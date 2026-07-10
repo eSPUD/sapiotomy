@@ -1,0 +1,24 @@
+Thinking Budget is hands-down the best looking.  The competition in this area is almost entirely
+non-existent.  Additionally, it is incredibly appealing.
+Better yet, this proposal could be combined/updated with some of the components "thinking harder" 
+proposal from my lineup for a better wow factor.  
+- Thinking budget focuses on scaling mechanics
+- Thinking harder focuses on selection economics and verifier behavior.
+- Thus, we could add the verifier "betrayal" as parrt of the thinking budget.  
+
+"Inside the Machines Eye" seems more difficult for our budget, and components of this project exist 
+such as the "hero gaze" interaction from molVLM Viz, as well as Bau labs Gaze Heads from June 2026.  
+
+Astrid seems to be the purest explainable but a bit too small for the workshop.  Hpwever, it is very
+ interesting and could be included in addition to any of the other mentioned proposals.
+- The wow factor "nothing you can do can change the fact that this LLM keeps coming up with Astrid as
+ the main hero character" is very simply for a reader to understand.
+
+Reasoning Illusion has very little competition and honestly, the biggest wow factor.  Letting a 
+reader operate on a reasoning trace is a strong concept, but feasability is lower for 40 hours of 
+development time a week.
+
+The Micoroscope has been largely done before with Neuronpedia.
+
+There is no Math Expert truly has zero precedent, but the novelty is a bit low in comparison to the 
+other projeccts.  
