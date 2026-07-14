@@ -36,4 +36,8 @@ at load time, so a missing `citation`/`provenance` fails the build and the tests
 
 | File | Page | Anchor | Source |
 |---|---|---|---|
+| `chain-of-thought.json` | 2, 3 | GSM8K 17.9% → 56.9% (+39.0) | Wei et al. 2022 |
 | `self-consistency.json` | 6 | GSM8K +17.9% (56.5% → 74.4%) | Wang et al. 2022 |
+
+Authored (illustrative, non-paper) content for Pages 1 and 4 lives in
+`src/lib/authored.ts` and is labelled as such in-app.

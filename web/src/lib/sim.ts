@@ -115,6 +115,12 @@ export function coverageAtLeastOne(p: number, n: number): number {
   return 1 - Math.pow(1 - p, n);
 }
 
+/** A seeded grid of n attempts (true = correct) for the avatar viz on Page 5. */
+export function sampleGrid(p: number, n: number, seed: number): boolean[] {
+  const rng = createRng(seed);
+  return Array.from({ length: n }, () => bernoulli(rng, p));
+}
+
 /**
  * Seeded Monte Carlo estimate of the same coverage, used to demonstrate that
  * the "live" simulation converges to the closed form. Deterministic per seed.

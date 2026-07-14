@@ -6,9 +6,11 @@
  */
 import { parseCurveData, type CurveData } from "./data";
 import selfConsistencyRaw from "@data/self-consistency.json";
+import chainOfThoughtRaw from "@data/chain-of-thought.json";
 
 export const curves: Record<string, CurveData> = {
   selfConsistency: parseCurveData(selfConsistencyRaw, "self-consistency.json"),
+  chainOfThought: parseCurveData(chainOfThoughtRaw, "chain-of-thought.json"),
 };
 
 /** Linear interpolation of y at an arbitrary x along a curve's points. */

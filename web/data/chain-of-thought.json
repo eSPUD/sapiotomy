@@ -1,0 +1,14 @@
+{
+  "points": [
+    { "x": 0, "y": 17.9 },
+    { "x": 1, "y": 56.9 }
+  ],
+  "fit": { "kind": "toggle", "params": { "standard": 17.9, "chainOfThought": 56.9, "withCalculator": 58.0, "priorSota": 55.0 } },
+  "citation": {
+    "ref": "Wei et al. 2022",
+    "url": "https://arxiv.org/abs/2201.11903",
+    "venue": "NeurIPS 2022",
+    "preprint": false
+  },
+  "provenance": "GSM8K, PaLM-540B. Verbatim from Wei et al. 2022 'Chain-of-Thought Prompting Elicits Reasoning in LLMs': standard prompting 17.9% -> chain-of-thought 56.9% (+39.0 pts); 58.0% with an external calculator; surpasses the prior fine-tuned SOTA of 55%. x=0 denotes standard prompting, x=1 chain-of-thought."
+}

@@ -1,5 +1,5 @@
-import { PageScaffold } from "@/components/PageScaffold";
+import { Page1 } from "@/components/pages/Page1";
 
 export default function Page() {
-  return <PageScaffold n={1} />;
+  return <Page1 />;
 }
