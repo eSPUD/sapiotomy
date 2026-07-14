@@ -1,0 +1,39 @@
+# `data/` — pre-computed curves + provenance
+
+Every quantitative anchor in the explorable lives here as a versioned JSON file,
+locked to a cited primary source. This is the guardrail against the "invented
+curve" failure mode (see `../../planning/task_list.md`, Golden rule).
+
+## File shape (`CurveData`)
+
+```jsonc
+{
+  "points": [{ "x": 1, "y": 56.5 }, ...],       // digitized data points
+  "fit": { "kind": "...", "params": { ... } },   // optional fitted function
+  "citation": {                                   // REQUIRED
+    "ref": "Wang et al. 2022",
+    "url": "https://arxiv.org/abs/2203.11171",
+    "venue": "ICLR 2023",
+    "preprint": false                             // true => flagged in-app
+  },
+  "provenance": "GSM8K, PaLM-540B. Endpoints verbatim from ..."  // REQUIRED
+}
+```
+
+`src/lib/data.ts` validates every file; `src/lib/curves.ts` imports + parses them
+at load time, so a missing `citation`/`provenance` fails the build and the tests.
+
+## Adding a page's data
+
+1. Digitize / transcribe the anchor from the primary paper. Record the figure/table
+   and extraction method in [`PROVENANCE.md`](./PROVENANCE.md).
+2. Write `data/<page>.json` with `citation` + `provenance`.
+3. Register it in `src/lib/curves.ts`.
+4. Add a **data-fidelity test** asserting the endpoints match the paper within
+   ±1.0 pp (default tolerance).
+
+## Files
+
+| File | Page | Anchor | Source |
+|---|---|---|---|
+| `self-consistency.json` | 6 | GSM8K +17.9% (56.5% → 74.4%) | Wang et al. 2022 |

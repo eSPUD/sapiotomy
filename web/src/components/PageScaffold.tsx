@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { getPage, pageHref, ACTS } from "@/lib/pages";
+import { getPage, ACTS } from "@/lib/pages";
+import { PageNav } from "./PageNav";
 
 /**
  * Shared stub for a story page. Each of the 20 routes renders this with its
@@ -11,9 +11,6 @@ export function PageScaffold({ n }: { n: number }) {
   if (!page) {
     return <p className="text-wrong">Unknown page: {n}</p>;
   }
-  const prev = n > 1 ? n - 1 : null;
-  const next = n < 20 ? n + 1 : null;
-
   return (
     <article className="flex flex-col gap-4">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
@@ -32,24 +29,7 @@ export function PageScaffold({ n }: { n: number }) {
         </p>
       </div>
 
-      <nav className="mt-4 flex items-center justify-between text-sm" aria-label="Page navigation">
-        {prev ? (
-          <Link href={pageHref(prev)} className="text-ink-muted hover:text-ink">
-            ← Page {prev}
-          </Link>
-        ) : (
-          <Link href="/" className="text-ink-muted hover:text-ink">
-            ← Home
-          </Link>
-        )}
-        {next ? (
-          <Link href={pageHref(next)} className="text-ink-muted hover:text-ink">
-            Page {next} →
-          </Link>
-        ) : (
-          <span className="text-ink-muted">The End</span>
-        )}
-      </nav>
+      <PageNav n={n} />
     </article>
   );
 }

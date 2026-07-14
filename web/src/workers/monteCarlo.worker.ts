@@ -1,29 +1,12 @@
 /**
- * Monte Carlo Web Worker — keeps heavy simulation off the UI thread
- * (performance invariant, task_list.md). The worker is a thin wrapper around
- * the pure functions in lib/sim.ts, which are what the unit tests exercise.
+ * Monte Carlo Web Worker entry — keeps heavy simulation off the UI thread
+ * (performance invariant). All logic lives in lib/mcProtocol.ts; this file is
+ * only the worker-context glue, so nothing here is imported by the client.
  */
 /// <reference lib="webworker" />
-import { coverageMonteCarlo } from "@/lib/sim";
+import { handleRequest, type WorkerRequest } from "@/lib/mcProtocol";
 
-export interface CoverageRequest {
-  kind: "coverage";
-  p: number;
-  n: number;
-  trials: number;
-  seed: number;
-}
-
-export interface CoverageResponse {
-  kind: "coverage";
-  result: number;
-}
-
-self.addEventListener("message", (event: MessageEvent<CoverageRequest>) => {
-  const msg = event.data;
-  if (msg.kind === "coverage") {
-    const result = coverageMonteCarlo(msg.p, msg.n, msg.trials, msg.seed);
-    const response: CoverageResponse = { kind: "coverage", result };
-    (self as unknown as Worker).postMessage(response);
-  }
+self.addEventListener("message", (event: MessageEvent<WorkerRequest>) => {
+  const response = handleRequest(event.data);
+  (self as unknown as Worker).postMessage(response);
 });
