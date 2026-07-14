@@ -208,7 +208,7 @@ Goal: the breaks the story promised, and the bookend that answers page 1. **Prep
 ### Implement
 - [ ] **Page 11 — "The bill arrives" ★** *(promoted to MVP — wow #3b, cheapest build)*: 🔭 cost-vs-accuracy scatter, **log-$ axis**: o3 low **75.7% @ ~$17–20/task**; o3 high (172×) **87.5%** (thousands/task, *reported estimates*); o1 ≤ ~32%; human ~$5. Copy links back to the page-1 stake. Data: ARC Prize / OpenAI blog — **flag non-peer-reviewed; costs are estimates**.
 - [ ] **Page 12 — "When more thinking hurts":** length slider past the peak; inverse-U; draggable marker for the overthinking threshold (easy crosses first); red overthinking zone. **(preprints flagged)**
-- [ ] **Page 13 — "The complexity cliff":** Tower-of-Hanoi disk dial; accuracy collapses past the wall; **thinking-effort trace paradoxically drops** alongside. **(preprint flagged)**
+- [ ] **Page 13 — "The complexity cliff":** Tower-of-Hanoi disk dial; accuracy collapses past the wall; **thinking-effort trace paradoxically drops** alongside. **(preprint flagged)** Carries a "contested — see Lawsen (arXiv:2506.09250)" chip while page 15 is unshipped, so the MVP doesn't present a live debate one-sidedly.
 - [ ] **Page 16 — "Back to the first thought" ★★ (bookend + sandbox):**
   - the **page-1 hero trace returns** in TraceNavigator with all learned annotations switchable (moves, entropy, budget, verifier, tree);
   - **the honest answer in copy**: thinking longer works — lawfully, within limits (plateau, backfire, walls, cost, honesty);
