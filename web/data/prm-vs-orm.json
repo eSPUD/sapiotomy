@@ -1,0 +1,15 @@
+{
+  "points": [
+    { "x": 0, "y": 69.6 },
+    { "x": 1, "y": 72.4 },
+    { "x": 2, "y": 78.2 }
+  ],
+  "fit": { "kind": "selection-method", "params": { "majority": 69.6, "orm": 72.4, "prm": 78.2 } },
+  "citation": {
+    "ref": "Lightman et al. 2023",
+    "url": "https://arxiv.org/abs/2305.20050",
+    "venue": "ICLR 2024",
+    "preprint": false
+  },
+  "provenance": "MATH (representative subset), best-of-N. Verbatim from Lightman et al. 2023 'Let's Verify Step by Step': majority-vote baseline 69.6%, outcome reward model (ORM) 72.4%, process reward model (PRM) 78.2%. x encodes the selection method: 0=majority, 1=ORM, 2=PRM."
+}

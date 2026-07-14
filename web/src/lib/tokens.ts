@@ -18,10 +18,11 @@ export const tokens = {
   ink: "#e6eaf2",
   inkMuted: "#9aa4bf",
 
-  // The three semantic hues
+  // The three semantic hues (contrast-checked on the dark canvas and on the
+  // /20 tinted pill backgrounds — WCAG AA, >= 4.5:1)
   compute: "#f5a623",
   correct: "#33d69f",
-  wrong: "#ff5c72",
+  wrong: "#ff8a9a",
 } as const;
 
 /** The three semantic hues that carry meaning across every page. */

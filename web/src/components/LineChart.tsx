@@ -15,6 +15,9 @@ export interface LineChartProps {
   /** Draw a dashed horizontal reference line (e.g. the reader's prediction). */
   referenceY?: number;
   referenceLabel?: string;
+  /** Optional second line (drawn in the compute hue) for a contrast. */
+  secondary?: { points: { x: number; y: number }[]; label?: string };
+  primaryLabel?: string;
   logX?: boolean;
   width?: number;
   height?: number;
@@ -34,6 +37,8 @@ export function LineChart({
   markerX,
   referenceY,
   referenceLabel,
+  secondary,
+  primaryLabel,
   logX = false,
   width = 480,
   height = 320,
@@ -51,9 +56,11 @@ export function LineChart({
     .range([0, innerW]);
   const y = scaleLinear().domain(yd).range([innerH, 0]);
 
-  const path = d3line<{ x: number; y: number }>()
+  const lineGen = d3line<{ x: number; y: number }>()
     .x((p) => x(p.x))
-    .y((p) => y(p.y))(points);
+    .y((p) => y(p.y));
+  const path = lineGen(points);
+  const secondaryPath = secondary ? lineGen(secondary.points) : null;
 
   const markerPoint =
     markerX !== undefined
@@ -107,7 +114,27 @@ export function LineChart({
         </g>
       ) : null}
 
+      {secondaryPath ? (
+        <path d={secondaryPath} fill="none" className="stroke-compute" strokeWidth={2.5} />
+      ) : null}
       {path ? <path d={path} fill="none" className="stroke-correct" strokeWidth={2.5} /> : null}
+
+      {(primaryLabel || secondary?.label) && (
+        <g>
+          {primaryLabel ? (
+            <>
+              <rect x={8} y={8} width={10} height={3} className="fill-correct" />
+              <text x={22} y={12} className="fill-ink text-[10px]">{primaryLabel}</text>
+            </>
+          ) : null}
+          {secondary?.label ? (
+            <>
+              <rect x={8} y={22} width={10} height={3} className="fill-compute" />
+              <text x={22} y={26} className="fill-ink text-[10px]">{secondary.label}</text>
+            </>
+          ) : null}
+        </g>
+      )}
 
       {markerPoint ? (
         <g>

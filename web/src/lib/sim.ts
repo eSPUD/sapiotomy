@@ -97,6 +97,77 @@ export function selfConsistencyCurve(
   }));
 }
 
+// ---------------------------------------------------------------------------
+// Best-of-N selection (Page 8) — random vs. majority vs. verifier.
+//
+// Honest Monte Carlo: each question yields N candidates, each correct with
+// probability `p`; correct candidates share the correct answer, wrong ones each
+// pick one of `distractors` wrong answers. Three selection strategies are then
+// scored on the same candidates:
+//   - random  : pick a candidate uniformly            → accuracy ≈ p
+//   - majority : plurality vote over the answers       → rises with N
+//   - verifier : score each candidate (reliability r), pick argmax → best
+// ---------------------------------------------------------------------------
+export interface BestOfNModel {
+  p: number;
+  distractors: number;
+  verifierReliability: number;
+}
+
+export interface BestOfNResult {
+  random: number;
+  majority: number;
+  verifier: number;
+}
+
+export function bestOfN(
+  n: number,
+  trials: number,
+  seed: number,
+  model: BestOfNModel,
+): BestOfNResult {
+  const rng = createRng(seed);
+  let random = 0;
+  let majority = 0;
+  let verifier = 0;
+
+  for (let t = 0; t < trials; t++) {
+    const correct: boolean[] = [];
+    const answers: number[] = [];
+    for (let i = 0; i < n; i++) {
+      const isCorrect = bernoulli(rng, model.p);
+      correct.push(isCorrect);
+      answers.push(isCorrect ? 0 : 1 + Math.floor(rng() * model.distractors));
+    }
+
+    // random pick
+    if (correct[Math.floor(rng() * n)]) random += 1;
+
+    // majority vote (random tie-break)
+    const tally = new Array(model.distractors + 1).fill(0);
+    for (const a of answers) tally[a] += 1;
+    const max = Math.max(...tally);
+    const top: number[] = [];
+    for (let i = 0; i < tally.length; i++) if (tally[i] === max) top.push(i);
+    const winner = top.length === 1 ? top[0] : top[Math.floor(rng() * top.length)];
+    if (winner === 0) majority += 1;
+
+    // verifier: score = correctness blended with noise by (1 - reliability)
+    let bestIdx = 0;
+    let bestScore = -Infinity;
+    for (let i = 0; i < n; i++) {
+      const score = (correct[i] ? 1 : 0) * model.verifierReliability + rng() * (1 - model.verifierReliability);
+      if (score > bestScore) {
+        bestScore = score;
+        bestIdx = i;
+      }
+    }
+    if (correct[bestIdx]) verifier += 1;
+  }
+
+  return { random: (random / trials) * 100, majority: (majority / trials) * 100, verifier: (verifier / trials) * 100 };
+}
+
 /** One representative ballot on a solvable question (for the histogram viz). */
 export function representativeBallot(
   n: number,
