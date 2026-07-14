@@ -1,0 +1,16 @@
+{
+  "points": [
+    { "x": 1, "y": 15.9 },
+    { "x": 10, "y": 32.6 },
+    { "x": 50, "y": 44.3 },
+    { "x": 250, "y": 56.0 }
+  ],
+  "fit": { "kind": "log-linear", "params": { "intercept": 15.9, "slopePerDecade": 16.72, "singleSampleSota": 43.0 } },
+  "citation": {
+    "ref": "Brown et al. 2024",
+    "url": "https://arxiv.org/abs/2407.21787",
+    "venue": "arXiv",
+    "preprint": true
+  },
+  "provenance": "SWE-bench Lite, DeepSeek-Coder-V2-Instruct. Verbatim endpoints from Brown et al. 2024 'Large Language Monkeys': coverage 15.9% at 1 sample -> 56% at 250 samples, beating the single-sample SOTA of 43%. Coverage grows ~log-linearly: y = 15.9 + 16.72*log10(k); intermediate points computed from that fit. y = coverage (pass@k, %); x = samples k."
+}

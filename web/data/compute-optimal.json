@@ -1,0 +1,15 @@
+{
+  "points": [
+    { "x": 1, "y": 40.0 },
+    { "x": 2, "y": 52.0 },
+    { "x": 4, "y": 60.0 }
+  ],
+  "fit": { "kind": "compute-optimal", "params": { "efficiencyVsBestOfN": 4.0, "largerModelFactor": 14.0 } },
+  "citation": {
+    "ref": "Snell et al. 2024",
+    "url": "https://arxiv.org/abs/2408.03314",
+    "venue": "ICLR 2025",
+    "preprint": false
+  },
+  "provenance": "Verbatim claims from Snell et al. 2024 'Scaling LLM Test-Time Compute Optimally...': a compute-optimal (difficulty-adaptive) test-time strategy is >4x more efficient than a best-of-N baseline, and in a FLOPs-matched comparison test-time compute can outperform a 14x larger model on problems where the base model has non-trivial success. points illustrate accuracy rising with relative compute under the optimal policy (x = relative compute, y = accuracy %)."
+}

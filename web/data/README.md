@@ -38,6 +38,11 @@ at load time, so a missing `citation`/`provenance` fails the build and the tests
 |---|---|---|---|
 | `chain-of-thought.json` | 2, 3 | GSM8K 17.9% → 56.9% (+39.0) | Wei et al. 2022 |
 | `self-consistency.json` | 6 | GSM8K +17.9% (56.5% → 74.4%) | Wang et al. 2022 |
+| `voting-plateau.json` | 7 | coverage rises, majority plateaus | Brown et al. 2024 (PP) |
+| `prm-vs-orm.json` | 9 | MATH: PRM 78.2 / ORM 72.4 / maj 69.6 | Lightman et al. 2023 |
+| `tree-of-thoughts.json` | 10 | Game of 24: b=1→45%, b=5→74% | Yao et al. 2023 |
+| `coverage-scaling.json` | 12 | SWE-bench 15.9%→56% (250) | Brown et al. 2024 (PP) |
+| `compute-optimal.json` | 13 | >4× vs BoN; beats 14× larger | Snell et al. 2024 |
 
 Authored (illustrative, non-paper) content for Pages 1 and 4 lives in
 `src/lib/authored.ts` and is labelled as such in-app.

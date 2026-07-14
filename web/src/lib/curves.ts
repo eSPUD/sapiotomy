@@ -9,12 +9,18 @@ import selfConsistencyRaw from "@data/self-consistency.json";
 import chainOfThoughtRaw from "@data/chain-of-thought.json";
 import votingPlateauRaw from "@data/voting-plateau.json";
 import prmVsOrmRaw from "@data/prm-vs-orm.json";
+import treeOfThoughtsRaw from "@data/tree-of-thoughts.json";
+import coverageScalingRaw from "@data/coverage-scaling.json";
+import computeOptimalRaw from "@data/compute-optimal.json";
 
 export const curves: Record<string, CurveData> = {
   selfConsistency: parseCurveData(selfConsistencyRaw, "self-consistency.json"),
   chainOfThought: parseCurveData(chainOfThoughtRaw, "chain-of-thought.json"),
   votingPlateau: parseCurveData(votingPlateauRaw, "voting-plateau.json"),
   prmVsOrm: parseCurveData(prmVsOrmRaw, "prm-vs-orm.json"),
+  treeOfThoughts: parseCurveData(treeOfThoughtsRaw, "tree-of-thoughts.json"),
+  coverageScaling: parseCurveData(coverageScalingRaw, "coverage-scaling.json"),
+  computeOptimal: parseCurveData(computeOptimalRaw, "compute-optimal.json"),
 };
 
 /** Linear interpolation of y at an arbitrary x along a curve's points. */
