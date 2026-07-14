@@ -10,12 +10,10 @@ import type { ReactNode } from "react";
 export function Reveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
   const reduce = useReducedMotion();
   if (reduce) return <>{children}</>;
+  // Animate transform only (not opacity): a purposeful "rise" that never reduces
+  // text contrast mid-animation (keeps axe green).
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay }}
-    >
+    <motion.div initial={{ y: 8 }} animate={{ y: 0 }} transition={{ duration: 0.35, delay }}>
       {children}
     </motion.div>
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ProgressRail } from "@/components/ProgressRail";
+import { Footer } from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "The Story of Inference-Time Scaling",
@@ -14,6 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-canvas text-ink antialiased">
         <ProgressRail />
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <Footer />
       </body>
     </html>
   );
