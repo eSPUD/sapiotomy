@@ -1,0 +1,18 @@
+{
+  "points": [
+    { "x": 1, "y": 56.5 },
+    { "x": 5, "y": 67.0 },
+    { "x": 10, "y": 70.5 },
+    { "x": 40, "y": 74.4 },
+    { "x": 100, "y": 74.8 },
+    { "x": 300, "y": 75.0 }
+  ],
+  "fit": { "kind": "coverage-vs-selection", "params": { "coveragePerSample": 0.2, "plateau": 75.0 } },
+  "citation": {
+    "ref": "Brown et al. 2024",
+    "url": "https://arxiv.org/abs/2407.21787",
+    "venue": "arXiv",
+    "preprint": true
+  },
+  "provenance": "Illustrates Brown et al. 2024 'Large Language Monkeys': without an automatic verifier, common selection methods (majority voting and reward models) plateau beyond several hundred samples and fail to fully scale with the sample budget. Majority curve uses the GSM8K self-consistency shape (plateau ~74-75%, Wang et al. 2022) extended to large sample counts; coverage is generated closed-form 1-(1-p)^n with p=0.2 to contrast the still-rising 'any sample correct' line against the flattening 'majority correct' line."
+}

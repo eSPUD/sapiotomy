@@ -1,0 +1,17 @@
+{
+  "points": [
+    { "x": 0, "y": 15.6 },
+    { "x": 2000, "y": 33.0 },
+    { "x": 4000, "y": 48.0 },
+    { "x": 6000, "y": 60.0 },
+    { "x": 8000, "y": 71.0 }
+  ],
+  "fit": { "kind": "rl-training", "params": { "start": 15.6, "passAt1": 71.0, "cons64": 86.7, "lengthStart": 1000, "lengthEnd": 9000 } },
+  "citation": {
+    "ref": "DeepSeek-R1 2025",
+    "url": "https://arxiv.org/abs/2501.12948",
+    "venue": "Nature 2025",
+    "preprint": false
+  },
+  "provenance": "AIME 2024, DeepSeek-R1-Zero. Verbatim from DeepSeek-AI 2025: during RL, pass@1 rose from 15.6% to 71.0%; with majority voting (cons@64) it reaches 86.7% (matching OpenAI-o1-0912). Response length grows alongside accuracy. x = RL training step (approx); y = pass@1 (%). Intermediate points interpolated along the reported climb."
+}

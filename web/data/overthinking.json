@@ -1,0 +1,17 @@
+{
+  "points": [
+    { "x": 0, "y": 62 },
+    { "x": 3, "y": 74 },
+    { "x": 6, "y": 78 },
+    { "x": 9, "y": 74 },
+    { "x": 12, "y": 66 }
+  ],
+  "fit": { "kind": "inverse-u", "params": { "easyPeak": 3, "hardPeak": 8, "easyPeakAcc": 82, "hardPeakAcc": 55, "curvature": 1.4 } },
+  "citation": {
+    "ref": "Overthinking / inverse-scaling lit. 2025",
+    "url": "https://arxiv.org/abs/2507.14417",
+    "venue": "arXiv (preprint)",
+    "preprint": true
+  },
+  "provenance": "Illustrative inverse-U from the 2025 overthinking / inverse-scaling-in-test-time-compute literature (preprints): beyond a point, longer reasoning REDUCES accuracy, and easy problems cross the 'overthinking threshold' sooner than hard ones. Shape is authored to match the qualitative finding; the easy/hard peak positions encode 'easy peaks earlier'. x = thinking length (arb. units); y = accuracy (%)."
+}
