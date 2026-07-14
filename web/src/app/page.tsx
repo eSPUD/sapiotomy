@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
+import { Reveal } from "@/components/Reveal";
 
 export default function Home() {
   const acts: Act[] = [1, 2, 3];
   return (
     <div className="flex flex-col gap-8">
+      <Reveal>
       <header className="flex flex-col gap-3">
         <h1 className="text-4xl font-bold text-ink">The Story of Inference-Time Scaling</h1>
         <p className="max-w-2xl text-lg text-ink-muted">
@@ -20,6 +22,7 @@ export default function Home() {
           Start reading →
         </Link>
       </header>
+      </Reveal>
 
       <div className="grid gap-6">
         {acts.map((act) => (
