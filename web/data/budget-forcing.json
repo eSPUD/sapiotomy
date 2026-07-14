@@ -1,0 +1,18 @@
+{
+  "points": [
+    { "x": 0, "y": 50.0 },
+    { "x": 1, "y": 52.5 },
+    { "x": 2, "y": 54.3 },
+    { "x": 3, "y": 55.6 },
+    { "x": 4, "y": 56.5 },
+    { "x": 5, "y": 57.0 }
+  ],
+  "fit": { "kind": "budget-forcing", "params": { "start": 50.0, "end": 57.0, "flipAtPress": 3 } },
+  "citation": {
+    "ref": "Muennighoff et al. 2025",
+    "url": "https://arxiv.org/abs/2501.19393",
+    "venue": "arXiv (preprint)",
+    "preprint": true
+  },
+  "provenance": "AIME24, s1-32B. Verbatim from Muennighoff et al. 2025 's1: Simple Test-Time Scaling': budget forcing (appending 'Wait' to prolong thinking) extrapolates AIME24 accuracy from 50% to 57%. x = number of 'Wait' appends; y = accuracy (%). Intermediate points interpolated along the reported upward extrapolation; flipAtPress marks where a representative problem flips wrong->correct."
+}

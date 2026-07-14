@@ -31,4 +31,29 @@ or a `provenance` string. A unit test asserts this. No page ships a number witho
 
 ## Records
 
-_(none yet — M0 ships the loader + schema only; the first data file arrives with Page 6 in M1.)_
+Each data file's `provenance` field carries its full source + extraction note (paper +
+figure/table, verbatim vs. interpolated). Summary:
+
+| File | Page | Extraction |
+|---|---|---|
+| chain-of-thought.json | 2,3 | Verbatim endpoints (Wei et al. 2022), GSM8K PaLM-540B |
+| self-consistency.json | 6 | Verbatim endpoints (Wang et al. 2022) + interpolated shape |
+| voting-plateau.json | 7 | Self-consistency plateau shape + closed-form coverage (Brown et al. 2024) |
+| prm-vs-orm.json | 9 | Verbatim (Lightman et al. 2023), MATH |
+| tree-of-thoughts.json | 10 | Verbatim endpoints (Yao et al. 2023), Game of 24 |
+| coverage-scaling.json | 12 | Verbatim endpoints + log-linear fit (Brown et al. 2024) |
+| compute-optimal.json | 13 | Verbatim claims (Snell et al. 2024) |
+| budget-forcing.json | 14 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
+| deepseek-r1-training.json | 15 | Verbatim endpoints (DeepSeek-R1 2025) |
+| arc-cost.json | 16 | Reported **estimates** (ARC Prize blog, **not peer-reviewed**) |
+| overthinking.json | 17 | Authored inverse-U matching the 2025 literature (**PP**) |
+| faithfulness.json | 18 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
+| illusion-of-thinking.json | 19 | Derived Hanoi token math (Shojaee/Lawsen 2025, **PP, both sides**) |
+
+### Resolved conflict — Page 18 misalignment-hint faithfulness
+
+The two planning docs disagree on the misalignment-hint sub-figures (Explainable: 20% / 29%;
+Survey: 41% / 19%). **Decision:** pending direct verification against the primary paper
+(arXiv:2505.05410), the app displays ONLY the well-agreed headline rates (Claude 25%, R1 39%)
+and omits the conflicting sub-figures. This is stated in-app on Page 18. If/when the primary
+paper is checked, add the resolved value here and restore the sub-figure.

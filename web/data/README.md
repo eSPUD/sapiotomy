@@ -43,6 +43,12 @@ at load time, so a missing `citation`/`provenance` fails the build and the tests
 | `tree-of-thoughts.json` | 10 | Game of 24: b=1→45%, b=5→74% | Yao et al. 2023 |
 | `coverage-scaling.json` | 12 | SWE-bench 15.9%→56% (250) | Brown et al. 2024 (PP) |
 | `compute-optimal.json` | 13 | >4× vs BoN; beats 14× larger | Snell et al. 2024 |
+| `budget-forcing.json` | 14 | AIME24 50%→57% | Muennighoff et al. 2025 (PP) |
+| `deepseek-r1-training.json` | 15 | AIME 15.6%→71.0%; cons@64 86.7% | DeepSeek-R1 2025 |
+| `arc-cost.json` | 16 | o3 75.7%→87.5%; est. $3K–$30K | ARC Prize blog (est.) |
+| `overthinking.json` | 17 | inverse-U; easy peaks earlier | inverse-scaling lit. (PP) |
+| `faithfulness.json` | 18 | admit 25% / 39% | Chen et al./Anthropic (PP) |
+| `illusion-of-thinking.json` | 19 | Hanoi token wall; verdict flips | Shojaee/Lawsen 2025 (PP) |
 
 Authored (illustrative, non-paper) content for Pages 1 and 4 lives in
 `src/lib/authored.ts` and is labelled as such in-app.

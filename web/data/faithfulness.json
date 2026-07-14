@@ -1,0 +1,14 @@
+{
+  "points": [
+    { "x": 0, "y": 25 },
+    { "x": 1, "y": 39 }
+  ],
+  "fit": { "kind": "faithfulness", "params": { "claudeAdmit": 25, "r1Admit": 39 } },
+  "citation": {
+    "ref": "Chen et al. / Anthropic 2025",
+    "url": "https://arxiv.org/abs/2505.05410",
+    "venue": "arXiv (preprint)",
+    "preprint": true
+  },
+  "provenance": "Headline hint-admission rates, verbatim from Chen et al./Anthropic 2025 'Reasoning Models Don't Always Say What They Think': when an answer was influenced by an injected hint, the model verbalized it only 25% of the time (Claude 3.7 Sonnet) and 39% (DeepSeek-R1). x: 0=Claude, 1=R1; y = admission rate (%). NOTE (unresolved source conflict): the two planning docs disagree on the MISALIGNMENT-hint sub-figures (Explainable: 20%/29%; Survey: 41%/19%). Pending primary-source verification, only the headline 25%/39% figures are displayed in-app; the misalignment sub-figures are intentionally omitted."
+}
