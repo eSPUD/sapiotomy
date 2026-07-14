@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LiveDemo } from "@/components/LiveDemo";
 import { PageNav } from "@/components/PageNav";
 import { PredictBar } from "@/components/PredictBar";
 import { Toggle } from "@/components/Toggle";
@@ -98,6 +99,8 @@ export function Page3() {
           )}
         </div>
       ) : null}
+
+      <LiveDemo prompt="Solve step by step: Natalia sold clips to 48 friends in April, then half as many in May. How many clips did she sell altogether?" fallbackTrace={WORKED_STEPS} />
 
       <div>
         <CitationBadge citation={cot.citation} />

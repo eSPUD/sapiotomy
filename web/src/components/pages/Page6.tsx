@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BallotHistogram } from "@/components/BallotHistogram";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LiveDemo } from "@/components/LiveDemo";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { PredictBar } from "@/components/PredictBar";
@@ -108,6 +109,8 @@ export function Page6() {
           </div>
         </div>
       )}
+
+      <LiveDemo prompt="Solve this three different ways and take the majority answer: If a train travels 60 km in 1.5 hours, what is its average speed?" fallbackTrace={["Attempt 1: 60 / 1.5 = 40 km/h", "Attempt 2: 60 / 1.5 = 40 km/h", "Attempt 3: 60 / 1.5 = 40 km/h", "Majority: 40 km/h"]} />
 
       <div className="mt-2">
         <CitationBadge citation={anchor.citation} />

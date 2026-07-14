@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LiveDemo } from "@/components/LiveDemo";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves, interpolate } from "@/lib/curves";
@@ -73,6 +74,8 @@ export function Page14() {
           </ol>
         </div>
       </div>
+
+      <LiveDemo prompt="Make 24 from the numbers 6, 6, 4 using + - * / . Think step by step, and reconsider with 'Wait' if unsure." fallbackTrace={THOUGHTS} />
 
       <div>
         <CitationBadge citation={data.citation} />
