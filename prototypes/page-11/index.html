@@ -1,0 +1,545 @@
+<!doctype html>
+<!--
+  Page 11 — "The bill arrives" — STANDALONE PROTOTYPE
+  Purpose: fine-tune copy, data, visuals, and interactions before the scaffold lands.
+  Stack note: hand-rolled SVG + vanilla JS (zero deps, opens offline via file://).
+              On port → D3 inside <ChartFrame>, tokens from the M0 design layer,
+              staged reveals via the scaffold's reveal primitive. See ./README.md.
+  Data: inlined below as DATA — mirrors data/arc-agi-2-cost.json + data/arc-agi-1-cost-history.json.
+  All numbers are confirmed-landscape leads; verify vs the live ARC Prize leaderboard at M1 (see README).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page 11 · The bill arrives (prototype)</title>
+<style>
+  /* ---- PLACEHOLDER TOKENS (swap for the scaffold's M0 design tokens; no raw hex in the real build) ---- */
+  :root{
+    --surface:#ffffff; --panel:#f6f7f9; --ink:#1a1a1e; --muted:#5a6472; --grid:#e6e9ee; --hair:#d7dce3;
+    --compute:#2a78d6;      /* AI-system hue ("compute/energy") */
+    --compute-soft:#2a78d61a;
+    --human:#0e9f6e;        /* human baseline hue (distinct + diamond shape) */
+    --warn:#c77b00;         /* estimate / caution accents */
+    --focus:#2a78d6;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface:#14161a; --panel:#1b1e24; --ink:#eceef2; --muted:#9aa4b2; --grid:#262b33; --hair:#333a44;
+      --compute:#5aa0f0; --compute-soft:#5aa0f022; --human:#34d399; --warn:#e0a100; --focus:#5aa0f0;
+    }
+  }
+  :root[data-theme="dark"]{
+    --surface:#14161a; --panel:#1b1e24; --ink:#eceef2; --muted:#9aa4b2; --grid:#262b33; --hair:#333a44;
+    --compute:#5aa0f0; --compute-soft:#5aa0f022; --human:#34d399; --warn:#e0a100; --focus:#5aa0f0;
+  }
+  :root[data-theme="light"]{
+    --surface:#ffffff; --panel:#f6f7f9; --ink:#1a1a1e; --muted:#5a6472; --grid:#e6e9ee; --hair:#d7dce3;
+    --compute:#2a78d6; --compute-soft:#2a78d61a; --human:#0e9f6e; --warn:#c77b00; --focus:#2a78d6;
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--ink);font-family:var(--font);line-height:1.55;
+       -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:820px;margin:0 auto;padding:28px 20px 80px;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px;
+          font-size:12px;color:var(--muted);}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .acts span{padding:2px 8px;border:1px solid var(--hair);border-radius:20px}
+  .acts .on{background:var(--compute);border-color:var(--compute);color:#fff}
+  .themebtn{background:none;border:1px solid var(--hair);color:var(--muted);border-radius:20px;
+            padding:3px 10px;cursor:pointer;font-size:12px}
+
+  h1{font-size:30px;line-height:1.15;margin:0 0 6px}
+  .lede{color:var(--muted);font-size:17px;margin:0 0 22px;max-width:60ch}
+
+  /* Predict-Observe-Explain bar */
+  .poe{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:16px 18px;margin:20px 0}
+  .poe h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+  .poe p{margin:0 0 12px}
+  .opts{display:flex;gap:8px;flex-wrap:wrap}
+  .opt{flex:1 1 auto;min-width:96px;padding:10px 12px;border:1px solid var(--hair);background:var(--surface);
+       border-radius:9px;cursor:pointer;font-size:15px;color:var(--ink);text-align:center;transition:.15s}
+  .opt:hover{border-color:var(--compute)}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .opt.sel{border-color:var(--compute);background:var(--compute-soft);font-weight:600}
+  .opt.correct{border-color:var(--human);background:color-mix(in srgb,var(--human) 12%,transparent)}
+  .poe .feedback{margin:12px 0 0;font-size:14.5px;color:var(--ink)}
+
+  /* Field-data telescope frame */
+  .fieldframe{border:1.5px solid var(--hair);border-radius:14px;background:var(--panel);
+              margin:22px 0;overflow:hidden}
+  .fieldframe .fhead{display:flex;justify-content:space-between;align-items:center;
+                     padding:9px 14px;border-bottom:1px solid var(--hair);font-size:12px;color:var(--muted)}
+  .fieldframe .fhead .scope{display:flex;align-items:center;gap:7px}
+  .chartcard{padding:6px 8px 2px}
+  .chart-scroll{overflow-x:auto}
+  svg{display:block;width:100%;height:auto;min-width:520px;font-family:var(--font)}
+  .fieldframe .ffoot{padding:8px 14px;border-top:1px solid var(--hair);font-size:12.5px}
+  .zoomback{background:none;border:none;color:var(--compute);cursor:pointer;font:inherit;padding:0;
+            text-decoration:underline;text-underline-offset:2px}
+
+  /* controls row */
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:8px 8px 10px}
+  .controls .grow{flex:1}
+  .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:8px;
+       padding:7px 13px;cursor:pointer;font-size:14px;transition:.15s}
+  .btn:hover{border-color:var(--compute)}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .btn[aria-pressed="true"]{background:var(--compute);border-color:var(--compute);color:#fff}
+  .btn.primary{background:var(--compute);border-color:var(--compute);color:#fff;font-weight:600}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .toggles{display:flex;gap:8px;flex-wrap:wrap}
+  .toggles .btn{font-size:13px;padding:6px 11px}
+
+  /* big number */
+  .bignum{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:2px 8px 10px;padding:12px 14px;
+          background:color-mix(in srgb,var(--compute) 7%,transparent);border-radius:10px}
+  .bignum .n{font-size:40px;font-weight:700;letter-spacing:-.02em;color:var(--ink);line-height:1}
+  .bignum .sub{font-size:14px;color:var(--muted);max-width:52ch}
+  .bignum[hidden]{display:none}
+
+  /* copy beats */
+  .beat{margin:14px 2px;font-size:16.5px;max-width:64ch}
+  .beat[hidden]{display:none}
+  .beat b{color:var(--ink)}
+  .beat .hl{color:var(--compute);font-weight:600}
+
+  /* ARC-AGI-3 callout */
+  .callout{border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent);
+           padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 2px;font-size:15.5px}
+  .callout[hidden]{display:none}
+  .callout .k{font-weight:700}
+
+  /* legend */
+  .legend{display:flex;gap:16px;flex-wrap:wrap;padding:2px 10px 12px;font-size:13px;color:var(--muted)}
+  .legend .li{display:flex;align-items:center;gap:6px}
+  .swatch{width:12px;height:12px;border-radius:50%;background:var(--compute);flex:none}
+  .swatch.hum{width:12px;height:12px;border-radius:2px;transform:rotate(45deg);background:var(--human)}
+  .swatch.hist{background:var(--compute);opacity:.5;border:1px dashed var(--ink)}
+
+  /* table */
+  .tablewrap{margin:8px 2px}
+  table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+  caption{text-align:left;color:var(--muted);font-size:12.5px;margin-bottom:6px}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--hair)}
+  th{color:var(--muted);font-weight:600}
+  td.num{text-align:right}
+  .est{color:var(--warn);font-size:11px;font-weight:600;margin-left:4px;vertical-align:1px}
+
+  .foot{margin-top:28px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--hair);padding-top:14px}
+  .foot p{margin:6px 0}
+  .cite{display:inline-block;font-size:11.5px;color:var(--muted);border:1px solid var(--hair);
+        border-radius:20px;padding:2px 9px;margin-top:4px}
+
+  /* tooltip */
+  #tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);padding:8px 10px;
+       border-radius:8px;font-size:12.5px;max-width:240px;z-index:20;opacity:0;transition:opacity .1s;
+       box-shadow:0 4px 16px #0004}
+  #tip .tn{font-weight:700;margin-bottom:2px}
+  #tip .tv{font-size:14px;font-weight:700}
+  #tip .tm{opacity:.85;margin-top:3px;font-size:11.5px}
+
+  .prototype-tag{position:fixed;bottom:10px;right:10px;font-size:11px;color:var(--muted);
+                 background:var(--panel);border:1px solid var(--hair);border-radius:6px;padding:3px 8px;z-index:30}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+  @media (max-width:560px){ h1{font-size:25px} .lede{font-size:16px} .bignum .n{font-size:32px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="acts" aria-label="Story progress">
+      <span>Watch it think</span><span>You change its mind</span><span class="on">Watch it break</span>
+    </div>
+    <button class="themebtn" id="themeToggle" aria-label="Toggle light or dark theme">◑ theme</button>
+  </div>
+
+  <!-- C1 headline, C2 lede -->
+  <h1>The bill arrives</h1>
+  <p class="lede">You've spent ten pages learning to buy accuracy with compute. Nobody mentioned the currency. Time to look at the receipt.</p>
+
+  <!-- PREDICT -->
+  <div class="poe" id="predict">
+    <h2>Predict</h2>
+    <p>In 2026, the best AI model scores <b>92.5%</b> on <b>ARC-AGI-2</b> — a hard reasoning benchmark most people find genuinely difficult. Guess what one task costs it in compute.</p>
+    <div class="opts" role="group" aria-label="Cost guesses">
+      <button class="opt" data-v="1.44">$1.44</button>
+      <button class="opt" data-v="50">~$50</button>
+      <button class="opt" data-v="500">~$500</button>
+      <button class="opt" data-v="5000">$5,000+</button>
+    </div>
+    <p class="feedback" id="predictFeedback" hidden></p>
+  </div>
+
+  <!-- BIG NUMBER (spotlight) -->
+  <div class="bignum" id="bignum" hidden>
+    <div class="n" id="bignumN">$1.44</div>
+    <div class="sub" id="bignumSub"></div>
+  </div>
+
+  <!-- FIELD-DATA TELESCOPE FRAME + CHART -->
+  <div class="fieldframe">
+    <div class="fhead">
+      <div class="scope">🔭 <span>field data — ARC-AGI (published)</span></div>
+      <div id="eraStamp">ARC-AGI-2 · 2026</div>
+    </div>
+
+    <div class="chartcard">
+      <div class="controls">
+        <button class="btn primary" id="revealBtn" disabled>Answer the prediction to begin</button>
+        <span class="grow"></span>
+        <div class="toggles">
+          <button class="btn" id="eraBtn" aria-pressed="false" hidden>+ 2024 history</button>
+          <button class="btn" id="scaleBtn" aria-pressed="true" title="Log vs linear cost axis">Log $ axis</button>
+          <button class="btn" id="tableBtn" aria-pressed="false">Table</button>
+        </div>
+      </div>
+
+      <div class="chart-scroll">
+        <svg id="chart" viewBox="0 0 720 440" role="img"
+             aria-label="Scatter plot: accuracy versus compute cost per task on ARC-AGI, log dollar axis."></svg>
+      </div>
+
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="ffoot">
+      <button class="zoomback" id="zoomback">↩ back to the puzzle</button>
+      <span style="color:var(--muted)"> — the same trade lived on our Game-of-24 trace all along.</span>
+    </div>
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div class="tablewrap" id="tableWrap" hidden></div>
+
+  <!-- COPY BEATS (revealed progressively) -->
+  <div class="beat" id="beat1" hidden>
+    <b>It's $1.44.</b> Eighteen months ago, the top score on the <i>previous</i> ARC-AGI cost <span class="hl">thousands of dollars per task</span> — for a <i>lower</i> score. The price of frontier thinking didn't just fall. It cratered — roughly a thousand-fold.
+  </div>
+
+  <div class="beat" id="beat2" hidden>
+    <b>But the shape never left.</b> Spend less, get less — the same family runs <span class="hl">$0.67 → 59.5%</span> (Luna), <span class="hl">$1.09 → 83.9%</span> (Terra), <span class="hl">$1.44 → 92.5%</span> (Sol): the last <b>8.6 points cost nearly as much as the previous 24</b>. And paying <i>more</i> doesn't buy <i>more</i> — Gemini 3.1 Pro costs <span class="hl">$40 a task for 77.1%</span>, thirty times Terra's price for a worse score.
+  </div>
+
+  <!-- ARC-AGI-3 callout -->
+  <div class="callout" id="callout3" hidden>
+    <span class="k">So is reasoning solved and cheap?</span> The field already answered. On <b>ARC-AGI-3</b> — the newest test — that same best model scores just <b>7.8%</b>. Humans score <b>100%</b>. The frontier moved, and the next bill is already forming.
+  </div>
+
+  <div class="beat" id="beat3" hidden>
+    <b>The honest answer to page 1.</b> Is machine thinking worth buying? Astonishingly, yes — the price collapsed a thousand-fold in eighteen months. But you still pay for the last points, you can still overpay, and the moment one benchmark falls, a harder one takes its place. <span class="hl">The absolute price falls; the shape of the trade does not.</span>
+  </div>
+
+  <div class="foot">
+    <p><b>Sources & honesty.</b> Costs are reported or estimated per-task compute figures from the ARC Prize leaderboard and announcements (blog / leaderboard — not peer-reviewed). "Cost" mixes retail pricing and compute estimates; the human per-task figure is an ARC Prize panel estimate and is <b>still being verified</b> (see README, open items). ARC-AGI-3 uses a different scoring scale, so it is a callout, not a plotted point. Numbers are confirmed-landscape leads pending live-leaderboard verification at build time.</p>
+    <span class="cite">based on: ARC Prize / ARC-AGI-2 leaderboard 2026 + o3 (Dec 2024) — blog/leaderboard estimate</span>
+  </div>
+
+</div>
+
+<div id="tip" role="status" aria-live="polite"></div>
+<div class="prototype-tag">page 11 · prototype</div>
+
+<script>
+/* ============================================================================
+   DATA — mirrors data/arc-agi-2-cost.json + data/arc-agi-1-cost-history.json
+   Every point carries benchmark + asOf + estimate stamps (currency discipline).
+   ============================================================================ */
+const DATA = {
+  current: {           // ARC-AGI-2, 2026  (semi-private eval)
+    benchmark: "ARC-AGI-2", asOf: "2026",
+    family: [          // GPT-5.6 family — drawn as a connected cost/accuracy curve
+      { id:"luna",  label:"GPT-5.6 Luna",  acc:59.5, cost:0.67, est:true, note:"Max Reasoning · lightweight" },
+      { id:"terra", label:"GPT-5.6 Terra", acc:83.9, cost:1.09, est:true, note:"Max Reasoning · balanced" },
+      { id:"sol",   label:"GPT-5.6 Sol",   acc:92.5, cost:1.44, est:true, note:"Max Reasoning · current SOTA on ARC-AGI-2" }
+    ],
+    legacy: [          // same era, expensive — "paying more ≠ getting more"
+      { id:"gemini", label:"Gemini 3.1 Pro (Preview)", acc:77.1, cost:40, est:true, note:"strong baseline, steep per-task cost" }
+      // cost-only context (no published ARC-AGI-2 score → not plotted): GPT-5.4 ~$95, Claude Opus 4.6 ~$160
+    ],
+    human: { id:"human", label:"Human panel", acc:100, cost:17, est:true, resolve:true,
+             note:"100% on ARC-AGI-2; per-task $ is an ARC Prize estimate — VERIFY (open item)" }
+  },
+  history: {           // ARC-AGI-1, Dec 2024  — the "before"
+    benchmark: "ARC-AGI-1", asOf: "Dec 2024",
+    points: [
+      { id:"o3lo", label:"o3 (low compute)",  acc:75.7, cost:18.5, costLo:17, costHi:20,   est:true, note:"Dec 2024 · ARC-AGI-1" },
+      { id:"o3hi", label:"o3 (172× compute)", acc:87.5, cost:9500, costLo:3000, costHi:30000, est:true, note:"Dec 2024 · ARC-AGI-1 · ~172× the low-compute cost" }
+    ]
+  },
+  arcAgi3: { model:"GPT-5.6 Sol", modelScore:7.8, human:100, note:"newest benchmark; different scoring scale" },
+  citation: { ref:"ARC Prize 2025 results & leaderboard + OpenAI o3 (Dec 2024)", venue:"blog/leaderboard", estimate:true }
+};
+
+/* ---- geometry & scales ---- */
+const M = {t:28, r:118, b:52, l:60}, W=720, H=440;
+const PW = W-M.l-M.r, PH = H-M.t-M.b;
+const X_MIN=0.5, X_MAX=40000;
+const L10=Math.log(10);
+const log10 = v => Math.log(v)/L10;
+let logMode = true;
+function xPix(cost){
+  if(logMode){ return M.l + (log10(cost)-log10(X_MIN))/(log10(X_MAX)-log10(X_MIN))*PW; }
+  return M.l + (Math.max(0,cost))/X_MAX*PW;
+}
+const yPix = acc => M.t + (1-acc/100)*PH;
+
+const SVGNS="http://www.w3.org/2000/svg";
+const svg = document.getElementById('chart');
+const el = (n,a={})=>{const e=document.createElementNS(SVGNS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+
+/* ---- state ---- */
+let step = 0;              // 0 predict, 1 collapse, 2 shape, 3 frontier-moved
+let showHistory = false;
+
+/* ============================================================================
+   RENDER
+   ============================================================================ */
+function render(){
+  while(svg.firstChild) svg.removeChild(svg.firstChild);
+
+  // gridlines + y ticks (accuracy)
+  [0,20,40,60,80,100].forEach(t=>{
+    const y=yPix(t);
+    svg.appendChild(el('line',{x1:M.l,y1:y,x2:M.l+PW,y2:y,stroke:'var(--grid)','stroke-width':1}));
+    const tx=el('text',{x:M.l-9,y:y+4,'text-anchor':'end',fill:'var(--muted)','font-size':11}); tx.textContent=t+'%';
+    svg.appendChild(tx);
+  });
+  // x ticks (cost)
+  const xticks = logMode ? [1,10,100,1000,10000] : [0,10000,20000,30000,40000];
+  xticks.forEach(t=>{
+    const x=xPix(t===0?0.5:t);
+    if(logMode) svg.appendChild(el('line',{x1:x,y1:M.t,x2:x,y2:M.t+PH,stroke:'var(--grid)','stroke-width':1}));
+    const tx=el('text',{x:x,y:M.t+PH+18,'text-anchor':'middle',fill:'var(--muted)','font-size':11});
+    tx.textContent = t===0?'$0':('$'+t.toLocaleString());
+    svg.appendChild(tx);
+  });
+  // axis titles
+  const xt=el('text',{x:M.l+PW/2,y:H-8,'text-anchor':'middle',fill:'var(--muted)','font-size':12,'font-weight':600});
+  xt.textContent='Compute cost per task ('+(logMode?'log scale':'linear')+')'; svg.appendChild(xt);
+  const yt=el('text',{x:-(M.t+PH/2),y:15,'text-anchor':'middle',fill:'var(--muted)','font-size':12,'font-weight':600,transform:'rotate(-90)'});
+  yt.textContent='Accuracy'; svg.appendChild(yt);
+
+  const pts=[]; // {x,y,r,fill,shape,opacity,datum,dash}
+
+  // ----- historical layer (aged) -----
+  if(showHistory && step>=1){
+    const h=DATA.history.points;
+    // range bar for o3-high
+    h.forEach(p=>{ if(p.costLo && p.costHi){
+      svg.appendChild(el('line',{x1:xPix(p.costLo),y1:yPix(p.acc),x2:xPix(p.costHi),y2:yPix(p.acc),
+        stroke:'var(--compute)','stroke-width':2,'stroke-linecap':'round',opacity:.35}));
+    }});
+    // dashed connector low→high
+    svg.appendChild(el('line',{x1:xPix(h[0].cost),y1:yPix(h[0].acc),x2:xPix(h[1].cost),y2:yPix(h[1].acc),
+      stroke:'var(--compute)','stroke-width':2,'stroke-dasharray':'5 4',opacity:.5}));
+    h.forEach(p=> pts.push({x:xPix(p.cost),y:yPix(p.acc),r:6,fill:'var(--compute)',shape:'circle',opacity:.55,datum:p,era:'history'}));
+    // stamp
+    const st=el('text',{x:xPix(h[1].cost),y:yPix(h[1].acc)-14,'text-anchor':'middle',fill:'var(--muted)','font-size':10.5,'font-style':'italic'});
+    st.textContent='o3 · Dec 2024 · ARC-AGI-1'; svg.appendChild(st);
+  }
+
+  // ----- current family curve (step>=2) -----
+  const fam=DATA.current.family;
+  if(step>=2){
+    for(let i=0;i<fam.length-1;i++){
+      svg.appendChild(el('line',{x1:xPix(fam[i].cost),y1:yPix(fam[i].acc),x2:xPix(fam[i+1].cost),y2:yPix(fam[i+1].acc),
+        stroke:'var(--compute)','stroke-width':2,opacity:.55}));
+    }
+    fam.forEach(p=> pts.push({x:xPix(p.cost),y:yPix(p.acc),r:7,fill:'var(--compute)',shape:'circle',opacity:1,datum:p,era:'current'}));
+    DATA.current.legacy.forEach(p=> pts.push({x:xPix(p.cost),y:yPix(p.acc),r:7,fill:'var(--compute)',shape:'circle',opacity:1,datum:p,era:'current'}));
+    const hu=DATA.current.human;
+    pts.push({x:xPix(hu.cost),y:yPix(hu.acc),r:7,fill:'var(--human)',shape:'diamond',opacity:1,datum:hu,era:'human'});
+  } else if(step>=1){
+    // collapse reveal: just Sol, to contrast with the 2024 layer
+    const sol=fam[2];
+    pts.push({x:xPix(sol.cost),y:yPix(sol.acc),r:8,fill:'var(--compute)',shape:'circle',opacity:1,datum:sol,era:'current'});
+  }
+
+  // draw marks (ring first for legibility)
+  pts.forEach((p,i)=>{
+    const g=el('g',{tabindex:0,role:'listitem','aria-label':ariaFor(p.datum,p.era)});
+    g.style.cursor='pointer';
+    if(p.shape==='diamond'){
+      const s=p.r+2, ring=el('rect',{x:p.x-s,y:p.y-s,width:s*2,height:s*2,fill:'var(--surface)',transform:`rotate(45 ${p.x} ${p.y})`});
+      const d=el('rect',{x:p.x-p.r,y:p.y-p.r,width:p.r*2,height:p.r*2,fill:p.fill,transform:`rotate(45 ${p.x} ${p.y})`,opacity:p.opacity});
+      g.appendChild(ring); g.appendChild(d);
+    } else {
+      g.appendChild(el('circle',{cx:p.x,cy:p.y,r:p.r+2,fill:'var(--surface)'}));
+      const c=el('circle',{cx:p.x,cy:p.y,r:p.r,fill:p.fill,opacity:p.opacity});
+      if(p.era==='history') c.setAttribute('stroke','var(--surface)'), c.setAttribute('stroke-width',1);
+      g.appendChild(c);
+    }
+    // transparent 24px hit target
+    g.appendChild(el('circle',{cx:p.x,cy:p.y,r:14,fill:'transparent'}));
+    // direct label
+    const lab=el('text',{x:p.x+ (p.datum.id==='gemini'||p.datum.id==='human'?0:0), y:p.y-14,'text-anchor':'middle',
+      fill:'var(--ink)','font-size':11,'font-weight':600});
+    lab.textContent=shortLabel(p.datum);
+    // avoid the family labels colliding: stagger vertically
+    if(p.datum.id==='terra') lab.setAttribute('y',p.y-15);
+    if(p.datum.id==='luna') lab.setAttribute('y',p.y+22);
+    if(p.era==='history') lab.setAttribute('fill','var(--muted)');
+    if(step>=2 || p.datum.id==='sol') g.appendChild(lab);
+
+    const enter=e=>showTip(e,p.datum,p.era), leave=hideTip;
+    g.addEventListener('mouseenter',enter); g.addEventListener('mousemove',enter);
+    g.addEventListener('mouseleave',leave);
+    g.addEventListener('focus',()=>showTipAt(p.x,p.y,p.datum,p.era)); g.addEventListener('blur',leave);
+    svg.appendChild(g);
+  });
+
+  // predict placeholder marker
+  if(step===0){
+    const px=xPix(1.44),py=yPix(92.5);
+    svg.appendChild(el('circle',{cx:px,cy:py,r:7,fill:'none',stroke:'var(--muted)','stroke-width':1.5,'stroke-dasharray':'3 3'}));
+    const q=el('text',{x:px,y:py-13,'text-anchor':'middle',fill:'var(--muted)','font-size':13,'font-weight':700}); q.textContent='?';
+    svg.appendChild(q);
+    const hint=el('text',{x:px,y:py+22,'text-anchor':'middle',fill:'var(--muted)','font-size':11}); hint.textContent='92.5% — at what price?';
+    svg.appendChild(hint);
+  }
+
+  renderLegend();
+}
+
+function shortLabel(d){
+  return {luna:'Luna',terra:'Terra',sol:'Sol',gemini:'Gemini 3.1 Pro',human:'Human',
+          o3lo:'o3 low',o3hi:'o3 172×'}[d.id]||d.label;
+}
+function ariaFor(d,era){
+  const c = d.costLo?`$${d.costLo}–$${d.costHi.toLocaleString()} per task`:`$${d.cost} per task`;
+  return `${d.label}: ${d.acc}% accuracy, ${c}${era==='history'?', historical (Dec 2024, ARC-AGI-1)':''}.`;
+}
+function renderLegend(){
+  const L=document.getElementById('legend');
+  L.innerHTML='';
+  const add=(cls,txt)=>{const d=document.createElement('div');d.className='li';
+    d.innerHTML=`<span class="swatch ${cls}"></span><span></span>`;d.querySelector('span:last-child').textContent=txt;L.appendChild(d);};
+  add('','AI system — ARC-AGI-2, 2026 (GPT-5.6 family joined by a line)');
+  add('hum','Human panel — 100%');
+  if(showHistory && step>=1) add('hist','o3 — historical (Dec 2024, ARC-AGI-1)');
+}
+
+/* ---- tooltip ---- */
+const tip=document.getElementById('tip');
+function tipHTML(d,era){
+  const cost = d.costLo?`$${d.costLo.toLocaleString()}–$${d.costHi.toLocaleString()}`:`$${d.cost.toLocaleString()}`;
+  const bm = era==='history'?'ARC-AGI-1 · Dec 2024':'ARC-AGI-2 · 2026';
+  tip.innerHTML='';
+  const n=document.createElement('div');n.className='tn';n.textContent=d.label;
+  const b=document.createElement('div');b.style.cssText='opacity:.8;font-size:11px;margin-bottom:4px';b.textContent=bm;
+  const v=document.createElement('div');v.className='tv';v.textContent=`${d.acc}%  ·  ${cost}/task${d.est?' (est.)':''}`;
+  const m=document.createElement('div');m.className='tm';m.textContent=d.note||'';
+  tip.append(n,b,v,m);
+}
+function showTip(e,d,era){ tipHTML(d,era); tip.style.opacity=1;
+  tip.style.left=Math.min(e.clientX+14,innerWidth-250)+'px'; tip.style.top=(e.clientY+14)+'px'; }
+function showTipAt(x,y,d,era){ tipHTML(d,era); const r=svg.getBoundingClientRect();
+  const sx=r.left+x*(r.width/W), sy=r.top+y*(r.height/H);
+  tip.style.opacity=1; tip.style.left=Math.min(sx+14,innerWidth-250)+'px'; tip.style.top=(sy+14)+'px'; }
+function hideTip(){ tip.style.opacity=0; }
+
+/* ============================================================================
+   REVEAL FLOW
+   ============================================================================ */
+const revealBtn=document.getElementById('revealBtn');
+const bignum=document.getElementById('bignum');
+const labels=['Answer the prediction to begin','Reveal the collapse →','Show the shape →','What comes next →','— the frontier already moved —'];
+
+function setStep(s){
+  step=s;
+  if(step>=1) showHistory=true;
+  document.getElementById('eraBtn').hidden = step<1;
+  document.getElementById('eraBtn').setAttribute('aria-pressed', showHistory);
+
+  document.getElementById('beat1').hidden = step<1;
+  document.getElementById('beat2').hidden = step<2;
+  document.getElementById('callout3').hidden = step<3;
+  document.getElementById('beat3').hidden = step<3;
+
+  // big number
+  if(step===1){ bignum.hidden=false;
+    document.getElementById('bignumN').textContent='$1.44';
+    document.getElementById('bignumSub').textContent='GPT-5.6 Sol — 92.5% on ARC-AGI-2. In Dec 2024, a lower score cost thousands of dollars per task. A ~1,000× collapse in 18 months.';
+  } else if(step===2){
+    document.getElementById('bignumN').textContent='×30';
+    document.getElementById('bignumSub').textContent='Gemini 3.1 Pro costs 30× more than GPT-5.6 Terra ($40 vs $1.09) — for a lower score. More money ≠ more accuracy.';
+  } else if(step===3){
+    document.getElementById('bignumN').textContent='7.8%';
+    document.getElementById('bignumSub').textContent='The best model’s score on ARC-AGI-3, the newest benchmark. Humans: 100%. The bill is already relocating.';
+  }
+
+  if(step===0){ revealBtn.disabled=true; revealBtn.textContent=labels[0]; }
+  else { revealBtn.textContent=labels[Math.min(step+1,4)]; revealBtn.disabled=step>=3; }
+  document.getElementById('eraStamp').textContent = step>=3 ? 'ARC-AGI-2 · 2026  +  history' : 'ARC-AGI-2 · 2026';
+  render(); renderTable();
+}
+
+revealBtn.addEventListener('click',()=>{ if(step<3) setStep(step+1); });
+
+/* predict */
+document.querySelectorAll('.opt').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+    b.classList.add('sel');
+    document.querySelector('.opt[data-v="1.44"]').classList.add('correct');
+    const fb=document.getElementById('predictFeedback'); fb.hidden=false;
+    const v=+b.dataset.v;
+    fb.textContent = v===1.44
+      ? 'Correct — and almost nobody guesses this. Two years of headlines trained us to expect a big number.'
+      : 'A reasonable guess — it’s what 2024 taught us to expect. The real answer is smaller than you think.';
+    if(step===0) setStep(1);
+  });
+});
+
+/* toggles */
+document.getElementById('eraBtn').addEventListener('click',function(){
+  showHistory=!showHistory; this.setAttribute('aria-pressed',showHistory); render(); renderLegend();
+});
+document.getElementById('scaleBtn').addEventListener('click',function(){
+  logMode=!logMode; this.setAttribute('aria-pressed',logMode);
+  this.textContent=logMode?'Log $ axis':'Linear $ axis'; render();
+});
+document.getElementById('zoomback').addEventListener('click',()=>{
+  alert('↩ In the real build this zooms back to the Game-of-24 home-base trace: every "Wait…" you injected on page 4 was tokens, and tokens are metered.');
+});
+
+/* table */
+const tableBtn=document.getElementById('tableBtn'), tableWrap=document.getElementById('tableWrap');
+tableBtn.addEventListener('click',function(){
+  const show=tableWrap.hidden; tableWrap.hidden=!show; this.setAttribute('aria-pressed',show); if(show) renderTable();
+});
+function renderTable(){
+  if(tableWrap.hidden) return;
+  const rows=[];
+  const push=(d,bm,era)=>rows.push({label:d.label,bm,acc:d.acc,
+    cost:d.costLo?`$${d.costLo.toLocaleString()}–$${d.costHi.toLocaleString()}`:`$${d.cost.toLocaleString()}`,
+    est:d.est,resolve:d.resolve});
+  DATA.current.family.forEach(d=>{ if(step>=2||d.id==='sol') push(d,'ARC-AGI-2 · 2026','current'); });
+  if(step>=2){ DATA.current.legacy.forEach(d=>push(d,'ARC-AGI-2 · 2026')); push(DATA.current.human,'ARC-AGI-2 · 2026'); }
+  if(showHistory&&step>=1) DATA.history.points.forEach(d=>push(d,'ARC-AGI-1 · Dec 2024','history'));
+  let h='<table><caption>All plotted values (tooltips never gate — everything is here). ARC-AGI-3: GPT-5.6 Sol 7.8%, humans 100% (different scale).</caption>'+
+    '<thead><tr><th>System</th><th>Benchmark · era</th><th class="num">Accuracy</th><th class="num">Cost / task</th></tr></thead><tbody>';
+  rows.forEach(r=>{ h+=`<tr><td>${r.label}</td><td>${r.bm}</td><td class="num">${r.acc}%</td>`+
+    `<td class="num">${r.cost}${r.est?'<span class="est">est'+(r.resolve?'·verify':'')+'</span>':''}</td></tr>`; });
+  h+='</tbody></table>';
+  tableWrap.innerHTML=h;
+}
+
+/* theme toggle */
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const next = cur==='dark'?'light':(cur==='light'?'':'dark');
+  if(next) document.documentElement.setAttribute('data-theme',next); else document.documentElement.removeAttribute('data-theme');
+  render();
+});
+
+/* init */
+setStep(0);
+</script>
+</body>
+</html>
