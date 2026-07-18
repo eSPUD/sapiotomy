@@ -36,7 +36,10 @@ at load time, so a missing `citation`/`provenance` fails the build and the tests
 
 | File | Page | Anchor | Source |
 |---|---|---|---|
-| `chain-of-thought.json` | 2, 3 | GSM8K 17.9% → 56.9% (+39.0) | Wei et al. 2022 |
+| `epoch-training-costs.json` | 4 | run costs ×2.4/yr (CI ×2.0–×3.1); >$1B by 2027 | Cottier et al. 2024, Epoch AI (est.) |
+| `epoch-inference-prices.json` | 4 | answer price ÷40/yr (GPQA bar); ÷9–÷900, median ÷50 | Epoch AI data insight (est.) |
+| `query-energy.json` | 4 | 0.3 Wh/answer; ~50 GWh/run; 4-rung ladder (derived) | Epoch AI (est. + derived) |
+| `chain-of-thought.json` | — (reserved) | GSM8K 17.9% → 56.9% (+39.0) | Wei et al. 2022 |
 | `self-consistency.json` | 6 | GSM8K +17.9% (56.5% → 74.4%) | Wang et al. 2022 |
 | `voting-plateau.json` | 7 | coverage rises, majority plateaus | Brown et al. 2024 (PP) |
 | `prm-vs-orm.json` | 9 | MATH: PRM 78.2 / ORM 72.4 / maj 69.6 | Lightman et al. 2023 |
@@ -50,5 +53,10 @@ at load time, so a missing `citation`/`provenance` fails the build and the tests
 | `faithfulness.json` | 18 | admit 25% / 39% | Chen et al./Anthropic (PP) |
 | `illusion-of-thinking.json` | 19 | Hanoi token wall; verdict flips | Shojaee/Lawsen 2025 (PP) |
 
-Authored (illustrative, non-paper) content for Pages 1 and 4 lives in
-`src/lib/authored.ts` and is labelled as such in-app.
+Authored (illustrative, non-paper) content for Pages 1-3 lives in
+`src/lib/authored.ts` and is labelled as such in-app: the Page-1 game rounds and
+scripted computer playthrough, the Page-2 instant blurts (an **informal real
+test** of DeepSeek-V3, July 2026, recorded in `notes_on_slides.md`; re-run and
+provenance-log before shipping) and the hand-authored placeholder trace, and
+the Page-3 match-night config (a hypothetical: no real teams, facts, or
+results, so nothing dates).

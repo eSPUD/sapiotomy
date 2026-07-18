@@ -43,9 +43,11 @@ test.describe("M7 polish — mobile viewport", () => {
 test.describe("M7 polish — reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("respects prefers-reduced-motion without breaking content", async ({ page }) => {
-    await page.goto("/p/3");
-    await page.getByRole("button", { name: /lock in prediction/i }).click();
-    // BigNumber jumps straight to its value; the +39-point copy is present.
-    await expect(page.getByText(/\+39\.0 points/i)).toBeVisible();
+    await page.goto("/p/4");
+    await page.getByRole("button", { name: /seen this one/i }).click();
+    await page.getByRole("button", { name: /rebuild it/i }).click();
+    // The tiles flip instantly; both machine names are on screen.
+    await expect(page.getByText("Training", { exact: true })).toBeVisible();
+    await expect(page.getByText("Inference", { exact: true })).toBeVisible();
   });
 });

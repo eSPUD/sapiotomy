@@ -1,0 +1,24 @@
+{
+  "points": [
+    { "x": 0, "y": 1 },
+    { "x": 1, "y": 0.025 },
+    { "x": 2, "y": 0.000625 }
+  ],
+  "fit": {
+    "kind": "exponential-decay-rate",
+    "params": {
+      "perYearGPQA": 40,
+      "rangeLow": 9,
+      "rangeHigh": 900,
+      "median": 50,
+      "medianSinceJan2024": 200
+    }
+  },
+  "citation": {
+    "ref": "Epoch AI, LLM inference price trends",
+    "url": "https://epoch.ai/data-insights/llm-inference-price-trends",
+    "venue": "Epoch AI",
+    "preprint": true
+  },
+  "provenance": "Rates quoted verbatim from Epoch AI: the price of matching GPT-4's score on PhD-level science questions (GPQA) fell /40 per year; across benchmarks and thresholds the fall ranges /9 to /900 per year, median /50, steepening to a median of /200 per year since January 2024. points = relative price multiplier after x elapsed years at the GPQA bar (y = 40^-x), encoding the rate only; no absolute prices. Not peer-reviewed (research-org data insight); flagged in-app."
+}

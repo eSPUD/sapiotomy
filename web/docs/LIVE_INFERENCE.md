@@ -1,6 +1,6 @@
 # Optional live in-browser inference (M9)
 
-Pages 3, 6, and 14 can *optionally* show a **real** chain-of-thought from a small
+Pages 2, 6, and 14 can *optionally* show a **real** chain-of-thought from a small
 model running fully client-side (WebGPU). This is an enhancement — **never a
 dependency**. The default build has it OFF and is byte-for-byte the pre-computed
 MVP.

@@ -5,11 +5,6 @@ test.describe("M6 — full journey + sandbox + quiz", () => {
   test("traverses all 20 pages 1 → 20 via the next links", async ({ page }) => {
     await page.goto("/p/1");
     for (let n = 2; n <= 20; n++) {
-      // Page 3 gates its next link behind a prediction.
-      if (n === 4) {
-        await page.goto("/p/3");
-        await page.getByRole("button", { name: /lock in prediction/i }).click();
-      }
       const link = page.getByRole("link", { name: `Page ${n} →` });
       await link.scrollIntoViewIfNeeded();
       await link.click();

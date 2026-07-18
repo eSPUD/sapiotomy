@@ -28,10 +28,10 @@ export const ACTS: Record<Act, { title: string; range: string }> = {
 };
 
 export const PAGES: PageMeta[] = [
-  { n: 1, slug: "two-speeds", title: "Two Speeds of Thinking", act: 1, concept: "Instant vs. deliberate reasoning (System 1 / System 2).", milestone: "M2" },
-  { n: 2, slug: "instant-answer", title: "The Instant-Answer Problem", act: 1, concept: "Token-by-token answers fail on hard multi-step problems.", milestone: "M2" },
-  { n: 3, slug: "show-your-work", title: "Show Your Work (Chain-of-Thought)", act: 1, concept: "Intermediate steps before the answer.", milestone: "M2" },
-  { n: 4, slug: "not-every-path", title: "Not Every Path Is Right", act: 1, concept: "A single chain can go wrong early; the model is stochastic.", milestone: "M2" },
+  { n: 1, slug: "think-fast-think-slow", title: "Think Fast, Think Slow", act: 1, concept: "Feel your own two speeds: the size of the problem sets the thinking time.", milestone: "S1" },
+  { n: 2, slug: "machines-two-speeds", title: "The Machine's Two Speeds", act: 1, concept: "Instant answers crack silently as problems grow; thinking catches them.", milestone: "S1" },
+  { n: 3, slug: "match-night", title: "Match Night", act: 1, concept: "Thinking sharpens some answers and buys nothing on others; a fixed fact is memory or nothing.", milestone: "S1" },
+  { n: 4, slug: "two-machines", title: "Two Machines", act: 1, concept: "The two ways of having answers get their proper names, and their bills point the money at thinking.", milestone: "S1" },
   { n: 5, slug: "ask-many-times", title: "What If We Ask Many Times?", act: 1, concept: "Repeated sampling and coverage.", milestone: "M2" },
   { n: 6, slug: "majority-vote", title: "The Majority Vote (Self-Consistency)", act: 2, concept: "Sample many chains, take the most common answer.", milestone: "M1" },
   { n: 7, slug: "voting-not-enough", title: "When Voting Isn't Enough", act: 2, concept: "Majority vote plateaus when the right answer is rare.", milestone: "M3" },

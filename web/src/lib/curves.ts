@@ -18,6 +18,9 @@ import arcCostRaw from "@data/arc-cost.json";
 import overthinkingRaw from "@data/overthinking.json";
 import faithfulnessRaw from "@data/faithfulness.json";
 import illusionRaw from "@data/illusion-of-thinking.json";
+import epochTrainingCostsRaw from "@data/epoch-training-costs.json";
+import epochInferencePricesRaw from "@data/epoch-inference-prices.json";
+import queryEnergyRaw from "@data/query-energy.json";
 
 export const curves: Record<string, CurveData> = {
   selfConsistency: parseCurveData(selfConsistencyRaw, "self-consistency.json"),
@@ -33,6 +36,9 @@ export const curves: Record<string, CurveData> = {
   overthinking: parseCurveData(overthinkingRaw, "overthinking.json"),
   faithfulness: parseCurveData(faithfulnessRaw, "faithfulness.json"),
   illusion: parseCurveData(illusionRaw, "illusion-of-thinking.json"),
+  epochTrainingCosts: parseCurveData(epochTrainingCostsRaw, "epoch-training-costs.json"),
+  epochInferencePrices: parseCurveData(epochInferencePricesRaw, "epoch-inference-prices.json"),
+  queryEnergy: parseCurveData(queryEnergyRaw, "query-energy.json"),
 };
 
 /** Linear interpolation of y at an arbitrary x along a curve's points. */

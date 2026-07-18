@@ -1,0 +1,29 @@
+{
+  "points": [
+    { "x": 1, "y": 0.3 },
+    { "x": 2, "y": 1095 },
+    { "x": 3, "y": 750000000 },
+    { "x": 4, "y": 50000000000 }
+  ],
+  "fit": {
+    "kind": "scale-ladder",
+    "params": {
+      "whShortAnswer": 0.3,
+      "whLongQueryLow": 2.5,
+      "whLongQueryHigh": 40,
+      "runGWh": 50,
+      "runGWhLow": 33,
+      "runGWhHigh": 60,
+      "householdKWhPerDay": 28,
+      "answersPerDayBillions": 2.5,
+      "phoneChargeWh": 12
+    }
+  },
+  "citation": {
+    "ref": "Epoch AI, How much energy does ChatGPT use?",
+    "url": "https://epoch.ai/gradient-updates/how-much-energy-does-chatgpt-use",
+    "venue": "Epoch AI",
+    "preprint": true
+  },
+  "provenance": "0.3 Wh per typical short (~500 token) answer, 2.5 to 40+ Wh for long queries, the LED-bulb comparison, and ~28 kWh/day per US household are Epoch AI's figures; the ~50 GWh (outside estimates 33 to 60) for a GPT-4-class training run is from Epoch AI's energy hub and is marked an estimate in-app. points = the four-rung scale ladder in Wh: x=1 one answer (0.3), x=2 a year of asking at 10/day (10 x 365 x 0.3 = 1,095 Wh, about 90 phone charges at ~12 Wh), x=3 the world's day of asking (2.5e9 answers x 0.3 Wh = 750 MWh, about 27,000 households), x=4 one frontier run (50 GWh, about 67 world-days). Rungs 2 to 4 are DERIVED and labeled so in-app; 2.5B answers/day is an OpenAI figure as reported by press (mid-2025). CO2 stays an analogy: no Wh-to-grams conversion (grid-mix dependent). Not peer-reviewed."
+}

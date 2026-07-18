@@ -36,7 +36,10 @@ figure/table, verbatim vs. interpolated). Summary:
 
 | File | Page | Extraction |
 |---|---|---|
-| chain-of-thought.json | 2,3 | Verbatim endpoints (Wei et al. 2022), GSM8K PaLM-540B |
+| epoch-training-costs.json | 4 | Verbatim rate (Cottier et al. 2024, Epoch AI blog, **not peer-reviewed**); points encode the x2.4/yr multiplier only, no absolute dollars |
+| epoch-inference-prices.json | 4 | Verbatim rates (Epoch AI data insight, **not peer-reviewed**); points encode the /40-per-yr multiplier only, no absolute prices |
+| query-energy.json | 4 | Verbatim per-answer figures (Epoch AI, **not peer-reviewed**) + **derived** ladder rungs (labeled in-app); run energy is an outside **estimate** (33-60 GWh) |
+| chain-of-thought.json | — (reserved) | Verbatim endpoints (Wei et al. 2022), GSM8K PaLM-540B; formerly Pages 2,3, retained for later pages after the Act-1 redesign |
 | self-consistency.json | 6 | Verbatim endpoints (Wang et al. 2022) + interpolated shape |
 | voting-plateau.json | 7 | Self-consistency plateau shape + closed-form coverage (Brown et al. 2024) |
 | prm-vs-orm.json | 9 | Verbatim (Lightman et al. 2023), MATH |
