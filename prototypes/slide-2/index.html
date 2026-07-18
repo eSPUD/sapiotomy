@@ -2,10 +2,15 @@
 <!--
   Page 2 · "Instant answer vs reasoning" · STANDALONE PROTOTYPE
   The reasoning trace's new home (moved here from slide 1, per notes_on_slides.md).
+  The page's one axis: DOES MORE THINKING HELP HERE, OR NOT? (slide 1's System-1/2 seed).
   Beats: recap of the slide-1 game -> a reasoning trace on 350 × 638 (play/scrub) ->
-  the re-ask twist (you have seen this exact problem before; you "trained" on it one
-  slide ago) -> memorized vs understood -> the World Cup beat (some answers cannot be
-  reasoned into existence) -> teaser to slide 3 (inference vs training, named there).
+  memorized vs understood (a one-line thought experiment anchors it: asked again
+  tomorrow, the answer would just pop, zero steps; no interactive re-ask, the reader
+  has met this problem enough times) -> match night (forecast: thinking pays ->
+  breaking news: re-thinking pays again -> a past final: thinking buys nothing) ->
+  teaser to slide 3.
+  The two AI terms for these ways of knowing NEVER appear here (even scare-quoted);
+  naming them is slide 3's reveal. Acceptance check: grep the AI vocabulary, expect zero.
   Stack: vanilla JS, zero deps, opens offline via file://.
   DATA HONESTY: the trace below is a HAND-AUTHORED PLACEHOLDER, labeled in the UI.
   A shipping page uses a verbatim, provenance-logged run from a real agent.
@@ -59,6 +64,9 @@
   section[hidden]{display:none}
   .beatcard{background:var(--panel);border:1px solid var(--hair);border-radius:12px;
             padding:16px 18px;margin:16px 0}
+  .beatcard[hidden]{display:none}
+  .beatcard.newsflash{border-color:var(--warn);border-left:3px solid var(--warn)}
+  .beatcard.newsflash .kicker{color:var(--warn)}
   .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 6px}
   .prompt{font-size:18px;margin:0 0 10px}
   .followup{margin:12px 0 0;font-size:15.5px;max-width:62ch}
@@ -66,10 +74,6 @@
   .soft{color:var(--muted);font-size:13.5px}
   .beat{margin:14px 2px;font-size:16.5px;max-width:64ch}
 
-  .answerrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  input[type="text"]{font:inherit;font-size:17px;padding:8px 12px;border:1px solid var(--hair);
-                     border-radius:9px;background:var(--surface);color:var(--ink);width:11ch}
-  input[type="text"]:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
   .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:8px;
        padding:7px 13px;cursor:pointer;font-size:14px;transition:.15s}
   .btn:hover{border-color:var(--compute)}
@@ -77,8 +81,6 @@
   .btn.primary{background:var(--compute);border-color:var(--compute);color:#fff;font-weight:600}
   .btn[aria-pressed="true"]{background:var(--compute);border-color:var(--compute);color:#fff}
   .btn:disabled{opacity:.4;cursor:not-allowed}
-  .stopwatch{font-family:var(--mono);font-size:13px;color:var(--muted);border:1px solid var(--hair);
-             border-radius:20px;padding:2px 10px}
 
   /* trace panel (the machinery slide 1 gave up) */
   .tracepanel{border:1.5px solid var(--hair);border-radius:14px;background:var(--panel);margin:16px 0;overflow:hidden}
@@ -126,8 +128,8 @@
 <div class="wrap">
   <div class="topbar">
     <div class="acts" aria-label="Progress">
-      <span class="on">Act 1 · Watch it think</span><span>Act 2 · You change its mind</span>
-      <span>Act 3 · Watch it break</span><span>Capstone</span>
+      <span class="on">Act 1 · The trace</span><span>Act 2 · Match night</span>
+      <span>Act 3 · The hinge</span>
     </div>
     <button class="themebtn" id="themebtn" aria-label="Toggle color theme">◑ theme</button>
   </div>
@@ -167,38 +169,15 @@
     </div>
   </section>
 
-  <!-- the re-ask twist -->
-  <section id="reask" aria-label="One more time" hidden>
-    <div class="beatcard">
-      <p class="kicker">One more time</p>
-      <p class="prompt">Quick: what's <strong>350 × 638</strong>?</p>
-      <div class="answerrow">
-        <label class="visually-hidden" for="a1">Your answer to 350 times 638</label>
-        <input type="text" id="a1" inputmode="numeric" autocomplete="off" />
-        <button class="btn primary" id="go1">Answer</button>
-        <span class="stopwatch" id="watch1" role="timer" aria-label="stopwatch">0.0 s</span>
-      </div>
-      <p class="soft" style="margin:8px 0 0">The clock starts when you click into the box.</p>
-      <p class="followup" id="ffast" hidden><strong>That was fast.</strong> And here's the thing: you didn't
-      reason it out this time. You've seen this exact problem before, one slide ago, so the answer was just
-      <em>there</em>. Whether it came from memory or straight off the trace above, you'd already "trained" on
-      it. Blurting it out worked.</p>
-      <p class="followup" id="fslow" hidden><strong>223,300.</strong> Took some steps again? Fair: memory
-      fades fast. But notice the difference in kind. If you remembered it, it would just pop out, no steps at
-      all. Since you didn't, you could still <em>rebuild</em> it, because you've mastered the concept behind
-      it.</p>
-      <p class="followup" id="fwrong" hidden>It's <strong>223,300</strong>, same as last slide. And now that
-      you've been told twice, notice what happens next time someone asks: it'll pop out with no steps at all.
-      That pop is memory, not reasoning.</p>
-    </div>
-  </section>
-
   <!-- memorized vs understood -->
   <section id="distinct" aria-label="Memorized vs understood" hidden>
-    <div class="idea">That's the difference between <strong>knowing the answer</strong> because you memorized
-    it (you "trained" on it) and <strong>understanding it</strong> (you can reason your way there). And if you
-    didn't have it memorized, the reason you could still get to 223,300 is that you've mastered the concept:
-    multiplication, and breaking a big problem into steps.</div>
+    <p class="beat">Now, if someone asked you <strong>350 × 638</strong> again tomorrow, you wouldn't redo
+    any of those steps. You've met this exact problem twice now (the game, then the trace), so the answer
+    would just pop: <strong>223,300</strong>. Zero steps. That pop is memory, not reasoning.</p>
+    <div class="idea">And that's the difference between <strong>knowing the answer</strong> because you
+    memorized it and <strong>understanding it</strong> (you can reason your way there). Even when memory
+    fades, you can always rebuild 223,300, because you've mastered the concept: multiplication, and breaking
+    a big problem into steps.</div>
     <div class="tiles">
       <div class="tile">
         <div class="lbl">Memorized</div>
@@ -215,33 +194,63 @@
     </div>
   </section>
 
-  <!-- the world cup beat -->
-  <section id="worldcup" aria-label="A different kind of question" hidden>
+  <!-- match night: forecast -> breaking news -> the pole thinking can't reach -->
+  <section id="worldcup" aria-label="Match night" hidden>
+    <!-- stage A: the forecast (thinking pays) -->
     <div class="beatcard">
-      <p class="kicker">Now try a different kind of question</p>
-      <p class="prompt">Who won the last World Cup final?</p>
-      <div class="opts" role="group" aria-label="Do you know who won">
-        <button class="opt" id="wknow" aria-pressed="false">I know it</button>
-        <button class="opt" id="wdont" aria-pressed="false">No idea</button>
+      <p class="kicker">Now a different kind of question</p>
+      <p class="prompt">Picture it: the World Cup final is <strong>tonight</strong>. Who wins?</p>
+      <div class="opts" role="group" aria-label="Your pick for tonight's final">
+        <button class="opt" id="pickfav" aria-pressed="false">The favorite</button>
+        <button class="opt" id="pickdog" aria-pressed="false">The underdog</button>
       </div>
-      <p class="followup" id="wknowline" hidden>It just popped in, didn't it? That's memory again: you were
-      there for the data, so to speak. No reasoning happened.</p>
-      <p class="followup" id="wdontline" hidden>And here's the kicker: <strong>you can't reason your way to
-      it.</strong> There's no concept to master that derives a match result, the way multiplication derives
-      223,300. You'd have to look it up: find a source, then reason with what it says.</p>
-      <p class="followup" id="wshared" hidden>An agent is in the same spot. If the match happened after its
-      training, the winner simply isn't in its memory, and no amount of thinking alone can produce it. It has
-      to reach for a source and reason with what it finds. But 350 × 638? That it can always rebuild, because
-      the concept is enough.</p>
+      <p class="followup" id="fcast" hidden>Whichever you picked, notice where it came from. It didn't pop
+      out of memory; there's nothing to remember, the match hasn't happened. You <em>reasoned</em>: recent
+      form, the matchup, who's under pressure. And the longer you thought, the sharper the call. Thinking
+      time was buying you something.</p>
+    </div>
+
+    <!-- stage B: breaking news (re-thinking pays again) -->
+    <div class="beatcard newsflash" id="news" hidden>
+      <p class="kicker">Breaking, minutes before kickoff</p>
+      <p class="prompt">The favorite's star striker just went off <strong>injured in the warm-up</strong>.</p>
+      <p class="beat" style="margin:10px 2px 4px">Think again: who wins now?</p>
+      <div class="opts" role="group" aria-label="Rethink your pick">
+        <button class="opt" id="bstick" aria-pressed="false">Stick with my pick</button>
+        <button class="opt" id="bswitch" aria-pressed="false">Switch</button>
+      </div>
+      <p class="followup" id="fnews" hidden>Stick or switch, you just did it again: took a brand-new fact
+      and reasoned it into a better answer. The old call didn't get recalled, it got rebuilt. More thinking,
+      still paying.</p>
+    </div>
+
+    <!-- stage C: the pole thinking can't reach (the hinge into slide 3) -->
+    <div class="beatcard" id="past" hidden>
+      <p class="kicker">One more</p>
+      <p class="prompt">Who won the <strong><span class="pastyear">2010</span> World Cup final</strong>?</p>
+      <div class="opts" role="group" aria-label="Do you know that winner">
+        <button class="opt" id="ppop" aria-pressed="false">It popped into my head</button>
+        <button class="opt" id="pnothing" aria-pressed="false">I've got nothing</button>
+      </div>
+      <p class="followup" id="fpop" hidden>Zero steps, zero effort; it was just there. And notice: thinking
+      <em>harder</em> wouldn't have made it arrive any better.</p>
+      <p class="followup" id="fnothing" hidden>Here's the thing: you could sit here for an hour and it still
+      wouldn't come. There's nothing to reason <em>from</em>. A fixed result is either already in your head,
+      or it's nowhere.</p>
+      <p class="followup" id="fshared" hidden>An agent is in the same spot. Give it tonight's matchup and
+      that injury report, and thinking time turns into a sharper call. Ask it about a final it never saw,
+      and an hour of thinking buys nothing; there's nothing to work from.</p>
     </div>
   </section>
 
   <!-- teaser -->
   <section id="teaser" aria-label="Next" hidden>
-    <p class="beat"><em>These two ways of knowing have names in the world of AI, and the difference between
-    them decides how machines get smarter. Next: what they're called, and what each one costs.</em></p>
+    <p class="beat"><em>Two kinds of question, then. On one, thinking is the whole game, and turning it up
+    keeps paying. On the other, thinking buys you nothing; the answer is either already in there, or it
+    isn't. So how does an answer get <strong>in there</strong> in the first place? That's a different
+    machine, with its own name and its own price tag. Next slide.</em></p>
     <p class="srcchip">framing: Kahneman, <em>Thinking, Fast and Slow</em> · the trace is a labeled placeholder;
-    no benchmark numbers appear on this page</p>
+    no benchmark numbers appear on this page · the match night is a hypothetical; no real teams, no real result</p>
   </section>
 
   <div aria-live="polite" class="visually-hidden" id="announcer"></div>
@@ -261,16 +270,8 @@ const $ = id => document.getElementById(id);
 const announcer = $('announcer');
 const say = t => { announcer.textContent = t; };
 const show = el => { el.hidden = false; if (!reduced) el.scrollIntoView({behavior:'smooth', block:'nearest'}); };
-
-function parseAnswer(raw){
-  let s = String(raw).trim();
-  if (s.startsWith('=')) s = s.slice(1);
-  if (s.endsWith('.')) s = s.slice(0, -1);
-  s = s.replace(/[\s,]/g, '');
-  return /^-?\d+$/.test(s) ? parseInt(s, 10) : NaN;
-}
-const fmt = ms => { const s = ms/1000; if (s < 59.95) return `${s.toFixed(1)} s`;
-                    const t = Math.round(s); return `${Math.floor(t/60)} m ${t%60} s`; };
+const actChips = document.querySelectorAll('.acts span');
+const act = i => actChips.forEach((c, j) => c.classList.toggle('on', j === i));
 
 /* ---------- the trace (HAND-AUTHORED PLACEHOLDER; replace with a verbatim real run) ---------- */
 const SEGMENTS = [
@@ -351,50 +352,51 @@ function finishTrace(){
   if (finished) return; finished = true;
   pause();
   $('finalanswer').classList.add('show');
-  show($('reask'));
-  say("Trace finished; the answer is 223,300. One more time: what's 350 times 638?");
+  show($('distinct'));
+  $('worldcup').hidden = false; // revealed alongside, without stealing the scroll
+  act(1);
+  say("Trace finished; the answer is 223,300.");
 }
 
-/* ---------- the re-ask (clock arms on click into the box) ---------- */
-const FAST_MS = 12000;      // under this, the answer came from memory or the trace, not re-reasoning
-let armedAt = null, tick = null, asked = false;
-$('a1').addEventListener('focus', () => {
-  if (asked || armedAt != null) return;
-  armedAt = performance.now();
-  tick = setInterval(() => {
-    if (armedAt != null) $('watch1').textContent = fmt(performance.now() - armedAt);
-  }, reduced ? 1000 : 100);
-});
-$('a1').addEventListener('keydown', e => { if (e.key === 'Enter') $('go1').click(); });
-$('go1').addEventListener('click', () => {
-  if (asked) return;
-  const v = parseAnswer($('a1').value);
-  if (isNaN(v)) return;
-  asked = true;
-  clearInterval(tick);
-  const t = armedAt == null ? 0 : performance.now() - armedAt;
-  $('watch1').textContent = fmt(t);
-  $('a1').disabled = true; $('go1').disabled = true;
-  const right = v === 223300;
-  $(right ? (t < FAST_MS ? 'ffast' : 'fslow') : 'fwrong').hidden = false;
-  show($('distinct'));
-  show($('worldcup'));
-});
+/* ---------- match night: forecast -> breaking news -> the pole thinking can't reach ---------- */
+const PAST_YEAR = 2010; // a knob: any final far enough back that "I've got nothing" is common; the page never states the winner
+document.querySelectorAll('.pastyear').forEach(e => { e.textContent = String(PAST_YEAR); });
 
-/* ---------- the world cup beat ---------- */
-let picked = false;
-function pickW(know){
-  if (picked) return; picked = true;
-  $('wknow').classList.toggle('sel', know);
-  $('wknow').setAttribute('aria-pressed', String(know));
-  $('wdont').classList.toggle('sel', !know);
-  $('wdont').setAttribute('aria-pressed', String(!know));
-  $(know ? 'wknowline' : 'wdontline').hidden = false;
-  $('wshared').hidden = false;
+function mark(chosen, other){
+  chosen.classList.add('sel'); chosen.setAttribute('aria-pressed', 'true');
+  other.setAttribute('aria-pressed', 'false');
+}
+let pickedA = false, pickedB = false, pickedC = false;
+function pickA(id){
+  if (pickedA) return; pickedA = true;
+  mark($(id), $(id === 'pickfav' ? 'pickdog' : 'pickfav'));
+  $('fcast').hidden = false;
+  show($('news'));
+  say("Breaking: the favorite's star striker went off injured in the warm-up. Think again: who wins now?");
+}
+$('pickfav').addEventListener('click', () => pickA('pickfav'));
+$('pickdog').addEventListener('click', () => pickA('pickdog'));
+
+function pickB(id){
+  if (pickedB) return; pickedB = true;
+  mark($(id), $(id === 'bstick' ? 'bswitch' : 'bstick'));
+  $('fnews').hidden = false;
+  show($('past'));
+  act(2);
+  say(`One more question: who won the ${PAST_YEAR} World Cup final?`);
+}
+$('bstick').addEventListener('click', () => pickB('bstick'));
+$('bswitch').addEventListener('click', () => pickB('bswitch'));
+
+function pickC(id){
+  if (pickedC) return; pickedC = true;
+  mark($(id), $(id === 'ppop' ? 'pnothing' : 'ppop'));
+  $(id === 'ppop' ? 'fpop' : 'fnothing').hidden = false;
+  $('fshared').hidden = false;
   show($('teaser'));
 }
-$('wknow').addEventListener('click', () => pickW(true));
-$('wdont').addEventListener('click', () => pickW(false));
+$('ppop').addEventListener('click', () => pickC('ppop'));
+$('pnothing').addEventListener('click', () => pickC('pnothing'));
 </script>
 </body>
 </html>
