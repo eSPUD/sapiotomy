@@ -1,0 +1,319 @@
+<!doctype html>
+<!--
+  Page 3 · "Match night" · STANDALONE PROTOTYPE
+  The hinge slide. Slide 2 ended on a rule ("when the problem gets big, turn the thinking up")
+  and promised tonight would test it. Beats: the form guide + forecast (thinking pays; the reader
+  reasons FROM given facts, not from memory) -> breaking news (re-thinking pays again) -> the
+  past final (thinking buys nothing: a fixed fact is in your head or nowhere) -> the two shelves
+  (the memorized/understood tiles are BORN here, as the summary of what the reader just felt)
+  -> teaser to slide 4 ("a different machine, with its own name and its own price tag").
+  The World Cup framing is deliberate and fine-tuned: the reader is handed an invented form guide
+  so the forecast is visibly reasoning-over-facts (not fandom, not memory); the match is a
+  hypothetical with no real teams, no real facts, no real result, so nothing on this page dates.
+  The AI cost words NEVER appear here, even scare-quoted; naming them is slide 4's reveal.
+  Acceptance check: grep this file for the two AI cost words, expect zero.
+  Stack: vanilla JS, zero deps, opens offline via file://.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page 3 · Match night (prototype)</title>
+<style>
+  /* ---- PLACEHOLDER TOKENS (swap for the scaffold's design tokens; no raw hex in the real build) ---- */
+  :root{
+    --surface:#ffffff; --panel:#f6f7f9; --ink:#1a1a1e; --muted:#5a6472; --hair:#d7dce3;
+    --compute:#2a78d6;
+    --compute-soft:#2a78d61a;
+    --good:#0e9f6e;
+    --warn:#c77b00;
+    --warn-soft:#c77b001a;
+    --focus:#2a78d6;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --surface:#14161a; --panel:#1b1e24; --ink:#eceef2; --muted:#9aa4b2; --hair:#333a44;
+           --compute:#5aa0f0; --compute-soft:#5aa0f022; --good:#34d399; --warn:#e0a100;
+           --warn-soft:#e0a10022; --focus:#5aa0f0; }
+  }
+  :root[data-theme="dark"]{ --surface:#14161a; --panel:#1b1e24; --ink:#eceef2; --muted:#9aa4b2; --hair:#333a44;
+           --compute:#5aa0f0; --compute-soft:#5aa0f022; --good:#34d399; --warn:#e0a100;
+           --warn-soft:#e0a10022; --focus:#5aa0f0; }
+  :root[data-theme="light"]{ --surface:#ffffff; --panel:#f6f7f9; --ink:#1a1a1e; --muted:#5a6472; --hair:#d7dce3;
+           --compute:#2a78d6; --compute-soft:#2a78d61a; --good:#0e9f6e; --warn:#c77b00;
+           --warn-soft:#c77b001a; --focus:#2a78d6; }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--ink);font-family:var(--font);line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:28px 20px 80px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;
+          font-size:12px;color:var(--muted)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .acts span{padding:2px 8px;border:1px solid var(--hair);border-radius:20px}
+  .acts .on{background:var(--compute);border-color:var(--compute);color:#fff}
+  .themebtn{background:none;border:1px solid var(--hair);color:var(--muted);border-radius:20px;
+            padding:3px 10px;cursor:pointer;font-size:12px}
+
+  .protobanner{border:1px dashed var(--warn);border-radius:10px;padding:8px 12px;font-size:12.5px;
+               color:var(--muted);margin-bottom:20px}
+  .protobanner b{color:var(--warn)}
+
+  h1{font-size:30px;line-height:1.15;margin:0 0 6px}
+  .lede{color:var(--muted);font-size:17px;margin:0 0 20px;max-width:62ch}
+
+  section[hidden]{display:none}
+  .beatcard{background:var(--panel);border:1px solid var(--hair);border-radius:12px;
+            padding:16px 18px;margin:16px 0}
+  .beatcard[hidden]{display:none}
+  .beatcard.newsflash{border-color:var(--warn);border-left:3px solid var(--warn)}
+  .beatcard.newsflash .kicker{color:var(--warn)}
+  .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 6px}
+  .prompt{font-size:18px;margin:0 0 10px}
+  .followup{margin:12px 0 0;font-size:15.5px;max-width:62ch}
+  .followup[hidden]{display:none}
+  .soft{color:var(--muted);font-size:13.5px}
+  .beat{margin:14px 2px;font-size:16.5px;max-width:64ch}
+
+  .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:8px;
+       padding:7px 13px;cursor:pointer;font-size:14px;transition:.15s}
+  .btn:hover{border-color:var(--compute)}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+  /* the form guide */
+  .form{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
+  .side{flex:1 1 240px;background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:12px 14px}
+  .side .lbl{font-size:13px;color:var(--muted)}
+  .side .val{font-size:19px;font-weight:600;line-height:1.3;margin:2px 0 6px}
+  .side ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--muted)}
+  .side li{margin:3px 0}
+  .side li.out{color:var(--warn)}
+  .side li.out::marker{color:var(--warn)}
+
+  .opts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .opt{flex:1 1 auto;min-width:150px;padding:10px 12px;border:1px solid var(--hair);background:var(--surface);
+       border-radius:9px;cursor:pointer;font-size:14.5px;color:var(--ink);text-align:center;transition:.15s}
+  .opt:hover{border-color:var(--compute)}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .opt.sel{border-color:var(--compute);background:var(--compute-soft);font-weight:600}
+
+  /* the two shelves */
+  .tiles{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 4px}
+  .tile{flex:1 1 220px;background:var(--surface);border:1px solid var(--hair);border-radius:10px;padding:12px 14px}
+  .tile .lbl{font-size:13px;color:var(--muted)}
+  .tile .val{font-size:19px;font-weight:600;line-height:1.3;margin:2px 0 4px}
+  .tile .sub{font-size:13.5px;color:var(--muted)}
+
+  .idea{border-left:3px solid var(--compute);background:var(--compute-soft);
+        padding:14px 16px;border-radius:0 10px 10px 0;margin:18px 2px;font-size:17px;max-width:64ch}
+  .idea.turn{border-left-color:var(--warn);background:var(--warn-soft)}
+
+  .srcchip{font-size:12px;color:var(--muted);margin-top:18px}
+  .visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="acts" aria-label="Progress">
+      <span class="on">Act 1 · The forecast</span><span>Act 2 · Breaking news</span>
+      <span>Act 3 · The hinge</span>
+    </div>
+    <button class="themebtn" id="themebtn" aria-label="Toggle color theme">◑ theme</button>
+  </div>
+
+  <div class="protobanner"><b>Prototype.</b> Placeholder tokens; hand-rolled UI. The match is a
+  <b>hypothetical</b>: no real teams, no real facts, no real result, so nothing on this page can go
+  stale. The <span class="pastyear">2010</span> question names a year but never states the winner.</div>
+
+  <h1>Match night.</h1>
+  <p class="lede">Slide 2 ended on a rule: when the problem gets big, turn the thinking up. Tonight is the
+  perfect test. Picture it: the <strong>World Cup final</strong> kicks off in a few hours, and nobody on
+  Earth knows how it ends.</p>
+
+  <!-- act 1: the form guide + forecast -->
+  <section aria-label="The forecast">
+    <div class="beatcard">
+      <p class="kicker">A different kind of question</p>
+      <p class="prompt">Who wins tonight?</p>
+      <p class="beat" style="margin:6px 2px 10px">You cannot answer that from memory; there is nothing to
+      remember, it has not happened. But you are not answering from nothing, either. Here is the form
+      guide.</p>
+      <div class="form" aria-label="The form guide">
+        <div class="side">
+          <span class="lbl">Tonight</span>
+          <span class="val">The favorite</span>
+          <ul>
+            <li>won every match on the way here</li>
+            <li>eleven goals scored, one conceded</li>
+            <li id="fitline">full squad fit</li>
+            <li>five days' rest</li>
+          </ul>
+        </div>
+        <div class="side">
+          <span class="lbl">Tonight</span>
+          <span class="val">The underdog</span>
+          <ul>
+            <li>knocked out the defending champions</li>
+            <li>the tournament's in-form goalkeeper</li>
+            <li>has trailed in every knockout match, and won each one</li>
+            <li>four days' rest</li>
+          </ul>
+        </div>
+      </div>
+      <p class="beat" style="margin:10px 2px 4px">Take a moment with it. Your call:</p>
+      <div class="opts" role="group" aria-label="Your pick for tonight's final">
+        <button class="opt" id="pickfav" aria-pressed="false">The favorite</button>
+        <button class="opt" id="pickdog" aria-pressed="false">The underdog</button>
+      </div>
+      <p class="followup" id="fcast" hidden>Wherever you landed, watch where the answer came from. Not a
+      pop; there is no fact of the matter yet, anywhere, in any head. You <em>weighed facts against each
+      other</em>: form against momentum, a rested squad against a hot goalkeeper. That is reasoning, and on
+      this question it is the only tool there is. Give it more time and the call gets sharper, never
+      certain: replay their semifinals, weigh the midfields, picture that keeper against ten shots.
+      <strong>Thinking pays.</strong></p>
+    </div>
+  </section>
+
+  <!-- act 2: breaking news -->
+  <section id="newswrap" aria-label="Breaking news" hidden>
+    <div class="beatcard newsflash" id="news">
+      <p class="kicker">Breaking, an hour before kickoff</p>
+      <p class="prompt">The favorite's star striker pulled up <strong>injured in the warm-up</strong>, and
+      is out of the match.</p>
+      <p class="beat" style="margin:10px 2px 4px">One line of the form guide just died. Think again: who
+      wins now?</p>
+      <div class="opts" role="group" aria-label="Rethink your pick">
+        <button class="opt" id="bstick" aria-pressed="false">Stick with my pick</button>
+        <button class="opt" id="bswitch" aria-pressed="false">Switch</button>
+      </div>
+      <p class="followup" id="fnews" hidden>Stick or switch, you just did it again: took one brand-new fact
+      and <em>rebuilt the whole call</em> around it. Nothing got recalled; there is still nothing to recall.
+      New fact in, sharper call out. <strong>Thinking pays again.</strong></p>
+    </div>
+  </section>
+
+  <!-- act 3: the pole thinking can't reach -->
+  <section id="pastwrap" aria-label="The past final" hidden>
+    <div class="beatcard" id="past">
+      <p class="kicker">One more question</p>
+      <p class="prompt">Who won the <strong><span class="pastyear">2010</span> World Cup final</strong>?</p>
+      <div class="opts" role="group" aria-label="Do you know that winner">
+        <button class="opt" id="ppop" aria-pressed="false">It popped into my head</button>
+        <button class="opt" id="pnothing" aria-pressed="false">I've got nothing</button>
+      </div>
+      <p class="followup" id="fpop" hidden>Zero steps, zero effort; it was simply there. And notice:
+      thinking harder would not have made it arrive any better, or any faster. That was a lookup, not a
+      build.</p>
+      <p class="followup" id="fnothing" hidden>Now sit with that for a second. An hour would not help.
+      There is nothing to reason <em>from</em>: no form guide, no team sheets, nothing to weigh. The result
+      is a fixed fact of history, and a fixed fact is either already in your head, or it is nowhere.</p>
+      <p class="followup" id="fshared" hidden>An agent is in exactly the same spot. Hand it tonight's form
+      guide and the injury news, and thinking time turns into a sharper forecast. Ask it about a final it
+      never saw, and an hour of thinking buys nothing; there is nothing to work from.</p>
+    </div>
+  </section>
+
+  <!-- the two shelves + teaser -->
+  <section id="shelves" aria-label="The two shelves" hidden>
+    <p class="beat">Put the whole evening next to slide 2's multiplication, and the map draws itself.
+    Every answer you have ever given came off one of <strong>two shelves</strong>:</p>
+    <div class="tiles">
+      <div class="tile">
+        <div class="lbl">Memorized</div>
+        <div class="val">"I've seen this one."</div>
+        <div class="sub">The answer pops out whole. Zero steps, zero time. It only works for things that
+        have already crossed your path.</div>
+      </div>
+      <div class="tile">
+        <div class="lbl">Understood</div>
+        <div class="val">"I can rebuild it."</div>
+        <div class="sub">Steps take time. But it works on things nobody has met yet: a fresh
+        multiplication, tonight's final. If the pieces exist, reasoning builds the best answer they
+        allow.</div>
+      </div>
+    </div>
+    <div class="idea turn">And the <span class="pastyear">2010</span> final marks the boundary between
+    them. It cannot be rebuilt: no pieces, nothing to reason from. It can only be remembered. On one kind
+    of question, thinking is the whole game and turning it up keeps paying. On this kind, thinking buys
+    nothing: <strong>the answer is either already in there, or it is nowhere.</strong></div>
+    <p class="beat" id="teaser"><em>Which leaves the real question. How does an answer get <strong>in
+    there</strong> in the first place? That is a different machine from the one you have been watching,
+    with its own name and its own price tag. Next slide.</em></p>
+    <p class="srcchip">the match night is a hypothetical: no real teams, no real facts, no real result;
+    the form guide is invented on purpose so nothing here can go stale · the
+    <span class="pastyear">2010</span> question names a year but never states the winner · framing:
+    Kahneman, <em>Thinking, Fast and Slow</em></p>
+  </section>
+
+  <div aria-live="polite" class="visually-hidden" id="announcer"></div>
+</div>
+
+<script>
+"use strict";
+/* ---------- theme ---------- */
+document.getElementById('themebtn').addEventListener('click', () => {
+  const r = document.documentElement;
+  const dark = (r.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+  r.dataset.theme = dark ? 'light' : 'dark';
+});
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const announcer = $('announcer');
+const say = t => { announcer.textContent = t; };
+const show = el => { el.hidden = false; if (!reduced) el.scrollIntoView({behavior:'smooth', block:'nearest'}); };
+const actChips = document.querySelectorAll('.acts span');
+const act = i => actChips.forEach((c, j) => c.classList.toggle('on', j === i));
+
+const PAST_YEAR = 2010; // a knob: any final far enough back that "I've got nothing" is common; the page never states the winner
+document.querySelectorAll('.pastyear').forEach(e => { e.textContent = String(PAST_YEAR); });
+
+function mark(chosen, other){
+  chosen.classList.add('sel'); chosen.setAttribute('aria-pressed', 'true');
+  other.setAttribute('aria-pressed', 'false');
+}
+
+let pickedA = false, pickedB = false, pickedC = false;
+function pickA(id){
+  if (pickedA) return; pickedA = true;
+  mark($(id), $(id === 'pickfav' ? 'pickdog' : 'pickfav'));
+  $('fcast').hidden = false;
+  show($('newswrap'));
+  act(1);
+  say("Breaking: the favorite's star striker pulled up injured in the warm-up and is out. Think again: who wins now?");
+}
+$('pickfav').addEventListener('click', () => pickA('pickfav'));
+$('pickdog').addEventListener('click', () => pickA('pickdog'));
+
+function pickB(id){
+  if (pickedB) return; pickedB = true;
+  mark($(id), $(id === 'bstick' ? 'bswitch' : 'bstick'));
+  $('fnews').hidden = false;
+  /* the dead line of the form guide gets struck through, warn-colored */
+  const fit = $('fitline');
+  fit.classList.add('out');
+  fit.innerHTML = '<s>full squad fit</s> star striker out';
+  show($('pastwrap'));
+  act(2);
+  say(`One more question: who won the ${PAST_YEAR} World Cup final?`);
+}
+$('bstick').addEventListener('click', () => pickB('bstick'));
+$('bswitch').addEventListener('click', () => pickB('bswitch'));
+
+function pickC(id){
+  if (pickedC) return; pickedC = true;
+  mark($(id), $(id === 'ppop' ? 'pnothing' : 'ppop'));
+  $(id === 'ppop' ? 'fpop' : 'fnothing').hidden = false;
+  $('fshared').hidden = false;
+  show($('shelves'));
+  say('The two shelves: memorized, and understood. Then the teaser to slide 4.');
+}
+$('ppop').addEventListener('click', () => pickC('ppop'));
+$('pnothing').addEventListener('click', () => pickC('pnothing'));
+</script>
+</body>
+</html>

@@ -1,0 +1,535 @@
+<!doctype html>
+<!--
+  Page 1 · "Think fast, think slow" · STANDALONE PROTOTYPE (the front door)
+  A pure game, no LLM anywhere on this page (the reasoning trace moved to slide 2).
+  Three timed questions (2 + 2, 17 × 24, 350 × 638), a reflection pop-up, and a
+  time comparison: problem complexity raises time-to-complete. A "You vs Computer"
+  switch lets a reader watch the game played for them instead of playing.
+  Stack: vanilla JS, zero deps, opens offline via file://.
+  NOTE: computer mode is a scripted playthrough (a simulated human player); its times
+  are illustrative pacing, not measurements. See ./README.md.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page 1 · Think fast, think slow (prototype)</title>
+<style>
+  /* ---- PLACEHOLDER TOKENS (swap for the scaffold's design tokens; no raw hex in the real build) ---- */
+  :root{
+    --surface:#ffffff; --panel:#f6f7f9; --ink:#1a1a1e; --muted:#5a6472; --hair:#d7dce3;
+    --compute:#2a78d6;        /* "compute/energy" hue */
+    --compute-soft:#2a78d61a;
+    --good:#0e9f6e;           /* correct/accuracy hue */
+    --warn:#c77b00;           /* caution / placeholder accents */
+    --focus:#2a78d6;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --surface:#14161a; --panel:#1b1e24; --ink:#eceef2; --muted:#9aa4b2; --hair:#333a44;
+           --compute:#5aa0f0; --compute-soft:#5aa0f022; --good:#34d399; --warn:#e0a100; --focus:#5aa0f0; }
+  }
+  :root[data-theme="dark"]{ --surface:#14161a; --panel:#1b1e24; --ink:#eceef2; --muted:#9aa4b2; --hair:#333a44;
+           --compute:#5aa0f0; --compute-soft:#5aa0f022; --good:#34d399; --warn:#e0a100; --focus:#5aa0f0; }
+  :root[data-theme="light"]{ --surface:#ffffff; --panel:#f6f7f9; --ink:#1a1a1e; --muted:#5a6472; --hair:#d7dce3;
+           --compute:#2a78d6; --compute-soft:#2a78d61a; --good:#0e9f6e; --warn:#c77b00; --focus:#2a78d6; }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--ink);font-family:var(--font);line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:28px 20px 80px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;
+          font-size:12px;color:var(--muted)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .acts span{padding:2px 8px;border:1px solid var(--hair);border-radius:20px}
+  .acts .on{background:var(--compute);border-color:var(--compute);color:#fff}
+  .themebtn{background:none;border:1px solid var(--hair);color:var(--muted);border-radius:20px;
+            padding:3px 10px;cursor:pointer;font-size:12px}
+
+  .protobanner{border:1px dashed var(--warn);border-radius:10px;padding:8px 12px;font-size:12.5px;
+               color:var(--muted);margin-bottom:20px}
+  .protobanner b{color:var(--warn)}
+
+  h1{font-size:30px;line-height:1.15;margin:0 0 6px}
+  .lede{color:var(--muted);font-size:17px;margin:0 0 20px;max-width:60ch}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+
+  section[hidden]{display:none}
+  .beatcard{background:var(--panel);border:1px solid var(--hair);border-radius:12px;
+            padding:16px 18px;margin:16px 0}
+  .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 6px}
+  .prompt{font-size:18px;margin:0 0 10px}
+  .followup{margin:12px 0 0;font-size:15.5px;max-width:62ch}
+  .followup[hidden]{display:none}
+  .soft{color:var(--muted);font-size:13.5px}
+
+  .answerrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input[type="text"]{font:inherit;font-size:17px;padding:8px 12px;border:1px solid var(--hair);
+                     border-radius:9px;background:var(--surface);color:var(--ink);width:11ch}
+  input[type="text"]:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+  input[type="text"][readonly]{background:var(--panel)}
+  .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:8px;
+       padding:7px 13px;cursor:pointer;font-size:14px;transition:.15s}
+  .btn:hover{border-color:var(--compute)}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .btn.primary{background:var(--compute);border-color:var(--compute);color:#fff;font-weight:600}
+  .btn[aria-pressed="true"]{background:var(--compute);border-color:var(--compute);color:#fff}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .linkbtn{background:none;border:none;color:var(--compute);cursor:pointer;font:inherit;font-size:13.5px;
+           padding:0;text-decoration:underline;text-underline-offset:2px}
+  .linkbtn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+  .stopwatch{font-family:var(--mono);font-size:13px;color:var(--muted);border:1px solid var(--hair);
+             border-radius:20px;padding:2px 10px}
+  .ff{display:none;font-family:var(--mono);font-size:12px;color:var(--warn);border:1px solid var(--warn);
+      border-radius:20px;padding:1px 8px}
+  .ff.on{display:inline-block}
+
+  /* mode picker */
+  .modes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .modes .btn{min-width:130px}
+
+  /* results bars (single series: time per problem; direct labels, no legend) */
+  .rows{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;margin:10px 0 4px}
+  .rows .rlbl{font-size:14.5px;white-space:nowrap}
+  .rows .rtrack{min-width:60px}
+  .rows .rbar{display:block;height:18px;border-radius:4px;background:var(--compute);min-width:4px}
+  .rows .rval{font-family:var(--mono);font-size:13.5px;white-space:nowrap}
+  .rows .rnote{grid-column:1 / -1;font-size:12.5px;color:var(--muted);margin:-4px 0 2px}
+
+  .beat{margin:14px 2px;font-size:16.5px;max-width:64ch}
+  .beat[hidden]{display:none}
+  .idea{border-left:3px solid var(--compute);background:var(--compute-soft);
+        padding:14px 16px;border-radius:0 10px 10px 0;margin:18px 2px;font-size:17px;max-width:64ch}
+
+  /* reflection pop-up */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;
+           justify-content:center;padding:20px;z-index:50}
+  .overlay.open{display:flex}
+  .dialog{background:var(--surface);color:var(--ink);border:1px solid var(--hair);border-radius:14px;
+          max-width:480px;width:100%;padding:20px 22px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+  .dialog h3{margin:0 0 8px;font-size:19px}
+  .dialog p{margin:0 0 12px;font-size:15.5px}
+  .opts{display:flex;gap:8px;flex-wrap:wrap}
+  .opt{flex:1 1 auto;min-width:140px;padding:10px 12px;border:1px solid var(--hair);background:var(--surface);
+       border-radius:9px;cursor:pointer;font-size:14.5px;color:var(--ink);text-align:center;transition:.15s}
+  .opt:hover{border-color:var(--compute)}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .opt.sel{border-color:var(--compute);background:var(--compute-soft);font-weight:600}
+  .dialog .beat2{display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--hair)}
+  .dialog .beat2.show{display:block}
+
+  .srcchip{font-size:12px;color:var(--muted);margin-top:18px}
+  .visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="acts" aria-label="Progress">
+      <span class="on">Act 1 · Watch it think</span><span>Act 2 · You change its mind</span>
+      <span>Act 3 · Watch it break</span><span>Capstone</span>
+    </div>
+    <button class="themebtn" id="themebtn" aria-label="Toggle color theme">◑ theme</button>
+  </div>
+
+  <div class="protobanner"><b>Prototype.</b> Placeholder tokens; hand-rolled UI. No LLM on this page by design.
+  Computer mode is a scripted playthrough with illustrative pacing, not a measurement (see README).</div>
+
+  <h1>Think fast, think slow.</h1>
+  <p class="lede">Your mind has two gears. This little game finds both: three questions, a timer on each,
+  and a comparison at the end.</p>
+
+  <!-- who plays -->
+  <section aria-label="Who plays">
+    <div class="beatcard">
+      <h2 id="wholabel">Who plays?</h2>
+      <div class="modes" role="group" aria-labelledby="wholabel">
+        <button class="btn" id="modeyou" aria-pressed="true">You</button>
+        <button class="btn" id="modecpu" aria-pressed="false">The computer</button>
+        <span class="soft">Pick the computer and it plays the round for you.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- round 1 -->
+  <section id="round1" aria-label="Round 1">
+    <div class="beatcard">
+      <p class="kicker">Round 1</p>
+      <p class="prompt">What's <strong>2 + 2</strong>?</p>
+      <div class="answerrow">
+        <label class="visually-hidden" for="a1">Your answer to 2 plus 2</label>
+        <input type="text" id="a1" inputmode="numeric" autocomplete="off" />
+        <button class="btn primary" id="go1">Answer</button>
+        <span class="stopwatch" id="watch1" role="timer" aria-label="round 1 stopwatch">0.0 s</span>
+        <span class="ff" id="ff1" aria-label="fast forward">≫</span>
+      </div>
+      <p class="soft" style="margin:8px 0 0">The clock starts when you click into the box.</p>
+      <p class="followup" id="f1right" hidden><strong>4.</strong> It was there before you decided to think.</p>
+      <p class="followup" id="f1wrong" hidden>It's <strong>4</strong>. We'll call that a typo and move on.</p>
+    </div>
+  </section>
+
+  <!-- round 2 -->
+  <section id="round2" aria-label="Round 2" hidden>
+    <div class="beatcard">
+      <p class="kicker">Round 2</p>
+      <p class="prompt">What's <strong>17 × 24</strong>? In your head, no calculator.</p>
+      <div class="answerrow">
+        <label class="visually-hidden" for="a2">Your answer to 17 times 24</label>
+        <input type="text" id="a2" inputmode="numeric" autocomplete="off" />
+        <button class="btn primary" id="go2">Answer</button>
+        <span class="stopwatch" id="watch2" role="timer" aria-label="round 2 stopwatch">0.0 s</span>
+        <span class="ff" id="ff2" aria-label="fast forward">≫</span>
+      </div>
+      <p class="followup" id="f2right" hidden><strong>408.</strong> Notice the clock this time.</p>
+      <p class="followup" id="f2wrong" hidden>It's <strong>408</strong>. No matter: it's the clock we're after,
+      not the score.</p>
+    </div>
+  </section>
+
+  <!-- round 3 -->
+  <section id="round3" aria-label="Round 3" hidden>
+    <div class="beatcard">
+      <p class="kicker">Round 3</p>
+      <p class="prompt">What's <strong>350 × 638</strong>? Same rules. Just bigger.</p>
+      <div class="answerrow">
+        <label class="visually-hidden" for="a3">Your answer to 350 times 638</label>
+        <input type="text" id="a3" inputmode="numeric" autocomplete="off" />
+        <button class="btn primary" id="go3">Answer</button>
+        <span class="stopwatch" id="watch3" role="timer" aria-label="round 3 stopwatch">0.0 s</span>
+        <span class="ff" id="ff3" aria-label="fast forward">≫</span>
+      </div>
+      <div style="margin-top:8px"><button class="linkbtn" id="giveup">I give up, show me</button></div>
+      <p class="followup" id="f3right" hidden><strong>223,300.</strong> Look at the clock.</p>
+      <p class="followup" id="f3wrong" hidden>It's <strong>223,300</strong>. Somewhere in those steps a digit
+      slipped; that's what juggling that many digits in your head does.</p>
+      <p class="followup" id="f3gaveup" hidden>It's <strong>223,300</strong>. Your clock read <b id="gtime"></b>
+      when you stopped. That pause is the point.</p>
+    </div>
+  </section>
+
+  <!-- computer stepper (reduced motion only) -->
+  <section id="cpustep" aria-label="Computer playthrough steps" hidden>
+    <div class="beatcard">
+      <p class="soft" style="margin:0 0 8px">Reduced motion is on, so the computer plays step by step.</p>
+      <button class="btn primary" id="nextstep">Next ▸</button>
+    </div>
+  </section>
+
+  <!-- results -->
+  <section id="results" aria-label="Results" hidden>
+    <div class="beatcard">
+      <h2>Three questions, three times</h2>
+      <div class="rows" id="rows"></div>
+      <p class="soft" id="marks"></p>
+    </div>
+    <div class="idea" id="idea"></div>
+    <p class="beat" id="ideaecho" hidden></p>
+    <p class="beat"><em>Next: what happens when something answers instantly, no matter how big the problem
+    gets?</em></p>
+    <div class="answerrow"><button class="btn" id="again">Run it again</button></div>
+    <p class="srcchip">framing: Kahneman, <em>Thinking, Fast and Slow</em> · the times above are from this play
+    session; nothing here is a benchmark</p>
+  </section>
+
+  <div aria-live="polite" class="visually-hidden" id="announcer"></div>
+</div>
+
+<!-- reflection pop-up -->
+<div class="overlay" id="overlay">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgtitle" id="dialog">
+    <h3 id="dlgtitle">How did you think about it?</h3>
+    <p id="dlgbody">Did 408 just pop into your head when you saw 17 × 24, or did you have to reason through it?</p>
+    <div class="opts">
+      <button class="opt" id="poppop" aria-pressed="false">It just popped in</button>
+      <button class="opt" id="popreason" aria-pressed="false">I reasoned through it</button>
+    </div>
+    <div class="beat2" id="dlgbeat2">
+      <p>What about a harder problem: <strong>350 × 638</strong>?</p>
+      <button class="btn primary" id="bringit">Bring it on</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ---------- theme ---------- */
+document.getElementById('themebtn').addEventListener('click', () => {
+  const r = document.documentElement;
+  const dark = (r.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+  r.dataset.theme = dark ? 'light' : 'dark';
+});
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const announcer = $('announcer');
+const say = t => { announcer.textContent = t; };
+const show = el => { el.hidden = false; if (!reduced) el.scrollIntoView({behavior:'smooth', block:'nearest'}); };
+
+/* ---------- tolerant answer parsing ---------- */
+function parseAnswer(raw){
+  let s = String(raw).trim();
+  if (s.startsWith('=')) s = s.slice(1);
+  if (s.endsWith('.')) s = s.slice(0, -1);
+  s = s.replace(/[\s,]/g, '');
+  return /^-?\d+$/.test(s) ? parseInt(s, 10) : NaN;
+}
+const fmt = ms => { const s = ms/1000; if (s < 59.95) return `${s.toFixed(1)} s`;
+                    const t = Math.round(s); return `${Math.floor(t/60)} m ${t%60} s`; };
+
+/* ---------- game config ----------
+   Computer-mode simT values are ILLUSTRATIVE pacing for a simulated human player
+   (instant, then seconds, then minutes). They are not measurements. See README. */
+const ROUNDS = [
+  { label:'2 + 2',      answer:4,      simT:  1200, simReal: 1200 },
+  { label:'17 × 24',    answer:408,    simT: 26300, simReal: 3800 },
+  { label:'350 × 638',  answer:223300, simT:161000, simReal: 5200 },
+];
+
+/* ---------- state ---------- */
+let mode = 'you';                 // 'you' | 'cpu'
+let runId = 0;                    // increments on every reset; cancels stale async work
+let cur = 0;                      // active round index (0..2)
+const times  = [null, null, null];
+const status = [null, null, null];  // 'right' | 'wrong' | 'gaveup'
+let popChoice = null;             // 'pop' | 'reason'
+let armedAt = null;               // when the active round's clock started
+let tick = null;                  // stopwatch interval
+const pending = [];               // cancellable timeouts for the computer driver
+
+/* ---------- stopwatch ---------- */
+function armClock(i){
+  if (armedAt != null || cur !== i) return;
+  armedAt = performance.now();
+  clearInterval(tick);
+  tick = setInterval(() => {
+    if (armedAt != null) $('watch' + (cur+1)).textContent = fmt(performance.now() - armedAt);
+  }, reduced ? 1000 : 100);
+}
+function stopClock(){
+  clearInterval(tick); tick = null;
+  const t = armedAt == null ? 0 : performance.now() - armedAt;
+  armedAt = null;
+  return t;
+}
+
+/* ---------- flow (shared by both modes) ---------- */
+function finishRound(i, st, t){
+  times[i] = t; status[i] = st;
+  $('watch' + (i+1)).textContent = fmt(t);
+  ['a','go'].forEach(p => { $((p === 'a' ? 'a' : 'go') + (i+1)).disabled = true; });
+  if (i === 2){ $('giveup').hidden = true; }
+  if (i === 0){ $(st === 'right' ? 'f1right' : 'f1wrong').hidden = false; nextAfter(0); }
+  if (i === 1){ $(st === 'right' ? 'f2right' : 'f2wrong').hidden = false; openPopup(); }
+  if (i === 2){ $(st === 'right' ? 'f3right' : st === 'wrong' ? 'f3wrong' : 'f3gaveup').hidden = false; showResults(); }
+}
+function nextAfter(i){
+  /* no autofocus: the clock arms on the reader's own click into the box (the round-1 hint's contract) */
+  if (i === 0){ cur = 1; show($('round2')); if (mode === 'you') say("Round 2: what's 17 times 24?"); }
+  if (i === 1){ cur = 2; show($('round3')); if (mode === 'you') say("Round 3: what's 350 times 638?"); }
+}
+
+/* ---------- user mode handlers ---------- */
+[0,1,2].forEach(i => {
+  const input = $('a' + (i+1));
+  input.addEventListener('focus',   () => { if (mode === 'you') armClock(i); });
+  input.addEventListener('keydown', e => {
+    if (mode !== 'you') return;
+    armClock(i);
+    if (e.key === 'Enter') $('go' + (i+1)).click();
+  });
+  $('go' + (i+1)).addEventListener('click', () => {
+    if (mode !== 'you' || cur !== i) return;
+    const v = parseAnswer(input.value);
+    if (isNaN(v)) return;                       // empty or garbage never submits
+    const t = stopClock();
+    finishRound(i, v === ROUNDS[i].answer ? 'right' : 'wrong', t);
+  });
+});
+$('giveup').addEventListener('click', () => {
+  if (mode !== 'you' || cur !== 2) return;
+  const t = stopClock();
+  $('gtime').textContent = fmt(t);
+  finishRound(2, 'gaveup', t);
+});
+
+/* ---------- reflection pop-up ---------- */
+let lastFocus = null;
+function openPopup(){
+  $('dlgbody').textContent = status[1] === 'right'
+    ? 'Did 408 just pop into your head when you saw 17 × 24, or did you have to reason through it?'
+    : "It's 408. Did an answer just pop in, or did you have to reason through it?";
+  lastFocus = document.activeElement;
+  $('overlay').classList.add('open');
+  if (mode === 'you') $('poppop').focus();
+  say('A question: did the answer pop in, or did you reason through it?');
+}
+function pickPop(choice){
+  popChoice = choice;
+  $('poppop').classList.toggle('sel', choice === 'pop');
+  $('poppop').setAttribute('aria-pressed', String(choice === 'pop'));
+  $('popreason').classList.toggle('sel', choice === 'reason');
+  $('popreason').setAttribute('aria-pressed', String(choice === 'reason'));
+  $('dlgbeat2').classList.add('show');
+  if (mode === 'you' || (mode === 'cpu' && reduced)) $('bringit').focus();
+}
+function closePopup(){
+  $('overlay').classList.remove('open');
+  if (mode === 'you'){ nextAfter(1); }
+  if (lastFocus && mode === 'you') { /* focus moves into round 3 via nextAfter */ }
+}
+$('poppop').addEventListener('click', () => { if (mode === 'you') pickPop('pop'); });
+$('popreason').addEventListener('click', () => { if (mode === 'you') pickPop('reason'); });
+$('bringit').addEventListener('click', () => {
+  if (mode === 'you') closePopup();
+  else if (mode === 'cpu' && reduced && cpuStep === 2) cpuStepAdvance(runId);  // stepper step 3 lives in the dialog
+});
+/* light focus trap */
+$('dialog').addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  const f = Array.from($('dialog').querySelectorAll('button')).filter(b => b.offsetParent !== null && !b.disabled);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length-1];
+  if (e.shiftKey && document.activeElement === first){ last.focus(); e.preventDefault(); }
+  else if (!e.shiftKey && document.activeElement === last){ first.focus(); e.preventDefault(); }
+});
+
+/* ---------- results ---------- */
+function showResults(){
+  const rows = $('rows'); rows.innerHTML = '';
+  const max = Math.max(...times.map(t => t || 0), 1);
+  ROUNDS.forEach((r, i) => {
+    const lbl = document.createElement('span'); lbl.className = 'rlbl'; lbl.textContent = r.label;
+    const track = document.createElement('span'); track.className = 'rtrack';
+    const bar = document.createElement('span'); bar.className = 'rbar';
+    bar.style.width = Math.max(2, Math.round((times[i] / max) * 100)) + '%';
+    bar.setAttribute('role','img');
+    bar.setAttribute('aria-label', `${r.label}: ${fmt(times[i])}`);
+    track.appendChild(bar);
+    const val = document.createElement('span'); val.className = 'rval';
+    val.textContent = fmt(times[i]) + (status[i] === 'gaveup' ? ' (gave up)' : status[i] === 'wrong' ? ' (missed)' : '');
+    rows.append(lbl, track, val);
+  });
+  const missed = ROUNDS.filter((r, i) => status[i] !== 'right');
+  $('marks').textContent = missed.length
+    ? 'For the record: ' + ROUNDS.map((r, i) =>
+        `${r.label} = ${r.answer.toLocaleString('en-US')}`).join(' · ')
+    : 'All three right.';
+  $('idea').innerHTML = mode === 'cpu'
+    ? 'That is how a person plays: <strong>instant, then seconds, then minutes.</strong> Same kind of question every round; what grew was the number of steps, and the clock followed. The size of the problem sets the thinking time.'
+    : 'Same kind of question every round. What grew was the number of steps, and the clock followed. <strong>More steps, more time:</strong> the size of the problem sets the thinking time.';
+  const echo = $('ideaecho');
+  if (mode === 'you' && popChoice){
+    echo.textContent = popChoice === 'pop'
+      ? 'And even for you, popping has limits: 408 may have popped in, but 223,300 pops in for nobody. Past a certain size, answers stop popping and start taking steps.'
+      : 'You felt the gear change at 17 × 24. By 350 × 638 there was no choice left: only steps.';
+    echo.hidden = false;
+  } else { echo.hidden = true; }
+  show($('results'));
+  say('Results are in: ' + ROUNDS.map((r, i) => `${r.label} took ${fmt(times[i])}`).join(', ') + '.');
+}
+
+/* ---------- reset & mode switching ---------- */
+function resetGame(){
+  runId++;
+  pending.forEach(clearTimeout); pending.length = 0;
+  clearInterval(tick); tick = null; armedAt = null; cur = 0; popChoice = null;
+  times.fill(null); status.fill(null);
+  $('overlay').classList.remove('open');
+  $('dlgbeat2').classList.remove('show');
+  ['poppop','popreason'].forEach(id => { $(id).classList.remove('sel'); $(id).setAttribute('aria-pressed','false'); });
+  [1,2,3].forEach(n => {
+    $('a'+n).value = ''; $('a'+n).disabled = false; $('a'+n).readOnly = false;
+    $('go'+n).disabled = false;
+    $('watch'+n).textContent = '0.0 s';
+    $('ff'+n).classList.remove('on');
+  });
+  ['f1right','f1wrong','f2right','f2wrong','f3right','f3wrong','f3gaveup'].forEach(id => $(id).hidden = true);
+  $('round2').hidden = true; $('round3').hidden = true; $('results').hidden = true;
+  $('cpustep').hidden = true; $('giveup').hidden = false;
+  $('ideaecho').hidden = true;
+}
+function setMode(m){
+  mode = m;
+  $('modeyou').setAttribute('aria-pressed', String(m === 'you'));
+  $('modecpu').setAttribute('aria-pressed', String(m === 'cpu'));
+  resetGame();
+  if (m === 'cpu'){
+    [1,2,3].forEach(n => { $('a'+n).readOnly = true; });   // popup buttons stay enabled; handlers are mode-guarded
+    $('giveup').hidden = true;                             // the computer doesn't give up
+    startCpu();
+  }
+}
+$('modeyou').addEventListener('click', () => setMode('you'));
+$('modecpu').addEventListener('click', () => setMode('cpu'));
+$('again').addEventListener('click', () => setMode(mode));
+
+/* ---------- computer mode: a scripted playthrough ----------
+   The clock shows the simulated player's time; when it runs faster than real
+   time, the ≫ chip is on. Reduced motion replaces animation with a stepper. */
+const later = (fn, ms, id) => { const h = setTimeout(() => { if (id === runId) fn(); }, ms); pending.push(h); };
+
+function cpuRound(i, id, done){
+  cur = i;
+  if (i > 0) show($('round' + (i+1)));
+  const r = ROUNDS[i];
+  const compressed = r.simReal < r.simT;
+  if (compressed) $('ff' + (i+1)).classList.add('on');
+  const t0 = performance.now();
+  clearInterval(tick);
+  tick = setInterval(() => {                       // virtual clock: simT over simReal wall time
+    const p = Math.min(1, (performance.now() - t0) / r.simReal);
+    $('watch' + (i+1)).textContent = fmt(p * r.simT);
+  }, 80);
+  const ans = String(r.answer);
+  const typeStart = Math.max(0, r.simReal - 700);  // type the digits over the last stretch
+  ans.split('').forEach((ch, k) => {
+    later(() => { $('a' + (i+1)).value = ans.slice(0, k+1); }, typeStart + (700 / ans.length) * (k+1), id);
+  });
+  later(() => {
+    clearInterval(tick); tick = null;
+    $('ff' + (i+1)).classList.remove('on');
+    say(`The computer answered ${r.label} in ${fmt(r.simT)}.`);
+    finishRound(i, 'right', r.simT);
+    done && done();
+  }, r.simReal + 60, id);
+}
+function startCpu(){
+  const id = runId;
+  if (reduced){ startCpuStepper(id); return; }
+  cpuRound(0, id, () => {
+    /* finishRound(0) revealed round 2 via nextAfter */
+    later(() => cpuRound(1, id, () => {
+      /* finishRound(1) opened the pop-up */
+      later(() => { if (id === runId) pickPop('reason'); }, 1100, id);
+      later(() => { if (id === runId){ closePopup(); nextAfter(1); later(() => cpuRound(2, id), 500, id); } }, 2400, id);
+    }), 600, id);
+  });
+}
+/* reduced motion: the computer plays in discrete steps, one per press.
+   Steps 1-2 come from the Next button; step 3 fires from the dialog's own
+   button (the overlay covers Next while the pop-up is open). */
+let cpuStep = 0;
+function cpuStepAdvance(id){
+  if (id !== runId) return;
+  cpuStep++;
+  if (cpuStep === 1){ $('a1').value = '4'; finishRound(0, 'right', ROUNDS[0].simT); }
+  else if (cpuStep === 2){ $('a2').value = '408'; finishRound(1, 'right', ROUNDS[1].simT); pickPop('reason'); }
+  else if (cpuStep === 3){ closePopup(); nextAfter(1); $('a3').value = '223300';
+                           finishRound(2, 'right', ROUNDS[2].simT); $('cpustep').hidden = true; }
+}
+function startCpuStepper(id){
+  show($('cpustep'));
+  cpuStep = 0;
+  $('nextstep').onclick = () => { if (cpuStep < 2) cpuStepAdvance(id); };
+}
+
+/* ---------- boot ---------- */
+setMode('you');
+</script>
+</body>
+</html>

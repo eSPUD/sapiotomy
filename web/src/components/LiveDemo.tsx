@@ -11,7 +11,7 @@ export interface LiveDemoProps {
 }
 
 /**
- * Optional "see a real chain-of-thought" panel for Pages 3, 6, 14.
+ * Optional "see a real chain-of-thought" panel for Pages 2, 6, 14.
  *
  * - Flag OFF (default): renders NOTHING — the page is byte-for-byte the MVP.
  * - Flag ON + WebGPU: offers a "Run live" button that streams from a small
