@@ -1,0 +1,525 @@
+<!doctype html>
+<!--
+  Page 4 · "Two machines" · STANDALONE PROTOTYPE
+  The naming slide, rebuilt for the 4-slide arc with the CLIMATE/CO2 ANALOGY AS THE SPINE.
+  Slides 1-3 made the reader feel two ways of having an answer and banned the AI words for them;
+  slide 3 ended by promising "a different machine, with its own name and its own price tag."
+  Beats: the reveal (tile flip names the machines) -> the objection (POE: "surely you feed the
+  factory?", vote #1) -> the two bills, priced the way climate taught you (energy: factory vs
+  commute + the scale ladder; then Epoch's measured money rates, sprinting in opposite
+  directions) -> vote #2 (same question, bills on the table) -> the verdict (the marginal dollar
+  moved to thinking; you still need both machines) -> the catch (long thinking burns 2.5-40+ Wh
+  and we are about to make every trip longer) -> teaser to what comes next.
+  ACCEPTANCE CHECK: before both tiles are flipped, document.body.innerText contains neither
+  AI word. Everything after the reveal lives in an inert <template> and is stamped into the DOM
+  only when both tiles have been flipped; the words themselves live only in JS data and the
+  template. (The file necessarily contains them; the pre-flip DOM must not.)
+  Stack: vanilla JS, zero deps, opens offline via file://.
+  DATA HONESTY: every number on this page is a published Epoch AI rate or estimate, quoted as a
+  rate; unlike the previous revision of this page there are NO derived dollar meters and no
+  illustrative anchors. The only dollar figure shown is Epoch's own >$1B-by-2027 projection.
+  Derivations for the ladder sit in the sources note and are labeled derived.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Page 4 · Two machines (prototype)</title>
+<style>
+  /* ---- PLACEHOLDER TOKENS (swap for the scaffold's design tokens; no raw hex in the real build) ---- */
+  :root{
+    --surface:#ffffff; --panel:#f6f7f9; --ink:#1a1a1e; --muted:#5a6472; --hair:#d7dce3;
+    --compute:#2a78d6;
+    --compute-soft:#2a78d61a;
+    --good:#0e9f6e;
+    --warn:#c77b00;
+    --warn-soft:#c77b001a;
+    --focus:#2a78d6;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --surface:#14161a; --panel:#1b1e24; --ink:#eceef2; --muted:#9aa4b2; --hair:#333a44;
+           --compute:#5aa0f0; --compute-soft:#5aa0f022; --good:#34d399; --warn:#e0a100;
+           --warn-soft:#e0a10022; --focus:#5aa0f0; }
+  }
+  :root[data-theme="dark"]{ --surface:#14161a; --panel:#1b1e24; --ink:#eceef2; --muted:#9aa4b2; --hair:#333a44;
+           --compute:#5aa0f0; --compute-soft:#5aa0f022; --good:#34d399; --warn:#e0a100;
+           --warn-soft:#e0a10022; --focus:#5aa0f0; }
+  :root[data-theme="light"]{ --surface:#ffffff; --panel:#f6f7f9; --ink:#1a1a1e; --muted:#5a6472; --hair:#d7dce3;
+           --compute:#2a78d6; --compute-soft:#2a78d61a; --good:#0e9f6e; --warn:#c77b00;
+           --warn-soft:#c77b001a; --focus:#2a78d6; }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--surface);color:var(--ink);font-family:var(--font);line-height:1.55;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 20px 80px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;
+          font-size:12px;color:var(--muted)}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .acts span{padding:2px 8px;border:1px solid var(--hair);border-radius:20px}
+  .acts .on{background:var(--compute);border-color:var(--compute);color:#fff}
+  .themebtn{background:none;border:1px solid var(--hair);color:var(--muted);border-radius:20px;
+            padding:3px 10px;cursor:pointer;font-size:12px}
+
+  .protobanner{border:1px dashed var(--warn);border-radius:10px;padding:8px 12px;font-size:12.5px;
+               color:var(--muted);margin-bottom:20px}
+  .protobanner b{color:var(--warn)}
+
+  h1{font-size:30px;line-height:1.15;margin:0 0 6px}
+  .lede{color:var(--muted);font-size:17px;margin:0 0 20px;max-width:62ch}
+
+  section[hidden]{display:none}
+  .kicker{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 6px}
+  .beat{margin:14px 2px;font-size:16.5px;max-width:64ch}
+  .soft{color:var(--muted);font-size:13.5px}
+  .beatcard{background:var(--panel);border:1px solid var(--hair);border-radius:12px;
+            padding:16px 18px;margin:16px 0}
+  .beatcard[hidden]{display:none}
+  .prompt{font-size:18px;margin:0 0 10px}
+  .followup{margin:12px 0 0;font-size:15.5px;max-width:62ch}
+  .followup[hidden]{display:none}
+  .idea{border-left:3px solid var(--compute);background:var(--compute-soft);
+        padding:14px 16px;border-radius:0 10px 10px 0;margin:18px 2px;font-size:17px;max-width:64ch}
+  .idea[hidden]{display:none}
+  .idea.turn{border-left-color:var(--warn);background:var(--warn-soft)}
+
+  .btn{border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:8px;
+       padding:7px 13px;cursor:pointer;font-size:14px;transition:.15s}
+  .btn:hover{border-color:var(--compute)}
+  .btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .btn.primary{background:var(--compute);border-color:var(--compute);color:#fff;font-weight:600}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+
+  .chip{border:1px solid var(--hair);border-radius:20px;padding:1px 9px;white-space:nowrap;
+        font-size:12px;color:var(--muted)}
+  .chip.ill{border-color:var(--warn);color:var(--warn)}
+  .chip.rate{border-color:var(--compute);color:var(--compute);white-space:normal}
+
+  /* ---- beat 1: the two tiles, flippable ---- */
+  .tiles{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 4px}
+  .tile{flex:1 1 240px;background:var(--surface);border:1px solid var(--hair);border-radius:10px;
+        padding:12px 14px;text-align:left;color:var(--ink);font:inherit;line-height:1.45;cursor:pointer;
+        transition:transform .11s ease, border-color .15s}
+  .tile:hover{border-color:var(--compute)}
+  .tile:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .tile .lbl{font-size:13px;color:var(--muted);display:block}
+  .tile .val{font-size:19px;font-weight:600;line-height:1.3;margin:2px 0 4px;display:block}
+  .tile .sub{font-size:13.5px;color:var(--muted);display:block}
+  .tile .fliphint{display:inline-block;margin-top:9px;font-size:12.5px;color:var(--compute);font-weight:600}
+  .tile.named{border-color:var(--compute);background:var(--compute-soft);cursor:default}
+  .tile.named .val{color:var(--compute)}
+  .tile.squeeze{transform:scaleX(.02)}
+  @media (prefers-reduced-motion: reduce){ .tile.squeeze{transform:none} }
+
+  /* ---- votes ---- */
+  .opts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .opt{flex:1 1 auto;min-width:170px;padding:10px 12px;border:1px solid var(--hair);background:var(--surface);
+       border-radius:9px;cursor:pointer;font-size:14.5px;color:var(--ink);text-align:center;transition:.15s}
+  .opt:hover{border-color:var(--compute)}
+  .opt:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  .opt.sel{border-color:var(--compute);background:var(--compute-soft);font-weight:600}
+
+  /* ---- the two bills: pipes, ladder, arrows ---- */
+  .pipes{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 4px}
+  .pipe{flex:1 1 250px;background:var(--panel);border:1px solid var(--hair);border-radius:10px;padding:12px 14px}
+  .pipe .lbl{font-size:13px;color:var(--muted)}
+  .pipe .val{font-size:19px;font-weight:600;line-height:1.3;margin:2px 0 4px}
+  .pipe .sub{font-size:13.5px;color:var(--muted)}
+  .ladder{border:1.5px solid var(--hair);border-radius:14px;background:var(--panel);padding:13px 16px;margin:14px 0}
+  .ladder h3{margin:0 0 8px;font-size:14px}
+  .rung{display:none;border-top:1px solid var(--hair);padding:8px 2px 7px;font-size:14.5px}
+  .rung.in{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;justify-content:space-between}
+  .rung .r-what{font-weight:600}
+  .rung .r-energy{font-family:var(--mono);font-size:13.5px;color:var(--compute)}
+  .rung .r-feel{font-size:13px;color:var(--muted);flex-basis:100%}
+  .ladderbtns{display:flex;gap:8px;margin-top:10px}
+
+  .arrows{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:8px 0 4px}
+  .arrowpanel{background:var(--panel);border:1.5px solid var(--hair);border-radius:14px;padding:14px 16px}
+  .arrowpanel h3{margin:0 0 2px;font-size:14px}
+  .arrowpanel .bar{font-size:12px;color:var(--muted);margin:0 0 10px}
+  .rate-big{font-family:var(--mono);font-size:clamp(22px,4.6vw,32px);font-weight:700;line-height:1.15}
+  .rate-big.up{color:var(--warn)}
+  .rate-big.down{color:var(--good)}
+  .arrowpanel .sub{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+  .chiprow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+  /* ---- the "you still need both" strip ---- */
+  .strip{border:1.5px solid var(--hair);border-radius:14px;background:var(--panel);padding:6px 16px;margin:14px 0}
+  .striprow{display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;border-top:1px solid var(--hair);
+            padding:9px 0 8px;font-size:14.5px}
+  .striprow:first-child{border-top:none}
+  .striprow .s-prob{font-family:var(--mono);font-weight:600;min-width:130px}
+  .striprow .s-verdict{font-weight:600;color:var(--compute)}
+  .striprow .s-note{font-size:13px;color:var(--muted);flex-basis:100%}
+
+  .srcchip{font-size:12px;color:var(--muted);margin-top:18px}
+  .srcchip a{color:var(--compute)}
+  details.sources{margin-top:14px;font-size:13.5px;color:var(--muted);border:1px solid var(--hair);
+                  border-radius:10px;padding:10px 14px}
+  details.sources summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:13.5px}
+  details.sources ul{padding-left:18px;margin:8px 0}
+  details.sources li{margin:6px 0}
+  details.sources a{color:var(--compute)}
+  .visually-hidden{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+  <div class="topbar">
+    <div class="acts" aria-label="Progress">
+      <span class="on">Act 1 · The reveal</span><span>Act 2 · The objection</span>
+      <span>Act 3 · The two bills</span><span>Act 4 · The verdict</span>
+    </div>
+    <button class="themebtn" id="themebtn" aria-label="Toggle color theme">◑ theme</button>
+  </div>
+
+  <div class="protobanner"><b>Prototype.</b> Placeholder tokens; hand-rolled UI. Every number on this page
+  is a published <b>Epoch AI</b> rate or estimate, quoted as a rate; there are <b>no derived dollar
+  meters</b> on this revision. Ladder arithmetic is derived and labeled (see the sources note).</div>
+
+  <h1>Two machines.</h1>
+  <p class="lede">Slide 3 ended on a split: some answers get rebuilt step by step, and some are either
+  already in your head or nowhere. Those are two different machines for having answers. In AI, each has a
+  proper name, and once you have the names you can do what the last slide could not: ask what each machine
+  <strong>costs</strong>. Time to meet them.</p>
+
+  <!-- beat 1: the reveal -->
+  <section aria-label="The reveal">
+    <p class="beat">Here are slide 3's two shelves again. Each one is a machine. <strong>Flip each
+    tile</strong> to learn what its machine is called in the world of AI.</p>
+    <div class="tiles">
+      <button class="tile" id="flipA" aria-pressed="false">
+        <span class="lbl">Memorized</span>
+        <span class="val">"I've seen this one."</span>
+        <span class="sub">The answer pops out whole. Zero steps, zero time. It only works for things that
+        have already crossed your path.</span>
+        <span class="fliphint">Flip: name this machine ↺</span>
+      </button>
+      <button class="tile" id="flipB" aria-pressed="false">
+        <span class="lbl">Understood</span>
+        <span class="val">"I can rebuild it."</span>
+        <span class="sub">Steps take time. But it works on things nobody has met yet: a fresh
+        multiplication, tonight's final.</span>
+        <span class="fliphint">Flip: name this machine ↺</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- everything below the reveal is stamped in only after both tiles are flipped, so the
+       pre-flip DOM contains neither AI word (see header comment) -->
+  <template id="tpl-rest">
+
+  <div class="idea" id="revealline">In the world of AI, memorizing is called <strong>training</strong>,
+  and reasoning is called <strong>inference</strong>. You have already watched both machines run: the
+  blurt that cracked on slide 2 was the memory machine reaching past what it had met, and missing; the
+  trace that caught it was inference, on camera. Two machines, then. And each sends a very different
+  bill.</div>
+
+  <div class="beatcard" id="kahneman">
+    <p class="kicker">Fun fact: the human names came first</p>
+    <p class="beat" style="margin:6px 2px 0">Psychologists call the pop <strong>System&nbsp;1</strong> and the
+    step-by-step grind <strong>System&nbsp;2</strong>, names made famous by Daniel Kahneman's <em>Thinking,
+    Fast and Slow</em>. Four names, one split: System&nbsp;1 is to training roughly what System&nbsp;2 is to
+    inference. Hold it loosely; it is a map of the idea, not the territory.</p>
+  </div>
+
+  <!-- beat 2: the objection, vote #1 -->
+  <section aria-label="The objection" id="objection">
+    <div class="beatcard">
+      <p class="kicker">Before the bills: an objection</p>
+      <p class="beat" style="margin:6px 2px 10px">Here is the obvious pushback, and it deserves a straight
+      answer. <em>Training is when the machine actually gets smarter. Thinking at answer time just runs
+      whatever the factory already built. So if you had one budget to make answers better, surely you feed
+      the factory: build it bigger, show it more, bake more in.</em></p>
+      <p class="prompt">You hold the budget. Which machine do you feed?</p>
+      <div class="opts" role="group" aria-label="First vote: which machine gets the budget">
+        <button class="opt" id="v1factory" aria-pressed="false">Feed the factory</button>
+        <button class="opt" id="v1think" aria-pressed="false">Buy more thinking</button>
+      </div>
+      <p class="followup" id="fv1" hidden>Hold that vote. Before anyone spends real money, they read the
+      bills. Let's read them.</p>
+    </div>
+  </section>
+
+  <!-- beat 3: the two bills -->
+  <section aria-label="The two bills" id="bills" hidden>
+    <p class="kicker">The two bills, priced the way climate taught you</p>
+    <p class="beat">Not in dollars first: in what they <strong>burn</strong>. The shape of this is one you
+    already know from CO<sub>2</sub> math, because it is the same shape: <strong>build once, big and
+    visible; use forever, tiny and everywhere.</strong></p>
+    <div class="pipes">
+      <div class="pipe">
+        <div class="lbl">Training burns like building the factory</div>
+        <div class="val">≈ 50 GWh, once</div>
+        <div class="sub">One GPT-4-class run is estimated around 50 gigawatt-hours of electricity
+        (outside estimates run roughly 33 to 60). One concentrated, visible burn, paid before the first
+        question is ever asked. <span class="chip ill">estimate</span></div>
+      </div>
+      <div class="pipe">
+        <div class="lbl">Inference burns like the commute</div>
+        <div class="val">≈ 0.3 Wh, per answer</div>
+        <div class="sub">A typical short answer costs about a third of a watt-hour, less electricity than
+        an LED bulb burns in a few minutes. Invisible, per trip. <span class="chip">Epoch AI estimate</span></div>
+      </div>
+    </div>
+    <p class="soft" style="margin:8px 2px">Divide one by the other and a single run is roughly
+    <strong>170 billion answers'</strong> worth of energy. (Derived from the two estimates above, so hold
+    it loosely.)</p>
+
+    <div class="ladder" id="ladder">
+      <h3>Climb the scale</h3>
+      <p class="soft" style="margin:0 0 4px">from one answer to one training run, four rungs</p>
+      <div class="rung" data-r="1">
+        <span class="r-what">One answer</span><span class="r-energy">≈ 0.3 Wh</span>
+        <span class="r-feel">an LED bulb left on for a few minutes</span>
+      </div>
+      <div class="rung" data-r="2">
+        <span class="r-what">Your year of asking (say ten a day)</span><span class="r-energy">≈ 1.1 kWh</span>
+        <span class="r-feel">roughly ninety phone charges</span>
+      </div>
+      <div class="rung" data-r="3">
+        <span class="r-what">The world's day of asking (≈ 2.5 billion answers, as reported in 2025)</span>
+        <span class="r-energy">≈ 750 MWh</span>
+        <span class="r-feel">a day's electricity for about 27,000 US homes</span>
+      </div>
+      <div class="rung" data-r="4">
+        <span class="r-what">One frontier training run</span><span class="r-energy">≈ 50 GWh</span>
+        <span class="r-feel">about 67 days of the whole world asking; the factory bill equals two months
+        of everyone's commutes</span>
+      </div>
+      <div class="ladderbtns">
+        <button class="btn primary" id="climb">Climb a rung ▲</button>
+        <button class="btn" id="descend" disabled>Back down ▾</button>
+      </div>
+    </div>
+
+    <p class="kicker" style="margin-top:20px">And the money is not standing still</p>
+    <p class="beat">Energy gives the bills their shape. The dollars give them their
+    <strong>direction</strong>, and the two prices are sprinting opposite ways. <strong>Epoch AI</strong>,
+    a research group that measures the numbers behind AI, tracks both rates:</p>
+    <div class="arrows">
+      <div class="arrowpanel">
+        <h3>One frontier training run</h3>
+        <p class="bar">the factory bill: build the machine that knows things</p>
+        <div class="rate-big up">×2.4 every year ↗</div>
+        <p class="sub">measured across a decade of frontier runs (95% CI ×2.0 to ×3.1); on this trend the
+        largest runs pass <strong>$1 billion by 2027</strong> (Epoch's projection). A bill that multiplies
+        every year is not a bill anyone pays forever.</p>
+        <div class="chiprow"><span class="chip rate">Epoch AI, measured rate</span></div>
+      </div>
+      <div class="arrowpanel">
+        <h3>One answer at a fixed quality bar</h3>
+        <p class="bar">the thinking bill: the same answer, cheaper every year</p>
+        <div class="rate-big down">÷40 every year ↘</div>
+        <p class="sub">the price of matching a fixed score on PhD-level science questions; across Epoch's
+        benchmarks the fall runs <strong>÷9 to ÷900 per year, median ÷50</strong>, steepening to a median
+        of <strong>÷200 per year</strong> since early 2024.</p>
+        <div class="chiprow"><span class="chip rate">Epoch AI, measured rate</span></div>
+      </div>
+    </div>
+    <p class="srcchip">rates: Epoch AI (<a href="#sources">sources</a>) · both are measured trends, quoted
+    as rates; no dollar meter on this page, and the only dollar figure is Epoch's own projection</p>
+
+    <!-- vote #2 -->
+    <div class="beatcard" id="revote">
+      <p class="kicker">Same question, bills on the table</p>
+      <p class="prompt">One budget. One machine gets the marginal dollar. Which machine do you feed?</p>
+      <div class="opts" role="group" aria-label="Second vote: which machine gets the budget">
+        <button class="opt" id="v2factory" aria-pressed="false">Feed the factory</button>
+        <button class="opt" id="v2think" aria-pressed="false">Buy more thinking</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- beat 4: the verdict -->
+  <section aria-label="The verdict" id="verdictwrap" hidden>
+    <div class="idea" id="verdict"><strong id="echo"></strong> Here is how the field itself voted, with
+    its wallet: <strong>the marginal dollar moved to thinking.</strong> The factory bill multiplies by 2.4
+    every year and cannot do that forever; the thinking bill is tiny per answer and collapsing. When one
+    meter runs away and the other falls through the floor, the next dollar goes to the falling one.</div>
+
+    <p class="beat">But keep both machines bolted down. Three problems you have already met:</p>
+    <div class="strip" aria-label="Three problems, two machines, one line each">
+      <div class="striprow">
+        <span class="s-prob">4502 × 6398</span><span class="s-verdict">thinking's job</span>
+        <span class="s-note">derivable fresh in seconds, for a fraction of a cent; no factory run needed</span>
+      </div>
+      <div class="striprow">
+        <span class="s-prob">tonight's final</span><span class="s-verdict">only thinking arrives in time</span>
+        <span class="s-note">no run can bake in a result that does not exist yet</span>
+      </div>
+      <div class="striprow">
+        <span class="s-prob">the 2010 final</span><span class="s-verdict">only the factory puts it in there</span>
+        <span class="s-note">no amount of thinking summons a fixed fact</span>
+      </div>
+    </div>
+
+    <div class="idea turn"><strong>Now the catch, and it is the whole next slide.</strong> That 0.3 Wh
+    buys a <em>short</em> answer, around 500 tokens. Long questions and long thinking run 2.5 to 40
+    watt-hours and beyond, and this deck is literally about making machines think longer. Climate math was
+    never dominated by the rare big builds; it is dominated by billions of small trips. And the field just
+    decided, with its wallet, to make every trip longer.</div>
+
+    <p class="beat" id="teaser"><em>More time per answer, more money per answer... more problems per
+    answer? Next slide.</em></p>
+
+    <details class="sources" id="sources">
+      <summary>Sources and derivations</summary>
+      <ul>
+        <li><strong>Training-run costs:</strong> Epoch AI, <a href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models">How
+        much does it cost to train frontier AI models?</a> (Cottier et al., 2024): frontier training costs
+        grew <strong>×2.4 per year</strong> since 2016 (95% CI ×2.0 to ×3.1); the largest runs projected to
+        pass <strong>$1B by 2027</strong>; cost split: hardware 47 to 67%, R&amp;D staff 29 to 49%,
+        <strong>energy only 2 to 6%</strong>.</li>
+        <li><strong>Answer prices:</strong> Epoch AI, <a href="https://epoch.ai/data-insights/llm-inference-price-trends">LLM
+        inference price trends</a>: the price of matching GPT-4's score on PhD-level science questions
+        (GPQA) fell <strong>÷40 per year</strong>; across benchmarks and thresholds the fall ranges
+        <strong>÷9 to ÷900 per year, median ÷50</strong>, steepening to a median of <strong>÷200 per
+        year</strong> from January 2024 onward.</li>
+        <li><strong>Energy per answer:</strong> Epoch AI, <a href="https://epoch.ai/gradient-updates/how-much-energy-does-chatgpt-use">How
+        much energy does ChatGPT use?</a>: ≈ <strong>0.3 Wh</strong> for a typical short (~500 token) text
+        answer; long inputs can push a single query to <strong>2.5 to 40+ Wh</strong>; a US household uses
+        ≈ 28 kWh per day. The LED comparison is theirs.</li>
+        <li><strong>Energy per run:</strong> outside estimates for a GPT-4-class run cluster around
+        <strong>33 to 60 GWh</strong> (see Epoch AI's <a href="https://epoch.ai/topics/energy">energy
+        hub</a>); this page uses ≈ 50 GWh and marks it an estimate.</li>
+        <li><strong>Ladder arithmetic (derived):</strong> 10 answers/day × 365 × 0.3 Wh ≈ 1.1 kWh ≈ 90
+        phone charges at ~12 Wh each. 2.5 billion answers/day (OpenAI figure as reported by press,
+        mid-2025) × 0.3 Wh ≈ 750 MWh ≈ 27,000 households × 28 kWh. 50 GWh ÷ 750 MWh ≈ 67 days;
+        50 GWh ÷ 0.3 Wh ≈ 170 billion answers.</li>
+        <li><strong>CO<sub>2</sub> stays an analogy.</strong> Converting Wh to grams needs a grid-mix
+        assumption this page cannot cite cleanly, so it makes no gram claims; energy is the data,
+        climate is the shape.</li>
+      </ul>
+    </details>
+
+    <p class="srcchip">nothing on this page is a price quote or a benchmark; the cited rates are the
+    point · framing: Kahneman, <em>Thinking, Fast and Slow</em> · ◑ follows your OS theme</p>
+  </section>
+
+  </template>
+
+  <div aria-live="polite" class="visually-hidden" id="announcer"></div>
+</div>
+
+<script>
+"use strict";
+/* ---------- theme ---------- */
+document.getElementById('themebtn').addEventListener('click', () => {
+  const r = document.documentElement;
+  const dark = (r.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')) === 'dark';
+  r.dataset.theme = dark ? 'light' : 'dark';
+});
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+const announcer = $('announcer');
+const say = t => { announcer.textContent = t; };
+const show = el => { el.hidden = false; if (!reduced) el.scrollIntoView({behavior:'smooth', block:'nearest'}); };
+const actChips = document.querySelectorAll('.acts span');
+const act = i => actChips.forEach((c, j) => c.classList.toggle('on', j === i));
+
+/* ---------- DATA (names stamped in on flip; kept out of the initial DOM, see header comment) ---------- */
+const DATA = {
+  machines: {
+    A: { kicker: 'in AI, memorizing is called', name: 'Training',
+         sub: 'The factory step. Before you ever ask, the machine is shown a mountain of examples, once, up front. That is how an answer gets in there.' },
+    B: { kicker: 'in AI, reasoning is called', name: 'Inference',
+         sub: 'The answer-time step. The machine thinks it through right now, every time you ask. The trace on slide 2 was this machine on camera.' },
+  },
+};
+
+/* ---------- beat 1: the flip ---------- */
+const flipped = { A: false, B: false };
+function flip(which){
+  if (flipped[which]) return;
+  flipped[which] = true;
+  const btn = $('flip' + which), m = DATA.machines[which];
+  const fill = () => {
+    btn.innerHTML = '<span class="lbl">' + m.kicker + '</span><span class="val">' + m.name +
+      '</span><span class="sub">' + m.sub + '</span>';
+    btn.classList.add('named');
+    btn.setAttribute('aria-pressed', 'true');
+  };
+  if (reduced){ fill(); } else {
+    btn.classList.add('squeeze');
+    setTimeout(() => { fill(); btn.classList.remove('squeeze'); }, 120);
+  }
+  say('Named: ' + m.name + '.');
+  if (flipped.A && flipped.B) setTimeout(stampRest, reduced ? 0 : 260);
+}
+$('flipA').addEventListener('click', () => flip('A'));
+$('flipB').addEventListener('click', () => flip('B'));
+
+/* ---------- stamp everything after the reveal ---------- */
+let stamped = false;
+function stampRest(){
+  if (stamped) return; stamped = true;
+  $('wrap').insertBefore($('tpl-rest').content, announcer);
+  act(1);
+  initVotes();
+  initLadder();
+  document.querySelectorAll('a[href="#sources"]').forEach(a =>
+    a.addEventListener('click', () => { $('sources').open = true; }));
+  if (!reduced) $('revealline').scrollIntoView({behavior:'smooth', block:'nearest'});
+  say('Named: training and inference. Next, an objection to answer, then the two bills.');
+}
+
+/* ---------- the two votes + the verdict ---------- */
+const votes = { v1: null, v2: null };
+function vote(round, choice, btnId, otherId){
+  if (votes[round]) return;
+  votes[round] = choice;
+  $(btnId).classList.add('sel'); $(btnId).setAttribute('aria-pressed', 'true');
+  $(otherId).setAttribute('aria-pressed', 'false');
+  if (round === 'v1'){
+    $('fv1').hidden = false;
+    show($('bills'));
+    act(2);
+    say('Vote recorded. Now the two bills: energy first, then the money.');
+  } else {
+    landVerdict();
+  }
+}
+function landVerdict(){
+  const echo = $('echo');
+  const { v1, v2 } = votes;
+  if (v1 === 'factory' && v2 === 'think') echo.textContent = 'You switched sides once you saw the bills.';
+  else if (v1 === 'think' && v2 === 'think') echo.textContent = 'You called it before the bills even landed.';
+  else if (v1 === 'factory' && v2 === 'factory') echo.textContent = 'You held out for the factory; the field read the same bills and went the other way.';
+  else echo.textContent = 'You defected to the factory at the last minute; the field went the other way.';
+  show($('verdictwrap'));
+  act(3);
+  say('The verdict: the marginal dollar moved to thinking. And the catch: long thinking burns far more than 0.3 watt-hours.');
+}
+function initVotes(){
+  $('v1factory').addEventListener('click', () => vote('v1', 'factory', 'v1factory', 'v1think'));
+  $('v1think').addEventListener('click', () => vote('v1', 'think', 'v1think', 'v1factory'));
+  $('v2factory').addEventListener('click', () => vote('v2', 'factory', 'v2factory', 'v2think'));
+  $('v2think').addEventListener('click', () => vote('v2', 'think', 'v2think', 'v2factory'));
+}
+
+/* ---------- the ladder ---------- */
+let rungLevel = 0;
+function renderLadder(){
+  document.querySelectorAll('.rung').forEach(r => r.classList.toggle('in', +r.dataset.r <= rungLevel));
+  $('climb').disabled = rungLevel >= 4;
+  $('descend').disabled = rungLevel <= 0;
+  $('climb').textContent = rungLevel >= 4 ? 'Top of the ladder' : 'Climb a rung ▲';
+  if (rungLevel > 0){
+    const r = document.querySelector('.rung[data-r="' + rungLevel + '"]');
+    say(r.querySelector('.r-what').textContent + ': ' + r.querySelector('.r-energy').textContent + '. ' +
+        r.querySelector('.r-feel').textContent + '.');
+  }
+}
+function initLadder(){
+  $('climb').addEventListener('click', () => { if (rungLevel < 4){ rungLevel++; renderLadder(); } });
+  $('descend').addEventListener('click', () => { if (rungLevel > 0){ rungLevel--; renderLadder(); } });
+}
+</script>
+</body>
+</html>

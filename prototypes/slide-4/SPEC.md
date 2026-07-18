@@ -1,8 +1,13 @@
 # Page 3 spec: "Two machines" (training vs inference)
 
-**Status: implemented.** `index.html` is built and `README.md` is the as-built description (including
-resolved open questions and deliberate deviations). This file stays as the build-time spec of record;
-where it and the README disagree, the README describes what shipped.
+**Status: superseded (kept for history).** This was the build-time spec for the *previous revision* of
+this page, when the deck was three slides and "Two machines" was slide 3, carrying the year-scrubber
+odometer beat, the interactive quote comparator, and the exhaust pipes as a trailing beat. In the
+**4-slide restructure** (July 2026, per `slide_issues.md` and the follow-up discussion) the page moved
+to slide 4, the CO2/climate analogy became the spine, the odometers and their illustrative dollar
+anchors were removed in favor of Epoch's plain measured rates, the comparator was demoted to a static
+three-line strip, and an explicit objection/vote (POE) beat was added. `README.md` in this directory
+describes what is now built; where this file disagrees with it, the README wins.
 
 Slide 3 is **the naming slide**. Slides 1 and 2 made the reader *feel* two ways of having an answer
 (it pops vs. you rebuild it) while deliberately never using the AI words; slide 2's README bans them
