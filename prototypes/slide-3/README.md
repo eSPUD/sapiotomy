@@ -3,9 +3,11 @@
 A **standalone, dependency-free prototype** of slide 3 in the **4-slide arc**. This is the back half of
 the old slide 2, promoted to its own page and fine-tuned. Slide 2 ended on a rule ("when the problem gets
 big, turn the thinking up") and promised tonight would test it; this page runs that test on the World Cup
-and lands the hinge: **some answers cannot be thought into existence.** The memorized/understood tiles
+and lands the hinge: **some answers cannot be thought into existence.** The familiar/unfamiliar tiles
 are **born here**, as the summary of what the reader just felt; slide 4 flips them and names the
-machines. The AI cost words never appear on this page, even scare-quoted.
+machines. The whole evening turns on one axis, **familiarity** (whether the question sits on ground you
+have already covered, or hands you familiar pieces to rebuild it from), never on a sharper mind. The AI
+cost words never appear on this page, even scare-quoted.
 
 ## How to open
 Double-click `index.html` (or drag it into a browser). No server, no build, no network; it runs offline
@@ -26,9 +28,12 @@ from `file://`. Toggle light/dark with the ◑ button (it also follows your OS t
    help; there is nothing to reason *from*. A fixed result is either in your head or nowhere. The shared
    agent line keeps the compute axis: hand an agent the form guide and thinking buys a sharper forecast;
    ask about a final it never saw and an hour buys nothing.
-4. **The two shelves.** The tiles, born here: "I've seen this one" (memorized) vs "I can rebuild it"
-   (understood), with the evening mapped onto them: the multiplication and tonight's final live on the
-   rebuild shelf; the 2010 final marks the boundary, rebuildable by nobody, only rememberable.
+4. **The two shelves.** The tiles, born here: "I've seen this one" (**familiar** — the answer is
+   recalled whole) vs "I can work it out" (**unfamiliar** — reasoning derives it from familiar pieces),
+   with the evening mapped onto them: the multiplication and tonight's final live on the unfamiliar shelf
+   (new questions, familiar pieces to rebuild from); the 2010 final marks the edge of the familiar,
+   rebuildable by nobody, only recallable. Closing line names the axis: the gap was never a sharper mind,
+   it was familiarity.
 5. **Teaser to slide 4.** "How does an answer get *in there* in the first place? That is a different
    machine, with its own name and its own price tag. Next slide."
 

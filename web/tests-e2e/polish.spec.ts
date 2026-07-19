@@ -45,7 +45,7 @@ test.describe("M7 polish — reduced motion", () => {
   test("respects prefers-reduced-motion without breaking content", async ({ page }) => {
     await page.goto("/p/4");
     await page.getByRole("button", { name: /seen this one/i }).click();
-    await page.getByRole("button", { name: /rebuild it/i }).click();
+    await page.getByRole("button", { name: /work it out/i }).click();
     // The tiles flip instantly; both machine names are on screen.
     await expect(page.getByText("Training", { exact: true })).toBeVisible();
     await expect(page.getByText("Inference", { exact: true })).toBeVisible();

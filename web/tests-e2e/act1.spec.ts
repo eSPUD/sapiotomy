@@ -31,7 +31,7 @@ async function crackPage2(page: Page) {
 /** Page 4's full arc: flip both tiles, vote, then vote again on the bills. */
 async function revealPage4(page: Page) {
   await page.getByRole("button", { name: /seen this one/i }).click();
-  await page.getByRole("button", { name: /rebuild it/i }).click();
+  await page.getByRole("button", { name: /work it out/i }).click();
   await page
     .getByRole("group", { name: /first vote/i })
     .getByRole("button", { name: /feed the factory/i })
@@ -79,8 +79,8 @@ test.describe("Act 1 (pages 1–5)", () => {
     await expect(page.getByText("One more question", { exact: true })).toBeVisible();
     await page.getByRole("button", { name: "I've got nothing" }).click();
     await expect(page.getByText(/An hour would not help/)).toBeVisible();
-    await expect(page.getByText("Memorized", { exact: true })).toBeVisible();
-    await expect(page.getByText("Understood", { exact: true })).toBeVisible();
+    await expect(page.getByText("Familiar", { exact: true })).toBeVisible();
+    await expect(page.getByText("Unfamiliar", { exact: true })).toBeVisible();
     await expect(page.getByText(/already in there, or it is nowhere/)).toBeVisible();
   });
 
@@ -89,7 +89,7 @@ test.describe("Act 1 (pages 1–5)", () => {
     // Neither AI word may appear before the tiles are flipped.
     expect(await page.locator("article").innerText()).not.toMatch(/training|inference/i);
     await page.getByRole("button", { name: /seen this one/i }).click();
-    await page.getByRole("button", { name: /rebuild it/i }).click();
+    await page.getByRole("button", { name: /work it out/i }).click();
     await expect(page.getByText("Training", { exact: true })).toBeVisible();
     await expect(page.getByText("Inference", { exact: true })).toBeVisible();
     await page

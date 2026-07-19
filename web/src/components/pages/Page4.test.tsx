@@ -18,7 +18,7 @@ import { Page4 } from "./Page4";
 
 function flipBoth() {
   fireEvent.click(screen.getByRole("button", { name: /seen this one/i }));
-  fireEvent.click(screen.getByRole("button", { name: /rebuild it/i }));
+  fireEvent.click(screen.getByRole("button", { name: /work it out/i }));
 }
 
 function castVote(groupName: RegExp, buttonName: RegExp) {
@@ -37,7 +37,7 @@ describe("Page 4 (two machines) component", () => {
   it("flipping both tiles names the machines and reveals the objection card", () => {
     render(<Page4 />);
     // The two shelves from page 3, as flippable buttons.
-    expect(screen.getByRole("button", { name: /memorized/i })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: /^Familiar/ })).toHaveAttribute(
       "aria-pressed",
       "false",
     );

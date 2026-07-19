@@ -16,9 +16,10 @@ from `file://`. Toggle light/dark with the ◑ button (it also follows your OS t
 
 ## The beats
 1. **The reveal.** Slide 3's two shelves return as flippable tiles; flipping each names its machine:
-   memorized = **training** (the factory step, once, up front), understood = **inference** (the
-   answer-time step, every time you ask). The Kahneman System-1/System-2 aside is kept, compact and
-   non-blocking. Both flips stamp in the rest of the page.
+   familiar = **training** (what makes a question familiar — the factory step, once, up front),
+   unfamiliar = **inference** (how the machine reasons through the unfamiliar — the answer-time step,
+   every time you ask, from whatever training made familiar). The Kahneman System-1/System-2 aside is
+   kept, compact and non-blocking. Both flips stamp in the rest of the page.
 2. **The objection (vote #1).** New beat, per the slide-issues discussion: the training-first
    counter-argument is posed *explicitly*, in its strongest form ("training is when the machine actually
    gets smarter; surely you feed the factory"). The reader votes before seeing any evidence

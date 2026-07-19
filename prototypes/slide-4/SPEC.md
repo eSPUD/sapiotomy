@@ -40,7 +40,9 @@ into one inlined `DATA` config block with per-number provenance comments (rules 
    turns over to read **training** (how an answer gets *in there*: shown millions of examples ahead of
    time, once, at the factory) and the "I can rebuild it" tile turns over to read **inference**
    (thinking it through at answer time, every time you ask). Copy anchor, straight from the notes:
-   *"In the world of AI, memorizing is called training. Reasoning is called inference."*
+   *"In the world of AI, making things familiar is called training. Reasoning through the unfamiliar is
+   called inference."* (Superseding the older "memorizing/reasoning" phrasing; see slide-3/slide-4
+   READMEs for the familiar/unfamiliar axis.)
    - **Side callout (fun fact, non-blocking):** the human names for the same split, System 1 / System 2,
      from Kahneman's *Thinking, Fast and Slow*. Four names, two ideas: System 1 : training :: System 2 :
      inference (as an intuition pump, with a one-line "the analogy is loose" hedge).

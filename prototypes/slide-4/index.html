@@ -193,17 +193,17 @@
     tile</strong> to learn what its machine is called in the world of AI.</p>
     <div class="tiles">
       <button class="tile" id="flipA" aria-pressed="false">
-        <span class="lbl">Memorized</span>
+        <span class="lbl">Familiar</span>
         <span class="val">"I've seen this one."</span>
-        <span class="sub">The answer pops out whole. Zero steps, zero time. It only works for things that
-        have already crossed your path.</span>
+        <span class="sub">The question sits on ground already covered, so the answer is recalled whole.
+        Zero steps, zero time.</span>
         <span class="fliphint">Flip: name this machine ↺</span>
       </button>
       <button class="tile" id="flipB" aria-pressed="false">
-        <span class="lbl">Understood</span>
-        <span class="val">"I can rebuild it."</span>
-        <span class="sub">Steps take time. But it works on things nobody has met yet: a fresh
-        multiplication, tonight's final.</span>
+        <span class="lbl">Unfamiliar</span>
+        <span class="val">"I can work it out."</span>
+        <span class="sub">The question is new, but the familiar pieces are there. Reasoning derives the
+        answer step by step: a fresh multiplication, tonight's final.</span>
         <span class="fliphint">Flip: name this machine ↺</span>
       </button>
     </div>
@@ -213,11 +213,11 @@
        pre-flip DOM contains neither AI word (see header comment) -->
   <template id="tpl-rest">
 
-  <div class="idea" id="revealline">In the world of AI, memorizing is called <strong>training</strong>,
-  and reasoning is called <strong>inference</strong>. You have already watched both machines run: the
-  blurt that cracked on slide 2 was the memory machine reaching past what it had met, and missing; the
-  trace that caught it was inference, on camera. Two machines, then. And each sends a very different
-  bill.</div>
+  <div class="idea" id="revealline">In the world of AI, making things familiar is called
+  <strong>training</strong>, and reasoning through the unfamiliar is called <strong>inference</strong>.
+  You have already watched both machines run: the blurt that cracked on slide 2 was the model reaching
+  past the familiar and missing; the trace that caught it was inference, on camera. Two machines, then.
+  And each sends a very different bill.</div>
 
   <div class="beatcard" id="kahneman">
     <p class="kicker">Fun fact: the human names came first</p>
@@ -426,10 +426,10 @@ const act = i => actChips.forEach((c, j) => c.classList.toggle('on', j === i));
 /* ---------- DATA (names stamped in on flip; kept out of the initial DOM, see header comment) ---------- */
 const DATA = {
   machines: {
-    A: { kicker: 'in AI, memorizing is called', name: 'Training',
-         sub: 'The factory step. Before you ever ask, the machine is shown a mountain of examples, once, up front. That is how an answer gets in there.' },
-    B: { kicker: 'in AI, reasoning is called', name: 'Inference',
-         sub: 'The answer-time step. The machine thinks it through right now, every time you ask. The trace on slide 2 was this machine on camera.' },
+    A: { kicker: 'in AI, making things familiar is called', name: 'Training',
+         sub: 'The factory step. Before you ever ask, the machine is shown a mountain of examples, once, up front. That is how ground gets covered.' },
+    B: { kicker: 'in AI, reasoning through the unfamiliar is called', name: 'Inference',
+         sub: 'The answer-time step. The machine works it through right now, every time you ask, from whatever training made familiar. The trace on slide 2 was this machine on camera.' },
   },
 };
 

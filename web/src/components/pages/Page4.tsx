@@ -242,13 +242,13 @@ export function Page4() {
             onFlip={() => flipTile("A")}
             front={
               <>
-                <span className="block text-sm text-ink-muted">Memorized</span>
+                <span className="block text-sm text-ink-muted">Familiar</span>
                 <span className="mt-0.5 block text-lg font-semibold text-ink">
                   &ldquo;I&apos;ve seen this one.&rdquo;
                 </span>
                 <span className="mt-1 block text-sm text-ink-muted">
-                  The answer pops out whole. Zero steps, zero time. It only works for things that
-                  have already crossed your path.
+                  The question sits on ground already covered, so the answer is recalled whole.
+                  Zero steps, zero time.
                 </span>
                 <span className="mt-2 block text-xs font-semibold text-compute">
                   Flip: name this machine ↺
@@ -257,11 +257,13 @@ export function Page4() {
             }
             back={
               <>
-                <span className="block text-sm text-ink-muted">in AI, memorizing is called</span>
+                <span className="block text-sm text-ink-muted">
+                  in AI, making things familiar is called
+                </span>
                 <span className="mt-0.5 block text-lg font-semibold text-compute">Training</span>
                 <span className="mt-1 block text-sm text-ink-muted">
                   The factory step. Before you ever ask, the machine is shown a mountain of
-                  examples, once, up front. That is how an answer gets in there.
+                  examples, once, up front. That is how ground gets covered.
                 </span>
               </>
             }
@@ -271,13 +273,13 @@ export function Page4() {
             onFlip={() => flipTile("B")}
             front={
               <>
-                <span className="block text-sm text-ink-muted">Understood</span>
+                <span className="block text-sm text-ink-muted">Unfamiliar</span>
                 <span className="mt-0.5 block text-lg font-semibold text-ink">
-                  &ldquo;I can rebuild it.&rdquo;
+                  &ldquo;I can work it out.&rdquo;
                 </span>
                 <span className="mt-1 block text-sm text-ink-muted">
-                  Steps take time. But it works on things nobody has met yet: a fresh
-                  multiplication, tonight&apos;s final.
+                  The question is new, but the familiar pieces are there. Reasoning derives the
+                  answer step by step: a fresh multiplication, tonight&apos;s final.
                 </span>
                 <span className="mt-2 block text-xs font-semibold text-compute">
                   Flip: name this machine ↺
@@ -286,11 +288,14 @@ export function Page4() {
             }
             back={
               <>
-                <span className="block text-sm text-ink-muted">in AI, reasoning is called</span>
+                <span className="block text-sm text-ink-muted">
+                  in AI, reasoning through the unfamiliar is called
+                </span>
                 <span className="mt-0.5 block text-lg font-semibold text-compute">Inference</span>
                 <span className="mt-1 block text-sm text-ink-muted">
-                  The answer-time step. The machine thinks it through right now, every time you
-                  ask. The trace on page 2 was this machine on camera.
+                  The answer-time step. The machine works it through right now, every time you ask,
+                  from whatever training made familiar. The trace on page 2 was this machine on
+                  camera.
                 </span>
               </>
             }
@@ -301,11 +306,11 @@ export function Page4() {
       {bothFlipped ? (
         <>
           <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            In the world of AI, memorizing is called <strong>training</strong>, and reasoning is
-            called <strong>inference</strong>. You have already watched both machines run: the
-            blurt that cracked on page 2 was the memory machine reaching past what it had met, and
-            missing; the trace that caught it was inference, on camera. Two machines, then. And
-            each sends a very different bill.
+            In the world of AI, making things familiar is called <strong>training</strong>, and
+            reasoning through the unfamiliar is called <strong>inference</strong>. You have already
+            watched both machines run: the blurt that cracked on page 2 was the model reaching past
+            the familiar and missing; the trace that caught it was inference, on camera. Two
+            machines, then. And each sends a very different bill.
           </div>
 
           <div className="max-w-2xl rounded-lg border border-grid bg-surface p-4">

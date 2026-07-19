@@ -28,7 +28,7 @@ describe("Page 3 (Match Night)", () => {
     expect(screen.queryByText("Thinking pays.")).not.toBeInTheDocument();
     expect(screen.queryByText(/Breaking, an hour before kickoff/i)).not.toBeInTheDocument();
     expect(screen.queryByText("One more question")).not.toBeInTheDocument();
-    expect(screen.queryByText("Memorized")).not.toBeInTheDocument();
+    expect(screen.queryByText("Familiar")).not.toBeInTheDocument();
     // Navigation is always present.
     expect(screen.getByRole("navigation", { name: /page navigation/i })).toBeInTheDocument();
   });
@@ -89,8 +89,8 @@ describe("Page 3 (Match Night)", () => {
     expect(screen.getByText(/An agent is in exactly the same spot/)).toBeInTheDocument();
 
     // The two shelves and the teaser.
-    expect(screen.getByText("Memorized")).toBeInTheDocument();
-    expect(screen.getByText("Understood")).toBeInTheDocument();
+    expect(screen.getByText("Familiar")).toBeInTheDocument();
+    expect(screen.getByText("Unfamiliar")).toBeInTheDocument();
     expect(container.textContent).toContain("Next page.");
 
     // The past year renders from the authored data; the winner is never stated.

@@ -108,7 +108,7 @@ export function Page3() {
     if (pastPick !== null) return;
     setPastPick(pick);
     recordInteraction(PAGE_N);
-    setAnnouncement("The two shelves: memorized, and understood. Then the teaser to page 4.");
+    setAnnouncement("The two shelves: familiar, and unfamiliar. Then the teaser to page 4.");
   };
 
   return (
@@ -249,8 +249,8 @@ export function Page3() {
                 <p className="max-w-2xl text-ink">
                   Now sit with that for a second. An hour would not help. There is nothing to
                   reason <em>from</em>: no form guide, no team sheets, nothing to weigh. The result
-                  is a fixed fact of history, and a fixed fact is either already in your head, or
-                  it is nowhere.
+                  is a fixed fact of history, and a result you weren&apos;t there for is either
+                  already in your head, or it is nowhere.
                 </p>
               ) : null}
               {pastPick !== null ? (
@@ -275,34 +275,40 @@ export function Page3() {
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-grid bg-surface p-4">
-                <p className="text-xs text-ink-muted">Memorized</p>
+                <p className="text-xs text-ink-muted">Familiar</p>
                 <p className="mb-1 text-lg font-semibold text-ink">
                   &ldquo;I&apos;ve seen this one.&rdquo;
                 </p>
                 <p className="text-sm text-ink-muted">
-                  The answer pops out whole. Zero steps, zero time. It only works for things that
-                  have already crossed your path.
+                  The question sits on ground you have already covered, so the answer is recalled
+                  whole. Zero steps, zero time.
                 </p>
               </div>
               <div className="rounded-lg border border-grid bg-surface p-4">
-                <p className="text-xs text-ink-muted">Understood</p>
+                <p className="text-xs text-ink-muted">Unfamiliar</p>
                 <p className="mb-1 text-lg font-semibold text-ink">
-                  &ldquo;I can rebuild it.&rdquo;
+                  &ldquo;I can work it out.&rdquo;
                 </p>
                 <p className="text-sm text-ink-muted">
-                  Steps take time. But it works on things nobody has met yet: a fresh
-                  multiplication, tonight&apos;s final. If the pieces exist, reasoning builds the
-                  best answer they allow.
+                  The question is new, but the pieces to rebuild it are familiar. Reasoning derives
+                  the answer step by step, and that takes time: a fresh multiplication,
+                  tonight&apos;s final.
                 </p>
               </div>
             </div>
             <div className="max-w-2xl rounded-lg border-l-4 border-wrong bg-wrong/15 p-4 text-ink">
-              And the {MATCH_NIGHT.pastYear} final marks the boundary between them. It cannot be
-              rebuilt: no pieces, nothing to reason from. It can only be remembered. On one kind of
-              question, thinking is the whole game and turning it up keeps paying. On this kind,
-              thinking buys nothing:{" "}
+              And the {MATCH_NIGHT.pastYear} final marks the edge of the familiar. It cannot be
+              rebuilt: no familiar pieces, nothing to reason from. It can only be recalled. Where a
+              question is unfamiliar but the pieces to rebuild it are familiar, thinking is the
+              whole game and turning it up keeps paying. Where nothing familiar is there to reason
+              from, thinking buys nothing:{" "}
               <strong>the answer is either already in there, or it is nowhere.</strong>
             </div>
+            <p className="max-w-2xl text-ink">
+              The whole evening turned on one thing, and it was never a sharper mind. It was{" "}
+              <strong>familiarity</strong>: whether the question sat on ground you had already
+              covered, or at least handed you familiar pieces to rebuild it from.
+            </p>
             <p className="max-w-2xl text-ink">
               <em>
                 Which leaves the real question. How does an answer get <strong>in there</strong> in
