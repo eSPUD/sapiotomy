@@ -5,7 +5,23 @@
 :root {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Semantic hues exposed as CSS vars so SVG gradient stops can reference them
+     without hard-coding hex (keeps the "no raw hex in components" rule green). */
+  --compute: theme("colors.compute");
+  --correct: theme("colors.correct");
+  --wrong: theme("colors.wrong");
+  --canvas: theme("colors.canvas");
 }
+
+/* Slow, abstract drift for the landing backdrop — purposeful, and disabled
+   under prefers-reduced-motion by the media query below. */
+@keyframes drift {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+.animate-drift { animation: drift 9s ease-in-out infinite; }
 
 html,
 body {

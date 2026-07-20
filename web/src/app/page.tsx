@@ -1,55 +1,38 @@
 import Link from "next/link";
-import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
+import { LandingBackdrop } from "@/components/LandingBackdrop";
 import { Reveal } from "@/components/Reveal";
+import { pageHref } from "@/lib/pages";
 
 export default function Home() {
-  const acts: Act[] = [1, 2, 3];
   return (
-    <div className="flex flex-col gap-8">
-      <Reveal>
-      <header className="flex flex-col gap-3">
-        <h1 className="text-4xl font-bold text-ink">The Story of Inference-Time Scaling</h1>
-        <p className="max-w-2xl text-lg text-ink-muted">
-          A language model can get dramatically better answers by{" "}
-          <span className="text-compute">thinking longer at answer time</span> — not only by being
-          retrained or made larger. This extra thinking follows measurable, sometimes
-          counter-intuitive, scaling laws. Play with each one.
-        </p>
-        <Link
-          href={pageHref(1)}
-          className="w-fit rounded bg-compute px-5 py-2.5 font-semibold text-canvas"
-        >
-          Start reading →
-        </Link>
-      </header>
-      </Reveal>
+    <section className="relative flex min-h-[76vh] items-center justify-center overflow-hidden rounded-2xl border border-grid bg-canvas">
+      <LandingBackdrop />
 
-      <div className="grid gap-6">
-        {acts.map((act) => (
-          <section key={act} className="flex flex-col gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
-              Act {act} · {ACTS[act].title}{" "}
-              <span className="font-normal text-ink-muted">({ACTS[act].range})</span>
-            </h2>
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {PAGES.filter((p) => p.act === act).map((p) => (
-                <li key={p.n}>
-                  <Link
-                    href={pageHref(p.n)}
-                    className="flex items-baseline gap-3 rounded border border-grid bg-surface p-3 hover:border-compute"
-                  >
-                    <span className="font-mono text-ink-muted">{p.n}</span>
-                    <span>
-                      <span className="font-medium text-ink">{p.title}</span>
-                      <span className="block text-sm text-ink-muted">{p.concept}</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
-    </div>
+      {/* readability veil so text stays high-contrast over the art */}
+      <div className="pointer-events-none absolute inset-0 bg-canvas/40" aria-hidden="true" />
+
+      <Reveal>
+        <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center gap-6 px-6 py-16 text-center">
+          <span className="rounded-full border border-grid bg-surface/70 px-3 py-1 text-xs uppercase tracking-widest text-ink-muted">
+            An interactive explorable
+          </span>
+          <h1 className="text-4xl font-bold leading-tight text-ink sm:text-6xl">
+            The Story of{" "}
+            <span className="text-compute">Inference-Time Scaling</span>
+          </h1>
+          <p className="max-w-xl text-lg text-ink-muted">
+            A language model can get dramatically better answers by{" "}
+            <span className="text-ink">thinking longer at answer time</span> — not only by being
+            retrained or made larger. Watch each scaling law appear, hold, and sometimes break.
+          </p>
+          <Link
+            href={pageHref(1)}
+            className="rounded-lg bg-compute px-8 py-3.5 text-lg font-semibold text-canvas shadow-lg transition-transform hover:scale-105"
+          >
+            Begin the story →
+          </Link>
+        </div>
+      </Reveal>
+    </section>
   );
 }
