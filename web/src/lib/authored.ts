@@ -73,10 +73,13 @@ export const WORLD_CUP_2026 = {
     cutoffLabel: "memory sealed early 2025",
     constraintLabel: "no web search",
   },
-  /** Authored example of the ideal reply: the model owns the gap in its data. */
+  /**
+   * Authored example of the ideal reply: the model owns the gap in its data,
+   * then points the reader to the obvious fix. Kept short on purpose so the
+   * page reads as a dense visual, not a wall of text.
+   */
   exampleReply: [
-    "Straight answer: I don't know, and I can't.",
-    "My training data ends in early 2025, and that final was played after the cutoff, so I was not trained on the result. I have no web search, so I cannot look it up. And I cannot reason my way to it either: a match result is not derivable from anything I do hold. There is nothing to work from.",
-    "Any of those four names would be a coin flip dressed up as an answer. As far as my memory is concerned, that final has not been played yet.",
+    "I do not know who won the 2026 World Cup. Unfortunately, I was not trained on that information.",
+    "A quick Google search should lead you to the answer, though!",
   ],
 } as const;

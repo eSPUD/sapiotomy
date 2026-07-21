@@ -33,13 +33,12 @@ const expectClean = () => {
 };
 
 const pickTeam = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
-const handOver = () =>
-  fireEvent.click(screen.getByRole("button", { name: /hand the same question to the machine/i }));
-const overrideToMachine = () =>
+const passToMachine = () =>
   fireEvent.click(screen.getByRole("button", { name: /let the machine take it/i }));
+const runButton = () => screen.getByRole("button", { name: /run it/i });
 const run = async () => {
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: /run it/i }));
+    fireEvent.click(runButton());
   });
 };
 
@@ -48,27 +47,29 @@ describe("Page 2 (Two Systems)", () => {
     reducedMotion = true;
   });
 
-  it("starts with the question, four names, and the override; no machine, no analysis", () => {
+  it("shows everything up front: the question, the machine panel, and the analysis", () => {
     render(<Page2 />);
     expect(screen.getByText(WC.question)).toBeInTheDocument();
     for (const name of WC.options) {
       expect(screen.getByRole("button", { name })).toHaveAttribute("aria-pressed", "false");
     }
     expect(screen.getByRole("button", { name: /let the machine take it/i })).toBeInTheDocument();
-    expect(screen.queryByText(/the machine →/)).toBeNull();
-    expect(screen.queryByText("System 1 · the pop")).toBeNull();
-    expect(screen.queryByRole("button", { name: /run it/i })).toBeNull();
+    // No pop-ups: the machine panel and the two-systems analysis are always on.
+    expect(screen.getByRole("region", { name: /the machine tries the question/i })).toBeInTheDocument();
+    expect(screen.getByText("System 1 · the pop")).toBeInTheDocument();
+    expect(screen.getByText("System 2 · the steps")).toBeInTheDocument();
+    // But Run is grayed out until the reader has taken their turn.
+    expect(runButton()).toBeDisabled();
+    expect(screen.getByText(/unlocks once you answer, or pass/i)).toBeInTheDocument();
     expectClean();
   });
 
-  it("picking the recorded winner lands the right-verdict and offers the hand-over", () => {
+  it("picking the recorded winner lands the right-verdict and unlocks Run", () => {
     render(<Page2 />);
     pickTeam(WINNER);
     expect(screen.getByRole("button", { name: WINNER })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText(/A watched final files itself\./)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /hand the same question to the machine/i }),
-    ).toBeInTheDocument();
+    expect(runButton()).toBeEnabled();
     // The override disappears once the reader has answered.
     expect(screen.queryByRole("button", { name: /let the machine take it/i })).toBeNull();
     expectClean();
@@ -80,6 +81,7 @@ describe("Page 2 (Two Systems)", () => {
     expect(screen.getByText(new RegExp(`✗ You said ${LOSER};`))).toBeInTheDocument();
     expect(screen.getByText(WINNER, { selector: "strong" })).toBeInTheDocument();
     expect(screen.getByText(/cannot be\s+derived, only remembered/)).toBeInTheDocument();
+    expect(runButton()).toBeEnabled();
     expectClean();
   });
 
@@ -91,27 +93,11 @@ describe("Page 2 (Two Systems)", () => {
     expect(screen.getByRole("button", { name: WINNER })).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("hand-over opens the machine panel with its labels, prompt echo, and run button", () => {
+  it("the override passes the turn: no verdict, picks go inert, Run unlocks", () => {
     render(<Page2 />);
-    pickTeam(WINNER);
-    handOver();
-    expect(screen.getByText(/the exact same question goes to a machine/)).toBeInTheDocument();
-    expect(
-      screen.getByText(`${WC.machine.label} · ${WC.machine.cutoffLabel} · ${WC.machine.constraintLabel}`),
-    ).toBeInTheDocument();
-    expect(screen.getByText("example reply, authored · live model to follow")).toBeInTheDocument();
-    expect(screen.getByText(`${WC.question} ${WC.options.join(", ")}?`)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /run it/i })).toBeInTheDocument();
-    // The machine has the question now; the hand-over button is gone.
-    expect(screen.queryByRole("button", { name: /hand the same question/i })).toBeNull();
-    expectClean();
-  });
-
-  it("the override skips the human turn: machine panel opens with no verdict, picks go inert", () => {
-    render(<Page2 />);
-    overrideToMachine();
-    expect(screen.getByText(/Fair enough; you passed\./)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /run it/i })).toBeInTheDocument();
+    passToMachine();
+    expect(screen.getByText(/Fair enough — you passed\./)).toBeInTheDocument();
+    expect(runButton()).toBeEnabled();
     expect(screen.queryByText(/A watched final files itself\./)).toBeNull();
     // Options are locked once the machine has the question.
     pickTeam(WINNER);
@@ -120,24 +106,22 @@ describe("Page 2 (Two Systems)", () => {
     expectClean();
   });
 
-  it("run (reduced motion) lands the whole reply and reveals the two-systems analysis", async () => {
+  it("run (reduced motion) lands the whole reply; the analysis was there all along", async () => {
     render(<Page2 />);
     pickTeam(WINNER);
-    handOver();
     await run();
     // The full authored reply is on screen, including its last line.
-    expect(screen.getByText(/Straight answer: I don't know, and I can't\./)).toBeInTheDocument();
-    expect(screen.getByText(/that final has not been played yet\./)).toBeInTheDocument();
+    expect(screen.getByText(/I do not know who won the 2026 World Cup\./)).toBeInTheDocument();
+    expect(screen.getByText(/quick Google search should lead you to the answer/)).toBeInTheDocument();
     // The spec's ideal failure: the reply owns the training-data gap.
-    expect(document.body.textContent).toMatch(/training data/i);
-    expect(document.body.textContent).toMatch(/not trained on the result/i);
+    expect(document.body.textContent).toMatch(/not trained on that information/i);
     // The analysis: two systems, the machine read, the trap, the teaser.
     expect(screen.getByText("System 1 · the pop")).toBeInTheDocument();
     expect(screen.getByText("System 2 · the steps")).toBeInTheDocument();
-    expect(screen.getByText(/looks like a System 1 question\./)).toBeInTheDocument();
+    expect(screen.getByText(/looks like a System 1 question/i)).toBeInTheDocument();
     expect(screen.getByText(/that is exactly how you answered it/)).toBeInTheDocument();
     expect(screen.getByText(/guess wearing certainty's clothes/)).toBeInTheDocument();
-    expect(screen.getByText(/What if the model had been trained on\s+data/)).toBeInTheDocument();
+    expect(screen.getByText(/trained on data that includes that night/)).toBeInTheDocument();
     expect(screen.getByText(/verify the winner before shipping/)).toBeInTheDocument();
     // The run button is consumed.
     expect(screen.queryByRole("button", { name: /run it/i })).toBeNull();
@@ -146,9 +130,9 @@ describe("Page 2 (Two Systems)", () => {
 
   it("on the override path the analysis drops the 'how you answered it' clause", async () => {
     render(<Page2 />);
-    overrideToMachine();
+    passToMachine();
     await run();
-    expect(screen.getByText(/looks like a System 1 question\./)).toBeInTheDocument();
+    expect(screen.getByText(/looks like a System 1 question/i)).toBeInTheDocument();
     expect(screen.queryByText(/that is exactly how you answered it/)).toBeNull();
     expectClean();
   });
@@ -157,8 +141,6 @@ describe("Page 2 (Two Systems)", () => {
     render(<Page2 />);
     expectClean();
     pickTeam(LOSER);
-    expectClean();
-    handOver();
     expectClean();
     await run();
     expectClean();
@@ -177,27 +159,24 @@ describe("Page 2 animated streaming (no reduced motion)", () => {
     reducedMotion = true;
   });
 
-  it("streams the reply word by word, then finishes into the analysis", async () => {
+  it("streams the reply word by word after the reader takes their turn", async () => {
     const { container } = render(<Page2 />);
     fireEvent.click(screen.getByRole("button", { name: WINNER }));
-    fireEvent.click(screen.getByRole("button", { name: /hand the same question to the machine/i }));
     await run();
     expect(screen.getByText("The machine is replying.")).toBeInTheDocument();
     // A few ticks in: the reply has started, the cursor shows, the end is not out.
     act(() => {
       vi.advanceTimersByTime(55 * 4 + 10);
     });
-    expect(screen.getByText(/^Straight answer:/)).toBeInTheDocument();
+    expect(screen.getByText(/^I do not know/)).toBeInTheDocument();
     expect(container.textContent).toContain("▍");
-    expect(screen.queryByText(/has not been played yet\./)).toBeNull();
-    expect(screen.queryByText("System 1 · the pop")).toBeNull();
-    // Play it out: the reply completes, the cursor leaves, the analysis lands.
+    expect(screen.queryByText(/quick Google search/)).toBeNull();
+    // Play it out: the reply completes and the cursor leaves.
     act(() => {
       vi.advanceTimersByTime(55 * (TOTAL_WORDS + 2));
     });
-    expect(screen.getByText(/has not been played yet\./)).toBeInTheDocument();
+    expect(screen.getByText(/quick Google search/)).toBeInTheDocument();
     expect(container.textContent).not.toContain("▍");
-    expect(screen.getByText(/declined to guess/)).toBeInTheDocument();
     expect(screen.getByText("System 1 · the pop")).toBeInTheDocument();
     expect(screen.getByText("System 2 · the steps")).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(BANNED);

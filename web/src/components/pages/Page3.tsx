@@ -3,22 +3,25 @@
 /**
  * Page 3, "Daily Training?" (docs/page_3_refactor.md). Page 2 ended on the
  * question: what if the model HAD been trained on data that includes last
- * night? The obvious fix, retrain every day, gets priced in three beats:
- *   1. the meter: one $78M run per morning (Epoch AI via AI Index 2024),
- *      dragged across a year;
- *   2. the note: that assumed the SAME model; frontier language-model compute
- *      has grown ~5x/year since mid-2020 (Epoch, redrawn under CC BY);
- *   3. the combination: daily runs whose price rides Epoch's x2.4/year cost
- *      trend (the dollar shadow of that compute growth) across five years.
+ * night? The obvious fix, retrain every day, gets priced in three figures:
+ *   Fig. 1 the meter: one $78M run per morning (Epoch AI via AI Index 2024),
+ *          dragged across a year;
+ *   Fig. 2 the note: that assumed the SAME model; frontier language-model
+ *          compute has grown ~5x/year since mid-2020 (Epoch, redrawn, CC BY);
+ *   Fig. 3 the combination: daily runs whose price rides Epoch's x2.4/year
+ *          cost trend (the dollar shadow of that compute growth) over 5 years.
  * Training only on this page; the answer-time alternative is the next page's
  * business, teased by an optional guess box. No inference talk here.
+ *
+ * Layout rule (revision, 2026-07): no reveals, no drag-to-unlock. All three
+ * figures sit side by side in a textbook grid, each with its note directly
+ * below it, and every citation lands at the bottom of the page.
  */
 
 import { useMemo, useRef, useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
-import { Reveal } from "@/components/Reveal";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
@@ -56,13 +59,13 @@ export function Page3() {
   const cp = computeGrowth.fit!.params;
 
   const [day, setDay] = useState(1);
-  const [dragged, setDragged] = useState(false);
   const [months, setMonths] = useState(12);
   const [guessText, setGuessText] = useState("");
   const [guessState, setGuessState] = useState<GuessState>("open");
   const [announcement, setAnnouncement] = useState("");
-  const crossedBillionRef = useRef(false);
+  const dayTouchedRef = useRef(false);
   const monthsTouchedRef = useRef(false);
+  const crossedBillionRef = useRef(false);
   const crossedTrillionRef = useRef(false);
 
   // The one-year meter, in $ billions per day, straight off the cited rate.
@@ -106,15 +109,15 @@ export function Page3() {
   ];
 
   const onDay = (v: number) => {
-    if (!dragged) {
-      setDragged(true);
+    if (!dayTouchedRef.current) {
+      dayTouchedRef.current = true;
       recordInteraction(PAGE_N);
     }
     setDay(v);
     if (!crossedBillionRef.current && v * RUN_M >= 1000) {
       crossedBillionRef.current = true;
       setAnnouncement(
-        `Day ${v}: the bill passed one billion dollars, more than Epoch's projected record single run. The summary below is open.`,
+        `Day ${v}: the bill passed one billion dollars, more than Epoch's projected record single run.`,
       );
     } else if (v === DAYS) {
       setAnnouncement(`Day ${DAYS}: the year of daily retraining totals about ${yearFmt}.`);
@@ -159,18 +162,21 @@ export function Page3() {
       <p className="max-w-2xl text-lg text-ink-muted">
         Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
         stares right at you: reseal the memory <strong>every morning</strong>. Retrain the model
-        daily and it is never a day out of date. Before signing that plan, price it.
+        daily and it is never a day out of date. The three figures below price that plan.
       </p>
 
-      <section aria-label="The daily-retraining meter" className="flex flex-col gap-3">
-        <div className="overflow-hidden rounded-lg border border-grid bg-surface">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <figure
+          aria-label="Figure 1: the daily-retraining meter"
+          className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
+        >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span>the hypothetical: one full training run, every morning</span>
+            <span>Fig. 1 · one full training run, every morning</span>
             <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
               Epoch AI estimate · ${RUN_M}M per GPT-4-class run
             </span>
           </div>
-          <div className="flex flex-col gap-4 p-4 sm:p-6">
+          <div className="flex flex-col gap-4 p-4">
             <LineChart
               title={`Cumulative bill for one full training run per day: a straight line from zero to about ${yearFmt} over ${DAYS} days, crossing Epoch's projected one billion dollar record run on day ${rp.crossBillionDay}. Derived from Epoch's ${RUN_M} million dollar GPT-4 run estimate.`}
               points={chartPoints}
@@ -179,8 +185,8 @@ export function Page3() {
               referenceLabel={`Epoch's projected record run ($${tp.projectionBillionUSD}B, ${tp.projectionYear})`}
               xLabel="days of retraining daily"
               yLabel="cumulative bill ($ billions)"
-              width={640}
-              height={300}
+              width={460}
+              height={280}
             />
             <Slider
               label="Drag through the year"
@@ -220,14 +226,7 @@ export function Page3() {
                 </span>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {dragged ? (
-        <Reveal>
-          <section aria-label="The verdict, the moving frontier, and a question" className="flex flex-col gap-4">
-            <div className="max-w-2xl rounded-lg border-l-4 border-wrong bg-wrong/15 p-4 text-ink">
+            <figcaption className="rounded-lg border-l-4 border-wrong bg-wrong/15 p-3 text-sm text-ink">
               <strong>As you can see: training every day is simply not feasible.</strong> There is
               no justification for it. {rp.crossBillionDay} mornings in, the tab passes the
               priciest single run ever projected; by December it is {yearFmt} a year, spent
@@ -236,183 +235,186 @@ export function Page3() {
               <span className="text-ink-muted">
                 (Real labs do retrain, on rhythms of months or years; never mornings.)
               </span>
-            </div>
+            </figcaption>
+          </div>
+        </figure>
 
-            <div className="overflow-hidden rounded-lg border border-grid bg-surface">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-                <span>and it is worse than that</span>
-                <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
-                  Epoch AI · redrawn under CC BY
-                </span>
-              </div>
-              <div className="flex flex-col gap-4 p-4 sm:p-6">
-                <p className="max-w-2xl text-ink">
-                  <strong>All of this assumed you kept retraining the same model.</strong> The
-                  frontier does not sit still: since mid-2020, the compute behind frontier
-                  language-model runs has grown about <strong>5x every year</strong> (Epoch
-                  measures 5.0x, CI 3.1 to 7.3; 4-5x across frontier models broadly). GPT-3 took
-                  3×10²³ FLOP. GPT-4, three years on, took 2×10²⁵: nearly seventy times the
-                  compute.
-                </p>
-                <LineChart
-                  title={`Training compute of frontier language models from mid-2020 to May 2024 on a log scale: a straight climb of about five times per year, from GPT-3 at 3 times ten to the 23 FLOP through GPT-4 at 2 times ten to the 25 to Gemini Ultra at 5 times ten to the 25. Redrawn from Epoch AI's published figures.`}
-                  points={computeGrowth.points}
-                  dots={[
-                    { x: cp.gpt3Year, y: cp.gpt3Flop, label: "GPT-3" },
-                    { x: cp.gpt4Year, y: cp.gpt4Flop, label: "GPT-4" },
-                    { x: cp.geminiUltraYear, y: cp.geminiUltraFlop, label: "Gemini Ultra" },
-                  ]}
-                  logY
-                  yTickFormat={fmtFlop}
-                  yDomain={[1e23, 3e26]}
-                  xDomain={[2020.3, 2024.6]}
-                  xLabel="year"
-                  yLabel="training compute (FLOP)"
-                  width={640}
-                  height={280}
-                />
-              </div>
-            </div>
+        <figure
+          aria-label="Figure 2: the moving frontier"
+          className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+            <span>Fig. 2 · and it is worse than that</span>
+            <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
+              Epoch AI · redrawn under CC BY
+            </span>
+          </div>
+          <div className="flex flex-col gap-4 p-4">
+            <LineChart
+              title={`Training compute of frontier language models from mid-2020 to May 2024 on a log scale: a straight climb of about five times per year, from GPT-3 at 3 times ten to the 23 FLOP through GPT-4 at 2 times ten to the 25 to Gemini Ultra at 5 times ten to the 25. Redrawn from Epoch AI's published figures.`}
+              points={computeGrowth.points}
+              dots={[
+                { x: cp.gpt3Year, y: cp.gpt3Flop, label: "GPT-3" },
+                { x: cp.gpt4Year, y: cp.gpt4Flop, label: "GPT-4" },
+                { x: cp.geminiUltraYear, y: cp.geminiUltraFlop, label: "Gemini Ultra" },
+              ]}
+              logY
+              yTickFormat={fmtFlop}
+              yDomain={[1e23, 3e26]}
+              xDomain={[2020.3, 2024.6]}
+              xLabel="year"
+              yLabel="training compute (FLOP)"
+              width={460}
+              height={280}
+            />
+            <figcaption className="text-sm text-ink">
+              <strong>Fig. 1 assumed you kept retraining the same model.</strong> The frontier
+              does not sit still: since mid-2020, the compute behind frontier language-model runs
+              has grown about <strong>5x every year</strong> (Epoch measures 5.0x, CI 3.1 to 7.3;
+              4-5x across frontier models broadly). GPT-3 took 3×10²³ FLOP. GPT-4, three years
+              on, took 2×10²⁵: nearly seventy times the compute.
+            </figcaption>
+          </div>
+        </figure>
 
-            <div className="overflow-hidden rounded-lg border border-grid bg-surface">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-                <span>the two rates, combined</span>
-                <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-                  derived from the two Epoch trends
-                </span>
-              </div>
-              <div className="flex flex-col gap-4 p-4 sm:p-6">
-                <p className="max-w-2xl text-ink">
-                  Now combine the two curves you just saw. Compute per frontier run grows about 5x
-                  a year; cheaper, better hardware absorbs part of that, so the <strong>bill</strong>{" "}
-                  per run grows ×{tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
-                  <em>the frontier model of the day</em>, every day:
+        <figure
+          aria-label="Figure 3: the two rates, combined"
+          className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+            <span>Fig. 3 · the two rates, combined</span>
+            <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
+              derived from the two Epoch trends
+            </span>
+          </div>
+          <div className="flex flex-col gap-4 p-4">
+            <LineChart
+              title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
+              points={comboSame}
+              secondary={{ points: comboFrontier, label: "the frontier model of the day, daily" }}
+              primaryLabel="the same model, daily (the plan Fig. 1 rejected)"
+              markerX={months}
+              xLabel="months of keeping it up"
+              yLabel="cumulative bill ($ billions)"
+              yDomain={[0, 2600]}
+              width={460}
+              height={280}
+            />
+            <Slider
+              label="Drag through five years"
+              min={0}
+              max={COMBO_MONTHS}
+              value={months}
+              onChange={onMonths}
+              suffix=" months"
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-grid bg-surface-raised p-3">
+                <p className="text-xs uppercase tracking-wide text-ink-muted">
+                  the frontier of the day, daily
                 </p>
-                <LineChart
-                  title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
-                  points={comboSame}
-                  secondary={{ points: comboFrontier, label: "the frontier model of the day, daily" }}
-                  primaryLabel="the same model, daily (the plan you just rejected)"
-                  markerX={months}
-                  xLabel="months of keeping it up"
-                  yLabel="cumulative bill ($ billions)"
-                  yDomain={[0, 2600]}
-                  width={640}
-                  height={300}
-                />
-                <Slider
-                  label="Drag through five years"
-                  min={0}
-                  max={COMBO_MONTHS}
-                  value={months}
-                  onChange={onMonths}
-                  suffix=" months"
-                />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                    <p className="text-xs uppercase tracking-wide text-ink-muted">
-                      the frontier of the day, daily
-                    </p>
-                    <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
-                      {fmtM(frontierAtM)}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                    <p className="text-xs uppercase tracking-wide text-ink-muted">
-                      the same model, daily
-                    </p>
-                    <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-                      {fmtM(sameAtM)}
-                    </p>
-                  </div>
-                </div>
-                <p className="max-w-2xl text-sm text-ink-muted">
-                  By year five the daily-frontier program is measured in trillions, and the plan
-                  you already rejected is the flat line at the bottom of its own chart.
+                <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
+                  {fmtM(frontierAtM)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-grid bg-surface-raised p-3">
+                <p className="text-xs uppercase tracking-wide text-ink-muted">
+                  the same model, daily
+                </p>
+                <p className="font-mono text-2xl font-bold tabular-nums text-ink">
+                  {fmtM(sameAtM)}
                 </p>
               </div>
             </div>
+            <figcaption className="text-sm text-ink">
+              Combine the two figures on the left: compute per frontier run grows about 5x a
+              year; cheaper, better hardware absorbs part of that, so the <strong>bill</strong>{" "}
+              per run grows ×{tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
+              <em>the frontier model of the day</em>, every day, and by year five the program is
+              measured in trillions, while the plan Fig. 1 already rejected is the flat line at
+              the bottom of its own chart.
+            </figcaption>
+          </div>
+        </figure>
 
-            <div className="max-w-2xl overflow-hidden rounded-lg border border-grid bg-surface">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-                <span>one way out</span>
-                <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
-                  optional · skip freely
-                </span>
-              </div>
-              <div className="flex flex-col gap-3 p-4">
-                <p className="text-lg text-ink">
-                  There is, however, a way to get fresh facts to a model{" "}
-                  <strong>without retraining it at all</strong>. Any guesses?
-                </p>
-                {guessState === "open" ? (
-                  <form
-                    className="flex flex-wrap items-center gap-2"
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      lockGuess();
-                    }}
-                  >
-                    <input
-                      type="text"
-                      autoComplete="off"
-                      aria-label="Your guess"
-                      placeholder="a word or a sentence"
-                      value={guessText}
-                      onChange={(e) => setGuessText(e.target.value)}
-                      className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
-                    />
-                    <button
-                      type="submit"
-                      disabled={guessText.trim().length === 0}
-                      className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-                    >
-                      Lock it in
-                    </button>
-                    <button
-                      type="button"
-                      onClick={skipGuess}
-                      className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
-                    >
-                      Skip
-                    </button>
-                  </form>
-                ) : (
-                  <p className="text-ink">
-                    {guessState === "guessed" ? (
-                      <>
-                        Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
-                      </>
-                    ) : (
-                      <>Hold that thought anyway.</>
-                    )}{" "}
-                    <em className="text-ink-muted">The answer is one page away.</em>
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <CitationBadge citation={runCost.citation} />
-              <CitationBadge citation={computeGrowth.citation} />
-              <CitationBadge citation={trainTrend.citation} />
-            </div>
-            <p className="text-xs text-ink-muted">
-              the daily-retrain meter is a deliberately absurd hypothetical priced with one cited
-              anchor: Epoch AI&apos;s ≈ ${RUN_M}M compute estimate for the GPT-4 run (AI Index
-              2024) · the cumulative line, the day-{rp.crossBillionDay} crossing, and the{" "}
-              {yearFmt} year total are derived from that anchor · the $
-              {tp.projectionBillionUSD}B record-run line is Epoch&apos;s {tp.projectionYear}{" "}
-              projection · the frontier compute trend (about 5x per year for language models
-              since mid-2020) and the three model anchors are Epoch figures, redrawn under CC BY,
-              not Epoch&apos;s image · the combined curve is derived: one run per day priced at $
-              {RUN_M}M × {tp.perYear}^years, whose per-run price passes $1B around year three,
-              consistent with Epoch&apos;s {tp.projectionYear} projection · no claims about what
-              any lab actually spends
+        <section aria-label="One way out" className="overflow-hidden rounded-lg border border-grid bg-surface">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+            <span>one way out</span>
+            <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
+              optional · skip freely
+            </span>
+          </div>
+          <div className="flex flex-col gap-3 p-4">
+            <p className="text-lg text-ink">
+              There is, however, a way to get fresh facts to a model{" "}
+              <strong>without retraining it at all</strong>. Any guesses?
             </p>
-          </section>
-        </Reveal>
-      ) : null}
+            {guessState === "open" ? (
+              <form
+                className="flex flex-wrap items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  lockGuess();
+                }}
+              >
+                <input
+                  type="text"
+                  autoComplete="off"
+                  aria-label="Your guess"
+                  placeholder="a word or a sentence"
+                  value={guessText}
+                  onChange={(e) => setGuessText(e.target.value)}
+                  className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
+                />
+                <button
+                  type="submit"
+                  disabled={guessText.trim().length === 0}
+                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                >
+                  Lock it in
+                </button>
+                <button
+                  type="button"
+                  onClick={skipGuess}
+                  className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
+                >
+                  Skip
+                </button>
+              </form>
+            ) : (
+              <p className="text-ink">
+                {guessState === "guessed" ? (
+                  <>
+                    Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
+                  </>
+                ) : (
+                  <>Hold that thought anyway.</>
+                )}{" "}
+                <em className="text-ink-muted">The answer is one page away.</em>
+              </p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <CitationBadge citation={runCost.citation} />
+        <CitationBadge citation={computeGrowth.citation} />
+        <CitationBadge citation={trainTrend.citation} />
+      </div>
+      <p className="text-xs text-ink-muted">
+        the daily-retrain meter is a deliberately absurd hypothetical priced with one cited
+        anchor: Epoch AI&apos;s ≈ ${RUN_M}M compute estimate for the GPT-4 run (AI Index
+        2024) · the cumulative line, the day-{rp.crossBillionDay} crossing, and the{" "}
+        {yearFmt} year total are derived from that anchor · the $
+        {tp.projectionBillionUSD}B record-run line is Epoch&apos;s {tp.projectionYear}{" "}
+        projection · the frontier compute trend (about 5x per year for language models
+        since mid-2020) and the three model anchors are Epoch figures, redrawn under CC BY,
+        not Epoch&apos;s image · the combined curve is derived: one run per day priced at $
+        {RUN_M}M × {tp.perYear}^years, whose per-run price passes $1B around year three,
+        consistent with Epoch&apos;s {tp.projectionYear} projection · no claims about what
+        any lab actually spends
+      </p>
 
       <div aria-live="polite" className="sr-only">
         {announcement}

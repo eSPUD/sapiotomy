@@ -17,9 +17,8 @@ async function expectAxeClean(page: Page) {
  */
 async function finishPage2(page: Page) {
   await page.getByRole("group", { name: /the four names/i }).getByRole("button").first().click();
-  await page.getByRole("button", { name: /hand the same question to the machine/i }).click();
   await page.getByRole("button", { name: /run it/i }).click();
-  await expect(page.getByText(/looks like a System 1 question\./)).toBeVisible({
+  await expect(page.getByText(/looks like a System 1 question/i)).toBeVisible({
     timeout: 20_000,
   });
 }
@@ -54,24 +53,27 @@ test.describe("Act 1 (pages 1–5)", () => {
   }) => {
     await page.goto("/p/2");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Two Systems");
+    // The machine panel and its example-reply label are on screen from the start.
+    await expect(page.getByText("example reply, authored · live model to follow")).toBeVisible();
+    // Run is grayed until the reader takes their turn.
+    await expect(page.getByRole("button", { name: /run it/i })).toBeDisabled();
     // The reader's turn: pick a name, get a verdict, lose the override button.
     await expect(page.getByRole("button", { name: /let the machine take it/i })).toBeVisible();
     await page.getByRole("group", { name: /the four names/i }).getByRole("button").first().click();
     await expect(page.getByRole("button", { name: /let the machine take it/i })).toBeHidden();
-    // Hand the same question to the machine and run the example reply.
-    await page.getByRole("button", { name: /hand the same question to the machine/i }).click();
-    await expect(page.getByText("example reply, authored · live model to follow")).toBeVisible();
+    // Run the example reply now that it is unlocked.
+    await expect(page.getByRole("button", { name: /run it/i })).toBeEnabled();
     await page.getByRole("button", { name: /run it/i }).click();
-    // The streamed reply owns the gap in its training data...
-    await expect(page.getByText(/not trained on the result/)).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/that final has not been played yet\./)).toBeVisible({
+    // The streamed reply owns the gap in its training data, then points to search.
+    await expect(page.getByText(/not trained on that information/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/quick Google search should lead you to the answer/)).toBeVisible({
       timeout: 20_000,
     });
     // ...and the two-systems analysis lands with the trap and the teaser.
     await expect(page.getByText("System 1 · the pop")).toBeVisible();
     await expect(page.getByText("System 2 · the steps")).toBeVisible();
     await expect(page.getByText(/guess wearing certainty's clothes/)).toBeVisible();
-    await expect(page.getByText(/What if the model had been trained/)).toBeVisible();
+    await expect(page.getByText(/trained on data that includes that night/)).toBeVisible();
   });
 
   test("Page 3: the daily-retraining meter runs away, then the guess box hands off", async ({
@@ -81,15 +83,15 @@ test.describe("Act 1 (pages 1–5)", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Daily Training?");
     // The spec's hard rule: no inference talk anywhere on this page.
     expect(await page.locator("article").innerText()).not.toMatch(/inference/i);
+    // No drag-to-reveal: all three figures and both captions are on from paint.
+    await expect(page.getByText(/training every day is simply not feasible/i)).toBeVisible();
+    await expect(page.getByText(/assumed you kept retraining the same model/i)).toBeVisible();
     // Drag the year out with the keyboard: End jumps the slider to day 365.
     const slider = page.getByRole("slider", { name: /drag through the year/i });
     await slider.focus();
     await slider.press("End");
-    // The main total and the combined card's same-model tile both read $28.5B.
+    // The main total and the combined figure's same-model tile both read $28.5B.
     await expect(page.getByText("$28.5B", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText(/training every day is simply not feasible/i)).toBeVisible();
-    // The frontier note, the redrawn Epoch chart, and the combined meter.
-    await expect(page.getByText(/assumed you kept retraining the same model/i)).toBeVisible();
     const months = page.getByRole("slider", { name: /drag through five years/i });
     await months.focus();
     await months.press("End");

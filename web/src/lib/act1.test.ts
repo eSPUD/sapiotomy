@@ -55,11 +55,10 @@ describe("Page 2 world-cup question (authored; answer key is a flagged placehold
   it("the example reply owns the gap and never names one of the four as winner", () => {
     expect(WORLD_CUP_2026.exampleReply.length).toBeGreaterThan(0);
     const joined = WORLD_CUP_2026.exampleReply.join(" ");
-    // The spec's ideal failure: it says it was not trained on that data...
-    expect(joined).toMatch(/training data/i);
+    // The spec's ideal failure: it owns the gap, saying it was not trained on it...
     expect(joined).toMatch(/not trained/i);
-    // ...it cannot look the result up...
-    expect(joined).toMatch(/web search/i);
+    // ...and it points the reader to the obvious fix, a web/Google search...
+    expect(joined).toMatch(/search/i);
     // ...and it refuses to guess a name (no option may appear in the reply).
     for (const name of WORLD_CUP_2026.options) {
       expect(joined).not.toContain(name);
