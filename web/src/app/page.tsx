@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CiteBlock } from "@/components/CiteBlock";
 import { Reveal } from "@/components/Reveal";
 import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
 
@@ -10,8 +11,6 @@ const CITATION = `@article{bangalorelakshman2026inference,
   url    = {https://example.org/inference-time-scaling}
 }`;
 
-const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-
 export default function Home() {
   const acts: Act[] = [1, 2, 3];
   return (
@@ -20,9 +19,14 @@ export default function Home() {
       <section>
         <Reveal>
           <div className="flex max-w-3xl flex-col gap-5 py-12">
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
-              An interactive explorable · VISxAI 2026
-            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+                An interactive explorable · VISxAI 2026
+              </p>
+              <span className="rounded bg-wrong/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-wrong">
+                Pre-print
+              </span>
+            </div>
 
             <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
               The Story of{" "}
@@ -119,12 +123,7 @@ export default function Home() {
 
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Cite this work</h2>
-            <pre
-              className="whitespace-pre-wrap break-words rounded bg-surface p-4 text-xs leading-relaxed text-ink"
-              style={{ fontFamily: MONO }}
-            >
-              <code>{CITATION}</code>
-            </pre>
+            <CiteBlock citation={CITATION} filename="inference-time-scaling.bib" />
           </div>
         </div>
 
