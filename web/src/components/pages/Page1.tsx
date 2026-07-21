@@ -3,7 +3,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { PageNav } from "@/components/PageNav";
-import { Reveal } from "@/components/Reveal";
 import { ACTS, getPage } from "@/lib/pages";
 import { COMPUTER_SCRIPT, GAME_ROUNDS } from "@/lib/authored";
 import { useStore } from "@/store/useStore";
@@ -46,10 +45,12 @@ function fmt(ms: number): string {
 
 function ChoiceButton({
   selected,
+  disabled = false,
   onClick,
   children,
 }: {
   selected: boolean;
+  disabled?: boolean;
   onClick: () => void;
   children: ReactNode;
 }) {
@@ -57,8 +58,9 @@ function ChoiceButton({
     <button
       type="button"
       aria-pressed={selected}
+      disabled={disabled}
       onClick={onClick}
-      className={`rounded border px-4 py-2 text-sm text-ink ${
+      className={`rounded border px-4 py-2 text-sm text-ink disabled:opacity-50 ${
         selected ? "border-compute bg-compute/40 font-semibold" : "border-grid bg-surface-raised"
       }`}
     >
@@ -75,6 +77,8 @@ interface RoundCardProps {
   value: string;
   watchMs: number;
   ff: boolean;
+  /** The round has not opened yet: fully visible, but grayed and inert. */
+  locked: boolean;
   readOnly: boolean;
   submitDisabled: boolean;
   onChange: (v: string) => void;
@@ -87,7 +91,12 @@ interface RoundCardProps {
 function RoundCard(props: RoundCardProps) {
   const round = GAME_ROUNDS[props.index];
   return (
-    <section aria-label={`Round ${props.index + 1}`} className="rounded-lg border border-grid bg-surface p-4">
+    <section
+      aria-label={`Round ${props.index + 1}`}
+      className={`rounded-lg border bg-surface p-4 ${
+        props.locked ? "border-dashed border-grid" : "border-grid"
+      }`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Round {props.index + 1}</p>
       <p className="mt-1 text-lg text-ink">
         What&apos;s <strong className="font-mono">{round.prompt}</strong>?
@@ -106,16 +115,17 @@ function RoundCard(props: RoundCardProps) {
           autoComplete="off"
           aria-label={`Your answer to ${round.prompt}`}
           value={props.value}
+          disabled={props.locked}
           readOnly={props.readOnly}
           onChange={(e) => props.onChange(e.target.value)}
           onFocus={props.onFocus}
-          className={`w-28 rounded border border-grid px-3 py-2 font-mono text-ink ${
-            props.readOnly ? "bg-surface-raised" : "bg-canvas"
+          className={`w-28 rounded border border-grid px-3 py-2 font-mono text-ink disabled:opacity-50 ${
+            props.locked || props.readOnly ? "bg-surface-raised" : "bg-canvas"
           }`}
         />
         <button
           type="submit"
-          disabled={props.submitDisabled}
+          disabled={props.locked || props.submitDisabled}
           className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
         >
           Answer
@@ -135,7 +145,7 @@ function RoundCard(props: RoundCardProps) {
       </form>
       {props.hint ? <p className="mt-2 text-sm text-ink-muted">{props.hint}</p> : null}
       {props.extra}
-      {props.followup ? <p className="mt-3 max-w-2xl text-ink">{props.followup}</p> : null}
+      {props.followup ? <p className="mt-3 text-ink">{props.followup}</p> : null}
     </section>
   );
 }
@@ -151,9 +161,7 @@ export function Page1() {
   const [statuses, setStatuses] = useState<(RoundStatus | null)[]>([null, null, null]);
   const [values, setValues] = useState<string[]>(["", "", ""]);
   const [watch, setWatch] = useState<number[]>([0, 0, 0]);
-  const [popupOpen, setPopupOpen] = useState(false);
   const [popChoice, setPopChoice] = useState<PopChoice | null>(null);
-  const [round3Open, setRound3Open] = useState(false);
   const [ff, setFf] = useState(false);
   const [cpuStep, setCpuStep] = useState(0);
   const [announce, setAnnounce] = useState("");
@@ -163,8 +171,9 @@ export function Page1() {
   const runIdRef = useRef(0);
   const pendingRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const round2Open = statuses[0] != null;
   const doneAll = statuses[2] != null;
+  /** Every round is on screen from the start; a round unlocks in order. */
+  const unlocked = (i: number) => i === 0 || statuses[i - 1] != null;
 
   /** Schedule work that dies with the current run (mode switch, run again). */
   function later(fn: () => void, ms: number) {
@@ -207,7 +216,7 @@ export function Page1() {
 
   /** The per-round clock starts when the reader focuses the answer box. */
   function armClock(i: number) {
-    if (mode !== "you" || i !== cur || statuses[i] != null || armedAtRef.current != null) return;
+    if (mode !== "you" || !unlocked(i) || statuses[i] != null || armedAtRef.current != null) return;
     armedAtRef.current = performance.now();
     if (tickRef.current) clearInterval(tickRef.current);
     tickRef.current = setInterval(
@@ -224,43 +233,31 @@ export function Page1() {
     setAt(setTimes, i, t as number | null);
     setAt(setStatuses, i, st as RoundStatus | null);
     setAt(setWatch, i, t);
-    if (i === 0) setCur(1);
-    if (i === 1) setPopupOpen(true);
+    if (i < 2) setCur(i + 1);
   }
 
   function submit(i: number) {
-    if (mode !== "you" || i !== cur || statuses[i] != null) return;
+    if (mode !== "you" || !unlocked(i) || statuses[i] != null) return;
     const v = parseAnswer(values[i]);
     if (Number.isNaN(v)) return;
     recordInteraction(PAGE_N);
     const t = stopClock();
     finishRound(i, v === GAME_ROUNDS[i].answer ? "right" : "wrong", t);
-    if (i === 0) setAnnounce("Round 2: what's 17 times 24?");
-    if (i === 1) setAnnounce("A question: did the answer pop in, or did you reason through it?");
+    if (i === 0) setAnnounce("Round 2 is unlocked: what's 17 times 24?");
+    if (i === 1) setAnnounce("Round 3 is unlocked, and the reflection question is open.");
   }
 
   function giveUp() {
-    if (mode !== "you" || !round3Open || statuses[2] != null) return;
+    if (mode !== "you" || !unlocked(2) || statuses[2] != null) return;
     recordInteraction(PAGE_N);
     finishRound(2, "gaveup", stopClock());
   }
 
-  /**
-   * The pick locks once round 3 opens: in the prototype, "Bring it on" closed
-   * the dialog, so the choice could never be rewritten after the fact (and the
-   * results echo depends on it).
-   */
+  /** The pick is final: first choice locks (the results echo depends on it). */
   function pickPop(choice: PopChoice) {
-    if (mode !== "you" || round3Open) return;
+    if (mode !== "you" || statuses[1] == null || popChoice != null) return;
     recordInteraction(PAGE_N);
     setPopChoice(choice);
-  }
-
-  function bringIt() {
-    recordInteraction(PAGE_N);
-    setRound3Open(true);
-    setCur(2);
-    setAnnounce("Round 3: what's 350 times 638?");
   }
 
   /* ---- computer mode: a hand-scripted playthrough, not a measurement ---- */
@@ -300,11 +297,7 @@ export function Page1() {
         () =>
           cpuRound(1, () => {
             later(() => setPopChoice("reason"), 1100);
-            later(() => {
-              setRound3Open(true);
-              setCur(2);
-              later(() => cpuRound(2), 500);
-            }, 2400);
+            later(() => cpuRound(2), 2400);
           }),
         600,
       );
@@ -325,11 +318,7 @@ export function Page1() {
       fill(1);
       setPopChoice("reason");
     }
-    if (next === 3) {
-      setRound3Open(true);
-      setCur(2);
-      fill(2);
-    }
+    if (next === 3) fill(2);
   }
 
   /** Switching modes (either direction) or "Run it again" fully resets. */
@@ -349,9 +338,7 @@ export function Page1() {
     setStatuses([null, null, null]);
     setValues(["", "", ""]);
     setWatch([0, 0, 0]);
-    setPopupOpen(false);
     setPopChoice(null);
-    setRound3Open(false);
     setFf(false);
     setCpuStep(0);
     setAnnounce("");
@@ -410,11 +397,14 @@ export function Page1() {
   }
 
   const maxT = Math.max(...times.map((t) => t ?? 0), 1);
-  const barsLabel = `Time per round: ${GAME_ROUNDS.map(
-    (r, i) => `${r.prompt} took ${fmt(times[i] ?? 0)}${statuses[i] === "gaveup" ? " before giving up" : ""}`,
+  const barsLabel = `Time per round: ${GAME_ROUNDS.map((r, i) =>
+    times[i] == null
+      ? `${r.prompt} not yet answered`
+      : `${r.prompt} took ${fmt(times[i] ?? 0)}${statuses[i] === "gaveup" ? " before giving up" : ""}`,
   ).join(", ")}.`;
   const anyMissed = statuses.some((st) => st != null && st !== "right");
   const roundActive = (i: number) => cur === i && statuses[i] == null;
+  const reflectionOpen = statuses[1] != null;
 
   return (
     <article className="flex flex-col gap-5">
@@ -427,7 +417,7 @@ export function Page1() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Your mind has two gears. This little game finds both: three questions, a timer on each, and a
-        comparison at the end.
+        comparison at the end. Each round unlocks the next; grayed rounds are waiting, not hidden.
       </p>
 
       <div className="rounded-lg border border-grid bg-surface p-4">
@@ -465,198 +455,182 @@ export function Page1() {
         </section>
       ) : null}
 
-      <RoundCard
-        index={0}
-        hint="The clock starts when you click into the box."
-        value={values[0]}
-        watchMs={watch[0]}
-        ff={mode === "cpu" && ff && roundActive(0)}
-        readOnly={mode === "cpu" || statuses[0] != null}
-        submitDisabled={mode !== "you" || statuses[0] != null}
-        onChange={(v) => setAt(setValues, 0, v)}
-        onFocus={() => armClock(0)}
-        onSubmit={() => submit(0)}
-        followup={followup(0)}
-      />
-
-      {round2Open ? (
-        <Reveal>
-          <RoundCard
-            index={1}
-            promptSuffix="In your head, no calculator."
-            value={values[1]}
-            watchMs={watch[1]}
-            ff={mode === "cpu" && ff && roundActive(1)}
-            readOnly={mode === "cpu" || statuses[1] != null}
-            submitDisabled={mode !== "you" || statuses[1] != null}
-            onChange={(v) => setAt(setValues, 1, v)}
-            onFocus={() => armClock(1)}
-            onSubmit={() => submit(1)}
-            followup={followup(1)}
-          />
-        </Reveal>
-      ) : null}
-
-      {popupOpen ? (
-        <Reveal>
-          <section
-            aria-label="How did you think about it?"
-            className="rounded-lg border-l-4 border-compute bg-surface p-4"
-          >
-            <h2 className="text-lg font-semibold text-ink">How did you think about it?</h2>
-            <p className="mt-1 max-w-2xl text-ink-muted">
-              {statuses[1] === "right" ? (
-                <>
-                  Did {GAME_ROUNDS[1].display} just pop into your head when you saw {GAME_ROUNDS[1].prompt},
-                  or did you have to reason through it?
-                </>
-              ) : (
-                <>
-                  It&apos;s {GAME_ROUNDS[1].display}. Did an answer just pop in, or did you have to reason
-                  through it?
-                </>
-              )}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <ChoiceButton selected={popChoice === "pop"} onClick={() => pickPop("pop")}>
-                It just popped in
-              </ChoiceButton>
-              <ChoiceButton selected={popChoice === "reason"} onClick={() => pickPop("reason")}>
-                I reasoned through it
-              </ChoiceButton>
-            </div>
-            {popChoice != null ? (
-              <div className="mt-4 border-t border-grid pt-3">
-                <p className="text-ink">
-                  What about a harder problem: <strong className="font-mono">{GAME_ROUNDS[2].prompt}</strong>?
-                </p>
-                {mode === "you" && !round3Open ? (
-                  <button
-                    type="button"
-                    onClick={bringIt}
-                    className="mt-2 rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-                  >
-                    Bring it on
-                  </button>
-                ) : null}
+      <div className="flex flex-col gap-4">
+        <RoundCard
+          index={0}
+          hint="The clock starts when you click into the box."
+          value={values[0]}
+          watchMs={watch[0]}
+          ff={mode === "cpu" && ff && roundActive(0)}
+          locked={false}
+          readOnly={mode === "cpu" || statuses[0] != null}
+          submitDisabled={mode !== "you" || statuses[0] != null}
+          onChange={(v) => setAt(setValues, 0, v)}
+          onFocus={() => armClock(0)}
+          onSubmit={() => submit(0)}
+          followup={followup(0)}
+        />
+        <RoundCard
+          index={1}
+          promptSuffix="In your head, no calculator."
+          hint={unlocked(1) ? undefined : "Unlocks after round 1."}
+          value={values[1]}
+          watchMs={watch[1]}
+          ff={mode === "cpu" && ff && roundActive(1)}
+          locked={!unlocked(1)}
+          readOnly={mode === "cpu" || statuses[1] != null}
+          submitDisabled={mode !== "you" || statuses[1] != null}
+          onChange={(v) => setAt(setValues, 1, v)}
+          onFocus={() => armClock(1)}
+          onSubmit={() => submit(1)}
+          followup={followup(1)}
+        />
+        <RoundCard
+          index={2}
+          promptSuffix="Same rules. Just bigger."
+          hint={unlocked(2) ? undefined : "Unlocks after round 2."}
+          value={values[2]}
+          watchMs={watch[2]}
+          ff={mode === "cpu" && ff && roundActive(2)}
+          locked={!unlocked(2)}
+          readOnly={mode === "cpu" || statuses[2] != null}
+          submitDisabled={mode !== "you" || statuses[2] != null}
+          onChange={(v) => setAt(setValues, 2, v)}
+          onFocus={() => armClock(2)}
+          onSubmit={() => submit(2)}
+          extra={
+            mode === "you" && statuses[2] == null ? (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={giveUp}
+                  disabled={!unlocked(2)}
+                  className="text-sm text-compute underline underline-offset-2 disabled:opacity-50"
+                >
+                  I give up, show me
+                </button>
               </div>
-            ) : null}
-          </section>
-        </Reveal>
-      ) : null}
+            ) : null
+          }
+          followup={followup(2)}
+        />
+      </div>
 
-      {round3Open ? (
-        <Reveal>
-          <RoundCard
-            index={2}
-            promptSuffix="Same rules. Just bigger."
-            value={values[2]}
-            watchMs={watch[2]}
-            ff={mode === "cpu" && ff && roundActive(2)}
-            readOnly={mode === "cpu" || statuses[2] != null}
-            submitDisabled={mode !== "you" || statuses[2] != null}
-            onChange={(v) => setAt(setValues, 2, v)}
-            onFocus={() => armClock(2)}
-            onSubmit={() => submit(2)}
-            extra={
-              mode === "you" && statuses[2] == null ? (
-                <div className="mt-2">
-                  <button
-                    type="button"
-                    onClick={giveUp}
-                    className="text-sm text-compute underline underline-offset-2"
-                  >
-                    I give up, show me
-                  </button>
-                </div>
-              ) : null
-            }
-            followup={followup(2)}
-          />
-        </Reveal>
-      ) : null}
-
-      {doneAll ? (
-        <Reveal>
-          <section aria-label="Results" className="flex flex-col gap-4">
-            <div className="rounded-lg border border-grid bg-surface p-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                Three questions, three times
-              </h2>
-              <div role="img" aria-label={barsLabel} className="mt-3">
-                <div aria-hidden="true" className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2">
-                  {GAME_ROUNDS.map((r, i) => {
-                    const t = times[i] ?? 0;
-                    return (
-                      <Fragment key={r.prompt}>
-                        <span className="font-mono text-sm text-ink">{r.prompt}</span>
-                        <span className="min-w-[60px]">
-                          <span
-                            className="block h-4 rounded bg-compute"
-                            style={{ width: `${Math.max(2, Math.round((t / maxT) * 100))}%` }}
-                          />
-                        </span>
-                        <span className="font-mono text-sm tabular-nums text-ink">
-                          {fmt(t)}
-                          {statuses[i] === "gaveup" ? " (gave up)" : statuses[i] === "wrong" ? " (missed)" : ""}
-                        </span>
-                      </Fragment>
-                    );
-                  })}
-                </div>
-              </div>
-              <p className="mt-3 text-sm text-ink-muted">
-                {anyMissed
-                  ? `For the record: ${GAME_ROUNDS.map((r) => `${r.prompt} = ${r.display}`).join(" · ")}`
-                  : "All three right."}
-              </p>
-            </div>
-
-            <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              {mode === "cpu" ? (
-                <>
-                  That is how a person plays: <strong>instant, then seconds, then minutes.</strong> Same kind
-                  of question every round; what grew was the number of steps, and the clock followed. The
-                  size of the problem sets the thinking time.
-                </>
-              ) : (
-                <>
-                  Same kind of question every round. What grew was the number of steps, and the clock
-                  followed. <strong>More steps, more time:</strong> the size of the problem sets the thinking
-                  time.
-                </>
-              )}
-            </div>
-
-            {mode === "you" && popChoice != null ? (
-              <p className="max-w-2xl text-ink">
-                {popChoice === "pop"
-                  ? `And even for you, popping has limits: ${GAME_ROUNDS[1].display} may have popped in, but ${GAME_ROUNDS[2].display} pops in for nobody. Past a certain size, answers stop popping and start taking steps.`
-                  : `You felt the gear change at ${GAME_ROUNDS[1].prompt}. By ${GAME_ROUNDS[2].prompt} there was no choice left: only steps.`}
-              </p>
-            ) : null}
-
-            <p className="max-w-2xl text-ink">
-              <em>Next: a question where the size of the problem is not the problem at all.</em>
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <section
+          aria-label="How did you think about it?"
+          className="rounded-lg border-l-4 border-compute bg-surface p-4"
+        >
+          <h2 className="text-lg font-semibold text-ink">How did you think about it?</h2>
+          <p className="mt-1 text-ink-muted">
+            After round 2 ({GAME_ROUNDS[1].prompt}): did the answer just pop into your head, or did you
+            have to reason through it?
+            {reflectionOpen ? null : " Answer round 2 first; the buttons unlock then."}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <ChoiceButton
+              selected={popChoice === "pop"}
+              disabled={mode !== "you" || !reflectionOpen || popChoice != null}
+              onClick={() => pickPop("pop")}
+            >
+              It just popped in
+            </ChoiceButton>
+            <ChoiceButton
+              selected={popChoice === "reason"}
+              disabled={mode !== "you" || !reflectionOpen || popChoice != null}
+              onClick={() => pickPop("reason")}
+            >
+              I reasoned through it
+            </ChoiceButton>
+          </div>
+          {popChoice != null ? (
+            <p className="mt-3 text-ink">
+              Noted. Keep that feeling in mind as the rounds get bigger.
             </p>
+          ) : null}
+        </section>
 
-            <div>
-              <button
-                type="button"
-                onClick={() => resetTo(mode)}
-                className="rounded bg-surface-raised px-3 py-1.5 text-sm text-ink"
-              >
-                Run it again
-              </button>
+        <section aria-label="Results" className="rounded-lg border border-grid bg-surface p-4">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+            Three questions, three times
+          </h2>
+          <div role="img" aria-label={barsLabel} className="mt-3">
+            <div aria-hidden="true" className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2">
+              {GAME_ROUNDS.map((r, i) => {
+                const t = times[i] ?? 0;
+                return (
+                  <Fragment key={r.prompt}>
+                    <span className="font-mono text-sm text-ink">{r.prompt}</span>
+                    <span className="min-w-[60px]">
+                      <span
+                        className="block h-4 rounded bg-compute"
+                        style={{ width: `${Math.max(2, Math.round((t / maxT) * 100))}%` }}
+                      />
+                    </span>
+                    <span className="font-mono text-sm tabular-nums text-ink">
+                      {times[i] == null
+                        ? "–"
+                        : `${fmt(t)}${
+                            statuses[i] === "gaveup" ? " (gave up)" : statuses[i] === "wrong" ? " (missed)" : ""
+                          }`}
+                    </span>
+                  </Fragment>
+                );
+              })}
             </div>
+          </div>
+          <p className="mt-3 text-sm text-ink-muted">
+            {doneAll
+              ? anyMissed
+                ? `For the record: ${GAME_ROUNDS.map((r) => `${r.prompt} = ${r.display}`).join(" · ")}`
+                : "All three right."
+              : "The bars fill in as each round is answered."}
+          </p>
+        </section>
+      </div>
 
-            <p className="text-xs text-ink-muted">
-              framing: Kahneman, <em>Thinking, Fast and Slow</em> · the times above are from this play
-              session; nothing here is a benchmark
-            </p>
-          </section>
-        </Reveal>
+      <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+        {mode === "cpu" ? (
+          <>
+            That is how a person plays: <strong>instant, then seconds, then minutes.</strong> Same kind
+            of question every round; what grew was the number of steps, and the clock followed. The
+            size of the problem sets the thinking time.
+          </>
+        ) : (
+          <>
+            Same kind of question every round. What grows is the number of steps, and the clock
+            follows. <strong>More steps, more time:</strong> the size of the problem sets the thinking
+            time.
+          </>
+        )}
+      </div>
+
+      {mode === "you" && popChoice != null && doneAll ? (
+        <p className="max-w-2xl text-ink">
+          {popChoice === "pop"
+            ? `And even for you, popping has limits: ${GAME_ROUNDS[1].display} may have popped in, but ${GAME_ROUNDS[2].display} pops in for nobody. Past a certain size, answers stop popping and start taking steps.`
+            : `You felt the gear change at ${GAME_ROUNDS[1].prompt}. By ${GAME_ROUNDS[2].prompt} there was no choice left: only steps.`}
+        </p>
       ) : null}
+
+      <p className="max-w-2xl text-ink">
+        <em>Next: a question where the size of the problem is not the problem at all.</em>
+      </p>
+
+      <div>
+        <button
+          type="button"
+          onClick={() => resetTo(mode)}
+          className="rounded bg-surface-raised px-3 py-1.5 text-sm text-ink"
+        >
+          Run it again
+        </button>
+      </div>
+
+      <p className="text-xs text-ink-muted">
+        framing: Kahneman, <em>Thinking, Fast and Slow</em> · the times above are from this play
+        session; nothing here is a benchmark
+      </p>
 
       <div aria-live="polite" className="sr-only">
         {announce}
