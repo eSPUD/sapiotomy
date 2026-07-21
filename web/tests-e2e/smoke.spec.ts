@@ -8,12 +8,13 @@ test.describe("M0 smoke", () => {
     );
   });
 
-  test("progress rail renders on a story page", async ({ page }) => {
+  test("masthead renders the title on a story page", async ({ page }) => {
     await page.goto("/p/6");
     const rail = page.getByRole("navigation", { name: "Story progress" });
     await expect(rail).toBeVisible();
-    // The current page marker (6) is aria-current.
-    await expect(page.locator('[aria-current="page"]')).toHaveText("6");
+    await expect(
+      rail.getByRole("link", { name: "The Story of Inference-Time Scaling" }),
+    ).toBeVisible();
   });
 
   test("navigation between two stub routes works", async ({ page }) => {

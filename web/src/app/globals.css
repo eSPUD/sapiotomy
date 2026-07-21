@@ -3,8 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Broadsheet: the serif is the chrome. --font-serif is provided by next/font
+     in layout.tsx (Source Serif 4, with the true italic). */
+  --font-sans: var(--font-serif), "Source Serif 4", Georgia, serif;
+  --font-mono: var(--font-serif), "Source Serif 4", Georgia, serif;
 
   /* Semantic hues exposed as CSS vars so SVG gradient stops can reference them
      without hard-coding hex (keeps the "no raw hex in components" rule green). */
@@ -27,7 +29,25 @@ html,
 body {
   background-color: theme("colors.canvas");
   color: theme("colors.ink");
-  font-family: var(--font-sans);
+  font-family: var(--font-serif), "Source Serif 4", Georgia, serif;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Broadsheet headings: the serif scale carries the hierarchy. */
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+
+/* True italic voice for emphasis (never a synthesized oblique). */
+em, i, cite {
+  font-style: italic;
+}
+
+/* Accent-tinted selection (Broadsheet interaction state). */
+::selection {
+  background-color: color-mix(in srgb, theme("colors.compute") 24%, transparent);
 }
 
 /* Purposeful motion only: honour the reader's reduced-motion preference. */
@@ -42,7 +62,7 @@ body {
   }
 }
 
-/* Visible keyboard focus for accessibility. */
+/* Themed keyboard focus — the 2px accent ring, never the default blue. */
 :focus-visible {
   outline: 2px solid theme("colors.compute");
   outline-offset: 2px;

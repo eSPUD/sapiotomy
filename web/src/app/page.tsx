@@ -1,38 +1,94 @@
 import Link from "next/link";
-import { LandingBackdrop } from "@/components/LandingBackdrop";
 import { Reveal } from "@/components/Reveal";
 import { pageHref } from "@/lib/pages";
 
+const CITATION = `@article{author2026inference,
+  title  = {The Story of Inference-Time Scaling},
+  author = {Author, A. and Author, B.},
+  journal = {VISxAI Workshop at IEEE VIS},
+  year   = {2026},
+  url    = {https://example.org/inference-time-scaling}
+}`;
+
+const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+
 export default function Home() {
   return (
-    <section className="relative flex min-h-[76vh] items-center justify-center overflow-hidden rounded-2xl border border-grid bg-canvas">
-      <LandingBackdrop />
+    <div className="flex flex-col gap-16">
+      {/* Hero */}
+      <section className="min-h-[62vh]">
+        <Reveal>
+          <div className="flex max-w-3xl flex-col gap-5 py-16">
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+              An interactive explorable · VISxAI 2026
+            </p>
 
-      {/* readability veil so text stays high-contrast over the art */}
-      <div className="pointer-events-none absolute inset-0 bg-canvas/40" aria-hidden="true" />
+            {/* Front-page furniture: the thick–thin head pair, full-strength ink */}
+            <div className="h-[3px] w-full bg-ink" />
+            <h1 className="text-5xl font-bold leading-[1.05] text-ink sm:text-7xl">
+              The Story of{" "}
+              <span className="block text-compute">Inference-Time Scaling</span>
+            </h1>
+            <div className="h-px w-full bg-ink" />
 
-      <Reveal>
-        <div className="relative z-10 mx-auto flex max-w-2xl flex-col items-center gap-6 px-6 py-16 text-center">
-          <span className="rounded-full border border-grid bg-surface/70 px-3 py-1 text-xs uppercase tracking-widest text-ink-muted">
-            An interactive explorable
-          </span>
-          <h1 className="text-4xl font-bold leading-tight text-ink sm:text-6xl">
-            The Story of{" "}
-            <span className="text-compute">Inference-Time Scaling</span>
-          </h1>
-          <p className="max-w-xl text-lg text-ink-muted">
-            A language model can get dramatically better answers by{" "}
-            <span className="text-ink">thinking longer at answer time</span> — not only by being
-            retrained or made larger. Watch each scaling law appear, hold, and sometimes break.
-          </p>
-          <Link
-            href={pageHref(1)}
-            className="rounded-lg bg-compute px-8 py-3.5 text-lg font-semibold text-canvas shadow-lg transition-transform hover:scale-105"
-          >
-            Begin the story →
-          </Link>
+            <p className="max-w-xl text-lg text-ink-muted">
+              A language model can get dramatically better answers by{" "}
+              <span className="italic text-ink">thinking longer at answer time</span> — not only by
+              being retrained or made larger. Watch each scaling law appear, hold, and sometimes
+              break.
+            </p>
+
+            <Link
+              href={pageHref(1)}
+              className="w-fit rounded bg-compute px-8 py-3 text-lg font-semibold text-canvas shadow-md transition-opacity hover:opacity-90"
+            >
+              Begin the story →
+            </Link>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* About the series */}
+      <section className="flex flex-col gap-8">
+        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">About the series</p>
+
+        <div className="grid gap-10 md:grid-cols-3">
+          <div className="flex flex-col gap-3">
+            <h2 className="text-2xl font-bold text-ink">Who writes it</h2>
+            <p className="text-justify hyphens-auto text-ink-muted">
+              A. Author and B. Author, The University of Texas at Austin. Correspondence to{" "}
+              <a href="mailto:author@utexas.edu" className="text-compute underline">
+                author@utexas.edu
+              </a>
+              . Replace this block with the real author list and affiliations before submission.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <h2 className="text-2xl font-bold text-ink">How to read it</h2>
+            <p className="text-justify hyphens-auto text-ink-muted">
+              Chapters stand alone but build in order. Every figure is live: sliders re-derive the
+              curves, diagrams answer clicks, and the demos sample from a real model when one is
+              available — canned transcripts otherwise.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <h2 className="text-2xl font-bold text-ink">Cite the series</h2>
+            <pre
+              className="whitespace-pre-wrap break-words rounded bg-surface p-4 text-xs leading-relaxed text-ink"
+              style={{ fontFamily: MONO }}
+            >
+              <code>{CITATION}</code>
+            </pre>
+          </div>
         </div>
-      </Reveal>
-    </section>
+
+        <p className="border-t border-grid pt-4 text-sm text-ink-muted">
+          Submitted to the Workshop on Visualization for AI Explainability (VISxAI), IEEE VIS 2026 ·
+          Acknowledgments, funding, and conflict-of-interest statements go here.
+        </p>
+      </section>
+    </div>
   );
 }
