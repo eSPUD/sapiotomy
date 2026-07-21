@@ -24,9 +24,9 @@ export default function Home() {
               An interactive explorable · VISxAI 2026
             </p>
 
-            <h1 className="text-5xl font-bold leading-[1.05] text-ink sm:text-7xl">
+            <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
               The Story of{" "}
-              <span className="block text-compute">Inference-Time Scaling</span>
+              <span className="block whitespace-nowrap text-compute">Inference-Time Scaling</span>
             </h1>
 
             <p className="max-w-xl text-lg text-ink-muted">
@@ -47,42 +47,54 @@ export default function Home() {
       </section>
 
       {/* Contents */}
-      <section className="flex flex-col gap-8">
-        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Contents</p>
-        {acts.map((act) => (
-          <section key={act} className="flex flex-col gap-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
-              Act {act} · {ACTS[act].title} <span className="font-normal">({ACTS[act].range})</span>
-            </h2>
-            <ol className="flex flex-col gap-5">
-              {PAGES.filter((p) => p.act === act).map((p) => (
-                <li key={p.n} className="flex gap-4">
-                  <span className="w-7 shrink-0 pt-0.5 text-right tabular-nums text-ink-muted">
-                    {p.n}
-                  </span>
-                  <div className="flex flex-col gap-0.5">
+      <section aria-label="Contents" className="flex flex-col gap-6">
+        {/* thick–thin rule pair (newspaper furniture) */}
+        <div>
+          <div className="h-[3px] w-full bg-ink" />
+          <div className="mt-1 h-px w-full bg-ink" />
+        </div>
+
+        {/* masthead labels */}
+        <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 text-xs uppercase tracking-[0.15em] text-ink-muted">
+          <span>Contents</span>
+          <span>Twenty chapters</span>
+          <span>Interactive throughout</span>
+        </div>
+
+        {/* three columns, one per Act */}
+        <div className="grid gap-8 md:grid-cols-3">
+          {acts.map((act) => (
+            <div key={act} className="flex flex-col gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-ink-muted">
+                Act {act} · {ACTS[act].title}
+              </h2>
+              <ol className="flex flex-col gap-2.5">
+                {PAGES.filter((p) => p.act === act).map((p) => (
+                  <li key={p.n}>
                     <Link
                       href={pageHref(p.n)}
-                      className="w-fit text-lg font-semibold text-compute hover:underline"
+                      className="group flex items-baseline gap-2 text-sm"
                     >
-                      {p.title}
+                      <span className="tabular-nums text-ink-muted">
+                        {String(p.n).padStart(2, "0")}
+                      </span>
+                      <span className="text-ink group-hover:underline">{p.title}</span>
                     </Link>
-                    <p className="text-ink-muted">{p.concept}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </section>
-        ))}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
+        </div>
+
+        <div className="h-px w-full bg-ink" />
       </section>
 
       {/* About the series */}
       <section className="flex flex-col gap-8">
-        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">About the series</p>
-
         <div className="grid gap-10 md:grid-cols-3">
           <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-bold text-ink">Who writes it</h2>
+            <h2 className="text-2xl font-bold text-ink">Authors</h2>
             <p className="text-justify hyphens-auto text-ink-muted">
               <span className="text-ink">Shashank Bangalore Lakshman</span>, Graduate Student (M.S.
               in Artificial Intelligence), Department of Computer Science, The University of Texas at
@@ -106,7 +118,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-bold text-ink">Cite the series</h2>
+            <h2 className="text-2xl font-bold text-ink">Cite this work</h2>
             <pre
               className="whitespace-pre-wrap break-words rounded bg-surface p-4 text-xs leading-relaxed text-ink"
               style={{ fontFamily: MONO }}
