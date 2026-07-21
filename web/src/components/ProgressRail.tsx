@@ -17,18 +17,12 @@ export function ProgressRail() {
 
   const acts: Act[] = [1, 2, 3];
 
-  // Pages 1-4 withhold the machine names until Page 4's in-article tile flip
-  // performs the reveal; the sticky rail must not leak them beforehand (a
-  // reader arrives on Page 4 pre-flip), so those routes get a neutral site
-  // mark and the full title returns from Page 5 onward.
-  const preReveal = currentN !== null && currentN <= 4;
-
   return (
     <nav aria-label="Story progress" className="sticky top-0 z-10 border-b border-grid bg-canvas/95 backdrop-blur">
       <div className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-2">
         <div className="flex items-center gap-2 text-xs">
           <Link href="/" className="font-semibold text-ink hover:text-compute">
-            {preReveal ? "The Story of Machine Thinking" : "The Story of Inference-Time Scaling"}
+            The Story of Inference-Time Scaling
           </Link>
         </div>
         <ol className="flex flex-wrap items-center gap-x-1 gap-y-2">
