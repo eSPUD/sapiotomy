@@ -13,7 +13,7 @@ export function ProgressRail() {
       className="sticky top-0 z-10 border-b border-grid bg-canvas/95 backdrop-blur"
     >
       <ScrollProgress />
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2.5">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-5">
         <Link href="/" className="text-sm font-semibold text-ink hover:text-compute">
           The Story of Inference-Time Scaling
         </Link>

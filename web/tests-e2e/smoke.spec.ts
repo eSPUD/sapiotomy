@@ -37,6 +37,16 @@ test.describe("M0 smoke", () => {
     expect(after).toBeGreaterThan(before);
   });
 
+  test("progress bar segments are labelled links that navigate", async ({ page }) => {
+    await page.goto("/p/6");
+    const rail = page.getByRole("navigation", { name: "Story progress" });
+    const segments = rail.getByRole("link", { name: /^Chapter \d+:/ });
+    await expect(segments).toHaveCount(20);
+    // Clicking a segment jumps to that page.
+    await rail.getByRole("link", { name: /^Chapter 10:/ }).click();
+    await expect(page).toHaveURL(/\/p\/10$/);
+  });
+
   test("navigation between two stub routes works", async ({ page }) => {
     await page.goto("/p/1");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Think Fast, Think Slow");

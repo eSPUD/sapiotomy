@@ -1,16 +1,18 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PAGES } from "@/lib/pages";
+import { PAGES, pageHref } from "@/lib/pages";
 
 const TOTAL = PAGES.length; // 20 chapters
 
 /**
- * Whole-app reading progress, shown at the bottom edge of the sticky header.
- * The bar is split into one small segment per page: pages already read are
- * filled solid, the current page's segment fills with the accent colour as the
- * reader scrolls it, and pages ahead stay empty. Decorative (aria-hidden).
+ * Whole-app reading progress + quick navigation, at the bottom of the header.
+ * The bar is one small clickable segment per page: read pages are filled solid,
+ * the current page's segment fills as it's scrolled, pages ahead stay empty.
+ * Clicking a segment jumps to that page (clicking the current page scrolls to
+ * its top); hovering (or focusing) a segment shows the page title in a popup.
  */
 export function ScrollProgress() {
   const pathname = usePathname();
@@ -35,14 +37,38 @@ export function ScrollProgress() {
   }, [pathname]);
 
   return (
-    <div aria-hidden="true" className="absolute inset-x-0 bottom-0 flex h-1 gap-px">
-      {Array.from({ length: TOTAL }, (_, i) => {
-        const page = i + 1;
+    <div className="absolute inset-x-0 bottom-0 flex h-2 gap-px">
+      {PAGES.map((p) => {
+        const page = p.n;
         const fill = currentPage > page ? 1 : currentPage === page ? scrollFrac : 0;
+        const isCurrent = currentPage === page;
+        // Keep edge tooltips inside the viewport.
+        const tipAlign =
+          page <= 2 ? "left-0" : page >= TOTAL - 1 ? "right-0" : "left-1/2 -translate-x-1/2";
         return (
-          <div key={page} className="relative flex-1 overflow-hidden bg-grid">
-            <div className="h-full bg-compute" style={{ width: `${fill * 100}%` }} />
-          </div>
+          <Link
+            key={page}
+            href={pageHref(page)}
+            aria-label={`Chapter ${page}: ${p.title}`}
+            onClick={
+              isCurrent
+                ? (e) => {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                : undefined
+            }
+            className="group relative block flex-1"
+          >
+            <div className="h-full overflow-hidden bg-grid transition-colors group-hover:bg-ink-muted">
+              <div className="h-full bg-compute" style={{ width: `${fill * 100}%` }} />
+            </div>
+            <span
+              className={`pointer-events-none absolute top-full z-20 mt-1 whitespace-nowrap rounded bg-ink px-2 py-1 text-[11px] font-medium text-canvas opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${tipAlign}`}
+            >
+              {page}. {p.title}
+            </span>
+          </Link>
         );
       })}
     </div>
