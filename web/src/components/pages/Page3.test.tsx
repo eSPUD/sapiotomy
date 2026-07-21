@@ -32,19 +32,21 @@ const dragMonths = (v: number) =>
   fireEvent.change(fiveYearSlider(), { target: { value: String(v) } });
 
 describe("Page 3 (Daily Training?)", () => {
-  it("shows all three figures, both sliders, and the guess box up front", () => {
+  it("shows two figures, the cost-climb note, both sliders, and the guess box up front", () => {
     render(<Page3 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Daily Training?");
-    // No drag-to-reveal: every figure and its caption are on screen from paint.
+    // Two figures now: the meter and the combined curve. The old compute-growth
+    // chart is collapsed into a dense note.
     expect(screen.getByRole("img", { name: /cumulative bill/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole("img", { name: /training compute of frontier language models/i }),
-    ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /combination across five years/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("img", { name: /training compute of frontier language models/i }),
+    ).toBeNull();
+    expect(screen.getByText(/assumed a fixed training price/i)).toBeInTheDocument();
+    expect(screen.getByText(/per-year/i)).toBeInTheDocument();
     expect(yearSlider()).toBeInTheDocument();
     expect(fiveYearSlider()).toBeInTheDocument();
     expect(screen.getByText(/training every day is simply not feasible/i)).toBeInTheDocument();
-    expect(screen.getByText(/assumed you kept retraining the same model/i)).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /your guess/i })).toBeInTheDocument();
     expect(screen.getByText("optional · skip freely")).toBeInTheDocument();
     // Day 1: the total reads one run's cost (also quoted as the per-run rate).

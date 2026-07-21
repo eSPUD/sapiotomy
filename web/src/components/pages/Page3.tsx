@@ -36,14 +36,6 @@ const COMBO_MONTHS = 60;
 const fmtM = (m: number) =>
   m >= 1e6 ? `$${(m / 1e6).toFixed(1)}T` : m >= 1000 ? `$${(m / 1000).toFixed(1)}B` : `$${Math.round(m)}M`;
 
-/** 3e23 → "10²³" for FLOP axis ticks. */
-const SUP: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
-const fmtFlop = (v: number) =>
-  `10${String(Math.round(Math.log10(v)))
-    .split("")
-    .map((c) => SUP[c] ?? c)
-    .join("")}`;
-
 type GuessState = "open" | "guessed" | "skipped";
 
 export function Page3() {
@@ -56,7 +48,6 @@ export function Page3() {
   const trainTrend = curves.epochTrainingCosts;
   const tp = trainTrend.fit!.params;
   const computeGrowth = curves.epochComputeGrowth;
-  const cp = computeGrowth.fit!.params;
 
   const [day, setDay] = useState(1);
   const [months, setMonths] = useState(12);
@@ -162,7 +153,7 @@ export function Page3() {
       <p className="max-w-2xl text-lg text-ink-muted">
         Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
         stares right at you: reseal the memory <strong>every morning</strong>. Retrain the model
-        daily and it is never a day out of date. The three figures below price that plan.
+        daily and it is never a day out of date. The two figures below price that plan.
       </p>
 
       <div className="grid items-start gap-4 lg:grid-cols-2">
@@ -239,50 +230,24 @@ export function Page3() {
           </div>
         </figure>
 
-        <figure
-          aria-label="Figure 2: the moving frontier"
-          className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
+        <aside
+          aria-label="Note: training price is not fixed"
+          className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink"
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span>Fig. 2 · and it is worse than that</span>
-            <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
-              Epoch AI · redrawn under CC BY
-            </span>
-          </div>
-          <div className="flex flex-col gap-4 p-4">
-            <LineChart
-              title={`Training compute of frontier language models from mid-2020 to May 2024 on a log scale: a straight climb of about five times per year, from GPT-3 at 3 times ten to the 23 FLOP through GPT-4 at 2 times ten to the 25 to Gemini Ultra at 5 times ten to the 25. Redrawn from Epoch AI's published figures.`}
-              points={computeGrowth.points}
-              dots={[
-                { x: cp.gpt3Year, y: cp.gpt3Flop, label: "GPT-3" },
-                { x: cp.gpt4Year, y: cp.gpt4Flop, label: "GPT-4" },
-                { x: cp.geminiUltraYear, y: cp.geminiUltraFlop, label: "Gemini Ultra" },
-              ]}
-              logY
-              yTickFormat={fmtFlop}
-              yDomain={[1e23, 3e26]}
-              xDomain={[2020.3, 2024.6]}
-              xLabel="year"
-              yLabel="training compute (FLOP)"
-              width={460}
-              height={280}
-            />
-            <figcaption className="text-sm text-ink">
-              <strong>Fig. 1 assumed you kept retraining the same model.</strong> The frontier
-              does not sit still: since mid-2020, the compute behind frontier language-model runs
-              has grown about <strong>5x every year</strong> (Epoch measures 5.0x, CI 3.1 to 7.3;
-              4-5x across frontier models broadly). GPT-3 took 3×10²³ FLOP. GPT-4, three years
-              on, took 2×10²⁵: nearly seventy times the compute.
-            </figcaption>
-          </div>
-        </figure>
+          <p className="text-xs font-semibold uppercase tracking-wide text-compute">the catch</p>
+          <p className="mt-2 text-ink">
+            <strong>Fig. 1 assumed a fixed training price.</strong> It is not: Epoch AI puts
+            training-compute cost on a <strong>~5&times;-per-year</strong> climb. Fold that in and
+            you get the curve below.
+          </p>
+        </aside>
 
         <figure
-          aria-label="Figure 3: the two rates, combined"
+          aria-label="Figure 2: the two rates, combined"
           className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
         >
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span>Fig. 3 · the two rates, combined</span>
+            <span>Fig. 2 · the two rates, combined</span>
             <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
               derived from the two Epoch trends
             </span>
@@ -327,7 +292,7 @@ export function Page3() {
               </div>
             </div>
             <figcaption className="text-sm text-ink">
-              Combine the two figures on the left: compute per frontier run grows about 5x a
+              Combine the two rates: compute per frontier run grows about 5x a
               year; cheaper, better hardware absorbs part of that, so the <strong>bill</strong>{" "}
               per run grows ×{tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
               <em>the frontier model of the day</em>, every day, and by year five the program is

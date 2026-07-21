@@ -83,9 +83,9 @@ test.describe("Act 1 (pages 1–5)", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Daily Training?");
     // The spec's hard rule: no inference talk anywhere on this page.
     expect(await page.locator("article").innerText()).not.toMatch(/inference/i);
-    // No drag-to-reveal: all three figures and both captions are on from paint.
+    // No drag-to-reveal: both figures and the cost-climb note are on from paint.
     await expect(page.getByText(/training every day is simply not feasible/i)).toBeVisible();
-    await expect(page.getByText(/assumed you kept retraining the same model/i)).toBeVisible();
+    await expect(page.getByText(/assumed a fixed training price/i)).toBeVisible();
     // Drag the year out with the keyboard: End jumps the slider to day 365.
     const slider = page.getByRole("slider", { name: /drag through the year/i });
     await slider.focus();
