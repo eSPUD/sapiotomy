@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, devices } from "@playwright/test";
 
-const ALL = ["/", "/contents", ...Array.from({ length: 20 }, (_, i) => `/p/${i + 1}`)];
+const ALL = ["/", ...Array.from({ length: 20 }, (_, i) => `/p/${i + 1}`)];
 
 test.describe("M7 polish — accessibility across every page", () => {
   for (const path of ALL) {

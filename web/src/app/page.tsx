@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
-import { pageHref } from "@/lib/pages";
+import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
 
 const CITATION = `@article{bangalorelakshman2026inference,
   title  = {The Story of Inference-Time Scaling},
@@ -13,23 +13,21 @@ const CITATION = `@article{bangalorelakshman2026inference,
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
 export default function Home() {
+  const acts: Act[] = [1, 2, 3];
   return (
     <div className="flex flex-col gap-16">
       {/* Hero */}
-      <section className="min-h-[62vh]">
+      <section>
         <Reveal>
-          <div className="flex max-w-3xl flex-col gap-5 py-16">
+          <div className="flex max-w-3xl flex-col gap-5 py-12">
             <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
               An interactive explorable · VISxAI 2026
             </p>
 
-            {/* Front-page furniture: the thick–thin head pair, full-strength ink */}
-            <div className="h-[3px] w-full bg-ink" />
             <h1 className="text-5xl font-bold leading-[1.05] text-ink sm:text-7xl">
               The Story of{" "}
               <span className="block text-compute">Inference-Time Scaling</span>
             </h1>
-            <div className="h-px w-full bg-ink" />
 
             <p className="max-w-xl text-lg text-ink-muted">
               A language model can get dramatically better answers by{" "}
@@ -46,6 +44,36 @@ export default function Home() {
             </Link>
           </div>
         </Reveal>
+      </section>
+
+      {/* Contents */}
+      <section className="flex flex-col gap-8">
+        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Contents</p>
+        {acts.map((act) => (
+          <section key={act} className="flex flex-col gap-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
+              Act {act} · {ACTS[act].title} <span className="font-normal">({ACTS[act].range})</span>
+            </h2>
+            <ol className="flex flex-col gap-5">
+              {PAGES.filter((p) => p.act === act).map((p) => (
+                <li key={p.n} className="flex gap-4">
+                  <span className="w-7 shrink-0 pt-0.5 text-right tabular-nums text-ink-muted">
+                    {p.n}
+                  </span>
+                  <div className="flex flex-col gap-0.5">
+                    <Link
+                      href={pageHref(p.n)}
+                      className="w-fit text-lg font-semibold text-compute hover:underline"
+                    >
+                      {p.title}
+                    </Link>
+                    <p className="text-ink-muted">{p.concept}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ))}
       </section>
 
       {/* About the series */}
