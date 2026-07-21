@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Reveal } from "@/components/Reveal";
 import { pageHref } from "@/lib/pages";
 
-const CITATION = `@article{author2026inference,
+const CITATION = `@article{bangalorelakshman2026inference,
   title  = {The Story of Inference-Time Scaling},
-  author = {Author, A. and Author, B.},
+  author = {Bangalore Lakshman, Shashank and Eiers, Scott Lawrence},
   journal = {VISxAI Workshop at IEEE VIS},
   year   = {2026},
   url    = {https://example.org/inference-time-scaling}
@@ -56,11 +56,15 @@ export default function Home() {
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Who writes it</h2>
             <p className="text-justify hyphens-auto text-ink-muted">
-              A. Author and B. Author, The University of Texas at Austin. Correspondence to{" "}
-              <a href="mailto:author@utexas.edu" className="text-compute underline">
-                author@utexas.edu
-              </a>
-              . Replace this block with the real author list and affiliations before submission.
+              <span className="text-ink">Shashank Bangalore Lakshman</span>, Graduate Student (M.S.
+              in Artificial Intelligence), Department of Computer Science, The University of Texas at
+              Austin, and <span className="text-ink">Scott Lawrence Eiers</span>, Undergraduate
+              Student (B.S. in Computer Science), Department of Computer Science, Western Governors
+              University. The two authors contributed equally. Correspondence to{" "}
+              <a href="mailto:shashankbl@utexas.edu" className="text-compute underline">
+                shashankbl@utexas.edu
+              </a>{" "}
+              (corresponding author).
             </p>
           </div>
 
