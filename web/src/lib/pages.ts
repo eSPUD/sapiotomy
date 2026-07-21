@@ -29,8 +29,8 @@ export const ACTS: Record<Act, { title: string; range: string }> = {
 
 export const PAGES: PageMeta[] = [
   { n: 1, slug: "think-fast-think-slow", title: "Think Fast, Think Slow", act: 1, concept: "Feel your own two speeds: the size of the problem sets the thinking time.", milestone: "S1" },
-  { n: 2, slug: "machines-two-speeds", title: "The Machine's Two Speeds", act: 1, concept: "Instant answers crack silently as problems grow; thinking catches them.", milestone: "S1" },
-  { n: 3, slug: "match-night", title: "Match Night", act: 1, concept: "Thinking sharpens some answers and buys nothing on others; a fixed fact is memory or nothing.", milestone: "S1" },
+  { n: 2, slug: "two-systems", title: "Two Systems", act: 1, concept: "A question that looks like a lookup: the reader recalls it instantly; a machine whose memory predates the fact cannot, and thinking harder does not create the fact.", milestone: "S1" },
+  { n: 3, slug: "daily-training", title: "Daily Training?", act: 1, concept: "Pricing the obvious fix: one cited per-run cost times a year of daily retraining is an impossible bill.", milestone: "S1" },
   { n: 4, slug: "two-machines", title: "Two Machines", act: 1, concept: "The two ways of having answers get their proper names, and their bills point the money at thinking.", milestone: "S1" },
   { n: 5, slug: "ask-many-times", title: "What If We Ask Many Times?", act: 1, concept: "Repeated sampling and coverage.", milestone: "M2" },
   { n: 6, slug: "majority-vote", title: "The Majority Vote (Self-Consistency)", act: 2, concept: "Sample many chains, take the most common answer.", milestone: "M1" },

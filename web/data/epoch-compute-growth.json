@@ -1,0 +1,34 @@
+{
+  "points": [
+    { "x": 2020.5, "y": 3e23 },
+    { "x": 2021.5, "y": 1.5e24 },
+    { "x": 2022.5, "y": 7.5e24 },
+    { "x": 2023.5, "y": 3.75e25 },
+    { "x": 2024.4, "y": 1.59e26 }
+  ],
+  "fit": {
+    "kind": "exponential-rate",
+    "params": {
+      "perYearLM": 5.0,
+      "ci90Low": 3.1,
+      "ci90High": 7.3,
+      "perYearFrontierLow": 4,
+      "perYearFrontierHigh": 5,
+      "sinceYear": 2020.5,
+      "untilYear": 2024.4,
+      "gpt3Flop": 3e23,
+      "gpt3Year": 2020.5,
+      "gpt4Flop": 2e25,
+      "gpt4Year": 2023,
+      "geminiUltraFlop": 5e25,
+      "geminiUltraYear": 2023.9
+    }
+  },
+  "citation": {
+    "ref": "Sevilla & Roldán 2024 (Epoch AI)",
+    "url": "https://epoch.ai/blog/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year",
+    "venue": "Epoch AI",
+    "preprint": true
+  },
+  "provenance": "Rates and anchors quoted verbatim from Epoch AI (Sevilla & Roldán 2024): frontier training compute grew 4-5x/year (recommended summary figure); language models specifically grew about 5.0x/year (90% CI 3.1x to 7.3x) from the mid-2020 deceleration until May 2024; GPT-3 trained on 3e23 FLOP, GPT-4 estimated 2e25 FLOP, Gemini Ultra 5e25 FLOP. points draw y = 3e23 x 5.0^(x - 2020.5) across the CITED WINDOW ONLY (mid-2020 to May 2024), no extrapolation. The in-app chart is a REDRAWING from these published figures under Epoch's Creative Commons Attribution license, not a copy of their image. Not peer-reviewed (research-org blog); flagged in-app."
+}

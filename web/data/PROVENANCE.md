@@ -36,6 +36,8 @@ figure/table, verbatim vs. interpolated). Summary:
 
 | File | Page | Extraction |
 |---|---|---|
+| epoch-run-cost.json | 3 | Verbatim per-run anchors ($78M GPT-4, $191M Gemini Ultra; Epoch AI estimates via AI Index 2024 ch.1, **not peer-reviewed**); points encode the **derived** cumulative bill of the daily-retrain hypothetical (y = 78x $M, labeled derived in-app) |
+| epoch-compute-growth.json | 3 | Verbatim rates + FLOP anchors (Sevilla & Roldán 2024, Epoch AI, **not peer-reviewed**, CC BY): LMs ~5.0x/yr since mid-2020 (CI 3.1-7.3), frontier 4-5x/yr; GPT-3 3e23, GPT-4 2e25, Gemini Ultra 5e25 FLOP; points draw the trend across the cited window only; in-app chart is a **redrawing**, not Epoch's image |
 | epoch-training-costs.json | 4 | Verbatim rate (Cottier et al. 2024, Epoch AI blog, **not peer-reviewed**); points encode the x2.4/yr multiplier only, no absolute dollars |
 | epoch-inference-prices.json | 4 | Verbatim rates (Epoch AI data insight, **not peer-reviewed**); points encode the /40-per-yr multiplier only, no absolute prices |
 | query-energy.json | 4 | Verbatim per-answer figures (Epoch AI, **not peer-reviewed**) + **derived** ladder rungs (labeled in-app); run energy is an outside **estimate** (33-60 GWh) |

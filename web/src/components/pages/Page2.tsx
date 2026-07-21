@@ -1,60 +1,44 @@
 "use client";
 
 /**
- * Page 2: The Machine's Two Speeds.
- *
- * Ported from prototypes/slide-2 (approved copy). Beats: the blurt ladder
- * (instant answers; right, right, right, then confidently wrong one size up),
- * a prediction gate before the last rung, the crack, then the reasoning trace
- * on the same problem the blurt missed. The honesty labels (informal test,
- * placeholder trace) ship with the page.
+ * Page 2, "Two Systems" (docs/page_2_refactor.md). One question: who won the
+ * FIFA 2026 World Cup? The reader answers first (or hands the question
+ * straight to the machine), then watches a machine whose memory predates the
+ * final try the same question with no web search. Its honest failure names
+ * the two systems: the question looks like a System 1 lookup, but a fact that
+ * never reached the machine forces System 2, and System 2 starves with
+ * nothing to look up. The training question is only the closing teaser; no
+ * inference talk on this page.
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { LiveDemo } from "@/components/LiveDemo";
+import { useEffect, useMemo, useState } from "react";
 import { PageNav } from "@/components/PageNav";
 import { Reveal } from "@/components/Reveal";
-import { Slider } from "@/components/Slider";
-import { INSTANT_BLURTS, TRACE_4502, TRACE_4502_ANSWER } from "@/lib/authored";
+import { WORLD_CUP_2026 } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 2;
+const WC = WORLD_CUP_2026;
 
-const BLURT_ROUNDS = INSTANT_BLURTS.rounds;
-const CRACK_ROUND = BLURT_ROUNDS[3];
+/** Milliseconds per streamed word of the machine's reply. */
+const STREAM_MS = 55;
 
-/** Note shown next to the ask button before the first rung. */
-const ASK_START_NOTE = "2 + 2 first.";
-/** Note shown after rung r lands (index r), teasing the next rung. */
-const NEXT_NOTES = ["17 × 24 next.", "Now the big one from the game.", "One more, one size up."];
-/** Verdict sublines for the three rungs that hold. */
-const VERDICT_SUBS = [
-  "Same as you.",
-  "This is the one where you had to switch gears.",
-  "In the game this one cost you minutes, or a give-up. The blurt did not even slow down.",
-];
-
-// Word geometry for the trace scrubber.
-const SEG_WORDS: string[][] = TRACE_4502.map((s) => s.split(" "));
-const SEG_STARTS: number[] = [];
-const SEG_ENDS: number[] = [];
-{
-  let acc = 0;
-  for (const words of SEG_WORDS) {
-    SEG_STARTS.push(acc);
-    acc += words.length;
-    SEG_ENDS.push(acc);
-  }
+/**
+ * The machine's reply. Today this resolves the authored example instantly;
+ * the planned live route (a small open model behind a free API, still with NO
+ * web search) replaces the body of this function and nothing else.
+ */
+async function fetchMachineReply(): Promise<readonly string[]> {
+  return WC.exampleReply;
 }
-const TOTAL_WORDS = SEG_ENDS[SEG_ENDS.length - 1];
-
-const fmt = (n: number) => n.toLocaleString("en-US");
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+
+type RunState = "idle" | "streaming" | "done";
 
 export function Page2() {
   const page = getPage(PAGE_N)!;
@@ -65,160 +49,97 @@ export function Page2() {
     setReducedMotion(prefersReducedMotion());
   }, []);
 
-  // --- the blurt ladder ---
-  /** Rungs fully landed (answer typed + verdict shown). */
-  const [completed, setCompleted] = useState(0);
-  /** Rung currently typing its answer, if any. */
-  const [activeRow, setActiveRow] = useState<number | null>(null);
-  const [activeChars, setActiveChars] = useState(0);
-  const [prediction, setPrediction] = useState<"holds" | "cracks" | null>(null);
+  // --- the question, played by the reader ---
+  const [humanPick, setHumanPick] = useState<number | null>(null);
+  const [overrode, setOverrode] = useState(false);
+  const [machineOpen, setMachineOpen] = useState(false);
   const [announcement, setAnnouncement] = useState("");
 
-  // --- the trace ---
+  // --- the machine's reply ---
+  const [reply, setReply] = useState<readonly string[] | null>(null);
+  const [runState, setRunState] = useState<RunState>("idle");
   const [pos, setPos] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [docMode, setDocMode] = useState(false);
-  const [traceDone, setTraceDone] = useState(false);
 
-  /** Land rung r: show its verdict and announce the outcome. */
-  const land = useCallback((r: number) => {
-    setActiveRow(null);
-    setCompleted(r + 1);
-    const round = BLURT_ROUNDS[r];
-    const ans = fmt(round.blurted);
-    if (r < 3) {
-      setAnnouncement(`${round.prompt}: answered ${ans} instantly, and it is right. ${NEXT_NOTES[r]}`);
+  const segWords = useMemo(() => (reply ?? []).map((p) => p.split(" ")), [reply]);
+  const segStarts = useMemo(() => {
+    let acc = 0;
+    return segWords.map((w) => {
+      const s = acc;
+      acc += w.length;
+      return s;
+    });
+  }, [segWords]);
+  const totalWords = useMemo(() => segWords.reduce((n, w) => n + w.length, 0), [segWords]);
+
+  const locked = humanPick !== null || overrode;
+  const winner = WC.options[WC.winnerIndex];
+  const pickedRight = humanPick !== null && humanPick === WC.winnerIndex;
+
+  const pick = (i: number) => {
+    if (locked) return;
+    recordInteraction(PAGE_N);
+    setHumanPick(i);
+    setAnnouncement(
+      i === WC.winnerIndex
+        ? `${WC.options[i]}: right, and it took zero steps. Next, hand the same question to the machine.`
+        : `You said ${WC.options[i]}; the recorded winner here is ${winner}. Next, hand the same question to the machine.`,
+    );
+  };
+
+  const overrideToMachine = () => {
+    if (locked || machineOpen) return;
+    recordInteraction(PAGE_N);
+    setOverrode(true);
+    setMachineOpen(true);
+    setAnnouncement("You passed the question to the machine. Press run to watch it try.");
+  };
+
+  const handToMachine = () => {
+    if (machineOpen) return;
+    recordInteraction(PAGE_N);
+    setMachineOpen(true);
+    setAnnouncement("The machine has the question. Press run to watch it try.");
+  };
+
+  const onRun = async () => {
+    if (runState !== "idle") return;
+    recordInteraction(PAGE_N);
+    const r = await fetchMachineReply();
+    setReply(r);
+    if (reducedMotion) {
+      setPos(r.reduce((n, p) => n + p.split(" ").length, 0));
+      setRunState("done");
+      setAnnouncement(
+        "The machine declined to guess: its training data ends before the final. The two systems comparison is below.",
+      );
     } else {
-      setAnnouncement(
-        `${round.prompt}: answered ${ans} instantly, and it is wrong. The true product is ${fmt(round.trueValue)}; off by ten thousand.`,
-      );
+      setPos(0);
+      setRunState("streaming");
+      setAnnouncement("The machine is replying.");
     }
-  }, []);
+  };
 
-  // Type the active rung's answer character by character (about 45ms/char).
+  // Stream the reply word by word.
   useEffect(() => {
-    if (activeRow === null) return;
-    const r = activeRow;
-    const text = fmt(BLURT_ROUNDS[r].blurted);
-    let beat: ReturnType<typeof setTimeout> | undefined;
-    let i = 0;
-    const timer = setInterval(() => {
-      i += 1;
-      setActiveChars(i);
-      if (i >= text.length) {
-        clearInterval(timer);
-        // A short beat before the last rung's verdict flips the row.
-        if (r === 3) beat = setTimeout(() => land(r), 700);
-        else land(r);
-      }
-    }, 45);
-    return () => {
-      clearInterval(timer);
-      if (beat) clearTimeout(beat);
-    };
-  }, [activeRow, land]);
+    if (runState !== "streaming") return;
+    const t = setInterval(() => setPos((p) => p + 1), STREAM_MS);
+    return () => clearInterval(t);
+  }, [runState]);
 
-  const askNext = () => {
-    if (activeRow !== null || completed >= 3) return;
-    recordInteraction(PAGE_N);
-    if (reducedMotion) {
-      land(completed);
-      return;
-    }
-    setActiveChars(0);
-    setActiveRow(completed);
-  };
-
-  const predict = (choice: "holds" | "cracks") => {
-    if (prediction !== null) return;
-    recordInteraction(PAGE_N);
-    setPrediction(choice);
-  };
-
-  // Once a prediction is locked, play the last rung.
+  // Reaching the last word finishes the run exactly once.
   useEffect(() => {
-    if (prediction === null || completed !== 3 || activeRow !== null) return;
-    if (reducedMotion) {
-      land(3);
-      return;
-    }
-    const t = setTimeout(() => {
-      setActiveChars(0);
-      setActiveRow(3);
-    }, 500);
-    return () => clearTimeout(t);
-  }, [prediction, completed, activeRow, reducedMotion, land]);
+    if (runState !== "streaming" || totalWords === 0 || pos < totalWords) return;
+    setRunState("done");
+    setAnnouncement(
+      "The machine declined to guess: its training data ends before the final. The two systems comparison is below.",
+    );
+  }, [pos, totalWords, runState]);
 
-  // Play the trace word by word (about 60ms/word).
-  useEffect(() => {
-    if (!playing) return;
-    const timer = setInterval(() => {
-      setPos((p) => (p < TOTAL_WORDS ? p + 1 : p));
-    }, 60);
-    return () => clearInterval(timer);
-  }, [playing]);
-
-  // Reaching the last word finishes the trace exactly once.
-  useEffect(() => {
-    if (pos < TOTAL_WORDS) return;
-    setPlaying(false);
-    if (!traceDone) {
-      setTraceDone(true);
-      setAnnouncement(
-        `Trace finished. The answer is ${fmt(TRACE_4502_ANSWER)}; the blurt was wrong and the thinking caught it.`,
-      );
-    }
-  }, [pos, traceDone]);
-
-  const onPlayClick = () => {
-    recordInteraction(PAGE_N);
-    if (reducedMotion) {
-      // Step-through mode: one trace segment per press.
-      const idx = SEG_ENDS.findIndex((end) => pos < end);
-      if (idx === -1) return;
-      const next = SEG_ENDS[idx];
-      setPos(next);
-      if (next < TOTAL_WORDS) setAnnouncement(`Step ${idx + 1} of ${TRACE_4502.length} shown.`);
-      return;
-    }
-    if (playing) {
-      setPlaying(false);
-      // Matches the prototype: no "paused" call-out once the trace has finished.
-      if (pos < TOTAL_WORDS) setAnnouncement("Trace paused.");
-      return;
-    }
-    if (pos >= TOTAL_WORDS) return;
-    setPlaying(true);
-    setAnnouncement("Trace playing.");
-  };
-
-  const onJumpToEnd = () => {
-    recordInteraction(PAGE_N);
-    setPlaying(false);
-    setPos(TOTAL_WORDS);
-  };
-
-  const onScrub = (v: number) => {
-    recordInteraction(PAGE_N);
-    setPlaying(false);
-    setPos(v);
-  };
-
-  const onDocMode = () => {
-    recordInteraction(PAGE_N);
-    const on = !docMode;
-    setDocMode(on);
-    if (on) {
-      setPlaying(false);
-      setPos(TOTAL_WORDS);
-    }
-  };
-
-  const shownRows = Math.max(completed, activeRow !== null ? activeRow + 1 : 0);
-  const playLabel = reducedMotion ? "Show next step ▸" : playing ? "⏸ Pause" : "▶ Play";
   const optionClass = (selected: boolean) =>
-    `min-w-[150px] flex-1 rounded border px-3 py-2 text-sm text-ink ${
-      selected ? "border-compute bg-compute/40 font-semibold" : "border-grid bg-surface-raised"
+    `rounded border px-4 py-2.5 text-center text-sm ${
+      selected
+        ? "border-compute bg-compute/40 font-semibold text-ink"
+        : "border-grid bg-surface-raised text-ink"
     }`;
 
   return (
@@ -231,268 +152,240 @@ export function Page2() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        The game ended on a question: what if something answered instantly, no matter how big the
-        problem gets? There is such a thing. Ask an AI agent to answer with{" "}
-        <strong>no thinking allowed</strong>, and the answer just arrives: no steps, no pause, no
-        scratch work. Let&apos;s find out what that is worth.
+        Page 1 clocked your two gears on arithmetic. Now a question with no arithmetic in it at
+        all. The <strong>2026 World Cup</strong> is done: the final has been played, the cup handed
+        over. Four names; one of them lifted it.
       </p>
 
-      <section aria-label="Instant mode" className="flex flex-col gap-4">
-        <p className="max-w-2xl text-ink">
-          Same problems as the game, plus one size the game never reached. The rule for the agent:{" "}
-          <strong>first thing that pops, no working it out.</strong> You know what each of these
-          cost you. Watch what they cost it.
-        </p>
-
+      <section aria-label="The question" className="flex flex-col gap-3">
         <div className="overflow-hidden rounded-lg border border-grid bg-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span>instant mode: no thinking allowed</span>
-            <span className="flex flex-wrap gap-1.5">
-              <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
-                {`informal real test · ${INSTANT_BLURTS.model} · ${INSTANT_BLURTS.testedOn}`}
-              </span>
-              <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-                re-run + log before shipping
-              </span>
+            <span>one question · four names</span>
+            <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
+              answer key: authored placeholder · verify before shipping
             </span>
           </div>
-          <div className="flex flex-col gap-2 p-4">
-            {BLURT_ROUNDS.slice(0, shownRows).map((round, i) => {
-              const done = i < completed;
-              const isCracked = i === 3 && done;
-              const answerText = fmt(round.blurted);
-              const shownText = done ? answerText : answerText.slice(0, activeChars);
-              return (
-                <div
-                  key={round.prompt}
-                  className={`rounded-lg border p-3 ${
-                    isCracked ? "border-wrong bg-wrong/15" : "border-grid bg-surface-raised"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-baseline justify-between gap-3">
-                    <span className="font-mono text-lg font-semibold text-ink">{round.prompt}</span>
-                    <span className="min-h-[1.3em] font-mono text-lg tabular-nums text-ink">
-                      {shownText}
-                    </span>
-                  </div>
-                  {done &&
-                    (i < 3 ? (
-                      <p className="mt-1 text-sm text-correct">
-                        ✓ instant, right.{" "}
-                        <span className="text-ink-muted">{VERDICT_SUBS[i]}</span>
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-sm text-wrong">
-                        ✗ wrong.{" "}
-                        <span className="text-ink-muted">
-                          The true product is{" "}
-                          <strong className="font-mono tabular-nums text-ink">
-                            {fmt(round.trueValue)}
-                          </strong>
-                          . Off by exactly {fmt(round.trueValue - round.blurted)}, and delivered
-                          with the same certainty as the other three.
-                        </span>
-                      </p>
-                    ))}
-                </div>
-              );
-            })}
-            {completed < 3 && (
-              <div className="mt-1 flex items-center gap-3">
+          <div className="flex flex-col gap-3 p-4 sm:p-6">
+            <p className="text-lg text-ink">{WC.question}</p>
+            <div role="group" aria-label="The four names" className="grid gap-2 sm:grid-cols-2">
+              {WC.options.map((name, i) => (
                 <button
+                  key={name}
                   type="button"
-                  onClick={askNext}
-                  disabled={activeRow !== null}
-                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                  aria-pressed={humanPick === i}
+                  onClick={() => pick(i)}
+                  className={optionClass(humanPick === i)}
                 >
-                  Ask it ▸
+                  {name}
+                  {humanPick === i ? <span aria-hidden="true"> ✓</span> : null}
                 </button>
-                <span className="text-sm text-ink-muted">
-                  {completed === 0 ? ASK_START_NOTE : NEXT_NOTES[completed - 1]}
-                </span>
-              </div>
-            )}
+              ))}
+            </div>
+
+            {humanPick !== null ? (
+              <p className="max-w-2xl text-ink">
+                {pickedRight ? (
+                  <>
+                    <span className="text-correct">✓ {winner}.</span>{" "}
+                    <span className="text-ink-muted">
+                      And clock how the answer arrived: no steps, no scratch work, not even a
+                      pause. The name was simply <em>there</em>, the way 4 was there for 2 + 2. A
+                      watched final files itself.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-wrong">✗ You said {WC.options[humanPick]};</span>{" "}
+                    <span className="text-ink-muted">
+                      the record says <strong className="text-ink">{winner}</strong>. Notice there
+                      was still nothing to <em>work out</em>: a result you never saw cannot be
+                      derived, only remembered. It was in there, or it was not.
+                    </span>
+                  </>
+                )}
+              </p>
+            ) : null}
+
+            {!machineOpen ? (
+              humanPick !== null ? (
+                <div>
+                  <button
+                    type="button"
+                    onClick={handToMachine}
+                    className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas"
+                  >
+                    Now hand the same question to the machine ▸
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-ink-muted">or skip yourself entirely:</span>
+                  <button
+                    type="button"
+                    onClick={overrideToMachine}
+                    className="rounded border border-grid bg-surface-raised px-4 py-2 text-sm text-ink"
+                  >
+                    Don&apos;t answer. Let the machine take it ▸
+                  </button>
+                </div>
+              )
+            ) : null}
           </div>
         </div>
-
-        {completed >= 3 && (
-          <Reveal>
-            <div className="rounded-lg border border-grid bg-surface p-4">
-              <p className="text-xs uppercase tracking-wide text-ink-muted">
-                Before the last one, a prediction
-              </p>
-              <p className="mt-1 text-lg text-ink">
-                Three for three, and the third one beat your best time by minutes. Next up is a
-                size the game never reached: <strong className="font-mono">{CRACK_ROUND.prompt}</strong>.
-                Does the blurt hold?
-              </p>
-              <div
-                role="group"
-                aria-label="Your prediction for the biggest problem"
-                className="mt-3 flex flex-wrap gap-2"
-              >
-                <button
-                  type="button"
-                  aria-pressed={prediction === "holds"}
-                  onClick={() => predict("holds")}
-                  className={optionClass(prediction === "holds")}
-                >
-                  It holds
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={prediction === "cracks"}
-                  onClick={() => predict("cracks")}
-                  className={optionClass(prediction === "cracks")}
-                >
-                  It cracks
-                </button>
-              </div>
-              {prediction !== null && (
-                <p className="mt-3 max-w-2xl text-ink">
-                  {prediction === "holds"
-                    ? "A fair bet; the streak has been perfect. Watch."
-                    : "A suspicious mind. Watch."}
-                </p>
-              )}
-            </div>
-          </Reveal>
-        )}
       </section>
 
-      {completed === 4 && (
-        <section aria-label="The crack" className="flex flex-col gap-4">
-          <Reveal>
-            <div className="rounded-lg border-l-4 border-wrong bg-wrong/15 p-4 text-ink">
-              <strong>Nothing on the surface changed.</strong> No hesitation, no &ldquo;probably&rdquo;,
-              no smaller font. It handed over a wrong number with exactly the confidence of the
-              three right ones. And the miss is close: within four hundredths of a percent, near
-              enough to sail past anyone not checking. That is the trouble with a pop: it is a
-              guess wearing certainty&apos;s clothes, and it does not know when it is wrong.
-            </div>
-          </Reveal>
-          <p className="max-w-2xl text-ink">
-            So give the agent what round 3 of the game gave you:{" "}
-            <strong>permission to think.</strong> Same problem, thinking allowed. Here is the
-            reasoning trace, its actual scratch work, one step at a time.
-          </p>
-
-          <div className="overflow-hidden rounded-lg border border-grid bg-surface">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-              <span>{`the agent's scratch work · ${CRACK_ROUND.prompt}`}</span>
-              <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-                placeholder trace (real run to follow)
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 border-b border-grid px-4 py-3">
-              <button
-                type="button"
-                onClick={onPlayClick}
-                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-              >
-                {playLabel}
-              </button>
-              <button
-                type="button"
-                onClick={onJumpToEnd}
-                className="rounded bg-surface-raised px-3 py-1.5 text-sm text-ink"
-              >
-                ⏭ Jump to end
-              </button>
-              <div className="min-w-[160px] flex-1">
-                <Slider
-                  label="Scrub through the trace"
-                  min={0}
-                  max={TOTAL_WORDS}
-                  value={pos}
-                  onChange={onScrub}
-                  suffix={` of ${TOTAL_WORDS} words`}
-                />
-              </div>
-              <button
-                type="button"
-                aria-pressed={docMode}
-                onClick={onDocMode}
-                className={`rounded border px-3 py-1.5 text-sm text-ink ${
-                  docMode ? "border-compute bg-compute/40 font-semibold" : "border-grid bg-surface-raised"
-                }`}
-              >
-                Read as document
-              </button>
-            </div>
-            <div className="max-h-[420px] overflow-y-auto p-4">
-              <p className="mb-2 text-xs uppercase tracking-wide text-ink-muted">thinking…</p>
-              <div className="max-w-2xl text-sm leading-relaxed text-ink">
-                {SEG_WORDS.map((words, i) => {
-                  const visible = docMode
-                    ? words.length
-                    : Math.max(0, Math.min(words.length, pos - SEG_STARTS[i]));
-                  if (visible <= 0) return null;
-                  return <span key={i}>{words.slice(0, visible).join(" ")} </span>;
-                })}
-              </div>
-              {traceDone && (
-                <p className="mt-3 border-t border-dashed border-grid pt-3 text-lg text-ink">
-                  Answer:{" "}
-                  <strong className="font-mono tabular-nums">
-                    {CRACK_ROUND.prompt} = {fmt(TRACE_4502_ANSWER)}
-                  </strong>
-                  <span className="mt-1 block text-sm text-ink-muted">
-                    The blurt said {fmt(CRACK_ROUND.blurted)}. Six steps of checking caught it.
-                  </span>
-                </p>
+      {machineOpen ? (
+        <Reveal>
+          <section aria-label="The machine tries the question" className="flex flex-col gap-3">
+            <p className="max-w-2xl text-ink">
+              {overrode ? (
+                <>
+                  Fair enough; you passed. Notice what passing means here: nothing to figure out,
+                  so either the night is filed in your memory or there is no path to an answer at
+                  all. Now watch a machine in that exact spot. Two facts about it, both on the
+                  label: its memory was sealed <strong>early in 2025</strong>, months before this
+                  final, and it has <strong>no web search</strong>.
+                </>
+              ) : (
+                <>
+                  Now the exact same question goes to a machine. Two facts about it before it
+                  starts, both on the label: its memory was sealed <strong>early in 2025</strong>,
+                  months before this final, and it has <strong>no web search</strong>.
+                </>
               )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {traceDone && (
-        <section aria-label="After the trace" className="flex flex-col gap-4">
-          <Reveal>
-            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              Notice what the trace did. It opened with <em>the very same pop</em>, then refused to
-              trust it: broke the problem into pieces, worked each piece, hit a mismatch, and
-              checked again by a different route. The instant answer is still in there; thinking is
-              what catches it when it is wrong.{" "}
-              <strong>More steps, more time, and the answer flipped from wrong to right.</strong>
-            </div>
-          </Reveal>
-
-          <div className="rounded-lg border border-grid bg-surface p-4">
-            <p className="text-xs uppercase tracking-wide text-ink-muted">Honesty note</p>
-            <p className="mt-1 max-w-2xl text-ink">
-              In day-to-day use, a modern agent asked for arithmetic will usually just grab a
-              calculator: one line of code,{" "}
-              <code className="rounded bg-surface-raised px-1 font-mono text-sm">
-                print(4502 * 6398)
-              </code>
-              , done. Arithmetic is this deck&apos;s demo because you can feel every step of it in
-              your own head. The two speeds are real and they are everywhere; the multiplication is
-              just the cleanest place to watch them.
             </p>
-          </div>
 
-          <p className="max-w-2xl text-ink">
-            <em>
-              So: the pop is fast and silent about its failures, and thinking catches them. A fair
-              rule so far: when the problem gets big, turn the thinking up. Does that rule always
-              hold? Tonight happens to offer the perfect test. Next page: match night.
-            </em>
-          </p>
-          <p className="text-xs text-ink-muted">
-            the instant answers reproduce an informal test of a real agent ({INSTANT_BLURTS.model},{" "}
-            {INSTANT_BLURTS.testedOn}, verbatim); the trace is a labeled placeholder · no accuracy
-            percentages or benchmark numbers appear on this page · framing: Kahneman,{" "}
-            <em>Thinking, Fast and Slow</em>
-          </p>
+            <div className="overflow-hidden rounded-lg border border-grid bg-surface">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+                <span>{`${WC.machine.label} · ${WC.machine.cutoffLabel} · ${WC.machine.constraintLabel}`}</span>
+                <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
+                  example reply, authored · live model to follow
+                </span>
+              </div>
+              <div className="flex flex-col gap-2 p-4">
+                <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">you →</p>
+                <p className="max-w-2xl text-ink">
+                  {WC.question} {WC.options.join(", ")}?
+                </p>
+                <p className="mt-2 border-t border-dashed border-grid pt-3 font-mono text-xs uppercase tracking-wide text-ink-muted">
+                  the machine →
+                </p>
+                {runState === "idle" ? (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={onRun}
+                      className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas"
+                    >
+                      Run it ▸
+                    </button>
+                  </div>
+                ) : (
+                  <div className="max-w-2xl text-sm leading-relaxed text-ink">
+                    {runState === "streaming" && pos === 0 ? (
+                      <span aria-hidden="true" className="animate-pulse text-compute">
+                        ▍
+                      </span>
+                    ) : null}
+                    {segWords.map((words, i) => {
+                      const visible = Math.max(0, Math.min(words.length, pos - segStarts[i]));
+                      if (visible <= 0) return null;
+                      const isHead =
+                        runState === "streaming" &&
+                        pos >= segStarts[i] &&
+                        pos < segStarts[i] + words.length;
+                      return (
+                        <p key={i} className={i > 0 ? "mt-2" : undefined}>
+                          {words.slice(0, visible).join(" ")}
+                          {isHead ? (
+                            <span aria-hidden="true" className="animate-pulse text-compute">
+                              ▍
+                            </span>
+                          ) : null}
+                        </p>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        </Reveal>
+      ) : null}
 
-          <LiveDemo
-            prompt="What is 4502 x 6398? Think through it step by step."
-            fallbackTrace={TRACE_4502}
-          />
-        </section>
-      )}
+      {runState === "done" ? (
+        <Reveal>
+          <section aria-label="Two systems, one question" className="flex flex-col gap-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-grid bg-surface p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-compute">
+                  System 1 · the pop
+                </p>
+                <p className="mb-1 mt-1 text-lg font-semibold text-ink">
+                  A stored fact, recalled whole.
+                </p>
+                <p className="font-mono text-sm text-ink-muted">question → memory → answer</p>
+                <p className="mt-2 text-sm text-ink-muted">
+                  Zero steps, zero time. It is either in there, or it is nowhere.
+                </p>
+              </div>
+              <div className="rounded-lg border border-grid bg-surface p-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-compute">
+                  System 2 · the steps
+                </p>
+                <p className="mb-1 mt-1 text-lg font-semibold text-ink">
+                  An answer built from parts.
+                </p>
+                <p className="font-mono text-sm text-ink-muted">
+                  question → gather the pieces → work them → answer
+                </p>
+                <p className="mt-2 text-sm text-ink-muted">
+                  Slow and effortful, and it needs raw material: facts to gather, then reason
+                  over.
+                </p>
+              </div>
+            </div>
+
+            <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+              <strong>&ldquo;Who won?&rdquo; looks like a System 1 question.</strong> A fixed
+              fact, a one-shelf lookup
+              {humanPick !== null ? (
+                <>, and that is exactly how you answered it</>
+              ) : null}
+              . But the fact is <em>too new</em>: the machine&apos;s shelf was stocked in early
+              2025, the final is not on it, and the pop came up empty. That forced the slow road,
+              and the slow road starved. System 2 works by looking facts up and reasoning over
+              them; with no web search there was nothing to look up, so there was nothing to
+              reason <em>about</em>.{" "}
+              <strong>When the fact is missing, no amount of thinking manufactures it.</strong>{" "}
+              The honest move was the one you watched: say so.
+            </div>
+
+            <div className="max-w-2xl rounded-lg border-l-4 border-wrong bg-wrong/15 p-4 text-ink">
+              <strong>The trap is the other outcome.</strong> A machine that skips the admission
+              and simply names a winner: instant, fluent, and hollow. That is System 1 firing
+              with an empty shelf, a guess wearing certainty&apos;s clothes. The questions that
+              look easiest, the plain lookups, are exactly where it fails silently.
+            </div>
+
+            <p className="max-w-2xl text-ink">
+              <em>
+                Which leaves one question standing. The machine failed because the final never
+                reached its memory. So: what if it had? What if the model had been trained on
+                data that includes that night? What that takes, and what it costs, is the next
+                page.
+              </em>
+            </p>
+
+            <p className="text-xs text-ink-muted">
+              the question is real and recent on purpose · the answer key is an authored
+              placeholder; verify the winner before shipping · the machine&apos;s reply is an
+              authored example of the ideal honest failure; a live open model with no web search
+              replaces it later · framing: Kahneman, <em>Thinking, Fast and Slow</em>
+            </p>
+          </section>
+        </Reveal>
+      ) : null}
 
       <div aria-live="polite" className="sr-only">
         {announcement}

@@ -16,86 +16,115 @@ const mm = (q: string) => ({
 vi.stubGlobal("matchMedia", mm);
 
 import { Page3 } from "./Page3";
-import { MATCH_NIGHT } from "@/lib/authored";
+import { curves } from "@/lib/curves";
 
-describe("Page 3 (Match Night)", () => {
-  it("initially shows the forecast card only", () => {
+const RUN_M = curves.epochRunCost.fit!.params.usdMillionPerRun;
+
+// The spec's hard rule for this page: training only, no inference talk.
+const BANNED = /inference/i;
+const expectClean = () => {
+  expect(document.body.textContent ?? "").not.toMatch(BANNED);
+};
+
+const slider = () => screen.getByRole("slider", { name: /drag through the year/i });
+const drag = (v: number) => fireEvent.change(slider(), { target: { value: String(v) } });
+
+describe("Page 3 (Daily Training?)", () => {
+  it("starts on day 1 with the chart, slider, and per-run total; no summary, no guess box", () => {
     render(<Page3 />);
-    expect(screen.getByText("Who wins tonight?")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "The favorite" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "The underdog" })).toBeInTheDocument();
-    // Later beats are hidden until the first pick.
-    expect(screen.queryByText("Thinking pays.")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Breaking, an hour before kickoff/i)).not.toBeInTheDocument();
-    expect(screen.queryByText("One more question")).not.toBeInTheDocument();
-    expect(screen.queryByText("Familiar")).not.toBeInTheDocument();
-    // Navigation is always present.
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Daily Training?");
+    expect(screen.getByRole("img", { name: /cumulative bill/i })).toBeInTheDocument();
+    expect(slider()).toBeInTheDocument();
+    // Day 1: the total reads one run's cost (also quoted as the per-run rate).
+    expect(screen.getAllByText(`$${RUN_M}M`).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/simply not feasible/i)).toBeNull();
+    expect(screen.queryByText(/assumed you kept retraining the same model/i)).toBeNull();
+    expect(screen.queryByRole("slider", { name: /drag through five years/i })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: /your guess/i })).toBeNull();
     expect(screen.getByRole("navigation", { name: /page navigation/i })).toBeInTheDocument();
+    expectClean();
   });
 
-  it("picking The favorite reveals the follow-up and the breaking-news card", () => {
+  it("dragging to day 13 crosses $1B, announces it, and opens the summary + guess box", () => {
     render(<Page3 />);
-    fireEvent.click(screen.getByRole("button", { name: "The favorite" }));
-    expect(screen.getByRole("button", { name: "The favorite" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByText("Thinking pays.")).toBeInTheDocument();
-    expect(screen.getByText(/Breaking, an hour before kickoff/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Stick with my pick" })).toBeInTheDocument();
+    drag(13);
+    expect(screen.getByText("$1.0B")).toBeInTheDocument();
+    expect(screen.getByText(/passed one billion dollars/)).toBeInTheDocument();
+    expect(screen.getByText(/training every day is simply not feasible/i)).toBeInTheDocument();
+    expect(screen.getByText(/There is no justification for it\./)).toBeInTheDocument();
+    expect(screen.getByText(/Any guesses\?/)).toBeInTheDocument();
+    expect(screen.getByText("optional · skip freely")).toBeInTheDocument();
+    expectClean();
   });
 
-  it("locks the forecast pick after the first choice", () => {
+  it("the year lands at $28.5B across 365 runs", () => {
     render(<Page3 />);
-    fireEvent.click(screen.getByRole("button", { name: "The favorite" }));
-    fireEvent.click(screen.getByRole("button", { name: "The underdog" }));
-    expect(screen.getByRole("button", { name: "The favorite" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByRole("button", { name: "The underdog" })).toHaveAttribute(
-      "aria-pressed",
-      "false",
-    );
+    drag(365);
+    // The main total and the combined card's same-model tile both read $28.5B.
+    expect(screen.getAllByText("$28.5B").length).toBeGreaterThan(0);
+    expect(screen.getByText(/365 days · 365 runs/)).toBeInTheDocument();
+    expectClean();
   });
 
-  it("picking Switch reveals the past-final card and strikes the form-guide line", () => {
-    const { container } = render(<Page3 />);
-    fireEvent.click(screen.getByRole("button", { name: "The underdog" }));
-    fireEvent.click(screen.getByRole("button", { name: "Switch" }));
-    expect(screen.getByRole("button", { name: "Switch" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByText("Thinking pays again.")).toBeInTheDocument();
-    expect(screen.getByText("One more question")).toBeInTheDocument();
-    // The dead line of the form guide: struck original plus replacement.
-    expect(screen.getByText(MATCH_NIGHT.injuredLineReplacement)).toBeInTheDocument();
-    const struck = container.querySelector("s");
-    expect(struck).not.toBeNull();
-    expect(struck).toHaveTextContent(
-      MATCH_NIGHT.formGuide.favorite[MATCH_NIGHT.injuredLineIndex],
-    );
+  it("the reveal carries the frontier note, the redrawn compute chart, and the combined meter", () => {
+    render(<Page3 />);
+    drag(13);
+    expect(screen.getByText(/assumed you kept retraining the same model/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: /training compute of frontier language models/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: /combination across five years/i }),
+    ).toBeInTheDocument();
+    // Year one on the combined meter: compounding already beats the flat plan.
+    expect(screen.getByText("$45.5B")).toBeInTheDocument();
+    expectClean();
   });
 
-  it("picking I've got nothing reveals only that follow-up, the agent line, the shelves, and the teaser", () => {
-    const { container } = render(<Page3 />);
-    fireEvent.click(screen.getByRole("button", { name: "The favorite" }));
-    fireEvent.click(screen.getByRole("button", { name: "Stick with my pick" }));
-    fireEvent.click(screen.getByRole("button", { name: "I've got nothing" }));
+  it("dragging the five-year meter lands in the trillions and announces the crossing", () => {
+    render(<Page3 />);
+    drag(30);
+    fireEvent.change(screen.getByRole("slider", { name: /drag through five years/i }), {
+      target: { value: "60" },
+    });
+    expect(screen.getByText("$2.6T")).toBeInTheDocument();
+    expect(screen.getByText(/passed one trillion dollars/)).toBeInTheDocument();
+    expectClean();
+  });
 
-    expect(screen.getByText(/An hour would not help/)).toBeInTheDocument();
-    expect(screen.queryByText(/Zero steps, zero effort/)).not.toBeInTheDocument();
-    expect(screen.getByText(/An agent is in exactly the same spot/)).toBeInTheDocument();
+  it("locks a guess: echo, hold-that-thought, teaser; the form is consumed", () => {
+    render(<Page3 />);
+    drag(30);
+    const box = screen.getByRole("textbox", { name: /your guess/i });
+    const lock = screen.getByRole("button", { name: /lock it in/i });
+    expect(lock).toBeDisabled();
+    fireEvent.change(box, { target: { value: "  let it search the web  " } });
+    expect(lock).toBeEnabled();
+    fireEvent.click(lock);
+    expect(screen.getByText(/Noted:/)).toBeInTheDocument();
+    expect(screen.getByText(/let it search the web/)).toBeInTheDocument();
+    expect(screen.getByText(/The answer is one page away\./)).toBeInTheDocument();
+    expect(screen.queryByRole("textbox", { name: /your guess/i })).toBeNull();
+    expectClean();
+  });
 
-    // The two shelves and the teaser.
-    expect(screen.getByText("Familiar")).toBeInTheDocument();
-    expect(screen.getByText("Unfamiliar")).toBeInTheDocument();
-    expect(container.textContent).toContain("Next page.");
+  it("skip works without typing a guess", () => {
+    render(<Page3 />);
+    drag(2);
+    fireEvent.click(screen.getByRole("button", { name: /skip/i }));
+    expect(screen.getByText(/Hold that thought anyway\./)).toBeInTheDocument();
+    expect(screen.queryByText(/Noted:/)).toBeNull();
+    expect(screen.getByText(/The answer is one page away\./)).toBeInTheDocument();
+    expectClean();
+  });
 
-    // The past year renders from the authored data; the winner is never stated.
-    expect(container.textContent).toContain(String(MATCH_NIGHT.pastYear));
-    expect(container.textContent).not.toContain("Spain");
-    expect(container.textContent).not.toMatch(/training|inference|trained/i);
+  it("the three milestone chips ride the card from the start", () => {
+    render(<Page3 />);
+    expect(screen.getByText(/one GPT-4-class run/)).toBeInTheDocument();
+    expect(screen.getByText(/passes Epoch's projected record run/)).toBeInTheDocument();
+    expect(screen.getByText(/365 runs for one year of fresh memory/)).toBeInTheDocument();
+    drag(365);
+    fireEvent.click(screen.getByRole("button", { name: /skip/i }));
+    expectClean();
   });
 });

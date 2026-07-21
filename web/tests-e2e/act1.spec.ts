@@ -11,21 +11,17 @@ async function expectAxeClean(page: Page) {
 }
 
 /**
- * Drive page 2's blurt ladder through the crack: three asks (each answer types
- * in at ~45ms/char), the prediction gate, then the last rung's wrong verdict
- * (a 500ms beat, typing, then a 700ms beat before the row flips).
+ * Drive page 2 end to end: answer the question as a reader, hand it to the
+ * machine, run the reply (it streams at ~55ms/word), and wait for the
+ * two-systems analysis to land.
  */
-async function crackPage2(page: Page) {
-  const ask = page.getByRole("button", { name: /ask it/i });
-  const rightRows = page.getByText(/✓ instant, right\./);
-  for (let k = 1; k <= 3; k++) {
-    await ask.click();
-    await expect(rightRows).toHaveCount(k, { timeout: 10_000 });
-  }
-  await expect(page.getByText("Before the last one, a prediction")).toBeVisible();
-  await page.getByRole("button", { name: "It cracks" }).click();
-  await expect(page.getByText(/✗ wrong\./)).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText(/Nothing on the surface changed\./)).toBeVisible();
+async function finishPage2(page: Page) {
+  await page.getByRole("group", { name: /the four names/i }).getByRole("button").first().click();
+  await page.getByRole("button", { name: /hand the same question to the machine/i }).click();
+  await page.getByRole("button", { name: /run it/i }).click();
+  await expect(page.getByText(/looks like a System 1 question\./)).toBeVisible({
+    timeout: 20_000,
+  });
 }
 
 /** Page 4's full arc: flip both tiles, vote, then vote again on the bills. */
@@ -53,35 +49,67 @@ test.describe("Act 1 (pages 1–5)", () => {
     }
   });
 
-  test("Page 2: the blurt ladder cracks, then the trace catches it", async ({ page }) => {
+  test("Page 2: the reader answers, the machine declines, the two systems land", async ({
+    page,
+  }) => {
     await page.goto("/p/2");
-    await crackPage2(page);
-    await expect(page.getByText(/Off by exactly 10,000/)).toBeVisible();
-    // Skip the word-by-word playback and land the final answer + after-section.
-    await page.getByRole("button", { name: /jump to end/i }).click();
-    await expect(
-      page.getByText(/The blurt said 28,793,796\. Six steps of checking caught it\./),
-    ).toBeVisible();
-    await expect(page.getByText("Honesty note")).toBeVisible();
-    await expect(page.getByText(/Next page: match night\./)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Two Systems");
+    // The reader's turn: pick a name, get a verdict, lose the override button.
+    await expect(page.getByRole("button", { name: /let the machine take it/i })).toBeVisible();
+    await page.getByRole("group", { name: /the four names/i }).getByRole("button").first().click();
+    await expect(page.getByRole("button", { name: /let the machine take it/i })).toBeHidden();
+    // Hand the same question to the machine and run the example reply.
+    await page.getByRole("button", { name: /hand the same question to the machine/i }).click();
+    await expect(page.getByText("example reply, authored · live model to follow")).toBeVisible();
+    await page.getByRole("button", { name: /run it/i }).click();
+    // The streamed reply owns the gap in its training data...
+    await expect(page.getByText(/not trained on the result/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(/that final has not been played yet\./)).toBeVisible({
+      timeout: 20_000,
+    });
+    // ...and the two-systems analysis lands with the trap and the teaser.
+    await expect(page.getByText("System 1 · the pop")).toBeVisible();
+    await expect(page.getByText("System 2 · the steps")).toBeVisible();
+    await expect(page.getByText(/guess wearing certainty's clothes/)).toBeVisible();
+    await expect(page.getByText(/What if the model had been trained/)).toBeVisible();
   });
 
-  test("Page 3: three picks cascade to the two shelves", async ({ page }) => {
+  test("Page 3: the daily-retraining meter runs away, then the guess box hands off", async ({
+    page,
+  }) => {
     await page.goto("/p/3");
-    await page.getByRole("button", { name: "The favorite" }).click();
-    await expect(page.getByText("Thinking pays.")).toBeVisible();
-    await expect(page.getByText("Breaking, an hour before kickoff")).toBeVisible();
-    await page.getByRole("button", { name: "Switch" }).click();
-    await expect(page.getByText("Thinking pays again.")).toBeVisible();
-    // The injury news strikes the dead form-guide line and swaps in the news.
-    await expect(page.locator("s")).toHaveText("full squad fit");
-    await expect(page.getByText("star striker out")).toBeVisible();
-    await expect(page.getByText("One more question", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "I've got nothing" }).click();
-    await expect(page.getByText(/An hour would not help/)).toBeVisible();
-    await expect(page.getByText("Familiar", { exact: true })).toBeVisible();
-    await expect(page.getByText("Unfamiliar", { exact: true })).toBeVisible();
-    await expect(page.getByText(/already in there, or it is nowhere/)).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Daily Training?");
+    // The spec's hard rule: no inference talk anywhere on this page.
+    expect(await page.locator("article").innerText()).not.toMatch(/inference/i);
+    // Drag the year out with the keyboard: End jumps the slider to day 365.
+    const slider = page.getByRole("slider", { name: /drag through the year/i });
+    await slider.focus();
+    await slider.press("End");
+    // The main total and the combined card's same-model tile both read $28.5B.
+    await expect(page.getByText("$28.5B", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText(/training every day is simply not feasible/i)).toBeVisible();
+    // The frontier note, the redrawn Epoch chart, and the combined meter.
+    await expect(page.getByText(/assumed you kept retraining the same model/i)).toBeVisible();
+    const months = page.getByRole("slider", { name: /drag through five years/i });
+    await months.focus();
+    await months.press("End");
+    await expect(page.getByText("$2.6T", { exact: true })).toBeVisible();
+    // The optional guess box hands off to the next page.
+    await page.getByRole("textbox", { name: /your guess/i }).fill("let it look things up");
+    await page.getByRole("button", { name: /lock it in/i }).click();
+    await expect(page.getByText(/Hold that thought\./)).toBeVisible();
+    await expect(page.getByText(/The answer is one page away\./)).toBeVisible();
+  });
+
+  test("Page 3 post-drag state has no serious/critical accessibility violations", async ({
+    page,
+  }) => {
+    await page.goto("/p/3");
+    const slider = page.getByRole("slider", { name: /drag through the year/i });
+    await slider.focus();
+    await slider.press("End");
+    await page.getByRole("button", { name: "Skip" }).click();
+    await expectAxeClean(page);
   });
 
   test("Page 4: names hidden until the flip, then the bills land the verdict", async ({ page }) => {
@@ -121,11 +149,11 @@ test.describe("Act 1 (pages 1–5)", () => {
     });
   }
 
-  test("Page 2 post-crack state has no serious/critical accessibility violations", async ({
+  test("Page 2 post-reply state has no serious/critical accessibility violations", async ({
     page,
   }) => {
     await page.goto("/p/2");
-    await crackPage2(page);
+    await finishPage2(page);
     await expectAxeClean(page);
   });
 

@@ -1,0 +1,26 @@
+{
+  "points": [
+    { "x": 0, "y": 0 },
+    { "x": 1, "y": 78 },
+    { "x": 13, "y": 1014 },
+    { "x": 365, "y": 28470 }
+  ],
+  "fit": {
+    "kind": "linear-rate",
+    "params": {
+      "usdMillionPerRun": 78,
+      "runsPerDay": 1,
+      "days": 365,
+      "crossBillionDay": 13,
+      "yearTotalUSDMillion": 28470,
+      "geminiUltraUSDMillion": 191
+    }
+  },
+  "citation": {
+    "ref": "Epoch AI via AI Index 2024",
+    "url": "https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf",
+    "venue": "Stanford HAI AI Index 2024",
+    "preprint": true
+  },
+  "provenance": "Per-run anchors quoted verbatim from the AI Index Report 2024 ch.1 (Stanford HAI; estimates by Epoch AI): GPT-4 used an estimated $78M of compute to train; Gemini Ultra $191M. points encode the DERIVED cumulative bill of Page 3's deliberately absurd hypothetical, one full GPT-4-class run per day (y = 78x $M across x days): the day-13 crossing of $1B and the $28,470M year total follow arithmetically and are labeled derived in-app. No claim is made about what any lab actually spends per day. Not peer-reviewed (institutional report); flagged in-app."
+}

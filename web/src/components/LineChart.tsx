@@ -19,6 +19,12 @@ export interface LineChartProps {
   secondary?: { points: { x: number; y: number }[]; label?: string };
   primaryLabel?: string;
   logX?: boolean;
+  /** Log-scale the y axis; ticks land on powers of ten. */
+  logY?: boolean;
+  /** Custom y tick text (e.g. "10²³" for FLOP counts). */
+  yTickFormat?: (t: number) => string;
+  /** Labeled point markers (e.g. named models on a trend). */
+  dots?: { x: number; y: number; label?: string }[];
   width?: number;
   height?: number;
 }
@@ -40,6 +46,9 @@ export function LineChart({
   secondary,
   primaryLabel,
   logX = false,
+  logY = false,
+  yTickFormat,
+  dots,
   width = 480,
   height = 320,
 }: LineChartProps) {
@@ -54,7 +63,7 @@ export function LineChart({
   const x = (logX ? scaleLog() : scaleLinear())
     .domain([Math.max(logX ? 1 : xd[0], xd[0]), xd[1]])
     .range([0, innerW]);
-  const y = scaleLinear().domain(yd).range([innerH, 0]);
+  const y = (logY ? scaleLog() : scaleLinear()).domain(yd).range([innerH, 0]);
 
   const lineGen = d3line<{ x: number; y: number }>()
     .x((p) => x(p.x))
@@ -69,7 +78,13 @@ export function LineChart({
         )
       : null;
 
-  const yTicks = y.ticks(5);
+  // On a log y-axis, tick only the powers of ten inside the domain.
+  const yTicks = logY
+    ? Array.from(
+        { length: Math.floor(Math.log10(yd[1])) - Math.ceil(Math.log10(yd[0])) + 1 },
+        (_, k) => 10 ** (Math.ceil(Math.log10(yd[0])) + k),
+      )
+    : y.ticks(5);
   const xTicks = x.ticks(5);
 
   return (
@@ -79,7 +94,7 @@ export function LineChart({
         <g key={`y${t}`}>
           <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
           <text x={-6} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
-            {t}
+            {yTickFormat ? yTickFormat(t) : t}
           </text>
         </g>
       ))}
@@ -135,6 +150,25 @@ export function LineChart({
           ) : null}
         </g>
       )}
+
+      {dots?.map((d) => {
+        const atRightEdge = x(d.x) > innerW - 70;
+        return (
+          <g key={`${d.x}-${d.y}`}>
+            <circle cx={x(d.x)} cy={y(d.y)} r={4} className="fill-compute" />
+            {d.label ? (
+              <text
+                x={x(d.x) + (atRightEdge ? -7 : 7)}
+                y={y(d.y) - 6}
+                textAnchor={atRightEdge ? "end" : "start"}
+                className="fill-ink text-[9px]"
+              >
+                {d.label}
+              </text>
+            ) : null}
+          </g>
+        );
+      })}
 
       {markerPoint ? (
         <g>

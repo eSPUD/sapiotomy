@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { curves, interpolate } from "./curves";
+import { frontierCumulativeUSDM, sameModelCumulativeUSDM } from "./dailyTraining";
 import {
   COMPUTER_SCRIPT,
   GAME_ROUNDS,
-  INSTANT_BLURTS,
-  MATCH_NIGHT,
-  TRACE_4502,
-  TRACE_4502_ANSWER,
+  WORLD_CUP_2026,
 } from "./authored";
 import { coverageAtLeastOne, sampleGrid } from "./sim";
 
@@ -36,59 +34,106 @@ describe("Page 1 authored game rounds", () => {
   });
 });
 
-describe("Page 2 instant blurts (informal DeepSeek-V3 test) and the trace", () => {
-  it("the first three blurts are right and the fourth is wrong by exactly 10,000", () => {
-    const [a, b, c, d] = INSTANT_BLURTS.rounds;
-    expect(a.blurted).toBe(a.trueValue);
-    expect(b.blurted).toBe(b.trueValue);
-    expect(c.blurted).toBe(c.trueValue);
-    expect(d.trueValue).toBe(4502 * 6398);
-    expect(d.trueValue - d.blurted).toBe(10000);
+describe("Page 2 world-cup question (authored; answer key is a flagged placeholder)", () => {
+  it("offers four distinct names with the winner index inside the list", () => {
+    expect(WORLD_CUP_2026.options).toHaveLength(4);
+    expect(new Set(WORLD_CUP_2026.options).size).toBe(4);
+    expect(WORLD_CUP_2026.winnerIndex).toBeGreaterThanOrEqual(0);
+    expect(WORLD_CUP_2026.winnerIndex).toBeLessThan(WORLD_CUP_2026.options.length);
   });
 
-  it("true values are the actual products", () => {
-    expect(INSTANT_BLURTS.rounds[1].trueValue).toBe(17 * 24);
-    expect(INSTANT_BLURTS.rounds[2].trueValue).toBe(350 * 638);
+  it("asks about the 2026 final by name", () => {
+    expect(WORLD_CUP_2026.question).toContain("2026");
+    expect(WORLD_CUP_2026.question).toContain("World Cup");
   });
 
-  it("carries the informal-test label", () => {
-    expect(INSTANT_BLURTS.model).toBe("DeepSeek-V3");
-    expect(INSTANT_BLURTS.note.length).toBeGreaterThan(0);
+  it("the machine's labels seal its memory before the final and turn search off", () => {
+    expect(WORLD_CUP_2026.machine.cutoffLabel).toMatch(/202[0-5]/);
+    expect(WORLD_CUP_2026.machine.constraintLabel).toMatch(/no web search/i);
   });
 
-  it("the trace opens with the blurt, catches it, and lands the true product", () => {
-    expect(TRACE_4502_ANSWER).toBe(4502 * 6398);
-    expect(TRACE_4502[0]).toContain("28,793,796");
-    const joined = TRACE_4502.join(" ");
-    expect(joined).toContain("27,012,000");
-    expect(joined).toContain("1,791,796");
-    expect(joined).toContain("28,791,000");
-    expect(TRACE_4502[TRACE_4502.length - 1]).toContain("28,803,796");
-  });
-
-  it("the trace's arithmetic is internally consistent", () => {
-    expect(4502 * 6000).toBe(27012000);
-    expect(4502 * 400 - 4502 * 2).toBe(1791796);
-    expect(27012000 + 1791796).toBe(TRACE_4502_ANSWER);
-    expect(4500 * 6398 + 2 * 6398).toBe(TRACE_4502_ANSWER);
+  it("the example reply owns the gap and never names one of the four as winner", () => {
+    expect(WORLD_CUP_2026.exampleReply.length).toBeGreaterThan(0);
+    const joined = WORLD_CUP_2026.exampleReply.join(" ");
+    // The spec's ideal failure: it says it was not trained on that data...
+    expect(joined).toMatch(/training data/i);
+    expect(joined).toMatch(/not trained/i);
+    // ...it cannot look the result up...
+    expect(joined).toMatch(/web search/i);
+    // ...and it refuses to guess a name (no option may appear in the reply).
+    for (const name of WORLD_CUP_2026.options) {
+      expect(joined).not.toContain(name);
+    }
+    // The page's own hard rule: no inference talk anywhere in the data.
+    expect(joined).not.toMatch(/inference/i);
   });
 });
 
-describe("Page 3 match-night config (hypothetical by design)", () => {
-  it("has a form guide with material to reason from on both sides", () => {
-    expect(MATCH_NIGHT.formGuide.favorite.length).toBeGreaterThanOrEqual(3);
-    expect(MATCH_NIGHT.formGuide.underdog.length).toBeGreaterThanOrEqual(3);
+describe("Page 3 daily-training meter (Epoch run-cost anchor)", () => {
+  it("anchors: $78M per GPT-4-class run, $191M Gemini Ultra context, AI Index citation", () => {
+    const d = curves.epochRunCost;
+    const p = d.fit!.params;
+    expect(p.usdMillionPerRun).toBe(78);
+    expect(p.geminiUltraUSDMillion).toBe(191);
+    expect(d.citation.venue).toContain("AI Index");
+    expect(d.citation.preprint).toBe(true);
+    expect(d.provenance.length).toBeGreaterThan(0);
+    expect(d.provenance).toMatch(/derived/i);
   });
 
-  it("the injury news strikes a real line of the favorite's form guide", () => {
-    const i = MATCH_NIGHT.injuredLineIndex;
-    expect(i).toBeGreaterThanOrEqual(0);
-    expect(i).toBeLessThan(MATCH_NIGHT.formGuide.favorite.length);
-    expect(MATCH_NIGHT.injuredLineReplacement.length).toBeGreaterThan(0);
+  it("the cumulative points are the pure daily rate (derived, linear)", () => {
+    const d = curves.epochRunCost;
+    expect(d.points[0]).toEqual({ x: 0, y: 0 });
+    expect(d.points[d.points.length - 1]).toEqual({ x: 365, y: 28470 });
+    expect(365 * 78).toBe(28470);
+    expect(Math.abs(interpolate(d, 100) - 7800)).toBeLessThan(0.001);
+    expect(Math.abs(interpolate(d, 365) - d.fit!.params.yearTotalUSDMillion)).toBeLessThan(0.001);
   });
 
-  it("the past final is far enough back that a blank memory is common", () => {
-    expect(MATCH_NIGHT.pastYear).toBeLessThanOrEqual(2014);
+  it("the $1B crossing lands on day 13", () => {
+    const p = curves.epochRunCost.fit!.params;
+    expect(p.crossBillionDay).toBe(13);
+    expect(12 * 78).toBeLessThan(1000);
+    expect(13 * 78).toBeGreaterThanOrEqual(1000);
+  });
+});
+
+describe("Page 3 frontier compute growth (Epoch, redrawn) and the combined meter", () => {
+  it("rates and anchors are the verbatim Epoch figures, under CC BY", () => {
+    const d = curves.epochComputeGrowth;
+    const p = d.fit!.params;
+    expect(p.perYearLM).toBe(5.0);
+    expect(p.ci90Low).toBe(3.1);
+    expect(p.ci90High).toBe(7.3);
+    expect(p.gpt3Flop).toBe(3e23);
+    expect(p.gpt4Flop).toBe(2e25);
+    expect(p.geminiUltraFlop).toBe(5e25);
+    expect(d.citation.venue).toBe("Epoch AI");
+    expect(d.citation.preprint).toBe(true);
+    expect(d.provenance).toMatch(/Creative Commons/);
+    expect(d.provenance).toMatch(/REDRAWING/);
+  });
+
+  it("the drawn trend is 5x per year and stays inside the cited window", () => {
+    const pts = curves.epochComputeGrowth.points;
+    for (let i = 1; i < pts.length; i++) {
+      const years = pts[i].x - pts[i - 1].x;
+      const expected = Math.pow(5, years);
+      const ratio = pts[i].y / pts[i - 1].y;
+      expect(Math.abs(ratio - expected) / expected).toBeLessThan(0.01);
+    }
+    expect(pts[0].x).toBe(2020.5);
+    // No extrapolation past the study's May 2024 endpoint.
+    expect(pts[pts.length - 1].x).toBeLessThanOrEqual(2024.5);
+  });
+
+  it("combined meter: linear same-model, compounding frontier, $1T crossing at month 48", () => {
+    expect(sameModelCumulativeUSDM(365)).toBe(28470);
+    expect(frontierCumulativeUSDM(0)).toBe(0);
+    expect(frontierCumulativeUSDM(12)).toBeGreaterThan(sameModelCumulativeUSDM(365));
+    expect(frontierCumulativeUSDM(60) / 1e6).toBeCloseTo(2.557, 1);
+    expect(frontierCumulativeUSDM(47)).toBeLessThan(1e6);
+    expect(frontierCumulativeUSDM(48)).toBeGreaterThanOrEqual(1e6);
   });
 });
 

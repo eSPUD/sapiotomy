@@ -637,7 +637,7 @@ export function Page1() {
             ) : null}
 
             <p className="max-w-2xl text-ink">
-              <em>Next: what happens when something answers instantly, no matter how big the problem gets?</em>
+              <em>Next: a question where the size of the problem is not the problem at all.</em>
             </p>
 
             <div>

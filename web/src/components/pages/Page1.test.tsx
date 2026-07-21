@@ -76,7 +76,7 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     expect(screen.getByText(/more steps, more time/i)).toBeInTheDocument();
     expect(screen.getByText(/you felt the gear change/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/what happens when something answers instantly, no matter how big the problem gets/i),
+      screen.getByText(/a question where the size of the problem is not the problem at all/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/nothing here is a benchmark/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /run it again/i })).toBeInTheDocument();

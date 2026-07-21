@@ -1,114 +1,150 @@
 "use client";
 
 /**
- * Page 3, "Match Night": the hinge of Act 1. Three picks, each gating the
- * next: the forecast (thinking pays), the breaking news (re-thinking pays
- * again), the past final (thinking buys nothing; a fixed fact is memory or
- * nowhere). The match is a HYPOTHETICAL (see MATCH_NIGHT in lib/authored):
- * no real teams, no real facts, no real result, so nothing here goes stale.
- * The page names a past year but never states that winner.
+ * Page 3, "Daily Training?" (docs/page_3_refactor.md). Page 2 ended on the
+ * question: what if the model HAD been trained on data that includes last
+ * night? The obvious fix, retrain every day, gets priced in three beats:
+ *   1. the meter: one $78M run per morning (Epoch AI via AI Index 2024),
+ *      dragged across a year;
+ *   2. the note: that assumed the SAME model; frontier language-model compute
+ *      has grown ~5x/year since mid-2020 (Epoch, redrawn under CC BY);
+ *   3. the combination: daily runs whose price rides Epoch's x2.4/year cost
+ *      trend (the dollar shadow of that compute growth) across five years.
+ * Training only on this page; the answer-time alternative is the next page's
+ * business, teased by an optional guess box. No inference talk here.
  */
 
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { CitationBadge } from "@/components/CitationBadge";
+import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Reveal } from "@/components/Reveal";
+import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
-import { MATCH_NIGHT } from "@/lib/authored";
+import { curves } from "@/lib/curves";
+import { frontierCumulativeUSDM, sameModelCumulativeUSDM } from "@/lib/dailyTraining";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 3;
+const DAYS = 365;
+const COMBO_MONTHS = 60;
 
-type ForecastPick = "favorite" | "underdog";
-type NewsPick = "stick" | "switch";
-type PastPick = "pop" | "nothing";
+/** "$78M" below a billion, "$1.0B" to a trillion, "$2.6T" past it. */
+const fmtM = (m: number) =>
+  m >= 1e6 ? `$${(m / 1e6).toFixed(1)}T` : m >= 1000 ? `$${(m / 1000).toFixed(1)}B` : `$${Math.round(m)}M`;
 
-function ChoiceButton({
-  label,
-  selected,
-  onPick,
-}: {
-  label: string;
-  selected: boolean;
-  onPick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={onPick}
-      className={`rounded border px-4 py-2.5 text-center text-sm ${
-        selected
-          ? "border-compute bg-compute/40 font-semibold text-ink"
-          : "border-grid bg-surface-raised text-ink"
-      }`}
-    >
-      {label}
-      {selected ? <span aria-hidden="true"> ✓</span> : null}
-    </button>
-  );
-}
+/** 3e23 → "10²³" for FLOP axis ticks. */
+const SUP: Record<string, string> = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+const fmtFlop = (v: number) =>
+  `10${String(Math.round(Math.log10(v)))
+    .split("")
+    .map((c) => SUP[c] ?? c)
+    .join("")}`;
 
-function FormSide({
-  name,
-  lines,
-  struckIndex,
-  replacement,
-}: {
-  name: string;
-  lines: string[];
-  struckIndex?: number;
-  replacement?: string;
-}) {
-  return (
-    <div className="rounded-lg border border-grid bg-surface-raised p-4">
-      <p className="text-xs text-ink-muted">Tonight</p>
-      <p className="mb-1 text-lg font-semibold text-ink">{name}</p>
-      <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-ink-muted">
-        {lines.map((line, i) =>
-          i === struckIndex && replacement !== undefined ? (
-            <li key={line} className="text-wrong">
-              <s>{line}</s> {replacement}
-            </li>
-          ) : (
-            <li key={line}>{line}</li>
-          ),
-        )}
-      </ul>
-    </div>
-  );
-}
+type GuessState = "open" | "guessed" | "skipped";
 
 export function Page3() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-  const [forecastPick, setForecastPick] = useState<ForecastPick | null>(null);
-  const [newsPick, setNewsPick] = useState<NewsPick | null>(null);
-  const [pastPick, setPastPick] = useState<PastPick | null>(null);
+
+  const runCost = curves.epochRunCost;
+  const rp = runCost.fit!.params;
+  const RUN_M = rp.usdMillionPerRun;
+  const trainTrend = curves.epochTrainingCosts;
+  const tp = trainTrend.fit!.params;
+  const computeGrowth = curves.epochComputeGrowth;
+  const cp = computeGrowth.fit!.params;
+
+  const [day, setDay] = useState(1);
+  const [dragged, setDragged] = useState(false);
+  const [months, setMonths] = useState(12);
+  const [guessText, setGuessText] = useState("");
+  const [guessState, setGuessState] = useState<GuessState>("open");
   const [announcement, setAnnouncement] = useState("");
+  const crossedBillionRef = useRef(false);
+  const monthsTouchedRef = useRef(false);
+  const crossedTrillionRef = useRef(false);
 
-  const pickForecast = (pick: ForecastPick) => {
-    if (forecastPick !== null) return;
-    setForecastPick(pick);
-    recordInteraction(PAGE_N);
-    setAnnouncement(
-      "Breaking: the favorite's star striker pulled up injured in the warm-up and is out. Think again: who wins now?",
-    );
+  // The one-year meter, in $ billions per day, straight off the cited rate.
+  const chartPoints = useMemo(
+    () => Array.from({ length: DAYS + 1 }, (_, d) => ({ x: d, y: sameModelCumulativeUSDM(d) / 1000 })),
+    [],
+  );
+
+  // The five-year combination: same model (linear) vs the frontier model of
+  // the day (per-run price riding Epoch's x2.4/year cost trend). Derived.
+  const comboSame = useMemo(
+    () =>
+      Array.from({ length: COMBO_MONTHS + 1 }, (_, m) => ({
+        x: m,
+        y: sameModelCumulativeUSDM((m / 12) * DAYS) / 1000,
+      })),
+    [],
+  );
+  const comboFrontier = useMemo(
+    () =>
+      Array.from({ length: COMBO_MONTHS + 1 }, (_, m) => ({
+        x: m,
+        y: frontierCumulativeUSDM(m) / 1000,
+      })),
+    [],
+  );
+
+  const totalM = day * RUN_M;
+  const yearFmt = fmtM(DAYS * RUN_M);
+  const frontierAtM = frontierCumulativeUSDM(months);
+  const sameAtM = sameModelCumulativeUSDM((months / 12) * DAYS);
+
+  const milestones = [
+    { day: 1, tag: fmtM(RUN_M), note: "one GPT-4-class run" },
+    {
+      day: rp.crossBillionDay,
+      tag: fmtM(rp.crossBillionDay * RUN_M),
+      note: `passes Epoch's projected record run ($${tp.projectionBillionUSD}B, ${tp.projectionYear})`,
+    },
+    { day: DAYS, tag: yearFmt, note: "365 runs for one year of fresh memory" },
+  ];
+
+  const onDay = (v: number) => {
+    if (!dragged) {
+      setDragged(true);
+      recordInteraction(PAGE_N);
+    }
+    setDay(v);
+    if (!crossedBillionRef.current && v * RUN_M >= 1000) {
+      crossedBillionRef.current = true;
+      setAnnouncement(
+        `Day ${v}: the bill passed one billion dollars, more than Epoch's projected record single run. The summary below is open.`,
+      );
+    } else if (v === DAYS) {
+      setAnnouncement(`Day ${DAYS}: the year of daily retraining totals about ${yearFmt}.`);
+    }
   };
 
-  const pickNews = (pick: NewsPick) => {
-    if (newsPick !== null) return;
-    setNewsPick(pick);
-    recordInteraction(PAGE_N);
-    setAnnouncement(
-      `One more question: who won the ${MATCH_NIGHT.pastYear} World Cup final?`,
-    );
+  const onMonths = (v: number) => {
+    if (!monthsTouchedRef.current) {
+      monthsTouchedRef.current = true;
+      recordInteraction(PAGE_N);
+    }
+    setMonths(v);
+    if (!crossedTrillionRef.current && frontierCumulativeUSDM(v) >= 1e6) {
+      crossedTrillionRef.current = true;
+      setAnnouncement(`Month ${v}: the combined bill passed one trillion dollars.`);
+    }
   };
 
-  const pickPast = (pick: PastPick) => {
-    if (pastPick !== null) return;
-    setPastPick(pick);
+  const lockGuess = () => {
+    if (guessState !== "open" || guessText.trim().length === 0) return;
     recordInteraction(PAGE_N);
-    setAnnouncement("The two shelves: familiar, and unfamiliar. Then the teaser to page 4.");
+    setGuessState("guessed");
+    setAnnouncement("Guess noted. Hold that thought; the answer is one page away.");
+  };
+
+  const skipGuess = () => {
+    if (guessState !== "open") return;
+    recordInteraction(PAGE_N);
+    setGuessState("skipped");
+    setAnnouncement("Skipped. The reveal waits on the next page.");
   };
 
   return (
@@ -121,206 +157,258 @@ export function Page3() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Page 2 ended on a rule: when the problem gets big, turn the thinking up. Tonight is the
-        perfect test. Picture it: the <strong>World Cup final</strong> kicks off in a few hours,
-        and nobody on Earth knows how it ends.
+        Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
+        stares right at you: reseal the memory <strong>every morning</strong>. Retrain the model
+        daily and it is never a day out of date. Before signing that plan, price it.
       </p>
 
-      <section aria-label="The forecast">
-        <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4 sm:p-6">
-          <p className="text-xs uppercase tracking-wide text-ink-muted">
-            A different kind of question
-          </p>
-          <p className="text-lg text-ink">Who wins tonight?</p>
-          <p className="max-w-2xl text-ink">
-            You cannot answer that from memory; there is nothing to remember, it has not happened.
-            But you are not answering from nothing, either. Here is the form guide.
-          </p>
-          <div role="group" aria-label="The form guide" className="grid gap-3 sm:grid-cols-2">
-            <FormSide
-              name="The favorite"
-              lines={MATCH_NIGHT.formGuide.favorite}
-              struckIndex={newsPick !== null ? MATCH_NIGHT.injuredLineIndex : undefined}
-              replacement={MATCH_NIGHT.injuredLineReplacement}
-            />
-            <FormSide name="The underdog" lines={MATCH_NIGHT.formGuide.underdog} />
+      <section aria-label="The daily-retraining meter" className="flex flex-col gap-3">
+        <div className="overflow-hidden rounded-lg border border-grid bg-surface">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+            <span>the hypothetical: one full training run, every morning</span>
+            <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
+              Epoch AI estimate · ${RUN_M}M per GPT-4-class run
+            </span>
           </div>
-          <p className="max-w-2xl text-ink">Take a moment with it. Your call:</p>
-          <div
-            role="group"
-            aria-label="Your pick for tonight's final"
-            className="grid gap-2 sm:grid-cols-2"
-          >
-            <ChoiceButton
-              label="The favorite"
-              selected={forecastPick === "favorite"}
-              onPick={() => pickForecast("favorite")}
+          <div className="flex flex-col gap-4 p-4 sm:p-6">
+            <LineChart
+              title={`Cumulative bill for one full training run per day: a straight line from zero to about ${yearFmt} over ${DAYS} days, crossing Epoch's projected one billion dollar record run on day ${rp.crossBillionDay}. Derived from Epoch's ${RUN_M} million dollar GPT-4 run estimate.`}
+              points={chartPoints}
+              markerX={day}
+              referenceY={tp.projectionBillionUSD}
+              referenceLabel={`Epoch's projected record run ($${tp.projectionBillionUSD}B, ${tp.projectionYear})`}
+              xLabel="days of retraining daily"
+              yLabel="cumulative bill ($ billions)"
+              width={640}
+              height={300}
             />
-            <ChoiceButton
-              label="The underdog"
-              selected={forecastPick === "underdog"}
-              onPick={() => pickForecast("underdog")}
+            <Slider
+              label="Drag through the year"
+              min={0}
+              max={DAYS}
+              value={day}
+              onChange={onDay}
+              suffix=" days"
             />
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-ink-muted">total so far</p>
+                <p className="font-mono text-3xl font-bold tabular-nums text-compute">
+                  {fmtM(totalM)}
+                </p>
+                <p className="text-sm text-ink-muted">
+                  {day} {day === 1 ? "day" : "days"} · {day} {day === 1 ? "run" : "runs"}
+                </p>
+              </div>
+              <p className="text-right text-sm text-ink-muted">
+                at <strong className="font-mono text-ink">${RUN_M}M</strong> per run
+                <br />
+                (Epoch&apos;s GPT-4 estimate)
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {milestones.map((m) => (
+                <span
+                  key={m.day}
+                  className={`rounded-full border px-2 py-0.5 text-xs ${
+                    day >= m.day
+                      ? "border-compute bg-compute/15 text-ink"
+                      : "border-grid text-ink-muted"
+                  }`}
+                >
+                  day {m.day} · {m.tag} · {m.note}
+                </span>
+              ))}
+            </div>
           </div>
-          {forecastPick !== null ? (
-            <p className="max-w-2xl text-ink">
-              Wherever you landed, watch where the answer came from. Not a pop; there is no fact of
-              the matter yet, anywhere, in any head. You <em>weighed facts against each other</em>:
-              form against momentum, a rested squad against a hot goalkeeper. That is reasoning,
-              and on this question it is the only tool there is. Give it more time and the call
-              gets sharper, never certain: replay their semifinals, weigh the midfields, picture
-              that keeper against ten shots. <strong>Thinking pays.</strong>
-            </p>
-          ) : null}
         </div>
       </section>
 
-      {forecastPick !== null ? (
+      {dragged ? (
         <Reveal>
-          <section aria-label="Breaking news">
-            <div className="flex flex-col gap-3 rounded-lg border-l-4 border-wrong bg-surface p-4 sm:p-6">
-              <p className="text-xs uppercase tracking-wide text-wrong">
-                Breaking, an hour before kickoff
-              </p>
-              <p className="max-w-2xl text-lg text-ink">
-                The favorite&apos;s star striker pulled up <strong>injured in the warm-up</strong>,
-                and is out of the match.
-              </p>
-              <p className="max-w-2xl text-ink">
-                One line of the form guide just died. Think again: who wins now?
-              </p>
-              <div role="group" aria-label="Rethink your pick" className="grid gap-2 sm:grid-cols-2">
-                <ChoiceButton
-                  label="Stick with my pick"
-                  selected={newsPick === "stick"}
-                  onPick={() => pickNews("stick")}
-                />
-                <ChoiceButton
-                  label="Switch"
-                  selected={newsPick === "switch"}
-                  onPick={() => pickNews("switch")}
-                />
-              </div>
-              {newsPick !== null ? (
-                <p className="max-w-2xl text-ink">
-                  Stick or switch, you just did it again: took one brand-new fact and{" "}
-                  <em>rebuilt the whole call</em> around it. Nothing got recalled; there is still
-                  nothing to recall. New fact in, sharper call out.{" "}
-                  <strong>Thinking pays again.</strong>
-                </p>
-              ) : null}
-            </div>
-          </section>
-        </Reveal>
-      ) : null}
-
-      {newsPick !== null ? (
-        <Reveal>
-          <section aria-label="The past final">
-            <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4 sm:p-6">
-              <p className="text-xs uppercase tracking-wide text-ink-muted">One more question</p>
-              <p className="max-w-2xl text-lg text-ink">
-                Who won the <strong>{MATCH_NIGHT.pastYear} World Cup final</strong>?
-              </p>
-              <div
-                role="group"
-                aria-label="Do you know that winner"
-                className="grid gap-2 sm:grid-cols-2"
-              >
-                <ChoiceButton
-                  label="It popped into my head"
-                  selected={pastPick === "pop"}
-                  onPick={() => pickPast("pop")}
-                />
-                <ChoiceButton
-                  label="I've got nothing"
-                  selected={pastPick === "nothing"}
-                  onPick={() => pickPast("nothing")}
-                />
-              </div>
-              {pastPick === "pop" ? (
-                <p className="max-w-2xl text-ink">
-                  Zero steps, zero effort; it was simply there. And notice: thinking harder would
-                  not have made it arrive any better, or any faster. That was a lookup, not a
-                  build.
-                </p>
-              ) : null}
-              {pastPick === "nothing" ? (
-                <p className="max-w-2xl text-ink">
-                  Now sit with that for a second. An hour would not help. There is nothing to
-                  reason <em>from</em>: no form guide, no team sheets, nothing to weigh. The result
-                  is a fixed fact of history, and a result you weren&apos;t there for is either
-                  already in your head, or it is nowhere.
-                </p>
-              ) : null}
-              {pastPick !== null ? (
-                <p className="max-w-2xl text-ink">
-                  An agent is in exactly the same spot. Hand it tonight&apos;s form guide and the
-                  injury news, and thinking time turns into a sharper forecast. Ask it about a
-                  final it never saw, and an hour of thinking buys nothing; there is nothing to
-                  work from.
-                </p>
-              ) : null}
-            </div>
-          </section>
-        </Reveal>
-      ) : null}
-
-      {pastPick !== null ? (
-        <Reveal>
-          <section aria-label="The two shelves" className="flex flex-col gap-4">
-            <p className="max-w-2xl text-ink">
-              Put the whole evening next to page 2&apos;s multiplication, and the map draws itself.
-              Every answer you have ever given came off one of <strong>two shelves</strong>:
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-grid bg-surface p-4">
-                <p className="text-xs text-ink-muted">Familiar</p>
-                <p className="mb-1 text-lg font-semibold text-ink">
-                  &ldquo;I&apos;ve seen this one.&rdquo;
-                </p>
-                <p className="text-sm text-ink-muted">
-                  The question sits on ground you have already covered, so the answer is recalled
-                  whole. Zero steps, zero time.
-                </p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface p-4">
-                <p className="text-xs text-ink-muted">Unfamiliar</p>
-                <p className="mb-1 text-lg font-semibold text-ink">
-                  &ldquo;I can work it out.&rdquo;
-                </p>
-                <p className="text-sm text-ink-muted">
-                  The question is new, but the pieces to rebuild it are familiar. Reasoning derives
-                  the answer step by step, and that takes time: a fresh multiplication,
-                  tonight&apos;s final.
-                </p>
-              </div>
-            </div>
+          <section aria-label="The verdict, the moving frontier, and a question" className="flex flex-col gap-4">
             <div className="max-w-2xl rounded-lg border-l-4 border-wrong bg-wrong/15 p-4 text-ink">
-              And the {MATCH_NIGHT.pastYear} final marks the edge of the familiar. It cannot be
-              rebuilt: no familiar pieces, nothing to reason from. It can only be recalled. Where a
-              question is unfamiliar but the pieces to rebuild it are familiar, thinking is the
-              whole game and turning it up keeps paying. Where nothing familiar is there to reason
-              from, thinking buys nothing:{" "}
-              <strong>the answer is either already in there, or it is nowhere.</strong>
+              <strong>As you can see: training every day is simply not feasible.</strong> There is
+              no justification for it. {rp.crossBillionDay} mornings in, the tab passes the
+              priciest single run ever projected; by December it is {yearFmt} a year, spent
+              keeping one model&apos;s diary current. And that is with the cheap run: Epoch prices
+              Gemini Ultra&apos;s at ${rp.geminiUltraUSDMillion}M.{" "}
+              <span className="text-ink-muted">
+                (Real labs do retrain, on rhythms of months or years; never mornings.)
+              </span>
             </div>
-            <p className="max-w-2xl text-ink">
-              The whole evening turned on one thing, and it was never a sharper mind. It was{" "}
-              <strong>familiarity</strong>: whether the question sat on ground you had already
-              covered, or at least handed you familiar pieces to rebuild it from.
-            </p>
-            <p className="max-w-2xl text-ink">
-              <em>
-                Which leaves the real question. How does an answer get <strong>in there</strong> in
-                the first place? That is a different machine from the one you have been watching,
-                with its own name and its own price tag. Next page.
-              </em>
-            </p>
+
+            <div className="overflow-hidden rounded-lg border border-grid bg-surface">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+                <span>and it is worse than that</span>
+                <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
+                  Epoch AI · redrawn under CC BY
+                </span>
+              </div>
+              <div className="flex flex-col gap-4 p-4 sm:p-6">
+                <p className="max-w-2xl text-ink">
+                  <strong>All of this assumed you kept retraining the same model.</strong> The
+                  frontier does not sit still: since mid-2020, the compute behind frontier
+                  language-model runs has grown about <strong>5x every year</strong> (Epoch
+                  measures 5.0x, CI 3.1 to 7.3; 4-5x across frontier models broadly). GPT-3 took
+                  3×10²³ FLOP. GPT-4, three years on, took 2×10²⁵: nearly seventy times the
+                  compute.
+                </p>
+                <LineChart
+                  title={`Training compute of frontier language models from mid-2020 to May 2024 on a log scale: a straight climb of about five times per year, from GPT-3 at 3 times ten to the 23 FLOP through GPT-4 at 2 times ten to the 25 to Gemini Ultra at 5 times ten to the 25. Redrawn from Epoch AI's published figures.`}
+                  points={computeGrowth.points}
+                  dots={[
+                    { x: cp.gpt3Year, y: cp.gpt3Flop, label: "GPT-3" },
+                    { x: cp.gpt4Year, y: cp.gpt4Flop, label: "GPT-4" },
+                    { x: cp.geminiUltraYear, y: cp.geminiUltraFlop, label: "Gemini Ultra" },
+                  ]}
+                  logY
+                  yTickFormat={fmtFlop}
+                  yDomain={[1e23, 3e26]}
+                  xDomain={[2020.3, 2024.6]}
+                  xLabel="year"
+                  yLabel="training compute (FLOP)"
+                  width={640}
+                  height={280}
+                />
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-lg border border-grid bg-surface">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+                <span>the two rates, combined</span>
+                <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
+                  derived from the two Epoch trends
+                </span>
+              </div>
+              <div className="flex flex-col gap-4 p-4 sm:p-6">
+                <p className="max-w-2xl text-ink">
+                  Now combine the two curves you just saw. Compute per frontier run grows about 5x
+                  a year; cheaper, better hardware absorbs part of that, so the <strong>bill</strong>{" "}
+                  per run grows ×{tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
+                  <em>the frontier model of the day</em>, every day:
+                </p>
+                <LineChart
+                  title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
+                  points={comboSame}
+                  secondary={{ points: comboFrontier, label: "the frontier model of the day, daily" }}
+                  primaryLabel="the same model, daily (the plan you just rejected)"
+                  markerX={months}
+                  xLabel="months of keeping it up"
+                  yLabel="cumulative bill ($ billions)"
+                  yDomain={[0, 2600]}
+                  width={640}
+                  height={300}
+                />
+                <Slider
+                  label="Drag through five years"
+                  min={0}
+                  max={COMBO_MONTHS}
+                  value={months}
+                  onChange={onMonths}
+                  suffix=" months"
+                />
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border border-grid bg-surface-raised p-3">
+                    <p className="text-xs uppercase tracking-wide text-ink-muted">
+                      the frontier of the day, daily
+                    </p>
+                    <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
+                      {fmtM(frontierAtM)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-grid bg-surface-raised p-3">
+                    <p className="text-xs uppercase tracking-wide text-ink-muted">
+                      the same model, daily
+                    </p>
+                    <p className="font-mono text-2xl font-bold tabular-nums text-ink">
+                      {fmtM(sameAtM)}
+                    </p>
+                  </div>
+                </div>
+                <p className="max-w-2xl text-sm text-ink-muted">
+                  By year five the daily-frontier program is measured in trillions, and the plan
+                  you already rejected is the flat line at the bottom of its own chart.
+                </p>
+              </div>
+            </div>
+
+            <div className="max-w-2xl overflow-hidden rounded-lg border border-grid bg-surface">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+                <span>one way out</span>
+                <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
+                  optional · skip freely
+                </span>
+              </div>
+              <div className="flex flex-col gap-3 p-4">
+                <p className="text-lg text-ink">
+                  There is, however, a way to get fresh facts to a model{" "}
+                  <strong>without retraining it at all</strong>. Any guesses?
+                </p>
+                {guessState === "open" ? (
+                  <form
+                    className="flex flex-wrap items-center gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      lockGuess();
+                    }}
+                  >
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      aria-label="Your guess"
+                      placeholder="a word or a sentence"
+                      value={guessText}
+                      onChange={(e) => setGuessText(e.target.value)}
+                      className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
+                    />
+                    <button
+                      type="submit"
+                      disabled={guessText.trim().length === 0}
+                      className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                    >
+                      Lock it in
+                    </button>
+                    <button
+                      type="button"
+                      onClick={skipGuess}
+                      className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
+                    >
+                      Skip
+                    </button>
+                  </form>
+                ) : (
+                  <p className="text-ink">
+                    {guessState === "guessed" ? (
+                      <>
+                        Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
+                      </>
+                    ) : (
+                      <>Hold that thought anyway.</>
+                    )}{" "}
+                    <em className="text-ink-muted">The answer is one page away.</em>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <CitationBadge citation={runCost.citation} />
+              <CitationBadge citation={computeGrowth.citation} />
+              <CitationBadge citation={trainTrend.citation} />
+            </div>
             <p className="text-xs text-ink-muted">
-              the match night is a hypothetical: no real teams, no real facts, no real result; the
-              form guide is invented on purpose so nothing here can go stale · the{" "}
-              {MATCH_NIGHT.pastYear} question names a year but never states the winner · framing:
-              Kahneman, <em>Thinking, Fast and Slow</em>
+              the daily-retrain meter is a deliberately absurd hypothetical priced with one cited
+              anchor: Epoch AI&apos;s ≈ ${RUN_M}M compute estimate for the GPT-4 run (AI Index
+              2024) · the cumulative line, the day-{rp.crossBillionDay} crossing, and the{" "}
+              {yearFmt} year total are derived from that anchor · the $
+              {tp.projectionBillionUSD}B record-run line is Epoch&apos;s {tp.projectionYear}{" "}
+              projection · the frontier compute trend (about 5x per year for language models
+              since mid-2020) and the three model anchors are Epoch figures, redrawn under CC BY,
+              not Epoch&apos;s image · the combined curve is derived: one run per day priced at $
+              {RUN_M}M × {tp.perYear}^years, whose per-run price passes $1B around year three,
+              consistent with Epoch&apos;s {tp.projectionYear} projection · no claims about what
+              any lab actually spends
             </p>
           </section>
         </Reveal>
