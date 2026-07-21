@@ -17,6 +17,18 @@ test.describe("M0 smoke", () => {
     ).toBeVisible();
   });
 
+  test("scroll progress bar fills as the reader scrolls", async ({ page }) => {
+    await page.setViewportSize({ width: 1000, height: 500 });
+    await page.goto("/p/20");
+    const fill = page.locator('nav[aria-label="Story progress"] div.bg-compute');
+    await expect(fill).toHaveCSS("width", /.+/);
+    const before = await fill.evaluate((el) => (el as HTMLElement).getBoundingClientRect().width);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(250);
+    const after = await fill.evaluate((el) => (el as HTMLElement).getBoundingClientRect().width);
+    expect(after).toBeGreaterThan(before);
+  });
+
   test("navigation between two stub routes works", async ({ page }) => {
     await page.goto("/p/1");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Think Fast, Think Slow");

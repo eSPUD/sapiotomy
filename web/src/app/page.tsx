@@ -3,7 +3,7 @@ import { CiteBlock } from "@/components/CiteBlock";
 import { Reveal } from "@/components/Reveal";
 import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
 
-const CITATION = `@article{bangalorelakshman2026inference,
+const CITATION = `@article{bangalorelakshman2026its,
   title  = {The Story of Inference-Time Scaling},
   author = {Bangalore Lakshman, Shashank and Eiers, Scott Lawrence},
   journal = {VISxAI Workshop at IEEE VIS},
@@ -19,15 +19,6 @@ export default function Home() {
       <section>
         <Reveal>
           <div className="flex max-w-3xl flex-col gap-5 pt-12 pb-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
-                An interactive explorable · VISxAI 2026
-              </p>
-              <span className="rounded bg-wrong/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-wrong">
-                Pre-print
-              </span>
-            </div>
-
             <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
               The Story of{" "}
               <span className="block whitespace-nowrap text-compute">Inference-Time Scaling</span>
@@ -36,8 +27,7 @@ export default function Home() {
             <p className="max-w-xl text-lg text-ink-muted">
               A language model can get dramatically better answers by{" "}
               <span className="italic text-ink">thinking longer at answer time</span> — not only by
-              being retrained or made larger. Watch each scaling law appear, hold, and sometimes
-              break.
+              being retrained or made larger.
             </p>
 
             <Link
