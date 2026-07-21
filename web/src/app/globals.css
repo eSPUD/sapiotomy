@@ -32,6 +32,8 @@ body {
   font-family: var(--font-serif), "Source Serif 4", Georgia, serif;
   font-size: 15px;
   line-height: 1.55;
+  /* Disable elastic/rubber-band overscroll so the sticky header stays put. */
+  overscroll-behavior: none;
 }
 
 /* Broadsheet headings: the serif scale carries the hierarchy. */

@@ -60,8 +60,11 @@ export function ScrollProgress() {
             }
             className="group relative block flex-1"
           >
-            <div className="h-full overflow-hidden bg-grid transition-colors group-hover:bg-ink-muted">
-              <div className="h-full bg-compute" style={{ width: `${fill * 100}%` }} />
+            <div className="h-full overflow-hidden bg-grid transition-colors group-hover:bg-wrong">
+              <div
+                className="h-full bg-compute transition-colors group-hover:bg-wrong"
+                style={{ width: `${fill * 100}%` }}
+              />
             </div>
             <span
               className={`pointer-events-none absolute top-full z-20 mt-1 whitespace-nowrap rounded bg-ink px-2 py-1 text-[11px] font-medium text-canvas opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${tipAlign}`}
