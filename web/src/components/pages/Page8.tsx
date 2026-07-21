@@ -1,38 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
 import { PageNav } from "@/components/PageNav";
-import { Slider } from "@/components/Slider";
+import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
-import { bestOfN, sampleGrid, type BestOfNModel } from "@/lib/sim";
-import type { Citation } from "@/lib/data";
+import { curves } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 8;
-const MODEL: BestOfNModel = { p: 0.35, distractors: 4, verifierReliability: 0.85 };
-const SEED = 26082024;
-const TRIALS = 3000;
 
-const COBBE: Citation = {
-  ref: "Cobbe et al. 2021",
-  url: "https://arxiv.org/abs/2110.14168",
-  venue: "arXiv",
-  preprint: true,
-};
-
-type Method = "random" | "majority" | "verifier";
+// Authored worked solution with a slip on one step (illustrative).
+const SOLUTION: { text: string; ok: boolean }[] = [
+  { text: "Let the two numbers be x and y with x + y = 20.", ok: true },
+  { text: "Also x − y = 4, so 2x = 24 and x = 12.", ok: true },
+  { text: "Then y = 20 − 12 = 8.", ok: true },
+  { text: "So x · y = 12 · 8 = 108.", ok: false }, // slip: 12·8 = 96, not 108
+];
 
 export function Page8() {
   const page = getPage(PAGE_N)!;
-  const [n, setN] = useState(8);
-  const [method, setMethod] = useState<Method>("verifier");
+  const data = curves.prmVsOrm;
+  const { majority, orm, prm } = data.fit!.params;
+  const [processView, setProcessView] = useState(true);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const result = bestOfN(n, TRIALS, SEED, MODEL);
-  const accuracy = result[method];
-  const candidates = sampleGrid(MODEL.p, n, SEED + n); // representative draw for the cards
+  const bars = [
+    { label: "Majority vote", value: majority, tone: "bg-grid" },
+    { label: "Outcome RM (ORM)", value: orm, tone: "bg-compute" },
+    { label: "Process RM (PRM)", value: prm, tone: "bg-correct" },
+  ];
 
   return (
     <article className="flex flex-col gap-5">
@@ -44,71 +41,67 @@ export function Page8() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        If the right answer is often in the pile but voting can&apos;t surface it, add a{" "}
-        <strong>verifier</strong>: generate N candidates and let a reward model grade them, keeping
-        its top pick — like a teacher marking every draft and choosing the best.
+        A verifier can grade two ways. An <strong>outcome</strong> reward model checks only the final
+        answer. A <strong>process</strong> reward model checks <em>every step</em> — catching a slip
+        the moment it happens. On MATH, grading the steps wins.
       </p>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          <Slider
-            label="Candidates (N)"
-            min={1}
-            max={16}
-            value={n}
-            suffix=" drafts"
-            onChange={(v) => {
-              setN(v);
-              recordInteraction(PAGE_N);
-            }}
-          />
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm text-ink-muted">Selection method</legend>
-            <div className="flex gap-2">
-              {(["random", "majority", "verifier"] as Method[]).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  aria-pressed={method === m}
-                  onClick={() => {
-                    setMethod(m);
-                    recordInteraction(PAGE_N);
-                  }}
-                  className={`rounded px-3 py-1.5 text-sm capitalize ${
-                    method === m ? "bg-compute text-canvas" : "bg-surface-raised text-ink-muted"
+      <Toggle
+        label="Grading style"
+        checked={processView}
+        offLabel="Outcome (final only)"
+        onLabel="Process (every step)"
+        onChange={(v) => {
+          setProcessView(v);
+          recordInteraction(PAGE_N);
+        }}
+      />
+
+      <ol className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
+        {SOLUTION.map((step, i) => {
+          const isLast = i === SOLUTION.length - 1;
+          const showLabel = processView || isLast;
+          return (
+            <li key={i} className="flex items-center justify-between gap-3 font-mono text-sm">
+              <span className="text-ink">
+                {i + 1}. {step.text}
+              </span>
+              {showLabel ? (
+                <span
+                  className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
+                    step.ok ? "bg-correct/20 text-correct" : "bg-wrong/20 text-wrong"
                   }`}
                 >
-                  {m === "random" ? "Pick randomly" : m === "majority" ? "Majority vote" : "Verifier picks"}
-                </button>
-              ))}
+                  {step.ok ? "step ok" : "error"}
+                </span>
+              ) : (
+                <span className="shrink-0 text-xs text-ink-muted">—</span>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      <p className="text-sm text-ink-muted">
+        {processView
+          ? "Process view flags the exact line that went wrong — a much richer signal for selecting solutions."
+          : "Outcome view sees only the final answer, so it can't tell a lucky-but-flawed solution from a sound one."}
+      </p>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-semibold text-ink">Best-of-N accuracy on MATH</p>
+        {bars.map((b) => (
+          <div key={b.label} className="flex items-center gap-2 text-sm">
+            <span className="w-40 shrink-0 text-ink-muted">{b.label}</span>
+            <div className="h-5 flex-1 rounded bg-surface-raised">
+              <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
             </div>
-          </fieldset>
-          <BigNumber value={accuracy} suffix="%" tone="correct" label={`accuracy — ${method} selection`} />
-          <p className="text-sm text-ink-muted">
-            The verifier beats both random picking (≈ the per-draft rate) and majority voting,
-            because it can recognise a correct draft even when it&apos;s a minority.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-ink-muted">A representative batch of {n} draft{n === 1 ? "" : "s"}:</p>
-          <div className="flex flex-wrap gap-2" role="img" aria-label={`${candidates.filter(Boolean).length} of ${n} drafts are correct`}>
-            {candidates.map((ok, i) => (
-              <span
-                key={i}
-                title={ok ? "correct draft" : "wrong draft"}
-                className={`flex h-10 w-10 items-center justify-center rounded border text-sm ${
-                  ok ? "border-correct bg-correct/20 text-correct" : "border-grid bg-surface text-ink-muted"
-                }`}
-              >
-                {ok ? "✓" : "✗"}
-              </span>
-            ))}
+            <span className="w-14 shrink-0 text-right font-mono text-ink">{b.value}%</span>
           </div>
-        </div>
+        ))}
       </div>
 
       <div>
-        <CitationBadge citation={COBBE} />
+        <CitationBadge citation={data.citation} />
       </div>
       <PageNav n={PAGE_N} />
     </article>

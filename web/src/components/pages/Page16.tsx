@@ -1,34 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
+import { inverseU } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 16;
+const LENGTHS = Array.from({ length: 13 }, (_, i) => i);
 
 export function Page16() {
   const page = getPage(PAGE_N)!;
-  const data = curves.arcCost;
-  const { o3LowCost, o3LowAcc, o3HighCost, o3HighAcc, computeFactor, o1Acc, humanCost } = data.fit!.params;
-  // log10 dollar slider between the two o3 configs
-  const [logCost, setLogCost] = useState(Math.log10(o3LowCost) * 100);
+  const data = curves.overthinking;
+  const { easyPeak, hardPeak, easyPeakAcc, hardPeakAcc, curvature } = data.fit!.params;
+  const [length, setLength] = useState(3);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const cost = Math.pow(10, logCost / 100);
-  // interpolate accuracy in log-cost space between the two o3 points
-  const t = (Math.log10(cost) - Math.log10(o3LowCost)) / (Math.log10(o3HighCost) - Math.log10(o3LowCost));
-  const accuracy = o3LowAcc + Math.max(0, Math.min(1, t)) * (o3HighAcc - o3LowAcc);
-
-  const curve = [
-    { x: o3LowCost, y: o3LowAcc },
-    { x: o3HighCost, y: o3HighAcc },
-  ];
+  const easyCurve = LENGTHS.map((l) => ({ x: l, y: inverseU(l, easyPeak, easyPeakAcc, curvature) }));
+  const hardCurve = LENGTHS.map((l) => ({ x: l, y: inverseU(l, hardPeak, hardPeakAcc, curvature) }));
+  const easyNow = inverseU(length, easyPeak, easyPeakAcc, curvature);
+  const overthinkingEasy = length > easyPeak;
 
   return (
     <article className="flex flex-col gap-5">
@@ -40,44 +35,50 @@ export function Page16() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        More thinking isn&apos;t free. To crack ARC-AGI, OpenAI&apos;s o3 went from ~75.7% at roughly
-        $17–20 per task to 87.5% using <strong>{computeFactor}× the compute</strong> — costing{" "}
-        <em>thousands</em> of dollars per task. A human solves the same puzzle for about ${humanCost}.
+        Everything so far said &ldquo;more thinking helps.&rdquo; Here&apos;s the reversal. Push the
+        thinking length too far and accuracy <strong>peaks, then falls</strong> — the model talks
+        itself out of the right answer. Easy problems hit that overthinking threshold first.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
           <Slider
-            label="Compute spend per task"
-            min={Math.round(Math.log10(o3LowCost) * 100)}
-            max={Math.round(Math.log10(o3HighCost) * 100)}
-            value={logCost}
+            label="Thinking length"
+            min={0}
+            max={12}
+            value={length}
             onChange={(v) => {
-              setLogCost(v);
+              setLength(v);
               recordInteraction(PAGE_N);
             }}
           />
-          <div className="flex items-end justify-around rounded-lg border border-grid bg-surface p-4">
-            <BigNumber value={accuracy} suffix="%" tone="correct" label="ARC-AGI accuracy" />
-            <BigNumber value={cost} decimals={0} suffix=" $/task" tone="compute" label="estimated cost" />
+          <div className={`rounded-lg border p-4 ${overthinkingEasy ? "border-wrong bg-wrong/10" : "border-grid bg-surface"}`}>
+            <p className="text-sm text-ink-muted">Easy-problem accuracy at this length:</p>
+            <p className={`font-mono text-3xl ${overthinkingEasy ? "text-wrong" : "text-correct"}`}>
+              {easyNow.toFixed(0)}%
+            </p>
+            <p className="mt-1 text-sm">
+              {overthinkingEasy ? (
+                <span className="text-wrong">Overthinking zone — past the peak, accuracy is falling.</span>
+              ) : (
+                <span className="text-ink-muted">Still climbing toward the peak at length {easyPeak}.</span>
+              )}
+            </p>
           </div>
           <p className="text-sm text-ink-muted">
-            For reference: o1 reached at most ~{o1Acc}%; a human ≈ ${humanCost}/task.
-          </p>
-          <p className="text-xs italic text-ink-muted">
-            These dollar figures are <strong>reported estimates</strong>, not precise measurements
-            (the ARC Prize Foundation revised the high-compute figure from ~$3,000 toward ~$30,000
-            per task). Presented as reported.
+            The easy curve peaks at length {easyPeak}; the hard curve holds on until {hardPeak}.
           </p>
         </div>
         <LineChart
-          title="ARC-AGI accuracy versus estimated dollar cost per task (log scale)"
-          points={curve}
-          xLabel="$ per task (log scale)"
+          title="Accuracy versus thinking length: an inverse-U (easy peaks earlier than hard)"
+          points={easyCurve}
+          secondary={{ points: hardCurve, label: "hard problems" }}
+          primaryLabel="easy problems"
+          xLabel="thinking length"
           yLabel="accuracy (%)"
-          yDomain={[60, 100]}
-          xDomain={[o3LowCost, o3HighCost]}
-          logX
+          yDomain={[0, 90]}
+          xDomain={[0, 12]}
+          markerX={length}
         />
       </div>
 

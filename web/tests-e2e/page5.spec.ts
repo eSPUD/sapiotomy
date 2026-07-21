@@ -1,9 +1,9 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test.describe("Page 6 — self-consistency", () => {
+test.describe("Page 5 — self-consistency", () => {
   test("predict → interact → observe", async ({ page }) => {
-    await page.goto("/p/6");
+    await page.goto("/p/5");
     // Predict-Observe-Explain: commit a prediction first.
     await page.getByRole("button", { name: /lock in prediction/i }).click();
     // Slider is keyboard operable.
@@ -19,7 +19,7 @@ test.describe("Page 6 — self-consistency", () => {
   });
 
   test("has no serious or critical accessibility violations", async ({ page }) => {
-    await page.goto("/p/6");
+    await page.goto("/p/5");
     await page.getByRole("button", { name: /lock in prediction/i }).click();
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa"])

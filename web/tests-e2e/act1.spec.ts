@@ -23,26 +23,11 @@ async function finishPage2(page: Page) {
   });
 }
 
-/** Page 4's full arc: flip both tiles, vote, then vote again on the bills. */
-async function revealPage4(page: Page) {
-  await page.getByRole("button", { name: /seen this one/i }).click();
-  await page.getByRole("button", { name: /work it out/i }).click();
-  await page
-    .getByRole("group", { name: /first vote/i })
-    .getByRole("button", { name: /feed the factory/i })
-    .click();
-  await page
-    .getByRole("group", { name: /second vote/i })
-    .getByRole("button", { name: /buy more thinking/i })
-    .click();
-  await expect(page.getByText(/^the marginal dollar moved to thinking\.$/i)).toBeVisible();
-}
-
-test.describe("Act 1 (pages 1–5)", () => {
+test.describe("Act 1 (pages 1–4)", () => {
   test("traverses Act 1 in order", async ({ page }) => {
     await page.goto("/p/1");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Think Fast, Think Slow");
-    for (let n = 2; n <= 5; n++) {
+    for (let n = 2; n <= 4; n++) {
       await page.getByRole("link", { name: `Page ${n} →` }).click();
       await expect(page).toHaveURL(new RegExp(`/p/${n}$`));
     }
@@ -114,37 +99,7 @@ test.describe("Act 1 (pages 1–5)", () => {
     await expectAxeClean(page);
   });
 
-  test("Page 4: names hidden until the flip, then the bills land the verdict", async ({ page }) => {
-    await page.goto("/p/4");
-    // Neither AI word may appear before the tiles are flipped.
-    expect(await page.locator("article").innerText()).not.toMatch(/training|inference/i);
-    await page.getByRole("button", { name: /seen this one/i }).click();
-    await page.getByRole("button", { name: /work it out/i }).click();
-    await expect(page.getByText("Training", { exact: true })).toBeVisible();
-    await expect(page.getByText("Inference", { exact: true })).toBeVisible();
-    await page
-      .getByRole("group", { name: /first vote/i })
-      .getByRole("button", { name: /feed the factory/i })
-      .click();
-    await expect(page.getByText(/training burns like building the factory/i)).toBeVisible();
-    // Climb all four rungs of the energy ladder.
-    const climb = page.getByRole("button", { name: /climb a rung/i });
-    for (let i = 0; i < 4; i++) {
-      await climb.click();
-    }
-    await expect(page.getByRole("button", { name: /top of the ladder/i })).toBeDisabled();
-    await page
-      .getByRole("group", { name: /second vote/i })
-      .getByRole("button", { name: /buy more thinking/i })
-      .click();
-    await expect(page.getByText(/^the marginal dollar moved to thinking\.$/i)).toBeVisible();
-    // The three-row strip: three problems, two machines, one line each.
-    await expect(page.getByText("thinking's job")).toBeVisible();
-    await expect(page.getByText("only thinking arrives in time")).toBeVisible();
-    await expect(page.getByText("only the factory puts it in there")).toBeVisible();
-  });
-
-  for (const n of [1, 2, 3, 4, 5]) {
+  for (const n of [1, 2, 3, 4]) {
     test(`Page ${n} has no serious/critical accessibility violations`, async ({ page }) => {
       await page.goto(`/p/${n}`);
       await expectAxeClean(page);
@@ -156,14 +111,6 @@ test.describe("Act 1 (pages 1–5)", () => {
   }) => {
     await page.goto("/p/2");
     await finishPage2(page);
-    await expectAxeClean(page);
-  });
-
-  test("Page 4 post-reveal state has no serious/critical accessibility violations", async ({
-    page,
-  }) => {
-    await page.goto("/p/4");
-    await revealPage4(page);
     await expectAxeClean(page);
   });
 });

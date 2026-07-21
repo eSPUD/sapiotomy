@@ -9,7 +9,7 @@ test.describe("M0 smoke", () => {
   });
 
   test("masthead renders the title on a story page", async ({ page }) => {
-    await page.goto("/p/6");
+    await page.goto("/p/5");
     const rail = page.getByRole("navigation", { name: "Story progress" });
     await expect(rail).toBeVisible();
     await expect(
@@ -19,17 +19,17 @@ test.describe("M0 smoke", () => {
 
   test("app progress bar: prior pages filled, current page fills on scroll", async ({ page }) => {
     await page.setViewportSize({ width: 1000, height: 500 });
-    await page.goto("/p/20");
-    // 20 segments; the current page (20) is the last fill element.
+    await page.goto("/p/19");
+    // 19 segments; the current page (19) is the last fill element.
     const fills = page.locator('nav[aria-label="Story progress"] div.bg-compute');
-    await expect(fills).toHaveCount(20);
+    await expect(fills).toHaveCount(19);
     // A prior page's segment (e.g. #1) is already full.
     const first = await fills.nth(0).evaluate((el) => (el as HTMLElement).getBoundingClientRect().width);
     const cell = await fills.nth(0).evaluateHandle((el) => el.parentElement!);
     const cellW = await cell.evaluate((el) => (el as HTMLElement).getBoundingClientRect().width);
     expect(first).toBeGreaterThan(cellW - 1); // segment 1 filled
     // The current page's segment grows as you scroll it.
-    const last = fills.nth(19);
+    const last = fills.nth(18);
     const before = await last.evaluate((el) => (el as HTMLElement).getBoundingClientRect().width);
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(250);
@@ -38,10 +38,10 @@ test.describe("M0 smoke", () => {
   });
 
   test("progress bar segments are labelled links that navigate", async ({ page }) => {
-    await page.goto("/p/6");
+    await page.goto("/p/5");
     const rail = page.getByRole("navigation", { name: "Story progress" });
     const segments = rail.getByRole("link", { name: /^Chapter \d+:/ });
-    await expect(segments).toHaveCount(20);
+    await expect(segments).toHaveCount(19);
     // Clicking a segment jumps to that page.
     await rail.getByRole("link", { name: /^Chapter 10:/ }).click();
     await expect(page).toHaveURL(/\/p\/10$/);

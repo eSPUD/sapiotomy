@@ -3,32 +3,36 @@
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
-import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves, interpolate } from "@/lib/curves";
-import { coverageAtLeastOne } from "@/lib/sim";
+import { bestOfN, sampleGrid, type BestOfNModel } from "@/lib/sim";
+import type { Citation } from "@/lib/data";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 7;
-const BUDGETS = [1, 5, 10, 20, 40, 80, 150, 300];
+const MODEL: BestOfNModel = { p: 0.35, distractors: 4, verifierReliability: 0.85 };
+const SEED = 26082024;
+const TRIALS = 3000;
+
+const COBBE: Citation = {
+  ref: "Cobbe et al. 2021",
+  url: "https://arxiv.org/abs/2110.14168",
+  venue: "arXiv",
+  preprint: true,
+};
+
+type Method = "random" | "majority" | "verifier";
 
 export function Page7() {
   const page = getPage(PAGE_N)!;
-  const data = curves.votingPlateau;
-  const p = data.fit!.params.coveragePerSample; // 0.2
-  const [samples, setSamples] = useState(40);
-  const [showCoverage, setShowCoverage] = useState(true);
+  const [n, setN] = useState(8);
+  const [method, setMethod] = useState<Method>("verifier");
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const majorityCurve = BUDGETS.map((n) => ({ x: n, y: interpolate(data, n) }));
-  const coverageCurve = BUDGETS.map((n) => ({ x: n, y: coverageAtLeastOne(p, n) * 100 }));
-
-  const majorityNow = interpolate(data, samples);
-  const coverageNow = coverageAtLeastOne(p, samples) * 100;
-  const readout = showCoverage ? coverageNow : majorityNow;
+  const result = bestOfN(n, TRIALS, SEED, MODEL);
+  const accuracy = result[method];
+  const candidates = sampleGrid(MODEL.p, n, SEED + n); // representative draw for the cards
 
   return (
     <article className="flex flex-col gap-5">
@@ -40,61 +44,71 @@ export function Page7() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Push the vote count past a few dozen and something frustrating happens. The chance that{" "}
-        <em>some</em> sample is correct (<strong className="text-correct">coverage</strong>) keeps
-        climbing — but the <strong className="text-compute">majority-correct</strong> line flattens.
-        Having a right answer in the pile isn&apos;t the same as <em>picking</em> it.
+        If the right answer is often in the pile but voting can&apos;t surface it, add a{" "}
+        <strong>verifier</strong>: generate N candidates and let a reward model grade them, keeping
+        its top pick — like a teacher marking every draft and choosing the best.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
           <Slider
-            label="Samples"
+            label="Candidates (N)"
             min={1}
-            max={300}
-            value={samples}
-            suffix=" samples"
+            max={16}
+            value={n}
+            suffix=" drafts"
             onChange={(v) => {
-              setSamples(v);
+              setN(v);
               recordInteraction(PAGE_N);
             }}
           />
-          <Toggle
-            label="Readout"
-            checked={showCoverage}
-            offLabel="Majority correct"
-            onLabel="Coverage (any correct)"
-            onChange={(v) => {
-              setShowCoverage(v);
-              recordInteraction(PAGE_N);
-            }}
-          />
-          <BigNumber
-            value={readout}
-            suffix="%"
-            tone={showCoverage ? "correct" : "compute"}
-            label={showCoverage ? `coverage at ${samples} samples` : `majority correct at ${samples} samples`}
-          />
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-sm text-ink-muted">Selection method</legend>
+            <div className="flex gap-2">
+              {(["random", "majority", "verifier"] as Method[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={method === m}
+                  onClick={() => {
+                    setMethod(m);
+                    recordInteraction(PAGE_N);
+                  }}
+                  className={`rounded px-3 py-1.5 text-sm capitalize ${
+                    method === m ? "bg-compute text-canvas" : "bg-surface-raised text-ink-muted"
+                  }`}
+                >
+                  {m === "random" ? "Pick randomly" : m === "majority" ? "Majority vote" : "Verifier picks"}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <BigNumber value={accuracy} suffix="%" tone="correct" label={`accuracy — ${method} selection`} />
           <p className="text-sm text-ink-muted">
-            Without an automatic verifier, majority voting and reward-model selection{" "}
-            <strong>plateau beyond several hundred samples</strong> and fail to fully scale.
+            The verifier beats both random picking (≈ the per-draft rate) and majority voting,
+            because it can recognise a correct draft even when it&apos;s a minority.
           </p>
         </div>
-        <LineChart
-          title="Coverage keeps rising while majority-correct accuracy plateaus"
-          points={coverageCurve}
-          secondary={{ points: majorityCurve, label: "majority correct" }}
-          primaryLabel="coverage"
-          xLabel="samples"
-          yLabel="accuracy (%)"
-          yDomain={[50, 100]}
-          xDomain={[1, 300]}
-          markerX={samples}
-        />
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-ink-muted">A representative batch of {n} draft{n === 1 ? "" : "s"}:</p>
+          <div className="flex flex-wrap gap-2" role="img" aria-label={`${candidates.filter(Boolean).length} of ${n} drafts are correct`}>
+            {candidates.map((ok, i) => (
+              <span
+                key={i}
+                title={ok ? "correct draft" : "wrong draft"}
+                className={`flex h-10 w-10 items-center justify-center rounded border text-sm ${
+                  ok ? "border-correct bg-correct/20 text-correct" : "border-grid bg-surface text-ink-muted"
+                }`}
+              >
+                {ok ? "✓" : "✗"}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div>
-        <CitationBadge citation={data.citation} />
+        <CitationBadge citation={COBBE} />
       </div>
       <PageNav n={PAGE_N} />
     </article>

@@ -40,7 +40,7 @@ export function engagementReport(
     pagesManipulated: manipulated.length,
     totalPages,
     manipulationRate: manipulated.length / totalPages,
-    reachedEnd: (interactions[20] ?? 0) > 0,
+    reachedEnd: (interactions[PAGES[PAGES.length - 1].n] ?? 0) > 0,
     underThresholdPages: underThreshold,
   };
 }

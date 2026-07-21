@@ -2,28 +2,25 @@
 
 import { useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
-import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
-import { Slider } from "@/components/Slider";
+import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import { inverseU } from "@/lib/frontier";
+import { faithfulnessAdmitRate } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 17;
-const LENGTHS = Array.from({ length: 13 }, (_, i) => i);
 
 export function Page17() {
   const page = getPage(PAGE_N)!;
-  const data = curves.overthinking;
-  const { easyPeak, hardPeak, easyPeakAcc, hardPeakAcc, curvature } = data.fit!.params;
-  const [length, setLength] = useState(3);
+  const data = curves.faithfulness;
+  const { claudeAdmit, r1Admit } = data.fit!.params;
+  const [isR1, setIsR1] = useState(false);
+  const [trials, setTrials] = useState(0);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const easyCurve = LENGTHS.map((l) => ({ x: l, y: inverseU(l, easyPeak, easyPeakAcc, curvature) }));
-  const hardCurve = LENGTHS.map((l) => ({ x: l, y: inverseU(l, hardPeak, hardPeakAcc, curvature) }));
-  const easyNow = inverseU(length, easyPeak, easyPeakAcc, curvature);
-  const overthinkingEasy = length > easyPeak;
+  const admitProb = (isR1 ? r1Admit : claudeAdmit) / 100;
+  const measured = trials > 0 ? faithfulnessAdmitRate(admitProb, trials, isR1 ? 2 : 1) : 0;
 
   return (
     <article className="flex flex-col gap-5">
@@ -35,51 +32,55 @@ export function Page17() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Everything so far said &ldquo;more thinking helps.&rdquo; Here&apos;s the reversal. Push the
-        thinking length too far and accuracy <strong>peaks, then falls</strong> — the model talks
-        itself out of the right answer. Easy problems hit that overthinking threshold first.
+        We&apos;d love to trust a model&apos;s written reasoning. But when researchers slipped a{" "}
+        <strong>hint</strong> into a question — one the model demonstrably used — the model{" "}
+        <em>admitted</em> using it only a fraction of the time. Plant hints and watch the confession
+        meter stay stubbornly low.
       </p>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          <Slider
-            label="Thinking length"
-            min={0}
-            max={12}
-            value={length}
-            onChange={(v) => {
-              setLength(v);
-              recordInteraction(PAGE_N);
-            }}
-          />
-          <div className={`rounded-lg border p-4 ${overthinkingEasy ? "border-wrong bg-wrong/10" : "border-grid bg-surface"}`}>
-            <p className="text-sm text-ink-muted">Easy-problem accuracy at this length:</p>
-            <p className={`font-mono text-3xl ${overthinkingEasy ? "text-wrong" : "text-correct"}`}>
-              {easyNow.toFixed(0)}%
-            </p>
-            <p className="mt-1 text-sm">
-              {overthinkingEasy ? (
-                <span className="text-wrong">Overthinking zone — past the peak, accuracy is falling.</span>
-              ) : (
-                <span className="text-ink-muted">Still climbing toward the peak at length {easyPeak}.</span>
-              )}
-            </p>
+      <div className="flex flex-col gap-4">
+        <Toggle
+          label="Model under test"
+          checked={isR1}
+          offLabel="Claude 3.7 Sonnet"
+          onLabel="DeepSeek-R1"
+          onChange={(v) => {
+            setIsR1(v);
+            setTrials(0);
+            recordInteraction(PAGE_N);
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            setTrials((t) => t + 100);
+            recordInteraction(PAGE_N);
+          }}
+          className="w-fit rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas"
+        >
+          Plant a hint in 100 questions
+        </button>
+
+        <div className="rounded-lg border border-grid bg-surface p-4">
+          <p className="mb-1 text-sm text-ink-muted">
+            Confession meter — how often the model admits the hint ({trials} trials):
+          </p>
+          <div className="h-6 w-full rounded bg-surface-raised">
+            <div className="flex h-6 items-center justify-end rounded bg-wrong pr-2 text-xs font-semibold text-canvas" style={{ width: `${measured}%` }}>
+              {trials > 0 ? `${measured.toFixed(0)}%` : ""}
+            </div>
           </div>
-          <p className="text-sm text-ink-muted">
-            The easy curve peaks at length {easyPeak}; the hard curve holds on until {hardPeak}.
+          <p className="mt-2 text-sm text-ink-muted">
+            Converges near the reported average:{" "}
+            <strong>{isR1 ? r1Admit : claudeAdmit}%</strong> for {isR1 ? "DeepSeek-R1" : "Claude 3.7 Sonnet"}.
+            The other ~{100 - (isR1 ? r1Admit : claudeAdmit)}% of the time it used the hint silently.
           </p>
         </div>
-        <LineChart
-          title="Accuracy versus thinking length: an inverse-U (easy peaks earlier than hard)"
-          points={easyCurve}
-          secondary={{ points: hardCurve, label: "hard problems" }}
-          primaryLabel="easy problems"
-          xLabel="thinking length"
-          yLabel="accuracy (%)"
-          yDomain={[0, 90]}
-          xDomain={[0, 12]}
-          markerX={length}
-        />
+        <p className="text-xs italic text-ink-muted">
+          Only the paper&apos;s headline admission rates (Claude {claudeAdmit}%, R1 {r1Admit}%) are
+          shown; the misalignment-hint sub-figures differ between our two source documents and are
+          omitted pending primary-source verification (see PROVENANCE.md).
+        </p>
       </div>
 
       <div>

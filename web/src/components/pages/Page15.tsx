@@ -6,27 +6,29 @@ import { CitationBadge } from "@/components/CitationBadge";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves, interpolate } from "@/lib/curves";
+import { curves } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 15;
-const STEPS = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000];
 
 export function Page15() {
   const page = getPage(PAGE_N)!;
-  const data = curves.deepseekTraining;
-  const { cons64, lengthStart, lengthEnd } = data.fit!.params;
-  const [step, setStep] = useState(0);
-  const [voting, setVoting] = useState(false);
+  const data = curves.arcCost;
+  const { o3LowCost, o3LowAcc, o3HighCost, o3HighAcc, computeFactor, o1Acc, humanCost } = data.fit!.params;
+  // log10 dollar slider between the two o3 configs
+  const [logCost, setLogCost] = useState(Math.log10(o3LowCost) * 100);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const passAt1 = interpolate(data, step);
-  const accuracy = voting ? Math.max(passAt1, cons64 * (step / 8000)) : passAt1;
-  const displayAcc = voting && step >= 8000 ? cons64 : accuracy;
-  const length = Math.round(lengthStart + (lengthEnd - lengthStart) * (step / 8000));
-  const curve = STEPS.map((s) => ({ x: s, y: interpolate(data, s) }));
+  const cost = Math.pow(10, logCost / 100);
+  // interpolate accuracy in log-cost space between the two o3 points
+  const t = (Math.log10(cost) - Math.log10(o3LowCost)) / (Math.log10(o3HighCost) - Math.log10(o3LowCost));
+  const accuracy = o3LowAcc + Math.max(0, Math.min(1, t)) * (o3HighAcc - o3LowAcc);
+
+  const curve = [
+    { x: o3LowCost, y: o3LowAcc },
+    { x: o3HighCost, y: o3HighAcc },
+  ];
 
   return (
     <article className="flex flex-col gap-5">
@@ -38,46 +40,44 @@ export function Page15() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Reasoning models like DeepSeek-R1 aren&apos;t prompted to think — they&apos;re{" "}
-        <strong>trained</strong> to, with reinforcement learning. Scrub through training and watch
-        AIME accuracy climb from 15.6% to 71.0% as the model&apos;s answers grow longer.
+        More thinking isn&apos;t free. To crack ARC-AGI, OpenAI&apos;s o3 went from ~75.7% at roughly
+        $17–20 per task to 87.5% using <strong>{computeFactor}× the compute</strong> — costing{" "}
+        <em>thousands</em> of dollars per task. A human solves the same puzzle for about ${humanCost}.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
           <Slider
-            label="RL training step"
-            min={0}
-            max={8000}
-            step={500}
-            value={step}
+            label="Compute spend per task"
+            min={Math.round(Math.log10(o3LowCost) * 100)}
+            max={Math.round(Math.log10(o3HighCost) * 100)}
+            value={logCost}
             onChange={(v) => {
-              setStep(v);
+              setLogCost(v);
               recordInteraction(PAGE_N);
             }}
           />
-          <Toggle
-            label="Add majority voting (cons@64)"
-            checked={voting}
-            onChange={(v) => {
-              setVoting(v);
-              recordInteraction(PAGE_N);
-            }}
-          />
-          <BigNumber value={displayAcc} suffix="%" tone="correct" label={voting ? "AIME'24 with cons@64" : "AIME'24 pass@1"} />
+          <div className="flex items-end justify-around rounded-lg border border-grid bg-surface p-4">
+            <BigNumber value={accuracy} suffix="%" tone="correct" label="ARC-AGI accuracy" />
+            <BigNumber value={cost} decimals={0} suffix=" $/task" tone="compute" label="estimated cost" />
+          </div>
           <p className="text-sm text-ink-muted">
-            Reasoning length ≈ <span className="font-mono text-ink">{length}</span> tokens.{" "}
-            {voting && step >= 8000 ? "cons@64 reaches 86.7% — matching OpenAI-o1-0912." : "Accuracy and thinking length climb together."}
+            For reference: o1 reached at most ~{o1Acc}%; a human ≈ ${humanCost}/task.
+          </p>
+          <p className="text-xs italic text-ink-muted">
+            These dollar figures are <strong>reported estimates</strong>, not precise measurements
+            (the ARC Prize Foundation revised the high-compute figure from ~$3,000 toward ~$30,000
+            per task). Presented as reported.
           </p>
         </div>
         <LineChart
-          title="DeepSeek-R1-Zero AIME'24 pass@1 across RL training"
+          title="ARC-AGI accuracy versus estimated dollar cost per task (log scale)"
           points={curve}
-          xLabel="training step"
-          yLabel="pass@1 (%)"
-          yDomain={[0, 90]}
-          xDomain={[0, 8000]}
-          markerX={step}
+          xLabel="$ per task (log scale)"
+          yLabel="accuracy (%)"
+          yDomain={[60, 100]}
+          xDomain={[o3LowCost, o3HighCost]}
+          logX
         />
       </div>
 

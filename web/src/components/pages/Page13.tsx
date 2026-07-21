@@ -3,35 +3,32 @@
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LiveDemo } from "@/components/LiveDemo";
 import { PageNav } from "@/components/PageNav";
-import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves } from "@/lib/curves";
-import { allocationScore, optimalAllocation, type Allocation } from "@/lib/search";
+import { curves, interpolate } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 13;
-const TOTAL = 10;
+const MAX_PRESSES = 5;
+const THOUGHTS = [
+  "The three numbers are 6, 6, and 24…",
+  "Wait — let me re-check that multiplication.",
+  "Wait — actually 6 × 4 = 24, so I need a 4.",
+  "Wait — 6 / (1 − 3/4) = 24. That works.",
+  "Wait — let me confirm each operation once more.",
+  "Final answer: (6 ÷ (1 − 3 ÷ 4)) = 24. ✓",
+];
 
 export function Page13() {
   const page = getPage(PAGE_N)!;
-  const data = curves.computeOptimal;
-  const { efficiencyVsBestOfN, largerModelFactor } = data.fit!.params;
-  const [easy, setEasy] = useState(3);
-  const [medium, setMedium] = useState(3);
+  const data = curves.budgetForcing;
+  const flipAt = data.fit!.params.flipAtPress;
+  const [presses, setPresses] = useState(0);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const hard = Math.max(0, TOTAL - easy - medium);
-  const alloc: Allocation = { easy, medium, hard };
-  const optimal = optimalAllocation(TOTAL);
-  const yourScore = allocationScore(alloc) * 100;
-  const optimalScore = allocationScore(optimal) * 100;
-
-  const applyOptimal = () => {
-    setEasy(optimal.easy);
-    setMedium(optimal.medium);
-    recordInteraction(PAGE_N);
-  };
+  const accuracy = interpolate(data, presses);
+  const solved = presses >= flipAt;
 
   return (
     <article className="flex flex-col gap-5">
@@ -43,39 +40,42 @@ export function Page13() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        You have a fixed thinking budget of {TOTAL} units. Spend it across easy, medium, and hard
-        problems to maximise overall accuracy. Easy problems barely need it; hopeless-hard ones
-        waste it; the <strong>medium</strong> band is where thinking pays. Match the budget to the
-        difficulty.
+        The simplest modern trick: when the model tries to stop, make it keep going by appending the
+        word <strong>&ldquo;Wait&rdquo;</strong>. Each nudge forces another reconsideration — and the
+        answer sometimes flips from wrong to right.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <Slider label="Budget on EASY problems" min={0} max={TOTAL} value={easy}
-            onChange={(v) => { setEasy(Math.min(v, TOTAL)); recordInteraction(PAGE_N); }} />
-          <Slider label="Budget on MEDIUM problems" min={0} max={TOTAL - easy} value={Math.min(medium, TOTAL - easy)}
-            onChange={(v) => { setMedium(v); recordInteraction(PAGE_N); }} />
-          <p className="text-sm text-ink-muted">
-            Hard problems get the remaining <span className="font-mono text-ink">{hard}</span> unit
-            {hard === 1 ? "" : "s"} (total spent: {easy + medium + hard}/{TOTAL}).
-          </p>
-          <button type="button" onClick={applyOptimal} className="w-fit rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas">
-            Show the compute-optimal policy
+          <button
+            type="button"
+            disabled={presses >= MAX_PRESSES}
+            onClick={() => {
+              setPresses((n) => Math.min(MAX_PRESSES, n + 1));
+              recordInteraction(PAGE_N);
+            }}
+            className="w-fit rounded bg-compute px-6 py-3 text-lg font-bold text-canvas disabled:opacity-50"
+          >
+            Wait
           </button>
+          <BigNumber value={accuracy} suffix="%" tone={solved ? "correct" : "wrong"} label={`AIME24 accuracy (s1-32B) after ${presses} "Wait"${presses === 1 ? "" : "s"}`} />
+          <p className={`text-sm font-semibold ${solved ? "text-correct" : "text-wrong"}`}>
+            Current answer: {solved ? "24 ✓ (correct)" : "18 ✗ (still wrong — keep it thinking)"}
+          </p>
         </div>
-        <div className="flex flex-col gap-4">
-          <div className="flex items-end justify-around rounded-lg border border-grid bg-surface p-4">
-            <BigNumber value={yourScore} suffix="%" tone={yourScore >= optimalScore - 0.5 ? "correct" : "compute"} label="your accuracy" />
-            <BigNumber value={optimalScore} suffix="%" tone="ink" label="compute-optimal" />
-          </div>
-          <div className="rounded border border-grid bg-surface p-3 text-sm text-ink-muted">
-            Snell et al. found a compute-optimal, difficulty-adaptive strategy is{" "}
-            <strong className="text-correct">&gt;{efficiencyVsBestOfN}× more efficient</strong> than
-            best-of-N — and, FLOPs-matched, can beat a{" "}
-            <strong className="text-correct">{largerModelFactor}× larger model</strong>.
-          </div>
+        <div className="rounded-lg border border-grid bg-surface p-4">
+          <p className="mb-2 text-sm text-ink-muted">The reasoning trace grows with each press:</p>
+          <ol className="flex flex-col gap-2 font-mono text-sm">
+            {THOUGHTS.slice(0, presses + 1).map((t, i) => (
+              <li key={i} className={t.startsWith("Wait") ? "text-compute" : "text-ink"}>
+                {t}
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
+
+      <LiveDemo prompt="Make 24 from the numbers 6, 6, 4 using + - * / . Think step by step, and reconsider with 'Wait' if unsure." fallbackTrace={THOUGHTS} />
 
       <div>
         <CitationBadge citation={data.citation} />

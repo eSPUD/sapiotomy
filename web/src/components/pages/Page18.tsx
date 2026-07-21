@@ -3,24 +3,27 @@
 import { useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
 import { PageNav } from "@/components/PageNav";
+import { Slider } from "@/components/Slider";
 import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import { faithfulnessAdmitRate } from "@/lib/frontier";
+import { enumerationSolved, hanoiMoves, hanoiTokens } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 18;
 
 export function Page18() {
   const page = getPage(PAGE_N)!;
-  const data = curves.faithfulness;
-  const { claudeAdmit, r1Admit } = data.fit!.params;
-  const [isR1, setIsR1] = useState(false);
-  const [trials, setTrials] = useState(0);
+  const data = curves.illusion;
+  const { tokensPerMove, tokenBudget, riverCrossingImpossibleN } = data.fit!.params;
+  const [disks, setDisks] = useState(3);
+  const [scoreByAlgorithm, setScoreByAlgorithm] = useState(false);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const admitProb = (isR1 ? r1Admit : claudeAdmit) / 100;
-  const measured = trials > 0 ? faithfulnessAdmitRate(admitProb, trials, isR1 ? 2 : 1) : 0;
+  const moves = hanoiMoves(disks);
+  const tokens = hanoiTokens(disks, tokensPerMove);
+  const fitsBudget = enumerationSolved(disks, tokensPerMove, tokenBudget);
+  const solved = scoreByAlgorithm ? true : fitsBudget;
 
   return (
     <article className="flex flex-col gap-5">
@@ -32,56 +35,65 @@ export function Page18() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        We&apos;d love to trust a model&apos;s written reasoning. But when researchers slipped a{" "}
-        <strong>hint</strong> into a question — one the model demonstrably used — the model{" "}
-        <em>admitted</em> using it only a fraction of the time. Plant hints and watch the confession
-        meter stay stubbornly low.
+        Two expert witnesses. The <strong>prosecution</strong> (&ldquo;The Illusion of
+        Thinking&rdquo;) says reasoning <em>collapses</em> past a complexity threshold. The{" "}
+        <strong>defense</strong> says the model just ran out of room to write. Add disks to the Tower
+        of Hanoi, then choose how to score it — and reach your own verdict.
       </p>
 
-      <div className="flex flex-col gap-4">
-        <Toggle
-          label="Model under test"
-          checked={isR1}
-          offLabel="Claude 3.7 Sonnet"
-          onLabel="DeepSeek-R1"
-          onChange={(v) => {
-            setIsR1(v);
-            setTrials(0);
-            recordInteraction(PAGE_N);
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setTrials((t) => t + 100);
-            recordInteraction(PAGE_N);
-          }}
-          className="w-fit rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas"
-        >
-          Plant a hint in 100 questions
-        </button>
-
-        <div className="rounded-lg border border-grid bg-surface p-4">
-          <p className="mb-1 text-sm text-ink-muted">
-            Confession meter — how often the model admits the hint ({trials} trials):
-          </p>
-          <div className="h-6 w-full rounded bg-surface-raised">
-            <div className="flex h-6 items-center justify-end rounded bg-wrong pr-2 text-xs font-semibold text-canvas" style={{ width: `${measured}%` }}>
-              {trials > 0 ? `${measured.toFixed(0)}%` : ""}
-            </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <Slider
+            label="Disks (N)"
+            min={1}
+            max={12}
+            value={disks}
+            onChange={(v) => {
+              setDisks(v);
+              recordInteraction(PAGE_N);
+            }}
+          />
+          <div className="rounded-lg border border-grid bg-surface p-3 font-mono text-sm text-ink">
+            <div>moves required = 2^{disks} − 1 = {moves.toLocaleString()}</div>
+            <div>output tokens ≈ {tokens.toLocaleString()} / budget {tokenBudget.toLocaleString()}</div>
           </div>
-          <p className="mt-2 text-sm text-ink-muted">
-            Converges near the reported average:{" "}
-            <strong>{isR1 ? r1Admit : claudeAdmit}%</strong> for {isR1 ? "DeepSeek-R1" : "Claude 3.7 Sonnet"}.
-            The other ~{100 - (isR1 ? r1Admit : claudeAdmit)}% of the time it used the hint silently.
+          <div className="h-4 w-full rounded bg-surface-raised" aria-hidden="true">
+            <div
+              className={`h-4 rounded ${fitsBudget ? "bg-correct" : "bg-wrong"}`}
+              style={{ width: `${Math.min(100, (tokens / tokenBudget) * 100)}%` }}
+            />
+          </div>
+          <Toggle
+            label="Scoring rule"
+            checked={scoreByAlgorithm}
+            offLabel="By full enumeration"
+            onLabel="By algorithm"
+            onChange={(v) => {
+              setScoreByAlgorithm(v);
+              recordInteraction(PAGE_N);
+            }}
+          />
+        </div>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-grid bg-surface p-6">
+          <p className="text-sm text-ink-muted">Verdict</p>
+          <p className={`text-4xl font-bold ${solved ? "text-correct" : "text-wrong"}`}>
+            {solved ? "SOLVED" : "COLLAPSE"}
+          </p>
+          <p className="text-center text-sm text-ink-muted">
+            {scoreByAlgorithm
+              ? "Scored on whether it states the correct recursive rule — no token wall."
+              : fitsBudget
+                ? "The full move list still fits the token budget."
+                : "The full move list overflows the token budget — is that a reasoning failure, or a paper-length limit?"}
           </p>
         </div>
-        <p className="text-xs italic text-ink-muted">
-          Only the paper&apos;s headline admission rates (Claude {claudeAdmit}%, R1 {r1Admit}%) are
-          shown; the misalignment-hint sub-figures differ between our two source documents and are
-          omitted pending primary-source verification (see PROVENANCE.md).
-        </p>
       </div>
+
+      <p className="max-w-2xl text-sm text-ink-muted">
+        Note: some River-Crossing instances are mathematically <strong>impossible</strong> for N ≥{" "}
+        {riverCrossingImpossibleN} — so &ldquo;failure&rdquo; there can&apos;t be a reasoning deficit
+        at all.
+      </p>
 
       <div>
         <CitationBadge citation={data.citation} />

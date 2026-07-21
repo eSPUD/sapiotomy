@@ -2,26 +2,29 @@
 
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
+import { CitationBadge } from "@/components/CitationBadge";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
+import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
-import { toyMctsQuality, type ToyGame } from "@/lib/search";
+import { curves } from "@/lib/curves";
+import { logLinearCoverage } from "@/lib/search";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 11;
-const GAME: ToyGame = { armValues: [0.2, 0.5, 0.9, 0.45, 0.3] };
-const BUDGETS = [1, 2, 4, 8, 16, 32, 64, 128];
-const RUNS = 200;
+const BUDGETS = [1, 2, 5, 10, 25, 50, 100, 175, 250];
 
 export function Page11() {
   const page = getPage(PAGE_N)!;
-  const [budget, setBudget] = useState(1);
+  const data = curves.coverageScaling;
+  const { intercept, slopePerDecade, singleSampleSota } = data.fit!.params;
+  const [samples, setSamples] = useState(1);
+  const [logX, setLogX] = useState(false);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const quality = toyMctsQuality(GAME, budget, RUNS, 7) * 100;
-  const bestPossible = Math.max(...GAME.armValues) * 100;
-  const curve = BUDGETS.map((n) => ({ x: n, y: toyMctsQuality(GAME, n, RUNS, 7) * 100 }));
+  const curve = BUDGETS.map((k) => ({ x: k, y: logLinearCoverage(k, intercept, slopePerDecade) }));
+  const coverage = logLinearCoverage(samples, intercept, slopePerDecade);
 
   return (
     <article className="flex flex-col gap-5">
@@ -33,44 +36,58 @@ export function Page11() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Tree search in language models has a famous ancestor. AlphaGo read many moves ahead with{" "}
-        <strong>Monte Carlo Tree Search</strong> — simulating rollouts, then playing the move it had
-        explored most. Give it a bigger look-ahead budget and its move quality climbs toward the best
-        possible move.
+        Here is an inference-time <strong>scaling law</strong>. On SWE-bench Lite, the fraction of
+        problems solved by <em>some</em> sample climbs from 15.9% (one try) to 56% (250 tries) —
+        beating the single-sample state of the art of {singleSampleSota}%. Flip the x-axis to a log
+        scale and the curve straightens into a line: each <em>doubling</em> buys a roughly constant
+        bump.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
           <Slider
-            label="Look-ahead budget (rollouts)"
+            label="Samples (k)"
             min={1}
-            max={128}
-            value={budget}
-            suffix=" rollouts"
+            max={250}
+            value={samples}
+            suffix=" samples"
             onChange={(v) => {
-              setBudget(v);
+              setSamples(v);
               recordInteraction(PAGE_N);
             }}
           />
-          <BigNumber value={quality} suffix="%" tone="correct" label={`move quality (best possible ≈ ${bestPossible.toFixed(0)}%)`} />
-          <p className="text-xs italic text-ink-muted">
-            Illustrative toy MCTS (PUCT selection), not a published curve — it shows the mechanism,
-            the same idea behind AlphaGo/AlphaZero.
+          <Toggle
+            label="X-axis scale"
+            checked={logX}
+            offLabel="Linear"
+            onLabel="Logarithmic"
+            onChange={(v) => {
+              setLogX(v);
+              recordInteraction(PAGE_N);
+            }}
+          />
+          <BigNumber value={coverage} suffix="%" tone="correct" label={`coverage at ${samples} sample${samples === 1 ? "" : "s"}`} />
+          <p className="text-sm text-ink-muted">
+            On a log axis this is a straight line — the signature of log-linear scaling.
           </p>
         </div>
         <LineChart
-          title="Move quality versus look-ahead budget"
+          title="Coverage versus samples on SWE-bench Lite (toggle log axis to straighten it)"
           points={curve}
-          xLabel="rollouts"
-          yLabel="move quality (%)"
-          yDomain={[0, 100]}
-          xDomain={[1, 128]}
-          markerX={budget}
-          referenceY={bestPossible}
-          referenceLabel="best possible move"
+          xLabel={logX ? "samples (log scale)" : "samples"}
+          yLabel="coverage (%)"
+          yDomain={[0, 60]}
+          xDomain={[1, 250]}
+          markerX={samples}
+          referenceY={singleSampleSota}
+          referenceLabel={`single-sample SOTA ${singleSampleSota}%`}
+          logX={logX}
         />
       </div>
 
+      <div>
+        <CitationBadge citation={data.citation} />
+      </div>
       <PageNav n={PAGE_N} />
     </article>
   );

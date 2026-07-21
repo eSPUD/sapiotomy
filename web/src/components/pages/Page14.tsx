@@ -3,32 +3,30 @@
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
-import { LiveDemo } from "@/components/LiveDemo";
+import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
+import { Slider } from "@/components/Slider";
+import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves, interpolate } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 14;
-const MAX_PRESSES = 5;
-const THOUGHTS = [
-  "The three numbers are 6, 6, and 24…",
-  "Wait — let me re-check that multiplication.",
-  "Wait — actually 6 × 4 = 24, so I need a 4.",
-  "Wait — 6 / (1 − 3/4) = 24. That works.",
-  "Wait — let me confirm each operation once more.",
-  "Final answer: (6 ÷ (1 − 3 ÷ 4)) = 24. ✓",
-];
+const STEPS = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000];
 
 export function Page14() {
   const page = getPage(PAGE_N)!;
-  const data = curves.budgetForcing;
-  const flipAt = data.fit!.params.flipAtPress;
-  const [presses, setPresses] = useState(0);
+  const data = curves.deepseekTraining;
+  const { cons64, lengthStart, lengthEnd } = data.fit!.params;
+  const [step, setStep] = useState(0);
+  const [voting, setVoting] = useState(false);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const accuracy = interpolate(data, presses);
-  const solved = presses >= flipAt;
+  const passAt1 = interpolate(data, step);
+  const accuracy = voting ? Math.max(passAt1, cons64 * (step / 8000)) : passAt1;
+  const displayAcc = voting && step >= 8000 ? cons64 : accuracy;
+  const length = Math.round(lengthStart + (lengthEnd - lengthStart) * (step / 8000));
+  const curve = STEPS.map((s) => ({ x: s, y: interpolate(data, s) }));
 
   return (
     <article className="flex flex-col gap-5">
@@ -40,42 +38,48 @@ export function Page14() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        The simplest modern trick: when the model tries to stop, make it keep going by appending the
-        word <strong>&ldquo;Wait&rdquo;</strong>. Each nudge forces another reconsideration — and the
-        answer sometimes flips from wrong to right.
+        Reasoning models like DeepSeek-R1 aren&apos;t prompted to think — they&apos;re{" "}
+        <strong>trained</strong> to, with reinforcement learning. Scrub through training and watch
+        AIME accuracy climb from 15.6% to 71.0% as the model&apos;s answers grow longer.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <button
-            type="button"
-            disabled={presses >= MAX_PRESSES}
-            onClick={() => {
-              setPresses((n) => Math.min(MAX_PRESSES, n + 1));
+          <Slider
+            label="RL training step"
+            min={0}
+            max={8000}
+            step={500}
+            value={step}
+            onChange={(v) => {
+              setStep(v);
               recordInteraction(PAGE_N);
             }}
-            className="w-fit rounded bg-compute px-6 py-3 text-lg font-bold text-canvas disabled:opacity-50"
-          >
-            Wait
-          </button>
-          <BigNumber value={accuracy} suffix="%" tone={solved ? "correct" : "wrong"} label={`AIME24 accuracy (s1-32B) after ${presses} "Wait"${presses === 1 ? "" : "s"}`} />
-          <p className={`text-sm font-semibold ${solved ? "text-correct" : "text-wrong"}`}>
-            Current answer: {solved ? "24 ✓ (correct)" : "18 ✗ (still wrong — keep it thinking)"}
+          />
+          <Toggle
+            label="Add majority voting (cons@64)"
+            checked={voting}
+            onChange={(v) => {
+              setVoting(v);
+              recordInteraction(PAGE_N);
+            }}
+          />
+          <BigNumber value={displayAcc} suffix="%" tone="correct" label={voting ? "AIME'24 with cons@64" : "AIME'24 pass@1"} />
+          <p className="text-sm text-ink-muted">
+            Reasoning length ≈ <span className="font-mono text-ink">{length}</span> tokens.{" "}
+            {voting && step >= 8000 ? "cons@64 reaches 86.7% — matching OpenAI-o1-0912." : "Accuracy and thinking length climb together."}
           </p>
         </div>
-        <div className="rounded-lg border border-grid bg-surface p-4">
-          <p className="mb-2 text-sm text-ink-muted">The reasoning trace grows with each press:</p>
-          <ol className="flex flex-col gap-2 font-mono text-sm">
-            {THOUGHTS.slice(0, presses + 1).map((t, i) => (
-              <li key={i} className={t.startsWith("Wait") ? "text-compute" : "text-ink"}>
-                {t}
-              </li>
-            ))}
-          </ol>
-        </div>
+        <LineChart
+          title="DeepSeek-R1-Zero AIME'24 pass@1 across RL training"
+          points={curve}
+          xLabel="training step"
+          yLabel="pass@1 (%)"
+          yDomain={[0, 90]}
+          xDomain={[0, 8000]}
+          markerX={step}
+        />
       </div>
-
-      <LiveDemo prompt="Make 24 from the numbers 6, 6, 4 using + - * / . Think step by step, and reconsider with 'Wait' if unsure." fallbackTrace={THOUGHTS} />
 
       <div>
         <CitationBadge citation={data.citation} />
