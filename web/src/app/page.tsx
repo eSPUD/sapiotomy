@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CiteBlock } from "@/components/CiteBlock";
 import { Reveal } from "@/components/Reveal";
 import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
 
@@ -10,19 +11,22 @@ const CITATION = `@article{bangalorelakshman2026inference,
   url    = {https://example.org/inference-time-scaling}
 }`;
 
-const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-
 export default function Home() {
   const acts: Act[] = [1, 2, 3];
   return (
-    <div className="flex flex-col gap-16">
+    <div className="flex flex-col">
       {/* Hero */}
       <section>
         <Reveal>
-          <div className="flex max-w-3xl flex-col gap-5 py-12">
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
-              An interactive explorable · VISxAI 2026
-            </p>
+          <div className="flex max-w-3xl flex-col gap-5 pt-12 pb-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+                An interactive explorable · VISxAI 2026
+              </p>
+              <span className="rounded bg-wrong/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-wrong">
+                Pre-print
+              </span>
+            </div>
 
             <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
               The Story of{" "}
@@ -47,18 +51,11 @@ export default function Home() {
       </section>
 
       {/* Contents */}
-      <section aria-label="Contents" className="flex flex-col gap-6">
+      <section aria-label="Contents" className="mt-8 flex flex-col gap-6">
         {/* thick–thin rule pair (newspaper furniture) */}
         <div>
           <div className="h-[3px] w-full bg-ink" />
           <div className="mt-1 h-px w-full bg-ink" />
-        </div>
-
-        {/* masthead labels */}
-        <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 text-xs uppercase tracking-[0.15em] text-ink-muted">
-          <span>Contents</span>
-          <span>Twenty chapters</span>
-          <span>Interactive throughout</span>
         </div>
 
         {/* three columns, one per Act */}
@@ -91,7 +88,7 @@ export default function Home() {
       </section>
 
       {/* About the series */}
-      <section className="flex flex-col gap-8">
+      <section className="mt-16 flex flex-col gap-8">
         <div className="grid gap-10 md:grid-cols-3">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Authors</h2>
@@ -119,12 +116,7 @@ export default function Home() {
 
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Cite this work</h2>
-            <pre
-              className="whitespace-pre-wrap break-words rounded bg-surface p-4 text-xs leading-relaxed text-ink"
-              style={{ fontFamily: MONO }}
-            >
-              <code>{CITATION}</code>
-            </pre>
+            <CiteBlock citation={CITATION} filename="inference-time-scaling.bib" />
           </div>
         </div>
 
