@@ -156,6 +156,18 @@ export function Page3() {
         daily and it is never a day out of date. The two figures below price that plan.
       </p>
 
+      <aside
+        aria-label="Note: training price is not fixed"
+        className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-compute">the catch</p>
+        <p className="mt-2 max-w-3xl text-ink">
+          <strong>Fig. 1 (left) assumed a fixed training price.</strong> It is not: Epoch AI puts
+          training-compute cost on a <strong>~5&times;-per-year</strong> climb. Fold that in and you
+          get the curve at right.
+        </p>
+      </aside>
+
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <figure
           aria-label="Figure 1: the daily-retraining meter"
@@ -230,18 +242,6 @@ export function Page3() {
           </div>
         </figure>
 
-        <aside
-          aria-label="Note: training price is not fixed"
-          className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink"
-        >
-          <p className="text-xs font-semibold uppercase tracking-wide text-compute">the catch</p>
-          <p className="mt-2 text-ink">
-            <strong>Fig. 1 assumed a fixed training price.</strong> It is not: Epoch AI puts
-            training-compute cost on a <strong>~5&times;-per-year</strong> climb. Fold that in and
-            you get the curve below.
-          </p>
-        </aside>
-
         <figure
           aria-label="Figure 2: the two rates, combined"
           className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
@@ -301,66 +301,66 @@ export function Page3() {
             </figcaption>
           </div>
         </figure>
-
-        <section aria-label="One way out" className="overflow-hidden rounded-lg border border-grid bg-surface">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span>one way out</span>
-            <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
-              optional · skip freely
-            </span>
-          </div>
-          <div className="flex flex-col gap-3 p-4">
-            <p className="text-lg text-ink">
-              There is, however, a way to get fresh facts to a model{" "}
-              <strong>without retraining it at all</strong>. Any guesses?
-            </p>
-            {guessState === "open" ? (
-              <form
-                className="flex flex-wrap items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  lockGuess();
-                }}
-              >
-                <input
-                  type="text"
-                  autoComplete="off"
-                  aria-label="Your guess"
-                  placeholder="a word or a sentence"
-                  value={guessText}
-                  onChange={(e) => setGuessText(e.target.value)}
-                  className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
-                />
-                <button
-                  type="submit"
-                  disabled={guessText.trim().length === 0}
-                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-                >
-                  Lock it in
-                </button>
-                <button
-                  type="button"
-                  onClick={skipGuess}
-                  className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
-                >
-                  Skip
-                </button>
-              </form>
-            ) : (
-              <p className="text-ink">
-                {guessState === "guessed" ? (
-                  <>
-                    Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
-                  </>
-                ) : (
-                  <>Hold that thought anyway.</>
-                )}{" "}
-                <em className="text-ink-muted">The answer is one page away.</em>
-              </p>
-            )}
-          </div>
-        </section>
       </div>
+
+      <section aria-label="One way out" className="overflow-hidden rounded-lg border border-grid bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
+          <span>one way out</span>
+          <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
+            optional · skip freely
+          </span>
+        </div>
+        <div className="flex flex-col gap-3 p-4">
+          <p className="text-lg text-ink">
+            There is, however, a way to get fresh facts to a model{" "}
+            <strong>without retraining it at all</strong>. Any guesses?
+          </p>
+          {guessState === "open" ? (
+            <form
+              className="flex flex-wrap items-center gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                lockGuess();
+              }}
+            >
+              <input
+                type="text"
+                autoComplete="off"
+                aria-label="Your guess"
+                placeholder="a word or a sentence"
+                value={guessText}
+                onChange={(e) => setGuessText(e.target.value)}
+                className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
+              />
+              <button
+                type="submit"
+                disabled={guessText.trim().length === 0}
+                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+              >
+                Lock it in
+              </button>
+              <button
+                type="button"
+                onClick={skipGuess}
+                className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
+              >
+                Skip
+              </button>
+            </form>
+          ) : (
+            <p className="text-ink">
+              {guessState === "guessed" ? (
+                <>
+                  Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
+                </>
+              ) : (
+                <>Hold that thought anyway.</>
+              )}{" "}
+              <em className="text-ink-muted">The answer is one page away.</em>
+            </p>
+          )}
+        </div>
+      </section>
 
       <div className="flex flex-wrap gap-2">
         <CitationBadge citation={runCost.citation} />
