@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ProgressRail } from "@/components/ProgressRail";
+import { KeyboardNav } from "@/components/KeyboardNav";
+import { KeyboardHint } from "@/components/KeyboardHint";
 
 // Broadsheet's typeface — self-hosted by next/font (runtime stays offline-capable),
 // with the true italic loaded for emphasis and pull quotes.
@@ -23,8 +25,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={serif.variable}>
       <body className="min-h-screen bg-canvas text-ink antialiased">
+        <KeyboardNav />
         <ProgressRail />
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <KeyboardHint />
       </body>
     </html>
   );

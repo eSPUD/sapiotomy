@@ -47,6 +47,31 @@ test.describe("M0 smoke", () => {
     await expect(page).toHaveURL(/\/p\/10$/);
   });
 
+  test("keyboard-shortcuts button explains navigation", async ({ page }) => {
+    await page.goto("/p/5");
+    await page.getByRole("button", { name: /keyboard shortcuts/i }).click();
+    await expect(page.getByText("Keyboard navigation")).toBeVisible();
+    await expect(page.getByText(/next page/i)).toBeVisible();
+    await expect(page.getByText(/previous page/i)).toBeVisible();
+  });
+
+  test("arrow keys navigate between pages", async ({ page }) => {
+    await page.goto("/p/5");
+    await page.keyboard.press("ArrowRight");
+    await expect(page).toHaveURL(/\/p\/6$/);
+    await page.keyboard.press("ArrowLeft");
+    await expect(page).toHaveURL(/\/p\/5$/);
+  });
+
+  test("arrow keys do not hijack a focused slider", async ({ page }) => {
+    await page.goto("/p/6"); // has a Samples slider
+    const slider = page.getByRole("slider").first();
+    await slider.focus();
+    await page.keyboard.press("ArrowLeft");
+    // Still on page 6 — the slider consumed the arrow, no page change.
+    await expect(page).toHaveURL(/\/p\/6$/);
+  });
+
   test("navigation between two stub routes works", async ({ page }) => {
     await page.goto("/p/1");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Think Fast, Think Slow");
