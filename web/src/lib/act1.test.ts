@@ -4,7 +4,7 @@ import { frontierCumulativeUSDM, sameModelCumulativeUSDM } from "./dailyTraining
 import {
   COMPUTER_SCRIPT,
   GAME_ROUNDS,
-  WORLD_CUP_2026,
+  SPAIN_WORLD_CUPS,
 } from "./authored";
 import { coverageAtLeastOne, sampleGrid } from "./sim";
 
@@ -34,36 +34,35 @@ describe("Page 1 authored game rounds", () => {
   });
 });
 
-describe("Page 2 world-cup question (authored; answer key is a flagged placeholder)", () => {
-  it("offers four distinct names with the winner index inside the list", () => {
-    expect(WORLD_CUP_2026.options).toHaveLength(4);
-    expect(new Set(WORLD_CUP_2026.options).size).toBe(4);
-    expect(WORLD_CUP_2026.winnerIndex).toBeGreaterThanOrEqual(0);
-    expect(WORLD_CUP_2026.winnerIndex).toBeLessThan(WORLD_CUP_2026.options.length);
+describe("Page 2 Spain World-Cup count (authored; the 2026 win is a flagged placeholder)", () => {
+  it("asks how many World Cups Spain has won", () => {
+    expect(SPAIN_WORLD_CUPS.question).toContain("Spain");
+    expect(SPAIN_WORLD_CUPS.question).toContain("World Cup");
   });
 
-  it("asks about the 2026 final by name", () => {
-    expect(WORLD_CUP_2026.question).toContain("2026");
-    expect(WORLD_CUP_2026.question).toContain("World Cup");
+  it("the true count is the wins list, and the machine undercounts by exactly the newest", () => {
+    expect(SPAIN_WORLD_CUPS.wins).toHaveLength(SPAIN_WORLD_CUPS.trueCount);
+    // latestYear is the most recent win, the one the model was sealed before.
+    expect(Math.max(...SPAIN_WORLD_CUPS.wins)).toBe(SPAIN_WORLD_CUPS.latestYear);
+    // The model knows only the pre-cutoff wins, so it lands exactly one short.
+    expect(SPAIN_WORLD_CUPS.machine.knownWins).not.toContain(SPAIN_WORLD_CUPS.latestYear);
+    expect(SPAIN_WORLD_CUPS.machine.answer).toBe(SPAIN_WORLD_CUPS.trueCount - 1);
+    expect(SPAIN_WORLD_CUPS.machine.answer).toBe(SPAIN_WORLD_CUPS.machine.knownWins.length);
   });
 
   it("the machine's labels seal its memory before the final and turn search off", () => {
-    expect(WORLD_CUP_2026.machine.cutoffLabel).toMatch(/202[0-5]/);
-    expect(WORLD_CUP_2026.machine.constraintLabel).toMatch(/no web search/i);
+    expect(SPAIN_WORLD_CUPS.machine.cutoffLabel).toMatch(/202[0-5]/);
+    expect(SPAIN_WORLD_CUPS.machine.constraintLabel).toMatch(/no web search/i);
   });
 
-  it("the example reply owns the gap and never names one of the four as winner", () => {
-    expect(WORLD_CUP_2026.exampleReply.length).toBeGreaterThan(0);
-    const joined = WORLD_CUP_2026.exampleReply.join(" ");
-    // The spec's ideal failure: it owns the gap, saying it was not trained on it...
-    expect(joined).toMatch(/not trained/i);
-    // ...and it points the reader to the obvious fix, a web/Google search...
-    expect(joined).toMatch(/search/i);
-    // ...and it refuses to guess a name (no option may appear in the reply).
-    for (const name of WORLD_CUP_2026.options) {
-      expect(joined).not.toContain(name);
-    }
-    // The page's own hard rule: no inference talk anywhere in the data.
+  it("the blurt is a confident count off stale memory: it cites a known win, never the newest", () => {
+    expect(SPAIN_WORLD_CUPS.machine.reply.length).toBeGreaterThan(0);
+    const joined = SPAIN_WORLD_CUPS.machine.reply.join(" ");
+    // It confidently cites a title it DOES know (a pre-cutoff year)...
+    expect(joined).toContain(String(SPAIN_WORLD_CUPS.machine.knownWins[0]));
+    // ...but never the newest title it was sealed before (its whole problem)...
+    expect(joined).not.toContain(String(SPAIN_WORLD_CUPS.latestYear));
+    // ...and the page's hard rule: no inference talk in the data.
     expect(joined).not.toMatch(/inference/i);
   });
 });

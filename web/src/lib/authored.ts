@@ -45,41 +45,49 @@ export const COMPUTER_SCRIPT: ComputerMove[] = [
   { round: 2, typed: "223,300", seconds: 150 },
 ];
 
-// --- Page 2: Two Systems (the World Cup question) -------------------------
+// --- Page 2: Two Systems (the "how many World Cups?" question) ------------
 /**
  * The question is REAL and RECENT on purpose (docs/page_2_refactor.md): the
- * FIFA 2026 World Cup final is days old as this deck is being built, so a
- * reader recalls the winner instantly while a model whose training data ends
- * earlier cannot.
+ * FIFA 2026 World Cup final is days old as this deck is built. A reader who
+ * followed it counts Spain's titles instantly (System 1); a model whose memory
+ * ends before the final counts off stale data and lands exactly one short — it
+ * never saw the newest win.
  *
- * !! PLACEHOLDER ANSWER KEY !! `winnerIndex` was authored by a tool whose own
- * training data ALSO ends before the final (the page's failure mode, live):
- * verify the real winner, fix `winnerIndex` and, if needed, the options list
- * before shipping. The in-app chip and the page footer flag this until then.
+ * !! PLACEHOLDER FACT !! The trap needs Spain to have actually WON the 2026
+ * final (their 2nd title, after the real 2010 win). This was authored by a tool
+ * whose own training ALSO ends before the final — the page's failure mode, live.
+ * Before shipping: verify the 2026 result. If Spain won, `trueCount` is 2 and it
+ * ships as-is; if someone else won, swap `country`/`wins` to the real 2026 winner
+ * and their true total (the machine still undercounts by one). Chip + footer flag
+ * this until confirmed.
  *
- * The machine's reply is an authored EXAMPLE of the ideal honest failure
- * ("not trained on that data"). The planned live route swaps it for a real
- * completion from a small open model with no web search; the swap point is
- * fetchMachineReply() in components/pages/Page2.tsx.
+ * The machine's reply is an authored EXAMPLE of the ideal System-1 blurt: a flat,
+ * confident count off its frozen memory (2010 only -> "one"), wrong by omission.
+ * The planned live route swaps it for a real completion from a small open model
+ * with no web search; the swap point is fetchMachineReply() in Page2.tsx.
  */
-export const WORLD_CUP_2026 = {
-  question: "Who won the FIFA 2026 World Cup?",
-  /** Four plausible names, alphabetical so the order implies no ranking. */
-  options: ["Argentina", "England", "France", "Spain"],
-  /** TODO(ship): verify against the real result; see the block comment. */
-  winnerIndex: 3,
+export const SPAIN_WORLD_CUPS = {
+  question: "How many World Cups has Spain won?",
+  country: "Spain",
+  /** Spain's titles as of the 2026 final. 2010 is real; 2026 is the flagged,
+   *  verify-before-shipping part — the trap needs Spain to have won it. */
+  wins: [2010, 2026],
+  /** The answer a reader who kept up would give. */
+  trueCount: 2,
+  /** The most recent title — so recent the model was sealed before it. */
+  latestYear: 2026,
   machine: {
     label: "a small open model",
     cutoffLabel: "memory sealed early 2025",
     constraintLabel: "no web search",
+    /** The wins inside the model's frozen memory: everything before the seal. */
+    knownWins: [2010],
+    /** trueCount - 1: it counts only what it was trained on, missing 2026. */
+    answer: 1,
+    /**
+     * System 1 - the pop: a confident count off the one title it knows, stated
+     * as fact and short by one. No hedging — the page's reveal explains why.
+     */
+    reply: ["One. Spain won it in 2010."],
   },
-  /**
-   * Authored example of the ideal reply: the model owns the gap in its data,
-   * then points the reader to the obvious fix. Kept short on purpose so the
-   * page reads as a dense visual, not a wall of text.
-   */
-  exampleReply: [
-    "I do not know who won the 2026 World Cup. Unfortunately, I was not trained on that information.",
-    "A quick Google search should lead you to the answer, though!",
-  ],
 } as const;
