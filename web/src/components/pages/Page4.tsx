@@ -241,7 +241,16 @@ export function Page4() {
         </p>
       </div>
 
-      <div className="grid items-stretch gap-3 lg:grid-cols-2">
+      <div className="grid items-stretch gap-3 lg:grid-cols-3">
+        <div className="flex flex-col rounded-lg border-l-4 border-wrong bg-surface p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-wrong">
+            option 1 · answer from memory (page 2)
+          </p>
+          <p className="mt-1 text-sm text-ink">
+            <strong>Free</strong>, and one forward pass over whatever is already in the weights. It
+            lands one short the moment the fact is newer than the model.
+          </p>
+        </div>
         <div className="flex flex-col rounded-lg border-l-4 border-wrong bg-surface p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-wrong">
             option 2 · retrain (page 3)
