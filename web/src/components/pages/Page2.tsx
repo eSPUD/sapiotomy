@@ -381,13 +381,12 @@ export function Page2() {
             </p>
             <p className="mt-1 text-lg font-semibold text-ink">An answer built from parts.</p>
             <p className="mt-1 text-sm text-ink-muted">
-              Slow and effortful — and it decides what it needs: it can notice a fact might be
-              missing and go find it.
+              Slow and effortful — and it can pause to wonder whether a fact might be missing.
             </p>
             <p className="mt-3 border-t border-grid pt-3 text-sm text-ink">
               <strong>What the question actually needs.</strong> Notice the record can change, ask{" "}
               <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and go get the fresh
-              fact. The reasoning is what reveals the data gap — the move the machine skipped.
+              fact — the move the machine skipped.
             </p>
           </div>
         </div>
@@ -398,14 +397,14 @@ export function Page2() {
           </p>
           <div className="mt-3 flex flex-col gap-3">
             <PathRow
-              label="the machine"
+              label="System 1"
               labelClass="text-wrong"
               nodes={["question", "recall memory", `“${WC.machine.answer}”`]}
               endTone="wrong"
               note="stops one short"
             />
             <PathRow
-              label="reasoning"
+              label="System 2"
               labelClass="text-correct"
               nodes={[
                 "question",
@@ -420,11 +419,10 @@ export function Page2() {
 
         <p className="max-w-2xl text-ink">
           <em>
-            So the machine missed on two counts: it lacked the recent result, and it never reasoned
-            that it might be missing one. The easy fix goes after the first — what if we simply{" "}
-            <strong>trained it on data that includes that final</strong>? That is the next page.
-            Teaching it to reason about what it knows is the harder fix — and where this whole story
-            is headed.
+            So the machine missed on two counts: it lacked the recent result, and it never paused to
+            wonder whether it might be missing one. The easy fix goes after the first — what if we
+            simply <strong>trained it on data that includes that final</strong>? That is the next
+            page. The second miss is the harder fix — and where this whole story is headed.
           </em>
         </p>
 
