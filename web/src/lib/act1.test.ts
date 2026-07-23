@@ -65,6 +65,22 @@ describe("Page 2 Spain World-Cup count (authored; the 2026 win is a flagged plac
     // ...and the page's hard rule: no inference talk in the data.
     expect(joined).not.toMatch(/inference/i);
   });
+
+  it("the page-4 thinking trace recognizes the gap and checks — it does not invent the fact", () => {
+    const t = SPAIN_WORLD_CUPS.thinking;
+    expect(t.steps.length).toBeGreaterThan(1);
+    const joined = t.steps.join(" ");
+    // It reasons about its own cutoff / staleness before answering...
+    expect(joined).toMatch(/cutoff|sealed|memory|behind|recent/i);
+    // ...decides to look rather than answer from memory...
+    expect(joined).toMatch(/check|source|look/i);
+    // ...and, having looked, DOES name the newest title the blurt omitted
+    // (the contrast with machine.reply) — recognition, not invention.
+    expect(joined).toContain(String(SPAIN_WORLD_CUPS.latestYear));
+    // The count it lands on matches the true total, not the blurt.
+    expect(t.answer).toMatch(/two/i);
+    expect(SPAIN_WORLD_CUPS.trueCount).toBe(2);
+  });
 });
 
 describe("Page 3 daily-training meter (Epoch run-cost anchor)", () => {

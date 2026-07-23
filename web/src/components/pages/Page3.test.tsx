@@ -42,7 +42,7 @@ describe("Page 3 (Daily Training?)", () => {
     expect(
       screen.queryByRole("img", { name: /training compute of frontier language models/i }),
     ).toBeNull();
-    expect(screen.getByText(/assumed a fixed training price/i)).toBeInTheDocument();
+    expect(screen.getByText(/assumes a stagnant training price/i)).toBeInTheDocument();
     expect(screen.getByText(/per-year/i)).toBeInTheDocument();
     expect(yearSlider()).toBeInTheDocument();
     expect(fiveYearSlider()).toBeInTheDocument();

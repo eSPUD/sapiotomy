@@ -13,9 +13,10 @@
  * Training only on this page; the answer-time alternative is the next page's
  * business, teased by an optional guess box. No inference talk here.
  *
- * Layout rule (revision, 2026-07): no reveals, no drag-to-unlock. All three
- * figures sit side by side in a textbook grid, each with its note directly
- * below it, and every citation lands at the bottom of the page.
+ * Layout rule (revision, 2026-07): no reveals, no drag-to-unlock. Two-column
+ * grid: Fig. 1 fills the left column; the right column stacks Fig. 2 above the
+ * optional "one way out" guess box, so the shorter Fig. 2 leaves no dead space
+ * before the guess. Every citation lands at the bottom of the page.
  */
 
 import { useMemo, useRef, useState } from "react";
@@ -162,9 +163,9 @@ export function Page3() {
       >
         <p className="text-xs font-semibold uppercase tracking-wide text-compute">the catch</p>
         <p className="mt-2 max-w-3xl text-ink">
-          <strong>Fig. 1 (left) assumed a fixed training price.</strong> It is not: Epoch AI puts
-          training-compute cost on a <strong>~5&times;-per-year</strong> climb. Fold that in and you
-          get the curve at right.
+          <strong>Fig. 1 (left) assumes a stagnant training price.</strong> Fig. 2 (right) takes
+          into account the rising technical cost of compute: Epoch AI puts training-compute cost on
+          a <strong>~5&times;-per-year</strong> climb, so the real bill rises as the technology does.
         </p>
       </aside>
 
@@ -242,6 +243,7 @@ export function Page3() {
           </div>
         </figure>
 
+        <div className="flex flex-col gap-4">
         <figure
           aria-label="Figure 2: the two rates, combined"
           className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
@@ -301,9 +303,8 @@ export function Page3() {
             </figcaption>
           </div>
         </figure>
-      </div>
 
-      <section aria-label="One way out" className="overflow-hidden rounded-lg border border-grid bg-surface">
+        <section aria-label="One way out" className="overflow-hidden rounded-lg border border-grid bg-surface">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
           <span>one way out</span>
           <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
@@ -360,7 +361,9 @@ export function Page3() {
             </p>
           )}
         </div>
-      </section>
+        </section>
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <CitationBadge citation={runCost.citation} />

@@ -2,19 +2,21 @@
 
 /**
  * Page 2, "Two Systems" (docs/page_2_refactor.md). One question: how many World
- * Cups has Spain won? A reader who followed the tournaments counts instantly
- * (System 1); a machine whose memory was sealed before the 2026 final counts
- * off stale data and lands one short. The failure names the two systems: the
- * question looks like a System-1 lookup, but the freshest fact never reached
- * the machine, so even careful counting (System 2) starves for raw material.
- * The training question is only the closing teaser; no inference talk here.
+ * Cups has Spain won? It looks like a System-1 lookup, but answering it well is
+ * a System-2 move: you have to reason that the record can change, ask "have they
+ * won recently?", and go get the fresh fact — the reasoning is what reveals the
+ * data need. The machine skips that move: it blurts a confident recall off a
+ * memory sealed before the 2026 final and lands one short. So it misses twice —
+ * it lacks the recent result AND never reasons that it might be missing one. The
+ * "just retrain it" fix is the closing teaser; the reasoning thread pays off
+ * later. No inference talk here yet.
  *
  * Layout rule (revision, 2026-07): no pop-ups, no reveals. The question, the
  * machine panel, and the whole analysis are on screen from the first paint;
  * steps the reader has not reached yet are grayed out, never hidden.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { PageNav } from "@/components/PageNav";
 import { SPAIN_WORLD_CUPS } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
@@ -40,6 +42,55 @@ function parseCount(raw: string): number | null {
     six: 6,
   };
   return s in words ? words[s] : null;
+}
+
+/** Literal-class tones for a flow node, so Tailwind keeps them at build time. */
+const NODE_TONE = {
+  neutral: "border-grid bg-surface-raised text-ink",
+  wrong: "border-wrong/60 bg-wrong/15 text-ink",
+  correct: "border-correct/60 bg-correct/15 text-ink",
+} as const;
+
+type NodeTone = keyof typeof NODE_TONE;
+
+/** One labeled path: a row of nodes joined by arrows, last node optionally toned. */
+function PathRow({
+  label,
+  labelClass,
+  nodes,
+  endTone,
+  note,
+}: {
+  label: string;
+  labelClass: string;
+  nodes: readonly string[];
+  endTone: NodeTone;
+  note?: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+      <span className={`w-full text-xs font-semibold uppercase tracking-wide sm:w-20 ${labelClass}`}>
+        {label}
+      </span>
+      {nodes.map((n, i) => (
+        <Fragment key={n}>
+          {i > 0 ? (
+            <span aria-hidden="true" className="text-ink-muted">
+              →
+            </span>
+          ) : null}
+          <span
+            className={`rounded border px-2 py-1 text-xs ${
+              i === nodes.length - 1 ? NODE_TONE[endTone] : NODE_TONE.neutral
+            }`}
+          >
+            {n}
+          </span>
+        </Fragment>
+      ))}
+      {note ? <span className="text-xs text-ink-muted">· {note}</span> : null}
+    </div>
+  );
 }
 
 /**
@@ -157,8 +208,8 @@ export function Page2() {
         takes the same question.
       </p>
 
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <section aria-label="The question" className="overflow-hidden rounded-lg border border-grid bg-surface">
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section aria-label="The question" className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
             <span>your turn · one question · your best count</span>
             <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
@@ -220,8 +271,8 @@ export function Page2() {
                     <span className="text-wrong">✗ You said {guess.trim()};</span>{" "}
                     <span className="text-ink-muted">
                       the record is <strong className="text-ink">two</strong> — 2010, and again in
-                      2026, days ago. Miss the recent one and there is nothing to <em>work out</em>:
-                      a title you never saw cannot be derived, only recalled.
+                      2026, days ago. No amount of counting recovers a title you never saw: the move
+                      is to <em>realize</em> it might be missing and go look.
                     </span>
                   </>
                 )}
@@ -308,56 +359,72 @@ export function Page2() {
       </div>
 
       <section aria-label="Two systems, one question" className="flex flex-col gap-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-grid bg-surface p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-compute">
+        <div className="grid items-stretch gap-3 lg:grid-cols-2">
+          <div className="flex flex-col rounded-lg border-l-4 border-grid bg-surface p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
               System 1 · the pop
             </p>
-            <p className="mb-1 mt-1 text-lg font-semibold text-ink">
-              A stored fact, recalled whole.
-            </p>
-            <p className="font-mono text-sm text-ink-muted">question → memory → answer</p>
-            <p className="mt-2 text-sm text-ink-muted">
+            <p className="mt-1 text-lg font-semibold text-ink">A stored fact, recalled whole.</p>
+            <p className="mt-1 text-sm text-ink-muted">
               Zero steps, zero time. It is either in there, or it is nowhere.
             </p>
+            <p className="mt-3 border-t border-grid pt-3 text-sm text-ink">
+              <strong>It only looks like this.</strong> The count may pop
+              {answered ? <>, the way it may have for you</> : null} — but a bare recall is exactly
+              the trap the machine fell into: it counted off a memory sealed before this summer,{" "}
+              {WC.trueCount} titles reported as {WC.machine.answer}.
+            </p>
           </div>
-          <div className="rounded-lg border border-grid bg-surface p-4">
+          <div className="flex flex-col rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-compute">
               System 2 · the steps
             </p>
-            <p className="mb-1 mt-1 text-lg font-semibold text-ink">
-              An answer built from parts.
+            <p className="mt-1 text-lg font-semibold text-ink">An answer built from parts.</p>
+            <p className="mt-1 text-sm text-ink-muted">
+              Slow and effortful — and it decides what it needs: it can notice a fact might be
+              missing and go find it.
             </p>
-            <p className="font-mono text-sm text-ink-muted">
-              question → gather the pieces → work them → answer
-            </p>
-            <p className="mt-2 text-sm text-ink-muted">
-              Slow and effortful, and it needs raw material: facts to gather, then reason over.
+            <p className="mt-3 border-t border-grid pt-3 text-sm text-ink">
+              <strong>What the question actually needs.</strong> Notice the record can change, ask{" "}
+              <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and go get the fresh
+              fact. The reasoning is what reveals the data gap — the move the machine skipped.
             </p>
           </div>
         </div>
 
-        <div className="grid items-start gap-3 lg:grid-cols-2">
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <strong>Looks like a System 1 question.</strong> A count like this should just pop
-            {answered ? <>, the way it may have for you</> : null} — follow every tournament and it
-            is simply <em>there</em>. The machine has no such luck: the newest title never reached
-            its memory, so it counts what it has and stops one short.
-          </div>
-
-          <div className="rounded-lg border-l-4 border-wrong bg-wrong/15 p-4 text-ink">
-            <strong>The trap:</strong> it does not hesitate. It counts confidently off a memory that
-            ends before this summer — {WC.trueCount} titles reported as {WC.machine.answer}. The
-            right method on stale facts, delivered with a straight face.
+        <div className="rounded-lg border border-grid bg-surface p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+            same question, two paths
+          </p>
+          <div className="mt-3 flex flex-col gap-3">
+            <PathRow
+              label="the machine"
+              labelClass="text-wrong"
+              nodes={["question", "recall memory", `“${WC.machine.answer}”`]}
+              endTone="wrong"
+              note="stops one short"
+            />
+            <PathRow
+              label="reasoning"
+              labelClass="text-correct"
+              nodes={[
+                "question",
+                "“won it recently?”",
+                "check the latest",
+                `“${WC.trueCount === 2 ? "Two" : WC.trueCount}”`,
+              ]}
+              endTone="correct"
+            />
           </div>
         </div>
 
         <p className="max-w-2xl text-ink">
           <em>
-            The machine failed because the latest World Cup was never in its memory. So what is the
-            fix for questions like these? What if the model{" "}
-            <strong>were trained on data that includes that final</strong>, recent as it is? That is
-            the next page.
+            So the machine missed on two counts: it lacked the recent result, and it never reasoned
+            that it might be missing one. The easy fix goes after the first — what if we simply{" "}
+            <strong>trained it on data that includes that final</strong>? That is the next page.
+            Teaching it to reason about what it knows is the harder fix — and where this whole story
+            is headed.
           </em>
         </p>
 

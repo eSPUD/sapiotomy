@@ -90,4 +90,24 @@ export const SPAIN_WORLD_CUPS = {
      */
     reply: ["One. Spain won it in 2010."],
   },
+  /**
+   * Page 4, "The Third Option": the SAME question answered in thinking mode.
+   * The trace never invents the 2026 title — it recognizes the gap (a recent,
+   * post-cutoff result it may be missing), decides not to answer from memory,
+   * and checks before committing. That recognition is the whole point: a model
+   * that answers on reflex never reaches for the check, even when it could.
+   * Authored placeholder EXAMPLE; a live reasoning model replaces it later
+   * (swap point: the thinking trace in Page4.tsx). It names the newest year the
+   * blurt omits (2026) and lands on the true count.
+   */
+  thinking: {
+    steps: [
+      "Let me not answer on reflex. This asks for a count of titles — and a count like that can change whenever there's a new final.",
+      "The newest possibility is recent. My training was sealed in early 2025, so a 2026 result would fall after my cutoff — I could be a title behind.",
+      "So I shouldn't count from memory alone. Before I commit, let me check a current source.",
+      "The record: Spain won in 2010, and again in 2026.",
+    ],
+    /** The count it lands on once it has looked — the true total, not the blurt. */
+    answer: "Two.",
+  },
 } as const;

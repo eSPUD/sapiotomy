@@ -82,7 +82,7 @@ describe("Page 2 (Two Systems)", () => {
     render(<Page2 />);
     answer("5");
     expect(screen.getByText(/✗ You said 5;/)).toBeInTheDocument();
-    expect(screen.getByText(/cannot be derived, only recalled/)).toBeInTheDocument();
+    expect(screen.getByText(/No amount of counting recovers a title you never saw/)).toBeInTheDocument();
     expect(runButton()).toBeEnabled();
     expectClean();
   });
@@ -106,10 +106,10 @@ describe("Page 2 (Two Systems)", () => {
     // The analysis: two systems, the look-alike, the trap, the teaser, the flag.
     expect(screen.getByText("System 1 · the pop")).toBeInTheDocument();
     expect(screen.getByText("System 2 · the steps")).toBeInTheDocument();
-    expect(screen.getByText(/looks like a System 1 question/i)).toBeInTheDocument();
+    expect(screen.getByText(/It only looks like this/)).toBeInTheDocument();
     expect(screen.getByText(/the way it may have for you/)).toBeInTheDocument();
-    expect(screen.getByText(/delivered with a straight face/)).toBeInTheDocument();
-    expect(screen.getByText(/trained on data that includes that final/)).toBeInTheDocument();
+    expect(screen.getByText(/same question, two paths/i)).toBeInTheDocument();
+    expect(screen.getByText(/trained it on data that includes that final/)).toBeInTheDocument();
     expect(screen.getByText(/verify the final's result before shipping/)).toBeInTheDocument();
     // The run button is consumed.
     expect(screen.queryByRole("button", { name: /run it/i })).toBeNull();
@@ -120,7 +120,7 @@ describe("Page 2 (Two Systems)", () => {
     render(<Page2 />);
     passToMachine();
     await run();
-    expect(screen.getByText(/looks like a System 1 question/i)).toBeInTheDocument();
+    expect(screen.getByText(/It only looks like this/)).toBeInTheDocument();
     expect(screen.queryByText(/the way it may have for you/)).toBeNull();
     expectClean();
   });
