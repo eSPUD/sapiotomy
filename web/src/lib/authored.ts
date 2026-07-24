@@ -45,6 +45,24 @@ export const COMPUTER_SCRIPT: ComputerMove[] = [
   { round: 2, typed: "223,300", seconds: 150 },
 ];
 
+/**
+ * Page 1 as an explicit System 1 vs System 2 contrast (Kahneman). One
+ * operation, multiplication, at three sizes: a small product recognized whole
+ * (System 1), a medium one built step by step (System 2), and a large one
+ * neither system does in your head (the ceiling). Authored/illustrative; kept
+ * separate from GAME_ROUNDS so the older game data and its consumers stay
+ * untouched. The steps are arithmetically checked in act1.test.ts.
+ */
+export const SYSTEMS = {
+  fast: { prompt: "3 × 4", answer: "12" },
+  slow: {
+    prompt: "17 × 24",
+    steps: ["17 × 20 = 340", "17 × 4 = 68", "340 + 68 = 408"],
+    answer: "408",
+  },
+  ceiling: { prompt: "350 × 638" },
+} as const;
+
 // --- Page 2: Two Systems (the "how many World Cups?" question) ------------
 /**
  * The question is REAL and RECENT on purpose (docs/page_2_refactor.md): the

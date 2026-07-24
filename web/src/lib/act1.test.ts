@@ -6,6 +6,7 @@ import {
   GAME_ROUNDS,
   MULT_METHODS,
   SPAIN_WORLD_CUPS,
+  SYSTEMS,
 } from "./authored";
 import { coverageAtLeastOne, sampleGrid } from "./sim";
 
@@ -32,6 +33,26 @@ describe("Page 1 authored game rounds", () => {
     for (const m of COMPUTER_SCRIPT) {
       expect(Number(m.typed.replace(/,/g, ""))).toBe(GAME_ROUNDS[m.round].answer);
     }
+  });
+});
+
+describe("Page 1 System 1 / System 2 (authored multiplication contrast)", () => {
+  it("System 1 product is 3 × 4 = 12", () => {
+    expect(SYSTEMS.fast.prompt).toBe("3 × 4");
+    expect(Number(SYSTEMS.fast.answer)).toBe(3 * 4);
+  });
+
+  it("System 2 steps are arithmetically consistent and equal 17 × 24", () => {
+    expect(17 * 20).toBe(340);
+    expect(17 * 4).toBe(68);
+    expect(340 + 68).toBe(408);
+    expect(SYSTEMS.slow.steps).toHaveLength(3);
+    expect(Number(SYSTEMS.slow.answer)).toBe(17 * 24);
+  });
+
+  it("the ceiling is a still-larger multiplication with no shown answer", () => {
+    expect(SYSTEMS.ceiling.prompt).toBe("350 × 638");
+    expect(SYSTEMS.ceiling).not.toHaveProperty("answer");
   });
 });
 
