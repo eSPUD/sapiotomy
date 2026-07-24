@@ -387,48 +387,57 @@ export function Page5() {
                 ))}
               </div>
 
-              {/* two big readouts + delta */}
-              <div className="grid items-stretch gap-3 sm:grid-cols-2">
-                <div className="flex flex-col items-center rounded-lg border-l-4 border-grid bg-surface-raised p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    Standard · the blurt
-                  </p>
-                  <BigNumber value={now.standard} suffix="%" decimals={1} tone="ink" />
+              {/* chart beside the readouts: the marker and the numbers are one
+                  glance apart, and the section stops running a screen tall. */}
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+                {/* the chart, marker snapped to the current size. The viewBox is
+                    sized to the column it lands in so ChartFrame's width="100%"
+                    scales it ~1:1 instead of magnifying the axis type. */}
+                <div className="min-w-0">
+                  <LineChart
+                    title={`GSM8K solve rate for the PaLM family at 8, 62 and 540 billion parameters, log x axis, redrawn from Wei et al. 2022: standard prompting stays low at ${sp.palm8Standard}, ${sp.palm62Standard} and ${sp.palm540Standard} percent, while chain-of-thought climbs from ${sp.palm8Cot} through ${sp.palm62Cot} to ${sp.palm540Cot} percent — below standard at 8B, far above it at 540B. Currently marking ${size} billion parameters.`}
+                    points={standardCurve}
+                    secondary={{ points: cotCurve, label: "chain-of-thought prompting" }}
+                    primaryLabel="standard prompting (the blurt)"
+                    logX
+                    xTicks={[...SIZES]}
+                    xDomain={[7, 700]}
+                    yDomain={[0, 65]}
+                    markerX={size}
+                    xLabel="model size (billions of parameters, log scale)"
+                    yLabel="GSM8K solve rate (%)"
+                    width={620}
+                    height={300}
+                  />
                 </div>
-                <div className="flex flex-col items-center rounded-lg border-l-4 border-compute bg-surface-raised p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-compute">
-                    Chain-of-thought
-                  </p>
-                  <BigNumber value={now.cot} suffix="%" decimals={1} tone="compute" />
-                </div>
-              </div>
-              <div
-                className={`rounded-lg border-l-4 p-3 text-sm ${
-                  deltaNow >= 0 ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
-                }`}
-              >
-                <span className={`font-semibold ${deltaNow >= 0 ? "text-correct" : "text-wrong"}`}>
-                  {deltaNow >= 0 ? "✓" : "✗"} showing work at {size}B:{" "}
-                  {deltaNow >= 0 ? "+" : ""}
-                  {deltaNow} points
-                </span>
-              </div>
 
-              {/* the chart, marker snapped to the current size */}
-              <LineChart
-                title={`GSM8K solve rate for the PaLM family at 8, 62 and 540 billion parameters, log x axis, redrawn from Wei et al. 2022: standard prompting stays low at ${sp.palm8Standard}, ${sp.palm62Standard} and ${sp.palm540Standard} percent, while chain-of-thought climbs from ${sp.palm8Cot} through ${sp.palm62Cot} to ${sp.palm540Cot} percent — below standard at 8B, far above it at 540B. Currently marking ${size} billion parameters.`}
-                points={standardCurve}
-                secondary={{ points: cotCurve, label: "chain-of-thought prompting" }}
-                primaryLabel="standard prompting (the blurt)"
-                logX
-                xDomain={[7, 700]}
-                yDomain={[0, 65]}
-                markerX={size}
-                xLabel="model size (billions of parameters, log scale)"
-                yLabel="GSM8K solve rate (%)"
-                width={460}
-                height={260}
-              />
+                {/* two readouts + delta, stacked in the rail */}
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col items-center rounded-lg border-l-4 border-grid bg-surface-raised px-3 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                      Standard · the blurt
+                    </p>
+                    <BigNumber value={now.standard} suffix="%" decimals={1} tone="ink" />
+                  </div>
+                  <div className="flex flex-col items-center rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-compute">
+                      Chain-of-thought
+                    </p>
+                    <BigNumber value={now.cot} suffix="%" decimals={1} tone="compute" />
+                  </div>
+                  <div
+                    className={`rounded-lg border-l-4 px-3 py-2 text-sm ${
+                      deltaNow >= 0 ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
+                    }`}
+                  >
+                    <span className={`font-semibold ${deltaNow >= 0 ? "text-correct" : "text-wrong"}`}>
+                      {deltaNow >= 0 ? "✓" : "✗"} showing work at {size}B:{" "}
+                      {deltaNow >= 0 ? "+" : ""}
+                      {deltaNow} points
+                    </span>
+                  </div>
+                </div>
+              </div>
 
               {/* live narration */}
               <p className="min-h-[1.5rem] border-t border-grid pt-3 text-ink">{narrationB(size)}</p>
