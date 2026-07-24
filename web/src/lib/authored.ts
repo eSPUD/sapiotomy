@@ -285,3 +285,283 @@ export const THINK_BUDGET = {
     { text: "Subtract the products: 2,961 − 1,189 = 1,772.", value: 1772, tokens: 8 },
   ] as readonly BudgetStep[],
 } as const;
+
+// --- Page 7: Frequency Voting (the sampling chamber) ----------------------
+/**
+ * One word problem with FOUR landing places: the right answer and three
+ * distractors, each reachable by a specific, nameable misreading. That shape
+ * matters — the anchored self-consistency model (lib/sim SELF_CONSISTENCY_MODEL,
+ * calibrated to Wang et al. 2022) samples exactly one correct answer plus three
+ * distractors, so every ballot the chamber draws maps onto a real chain a reader
+ * can read and judge for themselves.
+ *
+ * All four arithmetic paths are self-verifiable from the two factors and are
+ * recomputed in src/lib/act2vote.test.ts, so a typo here fails the suite rather
+ * than shipping. Authored teaching example, not a model transcript; the page
+ * says so on the chip.
+ *
+ * Index 0 MUST be the correct path: lib/sim's answer indices use 0 = correct,
+ * 1..D = distractor, and the chamber renders paths[i] for answer index i.
+ */
+export interface ReasoningPath {
+  /** The number this path lands on. */
+  answer: number;
+  display: string;
+  correct: boolean;
+  /** One-line label for the tile and the histogram row. */
+  gist: string;
+  steps: readonly string[];
+}
+
+export const SAMPLING_CHAMBER = {
+  question:
+    "Marta bought 4 boxes of 12 candles. She used 15 of them, then gave away a third of what was left. How many candles does she have now?",
+  boxes: 4,
+  perBox: 12,
+  used: 15,
+  answer: 22,
+  display: "22",
+  paths: [
+    {
+      answer: 22,
+      display: "22",
+      correct: true,
+      gist: "gives away a third of the remainder",
+      steps: [
+        "4 boxes of 12 is 4 × 12 = 48 candles.",
+        "She used 15, so 48 − 15 = 33 are left.",
+        "A third of that remainder is 33 ÷ 3 = 11 given away.",
+        "So she keeps 33 − 11 = 22.",
+      ],
+    },
+    {
+      answer: 33,
+      display: "33",
+      correct: false,
+      gist: "stops at the remainder, never gives any away",
+      steps: [
+        "4 × 12 = 48 candles to start.",
+        "She used 15 of them: 48 − 15 = 33.",
+        "So she has 33 candles.",
+      ],
+    },
+    {
+      answer: 17,
+      display: "17",
+      correct: false,
+      gist: "takes the third from the original 48, not the remainder",
+      steps: [
+        "4 × 12 = 48 candles.",
+        "A third of 48 is 16, so she gives away 16.",
+        "She also used 15, so 48 − 15 − 16 = 17.",
+      ],
+    },
+    {
+      answer: 11,
+      display: "11",
+      correct: false,
+      gist: "reads 'gave away a third' as 'kept a third'",
+      steps: [
+        "4 × 12 = 48, and 48 − 15 = 33 left.",
+        "She is left with a third of them: 33 ÷ 3 = 11.",
+      ],
+    },
+  ] as readonly ReasoningPath[],
+} as const;
+
+// --- Page 8: Best-of-N and verifiers (generate, then select) ---------------
+/**
+ * The bat-and-ball problem — chosen because its wrong answer is not a random
+ * slip but an ATTRACTOR: the intuitive $0.10 is what a fast chain reaches, so
+ * the wrong answer is genuinely the popular one and the right answer is the
+ * rare one. That is the exact regime where majority voting fails and selection
+ * has to do the work, and it lands the page's premise without inventing a
+ * pathological example. It also pays back Act 1: this is the System-1 trap.
+ *
+ * Both candidate answers are checkable by substitution (verified in
+ * src/lib/act2verifiers.test.ts), which is the page's other point: a verifier's
+ * job is easier than a generator's, because checking "does 0.05 + 1.05 = 1.10
+ * and is 1.05 − 0.05 = 1.00?" is arithmetic, not insight.
+ *
+ * Index 0 is the correct answer, matching lib/sim's answer-index convention.
+ */
+export const BAT_AND_BALL = {
+  question:
+    "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost?",
+  total: 1.1,
+  difference: 1.0,
+  answers: [
+    {
+      display: "$0.05",
+      correct: true,
+      gist: "sets up the equation and solves it",
+      chain: "ball + (ball + 1.00) = 1.10, so 2 × ball = 0.10 and ball = 0.05.",
+      /** The substitution a verifier can run: both constraints hold. */
+      check: "0.05 + 1.05 = 1.10 ✓ and 1.05 − 0.05 = 1.00 ✓",
+      checks: true,
+    },
+    {
+      display: "$0.10",
+      correct: false,
+      gist: "subtracts the $1.00 and stops — the intuitive leap",
+      chain: "1.10 − 1.00 = 0.10, so the ball is 10 cents.",
+      check: "0.10 + 1.10 = 1.20 ✗ (not 1.10), and the gap is 1.00 only if the bat is 1.10",
+      checks: false,
+    },
+    {
+      display: "$1.05",
+      correct: false,
+      gist: "answers with the bat's price instead of the ball's",
+      chain: "The bat is 1.00 more than the ball, so the bat is 1.05 — the answer is 1.05.",
+      check: "1.05 + 2.05 = 3.10 ✗ — this is the bat, not the ball",
+      checks: false,
+    },
+  ],
+} as const;
+
+// --- Page 9: Outcome vs Process Supervision -------------------------------
+/**
+ * Three sampled solutions to ONE arithmetic question, chosen so the ORM/PRM
+ * contrast has somewhere to bite:
+ *
+ *   lucky   — the famous "cancel the 6s" fake-cancellation. 16/64 really is
+ *             1/4, so the FINAL ANSWER IS RIGHT and an outcome grader signs
+ *             off, while the middle step is mathematical nonsense. This is
+ *             "right answer, wrong reasoning" in its cleanest known form, and
+ *             it is why a teacher makes you show your work.
+ *   broken  — a wrong GCD at step 2; every later step is valid GIVEN that
+ *             mistake, so the chain reads fluently and lands on 2/8. An
+ *             outcome grader can only say "wrong"; a process grader points at
+ *             step 2 and the steps after it are not the reader's problem.
+ *   clean   — the correct road, for contrast.
+ *
+ * Every claim here is self-verifiable arithmetic (16/64 = 1/4; gcd(16,64) = 16;
+ * 16/8 = 2 and 64/8 = 8) and is recomputed in src/lib/act2verifiers.test.ts.
+ * Authored teaching examples, not model transcripts; the page's chip says so.
+ */
+export interface TraceStep {
+  text: string;
+  /** Is this step itself valid reasoning? (the process label) */
+  ok: boolean;
+  /** Shown when a step is flagged — why it is wrong. */
+  note?: string;
+}
+
+export interface SupervisionTrace {
+  key: string;
+  label: string;
+  /** One-line description of what kind of solution this is. */
+  kind: string;
+  steps: readonly TraceStep[];
+  finalAnswer: string;
+  /** Is the FINAL answer right? (the outcome label) */
+  outcomeOk: boolean;
+  /** What each grader concludes — the whole point of the page. */
+  ormVerdict: string;
+  prmVerdict: string;
+}
+
+export const SUPERVISION = {
+  question: "Reduce 16/64 to lowest terms.",
+  answer: "1/4",
+  traces: [
+    {
+      key: "lucky",
+      label: "Solution A",
+      kind: "right answer, wrong reasoning",
+      steps: [
+        { text: "16/64 — I need to simplify this fraction.", ok: true },
+        {
+          text: "Cancel the 6 on top with the 6 on the bottom.",
+          ok: false,
+          note: "Not a valid operation. Digits inside a number cannot be cancelled — only common factors of the whole numerator and denominator can.",
+        },
+        { text: "That leaves 1 over 4.", ok: true, note: "Follows from step 2, which was invalid." },
+      ],
+      finalAnswer: "1/4",
+      outcomeOk: true,
+      ormVerdict:
+        "Thumbs up. The final answer is 1/4, which is correct — so an outcome grader sees nothing wrong and rewards the whole chain, nonsense step included.",
+      prmVerdict:
+        "Step 2 is flagged. The answer happens to be right (16/64 really is 1/4), but the method would fail on almost any other fraction — a process grader refuses to reward it.",
+    },
+    {
+      key: "broken",
+      label: "Solution B",
+      kind: "wrong answer, one broken step",
+      steps: [
+        { text: "16/64 — divide the top and bottom by their greatest common divisor.", ok: true },
+        {
+          text: "The greatest common divisor of 16 and 64 is 8.",
+          ok: false,
+          note: "The GCD is 16, not 8. 16 divides 64 exactly four times, so 16 is itself the greatest common divisor.",
+        },
+        { text: "16 ÷ 8 = 2 and 64 ÷ 8 = 8, so the fraction becomes 2/8.", ok: true, note: "Arithmetic is correct given step 2's wrong divisor." },
+        { text: "So 16/64 = 2/8.", ok: true, note: "Follows from step 3; 2/8 is not in lowest terms." },
+      ],
+      finalAnswer: "2/8",
+      outcomeOk: false,
+      ormVerdict:
+        "Thumbs down. The answer is wrong — but that is all an outcome grader can say. It cannot tell you which of the four steps to fix.",
+      prmVerdict:
+        "Step 2 is flagged, and only step 2. Steps 3 and 4 are correct arithmetic on a wrong divisor, so the break is localised to one line — exactly the signal you need to fix the chain.",
+    },
+    {
+      key: "clean",
+      label: "Solution C",
+      kind: "right answer, sound reasoning",
+      steps: [
+        { text: "16/64 — divide the top and bottom by their greatest common divisor.", ok: true },
+        { text: "The greatest common divisor of 16 and 64 is 16.", ok: true },
+        { text: "16 ÷ 16 = 1 and 64 ÷ 16 = 4.", ok: true },
+        { text: "So 16/64 = 1/4, and 1/4 is in lowest terms.", ok: true },
+      ],
+      finalAnswer: "1/4",
+      outcomeOk: true,
+      ormVerdict: "Thumbs up. The answer is correct — and this time the chain deserves it.",
+      prmVerdict: "Every step passes. Both graders agree, which is what agreement is supposed to look like.",
+    },
+  ] as readonly SupervisionTrace[],
+} as const;
+
+// --- Page 10: Searching Through Thoughts (the Game of 24 instance) ---------
+/**
+ * The search page needs a problem where BRANCHING is the whole difficulty, not
+ * arithmetic. Game of 24 (use each of four numbers exactly once, with + − × ÷,
+ * to make 24) is that problem, and it is the task Yao et al. 2023 use for the
+ * Tree-of-Thoughts result this page's curve is anchored to — so the interactive
+ * and the cited numbers are about the same thing.
+ *
+ * The instance below is authored, not quoted, and it was CHOSEN by running every
+ * strategy in lib/game24.ts over a set of candidates and keeping the one whose
+ * outcomes actually differ: greedy dead-ends, a beam of width 1 dead-ends with
+ * it, a beam of 2 or more finds the answer, depth-first finds it by backtracking,
+ * breadth-first finds it by brute force at roughly six times the cost, and MCTS
+ * finds it cheapest of all. Those are measurements of the engine, re-asserted in
+ * src/lib/act2search.test.ts, not claims made up to fit the story.
+ *
+ * The solution is checkable by hand — 2 × 5 = 10, 10 − 6 = 4, 4 × 6 = 24, using
+ * each of 2, 5, 6, 6 exactly once — and game24.ts re-derives it by search, so
+ * the page never displays a solution it has not actually found.
+ *
+ * `plainCot` is the contrast case: one cheap chain that commits to a reasonable
+ * first move, gets agonisingly close, and cannot back out — which is what a
+ * single chain does on a problem that needs backtracking.
+ */
+export const GAME24 = {
+  numbers: [2, 5, 6, 6] as const,
+  target: 24,
+  /** Human-readable solution; lib/game24 finds it independently. */
+  solution: "(2 × 5 − 6) × 6 = 4 × 6 = 24",
+  plainCot: {
+    steps: [
+      "The 6 and the 5 look promising: 6 × 5 = 30, which is close to 24.",
+      "That leaves 30, 6 and 2. And 30 − 6 = 24 exactly.",
+      "But that uses only three of the numbers — the 2 is still on the table.",
+      "Fold the 2 in: 30 − 6 × 2 = 18, and 30 − 6 ÷ 2 = 27. Neither is 24.",
+      "I am stuck, and I committed to 6 × 5 four steps ago. Best guess: 30 − 6 = 24.",
+    ],
+    answer: "24, but using only three of the four numbers — not a valid solution",
+    correct: false,
+  },
+} as const;
