@@ -53,7 +53,7 @@ describe("Page 5 Wei CoT scaling curve (per-scale GSM8K, PaLM family)", () => {
   });
 });
 
-describe("Page 6 authored budget chain (tokens are word counts)", () => {
+describe("Page 6 authored budget chain (costs are word counts, NOT tokens)", () => {
   const T = THINK_BUDGET;
 
   it("the chain's intermediate values recompute from the question's factors", () => {
@@ -67,12 +67,17 @@ describe("Page 6 authored budget chain (tokens are word counts)", () => {
     expect(Number(T.display.replace(/,/g, ""))).toBe(T.answer);
   });
 
-  it("every step's token cost is exactly its whitespace word count", () => {
+  it("every step's cost is exactly its whitespace word count", () => {
     for (const s of T.steps) {
-      expect(s.tokens).toBe(s.text.trim().split(/\s+/).length);
+      expect(s.words).toBe(s.text.trim().split(/\s+/).length);
     }
+    // The two figures the page puts on screen, pinned explicitly: step 1 is 9
+    // words and the whole chain is 47. These are word counts — nothing here
+    // claims they are tokenizer token counts.
+    expect(T.steps[0].words).toBe(9);
+    expect(T.steps.reduce((n, s) => n + s.words, 0)).toBe(47);
     // A real budget exists: multiple steps, non-trivial total.
-    const total = T.steps.reduce((n, s) => n + s.tokens, 0);
+    const total = T.steps.reduce((n, s) => n + s.words, 0);
     expect(T.steps.length).toBe(5);
     expect(total).toBeGreaterThan(20);
   });

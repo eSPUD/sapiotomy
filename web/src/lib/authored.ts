@@ -293,19 +293,31 @@ export const COT_DEMO = {
 // --- Page 6: Thinking Longer (a token budget on the chain) -----------------
 /**
  * An authored hard-arithmetic chain for the compute-budget slider: five
- * dependent steps, each landing one intermediate value, whose token cost IS
- * its word count (split on whitespace) — so the budget arithmetic is
- * self-verifiable and re-checked in src/lib/act2reason.test.ts. The System-1
- * blurt is an authored plausible near-miss (a borrow slip in the final
- * subtraction). This is a demonstration, not a measurement; the page flags it
- * and leans on the cited s1 result for the measured version of the trade.
+ * dependent steps, each landing one intermediate value.
+ *
+ * UNITS: the cost of a step is its WHITESPACE WORD COUNT, and the field is
+ * named `words` because that is literally what it is. It is NOT a tokenizer
+ * token count, and the page must not present it as one. A real count is
+ * model-specific — it comes from a tokenizer (for Claude, the
+ * /v1/messages/count_tokens endpoint), and a string like "2,820." does not
+ * split into one token in any BPE vocabulary. Words are used here as a
+ * countable stand-in a reader can verify by eye; the page says so on the chip.
+ * Every count is re-derived from the step text in src/lib/act2reason.test.ts,
+ * so a typo fails the suite rather than shipping.
+ *
+ * The System-1 blurt is an authored plausible near-miss (a borrow slip in the
+ * final subtraction). This is a demonstration, not a measurement; the page
+ * leans on the cited s1 result for the measured version of the trade.
  */
 export interface BudgetStep {
   text: string;
   /** The intermediate value this step establishes (verified in tests). */
   value: number;
-  /** Token cost of the step = its whitespace word count (verified in tests). */
-  tokens: number;
+  /**
+   * Cost of the step in WORDS (whitespace-split), verified in tests. Not a
+   * tokenizer token count — see the units note above.
+   */
+  words: number;
 }
 
 export const THINK_BUDGET = {
@@ -316,11 +328,11 @@ export const THINK_BUDGET = {
   blurt: "1,822",
   blurtNumber: 1822,
   steps: [
-    { text: "First product, tens part: 47 × 60 = 2,820.", value: 2820, tokens: 9 },
-    { text: "Ones part: 47 × 3 = 141, so 47 × 63 = 2,961.", value: 2961, tokens: 13 },
-    { text: "Second product, tens part: 29 × 40 = 1,160.", value: 1160, tokens: 9 },
-    { text: "One more 29: 1,160 + 29 = 1,189.", value: 1189, tokens: 8 },
-    { text: "Subtract the products: 2,961 − 1,189 = 1,772.", value: 1772, tokens: 8 },
+    { text: "First product, tens part: 47 × 60 = 2,820.", value: 2820, words: 9 },
+    { text: "Ones part: 47 × 3 = 141, so 47 × 63 = 2,961.", value: 2961, words: 13 },
+    { text: "Second product, tens part: 29 × 40 = 1,160.", value: 1160, words: 9 },
+    { text: "One more 29: 1,160 + 29 = 1,189.", value: 1189, words: 8 },
+    { text: "Subtract the products: 2,961 − 1,189 = 1,772.", value: 1772, words: 8 },
   ] as readonly BudgetStep[],
 } as const;
 

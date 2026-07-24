@@ -19,9 +19,9 @@ import { Page6 } from "./Page6";
 import { THINK_BUDGET } from "@/lib/authored";
 
 const T = THINK_BUDGET;
-const CAP = T.steps.reduce((n, s) => n + s.tokens, 0);
+const CAP = T.steps.reduce((n, s) => n + s.words, 0);
 
-const slider = () => screen.getByRole("slider", { name: /compute budget/i });
+const slider = () => screen.getByRole("slider", { name: /working budget/i });
 const drag = (v: number) => fireEvent.change(slider(), { target: { value: String(v) } });
 
 describe("Page 6 (Thinking Longer)", () => {
@@ -31,7 +31,7 @@ describe("Page 6 (Thinking Longer)", () => {
     expect(screen.getByText(T.question)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`✗\\s*${T.blurt}`))).toBeInTheDocument();
     expect(screen.getByText(`depth 0 of ${T.steps.length}`)).toBeInTheDocument();
-    expect(screen.getByText(`0 of ${CAP} tokens spent`)).toBeInTheDocument();
+    expect(screen.getByText(`0 of ${CAP} words spent`)).toBeInTheDocument();
     // No step text is afforded yet.
     expect(screen.queryByText(T.steps[0].text)).toBeNull();
     expect(screen.getAllByText(/· · · \(not yet afforded\)/).length).toBe(T.steps.length);
@@ -40,7 +40,7 @@ describe("Page 6 (Thinking Longer)", () => {
   it("a partial budget affords whole steps in order and lands the mid-chain cut", () => {
     render(<Page6 />);
     // Enough for the first two steps (9 + 13), not the third.
-    drag(T.steps[0].tokens + T.steps[1].tokens);
+    drag(T.steps[0].words + T.steps[1].words);
     expect(screen.getByText(T.steps[0].text)).toBeInTheDocument();
     expect(screen.getByText(T.steps[1].text)).toBeInTheDocument();
     expect(screen.queryByText(T.steps[2].text)).toBeNull();
@@ -51,11 +51,11 @@ describe("Page 6 (Thinking Longer)", () => {
 
   it("a step that does not wholly fit is not afforded", () => {
     render(<Page6 />);
-    drag(T.steps[0].tokens + T.steps[1].tokens - 1);
+    drag(T.steps[0].words + T.steps[1].words - 1);
     expect(screen.getByText(T.steps[0].text)).toBeInTheDocument();
     expect(screen.queryByText(T.steps[1].text)).toBeNull();
     expect(screen.getByText(`depth 1 of ${T.steps.length}`)).toBeInTheDocument();
-    expect(screen.getByText(`${T.steps[0].tokens} of ${CAP} tokens spent`)).toBeInTheDocument();
+    expect(screen.getByText(`${T.steps[0].words} of ${CAP} words spent`)).toBeInTheDocument();
   });
 
   it("the full budget completes the chain and flips the answer to 1,772", () => {
@@ -78,9 +78,10 @@ describe("Page 6 (Thinking Longer)", () => {
     expect(screen.getByText("50%")).toBeInTheDocument();
     expect(screen.getByText("57%")).toBeInTheDocument();
     expect(screen.getByText(/inference-time scaling in its simplest form/i)).toBeInTheDocument();
-    // The requested grounding citations ride the footer.
-    expect(screen.getByText(/Kojima et al. 2022/)).toBeInTheDocument();
-    expect(screen.getByText(/Feng et al. 2023/)).toBeInTheDocument();
-    expect(screen.getByText(/Merrill & Sabharwal 2024/)).toBeInTheDocument();
+    // The requested grounding citations ride the footer (and are named again in
+    // the sidebar rail, so these are getAllByText).
+    expect(screen.getAllByText(/Kojima et al. 2022/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Feng et al. 2023/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Merrill & Sabharwal 2024/).length).toBeGreaterThan(0);
   });
 });
