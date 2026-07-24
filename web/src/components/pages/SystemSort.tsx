@@ -71,7 +71,7 @@ export function SystemSort() {
                   setSelected(x.id);
                 }}
                 onClick={() => setSelected(isSel ? null : x.id)}
-                className={`rounded border px-3 py-1.5 text-sm ${
+                className={`rounded-full border px-3 py-1.5 text-sm ${
                   isWrong
                     ? "border-wrong bg-wrong text-canvas"
                     : isSel
@@ -124,7 +124,7 @@ export function SystemSort() {
               </div>
               <ul className="flex flex-wrap gap-2">
                 {here.map((x) => (
-                  <li key={x.id} className="rounded border border-correct bg-correct px-3 py-1.5 text-sm text-canvas">
+                  <li key={x.id} className="rounded-full border border-correct bg-correct px-3 py-1.5 text-sm text-canvas">
                     <span aria-hidden="true">✓ </span>
                     {x.text}
                   </li>
