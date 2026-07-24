@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, devices } from "@playwright/test";
 
-const ALL = ["/", ...Array.from({ length: 19 }, (_, i) => `/p/${i + 1}`)];
+const ALL = ["/", ...Array.from({ length: 21 }, (_, i) => `/p/${i + 1}`)];
 
 test.describe("M7 polish — accessibility across every page", () => {
   for (const path of ALL) {
@@ -17,7 +17,7 @@ test.describe("M7 polish — accessibility across every page", () => {
 });
 
 test.describe("M7 polish — no console errors", () => {
-  for (const path of ["/", "/p/5", "/p/11", "/p/15", "/p/18", "/p/19"]) {
+  for (const path of ["/", "/p/5", "/p/7", "/p/13", "/p/17", "/p/20", "/p/21"]) {
     test(`${path}: no console errors on load`, async ({ page }) => {
       const errors: string[] = [];
       page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
@@ -32,7 +32,7 @@ test.describe("M7 polish — no console errors", () => {
 test.describe("M7 polish — mobile viewport", () => {
   test.use({ viewport: devices["Pixel 5"].viewport });
   test("story pages render and remain navigable on a narrow screen", async ({ page }) => {
-    await page.goto("/p/5");
+    await page.goto("/p/7");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     // The narrative + simulation stack (single column) — the sim controls are reachable.
     await page.getByRole("button", { name: /lock in prediction/i }).click();

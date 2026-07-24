@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { engagementReport, learningGain } from "./analytics";
 
 describe("engagement analytics (M8 instrumentation)", () => {
-  it("computes manipulation rate over the 19 pages", () => {
-    const r = engagementReport({ 1: 3, 6: 1, 19: 2 });
-    expect(r.totalPages).toBe(19);
+  it("computes manipulation rate over the 21 pages", () => {
+    const r = engagementReport({ 1: 3, 6: 1, 21: 2 });
+    expect(r.totalPages).toBe(21);
     expect(r.pagesManipulated).toBe(3);
-    expect(r.manipulationRate).toBeCloseTo(3 / 19, 5);
+    expect(r.manipulationRate).toBeCloseTo(3 / 21, 5);
     expect(r.reachedEnd).toBe(true);
   });
 

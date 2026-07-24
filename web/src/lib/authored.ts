@@ -223,3 +223,65 @@ export const MULT_METHODS = {
 } as const;
 
 export type MultMethodKey = "standard" | "lines" | "vedic";
+
+// --- Page 5: How to Reason (few-shot chain of thought) ---------------------
+/**
+ * The toggle demo QUOTES the canonical example from Wei et al. 2022, Figure 1
+ * (arXiv:2201.11903): the cafeteria word problem, the standard-prompting blurt
+ * ("The answer is 27.", wrong), and the chain-of-thought completion that lands
+ * 9. The arithmetic is self-verifiable (23 - 20 + 6) and re-checked in
+ * src/lib/act2reason.test.ts. No live model: this is an authored, cited
+ * example, and the page's chip says so.
+ */
+export const COT_DEMO = {
+  question:
+    "The cafeteria had 23 apples. If they used 20 to make lunch and bought 6 more, how many apples do they have?",
+  start: 23,
+  used: 20,
+  bought: 6,
+  /** The standard-prompting output quoted from the paper's Figure 1: wrong. */
+  blurt: "The answer is 27.",
+  blurtNumber: 27,
+  /** The chain-of-thought completion, quoted from the same figure. */
+  steps: [
+    "The cafeteria had 23 apples originally.",
+    "They used 20 to make lunch. So they had 23 - 20 = 3.",
+    "They bought 6 more apples, so they have 3 + 6 = 9.",
+  ],
+  answer: "The answer is 9.",
+  answerNumber: 9,
+} as const;
+
+// --- Page 6: Thinking Longer (a token budget on the chain) -----------------
+/**
+ * An authored hard-arithmetic chain for the compute-budget slider: five
+ * dependent steps, each landing one intermediate value, whose token cost IS
+ * its word count (split on whitespace) — so the budget arithmetic is
+ * self-verifiable and re-checked in src/lib/act2reason.test.ts. The System-1
+ * blurt is an authored plausible near-miss (a borrow slip in the final
+ * subtraction). This is a demonstration, not a measurement; the page flags it
+ * and leans on the cited s1 result for the measured version of the trade.
+ */
+export interface BudgetStep {
+  text: string;
+  /** The intermediate value this step establishes (verified in tests). */
+  value: number;
+  /** Token cost of the step = its whitespace word count (verified in tests). */
+  tokens: number;
+}
+
+export const THINK_BUDGET = {
+  question: "What is 47 × 63 − 29 × 41?",
+  answer: 1772,
+  display: "1,772",
+  /** The zero-budget System-1 blurt: confident, instant, wrong by a borrow. */
+  blurt: "1,822",
+  blurtNumber: 1822,
+  steps: [
+    { text: "First product, tens part: 47 × 60 = 2,820.", value: 2820, tokens: 9 },
+    { text: "Ones part: 47 × 3 = 141, so 47 × 63 = 2,961.", value: 2961, tokens: 13 },
+    { text: "Second product, tens part: 29 × 40 = 1,160.", value: 1160, tokens: 9 },
+    { text: "One more 29: 1,160 + 29 = 1,189.", value: 1189, tokens: 8 },
+    { text: "Subtract the products: 2,961 − 1,189 = 1,772.", value: 1772, tokens: 8 },
+  ] as readonly BudgetStep[],
+} as const;

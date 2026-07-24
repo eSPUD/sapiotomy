@@ -2,28 +2,28 @@
 
 import { useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import { enumerationSolved, hanoiMoves, hanoiTokens } from "@/lib/frontier";
+import { inverseU } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 18;
+const LENGTHS = Array.from({ length: 13 }, (_, i) => i);
 
 export function Page18() {
   const page = getPage(PAGE_N)!;
-  const data = curves.illusion;
-  const { tokensPerMove, tokenBudget, riverCrossingImpossibleN } = data.fit!.params;
-  const [disks, setDisks] = useState(3);
-  const [scoreByAlgorithm, setScoreByAlgorithm] = useState(false);
+  const data = curves.overthinking;
+  const { easyPeak, hardPeak, easyPeakAcc, hardPeakAcc, curvature } = data.fit!.params;
+  const [length, setLength] = useState(3);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const moves = hanoiMoves(disks);
-  const tokens = hanoiTokens(disks, tokensPerMove);
-  const fitsBudget = enumerationSolved(disks, tokensPerMove, tokenBudget);
-  const solved = scoreByAlgorithm ? true : fitsBudget;
+  const easyCurve = LENGTHS.map((l) => ({ x: l, y: inverseU(l, easyPeak, easyPeakAcc, curvature) }));
+  const hardCurve = LENGTHS.map((l) => ({ x: l, y: inverseU(l, hardPeak, hardPeakAcc, curvature) }));
+  const easyNow = inverseU(length, easyPeak, easyPeakAcc, curvature);
+  const overthinkingEasy = length > easyPeak;
 
   return (
     <article className="flex flex-col gap-5">
@@ -35,65 +35,52 @@ export function Page18() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Two expert witnesses. The <strong>prosecution</strong> (&ldquo;The Illusion of
-        Thinking&rdquo;) says reasoning <em>collapses</em> past a complexity threshold. The{" "}
-        <strong>defense</strong> says the model just ran out of room to write. Add disks to the Tower
-        of Hanoi, then choose how to score it — and reach your own verdict.
+        Everything so far said &ldquo;more thinking helps.&rdquo; Here&apos;s the reversal. Push the
+        thinking length too far and accuracy <strong>peaks, then falls</strong> — the model talks
+        itself out of the right answer. Easy problems hit that overthinking threshold first.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
           <Slider
-            label="Disks (N)"
-            min={1}
+            label="Thinking length"
+            min={0}
             max={12}
-            value={disks}
+            value={length}
             onChange={(v) => {
-              setDisks(v);
+              setLength(v);
               recordInteraction(PAGE_N);
             }}
           />
-          <div className="rounded-lg border border-grid bg-surface p-3 font-mono text-sm text-ink">
-            <div>moves required = 2^{disks} − 1 = {moves.toLocaleString()}</div>
-            <div>output tokens ≈ {tokens.toLocaleString()} / budget {tokenBudget.toLocaleString()}</div>
+          <div className={`rounded-lg border p-4 ${overthinkingEasy ? "border-wrong bg-wrong/10" : "border-grid bg-surface"}`}>
+            <p className="text-sm text-ink-muted">Easy-problem accuracy at this length:</p>
+            <p className={`font-mono text-3xl ${overthinkingEasy ? "text-wrong" : "text-correct"}`}>
+              {easyNow.toFixed(0)}%
+            </p>
+            <p className="mt-1 text-sm">
+              {overthinkingEasy ? (
+                <span className="text-wrong">Overthinking zone — past the peak, accuracy is falling.</span>
+              ) : (
+                <span className="text-ink-muted">Still climbing toward the peak at length {easyPeak}.</span>
+              )}
+            </p>
           </div>
-          <div className="h-4 w-full rounded bg-surface-raised" aria-hidden="true">
-            <div
-              className={`h-4 rounded ${fitsBudget ? "bg-correct" : "bg-wrong"}`}
-              style={{ width: `${Math.min(100, (tokens / tokenBudget) * 100)}%` }}
-            />
-          </div>
-          <Toggle
-            label="Scoring rule"
-            checked={scoreByAlgorithm}
-            offLabel="By full enumeration"
-            onLabel="By algorithm"
-            onChange={(v) => {
-              setScoreByAlgorithm(v);
-              recordInteraction(PAGE_N);
-            }}
-          />
-        </div>
-        <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-grid bg-surface p-6">
-          <p className="text-sm text-ink-muted">Verdict</p>
-          <p className={`text-4xl font-bold ${solved ? "text-correct" : "text-wrong"}`}>
-            {solved ? "SOLVED" : "COLLAPSE"}
-          </p>
-          <p className="text-center text-sm text-ink-muted">
-            {scoreByAlgorithm
-              ? "Scored on whether it states the correct recursive rule — no token wall."
-              : fitsBudget
-                ? "The full move list still fits the token budget."
-                : "The full move list overflows the token budget — is that a reasoning failure, or a paper-length limit?"}
+          <p className="text-sm text-ink-muted">
+            The easy curve peaks at length {easyPeak}; the hard curve holds on until {hardPeak}.
           </p>
         </div>
+        <LineChart
+          title="Accuracy versus thinking length: an inverse-U (easy peaks earlier than hard)"
+          points={easyCurve}
+          secondary={{ points: hardCurve, label: "hard problems" }}
+          primaryLabel="easy problems"
+          xLabel="thinking length"
+          yLabel="accuracy (%)"
+          yDomain={[0, 90]}
+          xDomain={[0, 12]}
+          markerX={length}
+        />
       </div>
-
-      <p className="max-w-2xl text-sm text-ink-muted">
-        Note: some River-Crossing instances are mathematically <strong>impossible</strong> for N ≥{" "}
-        {riverCrossingImpossibleN} — so &ldquo;failure&rdquo; there can&apos;t be a reasoning deficit
-        at all.
-      </p>
 
       <div>
         <CitationBadge citation={data.citation} />

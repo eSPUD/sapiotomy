@@ -1,0 +1,25 @@
+{
+  "points": [
+    { "x": 8, "y": 4.1 },
+    { "x": 62, "y": 29.9 },
+    { "x": 540, "y": 56.9 }
+  ],
+  "fit": {
+    "kind": "per-scale-pairs",
+    "params": {
+      "palm8Standard": 4.9,
+      "palm8Cot": 4.1,
+      "palm62Standard": 9.6,
+      "palm62Cot": 29.9,
+      "palm540Standard": 17.9,
+      "palm540Cot": 56.9
+    }
+  },
+  "citation": {
+    "ref": "Wei et al. 2022",
+    "url": "https://arxiv.org/abs/2201.11903",
+    "venue": "NeurIPS 2022",
+    "preprint": false
+  },
+  "provenance": "GSM8K solve rate for the PaLM family at three scales, quoted verbatim from the per-scale results table in the appendix of Wei et al. 2022 'Chain-of-Thought Prompting Elicits Reasoning in LLMs' (the numbers drawn as its Figure 4): standard prompting 8B 4.9, 62B 9.6, 540B 17.9; chain-of-thought 8B 4.1, 62B 29.9, 540B 56.9. points hold the chain-of-thought curve (x = parameters in billions, y = solve rate %); fit.params carries both curves and the page draws them together on a log-x axis. Note the honesty beat kept in-app: at 8B, chain of thought is BELOW standard (4.1 vs 4.9) — the paper calls the ability emergent with scale."
+}

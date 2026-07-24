@@ -1,10 +1,10 @@
 /**
- * The 19-page route map for *The Story of Inference-Time Scaling*.
+ * The 21-page route map for *The Story of Inference-Time Scaling*.
  *
  * Three Acts (Nicky Case's "this happens, THEREFORE that, BUT that…"):
  *   Act 1 — Building Intuition (pages 1–4)
- *   Act 2 — The Toolbox       (pages 5–12)
- *   Act 3 — Frontier & Caveats(pages 13–19)
+ *   Act 2 — The Toolbox       (pages 5–14)
+ *   Act 3 — Frontier & Caveats(pages 15–21)
  *
  * Titles/concepts are drawn from InferenceTimeScaling_Explainable.md §C.
  * Routes are stubs in M0; each page is built in a later milestone.
@@ -23,8 +23,8 @@ export interface PageMeta {
 
 export const ACTS: Record<Act, { title: string; range: string }> = {
   1: { title: "Building Intuition", range: "Pages 1–4" },
-  2: { title: "The Toolbox", range: "Pages 5–12" },
-  3: { title: "Frontier & Caveats", range: "Pages 13–19" },
+  2: { title: "The Toolbox", range: "Pages 5–14" },
+  3: { title: "Frontier & Caveats", range: "Pages 15–21" },
 };
 
 export const PAGES: PageMeta[] = [
@@ -32,21 +32,23 @@ export const PAGES: PageMeta[] = [
   { n: 2, slug: "two-systems", title: "Two Systems", act: 1, concept: "A question that looks like a lookup: the reader recalls it instantly; a machine whose memory predates the fact cannot, and thinking harder does not create the fact.", milestone: "S1" },
   { n: 3, slug: "daily-training", title: "Training Daily?", act: 1, concept: "The obvious fix hits two walls: the bill for daily retraining compounds, and the stock of quality training data runs out.", milestone: "S1" },
   { n: 4, slug: "reasoning-in-multiplication", title: "Reasoning in Multiplication", act: 1, concept: "Three cultures, three roads, one answer: reasoning as diverse pathfinding from prior knowledge — and the open question that hands Act 1 to the toolbox.", milestone: "S1" },
-  { n: 5, slug: "majority-vote", title: "The Majority Vote (Self-Consistency)", act: 2, concept: "Sample many chains, take the most common answer.", milestone: "M1" },
-  { n: 6, slug: "voting-not-enough", title: "When Voting Isn't Enough", act: 2, concept: "Majority vote plateaus when the right answer is rare.", milestone: "M3" },
-  { n: 7, slug: "best-of-n", title: "Best-of-N with a Verifier", act: 2, concept: "Generate N candidates; a verifier picks the best.", milestone: "M3" },
-  { n: 8, slug: "grading-steps", title: "Grading the Steps (Process vs. Outcome Rewards)", act: 2, concept: "PRM grades each step; ORM grades only the final answer.", milestone: "M3" },
-  { n: 9, slug: "maze-explorer", title: "The Maze Explorer (Tree Search)", act: 2, concept: "Tree-of-Thoughts: branch, evaluate, prune, backtrack.", milestone: "M4" },
-  { n: 10, slug: "alphago", title: "Interlude: How AlphaGo Thought", act: 2, concept: "Monte Carlo Tree Search as the ancestor of test-time search.", milestone: "M4" },
-  { n: 11, slug: "scaling-curve-lab", title: "The Scaling-Curve Lab (Log-Linear Coverage)", act: 2, concept: "Coverage grows roughly log-linearly with samples.", milestone: "M4" },
-  { n: 12, slug: "allocation-game", title: "The Allocation Game (Compute-Optimal Scaling)", act: 2, concept: "How you spend a fixed compute budget matters.", milestone: "M4" },
-  { n: 13, slug: "wait-button", title: "The 'Wait' Button (Budget Forcing)", act: 3, concept: "Force more thinking by appending 'Wait'.", milestone: "M5" },
-  { n: 14, slug: "rl-training-curve", title: "Reasoning Models & the RL Training Curve", act: 3, concept: "RL teaches models to reason; the curve climbs as thinking lengthens.", milestone: "M5" },
-  { n: 15, slug: "cost-of-thinking", title: "The Cost of Thinking (Economics Dashboard)", act: 3, concept: "Extra inference compute costs real money.", milestone: "M5" },
-  { n: 16, slug: "overthinking", title: "When More Thinking Hurts (Overthinking)", act: 3, concept: "Beyond a point, longer reasoning can reduce accuracy.", milestone: "M5" },
-  { n: 17, slug: "faithfulness", title: "Do the Thoughts Tell the Truth? (Faithfulness)", act: 3, concept: "Stated chain-of-thought may not reflect real reasoning.", milestone: "M5" },
-  { n: 18, slug: "you-be-the-judge", title: "You Be the Judge (The Illusion of Thinking Debate)", act: 3, concept: "Accuracy 'collapse' vs. the token-limit/evaluation rebuttal.", milestone: "M5" },
-  { n: 19, slug: "grand-sandbox", title: "The Grand Sandbox + Your Toolkit", act: 3, concept: "All levers together, plus a pre/post quiz.", milestone: "M6" },
+  { n: 5, slug: "how-to-reason", title: "How to Reason", act: 2, concept: "Show the model a worked road: few-shot chain-of-thought turns blurted answers into step-by-step ones, and a flat scaling curve turns steep.", milestone: "S2" },
+  { n: 6, slug: "thinking-longer", title: "Thinking Longer", act: 2, concept: "Tokens are the compute: a budget on reasoning tokens directly sets how long a model may think — the simplest form of inference-time scaling.", milestone: "S2" },
+  { n: 7, slug: "majority-vote", title: "The Majority Vote (Self-Consistency)", act: 2, concept: "Sample many chains, take the most common answer.", milestone: "M1" },
+  { n: 8, slug: "voting-not-enough", title: "When Voting Isn't Enough", act: 2, concept: "Majority vote plateaus when the right answer is rare.", milestone: "M3" },
+  { n: 9, slug: "best-of-n", title: "Best-of-N with a Verifier", act: 2, concept: "Generate N candidates; a verifier picks the best.", milestone: "M3" },
+  { n: 10, slug: "grading-steps", title: "Grading the Steps (Process vs. Outcome Rewards)", act: 2, concept: "PRM grades each step; ORM grades only the final answer.", milestone: "M3" },
+  { n: 11, slug: "maze-explorer", title: "The Maze Explorer (Tree Search)", act: 2, concept: "Tree-of-Thoughts: branch, evaluate, prune, backtrack.", milestone: "M4" },
+  { n: 12, slug: "alphago", title: "Interlude: How AlphaGo Thought", act: 2, concept: "Monte Carlo Tree Search as the ancestor of test-time search.", milestone: "M4" },
+  { n: 13, slug: "scaling-curve-lab", title: "The Scaling-Curve Lab (Log-Linear Coverage)", act: 2, concept: "Coverage grows roughly log-linearly with samples.", milestone: "M4" },
+  { n: 14, slug: "allocation-game", title: "The Allocation Game (Compute-Optimal Scaling)", act: 2, concept: "How you spend a fixed compute budget matters.", milestone: "M4" },
+  { n: 15, slug: "wait-button", title: "The 'Wait' Button (Budget Forcing)", act: 3, concept: "Force more thinking by appending 'Wait'.", milestone: "M5" },
+  { n: 16, slug: "rl-training-curve", title: "Reasoning Models & the RL Training Curve", act: 3, concept: "RL teaches models to reason; the curve climbs as thinking lengthens.", milestone: "M5" },
+  { n: 17, slug: "cost-of-thinking", title: "The Cost of Thinking (Economics Dashboard)", act: 3, concept: "Extra inference compute costs real money.", milestone: "M5" },
+  { n: 18, slug: "overthinking", title: "When More Thinking Hurts (Overthinking)", act: 3, concept: "Beyond a point, longer reasoning can reduce accuracy.", milestone: "M5" },
+  { n: 19, slug: "faithfulness", title: "Do the Thoughts Tell the Truth? (Faithfulness)", act: 3, concept: "Stated chain-of-thought may not reflect real reasoning.", milestone: "M5" },
+  { n: 20, slug: "you-be-the-judge", title: "You Be the Judge (The Illusion of Thinking Debate)", act: 3, concept: "Accuracy 'collapse' vs. the token-limit/evaluation rebuttal.", milestone: "M5" },
+  { n: 21, slug: "grand-sandbox", title: "The Grand Sandbox + Your Toolkit", act: 3, concept: "All levers together, plus a pre/post quiz.", milestone: "M6" },
 ];
 
 export function getPage(n: number): PageMeta | undefined {

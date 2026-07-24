@@ -1,38 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { BallotHistogram } from "@/components/BallotHistogram";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LiveDemo } from "@/components/LiveDemo";
+import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
+import { PredictBar } from "@/components/PredictBar";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
-import { bestOfN, sampleGrid, type BestOfNModel } from "@/lib/sim";
-import type { Citation } from "@/lib/data";
+import { curves } from "@/lib/curves";
+import { useSelfConsistency } from "@/lib/useSelfConsistency";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 7;
-const MODEL: BestOfNModel = { p: 0.35, distractors: 4, verifierReliability: 0.85 };
-const SEED = 26082024;
-const TRIALS = 3000;
-
-const COBBE: Citation = {
-  ref: "Cobbe et al. 2021",
-  url: "https://arxiv.org/abs/2110.14168",
-  venue: "arXiv",
-  preprint: true,
-};
-
-type Method = "random" | "majority" | "verifier";
+const CURVE_NS = [1, 2, 3, 5, 8, 12, 16, 20, 28, 40];
+const TRIALS = 4000;
+const SEED = 20220311; // arXiv id of Wang et al. — a stable, documented seed
 
 export function Page7() {
   const page = getPage(PAGE_N)!;
-  const [n, setN] = useState(8);
-  const [method, setMethod] = useState<Method>("verifier");
+  const [votes, setVotes] = useState(1);
+  const [prediction, setPrediction] = useState<number | null>(null);
   const recordInteraction = useStore((s) => s.recordInteraction);
+  const { result, request } = useSelfConsistency();
 
-  const result = bestOfN(n, TRIALS, SEED, MODEL);
-  const accuracy = result[method];
-  const candidates = sampleGrid(MODEL.p, n, SEED + n); // representative draw for the cards
+  // Recompute whenever the vote budget changes.
+  useEffect(() => {
+    request({ kind: "selfConsistency", ns: CURVE_NS, currentN: votes, trials: TRIALS, seed: SEED });
+  }, [votes, request]);
+
+  const curve = result?.curve ?? [{ x: 1, y: 56.5 }];
+  const ballot = result?.ballot ?? { tally: [1, 0, 0, 0], winner: 0, correctIsPlurality: true };
+  const currentAccuracy = useMemo(() => {
+    const c = result?.curve ?? [{ x: 1, y: 56.5 }];
+    const nearest = c.reduce((best, p) =>
+      Math.abs(p.x - votes) < Math.abs(best.x - votes) ? p : best,
+    );
+    return nearest.y;
+  }, [result, votes]);
+
+  const anchor = curves.selfConsistency;
 
   return (
     <article className="flex flex-col gap-5">
@@ -44,72 +53,69 @@ export function Page7() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        If the right answer is often in the pile but voting can&apos;t surface it, add a{" "}
-        <strong>verifier</strong>: generate N candidates and let a reward model grade them, keeping
-        its top pick — like a teacher marking every draft and choosing the best.
+        One chain of thought can slip. So ask the model the <em>same</em> question many times, let
+        each attempt reason independently, and go with the answer that comes up most often — like
+        polling a class and taking the plurality. This is <strong>self-consistency</strong>.
       </p>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          <Slider
-            label="Candidates (N)"
-            min={1}
-            max={16}
-            value={n}
-            suffix=" drafts"
-            onChange={(v) => {
-              setN(v);
-              recordInteraction(PAGE_N);
-            }}
-          />
-          <fieldset className="flex flex-col gap-2">
-            <legend className="text-sm text-ink-muted">Selection method</legend>
-            <div className="flex gap-2">
-              {(["random", "majority", "verifier"] as Method[]).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  aria-pressed={method === m}
-                  onClick={() => {
-                    setMethod(m);
-                    recordInteraction(PAGE_N);
-                  }}
-                  className={`rounded px-3 py-1.5 text-sm capitalize ${
-                    method === m ? "bg-compute text-canvas" : "bg-surface-raised text-ink-muted"
-                  }`}
-                >
-                  {m === "random" ? "Pick randomly" : m === "majority" ? "Majority vote" : "Verifier picks"}
-                </button>
-              ))}
+      {prediction === null ? (
+        <PredictBar
+          prompt="Single-chain reasoning gets 56.5% on GSM8K. If you take the majority vote over 40 tries, what accuracy do you predict?"
+          min={40}
+          max={100}
+          suffix="%"
+          onCommit={(p) => {
+            setPrediction(p);
+            setVotes(40);
+            recordInteraction(PAGE_N);
+          }}
+        />
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <Slider
+              label="Votes (independent attempts)"
+              min={1}
+              max={40}
+              value={votes}
+              suffix=" votes"
+              onChange={(v) => {
+                setVotes(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
+            <BigNumber value={currentAccuracy} suffix="%" tone="correct" label={`majority accuracy at ${votes} vote${votes === 1 ? "" : "s"}`} />
+            <div>
+              <p className="mb-2 text-sm text-ink-muted">A representative question&apos;s tally:</p>
+              <BallotHistogram ballot={ballot} />
             </div>
-          </fieldset>
-          <BigNumber value={accuracy} suffix="%" tone="correct" label={`accuracy — ${method} selection`} />
-          <p className="text-sm text-ink-muted">
-            The verifier beats both random picking (≈ the per-draft rate) and majority voting,
-            because it can recognise a correct draft even when it&apos;s a minority.
-          </p>
-        </div>
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-ink-muted">A representative batch of {n} draft{n === 1 ? "" : "s"}:</p>
-          <div className="flex flex-wrap gap-2" role="img" aria-label={`${candidates.filter(Boolean).length} of ${n} drafts are correct`}>
-            {candidates.map((ok, i) => (
-              <span
-                key={i}
-                title={ok ? "correct draft" : "wrong draft"}
-                className={`flex h-10 w-10 items-center justify-center rounded border text-sm ${
-                  ok ? "border-correct bg-correct/20 text-correct" : "border-grid bg-surface text-ink-muted"
-                }`}
-              >
-                {ok ? "✓" : "✗"}
-              </span>
-            ))}
+          </div>
+          <div className="flex flex-col gap-2">
+            <LineChart
+              title="Majority-vote accuracy versus number of votes on GSM8K"
+              points={curve}
+              xLabel="votes (samples)"
+              yLabel="accuracy (%)"
+              yDomain={[50, 80]}
+              xDomain={[1, 40]}
+              markerX={votes}
+              referenceY={prediction}
+              referenceLabel={`you predicted ${prediction}%`}
+            />
+            <p className="text-sm text-ink-muted">
+              The gain is real but flattens — <strong>diminishing returns</strong>. Wang et al. report
+              self-consistency lifts GSM8K by <strong>+17.9 points</strong> (56.5% → 74.4%).
+            </p>
           </div>
         </div>
+      )}
+
+      <LiveDemo prompt="Solve this three different ways and take the majority answer: If a train travels 60 km in 1.5 hours, what is its average speed?" fallbackTrace={["Attempt 1: 60 / 1.5 = 40 km/h", "Attempt 2: 60 / 1.5 = 40 km/h", "Attempt 3: 60 / 1.5 = 40 km/h", "Majority: 40 km/h"]} />
+
+      <div className="mt-2">
+        <CitationBadge citation={anchor.citation} />
       </div>
 
-      <div>
-        <CitationBadge citation={COBBE} />
-      </div>
       <PageNav n={PAGE_N} />
     </article>
   );

@@ -1,26 +1,34 @@
 "use client";
 
 import { useState } from "react";
+import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
-import { Toggle } from "@/components/Toggle";
+import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import { faithfulnessAdmitRate } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 17;
 
 export function Page17() {
   const page = getPage(PAGE_N)!;
-  const data = curves.faithfulness;
-  const { claudeAdmit, r1Admit } = data.fit!.params;
-  const [isR1, setIsR1] = useState(false);
-  const [trials, setTrials] = useState(0);
+  const data = curves.arcCost;
+  const { o3LowCost, o3LowAcc, o3HighCost, o3HighAcc, computeFactor, o1Acc, humanCost } = data.fit!.params;
+  // log10 dollar slider between the two o3 configs
+  const [logCost, setLogCost] = useState(Math.log10(o3LowCost) * 100);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const admitProb = (isR1 ? r1Admit : claudeAdmit) / 100;
-  const measured = trials > 0 ? faithfulnessAdmitRate(admitProb, trials, isR1 ? 2 : 1) : 0;
+  const cost = Math.pow(10, logCost / 100);
+  // interpolate accuracy in log-cost space between the two o3 points
+  const t = (Math.log10(cost) - Math.log10(o3LowCost)) / (Math.log10(o3HighCost) - Math.log10(o3LowCost));
+  const accuracy = o3LowAcc + Math.max(0, Math.min(1, t)) * (o3HighAcc - o3LowAcc);
+
+  const curve = [
+    { x: o3LowCost, y: o3LowAcc },
+    { x: o3HighCost, y: o3HighAcc },
+  ];
 
   return (
     <article className="flex flex-col gap-5">
@@ -32,55 +40,45 @@ export function Page17() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        We&apos;d love to trust a model&apos;s written reasoning. But when researchers slipped a{" "}
-        <strong>hint</strong> into a question — one the model demonstrably used — the model{" "}
-        <em>admitted</em> using it only a fraction of the time. Plant hints and watch the confession
-        meter stay stubbornly low.
+        More thinking isn&apos;t free. To crack ARC-AGI, OpenAI&apos;s o3 went from ~75.7% at roughly
+        $17–20 per task to 87.5% using <strong>{computeFactor}× the compute</strong> — costing{" "}
+        <em>thousands</em> of dollars per task. A human solves the same puzzle for about ${humanCost}.
       </p>
 
-      <div className="flex flex-col gap-4">
-        <Toggle
-          label="Model under test"
-          checked={isR1}
-          offLabel="Claude 3.7 Sonnet"
-          onLabel="DeepSeek-R1"
-          onChange={(v) => {
-            setIsR1(v);
-            setTrials(0);
-            recordInteraction(PAGE_N);
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            setTrials((t) => t + 100);
-            recordInteraction(PAGE_N);
-          }}
-          className="w-fit rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas"
-        >
-          Plant a hint in 100 questions
-        </button>
-
-        <div className="rounded-lg border border-grid bg-surface p-4">
-          <p className="mb-1 text-sm text-ink-muted">
-            Confession meter — how often the model admits the hint ({trials} trials):
-          </p>
-          <div className="h-6 w-full rounded bg-surface-raised">
-            <div className="flex h-6 items-center justify-end rounded bg-wrong pr-2 text-xs font-semibold text-canvas" style={{ width: `${measured}%` }}>
-              {trials > 0 ? `${measured.toFixed(0)}%` : ""}
-            </div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <Slider
+            label="Compute spend per task"
+            min={Math.round(Math.log10(o3LowCost) * 100)}
+            max={Math.round(Math.log10(o3HighCost) * 100)}
+            value={logCost}
+            onChange={(v) => {
+              setLogCost(v);
+              recordInteraction(PAGE_N);
+            }}
+          />
+          <div className="flex items-end justify-around rounded-lg border border-grid bg-surface p-4">
+            <BigNumber value={accuracy} suffix="%" tone="correct" label="ARC-AGI accuracy" />
+            <BigNumber value={cost} decimals={0} suffix=" $/task" tone="compute" label="estimated cost" />
           </div>
-          <p className="mt-2 text-sm text-ink-muted">
-            Converges near the reported average:{" "}
-            <strong>{isR1 ? r1Admit : claudeAdmit}%</strong> for {isR1 ? "DeepSeek-R1" : "Claude 3.7 Sonnet"}.
-            The other ~{100 - (isR1 ? r1Admit : claudeAdmit)}% of the time it used the hint silently.
+          <p className="text-sm text-ink-muted">
+            For reference: o1 reached at most ~{o1Acc}%; a human ≈ ${humanCost}/task.
+          </p>
+          <p className="text-xs italic text-ink-muted">
+            These dollar figures are <strong>reported estimates</strong>, not precise measurements
+            (the ARC Prize Foundation revised the high-compute figure from ~$3,000 toward ~$30,000
+            per task). Presented as reported.
           </p>
         </div>
-        <p className="text-xs italic text-ink-muted">
-          Only the paper&apos;s headline admission rates (Claude {claudeAdmit}%, R1 {r1Admit}%) are
-          shown; the misalignment-hint sub-figures differ between our two source documents and are
-          omitted pending primary-source verification (see PROVENANCE.md).
-        </p>
+        <LineChart
+          title="ARC-AGI accuracy versus estimated dollar cost per task (log scale)"
+          points={curve}
+          xLabel="$ per task (log scale)"
+          yLabel="accuracy (%)"
+          yDomain={[60, 100]}
+          xDomain={[o3LowCost, o3HighCost]}
+          logX
+        />
       </div>
 
       <div>

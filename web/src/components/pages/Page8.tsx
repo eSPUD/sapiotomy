@@ -1,35 +1,34 @@
 "use client";
 
 import { useState } from "react";
+import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
+import { Slider } from "@/components/Slider";
 import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves } from "@/lib/curves";
+import { curves, interpolate } from "@/lib/curves";
+import { coverageAtLeastOne } from "@/lib/sim";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 8;
-
-// Authored worked solution with a slip on one step (illustrative).
-const SOLUTION: { text: string; ok: boolean }[] = [
-  { text: "Let the two numbers be x and y with x + y = 20.", ok: true },
-  { text: "Also x − y = 4, so 2x = 24 and x = 12.", ok: true },
-  { text: "Then y = 20 − 12 = 8.", ok: true },
-  { text: "So x · y = 12 · 8 = 108.", ok: false }, // slip: 12·8 = 96, not 108
-];
+const BUDGETS = [1, 5, 10, 20, 40, 80, 150, 300];
 
 export function Page8() {
   const page = getPage(PAGE_N)!;
-  const data = curves.prmVsOrm;
-  const { majority, orm, prm } = data.fit!.params;
-  const [processView, setProcessView] = useState(true);
+  const data = curves.votingPlateau;
+  const p = data.fit!.params.coveragePerSample; // 0.2
+  const [samples, setSamples] = useState(40);
+  const [showCoverage, setShowCoverage] = useState(true);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const bars = [
-    { label: "Majority vote", value: majority, tone: "bg-grid" },
-    { label: "Outcome RM (ORM)", value: orm, tone: "bg-compute" },
-    { label: "Process RM (PRM)", value: prm, tone: "bg-correct" },
-  ];
+  const majorityCurve = BUDGETS.map((n) => ({ x: n, y: interpolate(data, n) }));
+  const coverageCurve = BUDGETS.map((n) => ({ x: n, y: coverageAtLeastOne(p, n) * 100 }));
+
+  const majorityNow = interpolate(data, samples);
+  const coverageNow = coverageAtLeastOne(p, samples) * 100;
+  const readout = showCoverage ? coverageNow : majorityNow;
 
   return (
     <article className="flex flex-col gap-5">
@@ -41,63 +40,57 @@ export function Page8() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        A verifier can grade two ways. An <strong>outcome</strong> reward model checks only the final
-        answer. A <strong>process</strong> reward model checks <em>every step</em> — catching a slip
-        the moment it happens. On MATH, grading the steps wins.
+        Push the vote count past a few dozen and something frustrating happens. The chance that{" "}
+        <em>some</em> sample is correct (<strong className="text-correct">coverage</strong>) keeps
+        climbing — but the <strong className="text-compute">majority-correct</strong> line flattens.
+        Having a right answer in the pile isn&apos;t the same as <em>picking</em> it.
       </p>
 
-      <Toggle
-        label="Grading style"
-        checked={processView}
-        offLabel="Outcome (final only)"
-        onLabel="Process (every step)"
-        onChange={(v) => {
-          setProcessView(v);
-          recordInteraction(PAGE_N);
-        }}
-      />
-
-      <ol className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
-        {SOLUTION.map((step, i) => {
-          const isLast = i === SOLUTION.length - 1;
-          const showLabel = processView || isLast;
-          return (
-            <li key={i} className="flex items-center justify-between gap-3 font-mono text-sm">
-              <span className="text-ink">
-                {i + 1}. {step.text}
-              </span>
-              {showLabel ? (
-                <span
-                  className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
-                    step.ok ? "bg-correct/20 text-correct" : "bg-wrong/20 text-wrong"
-                  }`}
-                >
-                  {step.ok ? "step ok" : "error"}
-                </span>
-              ) : (
-                <span className="shrink-0 text-xs text-ink-muted">—</span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
-      <p className="text-sm text-ink-muted">
-        {processView
-          ? "Process view flags the exact line that went wrong — a much richer signal for selecting solutions."
-          : "Outcome view sees only the final answer, so it can't tell a lucky-but-flawed solution from a sound one."}
-      </p>
-
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-semibold text-ink">Best-of-N accuracy on MATH</p>
-        {bars.map((b) => (
-          <div key={b.label} className="flex items-center gap-2 text-sm">
-            <span className="w-40 shrink-0 text-ink-muted">{b.label}</span>
-            <div className="h-5 flex-1 rounded bg-surface-raised">
-              <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
-            </div>
-            <span className="w-14 shrink-0 text-right font-mono text-ink">{b.value}%</span>
-          </div>
-        ))}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="flex flex-col gap-4">
+          <Slider
+            label="Samples"
+            min={1}
+            max={300}
+            value={samples}
+            suffix=" samples"
+            onChange={(v) => {
+              setSamples(v);
+              recordInteraction(PAGE_N);
+            }}
+          />
+          <Toggle
+            label="Readout"
+            checked={showCoverage}
+            offLabel="Majority correct"
+            onLabel="Coverage (any correct)"
+            onChange={(v) => {
+              setShowCoverage(v);
+              recordInteraction(PAGE_N);
+            }}
+          />
+          <BigNumber
+            value={readout}
+            suffix="%"
+            tone={showCoverage ? "correct" : "compute"}
+            label={showCoverage ? `coverage at ${samples} samples` : `majority correct at ${samples} samples`}
+          />
+          <p className="text-sm text-ink-muted">
+            Without an automatic verifier, majority voting and reward-model selection{" "}
+            <strong>plateau beyond several hundred samples</strong> and fail to fully scale.
+          </p>
+        </div>
+        <LineChart
+          title="Coverage keeps rising while majority-correct accuracy plateaus"
+          points={coverageCurve}
+          secondary={{ points: majorityCurve, label: "majority correct" }}
+          primaryLabel="coverage"
+          xLabel="samples"
+          yLabel="accuracy (%)"
+          yDomain={[50, 100]}
+          xDomain={[1, 300]}
+          markerX={samples}
+        />
       </div>
 
       <div>

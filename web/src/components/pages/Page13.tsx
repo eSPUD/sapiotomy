@@ -3,32 +3,28 @@
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
-import { LiveDemo } from "@/components/LiveDemo";
+import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
+import { Slider } from "@/components/Slider";
+import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves, interpolate } from "@/lib/curves";
+import { curves } from "@/lib/curves";
+import { logLinearCoverage } from "@/lib/search";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 13;
-const MAX_PRESSES = 5;
-const THOUGHTS = [
-  "The three numbers are 6, 6, and 24…",
-  "Wait — let me re-check that multiplication.",
-  "Wait — actually 6 × 4 = 24, so I need a 4.",
-  "Wait — 6 / (1 − 3/4) = 24. That works.",
-  "Wait — let me confirm each operation once more.",
-  "Final answer: (6 ÷ (1 − 3 ÷ 4)) = 24. ✓",
-];
+const BUDGETS = [1, 2, 5, 10, 25, 50, 100, 175, 250];
 
 export function Page13() {
   const page = getPage(PAGE_N)!;
-  const data = curves.budgetForcing;
-  const flipAt = data.fit!.params.flipAtPress;
-  const [presses, setPresses] = useState(0);
+  const data = curves.coverageScaling;
+  const { intercept, slopePerDecade, singleSampleSota } = data.fit!.params;
+  const [samples, setSamples] = useState(1);
+  const [logX, setLogX] = useState(false);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const accuracy = interpolate(data, presses);
-  const solved = presses >= flipAt;
+  const curve = BUDGETS.map((k) => ({ x: k, y: logLinearCoverage(k, intercept, slopePerDecade) }));
+  const coverage = logLinearCoverage(samples, intercept, slopePerDecade);
 
   return (
     <article className="flex flex-col gap-5">
@@ -40,42 +36,54 @@ export function Page13() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        The simplest modern trick: when the model tries to stop, make it keep going by appending the
-        word <strong>&ldquo;Wait&rdquo;</strong>. Each nudge forces another reconsideration — and the
-        answer sometimes flips from wrong to right.
+        Here is an inference-time <strong>scaling law</strong>. On SWE-bench Lite, the fraction of
+        problems solved by <em>some</em> sample climbs from 15.9% (one try) to 56% (250 tries) —
+        beating the single-sample state of the art of {singleSampleSota}%. Flip the x-axis to a log
+        scale and the curve straightens into a line: each <em>doubling</em> buys a roughly constant
+        bump.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <button
-            type="button"
-            disabled={presses >= MAX_PRESSES}
-            onClick={() => {
-              setPresses((n) => Math.min(MAX_PRESSES, n + 1));
+          <Slider
+            label="Samples (k)"
+            min={1}
+            max={250}
+            value={samples}
+            suffix=" samples"
+            onChange={(v) => {
+              setSamples(v);
               recordInteraction(PAGE_N);
             }}
-            className="w-fit rounded bg-compute px-6 py-3 text-lg font-bold text-canvas disabled:opacity-50"
-          >
-            Wait
-          </button>
-          <BigNumber value={accuracy} suffix="%" tone={solved ? "correct" : "wrong"} label={`AIME24 accuracy (s1-32B) after ${presses} "Wait"${presses === 1 ? "" : "s"}`} />
-          <p className={`text-sm font-semibold ${solved ? "text-correct" : "text-wrong"}`}>
-            Current answer: {solved ? "24 ✓ (correct)" : "18 ✗ (still wrong — keep it thinking)"}
+          />
+          <Toggle
+            label="X-axis scale"
+            checked={logX}
+            offLabel="Linear"
+            onLabel="Logarithmic"
+            onChange={(v) => {
+              setLogX(v);
+              recordInteraction(PAGE_N);
+            }}
+          />
+          <BigNumber value={coverage} suffix="%" tone="correct" label={`coverage at ${samples} sample${samples === 1 ? "" : "s"}`} />
+          <p className="text-sm text-ink-muted">
+            On a log axis this is a straight line — the signature of log-linear scaling.
           </p>
         </div>
-        <div className="rounded-lg border border-grid bg-surface p-4">
-          <p className="mb-2 text-sm text-ink-muted">The reasoning trace grows with each press:</p>
-          <ol className="flex flex-col gap-2 font-mono text-sm">
-            {THOUGHTS.slice(0, presses + 1).map((t, i) => (
-              <li key={i} className={t.startsWith("Wait") ? "text-compute" : "text-ink"}>
-                {t}
-              </li>
-            ))}
-          </ol>
-        </div>
+        <LineChart
+          title="Coverage versus samples on SWE-bench Lite (toggle log axis to straighten it)"
+          points={curve}
+          xLabel={logX ? "samples (log scale)" : "samples"}
+          yLabel="coverage (%)"
+          yDomain={[0, 60]}
+          xDomain={[1, 250]}
+          markerX={samples}
+          referenceY={singleSampleSota}
+          referenceLabel={`single-sample SOTA ${singleSampleSota}%`}
+          logX={logX}
+        />
       </div>
-
-      <LiveDemo prompt="Make 24 from the numbers 6, 6, 4 using + - * / . Think step by step, and reconsider with 'Wait' if unsure." fallbackTrace={THOUGHTS} />
 
       <div>
         <CitationBadge citation={data.citation} />

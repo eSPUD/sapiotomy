@@ -2,9 +2,9 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("M6 — full journey + sandbox + quiz", () => {
-  test("traverses all 19 pages 1 → 19 via the next links", async ({ page }) => {
+  test("traverses all 21 pages 1 → 21 via the next links", async ({ page }) => {
     await page.goto("/p/1");
-    for (let n = 2; n <= 19; n++) {
+    for (let n = 2; n <= 21; n++) {
       const link = page.getByRole("link", { name: `Page ${n} →` });
       await link.scrollIntoViewIfNeeded();
       await link.click();
@@ -12,8 +12,8 @@ test.describe("M6 — full journey + sandbox + quiz", () => {
     }
   });
 
-  test("Page 19: pre-quiz → sandbox → post-quiz reports a learning gain", async ({ page }) => {
-    await page.goto("/p/19");
+  test("Page 21: pre-quiz → sandbox → post-quiz reports a learning gain", async ({ page }) => {
+    await page.goto("/p/21");
     // Pre-quiz: answer every question (correctly) and submit.
     await answerAll(page);
     await page.getByRole("button", { name: /submit predictions/i }).click();
@@ -28,8 +28,8 @@ test.describe("M6 — full journey + sandbox + quiz", () => {
     await expect(page.getByText(/learning gain/i)).toBeVisible();
   });
 
-  test("Page 19 has no serious/critical accessibility violations", async ({ page }) => {
-    await page.goto("/p/19");
+  test("Page 21 has no serious/critical accessibility violations", async ({ page }) => {
+    await page.goto("/p/21");
     const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
     const serious = results.violations.filter(
       (v) => v.impact === "serious" || v.impact === "critical",

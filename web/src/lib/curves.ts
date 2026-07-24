@@ -7,6 +7,7 @@
 import { parseCurveData, type CurveData } from "./data";
 import selfConsistencyRaw from "@data/self-consistency.json";
 import chainOfThoughtRaw from "@data/chain-of-thought.json";
+import weiCotScalingRaw from "@data/wei-cot-scaling.json";
 import votingPlateauRaw from "@data/voting-plateau.json";
 import prmVsOrmRaw from "@data/prm-vs-orm.json";
 import treeOfThoughtsRaw from "@data/tree-of-thoughts.json";
@@ -29,6 +30,7 @@ import queryEnergyRaw from "@data/query-energy.json";
 export const curves: Record<string, CurveData> = {
   selfConsistency: parseCurveData(selfConsistencyRaw, "self-consistency.json"),
   chainOfThought: parseCurveData(chainOfThoughtRaw, "chain-of-thought.json"),
+  weiCotScaling: parseCurveData(weiCotScalingRaw, "wei-cot-scaling.json"),
   votingPlateau: parseCurveData(votingPlateauRaw, "voting-plateau.json"),
   prmVsOrm: parseCurveData(prmVsOrmRaw, "prm-vs-orm.json"),
   treeOfThoughts: parseCurveData(treeOfThoughtsRaw, "tree-of-thoughts.json"),

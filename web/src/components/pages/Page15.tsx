@@ -3,32 +3,32 @@
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
-import { LineChart } from "@/components/LineChart";
+import { LiveDemo } from "@/components/LiveDemo";
 import { PageNav } from "@/components/PageNav";
-import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves } from "@/lib/curves";
+import { curves, interpolate } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 15;
+const MAX_PRESSES = 5;
+const THOUGHTS = [
+  "The three numbers are 6, 6, and 24…",
+  "Wait — let me re-check that multiplication.",
+  "Wait — actually 6 × 4 = 24, so I need a 4.",
+  "Wait — 6 / (1 − 3/4) = 24. That works.",
+  "Wait — let me confirm each operation once more.",
+  "Final answer: (6 ÷ (1 − 3 ÷ 4)) = 24. ✓",
+];
 
 export function Page15() {
   const page = getPage(PAGE_N)!;
-  const data = curves.arcCost;
-  const { o3LowCost, o3LowAcc, o3HighCost, o3HighAcc, computeFactor, o1Acc, humanCost } = data.fit!.params;
-  // log10 dollar slider between the two o3 configs
-  const [logCost, setLogCost] = useState(Math.log10(o3LowCost) * 100);
+  const data = curves.budgetForcing;
+  const flipAt = data.fit!.params.flipAtPress;
+  const [presses, setPresses] = useState(0);
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const cost = Math.pow(10, logCost / 100);
-  // interpolate accuracy in log-cost space between the two o3 points
-  const t = (Math.log10(cost) - Math.log10(o3LowCost)) / (Math.log10(o3HighCost) - Math.log10(o3LowCost));
-  const accuracy = o3LowAcc + Math.max(0, Math.min(1, t)) * (o3HighAcc - o3LowAcc);
-
-  const curve = [
-    { x: o3LowCost, y: o3LowAcc },
-    { x: o3HighCost, y: o3HighAcc },
-  ];
+  const accuracy = interpolate(data, presses);
+  const solved = presses >= flipAt;
 
   return (
     <article className="flex flex-col gap-5">
@@ -40,46 +40,42 @@ export function Page15() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        More thinking isn&apos;t free. To crack ARC-AGI, OpenAI&apos;s o3 went from ~75.7% at roughly
-        $17–20 per task to 87.5% using <strong>{computeFactor}× the compute</strong> — costing{" "}
-        <em>thousands</em> of dollars per task. A human solves the same puzzle for about ${humanCost}.
+        The simplest modern trick: when the model tries to stop, make it keep going by appending the
+        word <strong>&ldquo;Wait&rdquo;</strong>. Each nudge forces another reconsideration — and the
+        answer sometimes flips from wrong to right.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="flex flex-col gap-4">
-          <Slider
-            label="Compute spend per task"
-            min={Math.round(Math.log10(o3LowCost) * 100)}
-            max={Math.round(Math.log10(o3HighCost) * 100)}
-            value={logCost}
-            onChange={(v) => {
-              setLogCost(v);
+          <button
+            type="button"
+            disabled={presses >= MAX_PRESSES}
+            onClick={() => {
+              setPresses((n) => Math.min(MAX_PRESSES, n + 1));
               recordInteraction(PAGE_N);
             }}
-          />
-          <div className="flex items-end justify-around rounded-lg border border-grid bg-surface p-4">
-            <BigNumber value={accuracy} suffix="%" tone="correct" label="ARC-AGI accuracy" />
-            <BigNumber value={cost} decimals={0} suffix=" $/task" tone="compute" label="estimated cost" />
-          </div>
-          <p className="text-sm text-ink-muted">
-            For reference: o1 reached at most ~{o1Acc}%; a human ≈ ${humanCost}/task.
-          </p>
-          <p className="text-xs italic text-ink-muted">
-            These dollar figures are <strong>reported estimates</strong>, not precise measurements
-            (the ARC Prize Foundation revised the high-compute figure from ~$3,000 toward ~$30,000
-            per task). Presented as reported.
+            className="w-fit rounded bg-compute px-6 py-3 text-lg font-bold text-canvas disabled:opacity-50"
+          >
+            Wait
+          </button>
+          <BigNumber value={accuracy} suffix="%" tone={solved ? "correct" : "wrong"} label={`AIME24 accuracy (s1-32B) after ${presses} "Wait"${presses === 1 ? "" : "s"}`} />
+          <p className={`text-sm font-semibold ${solved ? "text-correct" : "text-wrong"}`}>
+            Current answer: {solved ? "24 ✓ (correct)" : "18 ✗ (still wrong — keep it thinking)"}
           </p>
         </div>
-        <LineChart
-          title="ARC-AGI accuracy versus estimated dollar cost per task (log scale)"
-          points={curve}
-          xLabel="$ per task (log scale)"
-          yLabel="accuracy (%)"
-          yDomain={[60, 100]}
-          xDomain={[o3LowCost, o3HighCost]}
-          logX
-        />
+        <div className="rounded-lg border border-grid bg-surface p-4">
+          <p className="mb-2 text-sm text-ink-muted">The reasoning trace grows with each press:</p>
+          <ol className="flex flex-col gap-2 font-mono text-sm">
+            {THOUGHTS.slice(0, presses + 1).map((t, i) => (
+              <li key={i} className={t.startsWith("Wait") ? "text-compute" : "text-ink"}>
+                {t}
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
+
+      <LiveDemo prompt="Make 24 from the numbers 6, 6, 4 using + - * / . Think step by step, and reconsider with 'Wait' if unsure." fallbackTrace={THOUGHTS} />
 
       <div>
         <CitationBadge citation={data.citation} />
