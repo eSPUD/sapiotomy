@@ -71,12 +71,12 @@ export function SystemSort() {
                   setSelected(x.id);
                 }}
                 onClick={() => setSelected(isSel ? null : x.id)}
-                className={`rounded-full border px-3 py-1.5 text-sm ${
+                className={`rounded-full border border-compute px-3 py-1.5 text-sm text-canvas ${
                   isWrong
-                    ? "border-wrong bg-wrong text-canvas"
+                    ? "border-wrong bg-wrong"
                     : isSel
-                      ? "border-compute bg-compute/15 text-ink ring-2 ring-compute"
-                      : "border-grid bg-surface-raised text-ink hover:border-compute"
+                      ? "bg-compute ring-2 ring-ink"
+                      : "bg-compute hover:opacity-90"
                 }`}
               >
                 {x.text}
