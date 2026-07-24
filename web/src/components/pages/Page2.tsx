@@ -98,17 +98,20 @@ function PathRow({
         const reached = step >= i + 1;
         const current = step === i + 1;
         const isEnd = i === nodes.length - 1;
+        // Reached/unreached is carried by text colour (ink vs ink-muted) and
+        // background — never opacity, which would drop muted text below the
+        // 4.5:1 contrast floor.
         const toneClass = !reached
-          ? "border-grid bg-surface text-ink-muted opacity-70"
+          ? "border-grid bg-surface text-ink-muted"
           : isEnd
             ? endTone === "wrong"
               ? "border-wrong/60 bg-wrong/15 text-ink"
               : "border-correct/60 bg-correct/15 text-ink"
-            : "border-grid bg-surface-raised text-ink";
+            : "border-compute/40 bg-surface-raised text-ink";
         return (
           <Fragment key={i}>
             {i > 0 ? (
-              <span aria-hidden="true" className={reached ? "text-ink-muted" : "text-ink-muted opacity-50"}>
+              <span aria-hidden="true" className="text-ink-muted">
                 →
               </span>
             ) : null}
@@ -122,9 +125,7 @@ function PathRow({
           </Fragment>
         );
       })}
-      <span className={`text-xs ${step >= nodes.length ? "text-ink-muted" : "text-ink-muted opacity-60"}`}>
-        · {note}
-      </span>
+      <span className="text-xs text-ink-muted">· {note}</span>
     </div>
   );
 }
