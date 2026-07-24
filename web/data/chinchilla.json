@@ -1,0 +1,25 @@
+{
+  "points": [
+    { "x": 280, "y": 300 },
+    { "x": 70, "y": 1400 }
+  ],
+  "fit": {
+    "kind": "compute-optimal-anchors",
+    "params": {
+      "tokensPerParam": 20,
+      "chinchillaParamsB": 70,
+      "chinchillaTokensB": 1400,
+      "gopherParamsB": 280,
+      "gopherTokensB": 300,
+      "chinchillaMMLU": 67.5,
+      "mmluGainPts": 7
+    }
+  },
+  "citation": {
+    "ref": "Hoffmann et al. 2022 (Chinchilla)",
+    "url": "https://arxiv.org/abs/2203.15556",
+    "venue": "NeurIPS 2022",
+    "preprint": false
+  },
+  "provenance": "Anchors from Hoffmann et al. 2022, 'Training Compute-Optimal Large Language Models' (Chinchilla, NeurIPS 2022), which revised Kaplan et al. 2020 (arXiv:2001.08361): for compute-optimal training, model size and training tokens should scale roughly EQUALLY, about 20 tokens per parameter. The two points are the paper's headline comparison at equal training compute -- Gopher, 280B parameters on ~300B tokens (x=280, y=300), versus Chinchilla, 70B parameters on 1.4T tokens (x=70, y=1400) -- where the smaller, data-richer Chinchilla won, averaging 67.5% on MMLU, more than 7 points over Gopher. No curve is digitized or drawn; these are the reported model/token/score anchors only. This is the result that makes TRAINING TOKENS the binding constraint, and so makes the Villalobos et al. data-stock estimate bite."
+}

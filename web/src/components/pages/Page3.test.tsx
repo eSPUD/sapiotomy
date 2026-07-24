@@ -42,8 +42,15 @@ describe("Page 3 (Training Daily?)", () => {
     expect(fiveYearSlider()).toBeInTheDocument();
     // Problem two: the data wall, with the two cited anchors.
     expect(screen.getByText(/problem two · the data runs out/i)).toBeInTheDocument();
+    // The Chinchilla hinge: money alone can't buy capability, tokens must scale too.
+    expect(screen.getByText(/20 tokens per parameter/i)).toBeInTheDocument();
+    expect(screen.getByText(/A quarter the size, four times the data/i)).toBeInTheDocument();
     expect(screen.getByText("≈300T tokens")).toBeInTheDocument();
     expect(screen.getByText("2026–2032")).toBeInTheDocument();
+    // The data wall is a timeline meter, not a pair of static tiles.
+    expect(
+      screen.getByRole("img", { name: /cited full-utilization window/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/No budget buys tokens that do not exist/i)).toBeInTheDocument();
     // The guess, hinting back at page 1's multiplication round.
     expect(screen.getByText(/different scope/i)).toBeInTheDocument();

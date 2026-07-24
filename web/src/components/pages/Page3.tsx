@@ -44,6 +44,71 @@ const fmtM = (m: number) =>
 
 type GuessState = "open" | "guessed" | "skipped";
 
+/** The meter's calendar span, one year either side of the cited window. */
+const TRACK_START = 2025;
+const TRACK_END = 2033;
+/** Mid-2026: "today", so the five-year slider reads as a calendar date. */
+const PROGRAM_START_YEAR = 2026.5;
+
+const trackPct = (year: number) =>
+  ((year - TRACK_START) / (TRACK_END - TRACK_START)) * 100;
+
+/**
+ * The data wall as a timeline rather than a pair of static numbers. The shaded
+ * band is Villalobos et al.'s cited full-utilization window and the hairline is
+ * their median year; the moving marker is only the five-year slider's month
+ * placed on the calendar (derived, and labelled as such). Deliberately NOT a
+ * depletion curve — the source gives a window, not a per-month burn rate, so
+ * nothing here animates a "tokens remaining" figure.
+ */
+function DataWindowMeter({
+  months,
+  startY,
+  endY,
+  medianY,
+}: {
+  months: number;
+  startY: number;
+  endY: number;
+  medianY: number;
+}) {
+  const markerYear = PROGRAM_START_YEAR + months / 12;
+  const left = trackPct(startY);
+  const width = trackPct(endY) - left;
+  return (
+    <div>
+      <div
+        role="img"
+        aria-label={`Timeline ${TRACK_START} to ${TRACK_END}. The cited full-utilization window runs ${startY} to ${endY}, median ${medianY}. Keeping the plan up for ${months} months reaches ${Math.floor(markerYear)}.`}
+        className="relative h-3 rounded-sm border border-grid bg-canvas"
+      >
+        <div
+          className="absolute inset-y-0 rounded-sm bg-wrong/25"
+          style={{ left: `${left}%`, width: `${width}%` }}
+        />
+        <div
+          className="absolute inset-y-0 w-px bg-wrong/70"
+          style={{ left: `${trackPct(medianY)}%` }}
+        />
+        <div
+          className="absolute -bottom-1.5 -top-1.5 w-1 -translate-x-1/2 rounded-sm bg-compute ring-1 ring-canvas transition-[left] duration-150"
+          style={{ left: `${trackPct(markerYear)}%` }}
+        />
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-ink-muted">
+        <span>
+          fully utilized <span className="font-mono text-wrong">{startY}–{endY}</span> · median{" "}
+          {medianY}
+        </span>
+        <span>
+          this plan, month {months} ·{" "}
+          <span className="font-mono text-ink">{Math.floor(markerYear)}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function Page3() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
@@ -56,6 +121,8 @@ export function Page3() {
   const computeGrowth = curves.epochComputeGrowth;
   const dataStock = curves.epochDataStock;
   const ds = dataStock.fit!.params;
+  const chinchilla = curves.chinchilla;
+  const cp = chinchilla.fit!.params;
 
   const [months, setMonths] = useState(12);
   const [guessText, setGuessText] = useState("");
@@ -128,7 +195,7 @@ export function Page3() {
         data itself.
       </p>
 
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
         <figure
           aria-label="Problem one: the bill compounds"
           className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
@@ -202,37 +269,41 @@ export function Page3() {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
             <span className="font-semibold text-wrong">problem two · the data runs out</span>
             <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
-              Villalobos et al. 2024 · Epoch AI
+              Hoffmann 2022 · Villalobos 2024
             </span>
           </div>
           <div className="flex flex-col gap-3 p-4">
             <p className="text-sm text-ink">
-              Suppose the money were no object. The well itself is finite: training this hard runs
-              the world <strong>out of data</strong>.
+              Suppose money were no object. It fails anyway — on the scaling law itself.
+              Compute-optimal training needs parameters and training tokens to grow{" "}
+              <strong>together</strong>, about <strong>{cp.tokensPerParam} tokens per parameter</strong>.
+              You cannot turn money into capability without turning it into <strong>data</strong>.
             </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  the effective &ldquo;stock&rdquo; of quality training data
-                </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-                  ≈{ds.stockTrillionTokens}T tokens
-                </p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  fully utilized, if trends continue
-                </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
-                  {ds.windowStartYear}–{ds.windowEndYear}
-                </p>
-              </div>
+            <p className="rounded border-l-2 border-compute bg-surface-raised p-2 text-xs text-ink-muted">
+              Chinchilla <strong className="text-ink">{cp.chinchillaParamsB}B</strong> on{" "}
+              {cp.chinchillaTokensB / 1000}T tokens beat Gopher{" "}
+              <strong className="text-ink">{cp.gopherParamsB}B</strong> on {cp.gopherTokensB}B
+              tokens at equal compute — <strong className="text-ink">+{cp.mmluGainPts} pts</strong>{" "}
+              MMLU. A quarter the size, four times the data.
+            </p>
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-xs uppercase tracking-wide text-ink-muted">
+                and the tokens are finite
+              </p>
+              <p className="font-mono text-lg font-bold tabular-nums text-ink">
+                ≈{ds.stockTrillionTokens}T tokens
+              </p>
             </div>
+            <DataWindowMeter
+              months={months}
+              startY={ds.windowStartYear}
+              endY={ds.windowEndYear}
+              medianY={ds.medianYear}
+            />
             <p className="text-sm text-ink-muted">
-              Analysts estimate everything worth training on — the accumulated public human text of
-              the internet — at roughly {ds.stockTrillionTokens} trillion tokens. On current
-              trends, models will have consumed all of it between {ds.windowStartYear} and{" "}
-              {ds.windowEndYear}. No budget buys tokens that do not exist.
+              That is everything worth training on — the public human text of the internet. Drag the
+              meter and the plan walks straight into the window.{" "}
+              <strong className="text-ink">No budget buys tokens that do not exist.</strong>
             </p>
           </div>
         </section>
@@ -307,6 +378,7 @@ export function Page3() {
         <CitationBadge citation={runCost.citation} />
         <CitationBadge citation={computeGrowth.citation} />
         <CitationBadge citation={trainTrend.citation} />
+        <CitationBadge citation={chinchilla.citation} />
         <CitationBadge citation={dataStock.citation} />
       </div>
       <p className="text-xs text-ink-muted">
@@ -316,10 +388,15 @@ export function Page3() {
         year for language models since mid-2020) is an Epoch figure, redrawn under CC BY, not
         Epoch&apos;s image · the combined curve is derived: one run per day priced at ${RUN_M}M ×{" "}
         {tp.perYear}^years, whose per-run price passes $1B around year three, consistent with
-        Epoch&apos;s {tp.projectionYear} projection · the ≈{ds.stockTrillionTokens}T-token
-        effective data stock and the {ds.windowStartYear}–{ds.windowEndYear} full-utilization
-        window are Villalobos et al. 2024 (Epoch AI) estimates, quoted verbatim · no claims
-        about what any lab actually spends
+        Epoch&apos;s {tp.projectionYear} projection · the ≈{cp.tokensPerParam}-tokens-per-parameter
+        compute-optimal rule and the Chinchilla {cp.chinchillaParamsB}B / Gopher{" "}
+        {cp.gopherParamsB}B comparison are Hoffmann et al. 2022, which revised the earlier
+        very-large-model recipe of Kaplan et al. 2020 (arXiv:2001.08361) · the ≈
+        {ds.stockTrillionTokens}T-token effective data stock and the {ds.windowStartYear}–
+        {ds.windowEndYear} full-utilization window (median {ds.medianYear}) are Villalobos et al.
+        2024 (Epoch AI) estimates, quoted verbatim · the timeline marker is derived — it just places
+        the slider&apos;s month on the calendar assuming the plan starts today; no depletion rate is
+        claimed or drawn · no claims about what any lab actually spends
       </p>
 
       <div aria-live="polite" className="sr-only">

@@ -128,6 +128,48 @@ describe("Page 3 data stock (Villalobos et al. 2024, Epoch AI)", () => {
     expect(d.citation.preprint).toBe(true);
     expect(d.provenance).toMatch(/300 trillion tokens/);
     expect(d.provenance).toMatch(/between 2026 and 2032/);
+    // The median year the meter's hairline marks, and the standing promise that
+    // no depletion rate is invented from a source that only gives a window.
+    expect(p.medianYear).toBe(2028);
+    expect(p.medianYear).toBeGreaterThanOrEqual(p.windowStartYear);
+    expect(p.medianYear).toBeLessThanOrEqual(p.windowEndYear);
+    expect(d.provenance).toMatch(/no depletion curve is digitized or drawn/i);
+  });
+});
+
+describe("Page 3 compute-optimal scaling (Hoffmann et al. 2022, Chinchilla)", () => {
+  it("anchors: ~20 tokens/param, and Chinchilla 70B beats Gopher 280B at equal compute", () => {
+    const d = curves.chinchilla;
+    const p = d.fit!.params;
+    expect(p.tokensPerParam).toBe(20);
+    expect(p.chinchillaParamsB).toBe(70);
+    expect(p.chinchillaTokensB).toBe(1400);
+    expect(p.gopherParamsB).toBe(280);
+    expect(p.gopherTokensB).toBe(300);
+    expect(p.chinchillaMMLU).toBe(67.5);
+    expect(p.mmluGainPts).toBe(7);
+    // The rule is self-consistent: Chinchilla's tokens ARE ~20 per parameter.
+    expect(p.chinchillaTokensB / p.chinchillaParamsB).toBe(p.tokensPerParam);
+    // Gopher is the counterexample: far bigger, far under the token rule.
+    expect(p.gopherParamsB).toBeGreaterThan(p.chinchillaParamsB);
+    expect(p.gopherTokensB / p.gopherParamsB).toBeLessThan(p.tokensPerParam);
+  });
+
+  it("is cited as peer-reviewed and names the Kaplan recipe it revised", () => {
+    const d = curves.chinchilla;
+    expect(d.citation.ref).toContain("Hoffmann");
+    expect(d.citation.venue).toContain("NeurIPS");
+    expect(d.citation.preprint).toBe(false);
+    expect(d.provenance).toMatch(/Kaplan/);
+    expect(d.provenance).toMatch(/20 tokens per parameter/i);
+  });
+
+  it("the points are the two model anchors, params vs training tokens", () => {
+    const pts = curves.chinchilla.points;
+    expect(pts).toEqual([
+      { x: 280, y: 300 },
+      { x: 70, y: 1400 },
+    ]);
   });
 });
 

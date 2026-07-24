@@ -8,7 +8,8 @@
     "params": {
       "stockTrillionTokens": 300,
       "windowStartYear": 2026,
-      "windowEndYear": 2032
+      "windowEndYear": 2032,
+      "medianYear": 2028
     }
   },
   "citation": {
@@ -17,5 +18,5 @@
     "venue": "Epoch AI · arXiv 2211.04325",
     "preprint": true
   },
-  "provenance": "Verbatim anchors from Villalobos et al. 2024, 'Will we run out of data? Limits of LLM scaling based on human-generated data' (Epoch AI): the effective stock of public human-generated text data is estimated at roughly 300 trillion tokens, and if current LLM development trends continue, models will be trained on datasets roughly equal to the full available stock between 2026 and 2032. points encode only the two window-endpoint years (x) against the ~300T stock (y); no depletion curve is digitized or drawn. Conservatively flagged preprint (arXiv version cited)."
+  "provenance": "Verbatim anchors from Villalobos et al. 2024, 'Will we run out of data? Limits of LLM scaling based on human-generated data' (Epoch AI): the effective stock of public human-generated text data is estimated at roughly 300 trillion tokens, and if current LLM development trends continue, models will be trained on datasets roughly equal to the full available stock between 2026 and 2032, with a median projected year of 2028. points encode only the two window-endpoint years (x) against the ~300T stock (y); no depletion curve is digitized or drawn -- the page marks the cited window and median only, and never animates a tokens-remaining figure. Conservatively flagged preprint (arXiv version cited)."
 }
