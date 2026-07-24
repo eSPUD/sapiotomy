@@ -91,7 +91,6 @@ export function SystemSort() {
         {(["fast", "slow"] as Zone[]).map((z) => {
           const here = SORTING_ITEMS.filter((x) => placed[x.id] === z);
           const accentText = z === "fast" ? "text-compute" : "text-wrong";
-          const accentBorder = z === "fast" ? "border-compute" : "border-wrong";
           const accentBtn = z === "fast" ? "bg-compute" : "bg-wrong";
           return (
             <div
@@ -107,7 +106,7 @@ export function SystemSort() {
                 setDragOver(null);
                 if (id) attempt(id, z);
               }}
-              className={`flex min-h-[7rem] flex-col gap-2 rounded-lg border-l-4 bg-surface p-4 ${accentBorder} ${
+              className={`flex min-h-[7rem] flex-col gap-2 rounded-lg border border-grid bg-surface p-4 ${
                 dragOver === z ? "outline outline-2 outline-compute" : ""
               }`}
             >
