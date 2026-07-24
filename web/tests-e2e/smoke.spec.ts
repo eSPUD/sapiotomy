@@ -57,6 +57,13 @@ test.describe("M0 smoke", () => {
 
   test("arrow keys navigate between pages", async ({ page }) => {
     await page.goto("/p/5");
+    // KeyboardNav attaches its keydown listener in a useEffect, so the listener
+    // only exists once React has hydrated. page.goto() resolves before that, and
+    // a keypress sent into the gap is silently dropped — the test then fails
+    // with "expected /p/6, got /p/5" and looks like broken navigation. Wait for
+    // hydration (any client handler being live implies it) before pressing.
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("slider").first()).toBeEnabled();
     await page.keyboard.press("ArrowRight");
     await expect(page).toHaveURL(/\/p\/6$/);
     await page.keyboard.press("ArrowLeft");
