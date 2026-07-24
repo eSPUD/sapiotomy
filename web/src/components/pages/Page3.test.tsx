@@ -33,15 +33,23 @@ describe("Page 3 (Training Daily?)", () => {
   it("shows both problems, the slider, and the guess box up front", () => {
     render(<Page3 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training Daily?");
-    // Problem one: the combined cost curve. The old one-year meter stays gone.
-    expect(screen.getByText(/problem one · the bill compounds/i)).toBeInTheDocument();
+    // Step 1: the combined cost curve. The old one-year meter stays gone.
+    expect(
+      screen.getByRole("heading", { level: 2, name: /1\. The bill compounds/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /combination across five years/i })).toBeInTheDocument();
     expect(screen.queryByRole("img", { name: /cumulative bill/i })).toBeNull();
     expect(screen.queryByRole("slider", { name: /drag through the year/i })).toBeNull();
     expect(screen.getByText(/Training price is not a fixed number/i)).toBeInTheDocument();
     expect(fiveYearSlider()).toBeInTheDocument();
-    // Problem two: the data wall, with the two cited anchors.
-    expect(screen.getByText(/problem two · the data runs out/i)).toBeInTheDocument();
+    // Step 2: the data wall, with the two cited anchors.
+    expect(
+      screen.getByRole("heading", { level: 2, name: /2\. The data runs out/i }),
+    ).toBeInTheDocument();
+    // Step 3: the guess, under the same numbered spine as pages 1 and 4.
+    expect(
+      screen.getByRole("heading", { level: 2, name: /3\. So what is left\?/i }),
+    ).toBeInTheDocument();
     // The Chinchilla hinge: money alone can't buy capability, tokens must scale too.
     expect(screen.getByText(/20 tokens per parameter/i)).toBeInTheDocument();
     expect(screen.getByText(/A quarter the size, four times the data/i)).toBeInTheDocument();

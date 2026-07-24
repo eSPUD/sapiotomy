@@ -18,8 +18,12 @@
  * this page; the answer-time alternative is the next page's business. No
  * inference talk here.
  *
- * Layout rule: no reveals, no drag-to-unlock. Two-column grid: Problem 1 (the
- * figure) on the left; Problem 2 and the guess box stacked on the right.
+ * Layout rule: no reveals, no drag-to-unlock. Shell matches pages 1 and 4 — a
+ * single numbered reading column (1. the bill · 2. the data · 3. the guess)
+ * beside a sticky instructions/references rail. The earlier two-column split
+ * made the eye run left-down-right-down; the numbered stack is one straight
+ * read. One dial (the five-year slider) drives both walls: it moves the cost
+ * curve in step 1 and the calendar marker in step 2.
  * Every citation lands at the bottom of the page.
  */
 
@@ -180,7 +184,7 @@ export function Page3() {
   };
 
   return (
-    <article className="flex flex-col gap-5">
+    <article className="flex flex-col gap-6">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
@@ -188,190 +192,237 @@ export function Page3() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
-        stares right at you: reseal the memory <strong>every morning</strong>. Retrain the model
-        daily and it is never a day out of date. That plan fails twice — first the bill, then the
-        data itself.
-      </p>
 
-      <div className="grid items-stretch gap-4 lg:grid-cols-2">
-        <figure
-          aria-label="Problem one: the bill compounds"
-          className="m-0 overflow-hidden rounded-lg border border-grid bg-surface"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span className="font-semibold text-wrong">problem one · the bill compounds</span>
-            <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-              derived from the two Epoch trends
-            </span>
-          </div>
-          <div className="flex flex-col gap-4 p-4">
-            <p className="text-sm text-ink">
-              Every day of the plan costs more than the day before: training price is not a fixed
-              number, and Epoch AI puts training-compute cost on a{" "}
-              <strong>~5&times;-per-year</strong> climb.
-            </p>
-            <LineChart
-              title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
-              points={comboSame}
-              secondary={{ points: comboFrontier, label: "the frontier model of the day, daily" }}
-              primaryLabel="the same model, daily (flat $78M rate)"
-              markerX={months}
-              xLabel="months of keeping it up"
-              yLabel="cumulative bill ($ billions)"
-              yDomain={[0, 2600]}
-              width={460}
-              height={280}
-            />
-            <Slider
-              label="Drag through five years"
-              min={0}
-              max={COMBO_MONTHS}
-              value={months}
-              onChange={onMonths}
-              suffix=" months"
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  the frontier of the day, daily
-                </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
-                  {fmtM(frontierAtM)}
-                </p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  the same model, daily
-                </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-                  {fmtM(sameAtM)}
-                </p>
-              </div>
-            </div>
-            <figcaption className="text-sm text-ink">
-              Combine the two rates: compute per frontier run grows about 5x a
-              year; cheaper, better hardware absorbs part of that, so the <strong>bill</strong>{" "}
-              per run grows ×{tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
-              <em>the frontier model of the day</em>, every day, and by year five the program is
-              measured in trillions — and even the flat ${RUN_M}M-per-run plan at the bottom of the
-              chart burns {fmtM(DAYS * RUN_M)} a year.
-            </figcaption>
-          </div>
-        </figure>
-
-        <div className="flex flex-col gap-4">
-        <section
-          aria-label="Problem two: the data runs out"
-          className="overflow-hidden rounded-lg border border-grid bg-surface"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span className="font-semibold text-wrong">problem two · the data runs out</span>
-            <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
-              Hoffmann 2022 · Villalobos 2024
-            </span>
-          </div>
-          <div className="flex flex-col gap-3 p-4">
-            <p className="text-sm text-ink">
-              Suppose money were no object. It fails anyway — on the scaling law itself.
-              Compute-optimal training needs parameters and training tokens to grow{" "}
-              <strong>together</strong>, about <strong>{cp.tokensPerParam} tokens per parameter</strong>.
-              You cannot turn money into capability without turning it into <strong>data</strong>.
-            </p>
-            <p className="rounded border-l-2 border-compute bg-surface-raised p-2 text-xs text-ink-muted">
-              Chinchilla <strong className="text-ink">{cp.chinchillaParamsB}B</strong> on{" "}
-              {cp.chinchillaTokensB / 1000}T tokens beat Gopher{" "}
-              <strong className="text-ink">{cp.gopherParamsB}B</strong> on {cp.gopherTokensB}B
-              tokens at equal compute — <strong className="text-ink">+{cp.mmluGainPts} pts</strong>{" "}
-              MMLU. A quarter the size, four times the data.
-            </p>
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="text-xs uppercase tracking-wide text-ink-muted">
-                and the tokens are finite
-              </p>
-              <p className="font-mono text-lg font-bold tabular-nums text-ink">
-                ≈{ds.stockTrillionTokens}T tokens
-              </p>
-            </div>
-            <DataWindowMeter
-              months={months}
-              startY={ds.windowStartYear}
-              endY={ds.windowEndYear}
-              medianY={ds.medianYear}
-            />
-            <p className="text-sm text-ink-muted">
-              That is everything worth training on — the public human text of the internet. Drag the
-              meter and the plan walks straight into the window.{" "}
-              <strong className="text-ink">No budget buys tokens that do not exist.</strong>
-            </p>
-          </div>
-        </section>
-
-        <section aria-label="The guess" className="overflow-hidden rounded-lg border border-grid bg-surface">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-          <span>the guess</span>
-          <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
-            optional · skip freely
-          </span>
-        </div>
-        <div className="flex flex-col gap-3 p-4">
-          <p className="text-lg text-ink">
-            Training is hitting a wall — cost on one side, data on the other. So we had to look at
-            the problem through a <strong>different scope</strong>. What do you think the solution
-            may be?
+      {/* Left = the numbered walk-through · Right = instructions + references */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        {/* LEFT COLUMN */}
+        <div className="flex min-w-0 flex-col gap-8">
+          <p className="text-lg text-ink-muted">
+            Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
+            stares right at you: reseal the memory <strong className="text-ink">every morning</strong>.
+            Retrain the model daily and it is never a day out of date. That plan fails twice — first
+            the bill, then the data itself.
           </p>
-          <p className="text-sm text-ink-muted">
-            Hint: how did you solve <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong>{" "}
-            on page 1?
-          </p>
-          {guessState === "open" ? (
-            <form
-              className="flex flex-wrap items-center gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                lockGuess();
-              }}
+
+          {/* Step 1 — the bill */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              1. The bill compounds
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                derived from the two Epoch trends
+              </span>
+            </h2>
+            <figure
+              aria-label="Problem one: the bill compounds"
+              className="m-0 flex flex-col gap-4 rounded-lg border-l-4 border-wrong bg-surface p-4"
             >
-              <input
-                type="text"
-                autoComplete="off"
-                aria-label="Your guess"
-                placeholder="a word or a sentence"
-                value={guessText}
-                onChange={(e) => setGuessText(e.target.value)}
-                className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
+              <p className="text-sm text-ink">
+                Every day of the plan costs more than the day before: training price is not a fixed
+                number, and Epoch AI puts training-compute cost on a{" "}
+                <strong>~5&times;-per-year</strong> climb.
+              </p>
+              <LineChart
+                title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
+                points={comboSame}
+                secondary={{ points: comboFrontier, label: "the frontier model of the day, daily" }}
+                primaryLabel="the same model, daily (flat $78M rate)"
+                markerX={months}
+                xLabel="months of keeping it up"
+                yLabel="cumulative bill ($ billions)"
+                yDomain={[0, 2600]}
+                width={640}
+                height={300}
               />
-              <button
-                type="submit"
-                disabled={guessText.trim().length === 0}
-                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-              >
-                Lock it in
-              </button>
-              <button
-                type="button"
-                onClick={skipGuess}
-                className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
-              >
-                Skip
-              </button>
-            </form>
-          ) : (
-            <p className="text-ink">
-              {guessState === "guessed" ? (
-                <>
-                  Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
-                </>
+              <Slider
+                label="Drag through five years — this one dial drives both walls"
+                min={0}
+                max={COMBO_MONTHS}
+                value={months}
+                onChange={onMonths}
+                suffix=" months"
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-grid bg-surface-raised p-3">
+                  <p className="text-xs uppercase tracking-wide text-ink-muted">
+                    the frontier of the day, daily
+                  </p>
+                  <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
+                    {fmtM(frontierAtM)}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-grid bg-surface-raised p-3">
+                  <p className="text-xs uppercase tracking-wide text-ink-muted">
+                    the same model, daily
+                  </p>
+                  <p className="font-mono text-2xl font-bold tabular-nums text-ink">
+                    {fmtM(sameAtM)}
+                  </p>
+                </div>
+              </div>
+              <figcaption className="text-sm text-ink">
+                Combine the two rates: compute per frontier run grows about 5x a
+                year; cheaper, better hardware absorbs part of that, so the <strong>bill</strong>{" "}
+                per run grows ×{tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
+                <em>the frontier model of the day</em>, every day, and by year five the program is
+                measured in trillions — and even the flat ${RUN_M}M-per-run plan at the bottom of the
+                chart burns {fmtM(DAYS * RUN_M)} a year.
+              </figcaption>
+            </figure>
+          </section>
+
+          {/* Step 2 — the data */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              2. The data runs out
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                Hoffmann 2022 · Villalobos 2024
+              </span>
+            </h2>
+            <section
+              aria-label="Problem two: the data runs out"
+              className="flex flex-col gap-3 rounded-lg border-l-4 border-wrong bg-surface p-4"
+            >
+              <p className="text-sm text-ink">
+                Suppose money were no object. It fails anyway — on the scaling law itself.
+                Compute-optimal training needs parameters and training tokens to grow{" "}
+                <strong>together</strong>, about{" "}
+                <strong>{cp.tokensPerParam} tokens per parameter</strong>. You cannot turn money
+                into capability without turning it into <strong>data</strong>.
+              </p>
+              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                <p className="rounded border-l-2 border-compute bg-surface-raised p-2 text-xs text-ink-muted">
+                  Chinchilla <strong className="text-ink">{cp.chinchillaParamsB}B</strong> on{" "}
+                  {cp.chinchillaTokensB / 1000}T tokens beat Gopher{" "}
+                  <strong className="text-ink">{cp.gopherParamsB}B</strong> on {cp.gopherTokensB}B
+                  tokens at equal compute — <strong className="text-ink">+{cp.mmluGainPts} pts</strong>{" "}
+                  MMLU. A quarter the size, four times the data.
+                </p>
+                <div className="rounded-lg border border-grid bg-surface-raised p-3 md:text-right">
+                  <p className="text-xs uppercase tracking-wide text-ink-muted">
+                    and the tokens are finite
+                  </p>
+                  <p className="font-mono text-2xl font-bold tabular-nums text-ink">
+                    ≈{ds.stockTrillionTokens}T tokens
+                  </p>
+                </div>
+              </div>
+              <DataWindowMeter
+                months={months}
+                startY={ds.windowStartYear}
+                endY={ds.windowEndYear}
+                medianY={ds.medianYear}
+              />
+              <p className="text-sm text-ink-muted">
+                That is everything worth training on — the public human text of the internet. The
+                same dial from step 1 walks the plan straight into the window.{" "}
+                <strong className="text-ink">No budget buys tokens that do not exist.</strong>
+              </p>
+            </section>
+          </section>
+
+          {/* Step 3 — the guess */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              3. So what is left?
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                optional · skip freely
+              </span>
+            </h2>
+            <section
+              aria-label="The guess"
+              className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+            >
+              <p className="text-lg text-ink">
+                Training is hitting a wall — cost on one side, data on the other. So we had to look
+                at the problem through a <strong>different scope</strong>. What do you think the
+                solution may be?
+              </p>
+              <p className="text-sm text-ink-muted">
+                Hint: how did you solve{" "}
+                <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> on page 1?
+              </p>
+              {guessState === "open" ? (
+                <form
+                  className="flex flex-wrap items-center gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    lockGuess();
+                  }}
+                >
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    aria-label="Your guess"
+                    placeholder="a word or a sentence"
+                    value={guessText}
+                    onChange={(e) => setGuessText(e.target.value)}
+                    className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
+                  />
+                  <button
+                    type="submit"
+                    disabled={guessText.trim().length === 0}
+                    className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                  >
+                    Lock it in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={skipGuess}
+                    className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
+                  >
+                    Skip
+                  </button>
+                </form>
               ) : (
-                <>Hold that thought anyway.</>
-              )}{" "}
-              <em className="text-ink-muted">The answer is one page away.</em>
+                <p className="text-ink">
+                  {guessState === "guessed" ? (
+                    <>
+                      Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
+                    </>
+                  ) : (
+                    <>Hold that thought anyway.</>
+                  )}{" "}
+                  <em className="text-ink-muted">The answer is one page away.</em>
+                </p>
+              )}
+            </section>
+          </section>
+        </div>
+
+        {/* RIGHT COLUMN — instructions + references */}
+        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              How to read this page
+            </h2>
+            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
+              <li>Read straight down: the bill, then the data, then the guess.</li>
+              <li>
+                One dial runs the page — drag the five-year slider in step 1 and both the cost curve
+                and the calendar meter in step 2 move with it.
+              </li>
+              <li>The guess box is optional; skipping costs you nothing.</li>
+              <li>
+                Use{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
+                to move between pages.
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              References
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Run cost and the cost trend: Epoch AI. Compute-optimal scaling: Hoffmann et al. 2022.
+              Data stock: Villalobos et al. 2024.
             </p>
-          )}
-        </div>
-        </section>
-        </div>
+            <p className="text-sm text-ink-muted">
+              Full links and the derivation notes are at the foot of the page.
+            </p>
+          </div>
+        </aside>
       </div>
 
       <div className="flex flex-wrap gap-2">

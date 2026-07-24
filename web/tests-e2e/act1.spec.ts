@@ -68,9 +68,16 @@ test.describe("Act 1 (pages 1–4)", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Training Daily?");
     // The spec's hard rule: no inference talk anywhere on this page.
     expect(await page.locator("article").innerText()).not.toMatch(/inference/i);
-    // No drag-to-reveal: both problems are on from paint.
-    await expect(page.getByText(/problem one · the bill compounds/i)).toBeVisible();
-    await expect(page.getByText(/problem two · the data runs out/i)).toBeVisible();
+    // No drag-to-reveal: both problems are on from paint, on one numbered spine.
+    await expect(
+      page.getByRole("heading", { level: 2, name: /1\. The bill compounds/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: /2\. The data runs out/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2, name: /3\. So what is left\?/i }),
+    ).toBeVisible();
     await expect(page.getByText("≈300T tokens")).toBeVisible();
     await expect(page.getByText("2026–2032", { exact: true })).toBeVisible();
     // The old one-year meter is gone (scaling-laws pivot).
