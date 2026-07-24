@@ -112,6 +112,25 @@ describe("Page 3 daily-training meter (Epoch run-cost anchor)", () => {
   });
 });
 
+describe("Page 3 data stock (Villalobos et al. 2024, Epoch AI)", () => {
+  it("anchors: ~300T-token effective stock, fully utilized 2026-2032", () => {
+    const d = curves.epochDataStock;
+    const p = d.fit!.params;
+    expect(p.stockTrillionTokens).toBe(300);
+    expect(p.windowStartYear).toBe(2026);
+    expect(p.windowEndYear).toBe(2032);
+    // points encode exactly the two window endpoints against the stock.
+    expect(d.points).toEqual([
+      { x: 2026, y: 300 },
+      { x: 2032, y: 300 },
+    ]);
+    expect(d.citation.ref).toContain("Villalobos");
+    expect(d.citation.preprint).toBe(true);
+    expect(d.provenance).toMatch(/300 trillion tokens/);
+    expect(d.provenance).toMatch(/between 2026 and 2032/);
+  });
+});
+
 describe("Page 3 frontier compute growth (Epoch, redrawn) and the combined meter", () => {
   it("rates and anchors are the verbatim Epoch figures, under CC BY", () => {
     const d = curves.epochComputeGrowth;

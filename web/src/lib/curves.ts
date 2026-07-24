@@ -21,6 +21,7 @@ import illusionRaw from "@data/illusion-of-thinking.json";
 import epochTrainingCostsRaw from "@data/epoch-training-costs.json";
 import epochRunCostRaw from "@data/epoch-run-cost.json";
 import epochComputeGrowthRaw from "@data/epoch-compute-growth.json";
+import epochDataStockRaw from "@data/epoch-data-stock.json";
 import epochInferencePricesRaw from "@data/epoch-inference-prices.json";
 import queryEnergyRaw from "@data/query-energy.json";
 
@@ -41,6 +42,7 @@ export const curves: Record<string, CurveData> = {
   epochTrainingCosts: parseCurveData(epochTrainingCostsRaw, "epoch-training-costs.json"),
   epochRunCost: parseCurveData(epochRunCostRaw, "epoch-run-cost.json"),
   epochComputeGrowth: parseCurveData(epochComputeGrowthRaw, "epoch-compute-growth.json"),
+  epochDataStock: parseCurveData(epochDataStockRaw, "epoch-data-stock.json"),
   epochInferencePrices: parseCurveData(epochInferencePricesRaw, "epoch-inference-prices.json"),
   queryEnergy: parseCurveData(queryEnergyRaw, "query-energy.json"),
 };

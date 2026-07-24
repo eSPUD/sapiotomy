@@ -25,57 +25,43 @@ const expectClean = () => {
   expect(document.body.textContent ?? "").not.toMatch(BANNED);
 };
 
-const yearSlider = () => screen.getByRole("slider", { name: /drag through the year/i });
-const dragYear = (v: number) => fireEvent.change(yearSlider(), { target: { value: String(v) } });
 const fiveYearSlider = () => screen.getByRole("slider", { name: /drag through five years/i });
 const dragMonths = (v: number) =>
   fireEvent.change(fiveYearSlider(), { target: { value: String(v) } });
 
-describe("Page 3 (Daily Training?)", () => {
-  it("shows two figures, the cost-climb note, both sliders, and the guess box up front", () => {
+describe("Page 3 (Training Daily?)", () => {
+  it("shows both problems, the slider, and the guess box up front", () => {
     render(<Page3 />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Daily Training?");
-    // Two figures now: the meter and the combined curve. The old compute-growth
-    // chart is collapsed into a dense note.
-    expect(screen.getByRole("img", { name: /cumulative bill/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training Daily?");
+    // Problem one: the combined cost curve. The old one-year meter stays gone.
+    expect(screen.getByText(/problem one · the bill compounds/i)).toBeInTheDocument();
     expect(screen.getByRole("img", { name: /combination across five years/i })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("img", { name: /training compute of frontier language models/i }),
-    ).toBeNull();
-    expect(screen.getByText(/assumes a stagnant training price/i)).toBeInTheDocument();
-    expect(screen.getByText(/per-year/i)).toBeInTheDocument();
-    expect(yearSlider()).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /cumulative bill/i })).toBeNull();
+    expect(screen.queryByRole("slider", { name: /drag through the year/i })).toBeNull();
+    expect(screen.getByText(/Training price is not a fixed number/i)).toBeInTheDocument();
     expect(fiveYearSlider()).toBeInTheDocument();
-    expect(screen.getByText(/training every day is simply not feasible/i)).toBeInTheDocument();
+    // Problem two: the data wall, with the two cited anchors.
+    expect(screen.getByText(/problem two · the data runs out/i)).toBeInTheDocument();
+    expect(screen.getByText("≈300T tokens")).toBeInTheDocument();
+    expect(screen.getByText("2026–2032")).toBeInTheDocument();
+    expect(screen.getByText(/No budget buys tokens that do not exist/i)).toBeInTheDocument();
+    // The guess, hinting back at page 1's multiplication round.
+    expect(screen.getByText(/different scope/i)).toBeInTheDocument();
+    expect(screen.getByText("17 × 24")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /your guess/i })).toBeInTheDocument();
     expect(screen.getByText("optional · skip freely")).toBeInTheDocument();
-    // Day 1: the total reads one run's cost (also quoted as the per-run rate).
-    expect(screen.getAllByText(`$${RUN_M}M`).length).toBeGreaterThan(0);
+    // The flat per-run rate still anchors the legend, caption, and footer.
+    expect(screen.getAllByText(new RegExp(`\\$${RUN_M}M`)).length).toBeGreaterThan(0);
     expect(screen.getByRole("navigation", { name: /page navigation/i })).toBeInTheDocument();
-    expectClean();
-  });
-
-  it("dragging to day 13 crosses $1B and announces it", () => {
-    render(<Page3 />);
-    dragYear(13);
-    expect(screen.getByText("$1.0B")).toBeInTheDocument();
-    expect(screen.getByText(/passed one billion dollars/)).toBeInTheDocument();
-    expectClean();
-  });
-
-  it("the year lands at $28.5B across 365 runs", () => {
-    render(<Page3 />);
-    dragYear(365);
-    // The main total and the combined figure's same-model tile both read $28.5B.
-    expect(screen.getAllByText("$28.5B").length).toBeGreaterThan(0);
-    expect(screen.getByText(/365 days · 365 runs/)).toBeInTheDocument();
     expectClean();
   });
 
   it("the combined figure shows year one already beating the flat plan", () => {
     render(<Page3 />);
-    // months defaults to 12; the frontier tile reads its year-one compounding total.
+    // months defaults to 12; the frontier tile reads its year-one compounding
+    // total and the same-model tile reads the flat year rate.
     expect(screen.getByText("$45.5B")).toBeInTheDocument();
+    expect(screen.getByText("$28.5B")).toBeInTheDocument();
     expectClean();
   });
 
@@ -108,14 +94,6 @@ describe("Page 3 (Daily Training?)", () => {
     expect(screen.getByText(/Hold that thought anyway\./)).toBeInTheDocument();
     expect(screen.queryByText(/Noted:/)).toBeNull();
     expect(screen.getByText(/The answer is one page away\./)).toBeInTheDocument();
-    expectClean();
-  });
-
-  it("the three milestone chips ride the figure from the start", () => {
-    render(<Page3 />);
-    expect(screen.getByText(/one GPT-4-class run/)).toBeInTheDocument();
-    expect(screen.getByText(/passes Epoch's projected record run/)).toBeInTheDocument();
-    expect(screen.getByText(/365 runs for one year of fresh memory/)).toBeInTheDocument();
     expectClean();
   });
 

@@ -30,7 +30,7 @@ export const ACTS: Record<Act, { title: string; range: string }> = {
 export const PAGES: PageMeta[] = [
   { n: 1, slug: "think-fast-think-slow", title: "Think Fast, Think Slow", act: 1, concept: "Feel your own two speeds: the size of the problem sets the thinking time.", milestone: "S1" },
   { n: 2, slug: "two-systems", title: "Two Systems", act: 1, concept: "A question that looks like a lookup: the reader recalls it instantly; a machine whose memory predates the fact cannot, and thinking harder does not create the fact.", milestone: "S1" },
-  { n: 3, slug: "daily-training", title: "Daily Training?", act: 1, concept: "Pricing the obvious fix: one cited per-run cost times a year of daily retraining is an impossible bill.", milestone: "S1" },
+  { n: 3, slug: "daily-training", title: "Training Daily?", act: 1, concept: "The obvious fix hits two walls: the bill for daily retraining compounds, and the stock of quality training data runs out.", milestone: "S1" },
   { n: 4, slug: "the-third-option", title: "The Third Option", act: 1, concept: "Not answering from memory (p2) and not retraining (p3), but spending compute at answer time: thinking. The reveal and naming of inference-time scaling, and the setup for Act 2's toolbox.", milestone: "S1" },
   { n: 5, slug: "majority-vote", title: "The Majority Vote (Self-Consistency)", act: 2, concept: "Sample many chains, take the most common answer.", milestone: "M1" },
   { n: 6, slug: "voting-not-enough", title: "When Voting Isn't Enough", act: 2, concept: "Majority vote plateaus when the right answer is rare.", milestone: "M3" },

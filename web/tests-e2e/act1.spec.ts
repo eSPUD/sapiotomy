@@ -61,22 +61,21 @@ test.describe("Act 1 (pages 1–4)", () => {
     await expect(page.getByText(/trained on data that includes that night/)).toBeVisible();
   });
 
-  test("Page 3: the daily-retraining meter runs away, then the guess box hands off", async ({
+  test("Page 3: the combined-rates figure runs away, then the guess box hands off", async ({
     page,
   }) => {
     await page.goto("/p/3");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Daily Training?");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Training Daily?");
     // The spec's hard rule: no inference talk anywhere on this page.
     expect(await page.locator("article").innerText()).not.toMatch(/inference/i);
-    // No drag-to-reveal: both figures and the cost-climb note are on from paint.
-    await expect(page.getByText(/training every day is simply not feasible/i)).toBeVisible();
-    await expect(page.getByText(/assumed a fixed training price/i)).toBeVisible();
-    // Drag the year out with the keyboard: End jumps the slider to day 365.
-    const slider = page.getByRole("slider", { name: /drag through the year/i });
-    await slider.focus();
-    await slider.press("End");
-    // The main total and the combined figure's same-model tile both read $28.5B.
-    await expect(page.getByText("$28.5B", { exact: true }).first()).toBeVisible();
+    // No drag-to-reveal: both problems are on from paint.
+    await expect(page.getByText(/problem one · the bill compounds/i)).toBeVisible();
+    await expect(page.getByText(/problem two · the data runs out/i)).toBeVisible();
+    await expect(page.getByText("≈300T tokens")).toBeVisible();
+    await expect(page.getByText("2026–2032", { exact: true })).toBeVisible();
+    // The old one-year meter is gone (scaling-laws pivot).
+    await expect(page.getByRole("slider", { name: /drag through the year/i })).toHaveCount(0);
+    // Drag five years out with the keyboard: End jumps the slider to month 60.
     const months = page.getByRole("slider", { name: /drag through five years/i });
     await months.focus();
     await months.press("End");
@@ -92,9 +91,9 @@ test.describe("Act 1 (pages 1–4)", () => {
     page,
   }) => {
     await page.goto("/p/3");
-    const slider = page.getByRole("slider", { name: /drag through the year/i });
-    await slider.focus();
-    await slider.press("End");
+    const months = page.getByRole("slider", { name: /drag through five years/i });
+    await months.focus();
+    await months.press("End");
     await page.getByRole("button", { name: "Skip" }).click();
     await expectAxeClean(page);
   });
