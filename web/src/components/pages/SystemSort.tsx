@@ -46,14 +46,11 @@ export function SystemSort() {
 
   return (
     <section aria-label="Sort the questions into System 1 or System 2" className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-semibold text-ink">Your turn: sort six questions</h2>
-        <span className="font-mono text-sm text-ink-muted">{Object.keys(placed).length} / {TOTAL} sorted</span>
+      <div className="flex justify-end">
+        <span className="font-mono text-sm text-ink-muted">
+          {Object.keys(placed).length} / {TOTAL} sorted
+        </span>
       </div>
-      <p className="text-sm text-ink-muted">
-        Drag each question into the system it runs on, or select it and press a side. System 1 if the
-        answer just arrives; System 2 if you would have to work for it.
-      </p>
 
       {/* The pool */}
       <div className="flex min-h-[2.5rem] flex-wrap gap-2" aria-label="Questions still to sort">
