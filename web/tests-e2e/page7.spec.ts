@@ -1,21 +1,33 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test.describe("Page 7 — self-consistency", () => {
+test.describe("Page 7 — frequency voting", () => {
   test("predict → interact → observe", async ({ page }) => {
     await page.goto("/p/7");
     // Predict-Observe-Explain: commit a prediction first.
     await page.getByRole("button", { name: /lock in prediction/i }).click();
-    // Slider is keyboard operable.
-    const slider = page.getByRole("slider", { name: /votes/i });
-    await expect(slider).toBeVisible();
-    await slider.focus();
-    await slider.press("Home"); // jump to 1 vote
-    await expect(page.getByText(/majority accuracy at 1 vote/i)).toBeVisible();
+    // The chamber's two dials appear and are keyboard operable.
+    const chains = page.getByRole("slider", { name: /chains sampled/i });
+    await expect(chains).toBeVisible();
+    await chains.focus();
+    await chains.press("Home"); // jump to 1 chain
+    const temp = page.getByRole("slider", { name: /temperature/i });
+    await expect(temp).toBeVisible();
     // The accuracy chart is present and labelled for screen readers.
     await expect(
-      page.getByRole("img", { name: /majority-vote accuracy versus number of votes/i }),
+      page.getByRole("img", {
+        name: /majority-vote accuracy versus number of sampled chains/i,
+      }),
     ).toBeVisible();
+  });
+
+  test("temperature zero collapses the vote to one opinion", async ({ page }) => {
+    await page.goto("/p/7");
+    await page.getByRole("button", { name: /lock in prediction/i }).click();
+    const temp = page.getByRole("slider", { name: /temperature/i });
+    await temp.focus();
+    await temp.press("Home");
+    await expect(page.getByText(/every chain is the same chain/i)).toBeVisible();
   });
 
   test("has no serious or critical accessibility violations", async ({ page }) => {

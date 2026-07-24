@@ -36,6 +36,6 @@ test.describe("M7 polish — mobile viewport", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     // The narrative + simulation stack (single column) — the sim controls are reachable.
     await page.getByRole("button", { name: /lock in prediction/i }).click();
-    await expect(page.getByRole("slider", { name: /votes/i })).toBeVisible();
+    await expect(page.getByRole("slider", { name: /chains sampled/i })).toBeVisible();
   });
 });

@@ -347,7 +347,7 @@ export function Page9() {
                 <div key={b.label} className="flex items-center gap-2 text-sm">
                   <span className="w-36 shrink-0 text-ink-muted">
                     {b.label}
-                    <span className="block text-xs opacity-70">{b.note}</span>
+                    <span className="block text-xs text-ink-muted">{b.note}</span>
                   </span>
                   <div className="h-5 flex-1 rounded bg-surface-raised">
                     <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />

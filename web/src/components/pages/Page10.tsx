@@ -181,7 +181,7 @@ export function Page10() {
                   <p className="text-xs uppercase tracking-wide text-ink-muted">
                     {d === 0 ? "start" : `move ${d}`}
                     {d > 0 && level.hidden > 0 ? (
-                      <span className="ml-2 normal-case opacity-70">
+                      <span className="ml-2 normal-case text-ink-muted">
                         (+{level.hidden} more evaluated, not drawn)
                       </span>
                     ) : null}
@@ -203,16 +203,16 @@ export function Page10() {
                                 ? "border-correct bg-correct/10 text-ink"
                                 : node.kept
                                   ? "border-compute bg-surface text-ink"
-                                  : "border-grid bg-surface text-ink-muted opacity-60"
+                                  : "border-dashed border-grid bg-surface text-ink-muted"
                           }`}
                         >
                           <span className="font-mono tabular-nums">
                             {node.nums.map(fmt).join(" ")}
                           </span>
-                          <span className="flex items-center gap-1 font-mono text-[10px] opacity-80">
+                          <span className="flex items-center gap-1 font-mono text-[10px]">
                             <span>{node.expr ?? "root"}</span>
                           </span>
-                          <span className="text-[10px] opacity-70">
+                          <span className="text-[10px]">
                             score {node.score.toFixed(2)}
                             {dead ? " · dead end" : ""}
                             {node.kept && !onPath ? " · kept" : ""}
