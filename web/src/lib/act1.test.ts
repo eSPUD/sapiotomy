@@ -5,6 +5,7 @@ import {
   COMPUTER_SCRIPT,
   GAME_ROUNDS,
   MULT_METHODS,
+  SORTING_ITEMS,
   SPAIN_WORLD_CUPS,
   SYSTEMS,
 } from "./authored";
@@ -50,9 +51,12 @@ describe("Page 1 System 1 / System 2 (authored multiplication contrast)", () => 
     expect(Number(SYSTEMS.slow.answer)).toBe(17 * 24);
   });
 
-  it("the ceiling is a still-larger multiplication with no shown answer", () => {
-    expect(SYSTEMS.ceiling.prompt).toBe("350 × 638");
-    expect(SYSTEMS.ceiling).not.toHaveProperty("answer");
+  it("offers six sort items, three per system, with unique ids", () => {
+    expect(SORTING_ITEMS).toHaveLength(6);
+    expect(SORTING_ITEMS.filter((x) => x.system === "fast")).toHaveLength(3);
+    expect(SORTING_ITEMS.filter((x) => x.system === "slow")).toHaveLength(3);
+    expect(new Set(SORTING_ITEMS.map((x) => x.id)).size).toBe(6);
+    for (const x of SORTING_ITEMS) expect(["fast", "slow"]).toContain(x.system);
   });
 });
 

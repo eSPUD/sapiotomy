@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PageNav } from "@/components/PageNav";
+import { SystemSort } from "@/components/pages/SystemSort";
 import { ACTS, getPage } from "@/lib/pages";
 import { SYSTEMS } from "@/lib/authored";
 import { useStore } from "@/store/useStore";
@@ -113,7 +114,10 @@ export function Page1() {
           <p className="font-mono text-3xl text-ink">{SYSTEMS.slow.prompt}</p>
           <ol className="flex flex-col gap-1 font-mono text-sm text-ink">
             {SYSTEMS.slow.steps.slice(0, s2Step).map((line, i) => (
-              <li key={i}>{line}</li>
+              <li key={i}>
+                <span className="text-ink-muted">{i + 1}. </span>
+                {line}
+              </li>
             ))}
           </ol>
           {s2Done ? (
@@ -130,21 +134,15 @@ export function Page1() {
         </section>
       </div>
 
-      {/* The ceiling */}
-      <section className="rounded-lg border border-dashed border-grid bg-surface p-4">
-        <p className="text-ink">
-          And <span className="font-mono text-xl">{SYSTEMS.ceiling.prompt}</span>? Neither system
-          volunteers. Too big to recognize, too long to hold in your head.
-        </p>
-      </section>
+      {/* Your turn: sort six questions */}
+      <SystemSort />
 
       {/* The conclusion */}
       <section className="max-w-2xl rounded-lg border-l-4 border-ink bg-surface p-4 leading-relaxed text-ink">
-        One operation, two machines. Small products arrive whole; that is{" "}
-        <strong>System 1</strong>. Larger ones have to be built step by step; that is{" "}
-        <strong>System 2</strong>. Only the <strong>size</strong> changed, and size decides which
-        system runs. Past a point, neither finishes in your head. That gap, between recognizing an
-        answer and building one, is where thinking longer begins.
+        Same operation, two different machines. <strong>System 1</strong> recognizes the answer;{" "}
+        <strong>System 2</strong> builds it. One arrives whole, instant, effortless, automatic. The
+        other comes line by line, slow, deliberate, and you feel every step. Recognizing an answer
+        and constructing one are not the same act.
       </section>
 
       <p className="text-xs text-ink-muted">

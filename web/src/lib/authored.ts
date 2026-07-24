@@ -60,8 +60,28 @@ export const SYSTEMS = {
     steps: ["17 × 20 = 340", "17 × 4 = 68", "340 + 68 = 408"],
     answer: "408",
   },
-  ceiling: { prompt: "350 × 638" },
 } as const;
+
+/**
+ * Six everyday tasks across different topics (perception, language, emotion,
+ * arithmetic, motor, deliberation) for the reader to sort into System 1 vs
+ * System 2. `system: "fast"` = System 1 (the answer arrives); `"slow"` =
+ * System 2 (you have to work for it). Authored/illustrative, after Kahneman.
+ */
+export interface SortItem {
+  id: string;
+  text: string;
+  system: "fast" | "slow";
+}
+
+export const SORTING_ITEMS: SortItem[] = [
+  { id: "face", text: "Recognize a friend's face", system: "fast" },
+  { id: "salt", text: "Finish the phrase 'salt and ___'", system: "fast" },
+  { id: "anger", text: "Hear that a voice is angry", system: "fast" },
+  { id: "divide", text: "Divide 156 by 12 in your head", system: "slow" },
+  { id: "park", text: "Park a car in a tight space", system: "slow" },
+  { id: "compare", text: "Compare two phones for value", system: "slow" },
+];
 
 // --- Page 2: Two Systems (the "how many World Cups?" question) ------------
 /**
