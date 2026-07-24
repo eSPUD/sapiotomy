@@ -1,113 +1,385 @@
 "use client";
 
 /**
- * Page 4, "The Third Option" — the Act 1 finale and the reveal of the whole
- * deck's subject. Pages 2–3 laid out two dead ends: answer from a frozen memory
- * and land one short (p2), or retrain so the memory is never stale and drown in
- * an impossible bill (p3). This page offers the third option: leave training
- * alone and change what happens at ANSWER time. On the exact World-Cup question
- * from p2, a toggle contrasts the two behaviours:
- *   INSTANT   — one forward pass, the confident wrong blurt from p2.
- *   THINKING  — the model spends compute before committing: it questions what it
- *               knows, notices the post-cutoff gap, and checks before answering.
+ * Page 4, "Reasoning in Multiplication" — the Act 1 finale. Page 1's hardest
+ * round (350 × 638) comes back, solved three ways: standard long
+ * multiplication, Japanese line multiplication, and Indian Vedic
+ * (Urdhva-Tiryagbhyam). A dropdown picks the road; a stepped, animated
+ * walkthrough drives it; every road lands on the same 223,300. The meaning:
+ * journeys differ, destinations do not, and every method has its own
+ * limitations — reasoning is inherently diverse pathfinding from prior
+ * knowledge. Act 1 then closes on open questions (can we guide a machine down
+ * different roads? why can't it chart its own?) that hand off to Act 2's
+ * toolbox. House rules: the Act 2+ jargon is never named here (the /inference/
+ * test ban now covers all of Act 1), and nothing pops in — the meaning band
+ * and the finale are on screen from first paint; only the walkthrough
+ * animates, and only when asked.
  *
- * The novel through-line: the p2 model didn't fail only for want of data — it
- * failed because it never PAUSED. Thinking's contribution is the recognition
- * that it needs to look; a tool is useless to a model that never realizes it
- * should reach for one. That recognition, bought with compute at answer time,
- * is inference-time scaling. The page names it here (Act 1's payoff) and hands
- * to Act 2 the question it opens: once a model can spend that compute, how
- * should it spend it? Checking a fact is only the start — sample and vote,
- * generate and verify, search over reasoning. That is the toolbox.
- *
- * The thinking trace is an authored placeholder (see lib/authored), flagged like
- * p2's blurt; a live reasoning model replaces it later. No new data curves here.
+ * All walkthrough numbers live in lib/authored MULT_METHODS and are recomputed
+ * from the factors' digits by src/lib/act1.test.ts.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { PageNav } from "@/components/PageNav";
-import { SPAIN_WORLD_CUPS } from "@/lib/authored";
+import { MULT_METHODS, type MultMethodKey } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 4;
-const WC = SPAIN_WORLD_CUPS;
+const M = MULT_METHODS;
+const P = M.problem;
 
-/** Milliseconds a thinking step lingers before the next one appears. */
-const STEP_MS = 750;
+/** Milliseconds between auto-advanced steps when Play is pressed. */
+const PLAY_MS = 900;
+
+const fmt = (n: number) => n.toLocaleString("en-US");
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-type Mode = "idle" | "instant" | "thinking";
+/** Steps per method: one per structured entry, plus the shared landing step. */
+function maxStepOf(method: MultMethodKey): number {
+  if (method === "standard") return M.standard.rows.length + 1;
+  if (method === "lines") return M.lines.diagonals.length + 1;
+  return M.vedic.columns.length + 1;
+}
+
+/** Narration for the current step (step 0 is the setup prompt). */
+function narrationOf(method: MultMethodKey, step: number): string {
+  if (step === 0) return "Press Next (or Play) to walk the road.";
+  const max = maxStepOf(method);
+  if (step >= max) {
+    const landing =
+      method === "standard" ? M.standard.landing : method === "lines" ? M.lines.landing : M.vedic.landing;
+    return `${landing} Same destination: ${P.display}.`;
+  }
+  if (method === "standard") return M.standard.rows[step - 1].say;
+  if (method === "lines") return M.lines.diagonals[step - 1].say;
+  return M.vedic.columns[step - 1].say;
+}
+
+/* ------------------------- standard: the school column ------------------------- */
+
+function StandardPanel({ step }: { step: number }) {
+  const done = step >= M.standard.rows.length + 1;
+  return (
+    <div className="flex flex-col items-center gap-1 py-2 font-mono text-lg text-ink">
+      <div className="flex w-full max-w-[300px] flex-col items-stretch gap-1">
+        <p className="text-right">{fmt(P.a)}</p>
+        <p className="border-b border-ink pb-1 text-right">× {fmt(P.b)}</p>
+        {M.standard.rows.map((r, i) => {
+          const shown = step >= i + 1;
+          const current = step === i + 1;
+          return (
+            <div
+              key={r.partial}
+              className={`flex items-baseline justify-between gap-4 ${
+                shown ? (current ? "text-compute" : "") : "text-ink-muted"
+              }`}
+            >
+              <span className="text-xs text-ink-muted">
+                {P.a} × {r.digit * r.placeValue}
+              </span>
+              <span>{shown ? fmt(r.partial) : "· · ·"}</span>
+            </div>
+          );
+        })}
+        <div
+          className={`flex items-baseline justify-between gap-4 border-t border-ink pt-1 ${
+            done ? "font-bold text-correct" : "text-ink-muted"
+          }`}
+        >
+          <span className="text-xs text-ink-muted">sum</span>
+          <span>{done ? fmt(P.answer) : "· · ·"}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------- lines: bundles, crossings, columns --------------------- */
+
+/**
+ * Geometry: A-digit bundles are slope −1 lines (x + y = c), B-digit bundles
+ * slope +1 (x − y = d); a pair of intercepts meets at ((c+d)/2, (c−d)/2), so
+ * clusters with the same place value share an x — the "columns" the method
+ * counts. A zero digit draws one dashed ghost line and contributes nothing.
+ */
+const LG = { C0: 210, D0: -30, G: 84, S: 9, W: 348, H: 240 };
+
+function interceptsFor(base: number, group: number, count: number): number[] {
+  const center = base + group * LG.G;
+  if (count === 0) return [center]; // the ghost line
+  return Array.from({ length: count }, (_, t) => center + (t - (count - 1) / 2) * LG.S);
+}
+
+function LinesPanel({ step }: { step: number }) {
+  const nDiag = M.lines.diagonals.length;
+  const done = step >= nDiag + 1;
+  // Column k = i + j (0 = ten-thousands, 4 = units); walkthrough goes units-first.
+  const currentK = step >= 1 && step <= nDiag ? 5 - step : null;
+
+  const { aLines, bLines, dots } = useMemo(() => {
+    const aInts = P.aDigits.map((d, i) => interceptsFor(LG.C0, i, d));
+    const bInts = P.bDigits.map((d, j) => interceptsFor(LG.D0, j, d));
+    const dLo = LG.D0 - 46;
+    const dHi = LG.D0 + 2 * LG.G + 46;
+    const cLo = LG.C0 - 46;
+    const cHi = LG.C0 + 2 * LG.G + 46;
+    const aLines = aInts.flatMap((cs, i) =>
+      cs.map((c) => ({
+        ghost: P.aDigits[i] === 0,
+        x1: (c + dLo) / 2,
+        y1: (c - dLo) / 2,
+        x2: (c + dHi) / 2,
+        y2: (c - dHi) / 2,
+      })),
+    );
+    const bLines = bInts.flatMap((ds, j) =>
+      ds.map((d) => ({
+        ghost: P.bDigits[j] === 0,
+        x1: (cLo + d) / 2,
+        y1: (cLo - d) / 2,
+        x2: (cHi + d) / 2,
+        y2: (cHi - d) / 2,
+      })),
+    );
+    // Crossing dots, grouped by column k = i + j (ghost bundles contribute none).
+    const dots: Record<number, { x: number; y: number }[]> = {};
+    P.aDigits.forEach((ad, i) => {
+      if (ad === 0) return;
+      P.bDigits.forEach((bd, j) => {
+        if (bd === 0) return;
+        const k = i + j;
+        dots[k] ??= [];
+        for (const c of aInts[i]) {
+          for (const d of bInts[j]) {
+            dots[k].push({ x: (c + d) / 2, y: (c - d) / 2 });
+          }
+        }
+      });
+    });
+    return { aLines, bLines, dots };
+  }, []);
+
+  const colX = (k: number) => (LG.C0 + LG.D0) / 2 + (k * LG.G) / 2;
+
+  return (
+    <div className="flex flex-col items-center gap-2 py-1">
+      <svg
+        viewBox={`0 0 ${LG.W} ${LG.H}`}
+        width="100%"
+        className="max-w-[420px]"
+        role="img"
+        aria-label={`Line multiplication of ${P.a} by ${P.b}: bundles of 3, 5 and a ghost line cross bundles of 6, 3 and 8; the crossings in each column count 0, 40, 39, 39 and 18, read right to left with carries to reach ${P.display}.`}
+      >
+        {currentK != null ? (
+          <rect
+            x={colX(currentK) - 19}
+            y={4}
+            width={38}
+            height={LG.H - 30}
+            rx={6}
+            className="fill-compute/15"
+          />
+        ) : null}
+        {[...aLines, ...bLines].map((l, i) => (
+          <line
+            key={i}
+            x1={l.x1}
+            y1={l.y1}
+            x2={l.x2}
+            y2={l.y2}
+            className={l.ghost ? "stroke-ink-muted" : "stroke-ink"}
+            strokeWidth={l.ghost ? 1 : 1.3}
+            strokeDasharray={l.ghost ? "5 4" : undefined}
+            opacity={l.ghost ? 0.5 : 0.75}
+          />
+        ))}
+        {Object.entries(dots).map(([k, pts]) => {
+          const kk = Number(k);
+          const revealed = step >= 5 - kk; // units-first reveal order
+          if (!revealed) return null;
+          const isCurrent = currentK === kk;
+          return pts.map((p, i) => (
+            <circle
+              key={`${k}-${i}`}
+              cx={p.x}
+              cy={p.y}
+              r={isCurrent ? 3 : 2}
+              className={isCurrent ? "fill-compute" : "fill-correct"}
+            />
+          ));
+        })}
+        {M.lines.diagonals.map((d, di) => {
+          const kk = 4 - di;
+          const revealed = step >= di + 1;
+          return (
+            <text
+              key={d.place}
+              x={colX(kk)}
+              y={LG.H - 8}
+              textAnchor="middle"
+              className={`text-[13px] font-semibold ${
+                revealed ? (currentK === kk ? "fill-compute" : "fill-ink") : "fill-ink-muted"
+              }`}
+            >
+              {revealed ? d.sum : "?"}
+            </text>
+          );
+        })}
+      </svg>
+      <p className={`font-mono text-lg ${done ? "font-bold text-correct" : "text-ink-muted"}`}>
+        {done ? `carry the columns → ${P.display}` : "carry the columns → ?"}
+      </p>
+    </div>
+  );
+}
+
+/* ---------------------- vedic: vertically and crosswise ------------------------ */
+
+function VedicPanel({ step }: { step: number }) {
+  const nCols = M.vedic.columns.length;
+  const done = step >= nCols + 1;
+  const col = step >= 1 && step <= nCols ? M.vedic.columns[step - 1] : null;
+  // Highlighted digit indices (most-significant-first) for the current column.
+  const active = useMemo(() => {
+    if (!col) return { a: new Set<number>(), b: new Set<number>() };
+    const u = M.vedic.columns.indexOf(col);
+    const a = new Set<number>();
+    const b = new Set<number>();
+    for (let i = 0; i <= 2; i++) {
+      const j = 4 - u - i;
+      if (j >= 0 && j <= 2) {
+        a.add(i);
+        b.add(j);
+      }
+    }
+    return { a, b };
+  }, [col]);
+
+  // Result readout, filled right to left; the last column writes "22".
+  const written = M.vedic.columns.slice(0, Math.min(step, nCols)).map((c) => String(c.digit)).reverse().join("");
+  const slots = ("······" + written).slice(-6).split("");
+
+  const cell = (d: number, hot: boolean, key: string) => (
+    <span
+      key={key}
+      className={`flex h-9 w-9 items-center justify-center rounded border font-mono text-lg ${
+        hot ? "border-compute bg-compute/20 font-bold text-ink" : "border-grid text-ink"
+      }`}
+    >
+      {d}
+    </span>
+  );
+
+  return (
+    <div className="flex flex-col items-center gap-3 py-2">
+      <div className="flex flex-col gap-1.5">
+        <div className="flex gap-1.5">{P.aDigits.map((d, i) => cell(d, active.a.has(i), `a${i}`))}</div>
+        <div className="flex gap-1.5">{P.bDigits.map((d, j) => cell(d, active.b.has(j), `b${j}`))}</div>
+      </div>
+      {col ? (
+        <p className="font-mono text-sm text-ink">
+          {col.pairs.map(([x, y]) => `${x}×${y}`).join(" + ")} = {col.sum}
+          {col.carryIn > 0 ? ` · +carry ${col.carryIn} = ${col.sum + col.carryIn}` : ""}
+          {col.carryOut > 0 ? (
+            <span className="ml-2 rounded-full border border-compute px-2 py-0.5 text-xs text-compute">
+              carry {col.carryOut}
+            </span>
+          ) : null}
+        </p>
+      ) : (
+        <p className="font-mono text-sm text-ink-muted">
+          {done ? M.vedic.landing : "one column at a time, units first"}
+        </p>
+      )}
+      <div className="flex gap-1.5" aria-hidden="true">
+        {slots.map((s, i) => (
+          <span
+            key={i}
+            className={`flex h-9 w-9 items-center justify-center rounded border font-mono text-lg ${
+              s === "·" ? "border-dashed border-grid text-ink-muted" : "border-correct/60 bg-correct/15 font-bold text-ink"
+            }`}
+          >
+            {s}
+          </span>
+        ))}
+      </div>
+      <p className={`font-mono text-lg ${done ? "font-bold text-correct" : "sr-only"}`}>
+        {done ? `= ${P.display}` : ""}
+      </p>
+    </div>
+  );
+}
+
+/* --------------------------------- the page ----------------------------------- */
 
 export function Page4() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
+  const selectId = useId();
 
   const [reducedMotion, setReducedMotion] = useState(false);
   useEffect(() => {
     setReducedMotion(prefersReducedMotion());
   }, []);
 
-  const [mode, setMode] = useState<Mode>("idle");
-  const [stepShown, setStepShown] = useState(0);
+  const [method, setMethod] = useState<MultMethodKey>("standard");
+  const [step, setStep] = useState(0);
+  const [playing, setPlaying] = useState(false);
   const [touched, setTouched] = useState(false);
   const [announcement, setAnnouncement] = useState("");
 
-  const steps = WC.thinking.steps;
-  const thinkingDone = mode === "thinking" && stepShown >= steps.length;
+  const maxStep = maxStepOf(method);
+  const narration = narrationOf(method, step);
+  const meta = M[method];
 
-  // "Compute" the reader can see: instant is a single pass; thinking is the
-  // whole trace plus the answer. The number IS the point of the page.
-  const instantSteps = 1;
-  const thinkingSteps = steps.length + 1;
-
-  const chooseInstant = () => {
+  const touch = () => {
     if (!touched) {
       setTouched(true);
       recordInteraction(PAGE_N);
     }
-    setMode("instant");
-    setStepShown(0);
-    setAnnouncement(
-      `Instant mode: one forward pass. The model answers ${WC.machine.answer} — wrong by one, the same miss as page 2.`,
-    );
   };
 
-  const chooseThinking = () => {
-    if (!touched) {
-      setTouched(true);
-      recordInteraction(PAGE_N);
-    }
-    setMode("thinking");
-    if (reducedMotion) {
-      setStepShown(steps.length);
-      setAnnouncement(
-        `Thinking mode: ${thinkingSteps} steps. The model notices its memory may be stale, checks, and answers ${WC.thinking.answer.replace(/\.$/, "")} — the right count.`,
-      );
-    } else {
-      setStepShown(0);
-      setAnnouncement("Thinking mode: the model reasons before answering.");
-    }
+  const pickMethod = (key: MultMethodKey) => {
+    touch();
+    setMethod(key);
+    setStep(0);
+    setPlaying(false);
+    setAnnouncement(`Method: ${M[key].name}. ${M[key].origin}.`);
   };
 
-  // Reveal the thinking steps one at a time.
+  const go = (next: number) => {
+    touch();
+    setPlaying(false);
+    const clamped = Math.min(maxStep, Math.max(0, next));
+    setStep(clamped);
+    setAnnouncement(narrationOf(method, clamped));
+  };
+
+  const play = () => {
+    touch();
+    setPlaying(true);
+    setAnnouncement("Playing the walkthrough.");
+  };
+
+  // Auto-advance while playing (motion allowed only); stop at the landing.
   useEffect(() => {
-    if (mode !== "thinking" || reducedMotion || stepShown >= steps.length) return;
-    const t = setTimeout(() => setStepShown((s) => s + 1), STEP_MS);
+    if (!playing || reducedMotion) return;
+    if (step >= maxStep) {
+      setPlaying(false);
+      return;
+    }
+    const t = setTimeout(() => {
+      const nextStep = Math.min(maxStep, step + 1);
+      setStep(nextStep);
+      setAnnouncement(narrationOf(method, nextStep));
+    }, PLAY_MS);
     return () => clearTimeout(t);
-  }, [mode, reducedMotion, stepShown, steps.length]);
-
-  // Announce the landing once the trace finishes streaming.
-  useEffect(() => {
-    if (mode !== "thinking" || reducedMotion || stepShown !== steps.length) return;
-    setAnnouncement(
-      `The model checked, then answered ${WC.thinking.answer.replace(/\.$/, "")} — the right count. It recognized the gap; it did not invent the fact.`,
-    );
-  }, [mode, reducedMotion, stepShown, steps.length]);
+  }, [playing, reducedMotion, step, maxStep, method]);
 
   return (
     <article className="flex flex-col gap-5">
@@ -119,176 +391,124 @@ export function Page4() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Two dead ends so far. <strong className="text-ink">Answer from memory</strong> and the
-        machine lands one short (page 2). <strong className="text-ink">Retrain it daily</strong> so
-        the memory is never stale, and the bill is impossible (page 3). There is a third option, and
-        it touches neither the training data nor the model: change what happens at{" "}
-        <strong className="text-ink">answer time</strong>.
+        Back to page 1&apos;s hardest round: <strong className="font-mono text-ink">{P.a} × {P.b}</strong>,
+        the one that took minutes, if it fell at all. The destination is known —{" "}
+        <strong className="font-mono text-ink">{P.display}</strong>. This page is about the{" "}
+        <em>roads</em>: three cultures built three different ways to walk there.
       </p>
 
       <section
-        aria-label="The same question, answered two ways"
+        aria-label="One problem, three roads"
         className="overflow-hidden rounded-lg border border-grid bg-surface"
       >
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-          <span>the same question as page 2 · now you choose how it answers</span>
-          <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-            example trace, authored · live reasoning model to follow
+          <span>one problem · three roads · pick one and walk it</span>
+          <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
+            authored walkthroughs · every number recomputed by the tests
           </span>
         </div>
         <div className="flex flex-col gap-4 p-4">
-          <p className="text-lg text-ink">{WC.question}</p>
-
-          <div
-            role="group"
-            aria-label="Answer mode"
-            className="inline-flex w-fit rounded-lg border border-grid bg-canvas p-1"
-          >
-            <button
-              type="button"
-              onClick={chooseInstant}
-              aria-pressed={mode === "instant"}
-              className={`rounded px-3 py-1.5 text-sm font-semibold transition-colors ${
-                mode === "instant" ? "bg-wrong text-canvas" : "text-ink-muted hover:text-ink"
-              }`}
+          <div className="flex flex-wrap items-center gap-3">
+            <label htmlFor={selectId} className="text-sm font-semibold text-ink">
+              Method
+            </label>
+            <select
+              id={selectId}
+              value={method}
+              onChange={(e) => pickMethod(e.target.value as MultMethodKey)}
+              className="rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink"
             >
-              Answer instantly
-            </button>
-            <button
-              type="button"
-              onClick={chooseThinking}
-              aria-pressed={mode === "thinking"}
-              className={`rounded px-3 py-1.5 text-sm font-semibold transition-colors ${
-                mode === "thinking" ? "bg-compute text-canvas" : "text-ink-muted hover:text-ink"
-              }`}
-            >
-              Let it think
-            </button>
+              <option value="standard">{M.standard.name}</option>
+              <option value="lines">{M.lines.name}</option>
+              <option value="vedic">{M.vedic.name}</option>
+            </select>
+            <span className="text-sm text-ink-muted">{meta.origin}</span>
           </div>
 
-          {mode === "idle" ? (
-            <p className="rounded-lg border border-dashed border-grid bg-surface-raised p-4 text-sm text-ink-muted">
-              Same model, same question. Pick <strong className="text-ink">Answer instantly</strong>{" "}
-              to replay page 2&apos;s reflex — or <strong className="text-ink">Let it think</strong>{" "}
-              to spend a little compute before it commits.
-            </p>
-          ) : null}
+          <div className="rounded-lg border border-grid bg-surface-raised px-3 py-2">
+            {method === "standard" ? <StandardPanel step={step} /> : null}
+            {method === "lines" ? <LinesPanel step={step} /> : null}
+            {method === "vedic" ? <VedicPanel step={step} /> : null}
+          </div>
 
-          {mode === "instant" ? (
-            <div className="rounded-lg border-l-4 border-wrong bg-wrong/15 p-4">
-              <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">
-                the machine → <span className="text-wrong">one forward pass</span>
-              </p>
-              <p className="mt-2 text-ink">{WC.machine.reply.join(" ")}</p>
-              <p className="mt-3 text-sm text-wrong">
-                ✗ {WC.machine.answer}, wrong by one — the exact miss from page 2. It never paused to
-                ask whether its memory was current.{" "}
-                <span className="text-ink-muted">
-                  ({instantSteps} step of &ldquo;thinking&rdquo;.)
-                </span>
-              </p>
-            </div>
-          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => go(step - 1)}
+              disabled={step === 0}
+              className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
+            >
+              ◂ Back
+            </button>
+            <button
+              type="button"
+              onClick={() => go(step + 1)}
+              disabled={step >= maxStep}
+              className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+            >
+              Next ▸
+            </button>
+            {!reducedMotion ? (
+              <button
+                type="button"
+                onClick={play}
+                disabled={playing || step >= maxStep}
+                className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute disabled:opacity-50"
+              >
+                ▶ Play
+              </button>
+            ) : null}
+            <span className="font-mono text-xs tabular-nums text-ink-muted">
+              step {step} of {maxStep}
+            </span>
+          </div>
 
-          {mode === "thinking" ? (
-            <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-4">
-              <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">
-                the machine → <span className="text-compute">thinking first</span>
-              </p>
-              <ol className="mt-2 flex flex-col gap-2">
-                {steps.slice(0, stepShown).map((s, i) => (
-                  <li key={i} className="text-sm text-ink-muted motion-safe:animate-fade-in">
-                    <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
-                    {s}
-                  </li>
-                ))}
-              </ol>
-              {thinkingDone ? (
-                <p className="mt-3 border-t border-grid pt-3 text-ink">
-                  <span className="font-semibold text-correct">✓ {WC.thinking.answer}</span>{" "}
-                  <span className="text-sm text-ink-muted">
-                    the right count — reached only because it stopped to check.{" "}
-                    ({thinkingSteps} steps of thinking.)
-                  </span>
-                </p>
-              ) : (
-                <p className="mt-3 flex items-center gap-2 text-sm text-ink-muted">
-                  <span aria-hidden="true" className="animate-pulse text-compute">
-                    ▍
-                  </span>
-                  thinking…
-                </p>
-              )}
-            </div>
-          ) : null}
+          <p className="min-h-[1.5rem] max-w-2xl text-ink">
+            {step >= maxStep ? <span aria-hidden="true" className="text-correct">✓ </span> : null}
+            {narration}
+          </p>
+
+          <p className="border-t border-grid pt-3 text-sm text-ink-muted">
+            <strong className="text-wrong">The limit of this road:</strong> {meta.limitation}
+          </p>
         </div>
       </section>
 
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        <p className="text-xs font-semibold uppercase tracking-wide text-compute">the idea</p>
-        <p className="mt-2 max-w-3xl">
-          Instant mode is one forward pass — the model commits to its first instinct. Thinking mode
-          spends <strong>more compute before answering</strong>: it questions what it knows, notices
-          the gap, and acts on it. That is <strong>inference-time scaling</strong> — buying a better
-          answer with compute at <em>answer</em> time, instead of with a bigger training bill.
-        </p>
-        <p className="mt-2 max-w-3xl text-sm text-ink-muted">
-          And notice what thinking did <em>not</em> do: it never conjured the 2026 result out of
-          thin air. Page 2 was right — thinking cannot invent a fact the model never saw. What it
-          bought was the <strong className="text-ink">recognition</strong> that it needed to look. A
-          tool is useless to a model that never realizes it should reach for one; the recognition is
-          the scaling.
-        </p>
-      </div>
-
-      <div className="grid items-stretch gap-3 lg:grid-cols-3">
-        <div className="flex flex-col rounded-lg border-l-4 border-wrong bg-surface p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-wrong">
-            option 1 · answer from memory (page 2)
-          </p>
-          <p className="mt-1 text-sm text-ink">
-            <strong>Free</strong>, and one forward pass over whatever is already in the weights. It
-            lands one short the moment the fact is newer than the model.
-          </p>
+      <section aria-label="Three journeys, one destination" className="flex flex-col gap-3">
+        <div className="grid items-stretch gap-3 lg:grid-cols-3">
+          {([M.standard, M.lines, M.vedic] as const).map((m) => (
+            <div key={m.key} className="flex flex-col rounded-lg border-l-4 border-grid bg-surface p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{m.name}</p>
+              <p className="mt-1 text-sm text-ink">{m.origin}.</p>
+              <p className="mt-2 text-sm text-ink-muted">
+                <strong className="text-wrong">limit:</strong> {m.limitation}
+              </p>
+            </div>
+          ))}
         </div>
-        <div className="flex flex-col rounded-lg border-l-4 border-wrong bg-surface p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-wrong">
-            option 2 · retrain (page 3)
-          </p>
-          <p className="mt-1 text-sm text-ink">
-            One giant bill, paid <strong>up front</strong>, to bake every fact into the weights —
-            whether or not any question ever needs them.
-          </p>
+        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+          Three journeys, one destination: <strong className="font-mono">{P.display}</strong>. The
+          road changes; the answer does not — and each road pays its own toll.{" "}
+          <strong>Reasoning is inherently diverse pathfinding from prior knowledge.</strong>
         </div>
-        <div className="flex flex-col rounded-lg border-l-4 border-compute bg-surface p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-compute">
-            option 3 · think (this page)
-          </p>
-          <p className="mt-1 text-sm text-ink">
-            A little more compute <strong>per hard question</strong>, paid only when a question is
-            actually hard. Nothing is baked in; the effort moves to answer time.
-          </p>
-        </div>
-      </div>
+      </section>
 
       <p className="max-w-2xl text-ink">
         <em>
-          So the fix was never more data — it was more <strong>thinking</strong>, spent at the
-          moment of the question. Which opens the question all of Act 2 is about: once a model can
-          spend that compute, <strong>how should it spend it?</strong> Checking a fact is only the
-          start. It can sample many answers and keep the consensus, generate rival attempts and let
-          a verifier pick the best, or search across whole chains of reasoning and backtrack. Those
-          levers — and when each one pays off — are the toolbox.
+          Every culture that needed to multiply built its own road from what it already knew:
+          schoolbook columns, line bundles, a memorized sutra. Which leaves Act 1&apos;s open
+          questions: can we <strong>guide a machine down different roads</strong> to the same
+          destination? And why can&apos;t it <strong>chart its own road</strong> — derive its own
+          way to an answer? Act 2 opens that toolbox.
         </em>
       </p>
 
       <p className="text-xs text-ink-muted">
-        the same authored World-Cup question as page 2 · the &ldquo;thinking&rdquo; trace is an
-        authored example of the ideal reasoning behaviour — recognize a post-cutoff gap, decline to
-        answer from memory, check, then count; a live reasoning model replaces it later · it names
-        the 2026 title the instant blurt omits and lands on the true count of {WC.trueCount} ·
-        &ldquo;inference-time scaling&rdquo; is the name for trading answer-time compute for accuracy,
-        the subject of the rest of this deck
+        the three walkthroughs are authored teaching examples; every intermediate number is derived
+        from {P.a} × {P.b} and recomputed by the test suite · line multiplication is a visual method
+        commonly taught as a Japanese technique; &ldquo;Vedic&rdquo; names the Urdhva-Tiryagbhyam
+        (&ldquo;vertically and crosswise&rdquo;) sutra popularized by Bharati Krishna Tirtha · the
+        destination {P.display} is page 1&apos;s round 3
       </p>
 
       <div aria-live="polite" className="sr-only">

@@ -4,6 +4,7 @@ import { frontierCumulativeUSDM, sameModelCumulativeUSDM } from "./dailyTraining
 import {
   COMPUTER_SCRIPT,
   GAME_ROUNDS,
+  MULT_METHODS,
   SPAIN_WORLD_CUPS,
 } from "./authored";
 import { coverageAtLeastOne, sampleGrid } from "./sim";
@@ -212,7 +213,7 @@ describe("Page 3 frontier compute growth (Epoch, redrawn) and the combined meter
   });
 });
 
-describe("Page 4 Epoch rate anchors", () => {
+describe("Retained Epoch rate anchors (page 3's cost trend; prices and energy reserved)", () => {
   it("training-cost rate: x2.4 per year (CI x2.0 to x3.1), $1B projection by 2027", () => {
     const d = curves.epochTrainingCosts;
     const p = d.fit!.params;
@@ -252,6 +253,86 @@ describe("Page 4 Epoch rate anchors", () => {
     // the derived comparisons quoted in-app
     expect(Math.round(d.points[3].y / d.points[2].y)).toBe(67);
     expect(Math.round(d.points[3].y / d.points[0].y / 1e9)).toBe(167);
+  });
+});
+
+describe("Page 4 authored multiplication methods (three roads, one destination)", () => {
+  const { a, b, aDigits, bDigits, answer, display } = MULT_METHODS.problem;
+  const digitsToNumber = (ds: readonly number[]) => ds.reduce((n, d) => n * 10 + d, 0);
+
+  /** Place-value column u (0 = units): sum of digit pairs with msf indices i+j = 4-u. */
+  const columnSum = (u: number) => {
+    let s = 0;
+    for (let i = 0; i <= 2; i++) {
+      const j = 4 - u - i;
+      if (j >= 0 && j <= 2) s += aDigits[i] * bDigits[j];
+    }
+    return s;
+  };
+
+  it("the problem is exactly page 1's round 3", () => {
+    expect(`${a} × ${b}`).toBe(GAME_ROUNDS[2].prompt);
+    expect(answer).toBe(GAME_ROUNDS[2].answer);
+    expect(display).toBe(GAME_ROUNDS[2].display);
+    expect(a * b).toBe(answer);
+    expect(digitsToNumber(aDigits)).toBe(a);
+    expect(digitsToNumber(bDigits)).toBe(b);
+  });
+
+  it("standard rows are the true partial products and sum to the answer", () => {
+    const rows = MULT_METHODS.standard.rows;
+    // One row per digit of b, units first.
+    expect(rows.map((r) => r.digit)).toEqual([...bDigits].reverse());
+    let sum = 0;
+    rows.forEach((r, i) => {
+      expect(r.placeValue).toBe(10 ** i);
+      expect(r.partial).toBe(a * r.digit * r.placeValue);
+      sum += r.partial;
+    });
+    expect(sum).toBe(answer);
+  });
+
+  it("line diagonals count the true crossings, and their weighted sum is the answer", () => {
+    const diags = MULT_METHODS.lines.diagonals;
+    expect(diags).toHaveLength(5);
+    let total = 0;
+    diags.forEach((d, u) => {
+      expect(d.placeValue).toBe(10 ** u);
+      // The listed digit pairs multiply out to the column's crossing count...
+      expect(d.pairs.reduce((s, [x, y]) => s + x * y, 0)).toBe(d.sum);
+      // ...which is the true convolution column recomputed from the digits.
+      expect(d.sum).toBe(columnSum(u));
+      total += d.sum * d.placeValue;
+    });
+    expect(total).toBe(answer);
+  });
+
+  it("vedic columns match the line diagonals and carry to exactly the answer", () => {
+    const cols = MULT_METHODS.vedic.columns;
+    expect(cols).toHaveLength(5);
+    let carry = 0;
+    let assembled = 0;
+    cols.forEach((c, u) => {
+      // The deliberate beat: the same five sums as the line method's diagonals.
+      expect(c.sum).toBe(MULT_METHODS.lines.diagonals[u].sum);
+      expect(c.carryIn).toBe(carry);
+      const total = c.sum + c.carryIn;
+      if (u < cols.length - 1) {
+        expect(c.digit).toBe(total % 10);
+        expect(c.carryOut).toBe(Math.floor(total / 10));
+      } else {
+        // The last column writes everything left.
+        expect(c.digit).toBe(total);
+        expect(c.carryOut).toBe(0);
+      }
+      carry = c.carryOut;
+      assembled += c.digit * c.placeValue;
+    });
+    expect(assembled).toBe(answer);
+  });
+
+  it("no Act 2 jargon anywhere in the authored copy", () => {
+    expect(JSON.stringify(MULT_METHODS)).not.toMatch(/inference/i);
   });
 });
 

@@ -96,9 +96,11 @@ export const SPAIN_WORLD_CUPS = {
    * post-cutoff result it may be missing), decides not to answer from memory,
    * and checks before committing. That recognition is the whole point: a model
    * that answers on reflex never reaches for the check, even when it could.
-   * Authored placeholder EXAMPLE; a live reasoning model replaces it later
-   * (swap point: the thinking trace in Page4.tsx). It names the newest year the
-   * blurt omits (2026) and lands on the true count.
+   * Authored placeholder EXAMPLE; a live reasoning model replaces it later.
+   * (Currently unused by any page: the old Page 4 that rendered it was replaced
+   * by "Reasoning in Multiplication". Kept, with its guard test, for the
+   * planned live-model return.) It names the newest year the blurt omits
+   * (2026) and lands on the true count.
    */
   thinking: {
     steps: [
@@ -111,3 +113,113 @@ export const SPAIN_WORLD_CUPS = {
     answer: "Two.",
   },
 } as const;
+
+// --- Page 4: Reasoning in Multiplication (three roads, one destination) ----
+/**
+ * Page 1's hardest round (GAME_ROUNDS[2], 350 × 638) solved three ways:
+ * standard long multiplication, Japanese line multiplication, and Indian
+ * Vedic (the Urdhva-Tiryagbhyam sutra, "vertically and crosswise"). Every
+ * number below is DERIVED from the two factors; src/lib/act1.test.ts
+ * recomputes each step from the digits, so a typo here fails the tests,
+ * never ships. No external citation needed: this is self-verifiable
+ * arithmetic, authored as a teaching example.
+ *
+ * A deliberate beat: the line method's five diagonals and the Vedic method's
+ * five columns are the SAME five sums (0, 40, 39, 39, 18), reached by
+ * different journeys. Copy in this block stays em-dash-free (house rule) and,
+ * like the rest of Act 1, never says the deck's Act 2+ jargon.
+ */
+
+export interface MultProblem {
+  a: number;
+  b: number;
+  /** Most-significant digit first. */
+  aDigits: readonly number[];
+  bDigits: readonly number[];
+  answer: number;
+  display: string;
+}
+
+/** One row of standard long multiplication: a × (digit × placeValue). */
+export interface StandardRow {
+  say: string;
+  digit: number;
+  placeValue: number;
+  partial: number;
+}
+
+/** One place-value column: the digit pairs [aDigit, bDigit] that land on it. */
+export interface ColumnStep {
+  say: string;
+  place: string;
+  placeValue: number;
+  pairs: readonly (readonly [number, number])[];
+  sum: number;
+}
+
+/** A Vedic column additionally carries as it goes and writes result digits. */
+export interface VedicColumn extends ColumnStep {
+  carryIn: number;
+  /** What gets written this column (the last column writes everything left). */
+  digit: number;
+  carryOut: number;
+}
+
+export const MULT_METHODS = {
+  problem: {
+    a: 350,
+    b: 638,
+    aDigits: [3, 5, 0],
+    bDigits: [6, 3, 8],
+    answer: GAME_ROUNDS[2].answer,
+    display: GAME_ROUNDS[2].display,
+  } as MultProblem,
+
+  standard: {
+    key: "standard",
+    name: "Standard long multiplication",
+    origin: "the school algorithm: one partial product per digit, then add",
+    limitation:
+      "General at any size, but slow: every digit pair gets touched, and every carry is a chance for a digit to slip.",
+    rows: [
+      { say: "Multiply by the units digit: 350 × 8.", digit: 8, placeValue: 1, partial: 2800 },
+      { say: "Multiply by the tens digit: 350 × 30.", digit: 3, placeValue: 10, partial: 10500 },
+      { say: "Multiply by the hundreds digit: 350 × 600.", digit: 6, placeValue: 100, partial: 210000 },
+    ] as readonly StandardRow[],
+    landing: "Add the three partial products.",
+  },
+
+  lines: {
+    key: "lines",
+    name: "Japanese line multiplication",
+    origin: "a visual method often taught in East Asia: draw each digit as a bundle of lines, count the crossings",
+    limitation:
+      "No times tables needed, but big digits mean counting dozens of crossings (5 × 8 alone is 40), and a zero needs a ghost line.",
+    diagonals: [
+      { say: "Units column: the 0-bundle is a ghost line, so 0 crossings.", place: "units", placeValue: 1, pairs: [[0, 8]], sum: 0 },
+      { say: "Tens column: 5 lines cross 8 lines. Count them all: 40 crossings.", place: "tens", placeValue: 10, pairs: [[5, 8], [0, 3]], sum: 40 },
+      { say: "Hundreds column: three clusters land here. 24 + 15 + 0 = 39 crossings.", place: "hundreds", placeValue: 100, pairs: [[3, 8], [5, 3], [0, 6]], sum: 39 },
+      { say: "Thousands column: two clusters. 9 + 30 = 39 crossings.", place: "thousands", placeValue: 1000, pairs: [[3, 3], [5, 6]], sum: 39 },
+      { say: "Ten-thousands column: 3 lines cross 6 lines. 18 crossings.", place: "ten-thousands", placeValue: 10000, pairs: [[3, 6]], sum: 18 },
+    ] as readonly ColumnStep[],
+    landing: "Read the columns right to left, carrying: 0, 40, 39, 39, 18.",
+  },
+
+  vedic: {
+    key: "vedic",
+    name: "Indian Vedic (Urdhva-Tiryagbhyam)",
+    origin: "the 'vertically and crosswise' sutra: one pass, one result digit per column",
+    limitation:
+      "The fastest road, but the crosswise pattern must be memorized for each size, and the carries stack up in your head.",
+    columns: [
+      { say: "Units, vertically: 0 × 8 = 0. Write 0.", place: "units", placeValue: 1, pairs: [[0, 8]], sum: 0, carryIn: 0, digit: 0, carryOut: 0 },
+      { say: "Tens, crosswise: 5 × 8 + 0 × 3 = 40. Write 0, carry 4.", place: "tens", placeValue: 10, pairs: [[5, 8], [0, 3]], sum: 40, carryIn: 0, digit: 0, carryOut: 4 },
+      { say: "Hundreds, three ways: 3 × 8 + 5 × 3 + 0 × 6 = 39, plus the carry makes 43. Write 3, carry 4.", place: "hundreds", placeValue: 100, pairs: [[3, 8], [5, 3], [0, 6]], sum: 39, carryIn: 4, digit: 3, carryOut: 4 },
+      { say: "Thousands, crosswise: 3 × 3 + 5 × 6 = 39, plus the carry makes 43. Write 3, carry 4.", place: "thousands", placeValue: 1000, pairs: [[3, 3], [5, 6]], sum: 39, carryIn: 4, digit: 3, carryOut: 4 },
+      { say: "Ten-thousands, vertically: 3 × 6 = 18, plus the carry makes 22. Write it all.", place: "ten-thousands", placeValue: 10000, pairs: [[3, 6]], sum: 18, carryIn: 4, digit: 22, carryOut: 0 },
+    ] as readonly VedicColumn[],
+    landing: "The digits, assembled right to left.",
+  },
+} as const;
+
+export type MultMethodKey = "standard" | "lines" | "vedic";

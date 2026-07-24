@@ -16,9 +16,10 @@ async function expectAxeClean(page: Page) {
  * two-systems analysis to land.
  */
 async function finishPage2(page: Page) {
-  await page.getByRole("group", { name: /the four names/i }).getByRole("button").first().click();
+  await page.getByRole("textbox", { name: /how many world cups/i }).fill("2");
+  await page.getByRole("button", { name: /^answer$/i }).click();
   await page.getByRole("button", { name: /run it/i }).click();
-  await expect(page.getByText(/looks like a System 1 question/i)).toBeVisible({
+  await expect(page.getByText(/same question, two paths/i)).toBeVisible({
     timeout: 20_000,
   });
 }
@@ -42,23 +43,22 @@ test.describe("Act 1 (pages 1–4)", () => {
     await expect(page.getByText("example reply, authored · live model to follow")).toBeVisible();
     // Run is grayed until the reader takes their turn.
     await expect(page.getByRole("button", { name: /run it/i })).toBeDisabled();
-    // The reader's turn: pick a name, get a verdict, lose the override button.
+    // The reader's turn: type a count, answer, lose the pass button.
     await expect(page.getByRole("button", { name: /let the machine take it/i })).toBeVisible();
-    await page.getByRole("group", { name: /the four names/i }).getByRole("button").first().click();
+    await page.getByRole("textbox", { name: /how many world cups/i }).fill("2");
+    await page.getByRole("button", { name: /^answer$/i }).click();
     await expect(page.getByRole("button", { name: /let the machine take it/i })).toBeHidden();
     // Run the example reply now that it is unlocked.
     await expect(page.getByRole("button", { name: /run it/i })).toBeEnabled();
     await page.getByRole("button", { name: /run it/i }).click();
-    // The streamed reply owns the gap in its training data, then points to search.
-    await expect(page.getByText(/not trained on that information/)).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/quick Google search should lead you to the answer/)).toBeVisible({
-      timeout: 20_000,
-    });
-    // ...and the two-systems analysis lands with the trap and the teaser.
+    // The streamed blurt is the confident stale count off the 2010-only memory.
+    await expect(page.getByText(/One\. Spain won it in 2010\./)).toBeVisible({ timeout: 20_000 });
+    // ...and the two-systems analysis with the paths strip is on screen.
     await expect(page.getByText("System 1 · the pop")).toBeVisible();
     await expect(page.getByText("System 2 · the steps")).toBeVisible();
-    await expect(page.getByText(/guess wearing certainty's clothes/)).toBeVisible();
-    await expect(page.getByText(/trained on data that includes that night/)).toBeVisible();
+    await expect(page.getByText(/same question, two paths/i)).toBeVisible();
+    await expect(page.getByText(/stops one short/i)).toBeVisible();
+    await expect(page.getByText(/trained it on data that includes that final/)).toBeVisible();
   });
 
   test("Page 3: the combined-rates figure runs away, then the guess box hands off", async ({
@@ -96,6 +96,28 @@ test.describe("Act 1 (pages 1–4)", () => {
     await months.press("End");
     await page.getByRole("button", { name: "Skip" }).click();
     await expectAxeClean(page);
+  });
+
+  test("Page 4: every road walks to the same 223,300", async ({ page }) => {
+    await page.goto("/p/4");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "Reasoning in Multiplication",
+    );
+    // Act 1's hard rule now covers its finale too: no Act 2 jargon.
+    expect(await page.locator("article").innerText()).not.toMatch(/inference/i);
+    // The meaning band and the open questions are on from first paint.
+    await expect(page.getByText(/Three journeys, one destination/i)).toBeVisible();
+    await expect(page.getByText(/chart its own road/i)).toBeVisible();
+    // Walk each road with Next until it lands; every one arrives at 223,300.
+    for (const method of ["standard", "lines", "vedic"]) {
+      await page.getByLabel("Method").selectOption(method);
+      const next = page.getByRole("button", { name: /next/i });
+      for (let i = 0; i < 8 && !(await next.isDisabled()); i++) {
+        await next.click();
+      }
+      await expect(next).toBeDisabled();
+      await expect(page.getByText(/Same destination: 223,300\./).first()).toBeVisible();
+    }
   });
 
   for (const n of [1, 2, 3, 4]) {

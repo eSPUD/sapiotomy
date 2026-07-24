@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 
-// Reduced motion is ON by default so "Let it think" reveals the whole trace at
-// once (no timers to advance). The animated block below flips it OFF to cover
-// the step-by-step streaming.
+// Reduced motion is ON by default: no Play button, the walkthrough is a manual
+// stepper, and every assertion is timer-free. The animated block below flips
+// it OFF to cover Play's auto-advance.
 let reducedMotion = true;
 const mm = (q: string) => ({
   matches: reducedMotion && q.includes("prefers-reduced-motion"),
@@ -18,92 +18,183 @@ const mm = (q: string) => ({
 vi.stubGlobal("matchMedia", mm);
 
 import { Page4 } from "./Page4";
-import { SPAIN_WORLD_CUPS } from "@/lib/authored";
+import { MULT_METHODS } from "@/lib/authored";
 
-const WC = SPAIN_WORLD_CUPS;
+const M = MULT_METHODS;
 
-const instant = () => fireEvent.click(screen.getByRole("button", { name: /answer instantly/i }));
-const think = () => fireEvent.click(screen.getByRole("button", { name: /let it think/i }));
+// Act 1's hard rule now covers this page too: the Act 2+ jargon never appears.
+const BANNED = /inference/i;
+const expectClean = () => {
+  expect(document.body.textContent ?? "").not.toMatch(BANNED);
+};
 
-describe("Page 4 (The Third Option)", () => {
+const methodSelect = () => screen.getByRole("combobox", { name: /method/i });
+const pick = (key: string) => fireEvent.change(methodSelect(), { target: { value: key } });
+const next = () => fireEvent.click(screen.getByRole("button", { name: /next/i }));
+const walk = (n: number) => {
+  for (let i = 0; i < n; i++) next();
+};
+
+describe("Page 4 (Reasoning in Multiplication)", () => {
   beforeEach(() => {
     reducedMotion = true;
   });
 
-  it("opens on the choice, having replayed neither behaviour yet", () => {
+  it("shows everything up front: dropdown, panel, meaning band, open questions", () => {
     render(<Page4 />);
-    expect(screen.getByRole("heading", { name: /The Third Option/i })).toBeInTheDocument();
-    // The same question as page 2 is on screen.
-    expect(screen.getByText(WC.question)).toBeInTheDocument();
-    // Neither the blurt nor the trace has been shown.
-    expect(screen.queryByText(WC.machine.reply.join(" "))).toBeNull();
-    expect(screen.queryByText(WC.thinking.steps[0])).toBeNull();
-  });
-
-  it("instant mode replays page 2's wrong blurt in a single pass", () => {
-    render(<Page4 />);
-    instant();
-    // The blurt itself — which the authored guard proves omits the newest title.
-    expect(screen.getByText(WC.machine.reply.join(" "))).toBeInTheDocument();
-    // The verdict names the one-short miss.
-    expect(screen.getByText(new RegExp(`✗\\s*${WC.machine.answer}`))).toBeInTheDocument();
-  });
-
-  it("thinking mode recognizes the gap, checks, and lands the true count", () => {
-    render(<Page4 />);
-    think();
-    // The whole trace is present (reduced motion), and it names the 2026 title
-    // the blurt omitted — recognition, not invention.
-    for (const step of WC.thinking.steps) {
-      expect(screen.getByText(new RegExp(step.slice(0, 24)))).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Reasoning in Multiplication",
+    );
+    // The dropdown carries all three roads.
+    expect(methodSelect()).toBeInTheDocument();
+    expect(screen.getAllByRole("option")).toHaveLength(3);
+    // No pop-ups: the meaning band and the finale are on from first paint —
+    // each method's name shows in its option AND its meaning card.
+    for (const m of [M.standard, M.lines, M.vedic]) {
+      expect(screen.getAllByText(m.name).length).toBeGreaterThanOrEqual(2);
+      expect(screen.getAllByText(new RegExp(m.limitation.slice(0, 24))).length).toBeGreaterThan(0);
     }
-    expect(document.body.textContent ?? "").toContain(String(WC.latestYear));
-    // The verdict lands on the true count.
+    expect(screen.getByText(/Three journeys, one destination/i)).toBeInTheDocument();
     expect(
-      screen.getByText(new RegExp(`✓\\s*${WC.thinking.answer.replace(/\.$/, "")}`)),
+      screen.getByText(/Reasoning is inherently diverse pathfinding from prior knowledge/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/guide a machine down different roads/i)).toBeInTheDocument();
+    expect(screen.getByText(/chart its own road/i)).toBeInTheDocument();
+    // The walkthrough waits at its setup step.
+    expect(screen.getByText("step 0 of 4")).toBeInTheDocument();
+    expect(screen.getAllByText(/Press Next/).length).toBeGreaterThan(0);
+    expectClean();
   });
 
-  it("names inference-time scaling here — the Act 1 payoff — and previews the toolbox", () => {
+  it("reduced motion hides Play: the walkthrough is a manual stepper", () => {
     render(<Page4 />);
-    // Named on this page (the callout and the footer both carry it).
-    expect(screen.getAllByText(/inference-time scaling/i).length).toBeGreaterThan(0);
-    // The honest note: thinking recognizes the gap, it does not invent the fact.
-    expect(screen.getByText(/cannot invent a fact the model never saw/i)).toBeInTheDocument();
-    // Sets up Act 2: sample/vote, generate/verify, search.
-    expect(screen.getByText(/how should it spend it/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /play/i })).toBeNull();
+    expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /back/i })).toBeDisabled();
   });
 
-  it("toggling between modes swaps the panel (no stale trace left behind)", () => {
+  it("standard: four steps land the partial products on 223,300", () => {
     render(<Page4 />);
-    think();
-    expect(screen.getByText(new RegExp(WC.thinking.steps[0].slice(0, 24)))).toBeInTheDocument();
-    instant();
-    expect(screen.queryByText(new RegExp(WC.thinking.steps[0].slice(0, 24)))).toBeNull();
-    expect(screen.getByText(WC.machine.reply.join(" "))).toBeInTheDocument();
+    walk(1);
+    expect(screen.getAllByText(M.standard.rows[0].say).length).toBeGreaterThan(0);
+    walk(3);
+    expect(screen.getByText("step 4 of 4")).toBeInTheDocument();
+    expect(screen.getAllByText(/Same destination: 223,300\./).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /next/i })).toBeDisabled();
+    expectClean();
   });
 
-  it("streams the trace step by step when motion is allowed", () => {
+  it("lines: six steps count the crossings and carry to 223,300", () => {
+    render(<Page4 />);
+    pick("lines");
+    expect(screen.getByText("step 0 of 6")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /line multiplication/i })).toBeInTheDocument();
+    walk(2);
+    // Tens column: the 40-crossing count is narrated.
+    expect(screen.getAllByText(M.lines.diagonals[1].say).length).toBeGreaterThan(0);
+    walk(4);
+    expect(screen.getAllByText(/Same destination: 223,300\./).length).toBeGreaterThan(0);
+    expect(screen.getByText(/carry the columns → 223,300/)).toBeInTheDocument();
+    expectClean();
+  });
+
+  it("vedic: six crosswise steps write the digits right to left", () => {
+    render(<Page4 />);
+    pick("vedic");
+    walk(3);
+    // Hundreds column: the three-way crosswise sum with its carry.
+    expect(screen.getAllByText(M.vedic.columns[2].say).length).toBeGreaterThan(0);
+    expect(screen.getByText(/3×8 \+ 5×3 \+ 0×6 = 39/)).toBeInTheDocument();
+    walk(3);
+    expect(screen.getAllByText(/Same destination: 223,300\./).length).toBeGreaterThan(0);
+    expect(screen.getByText(/= 223,300/)).toBeInTheDocument();
+    expectClean();
+  });
+
+  it("switching method resets the walkthrough to its setup step", () => {
+    render(<Page4 />);
+    walk(2);
+    expect(screen.getByText("step 2 of 4")).toBeInTheDocument();
+    pick("lines");
+    expect(screen.getByText("step 0 of 6")).toBeInTheDocument();
+    expect(screen.getAllByText(/Press Next/).length).toBeGreaterThan(0);
+    // The selected road's limitation rides the panel.
+    expect(screen.getAllByText(new RegExp(M.lines.limitation.slice(0, 24))).length).toBeGreaterThan(0);
+    expectClean();
+  });
+
+  it("back walks the road in reverse", () => {
+    render(<Page4 />);
+    walk(3);
+    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    expect(screen.getByText("step 2 of 4")).toBeInTheDocument();
+    expect(screen.getAllByText(M.standard.rows[1].say).length).toBeGreaterThan(0);
+  });
+
+  it("never says the banned word on any road at any step", () => {
+    render(<Page4 />);
+    for (const key of ["standard", "lines", "vedic"]) {
+      pick(key);
+      for (let i = 0; i < 6; i++) {
+        expectClean();
+        const btn = screen.getByRole("button", { name: /next/i });
+        if ((btn as HTMLButtonElement).disabled) break;
+        fireEvent.click(btn);
+      }
+      expectClean();
+    }
+  });
+});
+
+// The animated path: reduced motion OFF with fake timers, so Play auto-advances
+// the walkthrough to the landing and then stops.
+describe("Page 4 animated Play (no reduced motion)", () => {
+  beforeEach(() => {
     reducedMotion = false;
     vi.useFakeTimers();
-    try {
-      render(<Page4 />);
-      think();
-      // Before any timer fires, no step is visible yet.
-      expect(screen.queryByText(new RegExp(WC.thinking.steps[0].slice(0, 24)))).toBeNull();
-      act(() => {
-        vi.advanceTimersByTime(750 * (WC.thinking.steps.length + 1));
-      });
-      expect(screen.getByText(new RegExp(WC.thinking.steps[0].slice(0, 24)))).toBeInTheDocument();
-      expect(
-        screen.getByText(new RegExp(WC.thinking.answer.replace(/\.$/, ""))),
-      ).toBeInTheDocument();
-    } finally {
-      vi.useRealTimers();
-    }
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    reducedMotion = true;
   });
 
-  afterEach(() => {
-    reducedMotion = true;
+  /** Each play tick re-arms its timeout in an effect, so flush act() per tick. */
+  const tick = (n: number) => {
+    for (let i = 0; i < n; i++) {
+      act(() => {
+        vi.advanceTimersByTime(900 + 20);
+      });
+    }
+  };
+
+  it("Play walks the standard road to the landing, then stops", () => {
+    render(<Page4 />);
+    const play = screen.getByRole("button", { name: /play/i });
+    fireEvent.click(play);
+    // Two ticks in: mid-walkthrough.
+    tick(2);
+    expect(screen.getByText("step 2 of 4")).toBeInTheDocument();
+    // Play out the rest: it reaches the landing and stops advancing.
+    tick(3);
+    expect(screen.getByText("step 4 of 4")).toBeInTheDocument();
+    expect(screen.getAllByText(/Same destination: 223,300\./).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /play/i })).toBeDisabled();
+    // No stray timer keeps stepping past the end.
+    tick(5);
+    expect(screen.getByText("step 4 of 4")).toBeInTheDocument();
+  });
+
+  it("pressing Next mid-play takes over from the auto-advance", () => {
+    render(<Page4 />);
+    fireEvent.click(screen.getByRole("button", { name: /play/i }));
+    tick(1);
+    expect(screen.getByText("step 1 of 4")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /next/i }));
+    expect(screen.getByText("step 2 of 4")).toBeInTheDocument();
+    // The manual press paused the run: time passing no longer advances it.
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByText("step 2 of 4")).toBeInTheDocument();
   });
 });
