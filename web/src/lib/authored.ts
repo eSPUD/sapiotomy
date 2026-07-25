@@ -136,7 +136,7 @@ export const SPAIN_WORLD_CUPS = {
    * that answers on reflex never reaches for the check, even when it could.
    * Authored placeholder EXAMPLE; a live reasoning model replaces it later.
    * (Currently unused by any page: the old Page 4 that rendered it was replaced
-   * by "Reasoning in Multiplication". Kept, with its guard test, for the
+   * by "Reasoning: Diverse Pathfinding". Kept, with its guard test, for the
    * planned live-model return.) It names the newest year the blurt omits
    * (2026) and lands on the true count.
    */
@@ -152,7 +152,7 @@ export const SPAIN_WORLD_CUPS = {
   },
 } as const;
 
-// --- Page 4: Reasoning in Multiplication (three roads, one destination) ----
+// --- Page 4: Reasoning: Diverse Pathfinding (three roads, one destination) ----
 /**
  * Page 1's hardest round (GAME_ROUNDS[2], 350 × 638) solved three ways:
  * standard long multiplication, Japanese line multiplication, and Indian
@@ -270,6 +270,12 @@ export type MultMethodKey = "standard" | "lines" | "vedic";
  * 9. The arithmetic is self-verifiable (23 - 20 + 6) and re-checked in
  * src/lib/act2reason.test.ts. No live model: this is an authored, cited
  * example, and the page's chip says so.
+ *
+ * `exemplar` is the ONE-SHOT worked example the few-shot prompt prepends — the
+ * blue exemplar from the SAME Figure 1: the tennis-ball problem, worked step by
+ * step, landing 11 (5 + 2 x 3). The model imitates its reasoning shape on the
+ * cafeteria question. Both halves are verbatim from Fig. 1, so the page's
+ * "quoted from Wei et al. Fig. 1" chip stays fully accurate.
  */
 export const COT_DEMO = {
   question:
@@ -288,6 +294,22 @@ export const COT_DEMO = {
   ],
   answer: "The answer is 9.",
   answerNumber: 9,
+  /**
+   * The prepended one-shot exemplar, quoted from the same Figure 1: a DIFFERENT
+   * problem, solved out loud, that the model copies the shape of. Arithmetic
+   * (5 + 2 x 3 = 11) is re-checked in src/lib/act2reason.test.ts.
+   */
+  exemplar: {
+    question:
+      "Roger has 5 tennis balls. He buys 2 more cans of tennis balls. Each can has 3 tennis balls. How many tennis balls does he have now?",
+    steps: [
+      "Roger started with 5 balls.",
+      "2 cans of 3 tennis balls each is 6 tennis balls.",
+      "5 + 6 = 11.",
+    ],
+    answer: "The answer is 11.",
+    answerNumber: 11,
+  },
 } as const;
 
 // --- Page 6: Thinking Longer (a token budget on the chain) -----------------

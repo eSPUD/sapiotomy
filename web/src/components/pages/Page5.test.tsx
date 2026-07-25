@@ -78,6 +78,20 @@ describe("Page 5 (How to Reason), Stage A: teach by example", () => {
     expect(screen.getByText(D.blurt)).toBeInTheDocument();
     expect(screen.queryByText(D.steps[0])).toBeNull();
   });
+
+  it("reveals the real Fig. 1 exemplar behind a disclosure, only with the example on", () => {
+    render(<Page5 />);
+    // "none": no prepended exemplar, no disclosure.
+    expect(screen.queryByText(/see full prompt/i)).toBeNull();
+    expect(screen.queryByText(D.exemplar.question)).toBeNull();
+    // "one": the "see full prompt" disclosure and the concrete tennis-ball
+    // exemplar (question, chain, and its answer 11) are all on the page.
+    fireEvent.click(exampleOne());
+    expect(screen.getByText(/see full prompt/i)).toBeInTheDocument();
+    expect(screen.getByText(D.exemplar.question)).toBeInTheDocument();
+    expect(screen.getByText(D.exemplar.steps[2])).toBeInTheDocument(); // "5 + 6 = 11."
+    expect(screen.getByText(D.exemplar.answer)).toBeInTheDocument();
+  });
 });
 
 describe("Page 5, Stage B: predict then drive the scaling law", () => {
@@ -101,6 +115,9 @@ describe("Page 5, Stage B: predict then drive the scaling law", () => {
     expect(screen.getByRole("group", { name: /model size/i })).toBe(stepperBefore);
     expect(screen.queryByRole("button", { name: /lock in prediction/i })).toBeNull();
     expect(screen.getByText(/you guessed/i)).toBeInTheDocument();
+    // The strip points at buttons, so the copy says "step through", not "drag".
+    expect(screen.getByText(/step through the model sizes/i)).toBeInTheDocument();
+    expect(screen.queryByText(/drag the model size/i)).toBeNull();
     // Defaults to 8B, where CoT hurts. Narration + live region both carry it.
     expect(screen.getAllByText(/chain-of-thought hurts here/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/emergent/i).length).toBeGreaterThan(0);

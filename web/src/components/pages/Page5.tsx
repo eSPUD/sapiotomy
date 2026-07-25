@@ -13,11 +13,13 @@
  *   Example OFF -> ask -> the model blurts 27 (one forward leap, wrong).
  *   Example ON  -> ask -> a stepper (Back/Next/Play, page-4 style) walks the
  *   quoted chain to 9, one line at a time, narration per step. Flip the switch
- *   after asking to feel that the example is what flips blurt -> chain.
+ *   after asking to feel that the example is what flips blurt -> chain. The
+ *   prepended exemplar itself (Fig. 1's tennis-ball problem) is real, not
+ *   abstract: a "see full prompt" disclosure reveals it on demand.
  *
  *   Stage B — "The road only helps a big-enough walker." Predict-then-drive:
  *   the reader first guesses what showing work does at 8B (the deck's
- *   PredictBar), then drags a model-size stepper across the three real PaLM
+ *   PredictBar), then steps a model-size control across the three real PaLM
  *   points (8B / 62B / 540B). Two big readouts (standard vs CoT) and the chart
  *   marker move together; narration flips from "it HURTS here (emergent)" at 8B
  *   to "+39.0 points from a prompt alone" at 540B.
@@ -232,10 +234,30 @@ export function Page5() {
           {/* the prompt surface */}
           <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-3">
             {example ? (
-              <p className="mb-2 flex items-center gap-2 border-b border-dashed border-grid pb-2 text-xs text-compute">
-                <span aria-hidden="true">＋</span>1 worked example prepended: a{" "}
-                <em>different</em> problem, solved step by step for the model to imitate
-              </p>
+              <details className="group mb-2 border-b border-dashed border-grid pb-2">
+                <summary className="flex cursor-pointer list-none items-center gap-2 text-xs text-compute focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-compute">
+                  <span aria-hidden="true" className="font-mono transition-transform group-open:rotate-90">
+                    ▸
+                  </span>
+                  <span>
+                    <span aria-hidden="true">＋</span>1 worked example prepended (Wei et al. Fig. 1)
+                    <span className="text-ink-muted"> · see full prompt</span>
+                  </span>
+                </summary>
+                <div className="mt-2 rounded border border-grid bg-surface p-3 text-xs">
+                  <p className="font-mono uppercase tracking-wide text-ink-muted">example →</p>
+                  <p className="mt-1 text-ink-muted">{D.exemplar.question}</p>
+                  <ol className="mt-2 flex flex-col gap-1 text-ink-muted">
+                    {D.exemplar.steps.map((s, i) => (
+                      <li key={i}>
+                        <span className="mr-2 font-mono text-compute">{i + 1}</span>
+                        {s}
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mt-2 text-ink-muted">{D.exemplar.answer}</p>
+                </div>
+              </details>
             ) : null}
             <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">you →</p>
             <p className="mt-1 text-ink">{D.question}</p>
@@ -377,7 +399,7 @@ export function Page5() {
                 {prediction >= 0 ? "+" : ""}
                 {prediction} pts
               </strong>
-              . Drag the model size and watch the real numbers.
+              . Step through the model sizes and watch the real numbers.
             </p>
           )}
 
@@ -402,8 +424,12 @@ export function Page5() {
                   <LineChart
                     title={`GSM8K solve rate for the PaLM family at 8, 62 and 540 billion parameters, log x axis, redrawn from Wei et al. 2022: standard prompting stays low at ${sp.palm8Standard}, ${sp.palm62Standard} and ${sp.palm540Standard} percent, while chain-of-thought climbs from ${sp.palm8Cot} through ${sp.palm62Cot} to ${sp.palm540Cot} percent: below standard at 8B, far above it at 540B. Currently marking ${size} billion parameters.`}
                     points={standardCurve}
-                    secondary={{ points: cotCurve, label: "chain-of-thought prompting" }}
-                    primaryLabel="standard prompting (the blurt)"
+                    secondary={{ points: cotCurve, label: "chain-of-thought" }}
+                    primaryLabel="standard (the blurt)"
+                    fillBetween
+                    markPoints
+                    inlineLabels
+                    markerDelta
                     logX
                     xTicks={[...SIZES]}
                     xDomain={[7, 700]}
@@ -463,8 +489,9 @@ export function Page5() {
         <CitationBadge citation={scaling.citation} />
       </div>
       <p className="text-xs text-ink-muted">
-        the word problem, the wrong blurt ({D.blurtNumber}), and the worked chain are quoted from
-        Figure 1 of Wei et al. 2022 (arXiv:2201.11903); no live model runs on this page · the
+        the word problem, the wrong blurt ({D.blurtNumber}), the worked chain, and the prepended
+        exemplar (the tennis-ball problem → {D.exemplar.answerNumber}) are quoted from Figure 1 of
+        Wei et al. 2022 (arXiv:2201.11903); no live model runs on this page · the
         flat-vs-steep numbers are the paper&apos;s per-scale GSM8K results for the PaLM family
         (appendix table, drawn as its Figure 4): standard {sp.palm8Standard}/{sp.palm62Standard}/
         {sp.palm540Standard}% and chain-of-thought {sp.palm8Cot}/{sp.palm62Cot}/{sp.palm540Cot}% at

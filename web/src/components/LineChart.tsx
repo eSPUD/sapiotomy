@@ -18,6 +18,20 @@ export interface LineChartProps {
   /** Optional second line (drawn in the compute hue) for a contrast. */
   secondary?: { points: { x: number; y: number }[]; label?: string };
   primaryLabel?: string;
+  /** Shade the area between the primary and secondary lines (the gap itself). */
+  fillBetween?: boolean;
+  /** Circle every data point on both lines, not just the marker. */
+  markPoints?: boolean;
+  /**
+   * Label each line at its right end instead of in the corner legend box —
+   * less chart furniture when there are only two series.
+   */
+  inlineLabels?: boolean;
+  /**
+   * At markerX, connect the two lines with a vertical segment carrying the
+   * signed gap (ties the chart to a delta readout). Needs `secondary`.
+   */
+  markerDelta?: boolean;
   logX?: boolean;
   /** Log-scale the y axis; ticks land on powers of ten. */
   logY?: boolean;
@@ -51,6 +65,10 @@ export function LineChart({
   referenceLabel,
   secondary,
   primaryLabel,
+  fillBetween = false,
+  markPoints = false,
+  inlineLabels = false,
+  markerDelta = false,
   logX = false,
   logY = false,
   yTickFormat,
@@ -83,6 +101,25 @@ export function LineChart({
       ? points.reduce((best, p) =>
           Math.abs(p.x - markerX) < Math.abs(best.x - markerX) ? p : best,
         )
+      : null;
+
+  // The secondary point at the marker, for the delta connector.
+  const secondaryMarkerPoint =
+    markerX !== undefined && secondary
+      ? secondary.points.reduce((best, p) =>
+          Math.abs(p.x - markerX) < Math.abs(best.x - markerX) ? p : best,
+        )
+      : null;
+
+  // A filled polygon between the two lines: forward along primary, back along
+  // secondary. Renders correctly through the crossover (primary can be on top
+  // at one x and below at another) — it always shades the gap itself.
+  const bandPath =
+    fillBetween && secondary
+      ? `M${points.map((p) => `${x(p.x)},${y(p.y)}`).join("L")}L${secondary.points
+          .map((p) => `${x(p.x)},${y(p.y)}`)
+          .reverse()
+          .join("L")}Z`
       : null;
 
   // On a log y-axis, tick only the powers of ten inside the domain.
@@ -136,12 +173,65 @@ export function LineChart({
         </g>
       ) : null}
 
+      {/* the gap between the lines, shaded (drawn under the lines) */}
+      {bandPath ? <path d={bandPath} className="fill-compute" fillOpacity={0.12} /> : null}
+
       {secondaryPath ? (
         <path d={secondaryPath} fill="none" className="stroke-compute" strokeWidth={2.5} />
       ) : null}
       {path ? <path d={path} fill="none" className="stroke-correct" strokeWidth={2.5} /> : null}
 
-      {(primaryLabel || secondary?.label) && (
+      {/* dot every real data point on both lines (surface ring keeps them off the line) */}
+      {markPoints ? (
+        <g>
+          {points.map((p) => (
+            <circle
+              key={`pp${p.x}`}
+              cx={x(p.x)}
+              cy={y(p.y)}
+              r={3.5}
+              className="fill-correct stroke-canvas"
+              strokeWidth={2}
+            />
+          ))}
+          {secondary?.points.map((p) => (
+            <circle
+              key={`sp${p.x}`}
+              cx={x(p.x)}
+              cy={y(p.y)}
+              r={3.5}
+              className="fill-compute stroke-canvas"
+              strokeWidth={2}
+            />
+          ))}
+        </g>
+      ) : null}
+
+      {/* identity: either direct end-of-line labels, or the corner legend box */}
+      {inlineLabels && (primaryLabel || secondary?.label) ? (
+        <g>
+          {primaryLabel && points.length ? (
+            <text
+              x={x(points[points.length - 1].x) - 6}
+              y={y(points[points.length - 1].y) + 14}
+              textAnchor="end"
+              className="fill-ink text-[10px]"
+            >
+              {primaryLabel}
+            </text>
+          ) : null}
+          {secondary?.label && secondary.points.length ? (
+            <text
+              x={x(secondary.points[secondary.points.length - 1].x) - 6}
+              y={y(secondary.points[secondary.points.length - 1].y) - 8}
+              textAnchor="end"
+              className="fill-ink text-[10px]"
+            >
+              {secondary.label}
+            </text>
+          ) : null}
+        </g>
+      ) : (primaryLabel || secondary?.label) ? (
         <g>
           {primaryLabel ? (
             <>
@@ -156,7 +246,7 @@ export function LineChart({
             </>
           ) : null}
         </g>
-      )}
+      ) : null}
 
       {dots?.map((d) => {
         const atRightEdge = x(d.x) > innerW - 70;
@@ -191,6 +281,40 @@ export function LineChart({
           <circle cx={x(markerPoint.x)} cy={y(markerPoint.y)} r={5} className="fill-compute" />
         </g>
       ) : null}
+
+      {/* the signed gap at the marker: a bracket between the two lines + label */}
+      {markerDelta && markerPoint && secondaryMarkerPoint
+        ? (() => {
+            const cx = x(markerPoint.x);
+            const y1 = y(markerPoint.y);
+            const y2 = y(secondaryMarkerPoint.y);
+            const delta = +(secondaryMarkerPoint.y - markerPoint.y).toFixed(1);
+            const up = delta >= 0;
+            const atRightEdge = cx > innerW - 48;
+            return (
+              <g>
+                <line
+                  x1={cx}
+                  x2={cx}
+                  y1={y1}
+                  y2={y2}
+                  className={up ? "stroke-correct" : "stroke-wrong"}
+                  strokeWidth={2}
+                />
+                <text
+                  x={cx + (atRightEdge ? -8 : 8)}
+                  y={(y1 + y2) / 2}
+                  dy="0.32em"
+                  textAnchor={atRightEdge ? "end" : "start"}
+                  className={`${up ? "fill-correct" : "fill-wrong"} text-[10px] font-semibold`}
+                >
+                  {up ? "+" : ""}
+                  {delta} pts
+                </text>
+              </g>
+            );
+          })()
+        : null}
     </ChartFrame>
   );
 }

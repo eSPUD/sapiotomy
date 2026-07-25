@@ -21,6 +21,17 @@ describe("Page 5 authored CoT demo (quoted from Wei et al. 2022, Fig. 1)", () =>
     expect(joined).toContain("3 + 6 = 9");
     expect(COT_DEMO.steps.length).toBeGreaterThan(1);
   });
+
+  it("the prepended exemplar (tennis balls) is self-consistent and lands 11", () => {
+    const e = COT_DEMO.exemplar;
+    // 5 + 2 × 3 = 11, the Fig. 1 blue exemplar the model imitates.
+    expect(5 + 2 * 3).toBe(e.answerNumber);
+    expect(e.answer).toContain(String(e.answerNumber));
+    expect(e.steps.join(" ")).toContain("5 + 6 = 11");
+    // A DIFFERENT problem from the cafeteria question it is prepended to.
+    expect(e.question).not.toBe(COT_DEMO.question);
+    expect(e.answerNumber).not.toBe(COT_DEMO.answerNumber);
+  });
 });
 
 describe("Page 5 Wei CoT scaling curve (per-scale GSM8K, PaLM family)", () => {
