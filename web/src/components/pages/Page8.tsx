@@ -87,7 +87,7 @@ export function Page8() {
   const bestScore = Math.max(...batch.candidates.map((c) => c.score), 1);
 
   return (
-    <article className="flex flex-col gap-5">
+    <article className="flex flex-col gap-6">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
@@ -95,26 +95,33 @@ export function Page8() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        Frequency voting has a blind spot, and it is a bad one:{" "}
-        <strong>sometimes the right answer is the rarest one</strong>. When a problem has a trap in
-        it, the crowd does not scatter randomly around the truth — it piles onto the trap. Count
-        those votes and you have measured the trap very precisely.
-      </p>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[1.35fr_1fr]">
-        <section
-          aria-label="Majority vote versus verifier best-of-N on the same candidates"
-          className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span>one batch of candidates · two ways to choose</span>
-            <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-              illustrative simulation · seeded · no live model
-            </span>
-          </div>
+      {/* Left = the numbered walk-through · Right = instructions + references */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        {/* LEFT COLUMN */}
+        <div className="flex min-w-0 flex-col gap-8">
+          <p className="text-lg text-ink-muted">
+            Frequency voting has a bad blind spot:{" "}
+            <strong className="text-ink">sometimes the right answer is the rarest one</strong>. On a
+            problem with a trap the crowd piles onto the trap, so counting votes just measures it
+            precisely. Bring in a judge instead — nobody wins a poetry competition by submitting
+            the same poem forty times. Score every candidate, keep the best:{" "}
+            <strong className="text-ink">best-of-N with a verifier</strong>.
+          </p>
 
-          <div className="flex flex-col gap-4 p-4">
+          {/* Step 1 — the two selectors */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              1. Judge one batch two ways
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                seeded illustrative simulation · no live model
+              </span>
+            </h2>
+            <section
+              aria-label="Majority vote versus verifier best-of-N on the same candidates"
+              className="flex flex-col rounded-lg border-l-4 border-compute bg-surface"
+            >
+              <div className="flex flex-col gap-4 p-4">
             <p className="text-ink">{B.question}</p>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -199,7 +206,9 @@ export function Page8() {
                   Verifier best-of-N
                 </p>
                 <p className="text-xs text-ink-muted">
-                  scores every candidate, keeps the top one
+                  scores every candidate, keeps the top one — and it has the easier job:{" "}
+                  <em>checking</em> that $0.05 and $1.05 sum to $1.10 is arithmetic,{" "}
+                  <em>finding</em> $0.05 took insight
                 </p>
                 <div
                   className="flex flex-col gap-1 pt-1"
@@ -210,7 +219,7 @@ export function Page8() {
                     batch.verifierCorrect ? "correct" : "wrong"
                   }.`}
                 >
-                  {batch.candidates.slice(0, 12).map((c, i) => {
+                  {batch.candidates.slice(0, 8).map((c, i) => {
                     const a = B.answers[c.answer];
                     const picked = i === batch.verifierPick;
                     return (
@@ -230,10 +239,8 @@ export function Page8() {
                       </div>
                     );
                   })}
-                  {n > 12 ? (
-                    <p className="text-xs text-ink-muted">
-                      …and {n - 12} more, all scored
-                    </p>
+                  {n > 8 ? (
+                    <p className="text-xs text-ink-muted">…and {n - 8} more, all scored</p>
                   ) : null}
                 </div>
                 <p
@@ -287,35 +294,25 @@ export function Page8() {
               over {TRIALS.toLocaleString()} seeded batches of {n} — the panels above are one draw
               from this distribution
             </p>
-          </div>
-        </section>
+              </div>
+            </section>
+          </section>
 
-        <div className="flex flex-col gap-4">
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <p>
-              <strong>So bring in a judge.</strong> At a poetry competition nobody wins by
-              submitting the same poem forty times. A judge reads every entry and scores it against
-              criteria — craft, novelty, whether it actually lands. The winner can be the one nobody
-              else saw coming.
-            </p>
-            <p className="mt-2 text-ink-muted">
-              That is <strong className="text-ink">best-of-N with a verifier</strong>: generate N
-              candidates, have a scoring model grade each one, keep its top pick. And notice why
-              the judge has the easier job here — <em>checking</em> that $0.05 and $1.05 sum to
-              $1.10 and differ by $1.00 is arithmetic. <em>Finding</em> $0.05 took insight.
-            </p>
-          </div>
-
+          {/* Step 2 — the curves */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              2. The two rules as N grows
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                illustrative · Cobbe 2021 · Stroebl 2024
+              </span>
+            </h2>
+          {/* Chart beside its caveat: the crossing you are told to look for and
+              the control that causes it stay in one glance. */}
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
           <figure
             aria-label="Selection accuracy against the number of candidates, for majority voting and verifier best-of-N"
-            className="m-0 flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
+            className="m-0 flex min-w-0 flex-col rounded-lg border-l-4 border-grid bg-surface"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-              <span>the two rules as N grows</span>
-              <span className="rounded-full border border-wrong/60 px-2 py-0.5 text-wrong">
-                illustrative
-              </span>
-            </div>
             <div className="flex flex-col gap-2 p-4">
               <LineChart
                 title={`Accuracy against number of candidates on a trap problem, log x axis. Verifier best-of-N at ${reliability} percent reliability compared with majority voting, which falls as more candidates are drawn because the popular answer is the wrong one.`}
@@ -328,44 +325,76 @@ export function Page8() {
                 markerX={n}
                 xLabel="candidates (log scale)"
                 yLabel="accuracy (%)"
-                width={420}
+                width={560}
                 height={250}
               />
               <figcaption className="text-sm text-ink-muted">
-                Majority voting <strong className="text-wrong">falls</strong> as N grows here.
-                More samples do not help you find a rare answer if your rule for choosing is
-                &ldquo;whatever is most common&rdquo; — they just sharpen your measurement of the
-                trap.
+                Majority voting <strong className="text-wrong">falls</strong> as N grows: more
+                samples cannot find a rare answer when the rule is &ldquo;whatever is most
+                common&rdquo; — they only sharpen the measurement of the trap.
               </figcaption>
             </div>
           </figure>
 
-          <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-ink">
-            <p>
-              <strong>Now drag the reliability slider down.</strong> The caveat: the judge is a
-              model too. And a judge that has misunderstood the criteria does not become random —
-              it becomes <em>confidently</em> wrong, drifting toward whatever looks most fluent and
-              familiar. Which, on a trap problem, is the trap.
-            </p>
-            <p className="mt-2 text-sm text-ink-muted">
-              Watch the two lines cross. Below roughly {" "}
-              <strong className="text-ink">45% reliability</strong> the verifier is worse than
-              simply counting votes — and worse at large N than small N, because every extra
-              candidate is another chance for a wrong one to score luckily high. A weak verifier
-              turns more compute into more confident errors. This is why frequency voting keeps its
-              place in the toolbox: it is dumb, but it cannot be fooled about what it is measuring.
+          <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
+            <strong>Now drag reliability down.</strong> The judge is a model too, and one that has
+            misread the criteria does not go random — it goes <em>confidently</em> wrong, toward
+            whatever looks most fluent, which on a trap problem is the trap. Below roughly{" "}
+            <strong>45%</strong> the lines cross: the verifier does worse than counting, and worse
+            at large N than small, since every extra candidate is another chance for a wrong one to
+            score luckily high. A weak verifier turns compute into confident errors — which is why
+            voting keeps its place. It is dumb, but it cannot be fooled about what it measures.
+          </div>
+          </div>
+          </section>
+
+          {/* Step 3 — the handoff */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
+            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+              Selection beats counting exactly as far as the selector can be trusted — so the next
+              question is not &ldquo;how many candidates?&rdquo; but{" "}
+              <em>&ldquo;what is the judge actually reading?&rdquo;</em>{" "}
+              <em className="text-ink-muted">
+                Grading only the final answer is its own kind of blindness. Turn the page.
+              </em>
+            </div>
+          </section>
+        </div>
+
+        {/* RIGHT COLUMN — instructions + references */}
+        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              How to read this page
+            </h2>
+            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
+              <li>
+                Both panels in step 1 judge the <strong className="text-ink">same</strong> batch —
+                only the rule for choosing differs.
+              </li>
+              <li>
+                Drag <strong className="text-ink">reliability</strong> down and watch the two lines
+                in step 2 cross.
+              </li>
+              <li>
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
+                move between pages.
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              References
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Verifier best-of-N: Cobbe et al. 2021. Imperfect verifiers cap (and reverse) the
+              gains: Stroebl et al. 2024. The simulation is illustrative, not a digitized curve —
+              links at the foot.
             </p>
           </div>
-        </div>
-      </div>
-
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        <strong>Where this leaves us:</strong> selection beats counting exactly as far as the
-        selector can be trusted — so the next question is not &ldquo;how many candidates?&rdquo;
-        but <em>&ldquo;what is the judge actually reading?&rdquo;</em>{" "}
-        <em className="text-ink-muted">
-          Grading only the final answer turns out to be its own kind of blindness. Turn the page.
-        </em>
+        </aside>
       </div>
 
       <div className="flex flex-wrap gap-2">
