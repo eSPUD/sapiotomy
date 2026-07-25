@@ -44,16 +44,18 @@ describe("Page 3 (Training Daily?)", () => {
     expect(fiveYearSlider()).toBeInTheDocument();
     // Step 2: the data wall, with the two cited anchors.
     expect(
-      screen.getByRole("heading", { level: 2, name: /2\. The data runs out/i }),
+      screen.getByRole("heading", { level: 2, name: /2\. Bigger models, finite data/i }),
     ).toBeInTheDocument();
     // Step 3: the guess, under the same numbered spine as pages 1 and 4.
     expect(
       screen.getByRole("heading", { level: 2, name: /3\. So what is left\?/i }),
     ).toBeInTheDocument();
-    // The Chinchilla hinge: money alone can't buy capability, tokens must scale too.
-    expect(screen.getByText(/20 tokens per parameter/i)).toBeInTheDocument();
-    expect(screen.getByText(/A quarter the size, four times the data/i)).toBeInTheDocument();
+    // The scaling-law spine: bigger models only pay off if they read more, in step.
+    expect(screen.getByText(/that is the scaling law/i)).toBeInTheDocument();
+    // The featured number, plainly glossed; the Chinchilla comparison moved to the footer.
     expect(screen.getByText("≈300T tokens")).toBeInTheDocument();
+    expect(screen.getByText(/tokens: the pieces of text a model reads/i)).toBeInTheDocument();
+    expect(screen.queryByText(/A quarter the size, four times the data/i)).toBeNull();
     expect(screen.getByText("2026–2032")).toBeInTheDocument();
     // The data wall is a timeline meter, not a pair of static tiles.
     expect(
@@ -61,7 +63,7 @@ describe("Page 3 (Training Daily?)", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/No budget buys tokens that do not exist/i)).toBeInTheDocument();
     // The guess, hinting back at page 1's multiplication round.
-    expect(screen.getByText(/different scope/i)).toBeInTheDocument();
+    expect(screen.getByText(/paying for smarts/i)).toBeInTheDocument();
     expect(screen.getByText("17 × 24")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /your guess/i })).toBeInTheDocument();
     expect(screen.getByText("optional · skip freely")).toBeInTheDocument();

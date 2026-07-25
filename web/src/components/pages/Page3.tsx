@@ -12,11 +12,12 @@
  *   Problem 2 — the data: even with an unlimited budget, the effective stock
  *     of quality human text is ~300T tokens, fully utilized between 2026 and
  *     2032 if trends continue (Villalobos et al. 2024, Epoch AI).
- * The guess box then pivots the story: training is hitting a wall, so look
- * through a different scope — the hint points back at page 1's 17 × 24, which
- * the reader solved by thinking longer, not by knowing more. Training only on
- * this page; the answer-time alternative is the next page's business. No
- * inference talk here.
+ * The guess box then pivots the story: both walls come from paying compute up
+ * front to bake smarts in, so turn it around and spend that effort when the
+ * question arrives instead — the hint points back at page 1's 17 × 24, which
+ * the reader worked out on the spot, not by knowing it in advance. Training
+ * only on this page; the answer-time alternative is the next page's business.
+ * No inference talk here.
  *
  * Layout rule: no reveals, no drag-to-unlock. Shell matches pages 1 and 4 — a
  * single numbered reading column (1. the bill · 2. the data · 3. the guess)
@@ -273,7 +274,7 @@ export function Page3() {
           {/* Step 2 — the data */}
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">
-              2. The data runs out
+              2. Bigger models, finite data
               <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
                 Hoffmann 2022 · Villalobos 2024
               </span>
@@ -283,28 +284,22 @@ export function Page3() {
               className="flex flex-col gap-3 rounded-lg border-l-4 border-wrong bg-surface p-4"
             >
               <p className="text-sm text-ink">
-                Suppose money were no object. It fails anyway, on the scaling law itself.
-                Compute-optimal training needs parameters and training tokens to grow{" "}
-                <strong>together</strong>, about{" "}
-                <strong>{cp.tokensPerParam} tokens per parameter</strong>. You cannot turn money
-                into capability without turning it into <strong>data</strong>.
+                Suppose money were no object. It still fails. The other way to make a model smarter
+                is to make it <strong>bigger</strong>, but a bigger model only pays off if it also{" "}
+                <strong>reads more</strong>, in step. Size and reading climb together: that is the
+                scaling law. So the ceiling was never the money. It is how much there is worth
+                reading.
               </p>
-              <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-                <p className="rounded border-l-2 border-compute bg-surface-raised p-2 text-xs text-ink-muted">
-                  Chinchilla <strong className="text-ink">{cp.chinchillaParamsB}B</strong> on{" "}
-                  {cp.chinchillaTokensB / 1000}T tokens beat Gopher{" "}
-                  <strong className="text-ink">{cp.gopherParamsB}B</strong> on {cp.gopherTokensB}B
-                  tokens at equal compute: <strong className="text-ink">+{cp.mmluGainPts} pts</strong>{" "}
-                  MMLU. A quarter the size, four times the data.
+              <div className="rounded-lg border border-grid bg-surface-raised p-4">
+                <p className="text-xs uppercase tracking-wide text-ink-muted">
+                  every quality token humans have written
                 </p>
-                <div className="rounded-lg border border-grid bg-surface-raised p-3 md:text-right">
-                  <p className="text-xs uppercase tracking-wide text-ink-muted">
-                    and the tokens are finite
-                  </p>
-                  <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-                    ≈{ds.stockTrillionTokens}T tokens
-                  </p>
-                </div>
+                <p className="font-mono text-3xl font-bold tabular-nums text-ink">
+                  ≈{ds.stockTrillionTokens}T tokens
+                </p>
+                <p className="mt-1 text-xs text-ink-muted">
+                  tokens: the pieces of text a model reads, roughly a word each
+                </p>
               </div>
               <DataWindowMeter
                 months={months}
@@ -333,13 +328,17 @@ export function Page3() {
               className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
             >
               <p className="text-lg text-ink">
-                Training is hitting a wall: cost on one side, data on the other. So we had to look
-                at the problem through a <strong>different scope</strong>. What do you think the
-                solution may be?
+                Both walls come from the same habit: paying for smarts <strong>up front</strong>,
+                all at once, before a single question is asked. That is what the bill buys, and what
+                the data runs out on. So turn it around, and instead of front-loading everything to
+                make the model <strong>know</strong> the answer, what if we spent that effort{" "}
+                <strong>when the question arrives</strong>, and let it{" "}
+                <strong>work the answer out</strong>? What do you think that would look like?
               </p>
               <p className="text-sm text-ink-muted">
                 Hint: how did you solve{" "}
                 <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> on page 1?
+                You didn&apos;t know it in advance. You built it on the spot.
               </p>
               {guessState === "open" ? (
                 <form

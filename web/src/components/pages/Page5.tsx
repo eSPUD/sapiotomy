@@ -358,8 +358,8 @@ export function Page5() {
 
       <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
         This is <strong>chain-of-thought prompting</strong>: the worked example in the prompt
-        carries its reasoning out loud, so the model answers the new question the same way:
-        reasoning first, answer last. The page is its scratch paper.
+        carries its reasoning out loud, so the model answers the new question the same way.
+        Reasoning first, answer last. The page is its scratch paper.
       </div>
 
       {/* ================= Stage B: the scaling law ===================== */}

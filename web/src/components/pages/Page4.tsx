@@ -1,8 +1,10 @@
 "use client";
 
 /**
- * Page 4, "Reasoning in Multiplication" — the Act 1 finale. Page 1's hardest
- * round (350 × 638) comes back, solved three ways: standard long
+ * Page 4, "Reasoning: Diverse Pathfinding" — the Act 1 finale. It catches page 3's
+ * pivot (spend the effort when the question arrives, not up front) and names
+ * that working-out: reasoning. Page 1's 17 × 24 is recalled, then escalated to
+ * a bigger instance, 350 × 638, solved three ways: standard long
  * multiplication, Japanese line multiplication, and Indian Vedic
  * (Urdhva-Tiryagbhyam). A dropdown picks the road; a stepped, animated
  * walkthrough drives it; every road lands on the same 223,300. The meaning:
@@ -21,7 +23,7 @@
 
 import { useEffect, useId, useMemo, useState } from "react";
 import { PageNav } from "@/components/PageNav";
-import { MULT_METHODS, type MultMethodKey } from "@/lib/authored";
+import { GAME_ROUNDS, MULT_METHODS, type MultMethodKey } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
@@ -391,10 +393,14 @@ export function Page4() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Back to page 1&apos;s hardest round: <strong className="font-mono text-ink">{P.a} × {P.b}</strong>,
-        the one that took minutes, if it fell at all. The destination is known:{" "}
-        <strong className="font-mono text-ink">{P.display}</strong>. This page is about the{" "}
-        <em>roads</em>: three cultures built three different ways to walk there.
+        Working a problem out instead of looking it up has a name:{" "}
+        <strong className="text-ink">reasoning</strong>. And here is the surprise: it is never one
+        fixed procedure. Page 1 gave you{" "}
+        <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> and one way to
+        build it; take a bigger one, <strong className="font-mono text-ink">{P.a} × {P.b}</strong>,
+        and three cultures built three different roads to the same{" "}
+        <strong className="font-mono text-ink">{P.display}</strong>. Each is a real method with its
+        own strengths and weaknesses, so pick one below, walk it, then try another and compare.
       </p>
 
       <section
@@ -425,10 +431,15 @@ export function Page4() {
             <span className="text-sm text-ink-muted">{meta.origin}</span>
           </div>
 
-          <div className="rounded-lg border border-grid bg-surface-raised px-3 py-2">
-            {method === "standard" ? <StandardPanel step={step} /> : null}
-            {method === "lines" ? <LinesPanel step={step} /> : null}
-            {method === "vedic" ? <VedicPanel step={step} /> : null}
+          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_13rem] lg:items-start">
+            <div className="rounded-lg border border-grid bg-surface-raised px-3 py-2">
+              {method === "standard" ? <StandardPanel step={step} /> : null}
+              {method === "lines" ? <LinesPanel step={step} /> : null}
+              {method === "vedic" ? <VedicPanel step={step} /> : null}
+            </div>
+            <aside className="rounded-lg border-l-4 border-grid bg-surface px-3 py-2 text-sm text-ink-muted">
+              There are many different ways to do multiplication. We showcase only three here.
+            </aside>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

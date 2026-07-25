@@ -35,7 +35,7 @@ const walk = (n: number) => {
   for (let i = 0; i < n; i++) next();
 };
 
-describe("Page 4 (Reasoning in Multiplication)", () => {
+describe("Page 4 (Reasoning: Diverse Pathfinding)", () => {
   beforeEach(() => {
     reducedMotion = true;
   });
@@ -43,7 +43,7 @@ describe("Page 4 (Reasoning in Multiplication)", () => {
   it("shows everything up front: dropdown, panel, meaning band, open questions", () => {
     render(<Page4 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Reasoning in Multiplication",
+      "Reasoning: Diverse Pathfinding",
     );
     // The dropdown carries all three roads.
     expect(methodSelect()).toBeInTheDocument();
