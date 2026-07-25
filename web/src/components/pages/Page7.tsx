@@ -25,6 +25,19 @@
  * — and reduces EXACTLY to that curve at the reference temperature. Temperature
  * itself is not in the paper's reported numbers, so the dial is modelled and the
  * page's chip says so.
+ *
+ * NO GATE (load-bearing). An earlier build hid the ENTIRE page behind the
+ * PredictBar — `prediction === null ? <PredictBar/> : <>whole page</>` — so
+ * pressing "Lock it in" replaced the whole document in one jump. That is the
+ * one interaction on the page that must not feel like a page change. The
+ * chamber and the curve now render from first paint; committing a prediction
+ * swaps only the small strip above the chart and draws your line on it. Keep it
+ * that way: if you find yourself wrapping a section in `prediction === null ?`,
+ * you are rebuilding the thing that was removed.
+ *
+ * Layout: shell matches pages 1, 3, 5 and 6 — one numbered reading column
+ * (1. run the vote · 2. what the vote buys · 3. where it leaves us) beside a
+ * sticky instructions/references rail.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -101,17 +114,18 @@ export function Page7() {
     ballot.draws.filter((_, i) => !ballot.duplicated[i]).map((_, i) => i),
   ).size;
 
-  // Stream the chains in whenever the batch changes.
+  // Stream the chains in whenever the batch changes. Deliberately NOT gated on
+  // the prediction: the chamber runs from first paint, so committing a guess
+  // adds a reference line to the chart instead of swapping the page.
   useEffect(() => {
-    if (prediction === null) return;
     setShown(reducedMotion ? votes : 0);
-  }, [votes, temperature, prediction, reducedMotion]);
+  }, [votes, temperature, reducedMotion]);
 
   useEffect(() => {
-    if (prediction === null || reducedMotion || shown >= votes) return;
+    if (reducedMotion || shown >= votes) return;
     const t = setTimeout(() => setShown((s) => Math.min(votes, s + 1)), STREAM_MS);
     return () => clearTimeout(t);
-  }, [prediction, reducedMotion, shown, votes]);
+  }, [reducedMotion, shown, votes]);
 
   const visible = ballot.draws.slice(0, shown);
   const liveTally = new Array(C.paths.length).fill(0) as number[];
@@ -147,7 +161,7 @@ export function Page7() {
   };
 
   return (
-    <article className="flex flex-col gap-5">
+    <article className="flex flex-col gap-6">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
@@ -155,52 +169,45 @@ export function Page7() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        A chain of thought is a good road, but a single traveller can still take a wrong turn. So
-        stop asking once. Ask the <em>same</em> question many times, let each attempt reason
-        independently, and keep the answer that comes up <strong>most often</strong>.
-      </p>
 
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        <p>
-          <strong>Why does a vote work at all?</strong> You are at a party choosing between three
-          pizza places. Ask one friend and you get one opinion, with all of that friend&apos;s
-          quirks attached. Ask everyone, and the quirks scatter in different directions while the
-          genuinely best place keeps collecting votes. Nobody had to be right on their own — the
-          crowd only had to be wrong in <em>uncorrelated</em> ways.
-        </p>
-        <p className="mt-2 text-ink-muted">
-          Do the same to a model and it is called <strong className="text-ink">self-consistency</strong>:
-          sample many reasoning paths, then take the majority answer.
-        </p>
-      </div>
+      {/* Left = the numbered walk-through · Right = instructions + references */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        {/* LEFT COLUMN */}
+        <div className="flex min-w-0 flex-col gap-8">
+          <p className="text-lg text-ink-muted">
+            A chain of thought is a good road, but a single traveller can still take a wrong turn.
+            So stop asking once. Ask the <em>same</em> question many times, let each attempt reason
+            independently, and keep the answer that comes up{" "}
+            <strong className="text-ink">most often</strong>.
+          </p>
 
-      {prediction === null ? (
-        <PredictBar
-          prompt="A single chain of thought gets 56.5% on GSM8K. If you sample 40 chains and take the majority answer, what accuracy do you predict?"
-          min={40}
-          max={100}
-          suffix="%"
-          onCommit={(p) => {
-            setPrediction(p);
-            setVotes(40);
-            recordInteraction(PAGE_N);
-          }}
-        />
-      ) : (
-        <>
-          <div className="grid items-start gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            <p>
+              <strong>Why does a vote work at all?</strong> You are at a party choosing between
+              three pizza places. Ask one friend and you get one opinion, with all of that
+              friend&apos;s quirks attached. Ask everyone, and the quirks scatter in different
+              directions while the genuinely best place keeps collecting votes. Nobody had to be
+              right on their own — the crowd only had to be wrong in <em>uncorrelated</em> ways.
+            </p>
+            <p className="mt-2 text-ink-muted">
+              Do the same to a model and it is called{" "}
+              <strong className="text-ink">self-consistency</strong>: sample many reasoning paths,
+              then take the majority answer.
+            </p>
+          </div>
+
+          {/* Step 1 — the chamber */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              1. Run the vote
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                one question · many independent chains · no live model
+              </span>
+            </h2>
             <section
               aria-label="The sampling chamber"
-              className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
+              className="flex flex-col rounded-lg border-l-4 border-compute bg-surface"
             >
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-                <span>one question · many independent chains</span>
-                <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-                  authored chains · modelled temperature · no live model
-                </span>
-              </div>
-
               <div className="flex flex-col gap-4 p-4">
                 <p className="text-ink">{C.question}</p>
 
@@ -367,18 +374,46 @@ export function Page7() {
                 </div>
               </div>
             </section>
+          </section>
 
-            <div className="flex flex-col gap-4">
-              <figure
-                aria-label="Majority-vote accuracy against the number of sampled chains"
-                className="m-0 flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-                  <span>what the vote buys, on average</span>
-                  <span className="rounded-full border border-compute/60 px-2 py-0.5 text-compute">
-                    Wang et al. 2022 · GSM8K · anchored
-                  </span>
-                </div>
+          {/* Step 2 — the curve */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              2. What the vote buys
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                Wang et al. 2022 · GSM8K · anchored
+              </span>
+            </h2>
+
+            {/* The prediction. This strip is the ONLY thing that swaps when you
+                commit — the curve below stays put. See the no-gate note above. */}
+            {prediction === null ? (
+              <PredictBar
+                prompt="Before you read it off the curve: a single chain of thought gets 56.5% on GSM8K. Sample 40 chains and take the majority answer — what accuracy do you predict?"
+                min={40}
+                max={100}
+                suffix="%"
+                onCommit={(p) => {
+                  setPrediction(p);
+                  setVotes(40);
+                  recordInteraction(PAGE_N);
+                  setAnnouncement(
+                    `Prediction locked at ${p} percent. Your line is drawn on the curve and the sampler has moved to 40 chains.`,
+                  );
+                }}
+              />
+            ) : (
+              <p className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-sm text-ink">
+                You predicted{" "}
+                <strong className="font-mono text-compute">{prediction}%</strong> — it is the dashed
+                line on the curve. The sampler jumped to 40 chains to match the question.
+              </p>
+            )}
+
+            <figure
+              aria-label="Majority-vote accuracy against the number of sampled chains"
+              className="m-0 flex flex-col rounded-lg border-l-4 border-grid bg-surface"
+            >
                 <div className="flex flex-col gap-3 p-4">
                   <LineChart
                     title={`Majority-vote accuracy versus number of sampled chains on GSM8K, log x axis. At the reference temperature accuracy climbs from 56.5 percent at one chain toward a plateau near 74.4 percent, with most of the gain arriving in the first dozen chains. Currently ${accuracyNow.toFixed(1)} percent at ${votes} chains.`}
@@ -387,12 +422,14 @@ export function Page7() {
                     xDomain={[1, MAX_VOTES]}
                     yDomain={[50, 80]}
                     markerX={votes}
-                    referenceY={prediction}
-                    referenceLabel={`you predicted ${prediction}%`}
+                    referenceY={prediction ?? undefined}
+                    referenceLabel={
+                      prediction !== null ? `you predicted ${prediction}%` : undefined
+                    }
                     xLabel="chains sampled (log scale)"
                     yLabel="accuracy (%)"
-                    width={460}
-                    height={280}
+                    width={620}
+                    height={300}
                   />
                   <figcaption className="flex flex-col gap-2 text-sm">
                     <p className="text-ink">
@@ -411,34 +448,80 @@ export function Page7() {
                       almost nothing, at double the cost.
                     </p>
                   </figcaption>
-                </div>
-              </figure>
-
-              <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-ink">
-                <p>
-                  <strong>Try turning the temperature to zero.</strong> The accuracy line goes flat
-                  and stays flat no matter how many chains you buy. At zero the model writes the
-                  same chain every time, so sampling 64 of them is asking one friend the same
-                  question 64 times and calling it a poll.
-                </p>
-                <p className="mt-2 text-sm text-ink-muted">
-                  Voting does not create knowledge. It only cancels <em>uncorrelated</em> errors —
-                  so the diversity you pay for is the thing that makes the vote work.
-                </p>
               </div>
-            </div>
-          </div>
+            </figure>
 
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <strong>Where this leaves us:</strong> voting reads the crowd by frequency alone — the
-            most popular answer wins, and nothing ever looks at whether an answer is any{" "}
-            <em>good</em>. That works while the crowd leans right.{" "}
-            <em className="text-ink-muted">
-              But what happens when the popular answer is the wrong one? Turn the page.
-            </em>
+            <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-ink">
+              <p>
+                <strong>Try turning the temperature to zero.</strong> The accuracy line goes flat
+                and stays flat no matter how many chains you buy. At zero the model writes the
+                same chain every time, so sampling 64 of them is asking one friend the same
+                question 64 times and calling it a poll.
+              </p>
+              <p className="mt-2 text-sm text-ink-muted">
+                Voting does not create knowledge. It only cancels <em>uncorrelated</em> errors —
+                so the diversity you pay for is the thing that makes the vote work.
+              </p>
+            </div>
+          </section>
+
+          {/* Step 3 — the handoff */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              3. Where this leaves us
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                the crack the next page opens
+              </span>
+            </h2>
+            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+              Voting reads the crowd by frequency alone — the most popular answer wins, and
+              nothing ever looks at whether an answer is any <em>good</em>. That works while the
+              crowd leans right.{" "}
+              <em className="text-ink-muted">
+                But what happens when the popular answer is the wrong one? Turn the page.
+              </em>
+            </div>
+          </section>
+        </div>
+
+        {/* RIGHT COLUMN — instructions + references */}
+        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              How to read this page
+            </h2>
+            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
+              <li>Read straight down: run the vote, see what it buys, then the catch.</li>
+              <li>
+                Two dials in step 1: how many chains you sample, and how different they are
+                allowed to be. Click any tally row to read the chain behind it.
+              </li>
+              <li>
+                Turn temperature to <strong className="text-ink">0</strong> — the vote collapses to
+                one opinion repeated, and the curve goes flat.
+              </li>
+              <li>
+                Use{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
+                to move between pages.
+              </li>
+            </ul>
           </div>
-        </>
-      )}
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              References
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Self-consistency: Wang et al. 2022 (GSM8K, PaLM-540B, 56.5% → 74.4%).
+            </p>
+            <p className="text-sm text-ink-muted">
+              The chains are authored teaching examples and the temperature dial is modelled, not
+              measured. Full links and derivation notes are at the foot of the page.
+            </p>
+          </div>
+        </aside>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <CitationBadge citation={anchor.citation} />
