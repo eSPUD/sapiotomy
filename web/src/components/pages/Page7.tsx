@@ -175,26 +175,14 @@ export function Page7() {
         {/* LEFT COLUMN */}
         <div className="flex min-w-0 flex-col gap-8">
           <p className="text-lg text-ink-muted">
-            A chain of thought is a good road, but a single traveller can still take a wrong turn.
-            So stop asking once. Ask the <em>same</em> question many times, let each attempt reason
-            independently, and keep the answer that comes up{" "}
-            <strong className="text-ink">most often</strong>.
+            One traveller on a good road can still take a wrong turn. So stop asking once: ask the{" "}
+            <em>same</em> question many times and keep the answer that comes up{" "}
+            <strong className="text-ink">most often</strong>. Choosing between three pizza places,
+            one friend gives you one opinion and all their quirks; ask everyone and the quirks
+            scatter while the best place keeps collecting votes. Nobody had to be right alone — the
+            crowd only had to be wrong in <em>uncorrelated</em> ways. Done to a model, that is{" "}
+            <strong className="text-ink">self-consistency</strong>.
           </p>
-
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <p>
-              <strong>Why does a vote work at all?</strong> You are at a party choosing between
-              three pizza places. Ask one friend and you get one opinion, with all of that
-              friend&apos;s quirks attached. Ask everyone, and the quirks scatter in different
-              directions while the genuinely best place keeps collecting votes. Nobody had to be
-              right on their own — the crowd only had to be wrong in <em>uncorrelated</em> ways.
-            </p>
-            <p className="mt-2 text-ink-muted">
-              Do the same to a model and it is called{" "}
-              <strong className="text-ink">self-consistency</strong>: sample many reasoning paths,
-              then take the majority answer.
-            </p>
-          </div>
 
           {/* Step 1 — the chamber */}
           <section className="flex flex-col gap-3">
@@ -279,9 +267,14 @@ export function Page7() {
                   })}
                 </div>
 
-                {/* Live tally. */}
-                <div className="flex flex-col gap-1.5 border-t border-dashed border-grid pt-3">
-                  <p className="text-xs uppercase tracking-wide text-ink-muted">the tally</p>
+                {/* Tally and the chain behind the selected row, side by side —
+                    they are one read (pick a bucket, see its reasoning), and
+                    stacking them ran the section a screen taller. */}
+                <div className="grid gap-4 border-t border-dashed border-grid pt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
+                <div className="flex flex-col gap-1.5">
+                  <p className="text-xs uppercase tracking-wide text-ink-muted">
+                    the tally · click a row to read its chain
+                  </p>
                   {C.paths.map((p, i) => {
                     const count = liveTally[i];
                     const pct = shown > 0 ? (count / shown) * 100 : 0;
@@ -320,29 +313,41 @@ export function Page7() {
                   })}
                 </div>
 
+                {/* The selected reasoning path, in full. */}
+                <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-3">
+                  <p className="text-xs uppercase tracking-wide text-ink-muted">
+                    a chain landing on {C.paths[openPath].display} — {C.paths[openPath].gist}
+                  </p>
+                  <ol className="mt-2 flex flex-col gap-1">
+                    {C.paths[openPath].steps.map((s, i) => (
+                      <li key={i} className="text-sm text-ink">
+                        <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
+                        {s}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+                </div>
+
                 {/* The winner. */}
                 {streamDone ? (
                   leader === 0 ? (
-                    <div className="rounded-lg border-l-4 border-correct bg-correct/15 p-3 text-sm">
-                      <p className="text-ink">
-                        <span className="font-semibold text-correct">✓ The vote lands on {C.display}.</span>{" "}
-                        The plurality of chains agreed on the right answer — even though{" "}
-                        {shown - liveTally[0]} of {shown} chains got it wrong.
-                      </p>
+                    <div className="rounded-lg border-l-4 border-correct bg-correct/15 p-3 text-sm text-ink">
+                      <span className="font-semibold text-correct">✓ The vote lands on {C.display}.</span>{" "}
+                      The plurality agreed on the right answer — even though {shown - liveTally[0]}{" "}
+                      of {shown} chains got it wrong.
                     </div>
                   ) : leader === -1 ? (
                     <div className="rounded-lg border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-                      A tie. With this few chains the vote has nothing to separate the buckets.
+                      A tie — too few chains to separate the buckets.
                     </div>
                   ) : (
-                    <div className="rounded-lg border-l-4 border-wrong bg-wrong/15 p-3 text-sm">
-                      <p className="text-ink">
-                        <span className="font-semibold text-wrong">
-                          ✗ The vote lands on {C.paths[leader].display}.
-                        </span>{" "}
-                        This batch&apos;s plurality was wrong — {C.paths[leader].gist}. One ballot
-                        is not the whole story; the curve to the right is what happens on average.
-                      </p>
+                    <div className="rounded-lg border-l-4 border-wrong bg-wrong/15 p-3 text-sm text-ink">
+                      <span className="font-semibold text-wrong">
+                        ✗ The vote lands on {C.paths[leader].display}.
+                      </span>{" "}
+                      This batch&apos;s plurality was wrong — {C.paths[leader].gist}. One ballot is
+                      not the whole story; the curve below is the average.
                     </div>
                   )
                 ) : (
@@ -353,25 +358,6 @@ export function Page7() {
                     sampling chain {shown + 1} of {votes}…
                   </p>
                 )}
-
-                {/* The selected reasoning path, in full. */}
-                <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-3">
-                  <p className="text-xs uppercase tracking-wide text-ink-muted">
-                    a chain that landed on {C.paths[openPath].display} —{" "}
-                    {C.paths[openPath].gist}
-                  </p>
-                  <ol className="mt-2 flex flex-col gap-1">
-                    {C.paths[openPath].steps.map((s, i) => (
-                      <li key={i} className="text-sm text-ink">
-                        <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
-                        {s}
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="mt-2 text-xs text-ink-muted">
-                    Click any row in the tally to read the chain behind it.
-                  </p>
-                </div>
               </div>
             </section>
           </section>
@@ -431,54 +417,30 @@ export function Page7() {
                     width={620}
                     height={300}
                   />
-                  <figcaption className="flex flex-col gap-2 text-sm">
-                    <p className="text-ink">
-                      <strong className="font-mono text-lg text-correct">
-                        {accuracyNow.toFixed(1)}%
-                      </strong>{" "}
-                      <span className="text-ink-muted">
-                        at {votes} chain{votes === 1 ? "" : "s"}, temperature {temperature.toFixed(1)}
-                      </span>
-                    </p>
-                    <p className="text-ink-muted">
-                      The gain is real and it is large — Wang et al. report self-consistency lifting
-                      GSM8K by <strong className="text-ink">+17.9 points</strong>, 56.5% → 74.4% —
-                      but look at the shape. It <strong className="text-ink">flattens</strong>. The
-                      first handful of chains buy almost everything; going from 32 to 64 buys
-                      almost nothing, at double the cost.
-                    </p>
+                  <figcaption className="text-sm text-ink-muted">
+                    <strong className="font-mono text-lg text-correct">
+                      {accuracyNow.toFixed(1)}%
+                    </strong>{" "}
+                    at {votes} chain{votes === 1 ? "" : "s"}, temperature{" "}
+                    {temperature.toFixed(1)}. The gain is large — Wang et al. report{" "}
+                    <strong className="text-ink">+17.9 points</strong>, 56.5% → 74.4% — but it{" "}
+                    <strong className="text-ink">flattens</strong>: the first handful of chains buy
+                    almost everything, and 32 → 64 buys almost nothing at double the cost. Voting
+                    cancels <em>uncorrelated</em> errors, so the diversity is what you are paying
+                    for.
                   </figcaption>
               </div>
             </figure>
-
-            <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-ink">
-              <p>
-                <strong>Try turning the temperature to zero.</strong> The accuracy line goes flat
-                and stays flat no matter how many chains you buy. At zero the model writes the
-                same chain every time, so sampling 64 of them is asking one friend the same
-                question 64 times and calling it a poll.
-              </p>
-              <p className="mt-2 text-sm text-ink-muted">
-                Voting does not create knowledge. It only cancels <em>uncorrelated</em> errors —
-                so the diversity you pay for is the thing that makes the vote work.
-              </p>
-            </div>
           </section>
 
           {/* Step 3 — the handoff */}
           <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              3. Where this leaves us
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                the crack the next page opens
-              </span>
-            </h2>
+            <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              Voting reads the crowd by frequency alone — the most popular answer wins, and
-              nothing ever looks at whether an answer is any <em>good</em>. That works while the
-              crowd leans right.{" "}
+              Voting picks by frequency alone — nothing ever asks whether an answer is any{" "}
+              <em>good</em>. Fine while the crowd leans right.{" "}
               <em className="text-ink-muted">
-                But what happens when the popular answer is the wrong one? Turn the page.
+                So what happens when the popular answer is the wrong one? Turn the page.
               </em>
             </div>
           </section>
@@ -491,20 +453,18 @@ export function Page7() {
               How to read this page
             </h2>
             <ul className="flex flex-col gap-2 text-sm text-ink-muted">
-              <li>Read straight down: run the vote, see what it buys, then the catch.</li>
               <li>
-                Two dials in step 1: how many chains you sample, and how different they are
-                allowed to be. Click any tally row to read the chain behind it.
+                Two dials in step 1: how many chains, and how different they may be. Click a tally
+                row to read that chain.
               </li>
               <li>
                 Turn temperature to <strong className="text-ink">0</strong> — the vote collapses to
-                one opinion repeated, and the curve goes flat.
+                one opinion repeated and the curve goes flat.
               </li>
               <li>
-                Use{" "}
                 <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
                 <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
-                to move between pages.
+                move between pages.
               </li>
             </ul>
           </div>
@@ -513,11 +473,8 @@ export function Page7() {
               References
             </h2>
             <p className="text-sm text-ink-muted">
-              Self-consistency: Wang et al. 2022 (GSM8K, PaLM-540B, 56.5% → 74.4%).
-            </p>
-            <p className="text-sm text-ink-muted">
-              The chains are authored teaching examples and the temperature dial is modelled, not
-              measured. Full links and derivation notes are at the foot of the page.
+              Self-consistency: Wang et al. 2022 (GSM8K, PaLM-540B, 56.5% → 74.4%). Chains are
+              authored; the temperature dial is modelled, not measured. Links at the foot.
             </p>
           </div>
         </aside>
@@ -528,13 +485,12 @@ export function Page7() {
       </div>
       <p className="text-xs text-ink-muted">
         the accuracy curve is a seeded Monte Carlo over a two-population model calibrated to Wang
-        et al. 2022, &ldquo;Self-Consistency Improves Chain of Thought Reasoning in Language
-        Models&rdquo; (arXiv:2203.11171, ICLR 2023): GSM8K with PaLM-540B, 56.5% for a single
-        chain rising to 74.4% under self-consistency, and the model reproduces both endpoints at
-        the reference temperature · the four reasoning paths are authored teaching examples whose
-        arithmetic is recomputed by the test suite, not model transcripts · the temperature dial is
-        modelled, not measured: below the reference temperature it makes chains duplicate, above it
-        it flattens the answer distribution
+        et al. 2022 (arXiv:2203.11171, ICLR 2023), GSM8K with PaLM-540B: 56.5% single chain to
+        74.4% under self-consistency, both endpoints reproduced at the reference temperature · the
+        four reasoning paths are authored teaching examples, not model transcripts, and their
+        arithmetic is recomputed by the test suite · the temperature dial is modelled, not
+        measured — below the reference it duplicates chains, above it flattens the answer
+        distribution
       </p>
 
       <div aria-live="polite" className="sr-only">
