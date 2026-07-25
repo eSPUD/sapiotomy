@@ -136,7 +136,7 @@ export const STRATEGIES: { key: Strategy; label: string; blurb: string }[] = [
     key: "greedy",
     label: "Greedy",
     blurb:
-      "Take the best-looking move at every step and never look back. Cheapest possible search — and it inherits every mistake its evaluator makes.",
+      "Take the best-looking move at every step and never look back. Cheapest possible search, and it inherits every mistake its evaluator makes.",
   },
   {
     key: "bfs",

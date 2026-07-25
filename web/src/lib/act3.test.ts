@@ -11,7 +11,7 @@ import {
 
 const TOL = 1.0;
 
-describe("Page 14 — budget forcing (Muennighoff et al., preprint)", () => {
+describe("Page 14: budget forcing (Muennighoff et al., preprint)", () => {
   const d = curves.budgetForcing;
   it("advances 50% -> 57% across 'Wait' presses", () => {
     expect(Math.abs(interpolate(d, 0) - 50)).toBeLessThan(TOL);
@@ -24,7 +24,7 @@ describe("Page 14 — budget forcing (Muennighoff et al., preprint)", () => {
   it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 15 — DeepSeek-R1 RL training (Nature)", () => {
+describe("Page 15: DeepSeek-R1 RL training (Nature)", () => {
   const d = curves.deepseekTraining;
   it("pass@1 rises 15.6% -> 71.0%, cons@64 = 86.7%", () => {
     expect(Math.abs(interpolate(d, 0) - 15.6)).toBeLessThan(TOL);
@@ -41,7 +41,7 @@ describe("Page 15 — DeepSeek-R1 RL training (Nature)", () => {
   });
 });
 
-describe("Page 16 — ARC-AGI cost (reported estimates, not peer-reviewed)", () => {
+describe("Page 16: ARC-AGI cost (reported estimates, not peer-reviewed)", () => {
   const d = curves.arcCost;
   it("matches o3 low/high, o1, human anchors", () => {
     const p = d.fit!.params;
@@ -54,7 +54,7 @@ describe("Page 16 — ARC-AGI cost (reported estimates, not peer-reviewed)", () 
   it("is flagged as non-peer-reviewed", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 17 — overthinking inverse-U (preprint)", () => {
+describe("Page 17: overthinking inverse-U (preprint)", () => {
   const d = curves.overthinking;
   const { easyPeak, hardPeak, easyPeakAcc, hardPeakAcc, curvature } = d.fit!.params;
   it("each curve is an inverse-U (single interior maximum)", () => {
@@ -69,7 +69,7 @@ describe("Page 17 — overthinking inverse-U (preprint)", () => {
   void hardPeakAcc;
 });
 
-describe("Page 18 — faithfulness (preprint)", () => {
+describe("Page 18: faithfulness (preprint)", () => {
   const d = curves.faithfulness;
   it("admission Monte Carlo converges to 25% / 39%", () => {
     expect(Math.abs(faithfulnessAdmitRate(0.25, 20000, 1) - 25)).toBeLessThan(1.5);
@@ -81,7 +81,7 @@ describe("Page 18 — faithfulness (preprint)", () => {
   it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 19 — Illusion of Thinking (preprints, both sides)", () => {
+describe("Page 19: Illusion of Thinking (preprints, both sides)", () => {
   const d = curves.illusion;
   const { tokensPerMove, tokenBudget, riverCrossingImpossibleN } = d.fit!.params;
   it("Hanoi requires 2^N - 1 moves and tokens grow with N", () => {

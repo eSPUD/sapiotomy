@@ -142,8 +142,8 @@ export const SPAIN_WORLD_CUPS = {
    */
   thinking: {
     steps: [
-      "Let me not answer on reflex. This asks for a count of titles — and a count like that can change whenever there's a new final.",
-      "The newest possibility is recent. My training was sealed in early 2025, so a 2026 result would fall after my cutoff — I could be a title behind.",
+      "Let me not answer on reflex. This asks for a count of titles, and a count like that can change whenever there's a new final.",
+      "The newest possibility is recent. My training was sealed in early 2025, so a 2026 result would fall after my cutoff; I could be a title behind.",
       "So I shouldn't count from memory alone. Before I commit, let me check a current source.",
       "The record: Spain won in 2010, and again in 2026.",
     ],
@@ -453,7 +453,7 @@ export const BAT_AND_BALL = {
     {
       display: "$0.10",
       correct: false,
-      gist: "subtracts the $1.00 and stops — the intuitive leap",
+      gist: "subtracts the $1.00 and stops (the intuitive leap)",
       chain: "1.10 − 1.00 = 0.10, so the ball is 10 cents.",
       check: "0.10 + 1.10 = 1.20 ✗ (not 1.10), and the gap is 1.00 only if the bat is 1.10",
       checks: false,
@@ -462,8 +462,8 @@ export const BAT_AND_BALL = {
       display: "$1.05",
       correct: false,
       gist: "answers with the bat's price instead of the ball's",
-      chain: "The bat is 1.00 more than the ball, so the bat is 1.05 — the answer is 1.05.",
-      check: "1.05 + 2.05 = 3.10 ✗ — this is the bat, not the ball",
+      chain: "The bat is 1.00 more than the ball, so the bat is 1.05; the answer is 1.05.",
+      check: "1.05 + 2.05 = 3.10 ✗ (this is the bat, not the ball)",
       checks: false,
     },
   ],
@@ -520,27 +520,27 @@ export const SUPERVISION = {
       label: "Solution A",
       kind: "right answer, wrong reasoning",
       steps: [
-        { text: "16/64 — I need to simplify this fraction.", ok: true },
+        { text: "16/64: I need to simplify this fraction.", ok: true },
         {
           text: "Cancel the 6 on top with the 6 on the bottom.",
           ok: false,
-          note: "Not a valid operation. Digits inside a number cannot be cancelled — only common factors of the whole numerator and denominator can.",
+          note: "Not a valid operation. Digits inside a number cannot be cancelled; only common factors of the whole numerator and denominator can.",
         },
         { text: "That leaves 1 over 4.", ok: true, note: "Follows from step 2, which was invalid." },
       ],
       finalAnswer: "1/4",
       outcomeOk: true,
       ormVerdict:
-        "Thumbs up. The final answer is 1/4, which is correct — so an outcome grader sees nothing wrong and rewards the whole chain, nonsense step included.",
+        "Thumbs up. The final answer is 1/4, which is correct, so an outcome grader sees nothing wrong and rewards the whole chain, nonsense step included.",
       prmVerdict:
-        "Step 2 is flagged. The answer happens to be right (16/64 really is 1/4), but the method would fail on almost any other fraction — a process grader refuses to reward it.",
+        "Step 2 is flagged. The answer happens to be right (16/64 really is 1/4), but the method would fail on almost any other fraction; a process grader refuses to reward it.",
     },
     {
       key: "broken",
       label: "Solution B",
       kind: "wrong answer, one broken step",
       steps: [
-        { text: "16/64 — divide the top and bottom by their greatest common divisor.", ok: true },
+        { text: "16/64: divide the top and bottom by their greatest common divisor.", ok: true },
         {
           text: "The greatest common divisor of 16 and 64 is 8.",
           ok: false,
@@ -552,23 +552,23 @@ export const SUPERVISION = {
       finalAnswer: "2/8",
       outcomeOk: false,
       ormVerdict:
-        "Thumbs down. The answer is wrong — but that is all an outcome grader can say. It cannot tell you which of the four steps to fix.",
+        "Thumbs down. The answer is wrong, but that is all an outcome grader can say. It cannot tell you which of the four steps to fix.",
       prmVerdict:
-        "Step 2 is flagged, and only step 2. Steps 3 and 4 are correct arithmetic on a wrong divisor, so the break is localised to one line — exactly the signal you need to fix the chain.",
+        "Step 2 is flagged, and only step 2. Steps 3 and 4 are correct arithmetic on a wrong divisor, so the break is localised to one line: exactly the signal you need to fix the chain.",
     },
     {
       key: "clean",
       label: "Solution C",
       kind: "right answer, sound reasoning",
       steps: [
-        { text: "16/64 — divide the top and bottom by their greatest common divisor.", ok: true },
+        { text: "16/64: divide the top and bottom by their greatest common divisor.", ok: true },
         { text: "The greatest common divisor of 16 and 64 is 16.", ok: true },
         { text: "16 ÷ 16 = 1 and 64 ÷ 16 = 4.", ok: true },
         { text: "So 16/64 = 1/4, and 1/4 is in lowest terms.", ok: true },
       ],
       finalAnswer: "1/4",
       outcomeOk: true,
-      ormVerdict: "Thumbs up. The answer is correct — and this time the chain deserves it.",
+      ormVerdict: "Thumbs up. The answer is correct, and this time the chain deserves it.",
       prmVerdict: "Every step passes. Both graders agree, which is what agreement is supposed to look like.",
     },
   ] as readonly SupervisionTrace[],
@@ -607,11 +607,11 @@ export const GAME24 = {
     steps: [
       "The 6 and the 5 look promising: 6 × 5 = 30, which is close to 24.",
       "That leaves 30, 6 and 2. And 30 − 6 = 24 exactly.",
-      "But that uses only three of the numbers — the 2 is still on the table.",
+      "But that uses only three of the numbers; the 2 is still on the table.",
       "Fold the 2 in: 30 − 6 × 2 = 18, and 30 − 6 ÷ 2 = 27. Neither is 24.",
       "I am stuck, and I committed to 6 × 5 four steps ago. Best guess: 30 − 6 = 24.",
     ],
-    answer: "24, but using only three of the four numbers — not a valid solution",
+    answer: "24, but using only three of the four numbers (not a valid solution)",
     correct: false,
   },
 } as const;

@@ -18,7 +18,7 @@ const serif = Source_Serif_4({
 export const metadata: Metadata = {
   title: "The Story of Inference-Time Scaling",
   description:
-    "An interactive explorable explanation: how a language model gets better answers by thinking longer at inference time — and where that stops working.",
+    "An interactive explorable explanation: how a language model gets better answers by thinking longer at inference time, and where that stops working.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -34,7 +34,7 @@ export function Page12() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Tree search in language models has a famous ancestor. AlphaGo read many moves ahead with{" "}
-        <strong>Monte Carlo Tree Search</strong> — simulating rollouts, then playing the move it had
+        <strong>Monte Carlo Tree Search</strong>, simulating rollouts, then playing the move it had
         explored most. Give it a bigger look-ahead budget and its move quality climbs toward the best
         possible move.
       </p>
@@ -54,7 +54,7 @@ export function Page12() {
           />
           <BigNumber value={quality} suffix="%" tone="correct" label={`move quality (best possible ≈ ${bestPossible.toFixed(0)}%)`} />
           <p className="text-xs italic text-ink-muted">
-            Illustrative toy MCTS (PUCT selection), not a published curve — it shows the mechanism,
+            Illustrative toy MCTS (PUCT selection), not a published curve; it shows the mechanism,
             the same idea behind AlphaGo/AlphaZero.
           </p>
         </div>

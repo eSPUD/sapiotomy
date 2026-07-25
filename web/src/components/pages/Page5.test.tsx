@@ -32,7 +32,7 @@ function walkChain() {
   for (let i = 0; i < D.steps.length; i++) fireEvent.click(nextBtn());
 }
 
-describe("Page 5 (How to Reason) — Stage A: teach by example", () => {
+describe("Page 5 (How to Reason), Stage A: teach by example", () => {
   beforeEach(() => {
     reducedMotion = true;
   });
@@ -80,7 +80,7 @@ describe("Page 5 (How to Reason) — Stage A: teach by example", () => {
   });
 });
 
-describe("Page 5 — Stage B: predict then drive the scaling law", () => {
+describe("Page 5, Stage B: predict then drive the scaling law", () => {
   beforeEach(() => {
     reducedMotion = true;
   });
@@ -115,7 +115,7 @@ describe("Page 5 — Stage B: predict then drive the scaling law", () => {
   });
 });
 
-describe("Page 5 — sourcing", () => {
+describe("Page 5: sourcing", () => {
   beforeEach(() => {
     reducedMotion = true;
   });

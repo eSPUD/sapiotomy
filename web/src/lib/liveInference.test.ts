@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { chooseInferenceMode, detectWebGPU } from "./liveInference";
 
-describe("live inference — capability detection & mode decision", () => {
+describe("live inference: capability detection & mode decision", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });

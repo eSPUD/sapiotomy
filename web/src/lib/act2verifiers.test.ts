@@ -26,7 +26,7 @@ const TOL = 1.0;
 const TRIALS = 3000;
 const SEED = 21101968;
 
-describe("Page 8 — the bat-and-ball setup", () => {
+describe("Page 8: the bat-and-ball setup", () => {
   const B = BAT_AND_BALL;
 
   it("index 0 is the correct answer and it satisfies both constraints", () => {
@@ -47,7 +47,7 @@ describe("Page 8 — the bat-and-ball setup", () => {
     expect(B.answers[1].checks).toBe(false);
   });
 
-  it("the model gives the trap more mass than the truth — that is the point", () => {
+  it("the model gives the trap more mass than the truth; that is the point", () => {
     const m = BAT_AND_BALL_MODEL;
     expect(m.answerProbs[1]).toBeGreaterThan(m.answerProbs[0]);
     expect(m.answerProbs.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
@@ -62,7 +62,7 @@ describe("Page 8 — the bat-and-ball setup", () => {
   });
 });
 
-describe("Page 8 — generate, then select", () => {
+describe("Page 8: generate, then select", () => {
   it("coverage tracks the closed form for the correct answer's rate", () => {
     const p = BAT_AND_BALL_MODEL.answerProbs[0];
     for (const n of [1, 8, 32]) {
@@ -110,7 +110,7 @@ describe("Page 8 — generate, then select", () => {
     expect(selectionAccuracy(16, TRIALS, SEED, 0.25).verifier).toBeLessThan(1);
   });
 
-  it("a weak verifier gets WORSE as N grows — the imperfect-verifier trap", () => {
+  it("a weak verifier gets WORSE as N grows: the imperfect-verifier trap", () => {
     // Just below the crossover the trap outscores the truth on average, so each
     // extra candidate is another chance for a wrong one to beat a right one.
     const small = selectionAccuracy(2, TRIALS, SEED, 0.4).verifier;
@@ -136,10 +136,10 @@ describe("Page 8 — generate, then select", () => {
   });
 });
 
-describe("Page 9 — the authored supervision traces", () => {
+describe("Page 9: the authored supervision traces", () => {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
 
-  it("16/64 really is 1/4 — so the fake cancellation lands the right answer", () => {
+  it("16/64 really is 1/4, so the fake cancellation lands the right answer", () => {
     expect(16 / 64).toBeCloseTo(1 / 4, 10);
     expect(gcd(16, 64)).toBe(16);
   });
@@ -189,7 +189,7 @@ describe("Page 9 — the authored supervision traces", () => {
   });
 });
 
-describe("Page 9 — PRM vs ORM (Lightman et al.)", () => {
+describe("Page 9: PRM vs ORM (Lightman et al.)", () => {
   it("endpoints match the paper: PRM 78.2 > ORM 72.4 > majority 69.6", () => {
     const data = curves.prmVsOrm;
     expect(Math.abs(interpolate(data, 2) - 78.2)).toBeLessThan(TOL);

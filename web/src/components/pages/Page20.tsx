@@ -38,7 +38,7 @@ export function Page20() {
         Two expert witnesses. The <strong>prosecution</strong> (&ldquo;The Illusion of
         Thinking&rdquo;) says reasoning <em>collapses</em> past a complexity threshold. The{" "}
         <strong>defense</strong> says the model just ran out of room to write. Add disks to the Tower
-        of Hanoi, then choose how to score it — and reach your own verdict.
+        of Hanoi, then choose how to score it, and reach your own verdict.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -81,17 +81,17 @@ export function Page20() {
           </p>
           <p className="text-center text-sm text-ink-muted">
             {scoreByAlgorithm
-              ? "Scored on whether it states the correct recursive rule — no token wall."
+              ? "Scored on whether it states the correct recursive rule: no token wall."
               : fitsBudget
                 ? "The full move list still fits the token budget."
-                : "The full move list overflows the token budget — is that a reasoning failure, or a paper-length limit?"}
+                : "The full move list overflows the token budget. Is that a reasoning failure, or a paper-length limit?"}
           </p>
         </div>
       </div>
 
       <p className="max-w-2xl text-sm text-ink-muted">
         Note: some River-Crossing instances are mathematically <strong>impossible</strong> for N ≥{" "}
-        {riverCrossingImpossibleN} — so &ldquo;failure&rdquo; there can&apos;t be a reasoning deficit
+        {riverCrossingImpossibleN}, so &ldquo;failure&rdquo; there can&apos;t be a reasoning deficit
         at all.
       </p>
 

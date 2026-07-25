@@ -44,10 +44,10 @@ const MAX_STEP = RECALL_NODES.length; // 4
 /** Narration for each beat (step 0 is the setup prompt). */
 const BEATS: readonly string[] = [
   "Press Next, or Play, to walk both paths from the same question.",
-  "The same question hits both. It looks like a plain fact to fetch — a System 1 lookup.",
+  "The same question hits both. It looks like a plain fact to fetch: a System 1 lookup.",
   "System 1 reaches straight into memory. System 2 pauses first: could this record have changed since it last learned it?",
   "The machine's memory was sealed in early 2025, before this summer's final. System 2 goes to check a current source instead.",
-  `Recall commits: “${WC.machine.reply[0]}” — one short. The reasoner checked, and lands on ${TWO}.`,
+  `Recall commits: “${WC.machine.reply[0]}” (one short). The reasoner checked, and lands on ${TWO}.`,
 ];
 
 function prefersReducedMotion(): boolean {
@@ -182,7 +182,7 @@ export function Page2() {
     setAnswered(true);
     setAnnounce(
       parseCount(guess) === WC.trueCount
-        ? `You said ${WC.trueCount} — the record. If you followed the news it just popped.`
+        ? `You said ${WC.trueCount}, the record. If you followed the news it just popped.`
         : `You said ${guess.trim()}; the record here is ${WC.trueCount}.`,
     );
   };
@@ -199,7 +199,7 @@ export function Page2() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        No mental math this time. One plain question of record —{" "}
+        No mental math this time. One plain question of record:{" "}
         <strong>how many World Cups has Spain won?</strong> It looks like a lookup. Watch the same
         question take two very different roads.
       </p>
@@ -250,16 +250,16 @@ export function Page2() {
             </button>
             <span className="text-sm text-ink-muted">
               {!answered ? (
-                "puts your own count beside the machine's — no wrong turns for you"
+                "puts your own count beside the machine's; no wrong turns for you"
               ) : guessedRight ? (
                 <>
                   <span className="text-correct">✓ {TWO}.</span> If you followed the news it{" "}
-                  <em>popped</em> — no steps, the count was simply there.
+                  <em>popped</em>: no steps, the count was simply there.
                 </>
               ) : (
                 <>
                   <span className="text-wrong">✗ you said {guess.trim()};</span> the record is{" "}
-                  <strong className="text-ink">{TWO.toLowerCase()}</strong> — the title you never
+                  <strong className="text-ink">{TWO.toLowerCase()}</strong>; the title you never
                   saw can&apos;t be counted from memory.
                 </>
               )}
@@ -336,14 +336,14 @@ export function Page2() {
       <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
         <p>
           <strong>It only looks like a lookup.</strong> The count may pop
-          {answered ? <>, the way it may have for you</> : null} — but a bare recall is exactly the
+          {answered ? <>, the way it may have for you</> : null}. But a bare recall is exactly the
           trap the machine fell into: it counted off a memory sealed before this summer,{" "}
           <strong>{WC.trueCount}</strong> titles reported as{" "}
           <strong>{WC.machine.answer === 1 ? "one" : WC.machine.answer}</strong>.
         </p>
         <p className="mt-2 text-ink-muted">
           Answering it <em>well</em> is a System 2 move: notice the record can change, ask{" "}
-          <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and go get the fresh fact —
+          <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and go get the fresh fact,
           the move the machine skipped.
         </p>
       </div>
@@ -351,15 +351,15 @@ export function Page2() {
       <p className="max-w-2xl text-ink">
         <em>
           So the machine missed on two counts: it lacked the recent result, and it never paused to
-          wonder whether it might be missing one. The easy fix goes after the first — what if we
+          wonder whether it might be missing one. The easy fix goes after the first: what if we
           simply <strong>trained it on data that includes that final</strong>? That is the next
-          page. The second miss is the harder fix — and where this whole story is headed.
+          page. The second miss is the harder fix, and where this whole story is headed.
         </em>
       </p>
 
       <p className="text-xs text-ink-muted">
         the question is real and recent on purpose · Spain&apos;s 2010 title is real, but the 2026
-        win — and so the count of two — is an authored placeholder; verify the final&apos;s result
+        win (and so the count of two) is an authored placeholder; verify the final&apos;s result
         before shipping · the machine&apos;s reply is an authored example of a confident System-1
         miss; a live open model with no web search replaces it later · framing: Kahneman,{" "}
         <em>Thinking, Fast and Slow</em>

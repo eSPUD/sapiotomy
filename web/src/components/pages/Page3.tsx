@@ -200,7 +200,7 @@ export function Page3() {
           <p className="text-lg text-ink-muted">
             Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
             stares right at you: reseal the memory <strong className="text-ink">every morning</strong>.
-            Retrain the model daily and it is never a day out of date. That plan fails twice — first
+            Retrain the model daily and it is never a day out of date. That plan fails twice: first
             the bill, then the data itself.
           </p>
 
@@ -234,7 +234,7 @@ export function Page3() {
                 height={300}
               />
               <Slider
-                label="Drag through five years — this one dial drives both walls"
+                label="Drag through five years; this one dial drives both walls"
                 min={0}
                 max={COMBO_MONTHS}
                 value={months}
@@ -264,7 +264,7 @@ export function Page3() {
                 year; cheaper, better hardware absorbs part of that, so the <strong>bill</strong>{" "}
                 per run grows ×{tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
                 <em>the frontier model of the day</em>, every day, and by year five the program is
-                measured in trillions — and even the flat ${RUN_M}M-per-run plan at the bottom of the
+                measured in trillions, and even the flat ${RUN_M}M-per-run plan at the bottom of the
                 chart burns {fmtM(DAYS * RUN_M)} a year.
               </figcaption>
             </figure>
@@ -283,7 +283,7 @@ export function Page3() {
               className="flex flex-col gap-3 rounded-lg border-l-4 border-wrong bg-surface p-4"
             >
               <p className="text-sm text-ink">
-                Suppose money were no object. It fails anyway — on the scaling law itself.
+                Suppose money were no object. It fails anyway, on the scaling law itself.
                 Compute-optimal training needs parameters and training tokens to grow{" "}
                 <strong>together</strong>, about{" "}
                 <strong>{cp.tokensPerParam} tokens per parameter</strong>. You cannot turn money
@@ -294,7 +294,7 @@ export function Page3() {
                   Chinchilla <strong className="text-ink">{cp.chinchillaParamsB}B</strong> on{" "}
                   {cp.chinchillaTokensB / 1000}T tokens beat Gopher{" "}
                   <strong className="text-ink">{cp.gopherParamsB}B</strong> on {cp.gopherTokensB}B
-                  tokens at equal compute — <strong className="text-ink">+{cp.mmluGainPts} pts</strong>{" "}
+                  tokens at equal compute: <strong className="text-ink">+{cp.mmluGainPts} pts</strong>{" "}
                   MMLU. A quarter the size, four times the data.
                 </p>
                 <div className="rounded-lg border border-grid bg-surface-raised p-3 md:text-right">
@@ -313,7 +313,7 @@ export function Page3() {
                 medianY={ds.medianYear}
               />
               <p className="text-sm text-ink-muted">
-                That is everything worth training on — the public human text of the internet. The
+                That is everything worth training on, the public human text of the internet. The
                 same dial from step 1 walks the plan straight into the window.{" "}
                 <strong className="text-ink">No budget buys tokens that do not exist.</strong>
               </p>
@@ -333,7 +333,7 @@ export function Page3() {
               className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
             >
               <p className="text-lg text-ink">
-                Training is hitting a wall — cost on one side, data on the other. So we had to look
+                Training is hitting a wall: cost on one side, data on the other. So we had to look
                 at the problem through a <strong>different scope</strong>. What do you think the
                 solution may be?
               </p>
@@ -398,7 +398,7 @@ export function Page3() {
             <ul className="flex flex-col gap-2 text-sm text-ink-muted">
               <li>Read straight down: the bill, then the data, then the guess.</li>
               <li>
-                One dial runs the page — drag the five-year slider in step 1 and both the cost curve
+                One dial runs the page: drag the five-year slider in step 1 and both the cost curve
                 and the calendar meter in step 2 move with it.
               </li>
               <li>The guess box is optional; skipping costs you nothing.</li>
@@ -445,7 +445,7 @@ export function Page3() {
         very-large-model recipe of Kaplan et al. 2020 (arXiv:2001.08361) · the ≈
         {ds.stockTrillionTokens}T-token effective data stock and the {ds.windowStartYear}–
         {ds.windowEndYear} full-utilization window (median {ds.medianYear}) are Villalobos et al.
-        2024 (Epoch AI) estimates, quoted verbatim · the timeline marker is derived — it just places
+        2024 (Epoch AI) estimates, quoted verbatim · the timeline marker is derived: it just places
         the slider&apos;s month on the calendar assuming the plan starts today; no depletion rate is
         claimed or drawn · no claims about what any lab actually spends
       </p>

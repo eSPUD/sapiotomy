@@ -179,7 +179,7 @@ export function Page7() {
             <em>same</em> question many times and keep the answer that comes up{" "}
             <strong className="text-ink">most often</strong>. Choosing between three pizza places,
             one friend gives you one opinion and all their quirks; ask everyone and the quirks
-            scatter while the best place keeps collecting votes. Nobody had to be right alone — the
+            scatter while the best place keeps collecting votes. Nobody had to be right alone; the
             crowd only had to be wrong in <em>uncorrelated</em> ways. Done to a model, that is{" "}
             <strong className="text-ink">self-consistency</strong>.
           </p>
@@ -316,7 +316,7 @@ export function Page7() {
                 {/* The selected reasoning path, in full. */}
                 <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-3">
                   <p className="text-xs uppercase tracking-wide text-ink-muted">
-                    a chain landing on {C.paths[openPath].display} — {C.paths[openPath].gist}
+                    a chain landing on {C.paths[openPath].display}: {C.paths[openPath].gist}
                   </p>
                   <ol className="mt-2 flex flex-col gap-1">
                     {C.paths[openPath].steps.map((s, i) => (
@@ -334,19 +334,19 @@ export function Page7() {
                   leader === 0 ? (
                     <div className="rounded-lg border-l-4 border-correct bg-correct/15 p-3 text-sm text-ink">
                       <span className="font-semibold text-correct">✓ The vote lands on {C.display}.</span>{" "}
-                      The plurality agreed on the right answer — even though {shown - liveTally[0]}{" "}
+                      The plurality agreed on the right answer, even though {shown - liveTally[0]}{" "}
                       of {shown} chains got it wrong.
                     </div>
                   ) : leader === -1 ? (
                     <div className="rounded-lg border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-                      A tie — too few chains to separate the buckets.
+                      A tie: too few chains to separate the buckets.
                     </div>
                   ) : (
                     <div className="rounded-lg border-l-4 border-wrong bg-wrong/15 p-3 text-sm text-ink">
                       <span className="font-semibold text-wrong">
                         ✗ The vote lands on {C.paths[leader].display}.
                       </span>{" "}
-                      This batch&apos;s plurality was wrong — {C.paths[leader].gist}. One ballot is
+                      This batch&apos;s plurality was wrong: {C.paths[leader].gist}. One ballot is
                       not the whole story; the curve below is the average.
                     </div>
                   )
@@ -375,7 +375,7 @@ export function Page7() {
                 commit — the curve below stays put. See the no-gate note above. */}
             {prediction === null ? (
               <PredictBar
-                prompt="Before you read it off the curve: a single chain of thought gets 56.5% on GSM8K. Sample 40 chains and take the majority answer — what accuracy do you predict?"
+                prompt="Before you read it off the curve: a single chain of thought gets 56.5% on GSM8K. Sample 40 chains and take the majority answer. What accuracy do you predict?"
                 min={40}
                 max={100}
                 suffix="%"
@@ -391,7 +391,7 @@ export function Page7() {
             ) : (
               <p className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-sm text-ink">
                 You predicted{" "}
-                <strong className="font-mono text-compute">{prediction}%</strong> — it is the dashed
+                <strong className="font-mono text-compute">{prediction}%</strong>; it is the dashed
                 line on the curve. The sampler jumped to 40 chains to match the question.
               </p>
             )}
@@ -422,8 +422,8 @@ export function Page7() {
                       {accuracyNow.toFixed(1)}%
                     </strong>{" "}
                     at {votes} chain{votes === 1 ? "" : "s"}, temperature{" "}
-                    {temperature.toFixed(1)}. The gain is large — Wang et al. report{" "}
-                    <strong className="text-ink">+17.9 points</strong>, 56.5% → 74.4% — but it{" "}
+                    {temperature.toFixed(1)}. The gain is large (Wang et al. report{" "}
+                    <strong className="text-ink">+17.9 points</strong>, 56.5% → 74.4%), but it{" "}
                     <strong className="text-ink">flattens</strong>: the first handful of chains buy
                     almost everything, and 32 → 64 buys almost nothing at double the cost. Voting
                     cancels <em>uncorrelated</em> errors, so the diversity is what you are paying
@@ -437,7 +437,7 @@ export function Page7() {
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              Voting picks by frequency alone — nothing ever asks whether an answer is any{" "}
+              Voting picks by frequency alone; nothing ever asks whether an answer is any{" "}
               <em>good</em>. Fine while the crowd leans right.{" "}
               <em className="text-ink-muted">
                 So what happens when the popular answer is the wrong one? Turn the page.
@@ -458,7 +458,7 @@ export function Page7() {
                 row to read that chain.
               </li>
               <li>
-                Turn temperature to <strong className="text-ink">0</strong> — the vote collapses to
+                Turn temperature to <strong className="text-ink">0</strong>: the vote collapses to
                 one opinion repeated and the curve goes flat.
               </li>
               <li>
@@ -489,7 +489,7 @@ export function Page7() {
         74.4% under self-consistency, both endpoints reproduced at the reference temperature · the
         four reasoning paths are authored teaching examples, not model transcripts, and their
         arithmetic is recomputed by the test suite · the temperature dial is modelled, not
-        measured — below the reference it duplicates chains, above it flattens the answer
+        measured: below the reference it duplicates chains, above it flattens the answer
         distribution
       </p>
 

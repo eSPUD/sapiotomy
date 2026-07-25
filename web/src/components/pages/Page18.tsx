@@ -36,7 +36,7 @@ export function Page18() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Everything so far said &ldquo;more thinking helps.&rdquo; Here&apos;s the reversal. Push the
-        thinking length too far and accuracy <strong>peaks, then falls</strong> — the model talks
+        thinking length too far and accuracy <strong>peaks, then falls</strong>: the model talks
         itself out of the right answer. Easy problems hit that overthinking threshold first.
       </p>
 
@@ -59,7 +59,7 @@ export function Page18() {
             </p>
             <p className="mt-1 text-sm">
               {overthinkingEasy ? (
-                <span className="text-wrong">Overthinking zone — past the peak, accuracy is falling.</span>
+                <span className="text-wrong">Overthinking zone: past the peak, accuracy is falling.</span>
               ) : (
                 <span className="text-ink-muted">Still climbing toward the peak at length {easyPeak}.</span>
               )}

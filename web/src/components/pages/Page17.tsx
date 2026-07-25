@@ -41,7 +41,7 @@ export function Page17() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         More thinking isn&apos;t free. To crack ARC-AGI, OpenAI&apos;s o3 went from ~75.7% at roughly
-        $17–20 per task to 87.5% using <strong>{computeFactor}× the compute</strong> — costing{" "}
+        $17–20 per task to 87.5% using <strong>{computeFactor}× the compute</strong>, costing{" "}
         <em>thousands</em> of dollars per task. A human solves the same puzzle for about ${humanCost}.
       </p>
 

@@ -24,7 +24,7 @@ const TRIALS = 4000;
 const SEED = 20220311;
 const TOL = 1.5; // Monte Carlo tolerance, percentage points
 
-describe("Page 7 — the authored reasoning paths", () => {
+describe("Page 7: the authored reasoning paths", () => {
   const C = SAMPLING_CHAMBER;
   const total = C.boxes * C.perBox;
   const remainder = total - C.used;
@@ -60,7 +60,7 @@ describe("Page 7 — the authored reasoning paths", () => {
   });
 });
 
-describe("Page 7 — the temperature model", () => {
+describe("Page 7: the temperature model", () => {
   it("reproduces the cited endpoints at the reference temperature", () => {
     const t = CHAMBER_MODEL.referenceTemp;
     const anchor = curves.selfConsistency;

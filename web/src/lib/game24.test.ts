@@ -25,7 +25,7 @@ const NUMS = [...GAME24.numbers];
 const TARGET = GAME24.target;
 const OPTS = { maxNodes: 3000, rollouts: 60 };
 
-describe("Game of 24 — the state space", () => {
+describe("Game of 24: the state space", () => {
   it("a move consumes two numbers and leaves one", () => {
     for (const m of moves([2, 5, 6, 6])) {
       expect(m.nums.length).toBe(3);
@@ -57,7 +57,7 @@ describe("Game of 24 — the state space", () => {
   });
 });
 
-describe("Game of 24 — the searcher's evaluator", () => {
+describe("Game of 24: the searcher's evaluator", () => {
   it("scores a finished target state 1 and is exact for two numbers", () => {
     expect(heuristic([24], TARGET)).toBe(1);
     expect(heuristic([4, 6], TARGET)).toBe(1); // 4 × 6
@@ -72,7 +72,7 @@ describe("Game of 24 — the searcher's evaluator", () => {
     }
   });
 
-  it("is genuinely imperfect — it misjudges the winning opening move", () => {
+  it("is genuinely imperfect: it misjudges the winning opening move", () => {
     // The page's claim: the evaluator likes 6, 9, 13-style states because they
     // sum near 24, and cannot see the setups that need two more moves. If it
     // ever became an oracle, greedy would stop failing and the page would lose
@@ -82,7 +82,7 @@ describe("Game of 24 — the searcher's evaluator", () => {
   });
 });
 
-describe("Game of 24 — the strategies on the chosen instance", () => {
+describe("Game of 24: the strategies on the chosen instance", () => {
   const run = (s: Strategy, beamWidth?: number) =>
     search(NUMS, TARGET, s, { ...OPTS, beamWidth });
 

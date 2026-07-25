@@ -102,8 +102,8 @@ export function Page10() {
 
       <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
         <p>
-          <strong>You already do this.</strong> Looking for a job, you can go broad — apply
-          everywhere, keep every option alive, judge later. Or you can go deep — pick one or two
+          <strong>You already do this.</strong> Looking for a job, you can go broad: apply
+          everywhere, keep every option alive, judge later. Or you can go deep: pick one or two
           roles and pour everything into them, and start over if they fall through. Neither is
           right. They are different bets about where your effort pays off, and you pick based on
           how much time you have and how good your judgement is.
@@ -223,7 +223,7 @@ export function Page10() {
                     })}
                     {level.shown.length === 0 ? (
                       <span className="text-xs text-ink-muted">
-                        never reached — the search stopped above this depth
+                        never reached: the search stopped above this depth
                       </span>
                     ) : null}
                   </div>
@@ -256,7 +256,7 @@ export function Page10() {
                   <>
                     <p className="font-semibold text-wrong">✗ no solution found</p>
                     <p className="mt-1 text-xs text-ink-muted">
-                      A solution exists — this strategy pruned it away. Its evaluator liked the
+                      A solution exists; this strategy pruned it away. Its evaluator liked the
                       wrong branch, and it had no way back.
                     </p>
                   </>
@@ -294,7 +294,7 @@ export function Page10() {
                     ✗ {G.plainCot.answer}
                   </p>
                   <p className="mt-1 text-xs text-ink-muted">
-                    The chain was not stupid — it got to within one unused number of the answer.
+                    The chain was not stupid; it got to within one unused number of the answer.
                     It just had no way to undo a decision it made four steps earlier. That is the
                     thing search buys, and the reason it costs more than one state.
                   </p>
@@ -312,7 +312,7 @@ export function Page10() {
               <span className="font-mono">
                 {search([...G.numbers], G.target, "greedy", { maxNodes: 3000 }).nodesEvaluated}
               </span>{" "}
-              states of wasted effort. It is not that greedy searched too little — it is that it
+              states of wasted effort. It is not that greedy searched too little; it is that it
               could never reconsider. Widen to a beam of two and the answer appears.
             </p>
             <p className="mt-2 text-sm text-ink-muted">
@@ -356,7 +356,7 @@ export function Page10() {
             </div>
             <p className="text-sm text-ink-muted">
               Chain of thought solves <strong className="text-ink">{cot}%</strong> of these. Even
-              voting over many chains only reaches {cotSc}% — because every chain is committing to
+              voting over many chains only reaches {cotSc}%, because every chain is committing to
               its first move. Searching the tree reaches{" "}
               <strong className="text-correct">74%</strong> at b = 5.
             </p>
@@ -378,7 +378,7 @@ export function Page10() {
       </div>
       <p className="text-xs text-ink-muted">
         the tree, the scores and the compute counter are produced by a real Game-of-24 search in
-        src/lib/game24.ts, run live in your browser — every number on this page is a measurement of
+        src/lib/game24.ts, run live in your browser; every number on this page is a measurement of
         that code, and the strategy outcomes are re-asserted in the test suite · the searcher&apos;s
         evaluator is deliberately imperfect (exact for one or two remaining numbers, an eyeballed
         sum-or-product guess above that), standing in for a model&apos;s value judgement; an exact

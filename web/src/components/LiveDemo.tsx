@@ -74,7 +74,7 @@ export function LiveDemo({ prompt, fallbackTrace }: LiveDemoProps) {
       </ol>
       {status === "fallback" ? (
         <p className="mt-2 text-xs italic text-ink-muted">
-          Live model unavailable — fell back to the pre-computed trace.
+          Live model unavailable; fell back to the pre-computed trace.
         </p>
       ) : null}
     </section>

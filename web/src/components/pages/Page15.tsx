@@ -13,10 +13,10 @@ const PAGE_N = 15;
 const MAX_PRESSES = 5;
 const THOUGHTS = [
   "The three numbers are 6, 6, and 24…",
-  "Wait — let me re-check that multiplication.",
-  "Wait — actually 6 × 4 = 24, so I need a 4.",
-  "Wait — 6 / (1 − 3/4) = 24. That works.",
-  "Wait — let me confirm each operation once more.",
+  "Wait, let me re-check that multiplication.",
+  "Wait, actually 6 × 4 = 24, so I need a 4.",
+  "Wait, 6 / (1 − 3/4) = 24. That works.",
+  "Wait, let me confirm each operation once more.",
   "Final answer: (6 ÷ (1 − 3 ÷ 4)) = 24. ✓",
 ];
 
@@ -41,7 +41,7 @@ export function Page15() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         The simplest modern trick: when the model tries to stop, make it keep going by appending the
-        word <strong>&ldquo;Wait&rdquo;</strong>. Each nudge forces another reconsideration — and the
+        word <strong>&ldquo;Wait&rdquo;</strong>. Each nudge forces another reconsideration, and the
         answer sometimes flips from wrong to right.
       </p>
 
@@ -60,7 +60,7 @@ export function Page15() {
           </button>
           <BigNumber value={accuracy} suffix="%" tone={solved ? "correct" : "wrong"} label={`AIME24 accuracy (s1-32B) after ${presses} "Wait"${presses === 1 ? "" : "s"}`} />
           <p className={`text-sm font-semibold ${solved ? "text-correct" : "text-wrong"}`}>
-            Current answer: {solved ? "24 ✓ (correct)" : "18 ✗ (still wrong — keep it thinking)"}
+            Current answer: {solved ? "24 ✓ (correct)" : "18 ✗ (still wrong; keep it thinking)"}
           </p>
         </div>
         <div className="rounded-lg border border-grid bg-surface p-4">

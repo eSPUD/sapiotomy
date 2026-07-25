@@ -98,7 +98,7 @@ export function Page1() {
               <div className="flex items-baseline justify-between gap-2">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-compute">System 1 · fast</h3>
                 <span role="timer" aria-label="System 1 time" className="rounded-full border border-grid px-2.5 py-0.5 font-mono text-xs tabular-nums text-ink-muted">
-                  {s1Revealed ? "instant" : "—"}
+                  {s1Revealed ? "instant" : "not started"}
                 </span>
               </div>
               <p className="font-mono text-3xl text-ink">{SYSTEMS.fast.prompt}</p>
@@ -124,7 +124,7 @@ export function Page1() {
               <div className="flex items-baseline justify-between gap-2">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-wrong">System 2 · slow</h3>
                 <span role="timer" aria-label="System 2 time" className="rounded-full border border-grid px-2.5 py-0.5 font-mono text-xs tabular-nums text-ink-muted">
-                  {s2Step === 0 ? "—" : fmt(s2Ms)}
+                  {s2Step === 0 ? "not started" : fmt(s2Ms)}
                 </span>
               </div>
               <p className="font-mono text-3xl text-ink">{SYSTEMS.slow.prompt}</p>

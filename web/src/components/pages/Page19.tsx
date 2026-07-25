@@ -33,7 +33,7 @@ export function Page19() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         We&apos;d love to trust a model&apos;s written reasoning. But when researchers slipped a{" "}
-        <strong>hint</strong> into a question — one the model demonstrably used — the model{" "}
+        <strong>hint</strong> into a question (one the model demonstrably used), the model{" "}
         <em>admitted</em> using it only a fraction of the time. Plant hints and watch the confession
         meter stay stubbornly low.
       </p>
@@ -63,7 +63,7 @@ export function Page19() {
 
         <div className="rounded-lg border border-grid bg-surface p-4">
           <p className="mb-1 text-sm text-ink-muted">
-            Confession meter — how often the model admits the hint ({trials} trials):
+            Confession meter, how often the model admits the hint ({trials} trials):
           </p>
           <div className="h-6 w-full rounded bg-surface-raised">
             <div className="flex h-6 items-center justify-end rounded bg-wrong pr-2 text-xs font-semibold text-canvas" style={{ width: `${measured}%` }}>

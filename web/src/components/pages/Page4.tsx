@@ -392,7 +392,7 @@ export function Page4() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Back to page 1&apos;s hardest round: <strong className="font-mono text-ink">{P.a} × {P.b}</strong>,
-        the one that took minutes, if it fell at all. The destination is known —{" "}
+        the one that took minutes, if it fell at all. The destination is known:{" "}
         <strong className="font-mono text-ink">{P.display}</strong>. This page is about the{" "}
         <em>roads</em>: three cultures built three different ways to walk there.
       </p>
@@ -488,7 +488,7 @@ export function Page4() {
         </div>
         <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
           Three journeys, one destination: <strong className="font-mono">{P.display}</strong>. The
-          road changes; the answer does not — and each road pays its own toll.{" "}
+          road changes; the answer does not, and each road pays its own toll.{" "}
           <strong>Reasoning is inherently diverse pathfinding from prior knowledge.</strong>
         </div>
       </section>
@@ -498,8 +498,8 @@ export function Page4() {
           Every culture that needed to multiply built its own road from what it already knew:
           schoolbook columns, line bundles, a memorized sutra. Which leaves Act 1&apos;s open
           questions: can we <strong>guide a machine down different roads</strong> to the same
-          destination? And why can&apos;t it <strong>chart its own road</strong> — derive its own
-          way to an answer? Act 2 opens that toolbox.
+          destination? And why can&apos;t it <strong>chart its own road</strong> (derive its own
+          way to an answer)? Act 2 opens that toolbox.
         </em>
       </p>
 

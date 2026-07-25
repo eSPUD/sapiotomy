@@ -16,7 +16,7 @@ export const QUIZ: QuizQuestion[] = [
     objective: "Read a log-linear coverage curve",
     prompt:
       "Coverage grows log-linearly with samples. Going from 10 → 100 samples gave +17 points. Roughly what does 100 → 1000 samples buy?",
-    options: ["About +17 points again", "About +170 points", "Nothing — it has saturated", "It goes down"],
+    options: ["About +17 points again", "About +170 points", "Nothing: it has saturated", "It goes down"],
     correctIndex: 0,
   },
   {
@@ -55,14 +55,14 @@ export interface ResourceLink {
 }
 
 export const RESOURCES: ResourceLink[] = [
-  { label: "Wei et al. 2022 — Chain-of-Thought Prompting", url: "https://arxiv.org/abs/2201.11903" },
-  { label: "Wang et al. 2022 — Self-Consistency", url: "https://arxiv.org/abs/2203.11171" },
-  { label: "Lightman et al. 2023 — Let's Verify Step by Step", url: "https://arxiv.org/abs/2305.20050" },
-  { label: "Yao et al. 2023 — Tree of Thoughts", url: "https://arxiv.org/abs/2305.10601" },
-  { label: "Snell et al. 2024 — Scaling Test-Time Compute", url: "https://arxiv.org/abs/2408.03314" },
-  { label: "Brown et al. 2024 — Large Language Monkeys", url: "https://arxiv.org/abs/2407.21787" },
+  { label: "Wei et al. 2022: Chain-of-Thought Prompting", url: "https://arxiv.org/abs/2201.11903" },
+  { label: "Wang et al. 2022: Self-Consistency", url: "https://arxiv.org/abs/2203.11171" },
+  { label: "Lightman et al. 2023: Let's Verify Step by Step", url: "https://arxiv.org/abs/2305.20050" },
+  { label: "Yao et al. 2023: Tree of Thoughts", url: "https://arxiv.org/abs/2305.10601" },
+  { label: "Snell et al. 2024: Scaling Test-Time Compute", url: "https://arxiv.org/abs/2408.03314" },
+  { label: "Brown et al. 2024: Large Language Monkeys", url: "https://arxiv.org/abs/2407.21787" },
   { label: "DeepSeek-R1 2025", url: "https://arxiv.org/abs/2501.12948" },
-  { label: "Muennighoff et al. 2025 — s1 (preprint)", url: "https://arxiv.org/abs/2501.19393" },
-  { label: "Anthropic 2025 — Reasoning models don't always say what they think (preprint)", url: "https://arxiv.org/abs/2505.05410" },
-  { label: "Shojaee et al. 2025 — The Illusion of Thinking (preprint)", url: "https://arxiv.org/abs/2506.06941" },
+  { label: "Muennighoff et al. 2025: s1 (preprint)", url: "https://arxiv.org/abs/2501.19393" },
+  { label: "Anthropic 2025: Reasoning models don't always say what they think (preprint)", url: "https://arxiv.org/abs/2505.05410" },
+  { label: "Shojaee et al. 2025: The Illusion of Thinking (preprint)", url: "https://arxiv.org/abs/2506.06941" },
 ];

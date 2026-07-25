@@ -93,7 +93,7 @@ export function Page9() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         There are two ways to grade a student. Mark the final answer, or mark{" "}
-        <strong>every line of the working</strong>. They agree most of the time — and where they
+        <strong>every line of the working</strong>. They agree most of the time, and where they
         disagree is where all the interesting failures live.
       </p>
 
@@ -103,7 +103,7 @@ export function Page9() {
           maths teacher said it, and plenty of them gave more credit for the working than for the
           answer. That always felt like bureaucracy. It was not. A right answer reached by a broken
           method is a <em>trap</em>: it will not survive contact with the next problem, and nobody
-          — not the student, not the teacher — has any way of knowing that from the answer alone.
+          (not the student, not the teacher) has any way of knowing that from the answer alone.
         </p>
       </div>
 
@@ -318,7 +318,7 @@ export function Page9() {
         <div className="flex flex-col gap-4">
           <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-ink">
             <p>
-              <strong>Solution A is the whole argument.</strong> 16/64 really does reduce to 1/4 —
+              <strong>Solution A is the whole argument.</strong> 16/64 really does reduce to 1/4,
               so cancelling the sixes gets full marks from an outcome grader. But the method is
               not arithmetic, it is a coincidence about these particular digits, and it collapses
               on the very next fraction. Reward the outcome and you have just taught the model that
@@ -326,7 +326,7 @@ export function Page9() {
             </p>
             <p className="mt-2 text-sm text-ink-muted">
               <strong className="text-ink">Right answer, wrong reasoning.</strong> Only a grader
-              that reads the steps can tell the difference — and when the answer is wrong
+              that reads the steps can tell the difference, and when the answer is wrong
               (Solution B), only the step grader can tell you <em>which line</em> to fix.
             </p>
           </div>
@@ -369,7 +369,7 @@ export function Page9() {
             <p className="text-sm">
               <strong>But only where there is a fact to be right about.</strong> Process
               supervision needs each step to have a truth value. Ask for a poem, a melody, a piece
-              of visual design, and there is no ground truth mid-stanza — a &ldquo;wrong&rdquo;
+              of visual design, and there is no ground truth mid-stanza; a &ldquo;wrong&rdquo;
               line three verses in may be exactly what makes the ending land. There, judging the
               outcome is not laziness, it is the only honest option. Grade the process when the
               domain has absolutes; grade the outcome when it has taste.
@@ -380,7 +380,7 @@ export function Page9() {
             <p className="text-sm">
               <strong>And finer is not automatically better.</strong> If step-level beats
               answer-level, why not grade every <em>token</em>? Because a half-written line is not
-              a claim yet — scoring it punishes a model for the shape of a sentence before the
+              a claim yet; scoring it punishes a model for the shape of a sentence before the
               sentence has said anything. That is judging a book by its cover, or a poem by its
               first word. The useful unit is the <strong>reasoning step</strong>: the smallest
               piece that is complete enough to be right or wrong.
@@ -391,7 +391,7 @@ export function Page9() {
 
       <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
         <strong>Where this leaves us:</strong> a step-level grader does something the others
-        cannot — it can judge a chain <em>while it is still being written</em>. And once you can
+        cannot: it can judge a chain <em>while it is still being written</em>. And once you can
         score a half-finished chain, you no longer have to finish the ones that are going badly.{" "}
         <em className="text-ink-muted">
           You can branch, look ahead, and back out. Turn the page.

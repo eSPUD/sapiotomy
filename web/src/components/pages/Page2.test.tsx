@@ -40,7 +40,7 @@ const walk = () => {
   for (let i = 0; i < WC.machine.reply.length + 3; i++) fireEvent.click(nextBtn());
 };
 
-describe("Page 2 (Two Systems) — all content visible, no popping", () => {
+describe("Page 2 (Two Systems): all content visible, no popping", () => {
   beforeEach(() => {
     reducedMotion = true;
   });

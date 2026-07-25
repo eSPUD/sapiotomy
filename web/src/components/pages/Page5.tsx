@@ -158,7 +158,7 @@ export function Page5() {
     ? "Set the example switch, then ask. Flip it after asking to compare the two behaviours."
     : example
       ? narrationA(step)
-      : `No worked example to copy — one forward leap. It is ${D.blurtNumber}, not ${D.answerNumber}. The right count is ${D.start} − ${D.used} + ${D.bought} = ${D.answerNumber}.`;
+      : `No worked example to copy: one forward leap. It is ${D.blurtNumber}, not ${D.answerNumber}. The right count is ${D.start} − ${D.used} + ${D.bought} = ${D.answerNumber}.`;
 
   // ---- Stage B: the scaling law, predict then drive --------------------
   const [prediction, setPrediction] = useState<number | null>(null);
@@ -175,10 +175,10 @@ export function Page5() {
   function narrationB(s: Size): string {
     const v = scoreAt[s];
     if (s === 8)
-      return `Chain-of-thought HURTS here — ${v.cot}% versus ${v.standard}% for the blurt. The model is too small to follow the road; the paper calls the ability emergent.`;
+      return `Chain-of-thought HURTS here: ${v.cot}% versus ${v.standard}% for the blurt. The model is too small to follow the road; the paper calls the ability emergent.`;
     if (s === 62)
-      return `Now it helps — ${v.cot}% versus ${v.standard}%. The road starts to pay off as the model grows.`;
-    return `+${delta540} points from a prompt alone — ${v.cot}% versus ${v.standard}%, past the old fine-tuned record of ${cp.priorSota}%.`;
+      return `Now it helps: ${v.cot}% versus ${v.standard}%. The road starts to pay off as the model grows.`;
+    return `+${delta540} points from a prompt alone: ${v.cot}% versus ${v.standard}%, past the old fine-tuned record of ${cp.priorSota}%.`;
   }
 
   const segBtn = (active: boolean) =>
@@ -197,7 +197,7 @@ export function Page5() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Act 1 ended on a question: can we <strong>guide a machine down a road</strong>? The first
-        tool is the simplest — <em>show it one</em>. Put a worked example in the prompt and watch
+        tool is the simplest: <em>show it one</em>. Put a worked example in the prompt and watch
         what changes.
       </p>
 
@@ -233,7 +233,7 @@ export function Page5() {
           <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-3">
             {example ? (
               <p className="mb-2 flex items-center gap-2 border-b border-dashed border-grid pb-2 text-xs text-compute">
-                <span aria-hidden="true">＋</span>1 worked example prepended — a{" "}
+                <span aria-hidden="true">＋</span>1 worked example prepended: a{" "}
                 <em>different</em> problem, solved step by step for the model to imitate
               </p>
             ) : null}
@@ -336,7 +336,7 @@ export function Page5() {
 
       <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
         This is <strong>chain-of-thought prompting</strong>: the worked example in the prompt
-        carries its reasoning out loud, so the model answers the new question the same way —
+        carries its reasoning out loud, so the model answers the new question the same way:
         reasoning first, answer last. The page is its scratch paper.
       </div>
 
@@ -359,7 +359,7 @@ export function Page5() {
               jump and read as a page change. Same rule as page 7. */}
           {prediction === null ? (
             <PredictBar
-              prompt={`Before you read it off the chart: showing work lifts the biggest model (PaLM-540B) by +${delta540} points on GSM8K. At 8B — a model ~67× smaller — what does showing work do to the score? (points gained)`}
+              prompt={`Before you read it off the chart: showing work lifts the biggest model (PaLM-540B) by +${delta540} points on GSM8K. At 8B (a model ~67× smaller), what does showing work do to the score? (points gained)`}
               min={-10}
               max={40}
               suffix=" pts"
@@ -400,7 +400,7 @@ export function Page5() {
                     scales it ~1:1 instead of magnifying the axis type. */}
                 <div className="min-w-0">
                   <LineChart
-                    title={`GSM8K solve rate for the PaLM family at 8, 62 and 540 billion parameters, log x axis, redrawn from Wei et al. 2022: standard prompting stays low at ${sp.palm8Standard}, ${sp.palm62Standard} and ${sp.palm540Standard} percent, while chain-of-thought climbs from ${sp.palm8Cot} through ${sp.palm62Cot} to ${sp.palm540Cot} percent — below standard at 8B, far above it at 540B. Currently marking ${size} billion parameters.`}
+                    title={`GSM8K solve rate for the PaLM family at 8, 62 and 540 billion parameters, log x axis, redrawn from Wei et al. 2022: standard prompting stays low at ${sp.palm8Standard}, ${sp.palm62Standard} and ${sp.palm540Standard} percent, while chain-of-thought climbs from ${sp.palm8Cot} through ${sp.palm62Cot} to ${sp.palm540Cot} percent: below standard at 8B, far above it at 540B. Currently marking ${size} billion parameters.`}
                     points={standardCurve}
                     secondary={{ points: cotCurve, label: "chain-of-thought prompting" }}
                     primaryLabel="standard prompting (the blurt)"
@@ -451,7 +451,7 @@ export function Page5() {
       </section>
 
       <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        Same models, same questions — but the road only helps a walker big enough to follow it.{" "}
+        Same models, same questions. But the road only helps a walker big enough to follow it.{" "}
         <em className="text-ink-muted">
           And if a longer walk buys a better answer, what sets how long the model may walk? Turn the
           page.
@@ -468,7 +468,7 @@ export function Page5() {
         flat-vs-steep numbers are the paper&apos;s per-scale GSM8K results for the PaLM family
         (appendix table, drawn as its Figure 4): standard {sp.palm8Standard}/{sp.palm62Standard}/
         {sp.palm540Standard}% and chain-of-thought {sp.palm8Cot}/{sp.palm62Cot}/{sp.palm540Cot}% at
-        8B/62B/540B · at 8B the chain is <em>below</em> standard ({delta8} pts) — the paper calls the
+        8B/62B/540B · at 8B the chain is <em>below</em> standard ({delta8} pts); the paper calls the
         ability emergent · the +{delta540}-point gain and the {cp.priorSota}% prior state of the art
         are the paper&apos;s own numbers
       </p>

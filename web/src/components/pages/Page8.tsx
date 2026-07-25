@@ -104,7 +104,7 @@ export function Page8() {
             Frequency voting has a bad blind spot:{" "}
             <strong className="text-ink">sometimes the right answer is the rarest one</strong>. On a
             problem with a trap the crowd piles onto the trap, so counting votes just measures it
-            precisely. Bring in a judge instead — nobody wins a poetry competition by submitting
+            precisely. Bring in a judge instead; nobody wins a poetry competition by submitting
             the same poem forty times. Score every candidate, keep the best:{" "}
             <strong className="text-ink">best-of-N with a verifier</strong>.
           </p>
@@ -206,7 +206,7 @@ export function Page8() {
                   Verifier best-of-N
                 </p>
                 <p className="text-xs text-ink-muted">
-                  scores every candidate, keeps the top one — and it has the easier job:{" "}
+                  scores every candidate, keeps the top one, and it has the easier job:{" "}
                   <em>checking</em> that $0.05 and $1.05 sum to $1.10 is arithmetic,{" "}
                   <em>finding</em> $0.05 took insight
                 </p>
@@ -291,7 +291,7 @@ export function Page8() {
               ))}
             </div>
             <p className="text-xs text-ink-muted">
-              over {TRIALS.toLocaleString()} seeded batches of {n} — the panels above are one draw
+              over {TRIALS.toLocaleString()} seeded batches of {n}; the panels above are one draw
               from this distribution
             </p>
               </div>
@@ -331,18 +331,18 @@ export function Page8() {
               <figcaption className="text-sm text-ink-muted">
                 Majority voting <strong className="text-wrong">falls</strong> as N grows: more
                 samples cannot find a rare answer when the rule is &ldquo;whatever is most
-                common&rdquo; — they only sharpen the measurement of the trap.
+                common&rdquo;. They only sharpen the measurement of the trap.
               </figcaption>
             </div>
           </figure>
 
           <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
             <strong>Now drag reliability down.</strong> The judge is a model too, and one that has
-            misread the criteria does not go random — it goes <em>confidently</em> wrong, toward
+            misread the criteria does not go random; it goes <em>confidently</em> wrong, toward
             whatever looks most fluent, which on a trap problem is the trap. Below roughly{" "}
             <strong>45%</strong> the lines cross: the verifier does worse than counting, and worse
             at large N than small, since every extra candidate is another chance for a wrong one to
-            score luckily high. A weak verifier turns compute into confident errors — which is why
+            score luckily high. A weak verifier turns compute into confident errors, which is why
             voting keeps its place. It is dumb, but it cannot be fooled about what it measures.
           </div>
           </div>
@@ -352,7 +352,7 @@ export function Page8() {
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              Selection beats counting exactly as far as the selector can be trusted — so the next
+              Selection beats counting exactly as far as the selector can be trusted, so the next
               question is not &ldquo;how many candidates?&rdquo; but{" "}
               <em>&ldquo;what is the judge actually reading?&rdquo;</em>{" "}
               <em className="text-ink-muted">
@@ -370,7 +370,7 @@ export function Page8() {
             </h2>
             <ul className="flex flex-col gap-2 text-sm text-ink-muted">
               <li>
-                Both panels in step 1 judge the <strong className="text-ink">same</strong> batch —
+                Both panels in step 1 judge the <strong className="text-ink">same</strong> batch;
                 only the rule for choosing differs.
               </li>
               <li>
@@ -390,8 +390,8 @@ export function Page8() {
             </h2>
             <p className="text-sm text-ink-muted">
               Verifier best-of-N: Cobbe et al. 2021. Imperfect verifiers cap (and reverse) the
-              gains: Stroebl et al. 2024. The simulation is illustrative, not a digitized curve —
-              links at the foot.
+              gains: Stroebl et al. 2024. The simulation is illustrative, not a digitized curve.
+              Links at the foot.
             </p>
           </div>
         </aside>
@@ -406,7 +406,7 @@ export function Page8() {
         arithmetic check shown for each answer is recomputed by the test suite · the two panels and
         the chart are a seeded, ILLUSTRATIVE Monte Carlo, not a digitized published curve: no
         reported result fixes what &ldquo;a 40%-reliable verifier&rdquo; means numerically · what
-        is cited is the shape — training a verifier and selecting among N sampled solutions
+        is cited is the shape: training a verifier and selecting among N sampled solutions
         outperforms taking the model&apos;s answer directly (Cobbe et al. 2021, arXiv:2110.14168,
         the GSM8K verifier result), and gains from resampling are capped, and can reverse, when the
         verifier is imperfect (Stroebl et al. 2024, &ldquo;Inference Scaling fLaws&rdquo;,

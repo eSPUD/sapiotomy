@@ -38,7 +38,7 @@ export function Page16() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Reasoning models like DeepSeek-R1 aren&apos;t prompted to think — they&apos;re{" "}
+        Reasoning models like DeepSeek-R1 aren&apos;t prompted to think; they&apos;re{" "}
         <strong>trained</strong> to, with reinforcement learning. Scrub through training and watch
         AIME accuracy climb from 15.6% to 71.0% as the model&apos;s answers grow longer.
       </p>
@@ -67,7 +67,7 @@ export function Page16() {
           <BigNumber value={displayAcc} suffix="%" tone="correct" label={voting ? "AIME'24 with cons@64" : "AIME'24 pass@1"} />
           <p className="text-sm text-ink-muted">
             Reasoning length ≈ <span className="font-mono text-ink">{length}</span> tokens.{" "}
-            {voting && step >= 8000 ? "cons@64 reaches 86.7% — matching OpenAI-o1-0912." : "Accuracy and thinking length climb together."}
+            {voting && step >= 8000 ? "cons@64 reaches 86.7%, matching OpenAI-o1-0912." : "Accuracy and thinking length climb together."}
           </p>
         </div>
         <LineChart

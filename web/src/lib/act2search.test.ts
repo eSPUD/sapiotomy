@@ -12,7 +12,7 @@ import {
 
 const TOL = 1.0;
 
-describe("Page 10 — Tree of Thoughts (Yao et al.)", () => {
+describe("Page 10: Tree of Thoughts (Yao et al.)", () => {
   it("b=1 -> 45% and b=5 -> 74% within tolerance", () => {
     const d = curves.treeOfThoughts;
     expect(Math.abs(interpolate(d, 1) - 45)).toBeLessThan(TOL);
@@ -26,7 +26,7 @@ describe("Page 10 — Tree of Thoughts (Yao et al.)", () => {
   });
 });
 
-describe("Page 11 — toy MCTS (PUCT)", () => {
+describe("Page 11: toy MCTS (PUCT)", () => {
   const game: ToyGame = { armValues: [0.2, 0.5, 0.9, 0.45, 0.3] };
 
   it("with enough rollouts it selects the best arm (index 2)", () => {
@@ -44,7 +44,7 @@ describe("Page 11 — toy MCTS (PUCT)", () => {
   });
 });
 
-describe("Page 12 — log-linear coverage (Brown et al.)", () => {
+describe("Page 12: log-linear coverage (Brown et al.)", () => {
   const d = curves.coverageScaling;
   const { intercept, slopePerDecade } = d.fit!.params;
 
@@ -61,7 +61,7 @@ describe("Page 12 — log-linear coverage (Brown et al.)", () => {
   });
 });
 
-describe("Page 13 — compute-optimal allocation (Snell et al.)", () => {
+describe("Page 13: compute-optimal allocation (Snell et al.)", () => {
   it("optimal allocation beats a naive uniform split", () => {
     const total = 9;
     const optimal = optimalAllocation(total);

@@ -81,10 +81,10 @@ export function Page6() {
     if (!landedRef.current && v >= WORD_CAP) {
       landedRef.current = true;
       setAnnouncement(
-        `Budget ${WORD_CAP} words: the chain completes at depth ${T.steps.length} and the answer flips to ${T.display} — correct.`,
+        `Budget ${WORD_CAP} words: the chain completes at depth ${T.steps.length} and the answer flips to ${T.display} (correct).`,
       );
     } else if (v === 0) {
-      setAnnouncement(`Budget zero: the model blurts ${T.blurt} — wrong.`);
+      setAnnouncement(`Budget zero: the model blurts ${T.blurt} (wrong).`);
     }
   };
 
@@ -106,7 +106,7 @@ export function Page6() {
             A chain is written one piece at a time, and{" "}
             <strong className="text-ink">every piece of it is computation</strong> the model spends
             before committing. So the dial is blunt and direct: cap the working and you have set
-            the bar for how long the model may think. More working, more serial computation — and a
+            the bar for how long the model may think. More working, more serial computation, and a
             higher chance the answer lands.
           </p>
 
@@ -206,14 +206,15 @@ export function Page6() {
               {/* Units, stated where the numbers are — not buried in the footer. */}
               <p className="border-t border-grid pt-3 text-xs text-ink-muted">
                 <strong className="text-ink">What the meter counts:</strong> words, not tokens.
-                Every figure above is the step&apos;s whitespace word count — step 1 is{" "}
+                Every figure above is the step&apos;s whitespace word count: step 1 is{" "}
                 <span className="font-mono text-ink">{T.steps[0].words}</span> words, the chain is{" "}
-                <span className="font-mono text-ink">{WORD_CAP}</span> — so you can check each one
+                <span className="font-mono text-ink">{WORD_CAP}</span>, so you can check each one
                 by eye. A model bills in <em>tokens</em>, and a token count is not a word count:
                 it depends on the tokenizer, and a string like{" "}
                 <span className="font-mono text-ink">2,820.</span> is more than one token. The real
-                figure has to be measured against a specific model, and this page does not do that
-                — no model is called here. Words stand in for the unit; the mechanism is the point.
+                figure has to be measured against a specific model, and this page does not do
+                that; no model is called here. Words stand in for the unit; the mechanism is the
+                point.
               </p>
             </section>
           </section>
@@ -233,7 +234,7 @@ export function Page6() {
                     System 1 · the blurt
                   </p>
                   <p className="mt-1 text-sm text-ink">
-                    The answer and nothing else. Cheap, instant — and here, wrong.
+                    The answer and nothing else. Cheap, instant. And here, wrong.
                   </p>
                   <p className="mt-2 font-mono text-sm text-ink-muted">
                     {T.blurt.trim().split(/\s+/).length} word · ✗
@@ -244,7 +245,7 @@ export function Page6() {
                     System 2 · the chain
                   </p>
                   <p className="mt-1 text-sm text-ink">
-                    The extra working you spend — and what it buys: each line is another unit of
+                    The extra working you spend, and what it buys: each line is another unit of
                     serial computation toward the answer.
                   </p>
                   <p className="mt-2 font-mono text-sm text-ink-muted">{WORD_CAP} words · ✓</p>
@@ -253,7 +254,7 @@ export function Page6() {
               <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
                 Just as when a person solves a problem: blurting takes no time, but showing your
                 work step by step takes <strong>focus and time</strong>. The only difference for a
-                model is the currency — its focus and time <strong>are tokens</strong>.
+                model is the currency: its focus and time <strong>are tokens</strong>.
               </div>
             </section>
           </section>
@@ -274,11 +275,11 @@ export function Page6() {
                 Step 1 is a demonstration; this is a measurement. Forcing a real model to think
                 longer (by refusing to let it stop) moves competition-math accuracy from{" "}
                 <strong className="font-mono">{bp.start}%</strong> to{" "}
-                <strong className="font-mono">{bp.end}%</strong> — no retraining, only more
+                <strong className="font-mono">{bp.end}%</strong>: no retraining, only more
                 thinking tokens. Those are real tokens, counted by the authors.
               </p>
               <p className="text-sm text-ink-muted">
-                The lever that does it — the &ldquo;Wait&rdquo; button — gets its own page (15).
+                The lever that does it, the &ldquo;Wait&rdquo; button, gets its own page (15).
               </p>
             </aside>
           </section>
@@ -303,7 +304,7 @@ export function Page6() {
                 stops where the money does.
               </li>
               <li>
-                The meter counts <strong className="text-ink">words</strong>, not tokens — every
+                The meter counts <strong className="text-ink">words</strong>, not tokens; every
                 number is checkable by eye.
               </li>
               <li>
@@ -335,7 +336,7 @@ export function Page6() {
       </div>
       <p className="text-xs text-ink-muted">
         the five-step chain is an authored demonstration, not a model transcript · its costs are
-        whitespace <strong>word</strong> counts, not tokenizer token counts — the page labels them
+        whitespace <strong>word</strong> counts, not tokenizer token counts; the page labels them
         as words throughout, and both the per-step counts and every intermediate value are
         recomputed from the step text by the test suite · a true token count is model-specific and
         would have to be measured against a particular tokenizer, which this page does not do ·
@@ -344,7 +345,7 @@ export function Page6() {
         full on page 15 · grounding: Kojima et al. 2022, &ldquo;Large Language Models are
         Zero-Shot Reasoners&rdquo; (NeurIPS 2022, arXiv:2205.11916) · theory: Feng et al. 2023
         (NeurIPS 2023, arXiv:2305.15408) and Merrill &amp; Sabharwal 2024 (ICLR 2024,
-        arXiv:2310.07923) — longer chains extend the serial computation a transformer can perform
+        arXiv:2310.07923): longer chains extend the serial computation a transformer can perform
       </p>
 
       <div aria-live="polite" className="sr-only">

@@ -92,7 +92,7 @@ describe("Page 2 Spain World-Cup count (authored; the 2026 win is a flagged plac
     expect(joined).not.toMatch(/inference/i);
   });
 
-  it("the page-4 thinking trace recognizes the gap and checks — it does not invent the fact", () => {
+  it("the page-4 thinking trace recognizes the gap and checks; it does not invent the fact", () => {
     const t = SPAIN_WORLD_CUPS.thinking;
     expect(t.steps.length).toBeGreaterThan(1);
     const joined = t.steps.join(" ");

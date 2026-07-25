@@ -71,7 +71,7 @@ export function Page14() {
           <div className="rounded border border-grid bg-surface p-3 text-sm text-ink-muted">
             Snell et al. found a compute-optimal, difficulty-adaptive strategy is{" "}
             <strong className="text-correct">&gt;{efficiencyVsBestOfN}× more efficient</strong> than
-            best-of-N — and, FLOPs-matched, can beat a{" "}
+            best-of-N, and, FLOPs-matched, can beat a{" "}
             <strong className="text-correct">{largerModelFactor}× larger model</strong>.
           </div>
         </div>

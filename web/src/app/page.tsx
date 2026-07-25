@@ -26,7 +26,7 @@ export default function Home() {
 
             <p className="max-w-xl text-lg text-ink-muted">
               A language model can get dramatically better answers by{" "}
-              <span className="italic text-ink">thinking longer at answer time</span> — not only by
+              <span className="italic text-ink">thinking longer at answer time</span>, not only by
               being retrained or made larger.
             </p>
 
@@ -100,7 +100,7 @@ export default function Home() {
             <p className="text-justify hyphens-auto text-ink-muted">
               Chapters stand alone but build in order. Every figure is live: sliders re-derive the
               curves, diagrams answer clicks, and the demos sample from a real model when one is
-              available — canned transcripts otherwise.
+              available; canned transcripts otherwise.
             </p>
           </div>
 

@@ -37,7 +37,7 @@ export function Page13() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Here is an inference-time <strong>scaling law</strong>. On SWE-bench Lite, the fraction of
-        problems solved by <em>some</em> sample climbs from 15.9% (one try) to 56% (250 tries) —
+        problems solved by <em>some</em> sample climbs from 15.9% (one try) to 56% (250 tries),
         beating the single-sample state of the art of {singleSampleSota}%. Flip the x-axis to a log
         scale and the curve straightens into a line: each <em>doubling</em> buys a roughly constant
         bump.
@@ -68,7 +68,7 @@ export function Page13() {
           />
           <BigNumber value={coverage} suffix="%" tone="correct" label={`coverage at ${samples} sample${samples === 1 ? "" : "s"}`} />
           <p className="text-sm text-ink-muted">
-            On a log axis this is a straight line — the signature of log-linear scaling.
+            On a log axis this is a straight line: the signature of log-linear scaling.
           </p>
         </div>
         <LineChart

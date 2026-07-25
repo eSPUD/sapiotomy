@@ -92,7 +92,7 @@ export function Page21() {
               </div>
               <p className="text-sm text-ink-muted">
                 Watch the classic trade-off: turning up samples, branching, budget forcing and compute
-                all cost more — and budget forcing eventually <em>over-thinks</em> and hurts accuracy.
+                all cost more; and budget forcing eventually <em>over-thinks</em> and hurts accuracy.
               </p>
               <p className="text-sm text-ink-muted">
                 You&apos;ve interacted with <strong className="text-ink">{simsTouched}</strong> of the
