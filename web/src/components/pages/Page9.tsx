@@ -174,7 +174,13 @@ export function Page9() {
               ))}
             </div>
 
-            {mode === "process" && !isRevealed ? (
+            {mode === "outcome" ? (
+              <p className="rounded-lg border border-dashed border-grid bg-surface-raised p-3 text-sm text-ink">
+                <strong>An outcome grader reads one thing: the answer.</strong> The working is
+                redacted below because that is exactly what this grader sees of it. Switch to{" "}
+                <strong>Process view</strong> to read the steps.
+              </p>
+            ) : !isRevealed ? (
               <p className="rounded-lg border border-dashed border-grid bg-surface-raised p-3 text-sm text-ink">
                 <strong>You be the process grader.</strong> Mark each step sound or broken, then
                 reveal what the PRM says.
@@ -184,7 +190,6 @@ export function Page9() {
             {/* the trace */}
             <ol className="flex flex-col gap-2">
               {trace.steps.map((step, i) => {
-                const isLast = i === trace.steps.length - 1;
                 const showProcess = mode === "process";
                 const mine = myMarks[i];
                 const shown = showProcess && isRevealed;
@@ -201,7 +206,26 @@ export function Page9() {
                   >
                     <div className="flex items-start gap-2">
                       <span className="mt-0.5 font-mono text-xs text-compute">{i + 1}</span>
-                      <span className="flex-1 text-sm text-ink">{step.text}</span>
+                      {/* Outcome view REDACTS the working. The grader cannot read
+                          it, so neither can you until you switch views. Showing
+                          the text here with a "not graded" tag made the two views
+                          near-identical and let the reader see the broken step the
+                          grader is supposed to be blind to. */}
+                      {mode === "outcome" ? (
+                        <span className="flex flex-1 items-center gap-2">
+                          <span
+                            aria-hidden="true"
+                            className="block h-3 rounded-sm bg-grid"
+                            style={{ width: `${Math.min(92, 28 + step.text.length * 1.1)}%` }}
+                          />
+                          <span className="sr-only">
+                            Step {i + 1} is redacted in the outcome view; the outcome grader does
+                            not read it. Switch to the process view to read it.
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="flex-1 text-sm text-ink">{step.text}</span>
+                      )}
                       {shown ? (
                         <span
                           className={`shrink-0 rounded px-2 py-0.5 text-xs font-semibold ${
@@ -240,9 +264,7 @@ export function Page9() {
                           </button>
                         </span>
                       ) : (
-                        <span className="shrink-0 text-xs text-ink-muted">
-                          {isLast ? "" : "not graded"}
-                        </span>
+                        <span className="shrink-0 text-xs text-ink-muted">not read</span>
                       )}
                     </div>
                     {shown && step.note ? (
