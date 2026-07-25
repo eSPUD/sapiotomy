@@ -85,17 +85,23 @@ describe("Page 5 — Stage B: predict then drive the scaling law", () => {
     reducedMotion = true;
   });
 
-  it("gates the scaling stage behind a prediction, then reveals the 8B emergence", () => {
+  // The stage must NOT be gated on the prediction. The earlier build hid the
+  // whole scaling stage until a guess was locked in, so committing swapped the
+  // section in one jump and read as a page change. Same rule as page 7.
+  it("shows the scaling stage WITHOUT a prediction; committing only swaps the strip", () => {
     render(<Page5 />);
-    // Predict-Observe: the scaling readouts are hidden until a guess is locked in.
+    // Offered, not blocking: the stepper is already live.
     expect(screen.getByText(/what does showing work do to the score/i)).toBeInTheDocument();
-    expect(screen.queryByRole("group", { name: /model size/i })).toBeNull();
+    const stepperBefore = screen.getByRole("group", { name: /model size/i });
+    expect(stepperBefore).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /lock in prediction/i }));
 
-    // Now the size stepper is live and defaults to 8B, where CoT hurts.
-    expect(screen.getByRole("group", { name: /model size/i })).toBeInTheDocument();
-    // Narration + live region both carry it.
+    // Same stepper node still mounted — nothing was replaced.
+    expect(screen.getByRole("group", { name: /model size/i })).toBe(stepperBefore);
+    expect(screen.queryByRole("button", { name: /lock in prediction/i })).toBeNull();
+    expect(screen.getByText(/you guessed/i)).toBeInTheDocument();
+    // Defaults to 8B, where CoT hurts. Narration + live region both carry it.
     expect(screen.getAllByText(/chain-of-thought hurts here/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/emergent/i).length).toBeGreaterThan(0);
   });

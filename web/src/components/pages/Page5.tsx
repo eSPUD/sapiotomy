@@ -353,9 +353,13 @@ export function Page5() {
         </div>
 
         <div className="flex flex-col gap-4 p-4">
+          {/* The prediction strip is the ONLY thing that swaps on commit — the
+              stepper, readouts and chart below stay mounted. Do not wrap them in
+              `prediction === null ?`; that gate replaced the whole stage in one
+              jump and read as a page change. Same rule as page 7. */}
           {prediction === null ? (
             <PredictBar
-              prompt={`Showing work lifts the biggest model (PaLM-540B) by +${delta540} points on GSM8K. At 8B — a model ~67× smaller — what does showing work do to the score? (points gained)`}
+              prompt={`Before you read it off the chart: showing work lifts the biggest model (PaLM-540B) by +${delta540} points on GSM8K. At 8B — a model ~67× smaller — what does showing work do to the score? (points gained)`}
               min={-10}
               max={40}
               suffix=" pts"
@@ -367,16 +371,17 @@ export function Page5() {
               }}
             />
           ) : (
-            <>
-              <p className="text-sm text-ink-muted">
-                You guessed{" "}
-                <strong className="font-mono text-ink">
-                  {prediction >= 0 ? "+" : ""}
-                  {prediction} pts
-                </strong>
-                . Drag the model size and watch the real numbers.
-              </p>
+            <p className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-sm text-ink">
+              You guessed{" "}
+              <strong className="font-mono text-compute">
+                {prediction >= 0 ? "+" : ""}
+                {prediction} pts
+              </strong>
+              . Drag the model size and watch the real numbers.
+            </p>
+          )}
 
+          <>
               {/* size stepper */}
               <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Model size">
                 <span className="text-sm font-semibold text-ink">Model size:</span>
@@ -441,8 +446,7 @@ export function Page5() {
 
               {/* live narration */}
               <p className="min-h-[1.5rem] border-t border-grid pt-3 text-ink">{narrationB(size)}</p>
-            </>
-          )}
+          </>
         </div>
       </section>
 
