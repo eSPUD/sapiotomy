@@ -85,7 +85,7 @@ export function Page10() {
   }, [trace]);
 
   return (
-    <article className="flex flex-col gap-5">
+    <article className="flex flex-col gap-6">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
@@ -93,44 +93,37 @@ export function Page10() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        Real problems are not corridors, they are <strong>mazes</strong>. At any point in a hard
-        problem there are several moves that all look reasonable, and you cannot tell which is
-        which until you have walked a little way down each. So stop treating reasoning as a line:{" "}
-        <strong>branch, evaluate, prune, and backtrack</strong>.
-      </p>
 
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        <p>
-          <strong>You already do this.</strong> Looking for a job, you can go broad: apply
-          everywhere, keep every option alive, judge later. Or you can go deep: pick one or two
-          roles and pour everything into them, and start over if they fall through. Neither is
-          right. They are different bets about where your effort pays off, and you pick based on
-          how much time you have and how good your judgement is.
-        </p>
-        <p className="mt-2 text-ink-muted">
-          Those bets have names: <strong className="text-ink">breadth-first</strong>,{" "}
-          <strong className="text-ink">depth-first</strong>, and the compromises in between. Give a
-          model the same choice over its own partial thoughts and you get{" "}
-          <strong className="text-ink">Tree of Thoughts</strong>.
-        </p>
-      </div>
+      {/* Left = the numbered walk-through · Right = instructions + references */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        {/* LEFT COLUMN */}
+        <div className="flex min-w-0 flex-col gap-8">
+          <p className="text-lg text-ink-muted">
+            Real problems are not corridors, they are <strong className="text-ink">mazes</strong>:
+            several moves look reasonable and you cannot tell which is which until you walk a little
+            way down each. You already know the trade from job-hunting, where you can apply
+            everywhere and judge later, or pour everything into two roles and start over if they
+            fall through. Those bets are called{" "}
+            <strong className="text-ink">breadth-first</strong> and{" "}
+            <strong className="text-ink">depth-first</strong>. Give a model the same choice over its
+            own partial thoughts and you get <strong className="text-ink">Tree of Thoughts</strong>:
+            branch, evaluate, prune, backtrack.
+          </p>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <section
-          aria-label="The explorable search tree"
-          className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span>
-              Game of 24 · use {G.numbers.join(", ")} once each to make {G.target}
-            </span>
-            <span className="rounded-full border border-correct/60 bg-correct/15 px-2 py-0.5 text-correct">
-              live search · real node counts
-            </span>
-          </div>
-
-          <div className="flex flex-col gap-4 p-4">
+          {/* Step 1 — the live search */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              1. Search the tree
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                use {G.numbers.join(", ")} once each to make {G.target} · live search, real node
+                counts
+              </span>
+            </h2>
+            <section
+              aria-label="The explorable search tree"
+              className="flex flex-col rounded-lg border-l-4 border-compute bg-surface"
+            >
+              <div className="flex flex-col gap-4 p-4">
             {/* strategy picker */}
             <div className="flex flex-col gap-2">
               <label htmlFor="strategy" className="text-sm text-ink-muted">
@@ -231,14 +224,15 @@ export function Page10() {
               ))}
             </div>
 
-            {/* the bill */}
-            <div className="grid gap-2 sm:grid-cols-2">
+            {/* The bill, the verdict and why it went that way, in one row: all
+                three answer "what did this run cost, and did it work". */}
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1.4fr)]">
               <div className="rounded-lg border border-grid bg-surface-raised p-3">
                 <p className="font-mono text-3xl font-bold tabular-nums text-compute">
                   {trace.nodesEvaluated}
                 </p>
                 <p className="text-xs text-ink">states scored</p>
-                <p className="text-xs text-ink-muted">the compute bill for this search</p>
+                <p className="text-xs text-ink-muted">the compute bill</p>
               </div>
               <div
                 className={`rounded-lg border-l-4 p-3 ${
@@ -261,6 +255,15 @@ export function Page10() {
                     </p>
                   </>
                 )}
+              </div>
+              <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-xs text-ink">
+                The evaluator is identical for every strategy, and it is <em>wrong</em> about the
+                best opening move. Greedy believes it and dead-ends after{" "}
+                <span className="font-mono">
+                  {search([...G.numbers], G.target, "greedy", { maxNodes: 3000 }).nodesEvaluated}
+                </span>{" "}
+                wasted states: not too little searching, just no way to reconsider. Search is what
+                makes a fallible evaluator survivable.
               </div>
             </div>
 
@@ -301,33 +304,20 @@ export function Page10() {
                 </div>
               ) : null}
             </div>
-          </div>
-        </section>
+              </div>
+            </section>
 
-        <div className="flex flex-col gap-4">
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <p>
-              <strong>Try Greedy first, then Beam.</strong> Greedy takes the best-looking move
-              every time and walks straight into a dead end for {" "}
-              <span className="font-mono">
-                {search([...G.numbers], G.target, "greedy", { maxNodes: 3000 }).nodesEvaluated}
-              </span>{" "}
-              states of wasted effort. It is not that greedy searched too little; it is that it
-              could never reconsider. Widen to a beam of two and the answer appears.
-            </p>
-            <p className="mt-2 text-sm text-ink-muted">
-              The evaluator is the same in every case, and it is <em>wrong</em> about which
-              opening move is best. Search is what makes a fallible evaluator survivable.
-            </p>
-          </div>
+          </section>
 
-          <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
-            <figcaption className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span className="font-semibold text-ink">Game of 24, solve rate</span>
-              <span className="rounded-full border border-compute/60 px-2 py-0.5 text-xs text-compute">
-                Yao et al. 2023 · GPT-4
+          {/* Step 2 — what search buys */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              2. What search buys
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                Yao et al. 2023 · Game of 24 · GPT-4
               </span>
-            </figcaption>
+            </h2>
+          <figure className="m-0 flex flex-col gap-2 rounded-lg border-l-4 border-grid bg-surface p-4">
             <div
               className="flex flex-col gap-2"
               role="img"
@@ -355,22 +345,52 @@ export function Page10() {
               ))}
             </div>
             <p className="text-sm text-ink-muted">
-              Chain of thought solves <strong className="text-ink">{cot}%</strong> of these. Even
-              voting over many chains only reaches {cotSc}%, because every chain is committing to
-              its first move. Searching the tree reaches{" "}
-              <strong className="text-correct">74%</strong> at b = 5.
+              Chain of thought solves <strong className="text-ink">{cot}%</strong> of these; voting
+              over many chains only reaches {cotSc}%, because every chain commits to its first move.
+              Searching the tree reaches <strong className="text-correct">74%</strong> at b = 5.
+              Breadth-first gets there by refusing to prune anything and pays roughly six times what
+              MCTS pays for the same answer. That is the trade this Act has circled throughout:
+              search buys reliability with compute, and the strategy is just{" "}
+              <em>where you choose to spend</em>.
             </p>
           </figure>
+          </section>
+        </div>
 
-          <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-ink">
-            <p className="text-sm">
-              <strong>Watch the compute counter as you switch.</strong> Breadth-first finds the
-              answer by refusing to prune anything, and pays roughly six times what MCTS pays for
-              the same answer. This is the trade the whole Act has been circling: search buys
-              reliability with compute, and the strategy is just <em>where you choose to spend</em>.
+        {/* RIGHT COLUMN — instructions + references */}
+        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              How to read this page
+            </h2>
+            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
+              <li>
+                Try <strong className="text-ink">Greedy</strong> first, then{" "}
+                <strong className="text-ink">Beam</strong> at width 2. Greedy dead-ends; the beam
+                finds it.
+              </li>
+              <li>Watch the states-scored counter as you switch. That is the compute bill.</li>
+              <li>
+                &ldquo;Solve with plain CoT instead&rdquo; is the contrast: one chain, one state, no
+                way back.
+              </li>
+              <li>
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
+                move between pages.
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              References
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Yao et al. 2023, Tree of Thoughts (Game of 24, GPT-4). The tree, scores and counter
+              are a real search running in your browser, not a recording. Links at the foot.
             </p>
           </div>
-        </div>
+        </aside>
       </div>
 
       <div className="flex flex-wrap gap-2">

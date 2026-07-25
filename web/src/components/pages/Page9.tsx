@@ -83,7 +83,7 @@ export function Page9() {
   ];
 
   return (
-    <article className="flex flex-col gap-5">
+    <article className="flex flex-col gap-6">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
@@ -91,58 +91,57 @@ export function Page9() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        There are two ways to grade a student. Mark the final answer, or mark{" "}
-        <strong>every line of the working</strong>. They agree most of the time, and where they
-        disagree is where all the interesting failures live.
-      </p>
 
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        <p>
-          <strong>&ldquo;Show your work. Don&apos;t do it in your head.&rdquo;</strong> Almost every
-          maths teacher said it, and plenty of them gave more credit for the working than for the
-          answer. That always felt like bureaucracy. It was not. A right answer reached by a broken
-          method is a <em>trap</em>: it will not survive contact with the next problem, and nobody
-          (not the student, not the teacher) has any way of knowing that from the answer alone.
-        </p>
-      </div>
+      {/* Left = the numbered walk-through · Right = instructions + references */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        {/* LEFT COLUMN */}
+        <div className="flex min-w-0 flex-col gap-8">
+          <p className="text-lg text-ink-muted">
+            Two ways to grade a student: mark the final answer, or mark{" "}
+            <strong className="text-ink">every line of the working</strong>. Where they disagree is
+            where the interesting failures live. Every maths teacher who said{" "}
+            <em>&ldquo;show your work&rdquo;</em> was defending the second one, and they were right:
+            a correct answer reached by a broken method is a trap, and nobody can tell from the
+            answer alone.
+          </p>
 
-      {/* --- trace picker ---------------------------------------------- */}
-      <div className="flex flex-wrap gap-2">
-        {S.traces.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            aria-pressed={traceKey === t.key}
-            onClick={() => {
-              setTraceKey(t.key);
-              recordInteraction(PAGE_N);
-            }}
-            className={`rounded px-3 py-1.5 text-sm ${
-              traceKey === t.key
-                ? "bg-compute text-canvas"
-                : "border border-grid bg-surface text-ink-muted"
-            }`}
-          >
-            {t.label}
-            <span className="ml-2 text-xs opacity-80">{t.kind}</span>
-          </button>
-        ))}
-      </div>
+          {/* Step 1 — grade it yourself */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              1. Grade it yourself
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                {S.question} · authored traces · no live model
+              </span>
+            </h2>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <section
-          aria-label="A sampled solution, graded two ways"
-          className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-            <span>{S.question}</span>
-            <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-              authored traces · no live model
-            </span>
-          </div>
+            {/* trace picker */}
+            <div className="flex flex-wrap gap-2">
+              {S.traces.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  aria-pressed={traceKey === t.key}
+                  onClick={() => {
+                    setTraceKey(t.key);
+                    recordInteraction(PAGE_N);
+                  }}
+                  className={`rounded px-3 py-1.5 text-sm ${
+                    traceKey === t.key
+                      ? "bg-compute text-canvas"
+                      : "border border-grid bg-surface text-ink-muted"
+                  }`}
+                >
+                  {t.label}
+                  <span className="ml-2 text-xs opacity-80">{t.kind}</span>
+                </button>
+              ))}
+            </div>
 
-          <div className="flex flex-col gap-4 p-4">
+            <section
+              aria-label="A sampled solution, graded two ways"
+              className="flex flex-col rounded-lg border-l-4 border-compute bg-surface"
+            >
+              <div className="flex flex-col gap-4 p-4">
             {/* grading mode */}
             <div
               className="flex flex-wrap gap-2"
@@ -312,32 +311,28 @@ export function Page9() {
                 </div>
               ) : null}
             </div>
-          </div>
-        </section>
+              </div>
+            </section>
 
-        <div className="flex flex-col gap-4">
-          <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-ink">
-            <p>
-              <strong>Solution A is the whole argument.</strong> 16/64 really does reduce to 1/4,
-              so cancelling the sixes gets full marks from an outcome grader. But the method is
-              not arithmetic, it is a coincidence about these particular digits, and it collapses
-              on the very next fraction. Reward the outcome and you have just taught the model that
-              cancelling digits works.
-            </p>
-            <p className="mt-2 text-sm text-ink-muted">
-              <strong className="text-ink">Right answer, wrong reasoning.</strong> Only a grader
-              that reads the steps can tell the difference, and when the answer is wrong
-              (Solution B), only the step grader can tell you <em>which line</em> to fix.
-            </p>
-          </div>
+            <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
+              <strong>Solution A is the whole argument.</strong> 16/64 really does reduce to 1/4, so
+              cancelling the sixes gets full marks from an outcome grader. But that is a coincidence
+              about these digits, not arithmetic, and it collapses on the next fraction. Reward the
+              outcome and you have taught the model that cancelling digits works. Only a grader that
+              reads the steps can tell; and when the answer is wrong (Solution B), only it can tell
+              you <em>which line</em> to fix.
+            </div>
+          </section>
 
-          <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
-            <figcaption className="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span className="font-semibold text-ink">Best-of-N accuracy on MATH</span>
-              <span className="rounded-full border border-compute/60 px-2 py-0.5 text-xs text-compute">
-                Lightman et al. 2023
+          {/* Step 2 — what step-grading buys */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              2. What step-grading buys
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                Lightman et al. 2023 · MATH · best-of-N
               </span>
-            </figcaption>
+            </h2>
+          <figure className="m-0 flex flex-col gap-2 rounded-lg border-l-4 border-grid bg-surface p-4">
             <div
               className="flex flex-col gap-2"
               role="img"
@@ -364,38 +359,68 @@ export function Page9() {
               the answer, on the same candidates.
             </p>
           </figure>
+          </section>
 
-          <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-ink">
-            <p className="text-sm">
-              <strong>But only where there is a fact to be right about.</strong> Process
-              supervision needs each step to have a truth value. Ask for a poem, a melody, a piece
-              of visual design, and there is no ground truth mid-stanza; a &ldquo;wrong&rdquo;
-              line three verses in may be exactly what makes the ending land. There, judging the
-              outcome is not laziness, it is the only honest option. Grade the process when the
-              domain has absolutes; grade the outcome when it has taste.
-            </p>
-          </div>
-
-          <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-ink">
-            <p className="text-sm">
-              <strong>And finer is not automatically better.</strong> If step-level beats
-              answer-level, why not grade every <em>token</em>? Because a half-written line is not
-              a claim yet; scoring it punishes a model for the shape of a sentence before the
-              sentence has said anything. That is judging a book by its cover, or a poem by its
-              first word. The useful unit is the <strong>reasoning step</strong>: the smallest
-              piece that is complete enough to be right or wrong.
-            </p>
-          </div>
+          {/* Step 3 — the two limits */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">3. Two limits, then the handoff</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
+                <strong>Only where there is a fact.</strong> Process supervision needs every step to
+                have a truth value. Ask for a poem and there is no ground truth mid-stanza; a
+                &ldquo;wrong&rdquo; line three verses in may be what makes the ending land. Grade the
+                process when the domain has absolutes, the outcome when it has taste.
+              </div>
+              <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
+                <strong>Finer is not better.</strong> If step beats answer, why not grade every{" "}
+                <em>token</em>? A half-written line is not a claim yet, so scoring it punishes the
+                shape of a sentence before it has said anything. The useful unit is the{" "}
+                <strong>reasoning step</strong>: the smallest piece complete enough to be right or
+                wrong.
+              </div>
+            </div>
+            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+              A step-level grader can do what the others cannot: judge a chain{" "}
+              <em>while it is still being written</em>. Once you can score a half-finished chain,
+              you need not finish the ones going badly.{" "}
+              <em className="text-ink-muted">
+                You can branch, look ahead, and back out. Turn the page.
+              </em>
+            </div>
+          </section>
         </div>
-      </div>
 
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        <strong>Where this leaves us:</strong> a step-level grader does something the others
-        cannot: it can judge a chain <em>while it is still being written</em>. And once you can
-        score a half-finished chain, you no longer have to finish the ones that are going badly.{" "}
-        <em className="text-ink-muted">
-          You can branch, look ahead, and back out. Turn the page.
-        </em>
+        {/* RIGHT COLUMN — instructions + references */}
+        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              How to read this page
+            </h2>
+            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
+              <li>
+                Pick a solution, then switch to <strong className="text-ink">Process view</strong>{" "}
+                and mark each step yourself before revealing the grader.
+              </li>
+              <li>
+                Solution A is the one to try first: the answer is right and the method is nonsense.
+              </li>
+              <li>
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
+                move between pages.
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              References
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Lightman et al. 2023 (MATH, best-of-N): majority {majority}%, ORM {orm}%, PRM {prm}%.
+              The three solutions are authored teaching examples. Links at the foot.
+            </p>
+          </div>
+        </aside>
       </div>
 
       <div className="flex flex-wrap gap-2">
