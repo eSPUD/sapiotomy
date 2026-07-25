@@ -599,44 +599,110 @@ export const SUPERVISION = {
   ] as readonly SupervisionTrace[],
 } as const;
 
-// --- Page 10: Searching Through Thoughts (the Game of 24 instance) ---------
+// --- Page 10: Searching Through Thoughts (a road map to search) ------------
 /**
- * The search page needs a problem where BRANCHING is the whole difficulty, not
- * arithmetic. Game of 24 (use each of four numbers exactly once, with + − × ÷,
- * to make 24) is that problem, and it is the task Yao et al. 2023 use for the
- * Tree-of-Thoughts result this page's curve is anchored to — so the interactive
- * and the cited numbers are about the same thing.
+ * The interactive is a live routing search over this authored road map
+ * (lib/routing.ts). A town is a state, a road is a move, and the searcher's
+ * evaluator is the straight-line ("crow-flies") distance to the destination —
+ * the number a GPS shows. It is informative but blind to water: the town that
+ * looks closest, Ferry Landing, is a dead-end spur with no bridge across the
+ * bay. The only crossing is far to the north (Kingsbridge), so the true route
+ * must first head AWAY from the destination — exactly the move a straight-line
+ * heuristic hates, which is why greedy (and a beam of 1) drive into the
+ * peninsula and strand, while search that can backtrack gets there.
  *
- * The instance below is authored, not quoted, and it was CHOSEN by running every
- * strategy in lib/game24.ts over a set of candidates and keeping the one whose
- * outcomes actually differ: greedy dead-ends, a beam of width 1 dead-ends with
- * it, a beam of 2 or more finds the answer, depth-first finds it by backtracking,
- * breadth-first finds it by brute force at roughly six times the cost, and MCTS
- * finds it cheapest of all. Those are measurements of the engine, re-asserted in
- * src/lib/act2search.test.ts, not claims made up to fit the story.
+ * The instance was tuned (see src/lib/act2routing.test.ts) so the strategies
+ * genuinely disagree: greedy and beam-1 fail; depth-first, breadth-first, wider
+ * beams and MCTS all reach Easton at very different prices, with breadth-first
+ * the most expensive (it visits nearly every town) and MCTS among the cheapest.
+ * Coordinates use y = north; miles on screen are these straight-line distances.
  *
- * The solution is checkable by hand — 2 × 5 = 10, 10 − 6 = 4, 4 × 6 = 24, using
- * each of 2, 5, 6, 6 exactly once — and game24.ts re-derives it by search, so
- * the page never displays a solution it has not actually found.
- *
- * `plainCot` is the contrast case: one cheap chain that commits to a reasonable
- * first move, gets agonisingly close, and cannot back out — which is what a
- * single chain does on a problem that needs backtracking.
+ * `plainCot` is the contrast case: one confident drive that always closes the
+ * straight-line gap, reaches the town nearest the destination, and cannot turn
+ * around — a single chain on a problem that needs backtracking.
  */
-export const GAME24 = {
-  numbers: [2, 5, 6, 6] as const,
-  target: 24,
-  /** Human-readable solution; lib/game24 finds it independently. */
-  solution: "(2 × 5 − 6) × 6 = 4 × 6 = 24",
+export const ROUTE_MAP = {
+  origin: 0,
+  destination: 10,
+  towns: [
+    { id: 0, name: "Westford", x: 24, y: 50 }, // origin
+    // the lure: straight east, closest to Easton, ends at a bridgeless spur
+    { id: 1, name: "Ashford", x: 48, y: 52 },
+    { id: 2, name: "Bellcross", x: 60, y: 50 },
+    { id: 3, name: "Coldharbor", x: 70, y: 50 },
+    { id: 4, name: "Ferry Landing", x: 76, y: 54 }, // dead-end spur, no bridge
+    // the true route: north to the only bridge, then east
+    { id: 5, name: "Northgate", x: 40, y: 74 },
+    { id: 6, name: "Millgate", x: 56, y: 80 },
+    { id: 7, name: "Kingsbridge", x: 72, y: 78 }, // the one crossing
+    { id: 8, name: "Easthaven", x: 88, y: 74 },
+    { id: 9, name: "Elmgrove", x: 92, y: 62 },
+    { id: 10, name: "Easton", x: 94, y: 52 }, // destination
+    // southern filler that breadth-first floods and directed searches skip
+    { id: 11, name: "Marsh End", x: 40, y: 28 },
+    { id: 12, name: "Southpoint", x: 54, y: 26 },
+    { id: 13, name: "Drycreek", x: 66, y: 30 },
+    // western grid: same role, far from the destination
+    { id: 14, name: "Oakvale", x: 14, y: 76 },
+    { id: 15, name: "Pinehurst", x: 14, y: 62 },
+    { id: 16, name: "Millbrook", x: 14, y: 48 },
+    { id: 17, name: "Thornbury", x: 14, y: 34 },
+    { id: 18, name: "Larkfield", x: 14, y: 20 },
+    { id: 19, name: "Farwater", x: 4, y: 76 },
+    { id: 20, name: "Lonepine", x: 4, y: 62 },
+    { id: 21, name: "Greywood", x: 4, y: 48 },
+    { id: 22, name: "Duncot", x: 4, y: 34 },
+    { id: 23, name: "Westmere", x: 4, y: 20 },
+  ],
+  roads: [
+    // origin's roads
+    [0, 1],
+    [0, 5],
+    [0, 15],
+    [0, 16],
+    [0, 17],
+    // the lure + its southern hangers
+    [1, 2],
+    [2, 3],
+    [3, 4],
+    [1, 11],
+    [2, 12],
+    [3, 13],
+    [11, 12],
+    [12, 13],
+    // the true route north over the bridge
+    [5, 6],
+    [6, 7],
+    [7, 8],
+    [8, 9],
+    [9, 10],
+    // western grid (two columns, rungs between)
+    [14, 15],
+    [15, 16],
+    [16, 17],
+    [17, 18],
+    [19, 20],
+    [20, 21],
+    [21, 22],
+    [22, 23],
+    [14, 19],
+    [15, 20],
+    [16, 21],
+    [17, 22],
+    [18, 23],
+  ],
+  /** The one crossing of the bay, named in the copy. */
+  bridge: 7,
+  /** The greedy trap: closest in a straight line, no bridge. */
+  trap: 4,
   plainCot: {
     steps: [
-      "The 6 and the 5 look promising: 6 × 5 = 30, which is close to 24.",
-      "That leaves 30, 6 and 2. And 30 − 6 = 24 exactly.",
-      "But that uses only three of the numbers; the 2 is still on the table.",
-      "Fold the 2 in: 30 − 6 × 2 = 18, and 30 − 6 ÷ 2 = 27. Neither is 24.",
-      "I am stuck, and I committed to 6 × 5 four steps ago. Best guess: 30 − 6 = 24.",
+      "From Westford, the road that most cuts the distance to Easton runs east to Ashford.",
+      "Keep closing the straight-line gap: Ashford → Bellcross → Coldharbor.",
+      "Ferry Landing is closest of all, right across the bay from Easton.",
+      "Dead end: Ferry Landing has no bridge, and the only crossing is far to the north, four towns back.",
     ],
-    answer: "24, but using only three of the four numbers (not a valid solution)",
+    answer: "stranded at Ferry Landing, one bay short of Easton",
     correct: false,
   },
 } as const;
