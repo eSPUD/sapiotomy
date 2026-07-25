@@ -336,13 +336,11 @@ export function Page9() {
               </div>
             </section>
 
-            <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
-              <strong>Solution A is the whole argument.</strong> 16/64 really does reduce to 1/4, so
-              cancelling the sixes gets full marks from an outcome grader. But that is a coincidence
-              about these digits, not arithmetic, and it collapses on the next fraction. Reward the
-              outcome and you have taught the model that cancelling digits works. Only a grader that
-              reads the steps can tell; and when the answer is wrong (Solution B), only it can tell
-              you <em>which line</em> to fix.
+            <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-base text-ink">
+              <strong className="text-lg">Right answer, broken method is a trap.</strong> Cancelling
+              the sixes in 16/64 happens to land on 1/4, so an outcome grader rewards it, and the
+              model learns a trick that fails on the next fraction. Only a step grader catches it,
+              and only it can say <em>which line</em> to fix.
             </div>
           </section>
 
@@ -387,18 +385,15 @@ export function Page9() {
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">3. Two limits, then the handoff</h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
-                <strong>Only where there is a fact.</strong> Process supervision needs every step to
-                have a truth value. Ask for a poem and there is no ground truth mid-stanza; a
-                &ldquo;wrong&rdquo; line three verses in may be what makes the ending land. Grade the
-                process when the domain has absolutes, the outcome when it has taste.
+              <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-base text-ink">
+                <strong>Only where there is a fact.</strong> A step needs a truth value to grade. A
+                poem has none mid-stanza, so grade the process where the domain has absolutes, the
+                outcome where it has taste.
               </div>
-              <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
-                <strong>Finer is not better.</strong> If step beats answer, why not grade every{" "}
-                <em>token</em>? A half-written line is not a claim yet, so scoring it punishes the
-                shape of a sentence before it has said anything. The useful unit is the{" "}
-                <strong>reasoning step</strong>: the smallest piece complete enough to be right or
-                wrong.
+              <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-base text-ink">
+                <strong>Finer is not better.</strong> Grading every <em>token</em> scores a sentence
+                before it has said anything. The right unit is the{" "}
+                <strong>reasoning step</strong>: the smallest piece that can be right or wrong.
               </div>
             </div>
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">

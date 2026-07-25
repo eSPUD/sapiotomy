@@ -13,10 +13,10 @@
  * Solution B's steps after the bad GCD are internally valid.
  */
 import { describe, expect, it } from "vitest";
-import { BAT_AND_BALL, SUPERVISION } from "./authored";
+import { LILY_PADS, SUPERVISION } from "./authored";
 import { curves, interpolate } from "./curves";
 import {
-  BAT_AND_BALL_MODEL,
+  LILY_PAD_MODEL,
   coverageAtLeastOne,
   selectionAccuracy,
   selectionBatch,
@@ -26,29 +26,28 @@ const TOL = 1.0;
 const TRIALS = 3000;
 const SEED = 21101968;
 
-describe("Page 8: the bat-and-ball setup", () => {
-  const B = BAT_AND_BALL;
+describe("Page 8: the lily-pad setup", () => {
+  const B = LILY_PADS;
 
-  it("index 0 is the correct answer and it satisfies both constraints", () => {
+  it("index 0 is the correct answer and it satisfies the doubling constraint", () => {
     expect(B.answers[0].correct).toBe(true);
-    const ball = 0.05;
-    const bat = ball + B.difference;
-    expect(bat + ball).toBeCloseTo(B.total, 10);
-    expect(bat - ball).toBeCloseTo(B.difference, 10);
-    expect(B.answers[0].display).toBe("$0.05");
+    expect(B.answers[0].display).toBe("Day 47");
+    // Half on day 47; one doubling later the lake is full on day 48.
+    expect(B.halfDay).toBe(B.fullDay - 1);
     expect(B.answers[0].checks).toBe(true);
   });
 
   it("the intuitive answer really does fail the check", () => {
-    const ball = 0.1;
-    const bat = B.total - ball; // 1.00 — but then the gap is only 0.90
-    expect(bat - ball).not.toBeCloseTo(B.difference, 6);
+    // "Half the lake in half the days" lands on day 24, not the day before full.
+    expect(B.fullDay / 2).toBe(24);
+    expect(B.answers[1].display).toBe("Day 24");
+    expect(B.fullDay / 2).not.toBe(B.halfDay);
     expect(B.answers[1].correct).toBe(false);
     expect(B.answers[1].checks).toBe(false);
   });
 
   it("the model gives the trap more mass than the truth; that is the point", () => {
-    const m = BAT_AND_BALL_MODEL;
+    const m = LILY_PAD_MODEL;
     expect(m.answerProbs[1]).toBeGreaterThan(m.answerProbs[0]);
     expect(m.answerProbs.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 10);
     // ...and the trap is also the most superficially appealing candidate,
@@ -58,13 +57,13 @@ describe("Page 8: the bat-and-ball setup", () => {
   });
 
   it("there is one authored answer per bucket in the selection model", () => {
-    expect(B.answers.length).toBe(BAT_AND_BALL_MODEL.answerProbs.length);
+    expect(B.answers.length).toBe(LILY_PAD_MODEL.answerProbs.length);
   });
 });
 
 describe("Page 8: generate, then select", () => {
   it("coverage tracks the closed form for the correct answer's rate", () => {
-    const p = BAT_AND_BALL_MODEL.answerProbs[0];
+    const p = LILY_PAD_MODEL.answerProbs[0];
     for (const n of [1, 8, 32]) {
       const got = selectionAccuracy(n, TRIALS, SEED, 1).coverage;
       expect(Math.abs(got - coverageAtLeastOne(p, n) * 100)).toBeLessThan(3.0);

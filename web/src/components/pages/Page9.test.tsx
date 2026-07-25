@@ -28,6 +28,6 @@ describe("Page 9 (outcome vs process supervision) component", () => {
 
   it("keeps the domain caveat on screen", () => {
     render(<Page9 />);
-    expect(screen.getByText(/no ground truth mid-stanza/i)).toBeInTheDocument();
+    expect(screen.getByText(/a poem has none mid-stanza/i)).toBeInTheDocument();
   });
 });

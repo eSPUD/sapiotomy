@@ -35,6 +35,7 @@
 
 import { useRef, useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
+import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { THINK_BUDGET } from "@/lib/authored";
@@ -58,6 +59,30 @@ export function Page6() {
   const [announcement, setAnnouncement] = useState("");
   const touchedRef = useRef(false);
   const landedRef = useRef(false);
+
+  // Step 3 — the measured "Wait" dial (real s1-32B / AIME24 numbers).
+  const pts = bf.points; // x = number of "Wait" appends, y = accuracy %
+  const WAIT_MAX = pts.length - 1;
+  const flipAt = bp.flipAtPress; // a representative problem flips wrong->right here
+  const [appends, setAppends] = useState(0);
+  const acc = pts[appends].y;
+  const solved = appends >= flipAt;
+  const waitLandedRef = useRef(false);
+
+  const onWait = (n: number) => {
+    recordInteraction(PAGE_N);
+    const clamped = Math.max(0, Math.min(WAIT_MAX, n));
+    setAppends(clamped);
+    if (clamped >= flipAt && !waitLandedRef.current) {
+      waitLandedRef.current = true;
+      setAnnouncement(
+        `After ${clamped} "Wait" appends, AIME24 accuracy reaches ${pts[clamped].y}% and the representative problem flips to solved.`,
+      );
+    } else if (clamped === 0) {
+      waitLandedRef.current = false;
+      setAnnouncement(`Zero "Wait" appends: baseline AIME24 accuracy ${pts[0].y}%.`);
+    }
+  };
 
   // Steps afford in order; a step runs only if its whole cost fits.
   let spent = 0;
@@ -114,7 +139,7 @@ export function Page6() {
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">
               1. Spend the budget
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              <span className="ml-2 align-middle text-sm font-normal text-ink-muted">
                 one hard product · a budget on its thinking
               </span>
             </h2>
@@ -204,17 +229,14 @@ export function Page6() {
               )}
 
               {/* Units, stated where the numbers are — not buried in the footer. */}
-              <p className="border-t border-grid pt-3 text-xs text-ink-muted">
+              <p className="border-t border-grid pt-3 text-sm text-ink-muted">
                 <strong className="text-ink">What the meter counts:</strong> words, not tokens.
-                Every figure above is the step&apos;s whitespace word count: step 1 is{" "}
-                <span className="font-mono text-ink">{T.steps[0].words}</span> words, the chain is{" "}
-                <span className="font-mono text-ink">{WORD_CAP}</span>, so you can check each one
-                by eye. A model bills in <em>tokens</em>, and a token count is not a word count:
-                it depends on the tokenizer, and a string like{" "}
-                <span className="font-mono text-ink">2,820.</span> is more than one token. The real
-                figure has to be measured against a specific model, and this page does not do
-                that; no model is called here. Words stand in for the unit; the mechanism is the
-                point.
+                Every number above is the step&apos;s whitespace word count — step 1 is{" "}
+                <span className="font-mono text-ink">{T.steps[0].words}</span> words, the whole chain{" "}
+                <span className="font-mono text-ink">{WORD_CAP}</span> — so you can check them by eye.
+                A model actually bills in <em>tokens</em>, which depend on its tokenizer; the real
+                figure is model-specific and is not computed here (no model runs on this page). Words
+                stand in for the unit; the mechanism is the point.
               </p>
             </section>
           </section>
@@ -223,7 +245,7 @@ export function Page6() {
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">
               2. What the working bought
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              <span className="ml-2 align-middle text-sm font-normal text-ink-muted">
                 the Act 1 pair, priced
               </span>
             </h2>
@@ -259,29 +281,110 @@ export function Page6() {
             </section>
           </section>
 
-          {/* Step 3 — the measured version */}
+          {/* Step 3 — the measured version, now pressable */}
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">
               3. The same dial, measured for real
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              <span className="ml-2 align-middle text-sm font-normal text-ink-muted">
                 s1-32B · AIME24 · Muennighoff et al. 2025
               </span>
             </h2>
-            <aside
+            <section
               aria-label="The measured version of this trade"
-              className="flex flex-col gap-2 rounded-lg border-l-4 border-compute bg-surface p-4"
+              className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
             >
               <p className="text-sm text-ink">
-                Step 1 is a demonstration; this is a measurement. Forcing a real model to think
-                longer (by refusing to let it stop) moves competition-math accuracy from{" "}
+                Step 1 was an authored demonstration; this is a measurement. Forcing a real model to
+                keep thinking, by appending the word{" "}
+                <span className="font-mono text-ink">&ldquo;Wait&rdquo;</span> instead of letting it
+                stop, moves AIME24 accuracy from{" "}
                 <strong className="font-mono">{bp.start}%</strong> to{" "}
-                <strong className="font-mono">{bp.end}%</strong>: no retraining, only more
-                thinking tokens. Those are real tokens, counted by the authors.
+                <strong className="font-mono">{bp.end}%</strong>: no retraining, only more thinking
+                tokens. Press it yourself.
               </p>
+
+              {/* the "Wait" stepper */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => onWait(appends + 1)}
+                  disabled={appends >= WAIT_MAX}
+                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                >
+                  + &ldquo;Wait&rdquo; ▸
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onWait(0)}
+                  disabled={appends === 0}
+                  className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
+                >
+                  reset
+                </button>
+                <span className="font-mono text-sm tabular-nums text-ink-muted">
+                  &ldquo;Wait&rdquo; × {appends} of {WAIT_MAX}
+                </span>
+              </div>
+
+              {/* the thinking, extended one "Wait" at a time */}
+              <p
+                className="flex flex-wrap items-center gap-1 text-sm text-ink-muted"
+                aria-hidden="true"
+              >
+                <span>the model keeps going</span>
+                {Array.from({ length: appends }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="rounded-full border border-compute/60 bg-compute/10 px-2 py-0.5 font-mono text-xs text-compute"
+                  >
+                    Wait
+                  </span>
+                ))}
+              </p>
+
+              {/* readouts: the accuracy and a representative problem flipping */}
+              <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center">
+                <div className="flex flex-col rounded-lg border-l-4 border-compute bg-surface-raised px-4 py-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-compute">
+                    AIME24 accuracy
+                  </p>
+                  <p className="font-mono text-2xl tabular-nums text-ink">{acc.toFixed(1)}%</p>
+                </div>
+                <div
+                  className={`rounded-lg border-l-4 px-3 py-2 text-sm text-ink ${
+                    solved ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
+                  }`}
+                >
+                  <span className={`font-semibold ${solved ? "text-correct" : "text-wrong"}`}>
+                    {solved ? "✓" : "✗"} a representative problem:{" "}
+                  </span>
+                  {solved
+                    ? `solved — the extra thinking crossed the line at ${flipAt} "Wait"s.`
+                    : `still wrong — it needs more thinking to land (flips at ${flipAt} "Wait"s).`}
+                </div>
+              </div>
+
+              {/* the measured climb */}
+              <LineChart
+                title={`AIME24 accuracy for s1-32B against the number of "Wait" appends, climbing from ${bp.start} percent at zero appends to ${bp.end} percent at ${WAIT_MAX}. Currently marking ${appends} appends at ${acc.toFixed(1)} percent.`}
+                points={pts}
+                markPoints
+                markerX={appends}
+                xDomain={[0, WAIT_MAX]}
+                yDomain={[48, 60]}
+                xTicks={pts.map((p) => p.x)}
+                xLabel={'number of "Wait" appends'}
+                yLabel="AIME24 accuracy (%)"
+                width={560}
+                height={190}
+              />
+
               <p className="text-sm text-ink-muted">
-                The lever that does it, the &ldquo;Wait&rdquo; button, gets its own page (15).
+                Same trade as step 1, now on a real model: those are measured tokens, counted by the
+                authors. The lever that does it, the &ldquo;Wait&rdquo; button, gets its own page
+                (15).
               </p>
-            </aside>
+            </section>
           </section>
 
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">

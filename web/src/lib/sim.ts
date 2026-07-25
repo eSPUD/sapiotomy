@@ -358,7 +358,8 @@ export function representativeChamberBallot(
 // SAME candidates, with a verifier that can be corrupted.
 //
 // The regime that matters is the one where the wrong answer is the POPULAR one
-// (the bat-and-ball attractor): majority voting then gets worse as N grows,
+// (the lily-pad attractor, "half the days" not "half the lake"): majority
+// voting then gets worse as N grows,
 // while any selector that can recognise a correct answer gets better. So the
 // model carries an explicit answer distribution rather than a single p.
 //
@@ -385,8 +386,8 @@ export interface SelectionModel {
   noise: number;
 }
 
-/** Bat and ball: the correct answer is a minority, the trap is the plurality. */
-export const BAT_AND_BALL_MODEL: SelectionModel = {
+/** Lily pads: the correct answer is a minority, the trap is the plurality. */
+export const LILY_PAD_MODEL: SelectionModel = {
   answerProbs: [0.28, 0.62, 0.1],
   appeal: [0.2, 1.0, 0.5],
   noise: 0.35,
@@ -430,7 +431,7 @@ export function selectionBatch(
   n: number,
   seed: number,
   reliability: number,
-  model: SelectionModel = BAT_AND_BALL_MODEL,
+  model: SelectionModel = LILY_PAD_MODEL,
 ): SelectionBatch {
   const rng = createRng(seed);
   const probs = [...model.answerProbs];
@@ -482,7 +483,7 @@ export function selectionAccuracy(
   trials: number,
   seed: number,
   reliability: number,
-  model: SelectionModel = BAT_AND_BALL_MODEL,
+  model: SelectionModel = LILY_PAD_MODEL,
 ): SelectionAccuracy {
   let coverage = 0;
   let majority = 0;

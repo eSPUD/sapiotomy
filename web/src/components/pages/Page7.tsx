@@ -62,11 +62,28 @@ const PAGE_N = 7;
 const C = SAMPLING_CHAMBER;
 
 const MAX_VOTES = 64;
-const CURVE_NS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64];
+/** 40 is on the list so the step-2 curve can mark it exactly (the predict N). */
+const CURVE_NS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 40, 48, 64];
 const TRIALS = 1500;
 const SEED = 20220311; // arXiv id of Wang et al. — a stable, documented seed
 /** Milliseconds between chains arriving in the chamber. */
 const STREAM_MS = 45;
+/** The step-2 curve is about this many chains — the question the reader predicts.
+ *  It is fixed and independent of step 1's N slider (the two figures are decoupled). */
+const PREDICT_N = 40;
+
+/**
+ * One colour per reasoning bucket, so the dot array above and the tally bars
+ * below share a legend. Correct is the deck's green; the three misreadings are
+ * muted, distinct hues mixed from the semantic tokens (theme-aware, no raw hex).
+ * Order matches SAMPLING_CHAMBER.paths: [22 correct, 33, 17, 11].
+ */
+const PATH_COLORS = [
+  "var(--correct)",
+  "var(--wrong)",
+  "color-mix(in srgb, var(--wrong) 55%, var(--compute))",
+  "color-mix(in srgb, var(--wrong) 38%, var(--canvas))",
+];
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
@@ -101,12 +118,23 @@ export function Page7() {
     [temperature],
   );
 
-  const accuracyNow = useMemo(() => {
+  // Step 2 reads accuracy at the fixed PREDICT_N, NOT at step 1's votes slider:
+  // the curve (the average over many trials) is decoupled from the single ballot.
+  const accuracyAtPredict = useMemo(() => {
     const nearest = curve.reduce((best, p) =>
-      Math.abs(p.x - votes) < Math.abs(best.x - votes) ? p : best,
+      Math.abs(p.x - PREDICT_N) < Math.abs(best.x - PREDICT_N) ? p : best,
     );
     return nearest.y;
-  }, [curve, votes]);
+  }, [curve]);
+
+  // Hot temperatures start the curve well below 56.5% (each chain is individually
+  // worse), and a low prediction line can dip too. Drop the y-axis floor to
+  // contain them so the line never spills off the plot — the lower start at high
+  // temperature is the lesson, not a glitch. Stays at 50 for the default range.
+  const yFloor = useMemo(() => {
+    const yLow = Math.min(...curve.map((p) => p.y), prediction ?? 100);
+    return Math.max(30, Math.min(50, Math.floor((yLow - 4) / 5) * 5));
+  }, [curve, prediction]);
 
   const diversity = chamberDiversity(CHAMBER_MODEL, temperature);
   const probs = chamberProbs(CHAMBER_MODEL, temperature);
@@ -238,9 +266,11 @@ export function Page7() {
                   )}
                 </p>
 
-                {/* The chamber: one tile per sampled chain. */}
+                {/* The chamber: one dot per sampled chain, coloured by the bucket
+                    it landed in. A unit array reads as a distribution at a glance;
+                    the tally below shares the same colours as its legend. */}
                 <div
-                  className="flex flex-wrap gap-1"
+                  className="flex flex-wrap gap-1.5"
                   role="img"
                   aria-label={`${shown} of ${votes} chains sampled. Tally: ${liveTally
                     .map((v, i) => `${C.paths[i].display} appears ${v} times`)
@@ -253,16 +283,15 @@ export function Page7() {
                       <span
                         key={i}
                         title={on ? `chain ${i + 1} → ${p.display}` : undefined}
-                        className={`flex h-7 w-9 items-center justify-center rounded-sm border font-mono text-xs tabular-nums transition-opacity ${
-                          !on
-                            ? "border-dashed border-grid bg-surface-raised text-transparent"
-                            : p.correct
-                              ? "border-correct bg-correct/20 text-correct"
-                              : "border-grid bg-surface-raised text-ink-muted"
+                        className={`h-3 w-3 rounded-full transition-opacity ${
+                          on
+                            ? p.correct
+                              ? "ring-1 ring-correct/50"
+                              : ""
+                            : "border border-dashed border-grid"
                         }`}
-                      >
-                        {on ? p.display : "·"}
-                      </span>
+                        style={on ? { backgroundColor: PATH_COLORS[d] } : undefined}
+                      />
                     );
                   })}
                 </div>
@@ -292,13 +321,18 @@ export function Page7() {
                           openPath === i ? "bg-surface-raised" : ""
                         }`}
                       >
-                        <span className="w-10 shrink-0 font-mono text-ink">{p.display}</span>
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: PATH_COLORS[i] }}
+                          aria-hidden="true"
+                        />
+                        <span className="w-8 shrink-0 font-mono text-ink">{p.display}</span>
                         <span className="relative h-4 flex-1 rounded-sm bg-surface-raised">
                           <span
                             className={`absolute inset-y-0 left-0 rounded-sm ${
-                              p.correct ? "bg-correct" : "bg-grid"
-                            } ${winning ? "ring-2 ring-compute" : ""}`}
-                            style={{ width: `${pct}%` }}
+                              winning ? "ring-2 ring-compute" : ""
+                            }`}
+                            style={{ width: `${pct}%`, backgroundColor: PATH_COLORS[i] }}
                           />
                         </span>
                         <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-ink">
@@ -381,10 +415,9 @@ export function Page7() {
                 suffix="%"
                 onCommit={(p) => {
                   setPrediction(p);
-                  setVotes(40);
                   recordInteraction(PAGE_N);
                   setAnnouncement(
-                    `Prediction locked at ${p} percent. Your line is drawn on the curve and the sampler has moved to 40 chains.`,
+                    `Prediction locked at ${p} percent. Your line is drawn on the curve; the real majority-vote accuracy at ${PREDICT_N} chains is ${accuracyAtPredict.toFixed(1)} percent.`,
                   );
                 }}
               />
@@ -392,7 +425,8 @@ export function Page7() {
               <p className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-sm text-ink">
                 You predicted{" "}
                 <strong className="font-mono text-compute">{prediction}%</strong>; it is the dashed
-                line on the curve. The sampler jumped to 40 chains to match the question.
+                line on the curve. The marker sits at {PREDICT_N} chains — the accuracy the majority
+                vote actually reaches.
               </p>
             )}
 
@@ -402,12 +436,12 @@ export function Page7() {
             >
                 <div className="flex flex-col gap-3 p-4">
                   <LineChart
-                    title={`Majority-vote accuracy versus number of sampled chains on GSM8K, log x axis. At the reference temperature accuracy climbs from 56.5 percent at one chain toward a plateau near 74.4 percent, with most of the gain arriving in the first dozen chains. Currently ${accuracyNow.toFixed(1)} percent at ${votes} chains.`}
+                    title={`Majority-vote accuracy versus number of sampled chains on GSM8K, log x axis. At the reference temperature accuracy climbs from 56.5 percent at one chain toward a plateau near 74.4 percent, with most of the gain arriving in the first dozen chains. Marking ${PREDICT_N} chains, where the majority vote reaches ${accuracyAtPredict.toFixed(1)} percent.`}
                     points={curve}
                     logX
                     xDomain={[1, MAX_VOTES]}
-                    yDomain={[50, 80]}
-                    markerX={votes}
+                    yDomain={[yFloor, 80]}
+                    markerX={PREDICT_N}
                     referenceY={prediction ?? undefined}
                     referenceLabel={
                       prediction !== null ? `you predicted ${prediction}%` : undefined
@@ -419,10 +453,10 @@ export function Page7() {
                   />
                   <figcaption className="text-sm text-ink-muted">
                     <strong className="font-mono text-lg text-correct">
-                      {accuracyNow.toFixed(1)}%
+                      {accuracyAtPredict.toFixed(1)}%
                     </strong>{" "}
-                    at {votes} chain{votes === 1 ? "" : "s"}, temperature{" "}
-                    {temperature.toFixed(1)}. The gain is large (Wang et al. report{" "}
+                    at {PREDICT_N} chains, temperature {temperature.toFixed(1)}. The gain is large
+                    (Wang et al. report{" "}
                     <strong className="text-ink">+17.9 points</strong>, 56.5% → 74.4%), but it{" "}
                     <strong className="text-ink">flattens</strong>: the first handful of chains buy
                     almost everything, and 32 → 64 buys almost nothing at double the cost. Voting

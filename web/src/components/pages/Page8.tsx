@@ -3,9 +3,10 @@
 /**
  * Page 8, "Best-of-N and Verifiers" — page 7's vote counts by frequency, which
  * quietly assumes the crowd leans right. This page breaks that assumption on
- * purpose, with the bat-and-ball problem: the wrong answer there is not a slip,
- * it is an ATTRACTOR, so the popular answer is wrong and the right answer is
- * rare. Majority voting does not merely stall in that regime — it gets WORSE
+ * purpose, with the lily-pad problem: the wrong answer (day 24, "half the days"
+ * not "half the lake") is not a slip, it is an ATTRACTOR, so the popular answer
+ * is wrong and the right answer is rare. Majority voting does not merely stall
+ * in that regime — it gets WORSE
  * with more samples, because more samples means a more reliable measurement of
  * the wrong consensus.
  *
@@ -22,7 +23,7 @@
  * best-of-N cross below majority voting. That crossing is Stroebl et al. 2024's
  * point, and it is why frequency voting keeps its place in the toolbox.
  *
- * The simulation (lib/sim BAT_AND_BALL_MODEL) is illustrative and chipped as
+ * The simulation (lib/sim LILY_PAD_MODEL) is illustrative and chipped as
  * such: no published curve fixes what "a 40%-reliable verifier" means. What is
  * cited is the shape — that selection beats voting when the verifier is good,
  * and that imperfect verifiers cap resampling gains.
@@ -33,14 +34,14 @@ import { CitationBadge } from "@/components/CitationBadge";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { BAT_AND_BALL } from "@/lib/authored";
+import { LILY_PADS } from "@/lib/authored";
 import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import { selectionAccuracy, selectionBatch } from "@/lib/sim";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 8;
-const B = BAT_AND_BALL;
+const B = LILY_PADS;
 
 const CURVE_NS = [1, 2, 4, 8, 16, 32, 64];
 const TRIALS = 1200;
@@ -68,6 +69,13 @@ export function Page8() {
   const [reliability, setReliability] = useState(100);
   const r = reliability / 100;
 
+  // Step 2's chart has its OWN reliability dial, independent of the step-1 demo.
+  // The curves are a separate experiment (population accuracy vs N), not a live
+  // redraw of the single batch judged in step 1, so they never wobble when the
+  // batch above is re-judged.
+  const [chartReliability, setChartReliability] = useState(70);
+  const cr = chartReliability / 100;
+
   // One batch of candidates, judged twice — the two panels share it exactly.
   const batch = useMemo(() => selectionBatch(n, SEED, r), [n, r]);
   const pop = useMemo(() => selectionAccuracy(n, TRIALS, SEED, r), [n, r]);
@@ -75,14 +83,14 @@ export function Page8() {
   const curves = useMemo(() => {
     const verifier = CURVE_NS.map((k) => ({
       x: k,
-      y: selectionAccuracy(k, TRIALS, SEED, r).verifier,
+      y: selectionAccuracy(k, TRIALS, SEED, cr).verifier,
     }));
     const majority = CURVE_NS.map((k) => ({
       x: k,
-      y: selectionAccuracy(k, TRIALS, SEED, r).majority,
+      y: selectionAccuracy(k, TRIALS, SEED, cr).majority,
     }));
     return { verifier, majority };
-  }, [r]);
+  }, [cr]);
 
   const bestScore = Math.max(...batch.candidates.map((c) => c.score), 1);
 
@@ -207,8 +215,8 @@ export function Page8() {
                 </p>
                 <p className="text-xs text-ink-muted">
                   scores every candidate, keeps the top one, and it has the easier job:{" "}
-                  <em>checking</em> that $0.05 and $1.05 sum to $1.10 is arithmetic,{" "}
-                  <em>finding</em> $0.05 took insight
+                  <em>checking</em> that day 47 doubles to a full lake on day 48 is one step,{" "}
+                  <em>finding</em> day 47 meant resisting the &ldquo;half the days&rdquo; pull
                 </p>
                 <div
                   className="flex flex-col gap-1 pt-1"
@@ -298,7 +306,9 @@ export function Page8() {
             </section>
           </section>
 
-          {/* Step 2 — the curves */}
+          {/* Step 2 — the curves. Self-contained: its own reliability dial
+              drives it, decoupled from the step-1 demo, so the authoritative
+              curves never wobble when the batch above is re-judged. */}
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">
               2. The two rules as N grows
@@ -306,46 +316,46 @@ export function Page8() {
                 illustrative · Cobbe 2021 · Stroebl 2024
               </span>
             </h2>
-          {/* Chart beside its caveat: the crossing you are told to look for and
-              the control that causes it stay in one glance. */}
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_17rem] lg:items-start">
           <figure
             aria-label="Selection accuracy against the number of candidates, for majority voting and verifier best-of-N"
             className="m-0 flex min-w-0 flex-col rounded-lg border-l-4 border-grid bg-surface"
           >
-            <div className="flex flex-col gap-2 p-4">
+            <div className="flex flex-col gap-3 p-4">
               <LineChart
-                title={`Accuracy against number of candidates on a trap problem, log x axis. Verifier best-of-N at ${reliability} percent reliability compared with majority voting, which falls as more candidates are drawn because the popular answer is the wrong one.`}
+                title={`Accuracy against number of candidates on a trap problem, log x axis. Verifier best-of-N at ${chartReliability} percent reliability compared with majority voting, which falls as more candidates are drawn because the popular answer is the wrong one.`}
                 points={curves.verifier}
                 secondary={{ points: curves.majority, label: "majority vote" }}
-                primaryLabel={`verifier best-of-N (${reliability}%)`}
+                primaryLabel={`verifier best-of-N (${chartReliability}%)`}
                 logX
                 xDomain={[1, 64]}
                 yDomain={[0, 100]}
-                markerX={n}
                 xLabel="candidates (log scale)"
                 yLabel="accuracy (%)"
                 width={560}
                 height={250}
               />
+              <Slider
+                label="Verifier reliability — drag it down until best-of-N crosses below voting"
+                min={0}
+                max={100}
+                value={chartReliability}
+                suffix="%"
+                onChange={(v) => {
+                  setChartReliability(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
               <figcaption className="text-sm text-ink-muted">
-                Majority voting <strong className="text-wrong">falls</strong> as N grows: more
-                samples cannot find a rare answer when the rule is &ldquo;whatever is most
-                common&rdquo;. They only sharpen the measurement of the trap.
+                Majority voting <strong className="text-wrong">falls</strong> as N grows: counting
+                cannot find a rare answer. And the verifier is a model too, so misread the criteria
+                and it goes <em>confidently</em> wrong toward the trap. Below roughly{" "}
+                <strong>45%</strong> it crosses <em>under</em> voting, and does worse at large N
+                than small, since every extra candidate is another chance for a wrong one to score
+                luckily high. That crossing is why voting keeps its place: it is dumb, but it cannot
+                be fooled about what it measures.
               </figcaption>
             </div>
           </figure>
-
-          <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
-            <strong>Now drag reliability down.</strong> The judge is a model too, and one that has
-            misread the criteria does not go random; it goes <em>confidently</em> wrong, toward
-            whatever looks most fluent, which on a trap problem is the trap. Below roughly{" "}
-            <strong>45%</strong> the lines cross: the verifier does worse than counting, and worse
-            at large N than small, since every extra candidate is another chance for a wrong one to
-            score luckily high. A weak verifier turns compute into confident errors, which is why
-            voting keeps its place. It is dumb, but it cannot be fooled about what it measures.
-          </div>
-          </div>
           </section>
 
           {/* Step 3 — the handoff */}
@@ -374,8 +384,8 @@ export function Page8() {
                 only the rule for choosing differs.
               </li>
               <li>
-                Drag <strong className="text-ink">reliability</strong> down and watch the two lines
-                in step 2 cross.
+                Step 2 has its own <strong className="text-ink">reliability</strong> dial; drag it
+                down and watch best-of-N cross below voting.
               </li>
               <li>
                 <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
@@ -402,8 +412,8 @@ export function Page8() {
         <CitationBadge citation={STROEBL} />
       </div>
       <p className="text-xs text-ink-muted">
-        the bat-and-ball problem and both candidate chains are authored teaching examples, and the
-        arithmetic check shown for each answer is recomputed by the test suite · the two panels and
+        the lily-pad problem and its candidate chains are authored teaching examples, and the
+        doubling check shown for each answer is recomputed by the test suite · the two panels and
         the chart are a seeded, ILLUSTRATIVE Monte Carlo, not a digitized published curve: no
         reported result fixes what &ldquo;a 40%-reliable verifier&rdquo; means numerically · what
         is cited is the shape: training a verifier and selecting among N sampled solutions

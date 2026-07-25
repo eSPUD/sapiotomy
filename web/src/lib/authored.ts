@@ -443,49 +443,52 @@ export const SAMPLING_CHAMBER = {
 
 // --- Page 8: Best-of-N and verifiers (generate, then select) ---------------
 /**
- * The bat-and-ball problem — chosen because its wrong answer is not a random
- * slip but an ATTRACTOR: the intuitive $0.10 is what a fast chain reaches, so
- * the wrong answer is genuinely the popular one and the right answer is the
- * rare one. That is the exact regime where majority voting fails and selection
- * has to do the work, and it lands the page's premise without inventing a
- * pathological example. It also pays back Act 1: this is the System-1 trap.
+ * The lily-pad (doubling) problem — chosen because its wrong answer is not a
+ * random slip but an ATTRACTOR: "half the lake in half the days" is what a fast
+ * chain reaches, so the wrong answer (day 24) is genuinely the popular one and
+ * the right answer (day 47) is the rare one. That is the exact regime where
+ * majority voting fails and selection has to do the work, without inventing a
+ * pathological example. It also pays back Act 1: this is the System-1 trap, and
+ * the exponential twist makes it more than a one-line arithmetic slip.
  *
- * Both candidate answers are checkable by substitution (verified in
+ * Every answer is checkable by one doubling step (verified in
  * src/lib/act2verifiers.test.ts), which is the page's other point: a verifier's
- * job is easier than a generator's, because checking "does 0.05 + 1.05 = 1.10
- * and is 1.05 − 0.05 = 1.00?" is arithmetic, not insight.
+ * job is easier than a generator's, because checking "does day 47, doubled
+ * once, fill the lake on day 48?" is one step, while FINDING day 47 means
+ * resisting the "half the days" pull.
  *
  * Index 0 is the correct answer, matching lib/sim's answer-index convention.
  */
-export const BAT_AND_BALL = {
+export const LILY_PADS = {
   question:
-    "A bat and a ball cost $1.10 in total. The bat costs $1.00 more than the ball. How much does the ball cost?",
-  total: 1.1,
-  difference: 1.0,
+    "A patch of lily pads on a lake doubles in area every day. It covers the whole lake on day 48. On which day is the lake half covered?",
+  fullDay: 48,
+  halfDay: 47,
   answers: [
     {
-      display: "$0.05",
+      display: "Day 47",
       correct: true,
-      gist: "sets up the equation and solves it",
-      chain: "ball + (ball + 1.00) = 1.10, so 2 × ball = 0.10 and ball = 0.05.",
-      /** The substitution a verifier can run: both constraints hold. */
-      check: "0.05 + 1.05 = 1.10 ✓ and 1.05 − 0.05 = 1.00 ✓",
+      gist: "works backward one day: doubling means the day before full is half",
+      chain:
+        "The pads double each day, so the day before the lake is full it was half full. Full on day 48, so half on day 47.",
+      /** One doubling step is all a verifier has to check. */
+      check: "day 47 is half; one doubling fills the lake on day 48 ✓",
       checks: true,
     },
     {
-      display: "$0.10",
+      display: "Day 24",
       correct: false,
-      gist: "subtracts the $1.00 and stops (the intuitive leap)",
-      chain: "1.10 − 1.00 = 0.10, so the ball is 10 cents.",
-      check: "0.10 + 1.10 = 1.20 ✗ (not 1.10), and the gap is 1.00 only if the bat is 1.10",
+      gist: "halves the timeline, not the lake (the intuitive leap)",
+      chain: "The lake is full on day 48, so it is half covered halfway through, on day 24.",
+      check: "day 24 still needs 24 more doublings to fill; that is far less than half ✗",
       checks: false,
     },
     {
-      display: "$1.05",
+      display: "Day 46",
       correct: false,
-      gist: "answers with the bat's price instead of the ball's",
-      chain: "The bat is 1.00 more than the ball, so the bat is 1.05; the answer is 1.05.",
-      check: "1.05 + 2.05 = 3.10 ✗ (this is the bat, not the ball)",
+      gist: "steps back one day too many; that leaves a quarter, not a half",
+      chain: "Full on day 48, and half must be a couple of days earlier, so day 46.",
+      check: "day 46 doubles to half on day 47, so day 46 is only a quarter ✗",
       checks: false,
     },
   ],
