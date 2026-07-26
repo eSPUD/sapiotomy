@@ -19,13 +19,22 @@
  * only on this page; the answer-time alternative is the next page's business.
  * No inference talk here.
  *
- * Layout rule: no reveals, no drag-to-unlock. Shell matches pages 1 and 4 — a
- * single numbered reading column (1. the bill · 2. the data · 3. the guess)
- * beside a sticky instructions/references rail. The earlier two-column split
- * made the eye run left-down-right-down; the numbered stack is one straight
- * read. One dial (the five-year slider) drives both walls: it moves the cost
- * curve in step 1 and the calendar marker in step 2.
- * Every citation lands at the bottom of the page.
+ * Layout rule: no reveals, no drag-to-unlock. Shell matches page 1 exactly —
+ * numbered steps down the left, each with its own margin <Note> beside it
+ * (same component shape as Page1's). What was a sticky "how to read this page"
+ * rail is gone: a page with a slider, a dial and a text box does not need
+ * operating instructions, and one shared references block put Villalobos next
+ * to a cost curve he has nothing to do with. Sources now sit inside the step
+ * that uses them, and each step's margin note carries only that step's
+ * provenance (what is cited vs derived).
+ *
+ * Each figure owns its own control, too. Step 1's five-year slider moves step
+ * 1's cost curve, and nothing else; step 2's parameter dial moves step 2's
+ * reading bar, and nothing else. The old build had step 1's slider secretly
+ * driving a marker in step 2 — a dial in one figure yanking a needle in
+ * another, with no causal story connecting them. The data wall's timeline is
+ * now static, which is honest: Villalobos gives a window, not a rate, so there
+ * was never anything for the reader to drag there.
  */
 
 import { useMemo, useRef, useState } from "react";
@@ -45,46 +54,66 @@ const COMBO_MONTHS = 60;
 
 /** "$78M" below a billion, "$1.0B" to a trillion, "$2.6T" past it. */
 const fmtM = (m: number) =>
-  m >= 1e6 ? `$${(m / 1e6).toFixed(1)}T` : m >= 1000 ? `$${(m / 1000).toFixed(1)}B` : `$${Math.round(m)}M`;
+  m >= 1e6
+    ? `$${(m / 1e6).toFixed(1)}T`
+    : m >= 1000
+      ? `$${(m / 1000).toFixed(1)}B`
+      : `$${Math.round(m)}M`;
+
+/** Trillions of tokens: "1.4T" small, "300T" large. */
+const fmtT = (t: number) => `${t >= 10 ? Math.round(t) : t.toFixed(1)}T`;
+
+/** Parameter counts, dialled in billions but spoken in trillions past 1000B. */
+const fmtParams = (b: number) => (b >= 1000 ? `${(b / 1000).toFixed(1)}T` : `${b}B`);
+
+/** Step 2's dial: model size in billions of parameters. */
+const PARAMS_MIN = 100;
+const PARAMS_MAX = 20000;
+const PARAMS_STEP = 100;
 
 type GuessState = "open" | "guessed" | "skipped";
 
 /** The meter's calendar span, one year either side of the cited window. */
 const TRACK_START = 2025;
 const TRACK_END = 2033;
-/** Mid-2026: "today", so the five-year slider reads as a calendar date. */
-const PROGRAM_START_YEAR = 2026.5;
+/** Mid-2026, drawn as "today" so the cited window has a present to sit after. */
+const TODAY_YEAR = 2026.5;
 
-const trackPct = (year: number) =>
-  ((year - TRACK_START) / (TRACK_END - TRACK_START)) * 100;
+const trackPct = (year: number) => ((year - TRACK_START) / (TRACK_END - TRACK_START)) * 100;
+
+/** A margin note that sits beside its step and scrolls with the page (as page 1). */
+function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+  return (
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      {children}
+    </aside>
+  );
+}
 
 /**
- * The data wall as a timeline rather than a pair of static numbers. The shaded
- * band is Villalobos et al.'s cited full-utilization window and the hairline is
- * their median year; the moving marker is only the five-year slider's month
- * placed on the calendar (derived, and labelled as such). Deliberately NOT a
- * depletion curve — the source gives a window, not a per-month burn rate, so
- * nothing here animates a "tokens remaining" figure.
+ * The cited data-stock window on a calendar. Entirely static: the shaded band
+ * is Villalobos et al.'s full-utilization window, the hairline their median
+ * year, the marker just today. Deliberately NOT a depletion curve and no
+ * longer driven by step 1's slider — the source gives a window, not a
+ * per-month burn rate, so there is nothing here for a reader to drag.
  */
 function DataWindowMeter({
-  months,
   startY,
   endY,
   medianY,
 }: {
-  months: number;
   startY: number;
   endY: number;
   medianY: number;
 }) {
-  const markerYear = PROGRAM_START_YEAR + months / 12;
   const left = trackPct(startY);
   const width = trackPct(endY) - left;
   return (
     <div>
       <div
         role="img"
-        aria-label={`Timeline ${TRACK_START} to ${TRACK_END}. The cited full-utilization window runs ${startY} to ${endY}, median ${medianY}. Keeping the plan up for ${months} months reaches ${Math.floor(markerYear)}.`}
+        aria-label={`Timeline ${TRACK_START} to ${TRACK_END}. The cited full-utilization window runs ${startY} to ${endY}, median ${medianY}; today sits just before it.`}
         className="relative h-3 rounded-sm border border-grid bg-canvas"
       >
         <div
@@ -96,18 +125,59 @@ function DataWindowMeter({
           style={{ left: `${trackPct(medianY)}%` }}
         />
         <div
-          className="absolute -bottom-1.5 -top-1.5 w-1 -translate-x-1/2 rounded-sm bg-compute ring-1 ring-canvas transition-[left] duration-150"
-          style={{ left: `${trackPct(markerYear)}%` }}
+          className="absolute -bottom-1.5 -top-1.5 w-1 -translate-x-1/2 rounded-sm bg-ink-muted ring-1 ring-canvas"
+          style={{ left: `${trackPct(TODAY_YEAR)}%` }}
+        />
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-ink-muted">
+        <span>today</span>
+        <span>
+          fully utilized{" "}
+          <span className="font-mono text-wrong">
+            {startY}–{endY}
+          </span>{" "}
+          · median {medianY}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Step 2's own figure: how much of the finite stock one model has to read.
+ * Compute-optimal training wants about {tokensPerParam} tokens per parameter
+ * (Hoffmann et al. 2022), so the reader's parameter dial converts straight into
+ * a demand for text, drawn against Villalobos et al.'s ~300T stock. Derived
+ * from those two cited anchors and labelled as such; past 100% the bar turns
+ * red and says so rather than pretending the tokens exist.
+ */
+function ReadingBar({ tokensT, stockT }: { tokensT: number; stockT: number }) {
+  const share = tokensT / stockT;
+  const over = share > 1;
+  return (
+    <div>
+      <div
+        role="img"
+        aria-label={`Reading demand against the stock: this model must read about ${tokensT.toFixed(1)} trillion tokens, ${(share * 100).toFixed(0)} percent of the ${stockT} trillion token stock.`}
+        className="relative h-3 overflow-hidden rounded-sm border border-grid bg-canvas"
+      >
+        <div
+          className={`absolute inset-y-0 left-0 transition-[width] duration-150 ${over ? "bg-wrong" : "bg-compute"}`}
+          style={{ width: `${Math.min(share, 1) * 100}%` }}
         />
       </div>
       <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-ink-muted">
         <span>
-          fully utilized <span className="font-mono text-wrong">{startY}–{endY}</span> · median{" "}
-          {medianY}
+          must read <span className="font-mono text-ink">≈{fmtT(tokensT)}</span>
         </span>
         <span>
-          this plan, month {months} ·{" "}
-          <span className="font-mono text-ink">{Math.floor(markerYear)}</span>
+          {over ? (
+            <span className="font-semibold text-wrong">
+              {(share * 100).toFixed(0)}% — more text than exists
+            </span>
+          ) : (
+            `${(share * 100).toFixed(share < 0.1 ? 2 : 1)}% of everything ever written`
+          )}
         </span>
       </div>
     </div>
@@ -130,11 +200,20 @@ export function Page3() {
   const cp = chinchilla.fit!.params;
 
   const [months, setMonths] = useState(12);
+  const [paramsB, setParamsB] = useState(1000);
   const [guessText, setGuessText] = useState("");
   const [guessState, setGuessState] = useState<GuessState>("open");
   const [announcement, setAnnouncement] = useState("");
   const monthsTouchedRef = useRef(false);
+  const paramsTouchedRef = useRef(false);
   const crossedTrillionRef = useRef(false);
+  const crossedStockRef = useRef(false);
+
+  const STOCK_T = ds.stockTrillionTokens;
+  /** Compute-optimal reading for a model this size, in trillions of tokens. */
+  const tokensT = (paramsB * cp.tokensPerParam) / 1000;
+  /** The size whose compute-optimal appetite is exactly the whole stock. */
+  const paramsAtFullStock = (STOCK_T * 1000) / cp.tokensPerParam;
 
   // The five-year combination: same model (linear) vs the frontier model of
   // the day (per-run price riding Epoch's x2.4/year cost trend). Derived.
@@ -170,6 +249,20 @@ export function Page3() {
     }
   };
 
+  const onParams = (v: number) => {
+    if (!paramsTouchedRef.current) {
+      paramsTouchedRef.current = true;
+      recordInteraction(PAGE_N);
+    }
+    setParamsB(v);
+    if (!crossedStockRef.current && (v * cp.tokensPerParam) / 1000 > STOCK_T) {
+      crossedStockRef.current = true;
+      setAnnouncement(
+        `At ${fmtParams(v)} parameters the compute-optimal recipe asks for more text than humans have written.`,
+      );
+    }
+  };
+
   const lockGuess = () => {
     if (guessState !== "open" || guessText.trim().length === 0) return;
     recordInteraction(PAGE_N);
@@ -194,259 +287,257 @@ export function Page3() {
         {page.title}
       </h1>
 
-      {/* Left = the numbered walk-through · Right = instructions + references */}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        {/* LEFT COLUMN */}
-        <div className="flex min-w-0 flex-col gap-8">
-          <p className="text-lg text-ink-muted">
-            Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
-            stares right at you: reseal the memory <strong className="text-ink">every morning</strong>.
-            Retrain the model daily and it is never a day out of date. That plan fails twice: first
-            the bill, then the data itself.
-          </p>
+      <p className="max-w-2xl text-lg text-ink-muted">
+        Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
+        stares right at you: reseal the memory <strong className="text-ink">every morning</strong>.
+        Retrain the model daily and it is never a day out of date. That plan fails twice: first the
+        bill, then the data itself.
+      </p>
 
-          {/* Step 1 — the bill */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              1. The bill compounds
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                derived from the two Epoch trends
-              </span>
-            </h2>
-            <figure
-              aria-label="Problem one: the bill compounds"
-              className="m-0 flex flex-col gap-4 rounded-lg border-l-4 border-wrong bg-surface p-4"
-            >
-              <p className="text-sm text-ink">
-                Every day of the plan costs more than the day before: training price is not a fixed
-                number, and Epoch AI puts training-compute cost on a{" "}
-                <strong>~5&times;-per-year</strong> climb.
-              </p>
-              <LineChart
-                title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
-                points={comboSame}
-                secondary={{ points: comboFrontier, label: "the frontier model of the day, daily" }}
-                primaryLabel="the same model, daily (flat $78M rate)"
-                markerX={months}
-                xLabel="months of keeping it up"
-                yLabel="cumulative bill ($ billions)"
-                yDomain={[0, 2600]}
-                width={640}
-                height={300}
-              />
-              <Slider
-                label="Drag through five years; this one dial drives both walls"
-                min={0}
-                max={COMBO_MONTHS}
-                value={months}
-                onChange={onMonths}
-                suffix=" months"
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                  <p className="text-xs uppercase tracking-wide text-ink-muted">
-                    the frontier of the day, daily
-                  </p>
-                  <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
-                    {fmtM(frontierAtM)}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                  <p className="text-xs uppercase tracking-wide text-ink-muted">
-                    the same model, daily
-                  </p>
-                  <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-                    {fmtM(sameAtM)}
-                  </p>
-                </div>
-              </div>
-              <figcaption className="text-sm text-ink">
-                Combine the two rates: compute per frontier run grows about 5x a
-                year; cheaper, better hardware absorbs part of that, so the <strong>bill</strong>{" "}
-                per run grows ×{tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
-                <em>the frontier model of the day</em>, every day, and by year five the program is
-                measured in trillions, and even the flat ${RUN_M}M-per-run plan at the bottom of the
-                chart burns {fmtM(DAYS * RUN_M)} a year.
-              </figcaption>
-            </figure>
-          </section>
-
-          {/* Step 2 — the data */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              2. Bigger models, finite data
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                Hoffmann 2022 · Villalobos 2024
-              </span>
-            </h2>
-            <section
-              aria-label="Problem two: the data runs out"
-              className="flex flex-col gap-3 rounded-lg border-l-4 border-wrong bg-surface p-4"
-            >
-              <p className="text-sm text-ink">
-                Suppose money were no object. It still fails. The other way to make a model smarter
-                is to make it <strong>bigger</strong>, but a bigger model only pays off if it also{" "}
-                <strong>reads more</strong>, in step. Size and reading climb together: that is the
-                scaling law. So the ceiling was never the money. It is how much there is worth
-                reading.
-              </p>
-              <div className="rounded-lg border border-grid bg-surface-raised p-4">
+      {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
+      <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* Step 1 — the bill */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            1. The bill compounds
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              derived from the two Epoch trends
+            </span>
+          </h2>
+          <figure
+            aria-label="Problem one: the bill compounds"
+            className="m-0 flex flex-col gap-4 rounded-lg border-l-4 border-wrong bg-surface p-4"
+          >
+            <p className="text-sm text-ink">
+              Every day of the plan costs more than the day before: training price is not a fixed
+              number, and Epoch AI puts training-compute cost on a{" "}
+              <strong>~5&times;-per-year</strong> climb.
+            </p>
+            <LineChart
+              title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
+              points={comboSame}
+              secondary={{
+                points: comboFrontier,
+                label: "the frontier model of the day, daily",
+              }}
+              primaryLabel="the same model, daily (flat $78M rate)"
+              markerX={months}
+              xLabel="months of keeping it up"
+              yLabel="cumulative bill ($ billions)"
+              yDomain={[0, 2600]}
+              width={640}
+              height={300}
+            />
+            <Slider
+              label="Drag through five years of keeping the plan up"
+              min={0}
+              max={COMBO_MONTHS}
+              value={months}
+              onChange={onMonths}
+              suffix=" months"
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-grid bg-surface-raised p-3">
                 <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  every quality token humans have written
+                  the frontier of the day, daily
                 </p>
-                <p className="font-mono text-3xl font-bold tabular-nums text-ink">
-                  ≈{ds.stockTrillionTokens}T tokens
-                </p>
-                <p className="mt-1 text-xs text-ink-muted">
-                  tokens: the pieces of text a model reads, roughly a word each
+                <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
+                  {fmtM(frontierAtM)}
                 </p>
               </div>
-              <DataWindowMeter
-                months={months}
-                startY={ds.windowStartYear}
-                endY={ds.windowEndYear}
-                medianY={ds.medianYear}
-              />
-              <p className="text-sm text-ink-muted">
-                That is everything worth training on, the public human text of the internet. The
-                same dial from step 1 walks the plan straight into the window.{" "}
-                <strong className="text-ink">No budget buys tokens that do not exist.</strong>
-              </p>
-            </section>
-          </section>
-
-          {/* Step 3 — the guess */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              3. So what is left?
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                optional · skip freely
-              </span>
-            </h2>
-            <section
-              aria-label="The guess"
-              className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
-            >
-              <p className="text-lg text-ink">
-                Both walls come from the same habit: paying for smarts <strong>up front</strong>,
-                all at once, before a single question is asked. That is what the bill buys, and what
-                the data runs out on. So turn it around, and instead of front-loading everything to
-                make the model <strong>know</strong> the answer, what if we spent that effort{" "}
-                <strong>when the question arrives</strong>, and let it{" "}
-                <strong>work the answer out</strong>? What do you think that would look like?
-              </p>
-              <p className="text-sm text-ink-muted">
-                Hint: how did you solve{" "}
-                <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> on page 1?
-                You didn&apos;t know it in advance. You built it on the spot.
-              </p>
-              {guessState === "open" ? (
-                <form
-                  className="flex flex-wrap items-center gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    lockGuess();
-                  }}
-                >
-                  <input
-                    type="text"
-                    autoComplete="off"
-                    aria-label="Your guess"
-                    placeholder="a word or a sentence"
-                    value={guessText}
-                    onChange={(e) => setGuessText(e.target.value)}
-                    className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
-                  />
-                  <button
-                    type="submit"
-                    disabled={guessText.trim().length === 0}
-                    className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-                  >
-                    Lock it in
-                  </button>
-                  <button
-                    type="button"
-                    onClick={skipGuess}
-                    className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
-                  >
-                    Skip
-                  </button>
-                </form>
-              ) : (
-                <p className="text-ink">
-                  {guessState === "guessed" ? (
-                    <>
-                      Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
-                    </>
-                  ) : (
-                    <>Hold that thought anyway.</>
-                  )}{" "}
-                  <em className="text-ink-muted">The answer is one page away.</em>
+              <div className="rounded-lg border border-grid bg-surface-raised p-3">
+                <p className="text-xs uppercase tracking-wide text-ink-muted">
+                  the same model, daily
                 </p>
-              )}
-            </section>
+                <p className="font-mono text-2xl font-bold tabular-nums text-ink">
+                  {fmtM(sameAtM)}
+                </p>
+              </div>
+            </div>
+            <figcaption className="text-sm text-ink">
+              Combine the two rates: compute per frontier run grows about 5x a year; cheaper, better
+              hardware absorbs part of that, so the <strong>bill</strong> per run grows ×
+              {tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
+              <em>the frontier model of the day</em>, every day, and by year five the program is
+              measured in trillions, and even the flat ${RUN_M}M-per-run plan at the bottom of the
+              chart burns {fmtM(DAYS * RUN_M)} a year.
+            </figcaption>
+            <div className="flex flex-wrap gap-2 border-t border-grid pt-3">
+              <CitationBadge citation={runCost.citation} />
+              <CitationBadge citation={computeGrowth.citation} />
+              <CitationBadge citation={trainTrend.citation} />
+            </div>
+          </figure>
+        </section>
+        <Note kicker="Where the bill comes from">
+          <p>
+            Two cited anchors, one derived curve: the ≈${RUN_M}M compute estimate for the GPT-4 run,
+            and the ×{tp.perYear}-a-year training-cost trend. The curve is one run a day at ${RUN_M}
+            M × {tp.perYear}
+            <sup>years</sup>.
+          </p>
+          <p>
+            Its per-run price passes $1B around year three, matching Epoch&apos;s{" "}
+            {tp.projectionYear} projection. Daily retraining is a deliberately absurd hypothetical;
+            no lab is claimed to spend this.
+          </p>
+        </Note>
+
+        {/* Step 2 — the data */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            2. Bigger models, finite data
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              cited stock, derived demand
+            </span>
+          </h2>
+          <section
+            aria-label="Problem two: the data runs out"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-wrong bg-surface p-4"
+          >
+            <p className="text-sm text-ink">
+              Suppose money were no object. It still fails. The other way to make a model smarter is
+              to make it <strong>bigger</strong>, but a bigger model only pays off if it also{" "}
+              <strong>reads more</strong>, in step: about {cp.tokensPerParam} tokens for every
+              parameter. Size and reading climb together: that is the scaling law. So the ceiling
+              was never the money. It is how much there is worth reading.
+            </p>
+            <div className="rounded-lg border border-grid bg-surface-raised p-4">
+              <p className="text-xs uppercase tracking-wide text-ink-muted">
+                every quality token humans have written
+              </p>
+              <p className="font-mono text-3xl font-bold tabular-nums text-ink">
+                ≈{ds.stockTrillionTokens}T tokens
+              </p>
+              <p className="mt-1 text-xs text-ink-muted">
+                tokens: the pieces of text a model reads, roughly a word each
+              </p>
+            </div>
+            <Slider
+              label="Size the model you want to train next"
+              min={PARAMS_MIN}
+              max={PARAMS_MAX}
+              step={PARAMS_STEP}
+              value={paramsB}
+              onChange={onParams}
+              format={fmtParams}
+              suffix=" parameters"
+            />
+            <ReadingBar tokensT={tokensT} stockT={STOCK_T} />
+            <p className="text-sm text-ink-muted">
+              A <strong className="text-ink">{fmtParams(paramsB)}</strong>
+              -parameter model wants <strong className="text-ink">≈{fmtT(tokensT)}</strong> tokens
+              of training text. Push the dial to{" "}
+              <strong className="text-ink">{fmtParams(paramsAtFullStock)}</strong> and the recipe
+              asks for every
+              quality token humans have written — and the field is already on course to use the lot.{" "}
+              <strong className="text-ink">No budget buys tokens that do not exist.</strong>
+            </p>
+            <DataWindowMeter
+              startY={ds.windowStartYear}
+              endY={ds.windowEndYear}
+              medianY={ds.medianYear}
+            />
+            <div className="flex flex-wrap gap-2 border-t border-grid pt-3">
+              <CitationBadge citation={chinchilla.citation} />
+              <CitationBadge citation={dataStock.citation} />
+            </div>
           </section>
-        </div>
+        </section>
+        <Note kicker="Where the wall comes from">
+          <p>
+            The ≈{ds.stockTrillionTokens}T stock and the {ds.windowStartYear}–{ds.windowEndYear}{" "}
+            full-utilization window (median {ds.medianYear}) are Villalobos et al., quoted verbatim.
+            The timeline draws that window and today, nothing else — the source gives a window, not
+            a burn rate, so no depletion is animated.
+          </p>
+          <p>
+            The ≈{cp.tokensPerParam}-tokens-per-parameter rule is Hoffmann et al. 2022, which
+            revised Kaplan et al. 2020 (arXiv:2001.08361): Chinchilla, {cp.chinchillaParamsB}B
+            parameters on {cp.chinchillaTokensB / 1000}T tokens, beat Gopher&apos;s{" "}
+            {cp.gopherParamsB}B at equal compute. The bar multiplies your dial by that rule; it is
+            derived, not measured.
+          </p>
+        </Note>
 
-        {/* RIGHT COLUMN — instructions + references */}
-        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              How to read this page
-            </h2>
-            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
-              <li>Read straight down: the bill, then the data, then the guess.</li>
-              <li>
-                One dial runs the page: drag the five-year slider in step 1 and both the cost curve
-                and the calendar meter in step 2 move with it.
-              </li>
-              <li>The guess box is optional; skipping costs you nothing.</li>
-              <li>
-                Use{" "}
-                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
-                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
-                to move between pages.
-              </li>
-            </ul>
-          </div>
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              References
-            </h2>
-            <p className="text-sm text-ink-muted">
-              Run cost and the cost trend: Epoch AI. Compute-optimal scaling: Hoffmann et al. 2022.
-              Data stock: Villalobos et al. 2024.
+        {/* Step 3 — the guess */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            3. So what is left?
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              optional · skip freely
+            </span>
+          </h2>
+          <section
+            aria-label="The guess"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            <p className="text-lg text-ink">
+              Both walls come from the same habit: paying for smarts <strong>up front</strong>, all
+              at once, before a single question is asked. That is what the bill buys, and what the
+              data runs out on. So turn it around, and instead of front-loading everything to make
+              the model <strong>know</strong> the answer, what if we spent that effort{" "}
+              <strong>when the question arrives</strong>, and let it{" "}
+              <strong>work the answer out</strong>? What do you think that would look like?
             </p>
             <p className="text-sm text-ink-muted">
-              Full links and the derivation notes are at the foot of the page.
+              Hint: how did you solve{" "}
+              <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> on page 1? You
+              didn&apos;t know it in advance. You built it on the spot.
             </p>
-          </div>
-        </aside>
+            {guessState === "open" ? (
+              <form
+                className="flex flex-wrap items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  lockGuess();
+                }}
+              >
+                <input
+                  type="text"
+                  autoComplete="off"
+                  aria-label="Your guess"
+                  placeholder="a word or a sentence"
+                  value={guessText}
+                  onChange={(e) => setGuessText(e.target.value)}
+                  className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
+                />
+                <button
+                  type="submit"
+                  disabled={guessText.trim().length === 0}
+                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                >
+                  Lock it in
+                </button>
+                <button
+                  type="button"
+                  onClick={skipGuess}
+                  className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
+                >
+                  Skip
+                </button>
+              </form>
+            ) : (
+              <p className="text-ink">
+                {guessState === "guessed" ? (
+                  <>
+                    Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
+                  </>
+                ) : (
+                  <>Hold that thought anyway.</>
+                )}{" "}
+                <em className="text-ink-muted">The answer is one page away.</em>
+              </p>
+            )}
+          </section>
+        </section>
+        <div aria-hidden="true" />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={runCost.citation} />
-        <CitationBadge citation={computeGrowth.citation} />
-        <CitationBadge citation={trainTrend.citation} />
-        <CitationBadge citation={chinchilla.citation} />
-        <CitationBadge citation={dataStock.citation} />
-      </div>
       <p className="text-xs text-ink-muted">
-        daily retraining is a deliberately absurd hypothetical priced from two cited Epoch
-        anchors: the ≈ ${RUN_M}M compute estimate for the GPT-4 run (AI Index 2024) and the ×
-        {tp.perYear}-per-year training-cost trend · the frontier compute trend (about 5x per
-        year for language models since mid-2020) is an Epoch figure, redrawn under CC BY, not
-        Epoch&apos;s image · the combined curve is derived: one run per day priced at ${RUN_M}M ×{" "}
-        {tp.perYear}^years, whose per-run price passes $1B around year three, consistent with
-        Epoch&apos;s {tp.projectionYear} projection · the ≈{cp.tokensPerParam}-tokens-per-parameter
-        compute-optimal rule and the Chinchilla {cp.chinchillaParamsB}B / Gopher{" "}
-        {cp.gopherParamsB}B comparison are Hoffmann et al. 2022, which revised the earlier
-        very-large-model recipe of Kaplan et al. 2020 (arXiv:2001.08361) · the ≈
-        {ds.stockTrillionTokens}T-token effective data stock and the {ds.windowStartYear}–
-        {ds.windowEndYear} full-utilization window (median {ds.medianYear}) are Villalobos et al.
-        2024 (Epoch AI) estimates, quoted verbatim · the timeline marker is derived: it just places
-        the slider&apos;s month on the calendar assuming the plan starts today; no depletion rate is
-        claimed or drawn · no claims about what any lab actually spends
+        the frontier compute trend (about 5x per year for language models since mid-2020) is an
+        Epoch figure, redrawn under CC BY, not Epoch&apos;s image · no claims about what any lab
+        actually spends
       </p>
 
       <div aria-live="polite" className="sr-only">
