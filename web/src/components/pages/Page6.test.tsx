@@ -30,11 +30,11 @@ describe("Page 6 (Thinking Longer)", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Thinking Longer");
     expect(screen.getByText(T.question)).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`✗\\s*${T.blurt}`))).toBeInTheDocument();
-    expect(screen.getByText(`depth 0 of ${T.steps.length}`)).toBeInTheDocument();
+    expect(screen.getByText(`0 of ${T.steps.length} steps written`)).toBeInTheDocument();
     expect(screen.getByText(`0 of ${CAP} words spent`)).toBeInTheDocument();
     // No step text is afforded yet.
     expect(screen.queryByText(T.steps[0].text)).toBeNull();
-    expect(screen.getAllByText(/· · · \(not yet afforded\)/).length).toBe(T.steps.length);
+    expect(screen.getAllByText(/· · · \(not written\)/).length).toBe(T.steps.length);
   });
 
   it("a partial budget affords whole steps in order and lands the mid-chain cut", () => {
@@ -44,9 +44,9 @@ describe("Page 6 (Thinking Longer)", () => {
     expect(screen.getByText(T.steps[0].text)).toBeInTheDocument();
     expect(screen.getByText(T.steps[1].text)).toBeInTheDocument();
     expect(screen.queryByText(T.steps[2].text)).toBeNull();
-    expect(screen.getByText(`depth 2 of ${T.steps.length}`)).toBeInTheDocument();
+    expect(screen.getByText(`2 of ${T.steps.length} steps written`)).toBeInTheDocument();
     expect(screen.getByText(/out of budget mid-chain/i)).toBeInTheDocument();
-    expect(screen.getByText(/cut after step 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/stopped after step 2/i)).toBeInTheDocument();
   });
 
   it("a step that does not wholly fit is not afforded", () => {
@@ -54,7 +54,7 @@ describe("Page 6 (Thinking Longer)", () => {
     drag(T.steps[0].words + T.steps[1].words - 1);
     expect(screen.getByText(T.steps[0].text)).toBeInTheDocument();
     expect(screen.queryByText(T.steps[1].text)).toBeNull();
-    expect(screen.getByText(`depth 1 of ${T.steps.length}`)).toBeInTheDocument();
+    expect(screen.getByText(`1 of ${T.steps.length} steps written`)).toBeInTheDocument();
     expect(screen.getByText(`${T.steps[0].words} of ${CAP} words spent`)).toBeInTheDocument();
   });
 
@@ -64,7 +64,9 @@ describe("Page 6 (Thinking Longer)", () => {
     for (const s of T.steps) {
       expect(screen.getByText(s.text)).toBeInTheDocument();
     }
-    expect(screen.getByText(`depth ${T.steps.length} of ${T.steps.length}`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`${T.steps.length} of ${T.steps.length} steps written`),
+    ).toBeInTheDocument();
     expect(screen.getByText(new RegExp(`✓\\s*${T.display}`))).toBeInTheDocument();
     expect(screen.queryByText(/out of budget/i)).toBeNull();
   });
@@ -78,10 +80,28 @@ describe("Page 6 (Thinking Longer)", () => {
     expect(screen.getByText("50%")).toBeInTheDocument();
     expect(screen.getByText("57%")).toBeInTheDocument();
     expect(screen.getByText(/inference-time scaling in its simplest form/i)).toBeInTheDocument();
-    // The requested grounding citations ride the footer (and are named again in
-    // the sidebar rail, so these are getAllByText).
-    expect(screen.getAllByText(/Kojima et al. 2022/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Feng et al. 2023/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Merrill & Sabharwal 2024/).length).toBeGreaterThan(0);
+  });
+
+  it("puts each reference in the margin beside the step that uses it, with no footnote or how-to rail", () => {
+    render(<Page6 />);
+    // Grounding for step 1 sits in step 1's margin note.
+    expect(screen.getByText(/Kojima et al. 2022/)).toBeInTheDocument();
+    expect(screen.getByText(/Feng et al. 2023/)).toBeInTheDocument();
+    // The measured result is credited beside step 3, badge included.
+    expect(screen.getAllByText(/Muennighoff et al. 2025/).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: /Muennighoff et al. 2025/ })).toHaveAttribute(
+      "href",
+      "https://arxiv.org/abs/2501.19393",
+    );
+    // Page-1 shell: no sticky instructions rail, no jargon footnote.
+    expect(screen.queryByText(/how to read this page/i)).toBeNull();
+    expect(screen.queryByText(/arXiv:2205.11916/)).toBeNull();
+    expect(screen.queryByText(/whitespace/i)).toBeNull();
+  });
+
+  it("says out loud that a model cannot be held to a one-word answer", () => {
+    render(<Page6 />);
+    expect(screen.getByText(/cannot really hold a model to one word/i)).toBeInTheDocument();
+    expect(screen.getByText(/told to think longer/i)).toBeInTheDocument();
   });
 });
