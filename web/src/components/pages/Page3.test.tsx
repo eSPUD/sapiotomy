@@ -29,6 +29,10 @@ const fiveYearSlider = () => screen.getByRole("slider", { name: /drag through fi
 const dragMonths = (v: number) =>
   fireEvent.change(fiveYearSlider(), { target: { value: String(v) } });
 
+const sizeSlider = () => screen.getByRole("slider", { name: /size the model/i });
+const dragParams = (v: number) =>
+  fireEvent.change(sizeSlider(), { target: { value: String(v) } });
+
 describe("Page 3 (Training Daily?)", () => {
   it("shows both problems, the slider, and the guess box up front", () => {
     render(<Page3 />);
@@ -61,6 +65,9 @@ describe("Page 3 (Training Daily?)", () => {
     expect(
       screen.getByRole("img", { name: /cited full-utilization window/i }),
     ).toBeInTheDocument();
+    // Step 2 owns a dial of its own: model size against the finite stock.
+    expect(sizeSlider()).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /reading demand against the stock/i })).toBeInTheDocument();
     expect(screen.getByText(/No budget buys tokens that do not exist/i)).toBeInTheDocument();
     // The guess, hinting back at page 1's multiplication round.
     expect(screen.getByText(/paying for smarts/i)).toBeInTheDocument();
@@ -90,6 +97,36 @@ describe("Page 3 (Training Daily?)", () => {
     expectClean();
   });
 
+  it("each figure answers only to its own control", () => {
+    render(<Page3 />);
+    const stockShare = () => screen.getByRole("img", { name: /reading demand against the stock/i });
+    const before = stockShare().getAttribute("aria-label");
+
+    // Step 1's slider moves step 1's totals and leaves step 2's bar alone.
+    dragMonths(60);
+    expect(screen.getByText("$2.6T")).toBeInTheDocument();
+    expect(stockShare()).toHaveAttribute("aria-label", before);
+
+    // Step 2's dial moves step 2's bar and leaves step 1's totals alone.
+    dragParams(5000);
+    expect(stockShare().getAttribute("aria-label")).not.toBe(before);
+    expect(screen.getByText("$2.6T")).toBeInTheDocument();
+    expectClean();
+  });
+
+  it("the size dial converts parameters into reading, and says when it exceeds the stock", () => {
+    render(<Page3 />);
+    // Default 1000B x 20 tokens/param = 20T tokens, under the 300T stock. The
+    // bar's readout and the sentence beneath it quote the same figure.
+    expect(screen.getAllByText("≈20T")).toHaveLength(2);
+    expect(screen.getByText(/6\.67% of everything ever written/)).toBeInTheDocument();
+    // 20,000B x 20 = 400T: more text than humans have written.
+    dragParams(20000);
+    expect(screen.getByText(/133% — more text than exists/)).toBeInTheDocument();
+    expect(screen.getByText(/more text than humans have written/)).toBeInTheDocument();
+    expectClean();
+  });
+
   it("locks a guess: echo, hold-that-thought, teaser; the form is consumed", () => {
     render(<Page3 />);
     const box = screen.getByRole("textbox", { name: /your guess/i });
@@ -114,9 +151,34 @@ describe("Page 3 (Training Daily?)", () => {
     expectClean();
   });
 
-  it("citations sit at the bottom of the page", () => {
+  it("each step carries only the sources it uses", () => {
     render(<Page3 />);
-    expect(screen.getAllByRole("link").length).toBeGreaterThan(0);
+    const linkText = (root: HTMLElement) =>
+      Array.from(root.querySelectorAll("a"))
+        .map((a) => a.textContent ?? "")
+        .join(" | ");
+    const bill = screen.getByRole("figure", { name: /problem one/i });
+    const data = screen.getByRole("region", { name: /problem two/i });
+
+    // The bill cites Epoch's cost anchors; Villalobos and Hoffmann stay out of it.
+    expect(linkText(bill)).toMatch(/AI Index/);
+    expect(linkText(bill)).toMatch(/Cottier/);
+    expect(linkText(bill)).toMatch(/Sevilla/);
+    expect(linkText(bill)).not.toMatch(/Villalobos|Hoffmann/);
+    // The data wall cites the scaling law and the stock, and no cost trends.
+    expect(linkText(data)).toMatch(/Hoffmann/);
+    expect(linkText(data)).toMatch(/Villalobos/);
+    expect(linkText(data)).not.toMatch(/Cottier|AI Index|Sevilla/);
+    expectClean();
+  });
+
+  it("has no instructional side rail: the controls speak for themselves", () => {
+    render(<Page3 />);
+    expect(screen.queryByText(/how to read this page/i)).toBeNull();
+    expect(screen.queryByText(/one dial runs the page/i)).toBeNull();
+    // The margin notes that remain carry provenance, next to the step that needs it.
+    expect(screen.getByText(/where the bill comes from/i)).toBeInTheDocument();
+    expect(screen.getByText(/where the wall comes from/i)).toBeInTheDocument();
     expectClean();
   });
 });
