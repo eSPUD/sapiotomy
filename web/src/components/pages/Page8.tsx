@@ -313,7 +313,7 @@ export function Page8() {
             <h2 className="text-xl font-semibold text-ink">
               2. The two rules as N grows
               <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                illustrative · Cobbe 2021 · Stroebl 2024
+                seeded illustrative simulation
               </span>
             </h2>
           <figure
@@ -393,16 +393,6 @@ export function Page8() {
                 move between pages.
               </li>
             </ul>
-          </div>
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              References
-            </h2>
-            <p className="text-sm text-ink-muted">
-              Verifier best-of-N: Cobbe et al. 2021. Imperfect verifiers cap (and reverse) the
-              gains: Stroebl et al. 2024. The simulation is illustrative, not a digitized curve.
-              Links at the foot.
-            </p>
           </div>
         </aside>
       </div>
