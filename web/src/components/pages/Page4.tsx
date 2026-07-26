@@ -17,6 +17,13 @@
  * and the finale are on screen from first paint; only the walkthrough
  * animates, and only when asked.
  *
+ * Layout: shell matches pages 1, 3, 6 and 7 — one numbered reading column
+ * (1. walk a road · 2. three roads, three tolls · 3. where this leaves us)
+ * beside a sticky instructions/references rail. The earlier build was three
+ * unlabelled slabs with the walkthrough's caveat parked in a side note, so the
+ * page read as one undifferentiated block; the numbered stack breaks it into
+ * parts and gives the reader somewhere to stop.
+ *
  * All walkthrough numbers live in lib/authored MULT_METHODS and are recomputed
  * from the factors' digits by src/lib/act1.test.ts.
  */
@@ -392,127 +399,193 @@ export function Page4() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        Working a problem out instead of looking it up has a name:{" "}
-        <strong className="text-ink">reasoning</strong>. And here is the surprise: it is never one
-        fixed procedure. Page 1 gave you{" "}
-        <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> and one way to
-        build it; take a bigger one, <strong className="font-mono text-ink">{P.a} × {P.b}</strong>,
-        and three cultures built three different roads to the same{" "}
-        <strong className="font-mono text-ink">{P.display}</strong>. Each is a real method with its
-        own strengths and weaknesses, so pick one below, walk it, then try another and compare.
-      </p>
-
-      <section
-        aria-label="One problem, three roads"
-        className="overflow-hidden rounded-lg border border-grid bg-surface"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-          <span>one problem · three roads · pick one and walk it</span>
-          <span className="rounded-full border border-grid px-2 py-0.5 text-ink-muted">
-            authored walkthroughs · every number recomputed by the tests
-          </span>
-        </div>
-        <div className="flex flex-col gap-4 p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <label htmlFor={selectId} className="text-sm font-semibold text-ink">
-              Method
-            </label>
-            <select
-              id={selectId}
-              value={method}
-              onChange={(e) => pickMethod(e.target.value as MultMethodKey)}
-              className="rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink"
-            >
-              <option value="standard">{M.standard.name}</option>
-              <option value="lines">{M.lines.name}</option>
-              <option value="vedic">{M.vedic.name}</option>
-            </select>
-            <span className="text-sm text-ink-muted">{meta.origin}</span>
-          </div>
-
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_13rem] lg:items-start">
-            <div className="rounded-lg border border-grid bg-surface-raised px-3 py-2">
-              {method === "standard" ? <StandardPanel step={step} /> : null}
-              {method === "lines" ? <LinesPanel step={step} /> : null}
-              {method === "vedic" ? <VedicPanel step={step} /> : null}
-            </div>
-            <aside className="rounded-lg border-l-4 border-grid bg-surface px-3 py-2 text-sm text-ink-muted">
-              There are many different ways to do multiplication. We showcase only three here.
-            </aside>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => go(step - 1)}
-              disabled={step === 0}
-              className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
-            >
-              ◂ Back
-            </button>
-            <button
-              type="button"
-              onClick={() => go(step + 1)}
-              disabled={step >= maxStep}
-              className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-            >
-              Next ▸
-            </button>
-            {!reducedMotion ? (
-              <button
-                type="button"
-                onClick={play}
-                disabled={playing || step >= maxStep}
-                className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute disabled:opacity-50"
-              >
-                ▶ Play
-              </button>
-            ) : null}
-            <span className="font-mono text-xs tabular-nums text-ink-muted">
-              step {step} of {maxStep}
-            </span>
-          </div>
-
-          <p className="min-h-[1.5rem] max-w-2xl text-ink">
-            {step >= maxStep ? <span aria-hidden="true" className="text-correct">✓ </span> : null}
-            {narration}
+      {/* Left = the numbered walk-through · Right = instructions + references */}
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        {/* LEFT COLUMN */}
+        <div className="flex min-w-0 flex-col gap-8">
+          <p className="text-lg text-ink-muted">
+            Working a problem out instead of looking it up has a name:{" "}
+            <strong className="text-ink">reasoning</strong>. And here is the surprise: it is never
+            one fixed procedure. Page 1 gave you{" "}
+            <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> and one way to
+            build it; take a bigger one,{" "}
+            <strong className="font-mono text-ink">{P.a} × {P.b}</strong>, and three cultures built
+            three different roads to the same{" "}
+            <strong className="font-mono text-ink">{P.display}</strong>. Each is a real method with
+            its own strengths and weaknesses, so pick one below, walk it, then try another and
+            compare.
           </p>
 
-          <p className="border-t border-grid pt-3 text-sm text-ink-muted">
-            <strong className="text-wrong">The limit of this road:</strong> {meta.limitation}
-          </p>
-        </div>
-      </section>
+          {/* Step 1 — walk one road */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              1. Pick a road and walk it
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                one problem · three methods · authored walkthroughs
+              </span>
+            </h2>
+            <section
+              aria-label="One problem, three roads"
+              className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <label htmlFor={selectId} className="text-sm font-semibold text-ink">
+                  Method
+                </label>
+                <select
+                  id={selectId}
+                  value={method}
+                  onChange={(e) => pickMethod(e.target.value as MultMethodKey)}
+                  className="rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink"
+                >
+                  <option value="standard">{M.standard.name}</option>
+                  <option value="lines">{M.lines.name}</option>
+                  <option value="vedic">{M.vedic.name}</option>
+                </select>
+                <span className="text-sm text-ink-muted">{meta.origin}</span>
+              </div>
 
-      <section aria-label="Three journeys, one destination" className="flex flex-col gap-3">
-        <div className="grid items-stretch gap-3 lg:grid-cols-3">
-          {([M.standard, M.lines, M.vedic] as const).map((m) => (
-            <div key={m.key} className="flex flex-col rounded-lg border-l-4 border-grid bg-surface p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{m.name}</p>
-              <p className="mt-1 text-sm text-ink">{m.origin}.</p>
-              <p className="mt-2 text-sm text-ink-muted">
-                <strong className="text-wrong">limit:</strong> {m.limitation}
+              <div className="rounded-lg border border-grid bg-surface-raised px-3 py-2">
+                {method === "standard" ? <StandardPanel step={step} /> : null}
+                {method === "lines" ? <LinesPanel step={step} /> : null}
+                {method === "vedic" ? <VedicPanel step={step} /> : null}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => go(step - 1)}
+                  disabled={step === 0}
+                  className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
+                >
+                  ◂ Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go(step + 1)}
+                  disabled={step >= maxStep}
+                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                >
+                  Next ▸
+                </button>
+                {!reducedMotion ? (
+                  <button
+                    type="button"
+                    onClick={play}
+                    disabled={playing || step >= maxStep}
+                    className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute disabled:opacity-50"
+                  >
+                    ▶ Play
+                  </button>
+                ) : null}
+                <span className="font-mono text-xs tabular-nums text-ink-muted">
+                  step {step} of {maxStep}
+                </span>
+              </div>
+
+              <p className="min-h-[1.5rem] text-ink">
+                {step >= maxStep ? <span aria-hidden="true" className="text-correct">✓ </span> : null}
+                {narration}
               </p>
-            </div>
-          ))}
-        </div>
-        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-          Three journeys, one destination: <strong className="font-mono">{P.display}</strong>. The
-          road changes; the answer does not, and each road pays its own toll.{" "}
-          <strong>Reasoning is inherently diverse pathfinding from prior knowledge.</strong>
-        </div>
-      </section>
 
-      <p className="max-w-2xl text-ink">
-        <em>
-          Every culture that needed to multiply built its own road from what it already knew:
-          schoolbook columns, line bundles, a memorized sutra. Which leaves Act 1&apos;s open
-          questions: can we <strong>guide a machine down different roads</strong> to the same
-          destination? And why can&apos;t it <strong>chart its own road</strong> (derive its own
-          way to an answer)? Act 2 opens that toolbox.
-        </em>
-      </p>
+              <p className="border-t border-grid pt-3 text-sm text-ink-muted">
+                <strong className="text-wrong">The limit of this road:</strong> {meta.limitation}
+              </p>
+            </section>
+          </section>
+
+          {/* Step 2 — the three roads side by side */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">
+              2. Three roads, three tolls
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                what each method is good at, and what it costs
+              </span>
+            </h2>
+            <section aria-label="Three journeys, one destination" className="flex flex-col gap-3">
+              <div className="grid items-stretch gap-3 md:grid-cols-3">
+                {([M.standard, M.lines, M.vedic] as const).map((m) => (
+                  <div
+                    key={m.key}
+                    className="flex flex-col rounded-lg border-l-4 border-grid bg-surface p-4"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                      {m.name}
+                    </p>
+                    <p className="mt-1 text-sm text-ink">{m.origin}.</p>
+                    <p className="mt-2 text-sm text-ink-muted">
+                      <strong className="text-wrong">limit:</strong> {m.limitation}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-ink-muted">
+                There are many different ways to do multiplication. We showcase only three here.
+              </p>
+              <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+                Three journeys, one destination: <strong className="font-mono">{P.display}</strong>.
+                The road changes; the answer does not, and each road pays its own toll.{" "}
+                <strong>Reasoning is inherently diverse pathfinding from prior knowledge.</strong>
+              </div>
+            </section>
+          </section>
+
+          {/* Step 3 — the handoff out of Act 1 */}
+          <section className="flex flex-col gap-3">
+            <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
+            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+              <em>
+                Every culture that needed to multiply built its own road from what it already knew:
+                schoolbook columns, line bundles, a memorized sutra. Which leaves Act 1&apos;s open
+                questions: can we <strong>guide a machine down different roads</strong> to the same
+                destination? And why can&apos;t it <strong>chart its own road</strong> (derive its
+                own way to an answer)? Act 2 opens that toolbox.
+              </em>
+            </div>
+          </section>
+        </div>
+
+        {/* RIGHT COLUMN — instructions + references */}
+        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              How to read this page
+            </h2>
+            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
+              <li>
+                Read straight down: walk one road, compare all three, then the questions Act 1
+                leaves open.
+              </li>
+              <li>
+                Pick a method in step 1 and press Next to advance one line at a time; Back retraces
+                it.
+              </li>
+              <li>
+                Switching methods restarts the walk. Every road lands on the same{" "}
+                <strong className="font-mono text-ink">{P.display}</strong>.
+              </li>
+              <li>
+                Use{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
+                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
+                to move between pages.
+              </li>
+            </ul>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              References
+            </h2>
+            <p className="text-sm text-ink-muted">
+              The three walkthroughs are authored teaching examples, not transcripts; every
+              intermediate number is recomputed from the two factors by the test suite.
+            </p>
+            <p className="text-sm text-ink-muted">
+              Method attributions and the derivation notes are at the foot of the page.
+            </p>
+          </div>
+        </aside>
+      </div>
 
       <p className="text-xs text-ink-muted">
         the three walkthroughs are authored teaching examples; every intermediate number is derived
