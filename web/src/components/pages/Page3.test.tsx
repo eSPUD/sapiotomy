@@ -172,13 +172,20 @@ describe("Page 3 (Training Daily?)", () => {
     expectClean();
   });
 
-  it("has no instructional side rail: the controls speak for themselves", () => {
+  it("has no side rail and no margin prose: the figures carry their own cites", () => {
     render(<Page3 />);
     expect(screen.queryByText(/how to read this page/i)).toBeNull();
     expect(screen.queryByText(/one dial runs the page/i)).toBeNull();
-    // The margin notes that remain carry provenance, next to the step that needs it.
-    expect(screen.getByText(/where the bill comes from/i)).toBeInTheDocument();
-    expect(screen.getByText(/where the wall comes from/i)).toBeInTheDocument();
+    // The margin is empty: the old provenance notes are gone, not shrunk.
+    expect(screen.queryByText(/where the bill comes from/i)).toBeNull();
+    expect(screen.queryByText(/where the wall comes from/i)).toBeNull();
+    expect(document.querySelector("aside")).toBeNull();
+    // Provenance survives inline: the h2 annotations and the CC BY footnote.
+    expect(screen.getByText(/derived from the two Epoch trends/i)).toBeInTheDocument();
+    expect(screen.getByText(/cited stock, derived demand/i)).toBeInTheDocument();
+    expect(screen.getByText(/not a burn rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/redrawn under CC BY/i)).toBeInTheDocument();
+    expect(screen.getByText(/no claims about what any lab actually spends/i)).toBeInTheDocument();
     expectClean();
   });
 });
