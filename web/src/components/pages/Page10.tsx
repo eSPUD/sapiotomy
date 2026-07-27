@@ -252,6 +252,9 @@ export function Page10() {
               full, which is exactly what a chain of thought does: it writes the best next thing and
               finds out later.
             </p>
+            <p className="text-xs text-ink-muted">
+              The puzzle and its scores are written by hand. The search over them is real.
+            </p>
 
             {/* strategy picker */}
             <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
@@ -470,16 +473,10 @@ export function Page10() {
           </div>
         </section>
 
-        <div className="flex flex-col gap-6">
-          <Note kicker="Try it">
-            <p>Greedy first, then Beam at width 3.</p>
-            <p>Watch the counter. That is the bill.</p>
-          </Note>
-          <Note kicker="Authored, not live">
-            <p>The puzzle and its confidence scores are written by hand.</p>
-            <p>The search over them is real.</p>
-          </Note>
-        </div>
+        <Note kicker="Try it">
+          <p>Greedy first, then Beam at width 3.</p>
+          <p>Watch the counter. That is the bill.</p>
+        </Note>
 
         {/* Step 2 — what search buys */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -523,7 +520,8 @@ export function Page10() {
 
         <Note kicker="References">
           <p>
-            Yao et al. 2023, <em>Tree of Thoughts</em> (NeurIPS 2023), Table 3 &mdash; 20 puzzles.
+            Yao et al. 2023, <em>Tree of Thoughts: Deliberate Problem Solving with Large Language
+            Models</em>.
           </p>
         </Note>
       </div>

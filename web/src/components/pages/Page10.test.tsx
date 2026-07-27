@@ -82,8 +82,17 @@ describe("Page 10 (searching through thoughts) component", () => {
     expect(container.textContent).not.toMatch(/game of 24/i);
   });
 
-  it("carries the authored-not-live disclosure as a sidenote", () => {
+  it("discloses that the puzzle is authored and the search is real", () => {
+    // House style (pages 3-8): caveats live in the step body, not a margin note.
     render(<Page10 />);
-    expect(screen.getByText(/authored, not live/i)).toBeInTheDocument();
+    expect(screen.getByText(/written by hand\. The search over them is real\./)).toBeInTheDocument();
+  });
+
+  it("keeps the reference note to a bare cite, as pages 3-8 do", () => {
+    render(<Page10 />);
+    const note = screen.getByText("References").closest("aside")!;
+    expect(note.textContent).toMatch(/Yao et al\. 2023, Tree of Thoughts/);
+    // no venue, table number, sample size or arXiv id in the note itself
+    expect(note.textContent).not.toMatch(/NeurIPS|Table 3|20 puzzles|arXiv/);
   });
 });
