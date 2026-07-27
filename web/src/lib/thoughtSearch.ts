@@ -1,75 +1,43 @@
 /**
- * A real search engine over a space of partial thoughts (Page 10, "Searching
- * Through Thoughts").
+ * The search engine for Page 10, "Searching Through Thoughts".
  *
- * Why a real engine and not a canned animation: the page's claim is that
- * different search STRATEGIES explore the same space differently and cost
- * different amounts of compute. That is only honest if the space is actually
- * searched and the thoughts examined are actually counted. Everything here is
- * pure and deterministic (seeded where it needs randomness) and unit-tested, so
- * the "thoughts scored" counter on screen is a measurement of this code.
+ * This file knows nothing about the task being searched. It takes a SearchSpace
+ * — a set of states, each with a score, a list of successors, and flags for
+ * "goal" and "dead end" — and runs five strategies over it, counting honestly.
+ * The crossword that page 10 actually searches is built in lib/crossword.ts.
  *
- * WHAT IS AUTHORED AND WHAT IS DERIVED. The GROUPS are authored teaching content
- * — their words, the category the model claims, its one-line rationale, and the
- * evaluator's confidence in each. Everything else is derived mechanically by
- * `buildThoughtSpace`: a THOUGHT is a state, i.e. a set of groups committed so
- * far whose words do not overlap, and its children are the states reached by
- * committing one more compatible group. Deriving rather than hand-writing the
- * lattice means no typo can invent an edge that is not there, and the leftover
- * words on every card are computed, not transcribed.
- *
- * The state space is a DAG, not a tree: committing "red" then "eye" reaches the
- * same state as "eye" then "red". Thoughts are keyed on the SET, so the visited
- * set dedups them and the counter never charges twice for scoring the same
- * partial solution.
+ * Why a real engine and not a canned animation: the page claims that different
+ * strategies explore the same space differently and cost different amounts of
+ * compute. That is only honest if the space is actually searched and the
+ * thoughts scored are actually counted. Everything here is pure and
+ * deterministic (seeded where it needs randomness) and unit-tested, so the
+ * "thoughts scored" counter on screen is a measurement of this code.
  *
  * TWO evaluators, deliberately kept apart:
- *   - `score` is what the SEARCHER sees: the mean of its committed groups'
- *     confidences. Each confidence rates how tight a category sounds IN
- *     ISOLATION; none of them looks at what the group leaves behind. That
- *     blindness is the whole point — it ranks a wrong group above a right one,
- *     and it is right to, on the evidence it is allowed to see.
- *   - `deadEnd` is an exact structural label (a state with no children that is
- *     not the goal), used ONLY to colour the tree. No strategy consults it.
+ *   - `score` is what the SEARCHER sees: the model's own confidence in the
+ *     partial answer it has built. It never verifies anything; it only reports
+ *     how good each thought sounded. That blindness is the whole point.
+ *   - `deadEnd` is an exact structural label (a state with no successors that
+ *     is not the goal), used ONLY to colour the tree. No strategy consults it.
  */
 
-/** One candidate grouping — the authored unit. */
-export interface Group {
-  id: number;
-  /** The category the model claims, e.g. "Shades of red". */
-  label: string;
-  /** An abbreviation of `label` that fits a tree node, e.g. "Reds". */
-  short: string;
-  words: readonly string[];
-  /** The model's one-line case for the group, shown on the card. */
-  rationale: string;
-  /** The evaluator's confidence in this group alone, 0..1. */
-  confidence: number;
-  /** Whether it is part of the true solution. Viz only; never consulted. */
-  correct: boolean;
-}
-
-/** A state: the set of groups committed so far. */
+/** One state in the space. Everything the engine needs and nothing else. */
 export interface Thought {
   id: number;
-  /** Committed group ids, ascending. The empty set is the root. */
-  groups: readonly number[];
+  /** Thoughts committed along the path that first reached this state. */
   depth: number;
-  /** The searcher's evaluator on this partial solution, 0..1. */
+  /** The searcher's evaluator on this partial answer, 0..1. */
   score: number;
-  /** Words not yet placed, in the puzzle's own order. */
-  loose: readonly string[];
-  /** Thought ids reached by committing one more compatible group. */
+  /** How much of the task this state completes, 0..1. Used for MCTS rewards. */
+  progress: number;
+  /** Ids of the states reachable by committing one more thought. */
   next: readonly number[];
-  /** Structural oracle: no children and not the goal. Viz only. */
+  /** Structural oracle: no successors and not the goal. Viz only. */
   deadEnd: boolean;
   isGoal: boolean;
 }
 
-export interface ThoughtSpace {
-  prompt: string;
-  words: readonly string[];
-  groups: readonly Group[];
+export interface SearchSpace {
   thoughts: readonly Thought[];
   root: number;
   goal: number;
@@ -82,31 +50,31 @@ export const STRATEGIES: { key: Strategy; label: string; blurb: string }[] = [
     key: "greedy",
     label: "Greedy",
     blurb:
-      "Always take the grouping that sounds surest, and never reconsider. The cheapest search, and it inherits every place the evaluator is wrong.",
+      "Always write in the answer it is surest of, and never reconsider. This is a plain chain of thought with a scorer bolted on: one line, no way back.",
   },
   {
     key: "bfs",
     label: "Breadth-first",
     blurb:
-      "Score every partial solution one whole layer at a time. It refuses to prune, so it cannot be fooled — and it pays for that by scoring almost everything.",
+      "Score every partial grid one whole layer at a time. It cannot be fooled by a confident wrong answer, and it pays for that by scoring almost everything.",
   },
   {
     key: "dfs",
     label: "Depth-first",
     blurb:
-      "Follow the surest-looking idea all the way down; when it dead-ends, back up to the last untried grouping and try that. Little memory, and it pours effort into a bad first idea.",
+      "Follow the surest-looking answer as far as it goes; when the grid jams, back up to the last untried answer and try that instead.",
   },
   {
     key: "beam",
     label: "Beam",
     blurb:
-      "Branch, then keep only the b most promising partial solutions at each layer. The middle road that Tree-of-Thoughts actually uses: b is the branching dial.",
+      "Branch, then keep only the b most promising grids at each layer. The middle road that Tree-of-Thoughts actually uses: b is the branching dial.",
   },
   {
     key: "mcts",
     label: "MCTS",
     blurb:
-      "Run a few trial continuations from each partial solution and keep exploring wherever they tend to pay off, balancing what looks best against what is barely explored. The AlphaGo family's answer.",
+      "Run trial continuations from each partial grid and keep exploring wherever they tend to get furthest, balancing what looks best against what is barely explored. The AlphaGo family's answer.",
   },
 ];
 
@@ -114,9 +82,7 @@ export interface SearchNode {
   id: number;
   parentId: number | null;
   thoughtId: number;
-  /** Groups committed along the branch that reached this state. */
   depth: number;
-  /** The searcher's evaluator on this thought. */
   score: number;
   /** Structural oracle: a dead end that is not the goal. Viz only. */
   deadEnd: boolean;
@@ -137,11 +103,9 @@ export interface SearchTrace {
   solved: boolean;
   /** Node ids from the root to the goal, when solved. */
   solutionPath: number[];
-  /** Thought ids of the found solution, when solved. */
+  /** Thought ids along that path, when solved. */
   solutionThoughts: number[];
-  /** Group ids in the order they were committed, when solved. */
-  solutionGroups: number[];
-  /** Thought id where a committed strategy ran out of ideas, when it failed. */
+  /** Thought id where a committed strategy ran out of moves, when it failed. */
   deadEndReached: number | null;
 }
 
@@ -166,93 +130,15 @@ function createRng(seed: number): () => number {
   };
 }
 
-const disjoint = (a: readonly string[], b: readonly string[]) =>
-  !a.some((w) => b.includes(w));
-
-/** A stable key for a set of group ids, so the DAG dedups on the SET. */
-const keyOf = (groups: readonly number[]) => groups.join(",");
-
-export interface ThoughtSpaceSpec {
-  prompt: string;
-  words: readonly string[];
-  groups: readonly Omit<Group, "id">[];
-}
-
-/**
- * Derive the full state lattice from the authored groups.
- *
- * A state is any set of groups whose words are pairwise disjoint. The goal is
- * the state that places every word. States are created in breadth order and
- * children are listed ascending by id, so the whole structure — and therefore
- * every count the page prints — is deterministic.
- */
-export function buildThoughtSpace(spec: ThoughtSpaceSpec): ThoughtSpace {
-  const groups: Group[] = spec.groups.map((g, id) => ({ ...g, id }));
-
-  const thoughts: Thought[] = [];
-  const byKey = new Map<string, number>();
-
-  const create = (committed: number[]): number => {
-    const key = keyOf(committed);
-    const existing = byKey.get(key);
-    if (existing !== undefined) return existing;
-    const placed = new Set(committed.flatMap((gid) => groups[gid].words));
-    const id = thoughts.length;
-    const confidences = committed.map((gid) => groups[gid].confidence);
-    thoughts.push({
-      id,
-      groups: committed,
-      depth: committed.length,
-      // The evaluator on a partial solution: the mean of its groups' confidences.
-      score: confidences.length
-        ? confidences.reduce((a, b) => a + b, 0) / confidences.length
-        : 0,
-      loose: spec.words.filter((w) => !placed.has(w)),
-      next: [],
-      deadEnd: false,
-      isGoal: placed.size === spec.words.length,
-    });
-    byKey.set(key, id);
-    return id;
-  };
-
-  const root = create([]);
-  // Breadth order: every state at depth d is created before any at depth d + 1.
-  for (let cursor = 0; cursor < thoughts.length; cursor++) {
-    const here = thoughts[cursor];
-    if (here.isGoal) continue;
-    const placed = new Set(here.groups.flatMap((gid) => groups[gid].words));
-    const looseWords = spec.words.filter((w) => !placed.has(w));
-    const next: number[] = [];
-    for (const g of groups) {
-      if (here.groups.includes(g.id)) continue;
-      if (!disjoint(g.words, [...placed])) continue;
-      if (!g.words.every((w) => looseWords.includes(w))) continue;
-      next.push(create([...here.groups, g.id].sort((a, b) => a - b)));
-    }
-    thoughts[cursor] = { ...here, next: next.sort((a, b) => a - b) };
-  }
-
-  const goal = thoughts.findIndex((t) => t.isGoal);
-  for (let i = 0; i < thoughts.length; i++) {
-    thoughts[i] = {
-      ...thoughts[i],
-      deadEnd: thoughts[i].next.length === 0 && !thoughts[i].isGoal,
-    };
-  }
-
-  return { prompt: spec.prompt, words: spec.words, groups, thoughts, root, goal };
-}
-
 /** Shared bookkeeping so every strategy counts the same way. */
 class Trace {
   nodes: SearchNode[] = [];
   examined = 0;
   private nextId = 0;
-  private space: ThoughtSpace;
+  private space: SearchSpace;
   private maxNodes: number;
 
-  constructor(space: ThoughtSpace, maxNodes: number) {
+  constructor(space: SearchSpace, maxNodes: number) {
     this.space = space;
     this.maxNodes = maxNodes;
   }
@@ -305,14 +191,6 @@ class Trace {
       cur.kept = true;
       cur = cur.parentId === null ? null : (byId.get(cur.parentId) ?? null);
     }
-    // The groups, in the order the search actually committed them.
-    const solutionGroups: number[] = [];
-    for (let i = 1; i < solutionThoughts.length; i++) {
-      const before = this.space.thoughts[solutionThoughts[i - 1]].groups;
-      const after = this.space.thoughts[solutionThoughts[i]].groups;
-      const added = after.find((g) => !before.includes(g));
-      if (added !== undefined) solutionGroups.push(added);
-    }
     return {
       strategy,
       nodes: this.nodes,
@@ -320,7 +198,6 @@ class Trace {
       solved: solution !== null,
       solutionPath: path,
       solutionThoughts,
-      solutionGroups,
       deadEndReached,
     };
   }
@@ -328,7 +205,7 @@ class Trace {
 
 /** Run one search over the space and return the full, replayable trace. */
 export function search(
-  space: ThoughtSpace,
+  space: SearchSpace,
   strategy: Strategy,
   opts: SearchOptions = {},
 ): SearchTrace {
@@ -362,7 +239,7 @@ export function search(
         const kids = expand(node, visited);
         const win = kids.find((k) => k.isGoal);
         if (win) return t.finish(strategy, win, null);
-        if (kids.length === 0) break; // ran out of ideas
+        if (kids.length === 0) break; // ran out of moves
         kids.sort((a, b) => b.score - a.score);
         node = kids[0];
         node.kept = true;
@@ -401,7 +278,7 @@ export function search(
         const kids = expand(node, visited);
         const win = kids.find((k) => k.isGoal);
         if (win) return t.finish(strategy, win, null);
-        // Surest-looking idea explored first → push it last (popped first).
+        // Surest-looking answer explored first → push it last (popped first).
         kids.sort((a, b) => a.score - b.score);
         stack.push(...kids);
       }
@@ -431,10 +308,10 @@ export function search(
     }
 
     case "mcts": {
-      // PUCT trial continuations over the same space: follow promising branches,
-      // with an exploration bonus that eventually tries the unglamorous idea.
+      // PUCT trial continuations: follow promising branches, with an exploration
+      // bonus that eventually tries the answer the evaluator liked less.
       const rng = createRng(seed);
-      const visited = new Set<number>([space.root]); // thoughts scored (global dedup)
+      const visited = new Set<number>([space.root]);
       const childrenOf = new Map<number, SearchNode[]>();
       const visits = new Map<number, number>();
       const value = new Map<number, number>();
@@ -442,7 +319,6 @@ export function search(
       value.set(root.id, root.score);
 
       const c = 1.4;
-      const goalDepth = space.thoughts[space.goal].depth;
       let solution: SearchNode | null = null;
 
       for (let r = 0; r < rollouts && !t.exhausted && !solution; r++) {
@@ -465,7 +341,7 @@ export function search(
             }
           }
           const avail = kids.filter((k) => !seen.has(k.thoughtId));
-          if (avail.length === 0) break; // this continuation ran out of ideas
+          if (avail.length === 0) break; // this continuation ran out of moves
           const parentVisits = (visits.get(node.id) ?? 0) + 1;
           const prior = 1 / avail.length;
           let best = avail[0];
@@ -490,15 +366,14 @@ export function search(
           if (t.exhausted) break;
         }
 
-        // What the trial actually achieved: the fraction of the puzzle it
-        // finished. A run that stalls two groups in is worth half of one that
-        // sorts all sixteen words, however confident the evaluator was about
-        // the groups it did commit. Note this reads only what the search
-        // observed — it ran out of continuations — and never the deadEnd
-        // oracle. Rewarding a stranded run by its evaluator score instead
-        // (which is what a distance heuristic does) makes MCTS chase the trap,
-        // because the trap is exactly where the evaluator is most confident.
-        const reward = node.isGoal ? 1 : node.depth / goalDepth;
+        /* What the trial actually achieved: how much of the grid it filled.
+           A run that jams half-finished is worth half of one that completes it,
+           however confident the evaluator was about the words it did write.
+           This reads only what the search observed — it ran out of moves — and
+           never the deadEnd oracle. Rewarding a jammed run by its evaluator
+           score instead makes MCTS chase the trap, because the trap is exactly
+           where the evaluator is most confident. */
+        const reward = node.isGoal ? 1 : space.thoughts[node.thoughtId].progress;
         for (const p of path) {
           const v = (visits.get(p.id) ?? 0) + 1;
           visits.set(p.id, v);
@@ -514,6 +389,3 @@ export function search(
     }
   }
 }
-
-/** The cheapest possible baseline: score nothing, commit to one run. */
-export const PLAIN_COT_THOUGHTS = 1;

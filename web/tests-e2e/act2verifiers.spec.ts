@@ -32,16 +32,17 @@ test.describe("Act 2 verifiers (pages 8–10)", () => {
   test("Page 10: switching strategy re-runs the search", async ({ page }) => {
     await page.goto("/p/10");
     const bill = page.getByRole("status", { name: /the compute bill/i });
-    // Greedy (default) commits to the trap and strands, having scored 11 thoughts.
-    await expect(page.getByText(/✗ stranded/)).toBeVisible();
-    await expect(bill).toContainText("11");
-    // MCTS sorts all sixteen, and the counter is a real measurement, not a prop.
+    // Greedy (default) writes LID, the answer it is surest of, and jams the grid.
+    await expect(page.getByText(/✗ jammed/)).toBeVisible();
+    await expect(page.getByText(/1D reads LOT/)).toBeVisible();
+    await expect(bill).toContainText("16");
+    // MCTS finishes it, and the counter is a real measurement, not a prop.
     await page.getByRole("combobox", { name: /search strategy/i }).selectOption("mcts");
-    await expect(page.getByText(/all sixteen words placed/i)).toBeVisible();
-    await expect(bill).toContainText("21");
-    // Breadth-first refuses to prune and pays the most.
+    await expect(page.getByText(/every clue answered/i)).toBeVisible();
+    await expect(bill).toContainText("30");
+    // Breadth-first refuses to prune and pays three times greedy's bill.
     await page.getByRole("combobox", { name: /search strategy/i }).selectOption("bfs");
-    await expect(bill).toContainText("31");
+    await expect(bill).toContainText("48");
   });
 
   for (const n of [8, 9, 10]) {
