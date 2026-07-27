@@ -7,129 +7,161 @@
  * line becomes a TREE: branch, evaluate, prune, and when a branch dies, back up
  * and try another.
  *
- * The single road of slides 4-7 ("a road to a destination", "a traveller on a
- * good road takes a wrong turn") forks here into a NETWORK. The interactive runs
- * a real routing search (lib/routing.ts) over an authored road map (lib/authored
- * ROUTE_MAP): a town is a state, a road is a move, and the searcher's evaluator
- * is the straight-line "miles to go" a GPS shows — informative but blind to
- * water. Nothing is animated theatre: the strategy dropdown genuinely re-runs
- * the search, the map shows the towns that strategy actually scored, and the
- * counter is the real number of towns examined. The instance is tuned (see
- * src/lib/act2routing.test.ts) so the strategies disagree: greedy and a beam of
- * 1 drive into the bridgeless Ferry Landing peninsula and strand; depth-first,
- * breadth-first, wider beams and MCTS all reach Easton, at very different
- * prices, because the only crossing is far to the north — the true route must
- * first head AWAY from the destination, exactly the move a straight-line guess
- * hates.
+ * Step 1 is a live search (lib/thoughtSearch.ts) over an authored thought space
+ * (THOUGHT_SPACE_SPEC in lib/authored.ts). Sixteen words must split into four
+ * groups of four; a thought is one committed group, a state is the set of groups
+ * committed so far, and the evaluator is the model's own confidence in how tight
+ * each category sounds. Nothing is animated theatre: the strategy picker
+ * genuinely re-runs the search, the tree shows the states that strategy actually
+ * scored, and the counter is the real number of thoughts examined.
  *
- * The "solve with plain CoT" button is the contrast: one confident drive that
- * always closes the straight-line gap, reaches the town nearest the destination,
- * and cannot turn around.
+ * The instance is tuned (see src/lib/act2thoughts.test.ts) so the strategies
+ * disagree: "Flowers — ROSE LILY VIOLET IRIS" sounds tighter than the correct
+ * "Flowers that are also girls' names — ROSE LILY VIOLET HEATHER", so greedy and
+ * a beam of 1 or 2 commit to it and strand; a beam of 3, depth-first, MCTS and
+ * breadth-first all get there, at very different prices. IRIS belongs to the eye,
+ * and the failure is a positive discovery rather than an absence.
  *
- * Step 2 is anchored to Yao et al. 2023 (data/tree-of-thoughts.json): Game of 24
- * with GPT-4, input-output 7.3%, chain-of-thought 4.0%, CoT+self-consistency
- * 9.0%, Tree-of-Thoughts 45% at b=1 rising to 74% at b=5. The map is the
- * mechanism shown where a reader can see it; the chart is that mechanism
- * measured, on the task the paper used.
+ * Step 2 is anchored to Yao et al. 2023 (data/tot-crosswords.json): 5x5 mini
+ * crosswords with GPT-4, Table 3. The two ablation bars are the point — turning
+ * pruning off and turning backtracking off are what isolate the mechanism the
+ * reader just operated, rather than merely reporting that search scored higher.
  */
 
 import { useMemo, useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { ROUTE_MAP } from "@/lib/authored";
+import { THOUGHT_PLAIN_COT, THOUGHT_SPACE_SPEC } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves, interpolate } from "@/lib/curves";
+import { curves } from "@/lib/curves";
 import {
-  milesToGo,
+  buildThoughtSpace,
   search,
   STRATEGIES,
-  type RouteMap,
-  type RouteNode,
+  type SearchNode,
   type Strategy,
-} from "@/lib/routing";
+  type ThoughtSpaceSpec,
+} from "@/lib/thoughtSearch";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 10;
-const M = ROUTE_MAP as RouteMap;
+const SPACE = buildThoughtSpace(THOUGHT_SPACE_SPEC as unknown as ThoughtSpaceSpec);
 
-/** Map coordinates (0-100, y = north) → SVG user units (y flipped). */
-const SCALE = 6;
-const SX = (x: number) => x * SCALE;
-const SY = (y: number) => (96 - y) * SCALE;
+/* Tree geometry. Fixed node size and row pitch, so every connector is
+   arithmetic and nothing needs to be measured in the DOM. */
+const NW = 108;
+const NH = 26;
+const PITCH = 34;
+const COL = 132;
+const PAD = 14;
+const HEAD = 26;
+const SVG_W = PAD * 2 + COL * 4 + NW;
 
-const townById = (id: number) => M.towns[id];
+/** A margin note that sits beside its step and scrolls with the page. */
+function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+  return (
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      {children}
+    </aside>
+  );
+}
+
+/** The evaluator's 0-5 rating, as dots. */
+function Dots({ score }: { score: number }) {
+  const filled = Math.round(score * 5);
+  return (
+    <span className="inline-flex gap-0.5" aria-hidden="true">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          className={`inline-block h-1.5 w-1.5 rounded-full ${
+            i < filled ? "bg-compute" : "bg-grid"
+          }`}
+        />
+      ))}
+    </span>
+  );
+}
 
 export function Page10() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-  const data = curves.treeOfThoughts;
-  const { io, cot, cotSc } = data.fit!.params;
+  const cross = curves.totCrosswords;
+  const { io, cot, totNoBacktrack, totNoPrune, tot } = cross.fit!.params;
 
   const [strategy, setStrategy] = useState<Strategy>("greedy");
   const [beamWidth, setBeamWidth] = useState(3);
   const [showCot, setShowCot] = useState(false);
 
   const trace = useMemo(
-    () => search(M, strategy, { beamWidth, maxNodes: 400, rollouts: 80 }),
+    () => search(SPACE, strategy, { beamWidth, maxNodes: 400, rollouts: 80 }),
     [strategy, beamWidth],
   );
 
   const meta = STRATEGIES.find((s) => s.key === strategy)!;
-  const totAccuracy = interpolate(data, beamWidth);
-  const greedyStrand = useMemo(() => search(M, "greedy", { maxNodes: 400 }).townsExamined, []);
 
-  // town id → the node representing the search's arrival there (one per town).
-  const nodeByTown = useMemo(() => {
-    const m = new Map<number, RouteNode>();
-    for (const n of trace.nodes) if (!m.has(n.townId)) m.set(n.townId, n);
-    return m;
+  /* Where the search visibly ran aground. Greedy records it directly; a beam
+     simply runs out of live branches, so fall back to the best dead end it
+     actually kept. */
+  const stranded = useMemo(() => {
+    if (trace.solved) return null;
+    if (trace.deadEndReached !== null) return trace.deadEndReached;
+    const dead = trace.nodes
+      .filter((n) => n.deadEnd && n.kept)
+      .sort((a, b) => b.score - a.score);
+    return dead.length ? dead[0].thoughtId : null;
   }, [trace]);
-  const nodeById = useMemo(() => new Map(trace.nodes.map((n) => [n.id, n])), [trace]);
-  const routeSet = useMemo(() => new Set(trace.routeTowns), [trace]);
 
-  // Edges the search actually drove (kept child ← its parent), minus the route.
-  const drivenEdges = trace.nodes
-    .filter((n) => n.parentId !== null && n.kept && !(routeSet.has(n.townId) && trace.solved))
-    .map((n) => [nodeById.get(n.parentId!)!.townId, n.townId] as const);
-  const routeEdges = trace.routeTowns.slice(1).map((t, i) => [trace.routeTowns[i], t] as const);
+  /* Layout: one column per depth, rows in the order the searcher scored them. */
+  const laid = useMemo(() => {
+    const rows = new Map<number, number>();
+    const pos = new Map<number, { x: number; y: number }>();
+    const ordered = [...trace.nodes].sort((a, b) => a.order - b.order);
+    for (const n of ordered) {
+      const r = rows.get(n.depth) ?? 0;
+      rows.set(n.depth, r + 1);
+      pos.set(n.id, { x: PAD + n.depth * COL, y: HEAD + r * PITCH });
+    }
+    const maxRow = Math.max(...rows.values(), 1);
+    return { pos, height: HEAD + maxRow * PITCH + PAD };
+  }, [trace]);
 
-  const trap = trace.deadEndReached;
-  const trapMiles = trap !== null ? Math.round(milesToGo(M, trap)) : 0;
+  const byId = useMemo(() => new Map(trace.nodes.map((n) => [n.id, n])), [trace]);
+  const solutionSet = useMemo(() => new Set(trace.solutionPath), [trace]);
+
+  /** The group this node committed, relative to its parent in the trace. */
+  const addedGroup = (n: SearchNode) => {
+    if (n.parentId === null) return null;
+    const before = SPACE.thoughts[byId.get(n.parentId)!.thoughtId].groups;
+    const after = SPACE.thoughts[n.thoughtId].groups;
+    const id = after.find((g) => !before.includes(g));
+    return id === undefined ? null : SPACE.groups[id];
+  };
+
+  const nodeTone = (n: SearchNode) => {
+    if (n.parentId === null) return { fill: "fill-ink", text: "fill-canvas" };
+    if (solutionSet.has(n.id)) return { fill: "fill-correct", text: "fill-canvas" };
+    if (n.deadEnd && n.kept) return { fill: "fill-wrong", text: "fill-canvas" };
+    if (n.kept) return { fill: "fill-compute", text: "fill-canvas" };
+    return { fill: "fill-surface-raised", text: "fill-ink-muted" };
+  };
+
+  const strandedLoose = stranded !== null ? SPACE.thoughts[stranded].loose : [];
+  const strandedGroups = stranded !== null ? SPACE.thoughts[stranded].groups : [];
 
   const aria = trace.solved
-    ? `Road map. The ${meta.label} strategy examined ${trace.townsExamined} towns and found a route from ${townById(M.origin).name} to ${townById(M.destination).name}: ${trace.routeSteps.join(", ")}.`
-    : `Road map. The ${meta.label} strategy examined ${trace.townsExamined} towns and stranded at ${trap !== null ? townById(trap).name : "a dead end"}, which has no bridge across the bay.`;
+    ? `Search tree. The ${meta.label} strategy scored ${trace.thoughtsScored} thoughts and sorted all sixteen words: ${trace.solutionGroups.map((g) => SPACE.groups[g].label).join(", ")}.`
+    : `Search tree. The ${meta.label} strategy scored ${trace.thoughtsScored} thoughts and stranded, leaving ${strandedLoose.join(", ")} with nowhere to go.`;
 
-  const townStatus = (id: number): "origin" | "dest" | "route" | "kept" | "dead" | "pruned" | "unseen" => {
-    if (id === M.origin) return "origin";
-    if (id === M.destination) return "dest";
-    const n = nodeByTown.get(id);
-    if (!n) return "unseen";
-    if (routeSet.has(id)) return "route";
-    if (n.deadEnd) return "dead";
-    if (n.kept) return "kept";
-    return "pruned";
-  };
-
-  const dotFill: Record<ReturnType<typeof townStatus>, string> = {
-    origin: "fill-ink",
-    dest: trace.solved ? "fill-correct" : "fill-ink-muted",
-    route: "fill-correct",
-    kept: "fill-compute",
-    dead: "fill-wrong",
-    pruned: "fill-surface-raised stroke-grid",
-    unseen: "fill-surface stroke-grid",
-  };
-  const dotR: Record<ReturnType<typeof townStatus>, number> = {
-    origin: 8,
-    dest: 8,
-    route: 7,
-    kept: 6,
-    dead: 7,
-    pruned: 5,
-    unseen: 4,
-  };
+  const bars = [
+    { label: "Input-output prompting", value: io, tone: "bg-grid" },
+    { label: "Chain of thought", value: cot, tone: "bg-grid" },
+    { label: "Tree of Thoughts, no backtracking", value: totNoBacktrack, tone: "bg-wrong" },
+    { label: "Tree of Thoughts, no pruning", value: totNoPrune, tone: "bg-compute" },
+    { label: "Tree of Thoughts, full", value: tot, tone: "bg-correct" },
+  ];
 
   return (
     <article className="flex flex-col gap-6">
@@ -140,388 +172,384 @@ export function Page10() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
+      <p className="max-w-2xl text-lg text-ink-muted">
+        A chain of thought is a line: one idea after another, no way back. Real problems are not a
+        line. Several next steps look reasonable, and you cannot tell which is which until you
+        follow one a little way. Give a model the choice over its own partial thoughts and the line
+        becomes a <strong className="text-ink">tree</strong>:{" "}
+        <strong className="text-ink">branch, evaluate, prune, backtrack</strong>.
+      </p>
 
-      {/* Left = the numbered walk-through · Right = instructions + references */}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        {/* LEFT COLUMN */}
-        <div className="flex min-w-0 flex-col gap-8">
-          <p className="text-lg text-ink-muted">
-            Slides ago, a chain of thought was a single road to a destination. Real problems are not
-            one road, they are a <strong className="text-ink">map</strong>: several turns look
-            reasonable and you cannot tell which is which until you drive a little way down each. You
-            already know the trade from job-hunting, where you can apply everywhere and judge later,
-            or pour everything into two roles and start over if they fall through. Those bets are{" "}
-            <strong className="text-ink">breadth-first</strong> and{" "}
-            <strong className="text-ink">depth-first</strong>. Give a model the same choice over its
-            own partial thoughts and you get <strong className="text-ink">Tree of Thoughts</strong>:
-            branch, evaluate, prune, backtrack.
-          </p>
+      {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
+      <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* Step 1 — the live search */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">1. Sort sixteen words</h2>
 
-          {/* Step 1 — the live search */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              1. Search the map
-              <span className="ml-2 align-middle text-sm font-normal text-ink-muted">
-                drive from {townById(M.origin).name} to {townById(M.destination).name} · live
-                search, real town counts
-              </span>
-            </h2>
-            <section
-              aria-label="The explorable road map"
-              className="flex flex-col rounded-lg border-l-4 border-compute bg-surface"
-            >
-              <div className="flex flex-col gap-4 p-4">
-                {/* strategy picker */}
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="strategy" className="text-sm text-ink-muted">
-                    Search strategy
-                  </label>
-                  <select
-                    id="strategy"
-                    value={strategy}
-                    onChange={(e) => {
-                      setStrategy(e.target.value as Strategy);
-                      setShowCot(false);
-                      recordInteraction(PAGE_N);
-                    }}
-                    className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
+          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            <div>
+              <p className="text-sm text-ink">{SPACE.prompt}</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {SPACE.words.map((w) => (
+                  <span
+                    key={w}
+                    className="rounded border border-grid bg-surface-raised px-2 py-1 font-mono text-xs text-ink"
                   >
-                    {STRATEGIES.map((s) => (
-                      <option key={s.key} value={s.key}>
-                        {s.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-sm text-ink-muted">{meta.blurb}</p>
-                </div>
-
-                {strategy === "beam" ? (
-                  <Slider
-                    label="Beam width (b)"
-                    min={1}
-                    max={5}
-                    value={beamWidth}
-                    onChange={(v) => {
-                      setBeamWidth(v);
-                      recordInteraction(PAGE_N);
-                    }}
-                  />
-                ) : null}
-
-                {/* the map */}
-                <div
-                  className="rounded-lg border border-dashed border-grid bg-surface-raised p-2"
-                  role="img"
-                  aria-label={aria}
-                >
-                  <svg viewBox="0 0 600 540" width="100%" className="max-w-full">
-                    {/* the bay: the water Ferry Landing can't cross */}
-                    <rect
-                      x={SX(78)}
-                      y={SY(72)}
-                      width={SX(86) - SX(78)}
-                      height={SY(20) - SY(72)}
-                      rx={10}
-                      className="fill-compute"
-                      opacity={0.1}
-                    />
-                    <text
-                      x={SX(82)}
-                      y={SY(46)}
-                      textAnchor="middle"
-                      className="fill-compute text-[11px]"
-                      opacity={0.7}
-                    >
-                      bay
-                    </text>
-
-                    {/* every road, faint */}
-                    {M.roads.map(([a, b], i) => (
-                      <line
-                        key={`r${i}`}
-                        x1={SX(townById(a).x)}
-                        y1={SY(townById(a).y)}
-                        x2={SX(townById(b).x)}
-                        y2={SY(townById(b).y)}
-                        className="stroke-grid"
-                        strokeWidth={1.2}
-                      />
-                    ))}
-
-                    {/* roads the search drove */}
-                    {drivenEdges.map(([a, b], i) => (
-                      <line
-                        key={`d${i}`}
-                        x1={SX(townById(a).x)}
-                        y1={SY(townById(a).y)}
-                        x2={SX(townById(b).x)}
-                        y2={SY(townById(b).y)}
-                        className="stroke-compute"
-                        strokeWidth={2}
-                      />
-                    ))}
-
-                    {/* the found route */}
-                    {routeEdges.map(([a, b], i) => (
-                      <line
-                        key={`p${i}`}
-                        x1={SX(townById(a).x)}
-                        y1={SY(townById(a).y)}
-                        x2={SX(townById(b).x)}
-                        y2={SY(townById(b).y)}
-                        className="stroke-correct"
-                        strokeWidth={3.5}
-                      />
-                    ))}
-
-                    {/* the crow-flies lie: close in a straight line, no bridge */}
-                    {!trace.solved && trap !== null ? (
-                      <>
-                        <line
-                          x1={SX(townById(trap).x)}
-                          y1={SY(townById(trap).y)}
-                          x2={SX(townById(M.destination).x)}
-                          y2={SY(townById(M.destination).y)}
-                          className="stroke-wrong"
-                          strokeWidth={1.2}
-                          strokeDasharray="5 4"
-                        />
-                        <text
-                          x={(SX(townById(trap).x) + SX(townById(M.destination).x)) / 2}
-                          y={(SY(townById(trap).y) + SY(townById(M.destination).y)) / 2 - 4}
-                          textAnchor="middle"
-                          className="fill-wrong text-[11px]"
-                        >
-                          {trapMiles} mi · no bridge
-                        </text>
-                      </>
-                    ) : null}
-
-                    {/* towns */}
-                    {M.towns.map((t) => {
-                      const st = townStatus(t.id);
-                      const emphasised = st === "origin" || st === "dest" || st === "route" || st === "dead";
-                      return (
-                        <g key={t.id}>
-                          <circle
-                            cx={SX(t.x)}
-                            cy={SY(t.y)}
-                            r={dotR[st]}
-                            className={dotFill[st]}
-                            strokeWidth={st === "pruned" || st === "unseen" ? 1 : 0}
-                            opacity={st === "unseen" ? 0.5 : 1}
-                          />
-                          <text
-                            x={SX(t.x)}
-                            y={SY(t.y) - dotR[st] - 3}
-                            textAnchor="middle"
-                            className={`text-[10px] ${emphasised ? "fill-ink" : "fill-ink-muted"}`}
-                          >
-                            {t.name}
-                            {t.id === M.origin ? " ▸" : ""}
-                          </text>
-                        </g>
-                      );
-                    })}
-                  </svg>
-
-                  {/* legend */}
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 pt-1 text-xs text-ink-muted">
-                    <Key className="bg-ink" label="start" />
-                    <Key className="bg-correct" label="route found" />
-                    <Key className="bg-compute" label="examined" />
-                    <Key className="bg-wrong" label="dead end (no bridge)" />
-                    <Key className="border border-grid bg-surface-raised" label="pruned" />
-                  </div>
-                </div>
-
-                {/* The bill, the verdict and why it went that way, in one row. */}
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1.4fr)]">
-                  <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                    <p className="font-mono text-3xl font-bold tabular-nums text-compute">
-                      {trace.townsExamined}
-                    </p>
-                    <p className="text-xs text-ink">towns examined</p>
-                    <p className="text-xs text-ink-muted">the compute bill</p>
-                  </div>
-                  <div
-                    className={`rounded-lg border-l-4 p-3 ${
-                      trace.solved ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
-                    }`}
-                  >
-                    {trace.solved ? (
-                      <>
-                        <p className="font-semibold text-correct">
-                          ✓ arrived · {trace.routeMiles} mi
-                        </p>
-                        <p className="mt-1 font-mono text-xs text-ink">
-                          {trace.routeSteps.join("  →  ")}
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="font-semibold text-wrong">
-                          ✗ stranded at {trap !== null ? townById(trap).name : "a dead end"}
-                        </p>
-                        <p className="mt-1 text-xs text-ink-muted">
-                          A route exists; this strategy drove into a bridgeless spur and had no way
-                          back. Its evaluator liked the road that looked closest, and it could not
-                          reconsider.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-xs text-ink">
-                    The evaluator is identical for every strategy: straight-line miles to Easton, the
-                    number a GPS shows. It is <em>wrong</em> about the first move — Ferry Landing is
-                    closest as the crow flies, but there is no bridge. Greedy believes it and strands
-                    after <span className="font-mono">{greedyStrand}</span> towns. Search is what
-                    makes a fallible evaluator survivable.
-                  </div>
-                </div>
-
-                {/* the plain-CoT contrast */}
-                <div className="border-t border-dashed border-grid pt-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCot((s) => !s);
-                      recordInteraction(PAGE_N);
-                    }}
-                    aria-expanded={showCot}
-                    className="rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink"
-                  >
-                    {showCot ? "Hide plain chain-of-thought" : "Solve with plain CoT instead ▸"}
-                  </button>
-                  {showCot ? (
-                    <div className="mt-3 rounded-lg border-l-4 border-wrong bg-wrong/10 p-3">
-                      <p className="mb-2 text-xs uppercase tracking-wide text-ink-muted">
-                        one drive · 1 town examined · no branching
-                      </p>
-                      <ol className="flex flex-col gap-1">
-                        {ROUTE_MAP.plainCot.steps.map((s, i) => (
-                          <li key={i} className="text-sm text-ink">
-                            <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
-                            {s}
-                          </li>
-                        ))}
-                      </ol>
-                      <p className="mt-2 text-sm text-wrong">✗ {ROUTE_MAP.plainCot.answer}</p>
-                      <p className="mt-1 text-xs text-ink-muted">
-                        The drive was not stupid; it reached the town nearest Easton. It just had no
-                        way to undo a turn it made four towns earlier. That is the thing search buys,
-                        and the reason it costs more than one town.
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-          </section>
-
-          {/* Step 2 — what search buys */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              2. What search buys
-              <span className="ml-2 align-middle text-sm font-normal text-ink-muted">
-                Yao et al. 2023 · Game of 24 · GPT-4
-              </span>
-            </h2>
-            <figure className="m-0 flex flex-col gap-2 rounded-lg border-l-4 border-grid bg-surface p-4">
-              <p className="text-sm text-ink-muted">
-                The map above is the <em>mechanism</em> — branch, evaluate, prune, backtrack — shown
-                where you can watch it. Here is that mechanism <em>measured</em>, on the task the
-                paper used (Game of 24 with GPT-4):
-              </p>
-              <div
-                className="flex flex-col gap-2"
-                role="img"
-                aria-label={`Game of 24 solve rate with GPT-4: input-output prompting ${io} percent, chain-of-thought ${cot} percent, chain-of-thought with self-consistency ${cotSc} percent, Tree of Thoughts ${totAccuracy.toFixed(0)} percent at breadth ${beamWidth}.`}
-              >
-                {[
-                  { label: "Input-output prompting", value: io, tone: "bg-grid" },
-                  { label: "Chain of thought", value: cot, tone: "bg-grid" },
-                  { label: "CoT + self-consistency", value: cotSc, tone: "bg-compute" },
-                  {
-                    label: `Tree of Thoughts (b = ${beamWidth})`,
-                    value: totAccuracy,
-                    tone: "bg-correct",
-                  },
-                ].map((b) => (
-                  <div key={b.label} className="flex items-center gap-2 text-sm">
-                    <span className="w-40 shrink-0 text-ink-muted">{b.label}</span>
-                    <div className="h-5 flex-1 rounded bg-surface-raised">
-                      <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
-                    </div>
-                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">
-                      {b.value.toFixed(0)}%
-                    </span>
-                  </div>
+                    {w}
+                  </span>
                 ))}
               </div>
-              <p className="text-sm text-ink-muted">
-                Chain of thought solves <strong className="text-ink">{cot}%</strong> of these; voting
-                over many chains only reaches {cotSc}%, because every chain commits to its first
-                move. Searching the tree reaches <strong className="text-correct">74%</strong> at
-                b = 5. It is the same trade this Act has circled throughout, and the same one you
-                just drove on the map: <em>search buys reliability with compute, and the strategy is
-                only where you choose to spend</em> — breadth-first refuses to prune and visits every
-                town; MCTS finds the same route for a fraction of the bill.
+            </div>
+
+            {/* The seven thoughts. The reader rates them before the search does. */}
+            <div className="flex flex-col gap-1.5 border-t border-dashed border-grid pt-3">
+              <p className="text-xs uppercase tracking-wide text-ink-muted">
+                The groupings the model proposed, and how sure it is of each
               </p>
-            </figure>
-          </section>
+              <ul className="flex flex-col gap-1">
+                {[...SPACE.groups]
+                  .sort((a, b) => b.confidence - a.confidence)
+                  .map((g) => (
+                    <li key={g.id} className="flex flex-wrap items-baseline gap-x-2 text-sm">
+                      <Dots score={g.confidence} />
+                      <span className="font-semibold text-ink">{g.label}</span>
+                      <span className="font-mono text-xs text-ink">{g.words.join(" · ")}</span>
+                      <span className="text-xs text-ink-muted">{g.rationale}</span>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+
+            {/* strategy picker */}
+            <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
+              <label htmlFor="strategy" className="text-sm text-ink-muted">
+                Search strategy
+              </label>
+              <select
+                id="strategy"
+                value={strategy}
+                onChange={(e) => {
+                  setStrategy(e.target.value as Strategy);
+                  setShowCot(false);
+                  recordInteraction(PAGE_N);
+                }}
+                className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
+              >
+                {STRATEGIES.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-ink-muted">{meta.blurb}</p>
+            </div>
+
+            {strategy === "beam" ? (
+              <Slider
+                label="Beam width (b)"
+                min={1}
+                max={5}
+                value={beamWidth}
+                onChange={(v) => {
+                  setBeamWidth(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
+            ) : null}
+
+            {/* the tree */}
+            <div
+              className="overflow-x-auto rounded-lg border border-dashed border-grid bg-surface-raised p-2"
+              role="img"
+              aria-label={aria}
+            >
+              <svg
+                viewBox={`0 0 ${SVG_W} ${laid.height}`}
+                width="100%"
+                className="min-w-[560px] max-w-full"
+              >
+                {[0, 1, 2, 3, 4].map((d) => (
+                  <text
+                    key={d}
+                    x={PAD + d * COL}
+                    y={14}
+                    className="fill-ink-muted text-[9px]"
+                  >
+                    {d === 0 ? "start" : `${d} group${d > 1 ? "s" : ""}`}
+                  </text>
+                ))}
+
+                {/* connectors */}
+                {trace.nodes.map((n) => {
+                  if (n.parentId === null) return null;
+                  const a = laid.pos.get(n.parentId)!;
+                  const b = laid.pos.get(n.id)!;
+                  const x1 = a.x + NW;
+                  const y1 = a.y + NH / 2;
+                  const x2 = b.x;
+                  const y2 = b.y + NH / 2;
+                  const mid = (x1 + x2) / 2;
+                  return (
+                    <path
+                      key={`e${n.id}`}
+                      d={`M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`}
+                      fill="none"
+                      className={solutionSet.has(n.id) ? "stroke-correct" : "stroke-grid"}
+                      strokeWidth={solutionSet.has(n.id) ? 2 : 1}
+                    />
+                  );
+                })}
+
+                {/* nodes */}
+                {trace.nodes.map((n) => {
+                  const p = laid.pos.get(n.id)!;
+                  const tone = nodeTone(n);
+                  const g = addedGroup(n);
+                  return (
+                    <g key={n.id}>
+                      <rect
+                        x={p.x}
+                        y={p.y}
+                        width={NW}
+                        height={NH}
+                        rx={5}
+                        className={tone.fill}
+                        stroke={n.kept ? "none" : "currentColor"}
+                        strokeWidth={n.kept ? 0 : 1}
+                        opacity={n.kept ? 1 : 0.55}
+                      />
+                      <text
+                        x={p.x + 8}
+                        y={p.y + 17}
+                        className={`${tone.text} text-[10px]`}
+                      >
+                        {g ? g.short : "16 words"}
+                      </text>
+                      {n.isGoal ? (
+                        <text x={p.x + NW - 8} y={p.y + 17} textAnchor="end" className="fill-canvas text-[10px]">
+                          ✓
+                        </text>
+                      ) : n.deadEnd && n.kept ? (
+                        <text x={p.x + NW - 8} y={p.y + 17} textAnchor="end" className="fill-canvas text-[10px]">
+                          ✗
+                        </text>
+                      ) : null}
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* legend */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 pt-1 text-xs text-ink-muted">
+                <Key className="bg-ink" label="start" />
+                <Key className="bg-correct" label="the answer" />
+                <Key className="bg-compute" label="kept and expanded" />
+                <Key className="bg-wrong" label="dead end" />
+                <Key className="border border-grid bg-surface-raised" label="pruned" />
+              </div>
+            </div>
+
+            {/* The bill, the verdict, and why it went that way. */}
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[auto_minmax(0,1fr)]">
+              <div
+                className="rounded-lg border border-grid bg-surface-raised p-3"
+                role="status"
+                aria-label={`The compute bill: ${trace.thoughtsScored} thoughts scored`}
+              >
+                <p className="font-mono text-3xl font-bold tabular-nums text-compute">
+                  {trace.thoughtsScored}
+                </p>
+                <p className="text-xs text-ink">thoughts scored</p>
+                <p className="text-xs text-ink-muted">the compute bill</p>
+              </div>
+              <div
+                className={`rounded-lg border-l-4 p-3 ${
+                  trace.solved ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
+                }`}
+              >
+                {trace.solved ? (
+                  <>
+                    <p className="font-semibold text-correct">✓ all sixteen words placed</p>
+                    <ol className="mt-1 flex flex-col gap-0.5">
+                      {trace.solutionGroups.map((id) => (
+                        <li key={id} className="text-xs text-ink">
+                          <span className="font-semibold">{SPACE.groups[id].label}</span>{" "}
+                          <span className="font-mono text-ink-muted">
+                            {SPACE.groups[id].words.join(" · ")}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold text-wrong">✗ stranded</p>
+                    <p className="mt-1 text-xs text-ink">
+                      Committed{" "}
+                      {strandedGroups.map((id, i) => (
+                        <span key={id}>
+                          {i > 0 ? ", then " : ""}
+                          <span className="font-semibold">{SPACE.groups[id].label}</span>
+                        </span>
+                      ))}
+                      . That leaves:
+                    </p>
+                    <p className="mt-1 flex flex-wrap gap-1">
+                      {strandedLoose.map((w) => (
+                        <span
+                          key={w}
+                          className="rounded border border-wrong bg-surface px-1.5 py-0.5 font-mono text-xs text-ink"
+                        >
+                          {w}
+                        </span>
+                      ))}
+                    </p>
+                    <p className="mt-1 text-xs text-ink-muted">
+                      Four words that share nothing. Three of them are a real group missing its
+                      fourth, and that fourth is already spent.
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-xs text-ink">
+              The evaluator is identical for every strategy, and it is not stupid: it rates how{" "}
+              <em>tight</em> a category sounds, and marks down anything that needs a qualifier. So
+              it puts <span className="font-semibold">Flowers</span> above{" "}
+              <span className="font-semibold">Flowers that are also girls&apos; names</span>, which
+              is the right call on the evidence it is allowed to see. What it never checks is
+              whether a group strands the words it leaves behind. Search is what makes a fallible
+              evaluator survivable.
+            </div>
+
+            {/* the plain-CoT contrast */}
+            <div className="border-t border-dashed border-grid pt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCot((s) => !s);
+                  recordInteraction(PAGE_N);
+                }}
+                aria-expanded={showCot}
+                className="rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink"
+              >
+                {showCot ? "Hide plain chain-of-thought" : "Solve with plain CoT instead ▸"}
+              </button>
+              {showCot ? (
+                <div className="mt-3 rounded-lg border-l-4 border-wrong bg-wrong/10 p-3">
+                  <p className="mb-2 text-xs uppercase tracking-wide text-ink-muted">
+                    one run · 0 thoughts scored · no branching
+                  </p>
+                  <ol className="flex flex-col gap-1">
+                    {THOUGHT_PLAIN_COT.steps.map((s, i) => (
+                      <li key={i} className="text-sm text-ink">
+                        <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
+                        {s}
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mt-2 text-sm text-wrong">✗ {THOUGHT_PLAIN_COT.answer}</p>
+                  <p className="mt-1 text-xs text-ink-muted">
+                    It was not stupid; its first three groups are the three the evaluator liked
+                    best. It just had no way to undo a choice it made three steps earlier, so it
+                    invented a category rather than stop. That is the thing search buys, and the
+                    reason it costs more than one run.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-6">
+          <Note kicker="Try it">
+            <p>Greedy first, then Beam at width 3.</p>
+            <p>Watch the thoughts-scored counter change. That is the bill.</p>
+          </Note>
+          <Note kicker="Authored, not live">
+            <p>The sixteen words, every grouping and every confidence score are written by hand.</p>
+            <p>
+              The search over them is real: the picker re-runs it, and the counter is the true
+              number of thoughts scored.
+            </p>
+            <p>
+              Asked to do this live, a model recites a search algorithm it read in training, which
+              is the one thing this figure is not about.
+            </p>
+          </Note>
         </div>
 
-        {/* RIGHT COLUMN — instructions + references */}
-        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              How to read this page
-            </h2>
-            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
-              <li>
-                Try <strong className="text-ink">Greedy</strong> first, then{" "}
-                <strong className="text-ink">Beam</strong> at width 2. Greedy strands at Ferry
-                Landing; the beam gets across.
-              </li>
-              <li>Watch the towns-examined counter as you switch. That is the compute bill.</li>
-              <li>
-                &ldquo;Solve with plain CoT instead&rdquo; is the contrast: one drive, one town, no
-                way back.
-              </li>
-              <li>
-                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
-                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
-                move between pages.
-              </li>
-            </ul>
-          </div>
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              References
-            </h2>
+        {/* Step 2 — what search buys */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">2. What search buys</h2>
+          <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Yao et al. 2023, Tree of Thoughts (Game of 24, GPT-4). The map, the routes and the
-              counter are a real search running in your browser, not a recording. Links at the foot.
+              You just watched the mechanism. Here it is measured, on a task nobody needs explained:
+              GPT-4 filling 5&times;5 crosswords. The two middle bars are the ones that matter, because
+              they take the same search apart one piece at a time.
             </p>
-          </div>
-        </aside>
+            <div
+              className="flex flex-col gap-2"
+              role="img"
+              aria-label={`Percentage of crossword words filled correctly by GPT-4: input-output prompting ${io} percent, chain of thought ${cot} percent, Tree of Thoughts without backtracking ${totNoBacktrack} percent, Tree of Thoughts without pruning ${totNoPrune} percent, full Tree of Thoughts ${tot} percent.`}
+            >
+              {bars.map((b) => (
+                <div key={b.label} className="flex items-center gap-2 text-sm">
+                  <span className="w-48 shrink-0 text-ink-muted">{b.label}</span>
+                  <div className="h-5 flex-1 rounded bg-surface-raised">
+                    <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
+                  </div>
+                  <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">
+                    {b.value.toFixed(1)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-ink-muted">
+              Chain of thought fills <strong className="text-ink">{cot}%</strong> of the words,
+              barely above no reasoning at all, because one chain commits to its first guess. Take
+              the full search and switch off <strong className="text-ink">pruning</strong> and it
+              drops to {totNoPrune}%. Switch off <strong className="text-ink">backtracking</strong>{" "}
+              instead and it collapses to {totNoBacktrack}%, almost back to plain chain of thought.
+              That is the whole argument in two bars:{" "}
+              <em>
+                what search buys is not more thinking, it is the ability to take a thought back
+              </em>
+              . It is also the more expensive half, which is the trade the rest of this act is
+              about.
+            </p>
+          </figure>
+        </section>
+
+        <Note kicker="References">
+          <p>
+            Yao et al. 2023, <em>Tree of Thoughts</em> (NeurIPS 2023), Table 3 &mdash; 5&times;5 mini
+            crosswords, GPT-4.
+          </p>
+          <p>
+            Bars are the percentage of words filled correctly, over 20 puzzles. At whole-puzzle
+            level the same run solves 4 of 20, against 0 for input-output prompting.
+          </p>
+        </Note>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={data.citation} />
+        <CitationBadge citation={cross.citation} />
       </div>
       <p className="text-xs text-ink-muted">
-        the map, the routes and the towns-examined counter are produced by a real routing search in
-        src/lib/routing.ts, run live in your browser; every number on the map is a measurement of
-        that code, and the strategy outcomes are re-asserted in the test suite · the searcher&apos;s
-        evaluator is the straight-line distance to the destination, deliberately blind to water
-        (Ferry Landing is closest as the crow flies but has no bridge), standing in for a
-        model&apos;s value judgement; a structural check labels dead-end spurs and is never consulted
-        by a strategy · the solve-rate chart is verbatim from Yao et al. 2023, &ldquo;Tree of
-        Thoughts&rdquo; (arXiv:2305.10601, NeurIPS 2023): Game of 24 with GPT-4, input-output {io}%,
-        chain-of-thought {cot}%, CoT with self-consistency {cotSc}%, Tree-of-Thoughts 45% at b = 1
-        and 74% at b = 5, with b = 2 to 4 interpolated along the published monotonic increase
+        the thought tree, the groupings and their confidence scores are authored teaching content,
+        not a model transcript; the search across them, the pruning and the thoughts-scored counter
+        are produced by a real search in src/lib/thoughtSearch.ts running live in your browser, and
+        the outcome and cost of every strategy is re-asserted in the test suite (greedy and a beam
+        of 1 score 11 thoughts and fail, a beam of 2 scores 15 and fails, a beam of 3 and MCTS each
+        score 21 and succeed, depth-first 23, breadth-first 31) · the searcher&apos;s evaluator is
+        the mean of its committed groups&apos; confidences, deliberately blind to what a group
+        strands; a structural check labels dead ends and is never consulted by a strategy · the
+        crossword chart is verbatim from Yao et al. 2023, &ldquo;Tree of Thoughts&rdquo;
+        (arXiv:2305.10601, NeurIPS 2023), Table 3, word-success column: input-output {io}%, chain of
+        thought {cot}%, Tree of Thoughts without backtracking {totNoBacktrack}%, without pruning{" "}
+        {totNoPrune}%, full {tot}%
       </p>
 
       <PageNav n={PAGE_N} />

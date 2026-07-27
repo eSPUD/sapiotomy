@@ -12,7 +12,38 @@ import {
 
 const TOL = 1.0;
 
-describe("Page 10: Tree of Thoughts (Yao et al.)", () => {
+describe("Page 10: Tree of Thoughts on mini crosswords (Yao et al., Table 3)", () => {
+  const d = curves.totCrosswords;
+  const { io, cot, totNoBacktrack, totNoPrune, tot } = d.fit!.params;
+
+  it("carries the five word-success bars verbatim from the paper", () => {
+    expect(io).toBe(14.0);
+    expect(cot).toBe(15.6);
+    expect(totNoBacktrack).toBe(20.0);
+    expect(totNoPrune).toBe(41.5);
+    expect(tot).toBe(60.0);
+    expect(d.citation.ref).toBe("Yao et al. 2023");
+    expect(d.citation.venue).toBe("NeurIPS 2023");
+    expect(d.citation.preprint).toBe(false);
+  });
+
+  it("the ablations rank the way the page's argument claims", () => {
+    // Removing backtracking hurts far more than removing pruning: that is the
+    // whole point of the section, so pin it against the data.
+    expect(totNoBacktrack).toBeLessThan(totNoPrune);
+    expect(totNoPrune).toBeLessThan(tot);
+    expect(tot - totNoBacktrack).toBeGreaterThan(tot - totNoPrune);
+    // and no-backtracking lands close to plain chain-of-thought
+    expect(totNoBacktrack - cot).toBeLessThan(10);
+  });
+
+  it("names the crossword task, not Game of 24", () => {
+    expect(d.provenance).toMatch(/crossword/i);
+    expect(d.provenance).not.toMatch(/game of 24/i);
+  });
+});
+
+describe("Page 11: Tree of Thoughts branching curve (Yao et al., Game of 24)", () => {
   it("b=1 -> 45% and b=5 -> 74% within tolerance", () => {
     const d = curves.treeOfThoughts;
     expect(Math.abs(interpolate(d, 1) - 45)).toBeLessThan(TOL);
