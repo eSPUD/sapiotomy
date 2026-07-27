@@ -4,9 +4,7 @@ import { Page10 } from "./Page10";
 
 const readCount = () =>
   Number(
-    screen
-      .getByRole("status", { name: /the compute bill/i })
-      .querySelector("p")?.textContent ?? "0",
+    screen.getByRole("status", { name: /the compute bill/i }).querySelector("p")?.textContent ?? "0",
   );
 
 const setStrategy = (value: string) =>
@@ -15,26 +13,32 @@ const setStrategy = (value: string) =>
   });
 
 describe("Page 10 (searching through thoughts) component", () => {
-  it("opens on greedy, which commits to the trap and strands", () => {
+  it("opens on greedy, which writes the answer it likes best and jams", () => {
     render(<Page10 />);
     expect(screen.getByRole("combobox", { name: /search strategy/i })).toHaveValue("greedy");
-    expect(screen.getByText(/stranded/i)).toBeInTheDocument();
-    expect(readCount()).toBe(11);
+    // "jammed" is also a legend label, so match the verdict line specifically.
+    expect(screen.getByText(/✗ jammed/)).toBeInTheDocument();
+    expect(readCount()).toBe(16);
   });
 
-  it("shows the reader the leftover words, not just an assertion of failure", () => {
+  it("names the clue-breaking entries instead of just asserting failure", () => {
     render(<Page10 />);
-    // IRIS went to "Flowers", so the eye is short a part and HEATHER is homeless.
-    for (const w of ["HEATHER", "PUPIL", "LENS", "RETINA"]) {
+    // Down reads LOT / IRE / DEN — real words, wrong answers.
+    for (const w of ["LOT", "IRE", "DEN"]) {
       expect(screen.getAllByText(w).length, w).toBeGreaterThan(0);
     }
+    // the clue appears both in the clue list and in the jam report
+    expect(screen.getAllByText(/Camp bed/).length).toBeGreaterThan(1);
   });
 
-  it("switching to MCTS sorts all sixteen words", () => {
+  it("switching to MCTS finishes the grid, for fewer thoughts than breadth-first", () => {
     render(<Page10 />);
     setStrategy("mcts");
-    expect(screen.getByText(/all sixteen words placed/i)).toBeInTheDocument();
-    expect(readCount()).toBe(21);
+    expect(screen.getByText(/every clue answered/i)).toBeInTheDocument();
+    const mcts = readCount();
+    expect(mcts).toBe(30);
+    setStrategy("bfs");
+    expect(readCount()).toBeGreaterThan(mcts);
   });
 
   it("exposes the beam-width dial only for the beam strategy", () => {
@@ -44,23 +48,11 @@ describe("Page 10 (searching through thoughts) component", () => {
     expect(screen.getByRole("slider", { name: /beam width/i })).toBeInTheDocument();
   });
 
-  it("breadth-first scores more thoughts than MCTS", () => {
+  it("shows each clue with the answers the model would write", () => {
     render(<Page10 />);
-    setStrategy("mcts");
-    const mcts = readCount();
-    setStrategy("bfs");
-    expect(readCount()).toBeGreaterThan(mcts);
-  });
-
-  it("lists the groupings with the model's confidence in each", () => {
-    render(<Page10 />);
-    // The trap and the correct group it is one word away from are both offered,
-    // so the reader can rate them before the search does.
-    expect(screen.getAllByText("Flowers").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Flowers that are also girls' names").length).toBeGreaterThan(0);
-    expect(screen.getByText("Parts of the eye")).toBeInTheDocument();
-    expect(screen.getByText("ROSE · LILY · VIOLET · IRIS")).toBeInTheDocument();
-    expect(screen.getByText("ROSE · LILY · VIOLET · HEATHER")).toBeInTheDocument();
+    expect(screen.getByText("Bottle top")).toBeInTheDocument();
+    expect(screen.getAllByText("LID").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("CAP").length).toBeGreaterThan(0);
   });
 
   it("offers the plain chain-of-thought contrast", () => {

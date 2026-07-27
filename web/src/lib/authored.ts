@@ -599,112 +599,102 @@ export const SUPERVISION = {
   ] as readonly SupervisionTrace[],
 } as const;
 
-// --- Page 10: Searching Through Thoughts (a tree of groupings) -------------
+// --- Page 10: Searching Through Thoughts (a mini crossword) ----------------
 /**
- * The interactive is a live search over the thought space these groups generate
- * (lib/thoughtSearch.ts). Sixteen words must split into four groups of four. A
- * THOUGHT is one committed group; a STATE is the set of groups committed so far;
- * the goal is the state that places all sixteen words.
+ * A 3x3 mini. The grid solves to CAP / ORE / TEN across, COT / ARE / PEN down.
+ * lib/crossword.ts derives the whole search space from the candidate answers
+ * below; nothing about the tree is hand-placed.
  *
- * Only the groups below are authored. The state lattice, every card's leftover
- * words, and every dead end are derived from them by `buildThoughtSpace`, so a
- * typo cannot invent an edge and the copy cannot drift from the structure.
+ * THE TRAP. "Bottle top" is LID before it is CAP, for anybody. The model agrees:
+ * LID is its most confident answer anywhere on the board. Writing it is not
+ * stupid, and the grid does not object — LID fits an empty row perfectly. Three
+ * thoughts later the grid reads LID / ORE / TEN, which is FULL and spells LOT,
+ * IRE and DEN going down. All three are real words. None of them answers its
+ * clue: 1-Down is "Camp bed", 2-Down is "Exist", 3-Down is "Writing tool". That
+ * is the most familiar feeling in crosswords — the letters work, the clues do
+ * not — and a reader can check it against the clue list without trusting us.
  *
- * THE TRAP. "CHERRY RUBY ROSE BLOOD" is a genuinely better-sounding shades-of-red
- * group than the correct "CHERRY RUBY BRICK WINE" — cherry red, ruby red, rose
- * red and blood red are all stock phrases, while brick and wine are stretches.
- * So the evaluator ranks the wrong group top, and it is right to on the evidence
- * it is allowed to see: it never looks at what a group leaves behind. The damage
- * is remote. Nothing goes wrong until the third move, when the eight words left
- * over are three flowers, three oranges, and BRICK and WINE with nowhere to go.
- * That is a positive discovery (BLOOD ORANGE, IRIS the eye), not an absence the
- * reader has to take on trust.
+ * "Camp bed" is the same trick again: BED outranks COT, and any grid containing
+ * it jams too.
  *
- * The confidences were tuned (see src/lib/act2thoughts.test.ts) so the strategies
- * genuinely disagree, and so the root's options rank trap first, a second wrong
- * group second, and a correct group only third — which is what gives the beam
- * dial three regimes instead of two: b = 1 fails (and is identical to greedy),
- * b = 2 fails, b = 3 is the cheapest width that survives.
- *
- * `plainCot` is the contrast case: one confident run that takes the surest group
- * every time, cannot reconsider, and fudges the last step rather than stopping.
+ * The evaluator is the model's confidence in each answer, and its one blindness
+ * is that it judges an answer against its own clue and the letters already
+ * there, never against what the answer forecloses. Confidences were tuned (see
+ * src/lib/act2crossword.test.ts) so the two traps outrank every true answer,
+ * which is what makes greedy and the narrow beams fail.
  */
-export const THOUGHT_SPACE_SPEC = {
-  prompt: "Sort these sixteen words into four groups of four. Each group shares something.",
-  words: [
-    "ROSE", "LILY", "VIOLET", "HEATHER",
-    "PUPIL", "LENS", "RETINA", "IRIS",
-    "BLOOD", "NAVEL", "SEVILLE", "MANDARIN",
-    "CHERRY", "RUBY", "BRICK", "WINE",
-  ],
-  groups: [
+export const CROSSWORD_SPEC = {
+  size: 3,
+  entries: [
     {
-      label: "Flowers",
-      short: "Flowers",
-      words: ["ROSE", "LILY", "VIOLET", "IRIS"],
-      rationale: "Four flowers. No argument, no stretch, nothing to explain.",
-      confidence: 0.95,
-      correct: false,
+      id: "1A",
+      dir: "across",
+      index: 0,
+      clue: "Bottle top",
+      candidates: [
+        { word: "LID", confidence: 0.93, note: "A bottle has a lid. First thing anyone says.", correct: false },
+        { word: "CAP", confidence: 0.8, note: "A bottle cap, though 'cap' is the fussier word.", correct: true },
+      ],
     },
     {
-      label: "Girls' names",
-      short: "Names",
-      words: ["ROSE", "LILY", "IRIS", "HEATHER"],
-      rationale: "Four women in any school register.",
-      confidence: 0.86,
-      correct: false,
+      id: "1D",
+      dir: "down",
+      index: 0,
+      clue: "Camp bed",
+      candidates: [
+        { word: "BED", confidence: 0.88, note: "The clue literally says bed.", correct: false },
+        { word: "COT", confidence: 0.72, note: "A camp bed is a cot, if you know the word.", correct: true },
+      ],
     },
     {
-      label: "Parts of the eye",
-      short: "Eye",
-      words: ["PUPIL", "LENS", "RETINA", "IRIS"],
-      rationale: "Straight off the diagram in a biology textbook.",
-      confidence: 0.8,
-      correct: true,
+      id: "2A",
+      dir: "across",
+      index: 1,
+      clue: "Mined rock",
+      candidates: [
+        { word: "ORE", confidence: 0.86, note: "Rock you mine metal out of. Textbook.", correct: true },
+        { word: "GEM", confidence: 0.62, note: "Mined, and a rock, but a gem is the prize not the rock.", correct: false },
+      ],
     },
     {
-      label: "Flowers that are also girls' names",
-      short: "Flowers + names",
-      words: ["ROSE", "LILY", "VIOLET", "HEATHER"],
-      rationale: "True of all four, but it is two categories bolted together.",
-      confidence: 0.78,
-      correct: true,
+      id: "3A",
+      dir: "across",
+      index: 2,
+      clue: "Perfect score",
+      candidates: [
+        { word: "TEN", confidence: 0.84, note: "Ten out of ten.", correct: true },
+        { word: "ACE", confidence: 0.66, note: "An ace is perfect, but it is not a score.", correct: false },
+      ],
     },
     {
-      label: "Types of orange",
-      short: "Oranges",
-      words: ["BLOOD", "NAVEL", "SEVILLE", "MANDARIN"],
-      rationale: "Navel and Seville are oranges; blood and mandarin could be a lot of things.",
-      confidence: 0.55,
-      correct: true,
+      id: "2D",
+      dir: "down",
+      index: 1,
+      clue: "Exist",
+      candidates: [
+        { word: "ARE", confidence: 0.82, note: "As in 'they are'. Standard crossword filler.", correct: true },
+      ],
     },
     {
-      label: "Parts of the body",
-      short: "Body",
-      words: ["NAVEL", "PUPIL", "LENS", "RETINA"],
-      rationale: "All four qualify, but 'body' is broad enough to swallow half the list.",
-      confidence: 0.52,
-      correct: false,
-    },
-    {
-      label: "Shades of red",
-      short: "Reds",
-      words: ["CHERRY", "RUBY", "BRICK", "WINE"],
-      rationale: "Brick red and wine red are real, just less common.",
-      confidence: 0.5,
-      correct: true,
+      id: "3D",
+      dir: "down",
+      index: 2,
+      clue: "Writing tool",
+      candidates: [
+        { word: "PEN", confidence: 0.78, note: "A pen writes.", correct: true },
+      ],
     },
   ],
 } as const;
 
 /** The single confident run: no scoring, no branching, no going back. */
-export const THOUGHT_PLAIN_COT = {
+export const CROSSWORD_PLAIN_COT = {
   steps: [
-    "Four of these are flowers: rose, lily, violet, iris.",
-    "Four are shades of red: blood, cherry, ruby, wine.",
-    "Parts of the body next: navel, pupil, lens, retina.",
-    "That leaves heather, Seville, mandarin and brick. Reddish-brown things, near enough.",
+    "1-Across, 'Bottle top'. That's LID.",
+    "2-Across, 'Mined rock'. ORE.",
+    "3-Across, 'Perfect score'. TEN.",
+    "Grid's full. Down I get LOT, IRE, DEN. Those are all words, so I'm done.",
   ],
-  answer: "all sixteen words placed, and the last four have nothing in common",
+  answer: "a full grid of real words, none of which answers its clue",
   correct: false,
 } as const;
