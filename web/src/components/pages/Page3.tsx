@@ -20,13 +20,19 @@
  * No inference talk here.
  *
  * Layout rule: no reveals, no drag-to-unlock. Shell matches page 1 exactly —
- * numbered steps down the left, each with its own margin <Note> beside it
- * (same component shape as Page1's). What was a sticky "how to read this page"
- * rail is gone: a page with a slider, a dial and a text box does not need
- * operating instructions, and one shared references block put Villalobos next
- * to a cost curve he has nothing to do with. Sources now sit inside the step
- * that uses them, and each step's margin note carries only that step's
- * provenance (what is cited vs derived).
+ * numbered steps down the left, each followed by its margin cell. On this page
+ * every margin cell is an empty <div aria-hidden="true" />: there is no "how to
+ * read this page" rail (a slider, a dial and a text box need no instructions)
+ * and no margin prose or references block either. The CitationBadge rows on the
+ * border-t inside step 1's figure and step 2's section are the WHOLE citation
+ * story — each source is cited once, inside the figure that uses it, which is
+ * why the badge rows must stay put and must not be mirrored into the margin.
+ * What is cited vs derived is said inline in each step's h2 annotation
+ * ("derived from the two Epoch trends", "cited stock, derived demand"), the
+ * DataWindowMeter's caption line carries the "cited window, not a burn rate"
+ * caveat that used to live in a margin note, and the bottom footnote carries the
+ * CC BY redraw attribution plus the "no claims about what any lab actually
+ * spends" disclaimer. All three are load-bearing: do not trim them.
  *
  * Each figure owns its own control, too. Step 1's five-year slider moves step
  * 1's cost curve, and nothing else; step 2's parameter dial moves step 2's
@@ -81,22 +87,14 @@ const TODAY_YEAR = 2026.5;
 
 const trackPct = (year: number) => ((year - TRACK_START) / (TRACK_END - TRACK_START)) * 100;
 
-/** A margin note that sits beside its step and scrolls with the page (as page 1). */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
-  return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
-      {children}
-    </aside>
-  );
-}
-
 /**
  * The cited data-stock window on a calendar. Entirely static: the shaded band
  * is Villalobos et al.'s full-utilization window, the hairline their median
  * year, the marker just today. Deliberately NOT a depletion curve and no
  * longer driven by step 1's slider — the source gives a window, not a
- * per-month burn rate, so there is nothing here for a reader to drag.
+ * per-month burn rate, so there is nothing here for a reader to drag. The
+ * caption line under the track says exactly that; it is the only place on the
+ * page that does, so keep it.
  */
 function DataWindowMeter({
   startY,
@@ -139,6 +137,9 @@ function DataWindowMeter({
           · median {medianY}
         </span>
       </div>
+      <p className="mt-1 text-[11px] text-ink-muted">
+        The band is the cited window, not a burn rate; nothing here depletes.
+      </p>
     </div>
   );
 }
@@ -294,7 +295,7 @@ export function Page3() {
         bill, then the data itself.
       </p>
 
-      {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
+      {/* Each step (left) sits beside an empty margin cell; the cites live inside the figures. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 — the bill */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -359,8 +360,8 @@ export function Page3() {
               hardware absorbs part of that, so the <strong>bill</strong> per run grows ×
               {tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
               <em>the frontier model of the day</em>, every day, and by year five the program is
-              measured in trillions, and even the flat ${RUN_M}M-per-run plan at the bottom of the
-              chart burns {fmtM(DAYS * RUN_M)} a year.
+              measured in trillions, and even the flat ${RUN_M}M-per-run estimate at the bottom of
+              the chart burns {fmtM(DAYS * RUN_M)} a year.
             </figcaption>
             <div className="flex flex-wrap gap-2 border-t border-grid pt-3">
               <CitationBadge citation={runCost.citation} />
@@ -369,19 +370,7 @@ export function Page3() {
             </div>
           </figure>
         </section>
-        <Note kicker="Where the bill comes from">
-          <p>
-            Two cited anchors, one derived curve: the ≈${RUN_M}M compute estimate for the GPT-4 run,
-            and the ×{tp.perYear}-a-year training-cost trend. The curve is one run a day at ${RUN_M}
-            M × {tp.perYear}
-            <sup>years</sup>.
-          </p>
-          <p>
-            Its per-run price passes $1B around year three, matching Epoch&apos;s{" "}
-            {tp.projectionYear} projection. Daily retraining is a deliberately absurd hypothetical;
-            no lab is claimed to spend this.
-          </p>
-        </Note>
+        <div aria-hidden="true" />
 
         {/* Step 2 — the data */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -444,21 +433,7 @@ export function Page3() {
             </div>
           </section>
         </section>
-        <Note kicker="Where the wall comes from">
-          <p>
-            The ≈{ds.stockTrillionTokens}T stock and the {ds.windowStartYear}–{ds.windowEndYear}{" "}
-            full-utilization window (median {ds.medianYear}) are Villalobos et al., quoted verbatim.
-            The timeline draws that window and today, nothing else — the source gives a window, not
-            a burn rate, so no depletion is animated.
-          </p>
-          <p>
-            The ≈{cp.tokensPerParam}-tokens-per-parameter rule is Hoffmann et al. 2022, which
-            revised Kaplan et al. 2020 (arXiv:2001.08361): Chinchilla, {cp.chinchillaParamsB}B
-            parameters on {cp.chinchillaTokensB / 1000}T tokens, beat Gopher&apos;s{" "}
-            {cp.gopherParamsB}B at equal compute. The bar multiplies your dial by that rule; it is
-            derived, not measured.
-          </p>
-        </Note>
+        <div aria-hidden="true" />
 
         {/* Step 3 — the guess */}
         <section className="flex min-w-0 flex-col gap-3">

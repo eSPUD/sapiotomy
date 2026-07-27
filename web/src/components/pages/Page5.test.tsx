@@ -144,6 +144,27 @@ describe("Page 5: sourcing", () => {
     expect(screen.getAllByText(/Wei et al. 2022/).length).toBeGreaterThan(0);
     expect(screen.getByText(/quoted from\s+Figure 1/i)).toBeInTheDocument();
   });
+
+  // The sticky instructions/references rail is gone (page 1's shape). What is
+  // left in the margin is ONE bare cite beside step 1; the operating hints the
+  // rail carried are the controls' own job, and the prose that used to wrap the
+  // cite is gone.
+  it("has no instructions rail, only a bare reference note beside step 1", () => {
+    render(<Page5 />);
+    expect(screen.queryByText(/how to read this page/i)).toBeNull();
+    expect(screen.queryByText(/read straight down/i)).toBeNull();
+    expect(screen.queryByText(/to move between pages/i)).toBeNull();
+    expect(screen.queryByText(/the guess in step 2 is optional/i)).toBeNull();
+    expect(screen.queryByText(/links and the derivation notes are at the foot/i)).toBeNull();
+
+    // Exactly one "References" margin note, and its body is the bare cite.
+    const kickers = screen.getAllByText(/^references$/i);
+    expect(kickers).toHaveLength(1);
+    const note = kickers[0].closest("aside")!;
+    expect(note).toHaveTextContent(
+      /^References\s*Wei et al\. 2022, Chain-of-Thought Prompting Elicits Reasoning in Large Language Models\.$/,
+    );
+  });
 });
 
 // The animated path: reduced motion OFF, fake timers; Play streams the chain
