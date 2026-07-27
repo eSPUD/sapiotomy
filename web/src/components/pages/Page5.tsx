@@ -4,12 +4,15 @@
  * Page 5, "How to Reason" — Act 2 opens on page 4's open question: can we guide
  * a machine down a road? The first tool is the simplest: SHOW it one.
  *
- * Layout: shell matches pages 1, 3, 4, 6 and 7 — one numbered reading column
- * (1. show it one · 2. the scaling law · 3. where this leaves us) beside a
- * sticky instructions/references rail. The earlier build was two unlabelled
- * full-bleed stages with header chips, so the page read as one long slab; the
- * numbered stack breaks it into parts. Within each step the do -> see loop and
- * its live narration line are unchanged.
+ * Layout: page 1's per-step grid, same as pages 3 and 6. The intro paragraph
+ * runs full width above the grid; below it each numbered step (1. show it one ·
+ * 2. the scaling law · 3. where this leaves us) is a left-hand grid cell paired
+ * with its own margin cell. The old sticky "how to read this page" +
+ * references rail is gone: its bullets only restated what the controls and the
+ * live narration already say, and one shared references block repeated a cite
+ * the step headings already carry. Only step 1 has a margin note, and it holds
+ * nothing but the Wei et al. cite; steps 2 and 3 pair with an empty spacer.
+ * Within each step the do -> see loop and its live narration line are unchanged.
  *
  *   Step 1 — "Show it one worked example." The lever the reader flips is the
  *   actual cause in few-shot chain-of-thought: the WORKED EXAMPLE in the prompt.
@@ -20,10 +23,12 @@
  *   prepended exemplar itself (Fig. 1's tennis-ball problem) is real, not
  *   abstract: a "see full prompt" disclosure reveals it on demand.
  *
- *   Step 2 — "The road only helps a big-enough walker." Predict-then-drive:
- *   the reader first guesses what showing work does at 8B (the deck's
- *   PredictBar), then steps a model-size control across the three real PaLM
- *   points (8B / 62B / 540B). Two big readouts (standard vs CoT) and the chart
+ *   Step 2 — "The road only helps a big-enough walker." Predict-then-drive: a
+ *   prediction strip is OFFERED (the deck's PredictBar), never required — the
+ *   size stepper and the chart are mounted outside the prediction gate and are
+ *   live before any guess is locked in. The reader steps a model-size control
+ *   across the three real PaLM points (8B / 62B / 540B). Two big readouts
+ *   (standard vs CoT) and the chart
  *   marker move together; narration flips from "it HURTS here (emergent)" at 8B
  *   to "+39.0 points from a prompt alone" at 540B.
  *
@@ -32,7 +37,9 @@
  *
  * Everything is authored + cited (Wei et al. 2022): the Figure-1 cafeteria
  * problem and its 27/9 outputs, and the per-scale GSM8K table redrawn as the
- * flat-vs-steep curves. No live model; the step-1 heading and the rail say so.
+ * flat-vs-steep curves. No live model runs here, and that claim is load-bearing:
+ * the step-1 heading chip ("no live model") and the bottom provenance footnote
+ * both carry it. Keep both.
  */
 
 import { useEffect, useMemo, useState } from "react";
@@ -55,6 +62,16 @@ const STEP_MS = 800;
 /** The three PaLM scales, in billions of parameters — the paper's data points. */
 const SIZES = [8, 62, 540] as const;
 type Size = (typeof SIZES)[number];
+
+/** A margin note that sits beside its step and scrolls with the page. */
+function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+  return (
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      {children}
+    </aside>
+  );
+}
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
@@ -195,7 +212,7 @@ export function Page5() {
     }`;
 
   return (
-    <article className="flex flex-col gap-5">
+    <article className="flex flex-col gap-6">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
@@ -203,334 +220,298 @@ export function Page5() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      {/* Left = the numbered walk-through · Right = instructions + references */}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        {/* LEFT COLUMN */}
-        <div className="flex min-w-0 flex-col gap-8">
-          <p className="text-lg text-ink-muted">
-            Act 1 ended on a question: can we <strong className="text-ink">guide a machine down a
-            road</strong>? The first tool is the simplest: <em>show it one</em>. Put a worked
-            example in the prompt and watch what changes.
-          </p>
+      <p className="max-w-2xl text-lg text-ink-muted">
+        Act 1 ended on a question: can we <strong className="text-ink">guide a machine down a
+        road</strong>? The first tool is the simplest: <em>show it one</em>. Put a worked example in
+        the prompt and watch what changes.
+      </p>
 
-          {/* Step 1 — teach it by example */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              1. Show it one worked example
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                one word problem · quoted from Wei et al. Fig. 1 · no live model
-              </span>
-            </h2>
-            <section
-              aria-label="Teach it by example"
-              className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
+      {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
+      <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* Step 1 — teach it by example */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            1. Show it one worked example
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              one word problem · quoted from Wei et al. Fig. 1 · no live model
+            </span>
+          </h2>
+          <section
+            aria-label="Teach it by example"
+            className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            {/* the few-shot lever */}
+            <div
+              className="flex flex-wrap items-center gap-2"
+              role="group"
+              aria-label="Worked example in the prompt"
             >
-              {/* the few-shot lever */}
-              <div
-                className="flex flex-wrap items-center gap-2"
-                role="group"
-                aria-label="Worked example in the prompt"
-              >
-                <span className="text-sm font-semibold text-ink">Worked example in the prompt:</span>
-                <button type="button" aria-pressed={!example} onClick={() => setEx(false)} className={segBtn(!example)}>
-                  none
-                </button>
-                <button type="button" aria-pressed={example} onClick={() => setEx(true)} className={segBtn(example)}>
-                  one
-                </button>
-              </div>
+              <span className="text-sm font-semibold text-ink">Worked example in the prompt:</span>
+              <button type="button" aria-pressed={!example} onClick={() => setEx(false)} className={segBtn(!example)}>
+                none
+              </button>
+              <button type="button" aria-pressed={example} onClick={() => setEx(true)} className={segBtn(example)}>
+                one
+              </button>
+            </div>
 
-              {/* the prompt surface */}
-              <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-3">
-                {example ? (
-                  <details className="group mb-2 border-b border-dashed border-grid pb-2">
-                    <summary className="flex cursor-pointer list-none items-center gap-2 text-xs text-compute focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-compute">
-                      <span aria-hidden="true" className="font-mono transition-transform group-open:rotate-90">
-                        ▸
-                      </span>
-                      <span>
-                        <span aria-hidden="true">＋</span>1 worked example prepended (Wei et al. Fig. 1)
-                        <span className="text-ink-muted"> · see full prompt</span>
-                      </span>
-                    </summary>
-                    <div className="mt-2 rounded border border-grid bg-surface p-3 text-xs">
-                      <p className="font-mono uppercase tracking-wide text-ink-muted">example →</p>
-                      <p className="mt-1 text-ink-muted">{D.exemplar.question}</p>
-                      <ol className="mt-2 flex flex-col gap-1 text-ink-muted">
-                        {D.exemplar.steps.map((s, i) => (
-                          <li key={i}>
-                            <span className="mr-2 font-mono text-compute">{i + 1}</span>
-                            {s}
-                          </li>
-                        ))}
-                      </ol>
-                      <p className="mt-2 text-ink-muted">{D.exemplar.answer}</p>
-                    </div>
-                  </details>
-                ) : null}
-                <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">you →</p>
-                <p className="mt-1 text-ink">{D.question}</p>
-              </div>
-
-              {/* the model surface */}
-              <div>
-                <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">the model →</p>
-                {!asked ? (
-                  <p className="mt-1 rounded-lg border border-dashed border-grid bg-surface-raised p-3 text-sm text-ink-muted">
-                    Press <strong className="text-ink">Ask</strong> below.
-                  </p>
-                ) : example ? (
-                  <div className="mt-1 rounded-lg border-l-4 border-compute bg-surface-raised p-3">
-                    <ol className="flex flex-col gap-2">
-                      {D.steps.slice(0, step).map((s, i) => (
-                        <li key={i} className="text-sm text-ink motion-safe:animate-fade-in">
-                          <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
+            {/* the prompt surface */}
+            <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-3">
+              {example ? (
+                <details className="group mb-2 border-b border-dashed border-grid pb-2">
+                  <summary className="flex cursor-pointer list-none items-center gap-2 text-xs text-compute focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-compute">
+                    <span aria-hidden="true" className="font-mono transition-transform group-open:rotate-90">
+                      ▸
+                    </span>
+                    <span>
+                      <span aria-hidden="true">＋</span>1 worked example prepended (Wei et al. Fig. 1)
+                      <span className="text-ink-muted"> · see full prompt</span>
+                    </span>
+                  </summary>
+                  <div className="mt-2 rounded border border-grid bg-surface p-3 text-xs">
+                    <p className="font-mono uppercase tracking-wide text-ink-muted">example →</p>
+                    <p className="mt-1 text-ink-muted">{D.exemplar.question}</p>
+                    <ol className="mt-2 flex flex-col gap-1 text-ink-muted">
+                      {D.exemplar.steps.map((s, i) => (
+                        <li key={i}>
+                          <span className="mr-2 font-mono text-compute">{i + 1}</span>
                           {s}
                         </li>
                       ))}
                     </ol>
-                    {chainDone ? (
-                      <p className="mt-3 border-t border-grid pt-3 text-ink">
-                        <span className="font-semibold text-correct">✓ {D.answer}</span>
-                      </p>
-                    ) : (
-                      <p className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
-                        <span aria-hidden="true" className="animate-pulse text-compute">▍</span>
-                        {step === 0 ? "a worked example sits in the prompt…" : "thinking on the page…"}
-                      </p>
-                    )}
+                    <p className="mt-2 text-ink-muted">{D.exemplar.answer}</p>
                   </div>
-                ) : (
-                  <div className="mt-1 rounded-lg border-l-4 border-wrong bg-wrong/15 p-3">
-                    <p className="text-ink">{D.blurt}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* the driver */}
-              <div className="flex flex-wrap items-center gap-2">
-                {!asked ? (
-                  <button
-                    type="button"
-                    onClick={askModel}
-                    className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas"
-                  >
-                    Ask the model ▸
-                  </button>
-                ) : example ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => go(step - 1)}
-                      disabled={step === 0}
-                      className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
-                    >
-                      ◂ Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => go(step + 1)}
-                      disabled={step >= maxStep}
-                      className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-                    >
-                      Next ▸
-                    </button>
-                    {!reducedMotion ? (
-                      <button
-                        type="button"
-                        onClick={play}
-                        disabled={playing || step >= maxStep}
-                        className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute disabled:opacity-50"
-                      >
-                        ▶ Play
-                      </button>
-                    ) : null}
-                    <span className="font-mono text-xs tabular-nums text-ink-muted">
-                      step {step} of {maxStep}
-                    </span>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setEx(true)}
-                    className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute"
-                  >
-                    now add an example ▸
-                  </button>
-                )}
-              </div>
-
-              {/* live narration */}
-              <p className="min-h-[1.5rem] border-t border-grid pt-3 text-ink">{surfaceNarration}</p>
-            </section>
-
-            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              This is <strong>chain-of-thought prompting</strong>: the worked example in the prompt
-              carries its reasoning out loud, so the model answers the new question the same way.
-              Reasoning first, answer last. The page is its scratch paper.
+                </details>
+              ) : null}
+              <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">you →</p>
+              <p className="mt-1 text-ink">{D.question}</p>
             </div>
-          </section>
 
-          {/* Step 2 — the scaling law */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              2. The road only helps a big-enough walker
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                Wei et al. 2022 · GSM8K · redrawn
-              </span>
-            </h2>
-            <section
-              aria-label="The road only helps a big-enough walker"
-              className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
-            >
-              {/* The prediction strip is the ONLY thing that swaps on commit — the
-                  stepper, readouts and chart below stay mounted. Do not wrap them in
-                  `prediction === null ?`; that gate replaced the whole step in one
-                  jump and read as a page change. Same rule as page 7. */}
-              {prediction === null ? (
-                <PredictBar
-                  prompt={`Before you read it off the chart: showing work lifts the biggest model (PaLM-540B) by +${delta540} points on GSM8K. At 8B (a model ~67× smaller), what does showing work do to the score? (points gained)`}
-                  min={-10}
-                  max={40}
-                  suffix=" pts"
-                  onCommit={(p) => {
-                    setPrediction(p);
-                    setSize(8);
-                    recordInteraction(PAGE_N);
-                    setAnnounce(narrationB(8));
-                  }}
-                />
-              ) : (
-                <p className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-sm text-ink">
-                  You guessed{" "}
-                  <strong className="font-mono text-compute">
-                    {prediction >= 0 ? "+" : ""}
-                    {prediction} pts
-                  </strong>
-                  . Step through the model sizes and watch the real numbers.
+            {/* the model surface */}
+            <div>
+              <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">the model →</p>
+              {!asked ? (
+                <p className="mt-1 rounded-lg border border-dashed border-grid bg-surface-raised p-3 text-sm text-ink-muted">
+                  Press <strong className="text-ink">Ask</strong> below.
                 </p>
+              ) : example ? (
+                <div className="mt-1 rounded-lg border-l-4 border-compute bg-surface-raised p-3">
+                  <ol className="flex flex-col gap-2">
+                    {D.steps.slice(0, step).map((s, i) => (
+                      <li key={i} className="text-sm text-ink motion-safe:animate-fade-in">
+                        <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
+                        {s}
+                      </li>
+                    ))}
+                  </ol>
+                  {chainDone ? (
+                    <p className="mt-3 border-t border-grid pt-3 text-ink">
+                      <span className="font-semibold text-correct">✓ {D.answer}</span>
+                    </p>
+                  ) : (
+                    <p className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
+                      <span aria-hidden="true" className="animate-pulse text-compute">▍</span>
+                      {step === 0 ? "a worked example sits in the prompt…" : "thinking on the page…"}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-1 rounded-lg border-l-4 border-wrong bg-wrong/15 p-3">
+                  <p className="text-ink">{D.blurt}</p>
+                </div>
               )}
-
-              {/* size stepper */}
-              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Model size">
-                <span className="text-sm font-semibold text-ink">Model size:</span>
-                {SIZES.map((s) => (
-                  <button key={s} type="button" aria-pressed={size === s} onClick={() => pickSize(s)} className={segBtn(size === s)}>
-                    {s}B
-                  </button>
-                ))}
-              </div>
-
-              {/* The two readouts sit directly above the chart marker they
-                  explain, so the numbers and the curve are one glance apart.
-                  They used to live in a nested right-hand rail; the page rail
-                  now owns that column, so a full-width pair reads better and
-                  leaves the chart its native width. */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex flex-col items-center rounded-lg border-l-4 border-grid bg-surface-raised px-3 py-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    Standard · the blurt
-                  </p>
-                  <BigNumber value={now.standard} suffix="%" decimals={1} tone="ink" />
-                </div>
-                <div className="flex flex-col items-center rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-compute">
-                    Chain-of-thought
-                  </p>
-                  <BigNumber value={now.cot} suffix="%" decimals={1} tone="compute" />
-                </div>
-              </div>
-              <div
-                className={`rounded-lg border-l-4 px-3 py-2 text-sm ${
-                  deltaNow >= 0 ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
-                }`}
-              >
-                <span className={`font-semibold ${deltaNow >= 0 ? "text-correct" : "text-wrong"}`}>
-                  {deltaNow >= 0 ? "✓" : "✗"} showing work at {size}B:{" "}
-                  {deltaNow >= 0 ? "+" : ""}
-                  {deltaNow} points
-                </span>
-              </div>
-
-              {/* the chart, marker snapped to the current size */}
-              <LineChart
-                title={`GSM8K solve rate for the PaLM family at 8, 62 and 540 billion parameters, log x axis, redrawn from Wei et al. 2022: standard prompting stays low at ${sp.palm8Standard}, ${sp.palm62Standard} and ${sp.palm540Standard} percent, while chain-of-thought climbs from ${sp.palm8Cot} through ${sp.palm62Cot} to ${sp.palm540Cot} percent: below standard at 8B, far above it at 540B. Currently marking ${size} billion parameters.`}
-                points={standardCurve}
-                secondary={{ points: cotCurve, label: "chain-of-thought" }}
-                primaryLabel="standard (the blurt)"
-                fillBetween
-                markPoints
-                inlineLabels
-                markerDelta
-                logX
-                xTicks={[...SIZES]}
-                xDomain={[7, 700]}
-                yDomain={[0, 65]}
-                markerX={size}
-                xLabel="model size (billions of parameters, log scale)"
-                yLabel="GSM8K solve rate (%)"
-                width={620}
-                height={300}
-              />
-
-              {/* live narration */}
-              <p className="min-h-[1.5rem] border-t border-grid pt-3 text-ink">{narrationB(size)}</p>
-            </section>
-          </section>
-
-          {/* Step 3 — the handoff */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
-            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              Same models, same questions. But the road only helps a walker big enough to follow it.{" "}
-              <em className="text-ink-muted">
-                And if a longer walk buys a better answer, what sets how long the model may walk?
-                Turn the page.
-              </em>
             </div>
-          </section>
-        </div>
 
-        {/* RIGHT COLUMN — instructions + references */}
-        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              How to read this page
-            </h2>
-            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
-              <li>
-                Read straight down: teach the model one road, then see which models can walk it.
-              </li>
-              <li>
-                In step 1, ask first with <strong className="text-ink">none</strong>, then flip to{" "}
-                <strong className="text-ink">one</strong>: the example is what turns a blurt into a
-                chain.
-              </li>
-              <li>
-                The guess in step 2 is optional; the size buttons work either way.
-              </li>
-              <li>
-                Use{" "}
-                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
-                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
-                to move between pages.
-              </li>
-            </ul>
+            {/* the driver */}
+            <div className="flex flex-wrap items-center gap-2">
+              {!asked ? (
+                <button
+                  type="button"
+                  onClick={askModel}
+                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas"
+                >
+                  Ask the model ▸
+                </button>
+              ) : example ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => go(step - 1)}
+                    disabled={step === 0}
+                    className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
+                  >
+                    ◂ Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => go(step + 1)}
+                    disabled={step >= maxStep}
+                    className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                  >
+                    Next ▸
+                  </button>
+                  {!reducedMotion ? (
+                    <button
+                      type="button"
+                      onClick={play}
+                      disabled={playing || step >= maxStep}
+                      className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute disabled:opacity-50"
+                    >
+                      ▶ Play
+                    </button>
+                  ) : null}
+                  <span className="font-mono text-xs tabular-nums text-ink-muted">
+                    step {step} of {maxStep}
+                  </span>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEx(true)}
+                  className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute"
+                >
+                  now add an example ▸
+                </button>
+              )}
+            </div>
+
+            {/* live narration */}
+            <p className="min-h-[1.5rem] border-t border-grid pt-3 text-ink">{surfaceNarration}</p>
+          </section>
+
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            This is <strong>chain-of-thought prompting</strong>: the worked example in the prompt
+            carries its reasoning out loud, so the model answers the new question the same way.
+            Reasoning first, answer last. The page is its scratch paper.
           </div>
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              References
-            </h2>
-            <p className="text-sm text-ink-muted">
-              Chain-of-thought prompting and the per-scale GSM8K numbers: Wei et al. 2022. The word
-              problem and both answers are quoted from its Figure 1.
-            </p>
-            <p className="text-sm text-ink-muted">
-              No model runs on this page. Full links and the derivation notes are at the foot of
+        </section>
+        <Note kicker="References">
+          <p>
+            Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
+            Models</em>.
+          </p>
+        </Note>
+
+        {/* Step 2 — the scaling law */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            2. The road only helps a big-enough walker
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              Wei et al. 2022 · GSM8K · redrawn
+            </span>
+          </h2>
+          <section
+            aria-label="The road only helps a big-enough walker"
+            className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            {/* The prediction strip is the ONLY thing that swaps on commit — the
+                stepper, readouts and chart below stay mounted. Do not wrap them in
+                `prediction === null ?`; that gate replaced the whole step in one
+                jump and read as a page change. It also keeps the guess optional:
+                the size buttons are live before anything is locked in. */}
+            {prediction === null ? (
+              <PredictBar
+                prompt={`Before you read it off the chart: showing work lifts the biggest model (PaLM-540B) by +${delta540} points on GSM8K. At 8B (a model ~67× smaller), what does showing work do to the score? (points gained)`}
+                min={-10}
+                max={40}
+                suffix=" pts"
+                onCommit={(p) => {
+                  setPrediction(p);
+                  setSize(8);
+                  recordInteraction(PAGE_N);
+                  setAnnounce(narrationB(8));
+                }}
+              />
+            ) : (
+              <p className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-sm text-ink">
+                You guessed{" "}
+                <strong className="font-mono text-compute">
+                  {prediction >= 0 ? "+" : ""}
+                  {prediction} pts
+                </strong>
+                . Step through the model sizes and watch the real numbers.
+              </p>
+            )}
+
+            {/* size stepper */}
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Model size">
+              <span className="text-sm font-semibold text-ink">Model size:</span>
+              {SIZES.map((s) => (
+                <button key={s} type="button" aria-pressed={size === s} onClick={() => pickSize(s)} className={segBtn(size === s)}>
+                  {s}B
+                </button>
+              ))}
+            </div>
+
+            {/* The two readouts sit directly above the chart marker they
+                explain, so the numbers and the curve are one glance apart.
+                They used to live in a nested right-hand rail; a full-width pair
+                reads better and leaves the chart its native width. */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col items-center rounded-lg border-l-4 border-grid bg-surface-raised px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Standard · the blurt
+                </p>
+                <BigNumber value={now.standard} suffix="%" decimals={1} tone="ink" />
+              </div>
+              <div className="flex flex-col items-center rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-compute">
+                  Chain-of-thought
+                </p>
+                <BigNumber value={now.cot} suffix="%" decimals={1} tone="compute" />
+              </div>
+            </div>
+            <div
+              className={`rounded-lg border-l-4 px-3 py-2 text-sm ${
+                deltaNow >= 0 ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
+              }`}
+            >
+              <span className={`font-semibold ${deltaNow >= 0 ? "text-correct" : "text-wrong"}`}>
+                {deltaNow >= 0 ? "✓" : "✗"} showing work at {size}B:{" "}
+                {deltaNow >= 0 ? "+" : ""}
+                {deltaNow} points
+              </span>
+            </div>
+
+            {/* the chart, marker snapped to the current size */}
+            <LineChart
+              title={`GSM8K solve rate for the PaLM family at 8, 62 and 540 billion parameters, log x axis, redrawn from Wei et al. 2022: standard prompting stays low at ${sp.palm8Standard}, ${sp.palm62Standard} and ${sp.palm540Standard} percent, while chain-of-thought climbs from ${sp.palm8Cot} through ${sp.palm62Cot} to ${sp.palm540Cot} percent: below standard at 8B, far above it at 540B. Currently marking ${size} billion parameters.`}
+              points={standardCurve}
+              secondary={{ points: cotCurve, label: "chain-of-thought" }}
+              primaryLabel="standard (the blurt)"
+              fillBetween
+              markPoints
+              inlineLabels
+              markerDelta
+              logX
+              xTicks={[...SIZES]}
+              xDomain={[7, 700]}
+              yDomain={[0, 65]}
+              markerX={size}
+              xLabel="model size (billions of parameters, log scale)"
+              yLabel="GSM8K solve rate (%)"
+              width={620}
+              height={300}
+            />
+
+            {/* live narration */}
+            <p className="min-h-[1.5rem] border-t border-grid pt-3 text-ink">{narrationB(size)}</p>
+          </section>
+        </section>
+        <div aria-hidden="true" />
+
+        {/* Step 3 — the handoff */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            Same models, same questions. But the road only helps a walker big enough to follow it.{" "}
+            <em className="text-ink-muted">
+              And if a longer walk buys a better answer, what sets how long the model may walk? Turn
               the page.
-            </p>
+            </em>
           </div>
-        </aside>
+        </section>
+        <div aria-hidden="true" />
       </div>
 
       <div className="flex flex-wrap gap-2">

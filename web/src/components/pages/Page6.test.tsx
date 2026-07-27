@@ -82,7 +82,7 @@ describe("Page 6 (Thinking Longer)", () => {
     expect(screen.getByText(/inference-time scaling in its simplest form/i)).toBeInTheDocument();
   });
 
-  it("puts each reference in the margin beside the step that uses it, with no footnote or how-to rail", () => {
+  it("puts each reference in the margin beside the step that uses it, with the link on a citation badge and no how-to rail", () => {
     render(<Page6 />);
     // Grounding for step 1 sits in step 1's margin note.
     expect(screen.getByText(/Kojima et al. 2022/)).toBeInTheDocument();
@@ -99,9 +99,14 @@ describe("Page 6 (Thinking Longer)", () => {
     expect(screen.queryByText(/whitespace/i)).toBeNull();
   });
 
-  it("says out loud that a model cannot be held to a one-word answer", () => {
+  it("says out loud, inside step 2's body, that a model cannot be held to a one-word answer", () => {
     render(<Page6 />);
-    expect(screen.getByText(/cannot really hold a model to one word/i)).toBeInTheDocument();
-    expect(screen.getByText(/told to think longer/i)).toBeInTheDocument();
+    // The caveat is load-bearing AND its location is: it must read as part of
+    // step 2, not as a margin note off to the side (which is where it used to
+    // live). Scoping the query to step 2's region is what pins the relocation.
+    const step2 = screen.getByLabelText(/System 1 versus System 2, in tokens/i);
+    expect(step2.querySelector("aside")).toBeNull();
+    expect(step2.textContent).toMatch(/cannot really hold a model to one word/i);
+    expect(step2.textContent).toMatch(/told to think longer/i);
   });
 });

@@ -23,15 +23,18 @@
  *
  * HONESTY (load-bearing): the zero-budget end of the dial is an idealization.
  * You cannot actually hold a model to a one-word answer, and a model told to
- * think longer will spend more words than the problem needs. The margin note
- * beside step 2 says so where the "1 word" claim is made; do not delete it.
+ * think longer will spend more words than the problem needs. That caveat is the
+ * closing muted line of step 2's prose card, one card below the "1 word"
+ * readout it qualifies; it must stay in the step body — do not move it to a
+ * margin note and do not drop it.
  *
  * Layout: shell matches page 1 — one reading column of numbered steps, each
- * beside its own margin note that scrolls with it. No sticky how-to-read rail
- * and no footnote: references sit in the margin beside the step that uses
- * them, and the provenance caveats sit as chips on the control they qualify.
- * Explanation inside a control is limited to what a reader cannot get by
- * operating it.
+ * beside its own margin note that scrolls with it. No sticky how-to-read rail:
+ * references sit in the margin beside the step that uses them as bare cites,
+ * with the arXiv link carried by the CitationBadge row below the grid, and the
+ * provenance caveats sit as chips on the control they qualify. A margin note is
+ * either an operating hint or a bare "References" list; explanation inside a
+ * control is limited to what a reader cannot get by operating it.
  *
  * The demonstration is authored and flagged; no live model. Theory grounding
  * cited beside step 1: Kojima et al. 2022 (zero-shot "Let's think step by
@@ -242,12 +245,14 @@ export function Page6() {
         </section>
         <Note kicker="References">
           <p>
-            Kojima et al. 2022: a model does better on the same question when it is told to write
-            its steps out.
+            Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em>.
           </p>
           <p>
-            Feng et al. 2023; Merrill &amp; Sabharwal 2024: the longer the written working, the more
-            a model can work out before it has to answer.
+            Feng et al. 2023, <em>Towards Revealing the Mystery behind Chain of Thought</em>.
+          </p>
+          <p>
+            Merrill &amp; Sabharwal 2024, <em>The Expressive Power of Transformers with Chain of
+            Thought</em>.
           </p>
         </Note>
 
@@ -277,24 +282,22 @@ export function Page6() {
                 <p className="mt-2 font-mono text-sm text-ink-muted">{WORD_CAP} words · ✓</p>
               </div>
             </div>
-            <div className="rounded-lg border border-grid bg-surface p-4 leading-relaxed text-ink">
-              Same as when a person solves a problem: blurting takes no time, but showing your work
-              step by step takes <strong>focus and time</strong>. The only difference for a model is
-              the currency. Its focus and time <strong>are tokens</strong>, the words it writes on
-              the way to an answer.
+            <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4 leading-relaxed text-ink">
+              <p>
+                Same as when a person solves a problem: blurting takes no time, but showing your work
+                step by step takes <strong>focus and time</strong>. The only difference for a model
+                is the currency. Its focus and time <strong>are tokens</strong>, the words it writes
+                on the way to an answer.
+              </p>
+              <p className="text-sm text-ink-muted">
+                The one-word end is an idealization: you cannot really hold a model to one word, and
+                asking for the number alone will often still get you its working. Told to think
+                longer it overspends instead; the count is the model&apos;s call, not yours.
+              </p>
             </div>
           </section>
         </section>
-        <Note kicker="One word?">
-          <p>
-            You cannot really hold a model to one word. Ask for the number alone and it will often
-            still write its way there.
-          </p>
-          <p>
-            It works the other way too: told to think longer, a model will spend more words than the
-            question needs. Either system, the count is the model&apos;s call, not yours.
-          </p>
-        </Note>
+        <div aria-hidden="true" />
 
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -306,7 +309,7 @@ export function Page6() {
             <p className="text-sm text-ink">
               Step 1 was written for this page. This is a measurement. Made to keep going, by
               appending the word <span className="font-mono text-ink">&ldquo;Wait&rdquo;</span>{" "}
-              every time it tries to stop, a real model climbs from{" "}
+              every time it tries to stop, a real model (s1-32B) climbs from{" "}
               <strong className="font-mono">{bp.start}%</strong> to{" "}
               <strong className="font-mono">{bp.end}%</strong> on a hard competition maths exam. No
               retraining, only more thinking. Press it yourself.
@@ -393,11 +396,8 @@ export function Page6() {
         </section>
         <Note kicker="References">
           <p>
-            Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em>. The numbers are theirs:
-            the s1-32B model on AIME24, a competition maths exam, going from {bp.start}% to{" "}
-            {bp.end}%.
+            Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em>.
           </p>
-          <CitationBadge citation={bf.citation} />
         </Note>
 
         {/* Close */}
@@ -409,6 +409,10 @@ export function Page6() {
           </div>
         </section>
         <div aria-hidden="true" />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <CitationBadge citation={bf.citation} />
       </div>
 
       <div aria-live="polite" className="sr-only">

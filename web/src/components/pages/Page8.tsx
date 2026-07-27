@@ -18,15 +18,24 @@
  * And then the caveat that gives the page its second half. The verifier is
  * itself a model, and a judge reading the wrong criterion does not fail
  * gracefully — it fails toward whatever is most superficially appealing, which
- * here is the very attractor that fooled the crowd. So the reliability slider
- * runs both selections on the SAME candidates and lets the reader watch
- * best-of-N cross below majority voting. That crossing is Stroebl et al. 2024's
- * point, and it is why frequency voting keeps its place in the toolbox.
+ * here is the very attractor that fooled the crowd. So step 1's reliability
+ * slider re-judges the SAME candidates both ways, and step 2's own dial (which
+ * drives the curves and nothing else) is where the reader watches best-of-N
+ * cross below majority voting. That crossing is Stroebl et al. 2024's point, and
+ * it is why frequency voting keeps its place in the toolbox.
  *
  * The simulation (lib/sim LILY_PAD_MODEL) is illustrative and chipped as
  * such: no published curve fixes what "a 40%-reliable verifier" means. What is
  * cited is the shape — that selection beats voting when the verifier is good,
  * and that imperfect verifiers cap resampling gains.
+ *
+ * Layout: shell matches page 1 — the intro paragraph runs full width above one
+ * reading column of numbered steps, each step beside its own margin note that
+ * scrolls with it. No sticky how-to-read rail. Two one-line notes only, each
+ * carrying the one thing no on-screen label says: beside step 1, that both
+ * panels judge the same batch; beside step 2, that its chart has its own
+ * reliability dial. Step 3 has no note. Cobbe and Stroebl stay as the badge row
+ * and the provenance footnote below the grid — not as margin cites.
  */
 
 import { useMemo, useState } from "react";
@@ -60,6 +69,16 @@ const STROEBL: Citation = {
   venue: "arXiv",
   preprint: true,
 };
+
+/** A margin note that sits beside its step and scrolls with the page. */
+function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+  return (
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      {children}
+    </aside>
+  );
+}
 
 export function Page8() {
   const page = getPage(PAGE_N)!;
@@ -104,32 +123,29 @@ export function Page8() {
         {page.title}
       </h1>
 
-      {/* Left = the numbered walk-through · Right = instructions + references */}
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_15rem]">
-        {/* LEFT COLUMN */}
-        <div className="flex min-w-0 flex-col gap-8">
-          <p className="text-lg text-ink-muted">
-            Frequency voting has a bad blind spot:{" "}
-            <strong className="text-ink">sometimes the right answer is the rarest one</strong>. On a
-            problem with a trap the crowd piles onto the trap, so counting votes just measures it
-            precisely. Bring in a judge instead; nobody wins a poetry competition by submitting
-            the same poem forty times. Score every candidate, keep the best:{" "}
-            <strong className="text-ink">best-of-N with a verifier</strong>.
-          </p>
+      <p className="max-w-2xl text-lg text-ink-muted">
+        Frequency voting has a bad blind spot:{" "}
+        <strong className="text-ink">sometimes the right answer is the rarest one</strong>. On a
+        problem with a trap the crowd piles onto the trap, so counting votes just measures it
+        precisely. Bring in a judge instead; nobody wins a poetry competition by submitting the same
+        poem forty times. Score every candidate, keep the best:{" "}
+        <strong className="text-ink">best-of-N with a verifier</strong>.
+      </p>
 
-          {/* Step 1 — the two selectors */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              1. Judge one batch two ways
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                seeded illustrative simulation · no live model
-              </span>
-            </h2>
-            <section
-              aria-label="Majority vote versus verifier best-of-N on the same candidates"
-              className="flex flex-col rounded-lg border-l-4 border-compute bg-surface"
-            >
-              <div className="flex flex-col gap-4 p-4">
+      {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
+      <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* Step 1 — the two selectors */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            1. Judge one batch two ways
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              seeded illustrative simulation · no live model
+            </span>
+          </h2>
+          <section
+            aria-label="Majority vote versus verifier best-of-N on the same candidates"
+            className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
             <p className="text-ink">{B.question}</p>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -302,20 +318,22 @@ export function Page8() {
               over {TRIALS.toLocaleString()} seeded batches of {n}; the panels above are one draw
               from this distribution
             </p>
-              </div>
-            </section>
           </section>
+        </section>
+        <Note kicker="Same batch, two rules">
+          <p>Both panels judge the same candidates; only the rule for choosing differs.</p>
+        </Note>
 
-          {/* Step 2 — the curves. Self-contained: its own reliability dial
-              drives it, decoupled from the step-1 demo, so the authoritative
-              curves never wobble when the batch above is re-judged. */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">
-              2. The two rules as N grows
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                seeded illustrative simulation
-              </span>
-            </h2>
+        {/* Step 2 — the curves. Self-contained: its own reliability dial
+            drives it, decoupled from the step-1 demo, so the authoritative
+            curves never wobble when the batch above is re-judged. */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            2. The two rules as N grows
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              seeded illustrative simulation
+            </span>
+          </h2>
           <figure
             aria-label="Selection accuracy against the number of candidates, for majority voting and verifier best-of-N"
             className="m-0 flex min-w-0 flex-col rounded-lg border-l-4 border-grid bg-surface"
@@ -356,45 +374,24 @@ export function Page8() {
               </figcaption>
             </div>
           </figure>
-          </section>
+        </section>
+        <Note kicker="A second dial">
+          <p>This chart carries its own reliability dial; the batch in step 1 does not follow it.</p>
+        </Note>
 
-          {/* Step 3 — the handoff */}
-          <section className="flex flex-col gap-3">
-            <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
-            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              Selection beats counting exactly as far as the selector can be trusted, so the next
-              question is not &ldquo;how many candidates?&rdquo; but{" "}
-              <em>&ldquo;what is the judge actually reading?&rdquo;</em>{" "}
-              <em className="text-ink-muted">
-                Grading only the final answer is its own kind of blindness. Turn the page.
-              </em>
-            </div>
-          </section>
-        </div>
-
-        {/* RIGHT COLUMN — instructions + references */}
-        <aside className="flex flex-col gap-6 border-t border-grid pt-6 lg:sticky lg:top-24 lg:self-start lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              How to read this page
-            </h2>
-            <ul className="flex flex-col gap-2 text-sm text-ink-muted">
-              <li>
-                Both panels in step 1 judge the <strong className="text-ink">same</strong> batch;
-                only the rule for choosing differs.
-              </li>
-              <li>
-                Step 2 has its own <strong className="text-ink">reliability</strong> dial; drag it
-                down and watch best-of-N cross below voting.
-              </li>
-              <li>
-                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">←</kbd>{" "}
-                <kbd className="rounded border border-grid bg-surface px-1 font-mono text-[11px] text-ink">→</kbd>{" "}
-                move between pages.
-              </li>
-            </ul>
+        {/* Step 3 — the handoff */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            Selection beats counting exactly as far as the selector can be trusted, so the next
+            question is not &ldquo;how many candidates?&rdquo; but{" "}
+            <em>&ldquo;what is the judge actually reading?&rdquo;</em>{" "}
+            <em className="text-ink-muted">
+              Grading only the final answer is its own kind of blindness. Turn the page.
+            </em>
           </div>
-        </aside>
+        </section>
+        <div aria-hidden="true" />
       </div>
 
       <div className="flex flex-wrap gap-2">
