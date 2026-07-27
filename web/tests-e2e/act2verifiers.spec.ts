@@ -31,12 +31,17 @@ test.describe("Act 2 verifiers (pages 8–10)", () => {
 
   test("Page 10: switching strategy re-runs the search", async ({ page }) => {
     await page.goto("/p/10");
-    // Greedy (default) dead-ends on this instance.
-    await expect(page.getByText(/no solution found/i)).toBeVisible();
-    await page
-      .getByRole("combobox", { name: /search strategy/i })
-      .selectOption("mcts");
-    await expect(page.getByText(/✓ solved/)).toBeVisible();
+    const bill = page.getByRole("status", { name: /the compute bill/i });
+    // Greedy (default) commits to the trap and strands, having scored 11 thoughts.
+    await expect(page.getByText(/✗ stranded/)).toBeVisible();
+    await expect(bill).toContainText("11");
+    // MCTS sorts all sixteen, and the counter is a real measurement, not a prop.
+    await page.getByRole("combobox", { name: /search strategy/i }).selectOption("mcts");
+    await expect(page.getByText(/all sixteen words placed/i)).toBeVisible();
+    await expect(bill).toContainText("21");
+    // Breadth-first refuses to prune and pays the most.
+    await page.getByRole("combobox", { name: /search strategy/i }).selectOption("bfs");
+    await expect(bill).toContainText("31");
   });
 
   for (const n of [8, 9, 10]) {

@@ -1,0 +1,29 @@
+{
+  "points": [
+    { "x": 1, "y": 14.0 },
+    { "x": 2, "y": 15.6 },
+    { "x": 3, "y": 20.0 },
+    { "x": 4, "y": 41.5 },
+    { "x": 5, "y": 60.0 }
+  ],
+  "fit": {
+    "kind": "tot-crossword-ablation",
+    "params": {
+      "io": 14.0,
+      "cot": 15.6,
+      "totNoBacktrack": 20.0,
+      "totNoPrune": 41.5,
+      "tot": 60.0,
+      "gameIo": 0.0,
+      "gameCot": 1.0,
+      "gameTot": 20.0
+    }
+  },
+  "citation": {
+    "ref": "Yao et al. 2023",
+    "url": "https://arxiv.org/abs/2305.10601",
+    "venue": "NeurIPS 2023",
+    "preprint": false
+  },
+  "provenance": "5x5 mini crosswords, GPT-4, 20 puzzles. Verbatim from Table 3 of Yao et al. 2023 'Tree of Thoughts', word-success column: input-output prompting 14%, chain-of-thought 15.6%, ToT ablated to remove backtracking 20%, ToT ablated to remove pruning 41.5%, full ToT 60%. Game-level success from the same table: 0%, 1%, 20% (4 of 20 puzzles). x indexes the five methods in the order above and carries no quantitative meaning; y is the percentage of words filled correctly."
+}

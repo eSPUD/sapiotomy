@@ -599,110 +599,112 @@ export const SUPERVISION = {
   ] as readonly SupervisionTrace[],
 } as const;
 
-// --- Page 10: Searching Through Thoughts (a road map to search) ------------
+// --- Page 10: Searching Through Thoughts (a tree of groupings) -------------
 /**
- * The interactive is a live routing search over this authored road map
- * (lib/routing.ts). A town is a state, a road is a move, and the searcher's
- * evaluator is the straight-line ("crow-flies") distance to the destination —
- * the number a GPS shows. It is informative but blind to water: the town that
- * looks closest, Ferry Landing, is a dead-end spur with no bridge across the
- * bay. The only crossing is far to the north (Kingsbridge), so the true route
- * must first head AWAY from the destination — exactly the move a straight-line
- * heuristic hates, which is why greedy (and a beam of 1) drive into the
- * peninsula and strand, while search that can backtrack gets there.
+ * The interactive is a live search over the thought space these groups generate
+ * (lib/thoughtSearch.ts). Sixteen words must split into four groups of four. A
+ * THOUGHT is one committed group; a STATE is the set of groups committed so far;
+ * the goal is the state that places all sixteen words.
  *
- * The instance was tuned (see src/lib/act2routing.test.ts) so the strategies
- * genuinely disagree: greedy and beam-1 fail; depth-first, breadth-first, wider
- * beams and MCTS all reach Easton at very different prices, with breadth-first
- * the most expensive (it visits nearly every town) and MCTS among the cheapest.
- * Coordinates use y = north; miles on screen are these straight-line distances.
+ * Only the groups below are authored. The state lattice, every card's leftover
+ * words, and every dead end are derived from them by `buildThoughtSpace`, so a
+ * typo cannot invent an edge and the copy cannot drift from the structure.
  *
- * `plainCot` is the contrast case: one confident drive that always closes the
- * straight-line gap, reaches the town nearest the destination, and cannot turn
- * around — a single chain on a problem that needs backtracking.
+ * THE TRAP. "CHERRY RUBY ROSE BLOOD" is a genuinely better-sounding shades-of-red
+ * group than the correct "CHERRY RUBY BRICK WINE" — cherry red, ruby red, rose
+ * red and blood red are all stock phrases, while brick and wine are stretches.
+ * So the evaluator ranks the wrong group top, and it is right to on the evidence
+ * it is allowed to see: it never looks at what a group leaves behind. The damage
+ * is remote. Nothing goes wrong until the third move, when the eight words left
+ * over are three flowers, three oranges, and BRICK and WINE with nowhere to go.
+ * That is a positive discovery (BLOOD ORANGE, IRIS the eye), not an absence the
+ * reader has to take on trust.
+ *
+ * The confidences were tuned (see src/lib/act2thoughts.test.ts) so the strategies
+ * genuinely disagree, and so the root's options rank trap first, a second wrong
+ * group second, and a correct group only third — which is what gives the beam
+ * dial three regimes instead of two: b = 1 fails (and is identical to greedy),
+ * b = 2 fails, b = 3 is the cheapest width that survives.
+ *
+ * `plainCot` is the contrast case: one confident run that takes the surest group
+ * every time, cannot reconsider, and fudges the last step rather than stopping.
  */
-export const ROUTE_MAP = {
-  origin: 0,
-  destination: 10,
-  towns: [
-    { id: 0, name: "Westford", x: 24, y: 50 }, // origin
-    // the lure: straight east, closest to Easton, ends at a bridgeless spur
-    { id: 1, name: "Ashford", x: 48, y: 52 },
-    { id: 2, name: "Bellcross", x: 60, y: 50 },
-    { id: 3, name: "Coldharbor", x: 70, y: 50 },
-    { id: 4, name: "Ferry Landing", x: 76, y: 54 }, // dead-end spur, no bridge
-    // the true route: north to the only bridge, then east
-    { id: 5, name: "Northgate", x: 40, y: 74 },
-    { id: 6, name: "Millgate", x: 56, y: 80 },
-    { id: 7, name: "Kingsbridge", x: 72, y: 78 }, // the one crossing
-    { id: 8, name: "Easthaven", x: 88, y: 74 },
-    { id: 9, name: "Elmgrove", x: 92, y: 62 },
-    { id: 10, name: "Easton", x: 94, y: 52 }, // destination
-    // southern filler that breadth-first floods and directed searches skip
-    { id: 11, name: "Marsh End", x: 40, y: 28 },
-    { id: 12, name: "Southpoint", x: 54, y: 26 },
-    { id: 13, name: "Drycreek", x: 66, y: 30 },
-    // western grid: same role, far from the destination
-    { id: 14, name: "Oakvale", x: 14, y: 76 },
-    { id: 15, name: "Pinehurst", x: 14, y: 62 },
-    { id: 16, name: "Millbrook", x: 14, y: 48 },
-    { id: 17, name: "Thornbury", x: 14, y: 34 },
-    { id: 18, name: "Larkfield", x: 14, y: 20 },
-    { id: 19, name: "Farwater", x: 4, y: 76 },
-    { id: 20, name: "Lonepine", x: 4, y: 62 },
-    { id: 21, name: "Greywood", x: 4, y: 48 },
-    { id: 22, name: "Duncot", x: 4, y: 34 },
-    { id: 23, name: "Westmere", x: 4, y: 20 },
+export const THOUGHT_SPACE_SPEC = {
+  prompt: "Sort these sixteen words into four groups of four. Each group shares something.",
+  words: [
+    "ROSE", "LILY", "VIOLET", "HEATHER",
+    "PUPIL", "LENS", "RETINA", "IRIS",
+    "BLOOD", "NAVEL", "SEVILLE", "MANDARIN",
+    "CHERRY", "RUBY", "BRICK", "WINE",
   ],
-  roads: [
-    // origin's roads
-    [0, 1],
-    [0, 5],
-    [0, 15],
-    [0, 16],
-    [0, 17],
-    // the lure + its southern hangers
-    [1, 2],
-    [2, 3],
-    [3, 4],
-    [1, 11],
-    [2, 12],
-    [3, 13],
-    [11, 12],
-    [12, 13],
-    // the true route north over the bridge
-    [5, 6],
-    [6, 7],
-    [7, 8],
-    [8, 9],
-    [9, 10],
-    // western grid (two columns, rungs between)
-    [14, 15],
-    [15, 16],
-    [16, 17],
-    [17, 18],
-    [19, 20],
-    [20, 21],
-    [21, 22],
-    [22, 23],
-    [14, 19],
-    [15, 20],
-    [16, 21],
-    [17, 22],
-    [18, 23],
+  groups: [
+    {
+      label: "Flowers",
+      short: "Flowers",
+      words: ["ROSE", "LILY", "VIOLET", "IRIS"],
+      rationale: "Four flowers. No argument, no stretch, nothing to explain.",
+      confidence: 0.95,
+      correct: false,
+    },
+    {
+      label: "Girls' names",
+      short: "Names",
+      words: ["ROSE", "LILY", "IRIS", "HEATHER"],
+      rationale: "Four women in any school register.",
+      confidence: 0.86,
+      correct: false,
+    },
+    {
+      label: "Parts of the eye",
+      short: "Eye",
+      words: ["PUPIL", "LENS", "RETINA", "IRIS"],
+      rationale: "Straight off the diagram in a biology textbook.",
+      confidence: 0.8,
+      correct: true,
+    },
+    {
+      label: "Flowers that are also girls' names",
+      short: "Flowers + names",
+      words: ["ROSE", "LILY", "VIOLET", "HEATHER"],
+      rationale: "True of all four, but it is two categories bolted together.",
+      confidence: 0.78,
+      correct: true,
+    },
+    {
+      label: "Types of orange",
+      short: "Oranges",
+      words: ["BLOOD", "NAVEL", "SEVILLE", "MANDARIN"],
+      rationale: "Navel and Seville are oranges; blood and mandarin could be a lot of things.",
+      confidence: 0.55,
+      correct: true,
+    },
+    {
+      label: "Parts of the body",
+      short: "Body",
+      words: ["NAVEL", "PUPIL", "LENS", "RETINA"],
+      rationale: "All four qualify, but 'body' is broad enough to swallow half the list.",
+      confidence: 0.52,
+      correct: false,
+    },
+    {
+      label: "Shades of red",
+      short: "Reds",
+      words: ["CHERRY", "RUBY", "BRICK", "WINE"],
+      rationale: "Brick red and wine red are real, just less common.",
+      confidence: 0.5,
+      correct: true,
+    },
   ],
-  /** The one crossing of the bay, named in the copy. */
-  bridge: 7,
-  /** The greedy trap: closest in a straight line, no bridge. */
-  trap: 4,
-  plainCot: {
-    steps: [
-      "From Westford, the road that most cuts the distance to Easton runs east to Ashford.",
-      "Keep closing the straight-line gap: Ashford → Bellcross → Coldharbor.",
-      "Ferry Landing is closest of all, right across the bay from Easton.",
-      "Dead end: Ferry Landing has no bridge, and the only crossing is far to the north, four towns back.",
-    ],
-    answer: "stranded at Ferry Landing, one bay short of Easton",
-    correct: false,
-  },
+} as const;
+
+/** The single confident run: no scoring, no branching, no going back. */
+export const THOUGHT_PLAIN_COT = {
+  steps: [
+    "Four of these are flowers: rose, lily, violet, iris.",
+    "Four are shades of red: blood, cherry, ruby, wine.",
+    "Parts of the body next: navel, pupil, lens, retina.",
+    "That leaves heather, Seville, mandarin and brick. Reddish-brown things, near enough.",
+  ],
+  answer: "all sixteen words placed, and the last four have nothing in common",
+  correct: false,
 } as const;
