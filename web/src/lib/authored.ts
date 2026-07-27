@@ -599,102 +599,65 @@ export const SUPERVISION = {
   ] as readonly SupervisionTrace[],
 } as const;
 
-// --- Page 10: Searching Through Thoughts (a mini crossword) ----------------
+// --- Page 10: Searching Through Thoughts (the shaded-column mini) ----------
 /**
- * A 3x3 mini. The grid solves to CAP / ORE / TEN across, COT / ARE / PEN down.
- * lib/crossword.ts derives the whole search space from the candidate answers
- * below; nothing about the tree is hand-placed.
+ * THE RULE, ENTIRE: three answers stack, and the shaded first column has to
+ * read down as the answer to a fourth clue. One sentence, and the reader needs
+ * to know nothing else before they can watch the search work.
  *
- * THE TRAP. "Bottle top" is LID before it is CAP, for anybody. The model agrees:
- * LID is its most confident answer anywhere on the board. Writing it is not
- * stupid, and the grid does not object — LID fits an empty row perfectly. Three
- * thoughts later the grid reads LID / ORE / TEN, which is FULL and spells LOT,
- * IRE and DEN going down. All three are real words. None of them answers its
- * clue: 1-Down is "Camp bed", 2-Down is "Exist", 3-Down is "Writing tool". That
- * is the most familiar feeling in crosswords — the letters work, the clues do
- * not — and a reader can check it against the clue list without trusting us.
+ * THE TRAP is exactly one clue. "Add up" is SUM for anybody, and the model
+ * agrees: SUM is its most confident answer on the board. It is also wrong,
+ * because the column needs a T. TOT is the answer ("tot up"), and the model
+ * rates it poorly precisely because it is the dated word. The other two clues
+ * are honest — their best answer is also the right one — so the reader is not
+ * asked to distrust everything, only to notice one thing.
  *
- * "Camp bed" is the same trick again: BED outranks COT, and any grid containing
- * it jams too.
+ * THE FAILURE is one word long. Writing the best answer to all three clues
+ * gives SUM / INN / PEN, and the shaded column reads SIP. That is a real word.
+ * It is not a gratuity. The reader checks it against a single clue.
  *
- * The evaluator is the model's confidence in each answer, and its one blindness
- * is that it judges an answer against its own clue and the letters already
- * there, never against what the answer forecloses. Confidences were tuned (see
- * src/lib/act2crossword.test.ts) so the two traps outrank every true answer,
- * which is what makes greedy and the narrow beams fail.
+ * The confidences follow a stated rule the page repeats: how well the answer
+ * fits its OWN clue, ignoring the column. Tuned (see act2crossword.test.ts) so
+ * greedy and beams of 1 and 2 fail, and a beam of 3 is the cheapest that works.
  */
-export const CROSSWORD_SPEC = {
-  size: 3,
-  entries: [
+export const ACROSTIC_SPEC = {
+  rows: [
     {
-      id: "1A",
-      dir: "across",
-      index: 0,
-      clue: "Bottle top",
+      n: 1,
+      clue: "Add up",
       candidates: [
-        { word: "LID", confidence: 0.93, note: "A bottle has a lid. First thing anyone says.", correct: false },
-        { word: "CAP", confidence: 0.8, note: "A bottle cap, though 'cap' is the fussier word.", correct: true },
+        { word: "SUM", confidence: 0.95, note: "Sum is add up. Nothing to argue with.", correct: false },
+        { word: "TOT", confidence: 0.55, note: "'Tot up' does mean add up, but nobody says it any more.", correct: true },
       ],
     },
     {
-      id: "1D",
-      dir: "down",
-      index: 0,
-      clue: "Camp bed",
+      n: 2,
+      clue: "Traveller's rest",
       candidates: [
-        { word: "BED", confidence: 0.88, note: "The clue literally says bed.", correct: false },
-        { word: "COT", confidence: 0.72, note: "A camp bed is a cot, if you know the word.", correct: true },
+        { word: "INN", confidence: 0.85, note: "Where a traveller stops for the night.", correct: true },
+        { word: "PUB", confidence: 0.68, note: "You can rest in one, but it is a drinking house.", correct: false },
       ],
     },
     {
-      id: "2A",
-      dir: "across",
-      index: 1,
-      clue: "Mined rock",
+      n: 3,
+      clue: "Animal enclosure",
       candidates: [
-        { word: "ORE", confidence: 0.86, note: "Rock you mine metal out of. Textbook.", correct: true },
-        { word: "GEM", confidence: 0.62, note: "Mined, and a rock, but a gem is the prize not the rock.", correct: false },
-      ],
-    },
-    {
-      id: "3A",
-      dir: "across",
-      index: 2,
-      clue: "Perfect score",
-      candidates: [
-        { word: "TEN", confidence: 0.84, note: "Ten out of ten.", correct: true },
-        { word: "ACE", confidence: 0.66, note: "An ace is perfect, but it is not a score.", correct: false },
-      ],
-    },
-    {
-      id: "2D",
-      dir: "down",
-      index: 1,
-      clue: "Exist",
-      candidates: [
-        { word: "ARE", confidence: 0.82, note: "As in 'they are'. Standard crossword filler.", correct: true },
-      ],
-    },
-    {
-      id: "3D",
-      dir: "down",
-      index: 2,
-      clue: "Writing tool",
-      candidates: [
-        { word: "PEN", confidence: 0.78, note: "A pen writes.", correct: true },
+        { word: "PEN", confidence: 0.82, note: "A pen holds animals of any kind.", correct: true },
+        { word: "STY", confidence: 0.62, note: "An enclosure, but only ever for pigs.", correct: false },
       ],
     },
   ],
+  down: { clue: "Gratuity", answer: "TIP" },
 } as const;
 
 /** The single confident run: no scoring, no branching, no going back. */
-export const CROSSWORD_PLAIN_COT = {
+export const ACROSTIC_PLAIN_COT = {
   steps: [
-    "1-Across, 'Bottle top'. That's LID.",
-    "2-Across, 'Mined rock'. ORE.",
-    "3-Across, 'Perfect score'. TEN.",
-    "Grid's full. Down I get LOT, IRE, DEN. Those are all words, so I'm done.",
+    "Row 1, 'Add up'. That's SUM.",
+    "Row 2, 'Traveller's rest'. INN.",
+    "Row 3, 'Animal enclosure'. PEN.",
+    "Reading down the shaded column: S, I, P. SIP is a word, so that'll do.",
   ],
-  answer: "a full grid of real words, none of which answers its clue",
+  answer: "SIP is a word. The clue asked for a gratuity.",
   correct: false,
 } as const;
