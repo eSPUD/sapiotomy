@@ -1,0 +1,18 @@
+{
+  "points": [
+    { "x": 1, "y": 73.66 },
+    { "x": 2, "y": 28.94 },
+    { "x": 3, "y": 0.28 }
+  ],
+  "fit": {
+    "kind": "degeneration-repetition",
+    "params": { "greedy": 73.66, "beam16": 28.94, "human": 0.28 }
+  },
+  "citation": {
+    "ref": "Holtzman et al. 2020",
+    "url": "https://arxiv.org/abs/1904.09751",
+    "venue": "ICLR 2020",
+    "preprint": false
+  },
+  "provenance": "GPT-2 Large, 5,000 continuations of held-out WebText prompts, up to 200 tokens each. Verbatim from Table 1 of Holtzman et al. 2020, 'The Curious Case of Neural Text Degeneration': repetition rate — the share of continuations that end stuck repeating a phrase, where the paper counts a repetition when a phrase of at least 2 tokens repeats at least 3 times at the end of the generation — greedy decoding 73.66%, beam search (b=16) 28.94%, human text 0.28%. x indexes the three conditions in that order and carries no quantitative meaning; y is the repetition rate in percent."
+}

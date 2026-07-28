@@ -131,6 +131,8 @@ export function Page10() {
   const recordInteraction = useStore((s) => s.recordInteraction);
   const cross = curves.totCrosswords;
   const { io, cot, totNoBacktrack, totNoPrune, tot } = cross.fit!.params;
+  const degen = curves.neuralDegeneration;
+  const { greedy: degenGreedy, human: degenHuman } = degen.fit!.params;
 
   // Step 1 — the reader taps words.
   const [myState, setMyState] = useState(NW_.space.root);
@@ -364,6 +366,12 @@ export function Page10() {
               </div>
             )}
 
+            <p className="text-xs text-ink-muted">
+              The trap is not a toy. Run for real on GPT-2, always-take-the-likeliest-word gets
+              stuck repeating a phrase in {degenGreedy}% of its continuations. Human text:{" "}
+              {degenHuman}%.
+            </p>
+
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-sm text-ink-muted">
                 {mine.words.length} of {SPEC.length} words
@@ -381,10 +389,17 @@ export function Page10() {
           </div>
         </section>
 
-        <Note kicker="Try it">
-          <p>Take the likeliest word every time, the way you would with autocomplete.</p>
-          <p>That is what a chain of thought does.</p>
-        </Note>
+        <div className="flex flex-col gap-6">
+          <Note kicker="Try it">
+            <p>Take the likeliest word every time, the way you would with autocomplete.</p>
+            <p>That is what a chain of thought does.</p>
+          </Note>
+          <Note kicker="References">
+            <p>
+              Holtzman et al. 2020, <em>The Curious Case of Neural Text Degeneration</em>.
+            </p>
+          </Note>
+        </div>
 
         {/* Step 2 — five strategies replayed over one fixed tree. */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -654,9 +669,11 @@ export function Page10() {
           <h2 className="text-xl font-semibold text-ink">3. What search buys</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              A rhyme is a toy. Here is the same mechanism measured on a real task: GPT-4 filling
-              5&times;5 crosswords, with and without the ability to back up. The two middle bars
-              take the same search apart one piece at a time.
+              Nobody can publish these five head-to-head on a real model — a real vocabulary has
+              tens of thousands of branches per word, so breadth-first can never actually be run.
+              The closest measurement is the same branch, score, backtrack machinery taken apart
+              piece by piece on a real word task: GPT-4 filling 5&times;5 crosswords, with and
+              without the ability to back up. The two middle bars are the ones that matter.
             </p>
             <div
               className="flex flex-col gap-2"
@@ -700,6 +717,7 @@ export function Page10() {
 
       <div className="flex flex-wrap gap-2">
         <CitationBadge citation={cross.citation} />
+        <CitationBadge citation={degen.citation} />
       </div>
 
       <PageNav n={PAGE_N} />

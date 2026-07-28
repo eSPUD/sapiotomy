@@ -218,11 +218,42 @@ describe("Page 10 — step 3 and house style", () => {
     expect(container.textContent).not.toMatch(/game of 24/i);
   });
 
-  it("keeps the reference note to a bare cite, as pages 3-8 do", () => {
+  it("keeps both reference notes to bare cites, as pages 3-8 do", () => {
     render(<Page10 />);
-    const note = screen.getByText("References").closest("aside")!;
-    expect(note.textContent).toMatch(/Yao et al\. 2023, Tree of Thoughts/);
-    expect(note.textContent).not.toMatch(/NeurIPS|Table 3|20 puzzles|arXiv/);
+    const notes = screen.getAllByText("References").map((el) => el.closest("aside")!);
+    expect(notes).toHaveLength(2);
+    const all = notes.map((n) => n.textContent).join(" | ");
+    expect(all).toMatch(/Holtzman et al\. 2020, The Curious Case of Neural Text Degeneration/);
+    expect(all).toMatch(/Yao et al\. 2023, Tree of Thoughts/);
+    // no venue, table number, sample size or arXiv id in a note
+    expect(all).not.toMatch(/NeurIPS|ICLR|Table 1|Table 3|20 puzzles|GPT-2|arXiv/);
+  });
+
+  it("anchors the trap in Holtzman's measured numbers, beside step 1", () => {
+    render(<Page10 />);
+    expect(
+      screen.getByText(/gets"?\s*stuck repeating a phrase in 73\.66% of its continuations/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Human text:\s*0\.28%/)).toBeInTheDocument();
+  });
+
+  it("step 3 owns why the five buttons cannot have a literature chart", () => {
+    render(<Page10 />);
+    expect(
+      screen.getByText(/breadth-first can never actually be run/i),
+    ).toBeInTheDocument();
+  });
+
+  it("carries both citation chips at the foot", () => {
+    render(<Page10 />);
+    expect(screen.getByRole("link", { name: /Yao et al\. 2023/ })).toHaveAttribute(
+      "href",
+      expect.stringContaining("2305.10601"),
+    );
+    expect(screen.getByRole("link", { name: /Holtzman et al\. 2020/ })).toHaveAttribute(
+      "href",
+      expect.stringContaining("1904.09751"),
+    );
   });
 
   it("has no footnote: the page ends at the citation chip", () => {
@@ -231,5 +262,6 @@ describe("Page 10 — step 3 and house style", () => {
     const kids = [...article.children];
     expect(kids.at(-1)?.querySelector("a[href*='p/']")).toBeTruthy();
     expect(kids.at(-2)?.textContent).toMatch(/Yao et al\. 2023/);
+    expect(kids.at(-2)?.textContent).toMatch(/Holtzman et al\. 2020/);
   });
 });

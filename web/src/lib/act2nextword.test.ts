@@ -13,6 +13,7 @@
 import { describe, expect, it } from "vitest";
 import { NEXT_WORD_SPEC } from "./authored";
 import { buildNextWord, type NextWordSpec } from "./nextWord";
+import { curves } from "./curves";
 import { search, STRATEGIES, type Strategy } from "./thoughtSearch";
 
 const N = buildNextWord(NEXT_WORD_SPEC as unknown as NextWordSpec);
@@ -127,5 +128,26 @@ describe("The strategies, on the one fixed tree", () => {
     for (const s of ["greedy", "bfs", "dfs", "mcts"] as Strategy[]) {
       expect(cost(s), s).toBe(cost(s));
     }
+  });
+});
+
+describe("The Holtzman anchor (data/neural-degeneration.json)", () => {
+  const d = curves.neuralDegeneration;
+  const { greedy, beam16, human } = d.fit!.params;
+
+  it("carries Table 1's repetition rates verbatim", () => {
+    expect(greedy).toBe(73.66);
+    expect(beam16).toBe(28.94);
+    expect(human).toBe(0.28);
+    expect(d.citation.ref).toBe("Holtzman et al. 2020");
+    expect(d.citation.venue).toBe("ICLR 2020");
+    expect(d.citation.preprint).toBe(false);
+  });
+
+  it("provenance states the metric's real definition, not a paraphrase", () => {
+    // 73.66% is the share of continuations that END stuck in a repeating
+    // phrase — not the share of repeated words. The page copy depends on this.
+    expect(d.provenance).toMatch(/end stuck repeating a phrase/i);
+    expect(d.provenance).toMatch(/GPT-2 Large/);
   });
 });
