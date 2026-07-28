@@ -168,7 +168,7 @@ export function inverseU(length: number, peak: number, peakAcc: number, curvatur
   return Math.max(0, y);
 }
 
-// --- Page 19: chain-of-thought faithfulness --------------------------------
+// --- Page 18: chain-of-thought faithfulness --------------------------------
 // Over many trials the model USES an injected hint but only ADMITS it with the
 // reported probability. The Monte Carlo "confession meter" converges there.
 export function faithfulnessAdmitRate(admitProb: number, trials: number, seed: number): number {

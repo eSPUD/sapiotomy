@@ -21,7 +21,7 @@ import {
 
 const TOL = 1.0;
 
-describe("Page 15: budget forcing (Muennighoff et al., preprint)", () => {
+describe("Page 19: budget forcing (Muennighoff et al., preprint)", () => {
   const d = curves.budgetForcing;
   it("advances 50% -> 57% across 'Wait' presses", () => {
     expect(Math.abs(interpolate(d, 0) - 50)).toBeLessThan(TOL);
@@ -186,7 +186,7 @@ describe("Page 17: overthinking inverse-U (preprint)", () => {
   void hardPeakAcc;
 });
 
-describe("Page 19: faithfulness (preprint)", () => {
+describe("Page 18: faithfulness (preprint)", () => {
   const d = curves.faithfulness;
   it("admission Monte Carlo converges to 25% / 39%", () => {
     expect(Math.abs(faithfulnessAdmitRate(0.25, 20000, 1) - 25)).toBeLessThan(1.5);
