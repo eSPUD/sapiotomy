@@ -1,0 +1,30 @@
+{
+  "points": [
+    { "x": 0, "y": 77.5 },
+    { "x": 1, "y": 97.0 },
+    { "x": 2, "y": 42.9 },
+    { "x": 3, "y": 34.1 }
+  ],
+  "fit": {
+    "kind": "coconut-latent",
+    "params": {
+      "prosqaCot": 77.5,
+      "prosqaCoconut": 97.0,
+      "prosqaCotTokens": 49.4,
+      "prosqaCoconutTokens": 14.2,
+      "gsm8kCot": 42.9,
+      "gsm8kCoconut": 34.1,
+      "gsm8kCotTokens": 25.0,
+      "gsm8kCoconutTokens": 8.2,
+      "prontoqaCot": 98.8,
+      "prontoqaCoconut": 99.8
+    }
+  },
+  "citation": {
+    "ref": "Hao et al. 2024",
+    "url": "https://arxiv.org/abs/2412.06769",
+    "venue": "COLM 2025",
+    "preprint": false
+  },
+  "provenance": "GPT-2-scale experiments. Verbatim from the main results table of Hao et al. 'Training Large Language Models to Reason in a Continuous Latent Space' (Coconut), accuracy % / newly-generated tokens: GSM8K CoT 42.9 @ 25.0 vs Coconut 34.1 @ 8.2; ProntoQA CoT 98.8 @ 92.5 vs Coconut 99.8 @ 9.0; ProsQA CoT 77.5 @ 49.4 vs Coconut 97.0 @ 14.2. points: x indexes {0: ProsQA CoT, 1: ProsQA Coconut, 2: GSM8K CoT, 3: GSM8K Coconut} and carries no quantitative meaning; y = accuracy %."
+}

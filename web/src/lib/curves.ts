@@ -27,6 +27,7 @@ import selfCorrectionRaw from "@data/self-correction.json";
 import overthinkingRaw from "@data/overthinking.json";
 import faithfulnessRaw from "@data/faithfulness.json";
 import cotObfuscationRaw from "@data/cot-obfuscation.json";
+import coconutRaw from "@data/coconut.json";
 import illusionRaw from "@data/illusion-of-thinking.json";
 import epochTrainingCostsRaw from "@data/epoch-training-costs.json";
 import epochRunCostRaw from "@data/epoch-run-cost.json";
@@ -59,6 +60,7 @@ export const curves: Record<string, CurveData> = {
   overthinking: parseCurveData(overthinkingRaw, "overthinking.json"),
   faithfulness: parseCurveData(faithfulnessRaw, "faithfulness.json"),
   cotObfuscation: parseCurveData(cotObfuscationRaw, "cot-obfuscation.json"),
+  coconut: parseCurveData(coconutRaw, "coconut.json"),
   illusion: parseCurveData(illusionRaw, "illusion-of-thinking.json"),
   epochTrainingCosts: parseCurveData(epochTrainingCostsRaw, "epoch-training-costs.json"),
   epochRunCost: parseCurveData(epochRunCostRaw, "epoch-run-cost.json"),
