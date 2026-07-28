@@ -292,17 +292,16 @@ export function Page2() {
         </section>
         <Note kicker="Further reading">
           <p>
-            Dahlgren Lindström et al.,{" "}
+            Askell et al.,{" "}
             <a
-              href="https://link.springer.com/article/10.1007/s10676-025-09837-2"
+              href="https://arxiv.org/abs/2112.00861"
               target="_blank"
               rel="noopener noreferrer"
               className="text-compute underline"
             >
-              &ldquo;Helpful, harmless, honest? Sociotechnical limits of AI alignment and safety
-              through Reinforcement Learning from Human Feedback&rdquo;
-            </a>
-            , <em>Ethics and Information Technology</em> 27(2), 2025.
+              &ldquo;A General Language Assistant as a Laboratory for Alignment&rdquo;
+            </a>{" "}
+            (2021), which introduced the helpful, honest and harmless framing this page opens on.
           </p>
         </Note>
       </div>
