@@ -16,6 +16,7 @@ import starCqaRaw from "@data/star-cqa.json";
 import coverageScalingRaw from "@data/coverage-scaling.json";
 import computeOptimalRaw from "@data/compute-optimal.json";
 import rebaseParetoRaw from "@data/rebase-pareto.json";
+import pythiaInferenceScalingRaw from "@data/pythia-inference-scaling.json";
 import budgetForcingRaw from "@data/budget-forcing.json";
 import deepseekTrainingRaw from "@data/deepseek-r1-training.json";
 import o1ScalingRaw from "@data/o1-scaling.json";
@@ -49,6 +50,7 @@ export const curves: Record<string, CurveData> = {
   coverageScaling: parseCurveData(coverageScalingRaw, "coverage-scaling.json"),
   computeOptimal: parseCurveData(computeOptimalRaw, "compute-optimal.json"),
   rebasePareto: parseCurveData(rebaseParetoRaw, "rebase-pareto.json"),
+  pythiaInferenceScaling: parseCurveData(pythiaInferenceScalingRaw, "pythia-inference-scaling.json"),
   budgetForcing: parseCurveData(budgetForcingRaw, "budget-forcing.json"),
   deepseekTraining: parseCurveData(deepseekTrainingRaw, "deepseek-r1-training.json"),
   o1Scaling: parseCurveData(o1ScalingRaw, "o1-scaling.json"),

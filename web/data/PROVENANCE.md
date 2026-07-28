@@ -51,6 +51,7 @@ figure/table, verbatim vs. interpolated). Summary:
 | coverage-scaling.json | 12 | Verbatim endpoints + log-linear fit (Brown et al. 2024) |
 | compute-optimal.json | 11, 13 | Verbatim claims (Snell et al. 2024) |
 | rebase-pareto.json | 11 | Verbatim table values (Wu et al. 2024, Table 1, MATH500 accuracy vs inference FLOPs) |
+| pythia-inference-scaling.json | 11 | **By-eye digitization** of Wu et al. 2024's GSM8K inference-scaling figure (Pythia 410M/2.8B/12B, weighted majority; 1.4B and 6.9B omitted for legibility), ±3pp / ~1.5x-on-FLOPs tolerance, replotted as accuracy (= 100 − plotted test error); the preserved claim: small models are compute-optimal at small budgets, saturate, then larger models take over |
 | budget-forcing.json | 14 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
 | deepseek-r1-training.json | 14, 16 | Verbatim endpoints (DeepSeek-R1 2025): AIME 2024 pass@1 15.6 → 71.0, cons@64 86.7; intermediate points interpolated |
 | deepseek-r1-distill.json | 14 | Verbatim Table 4–5 values (DeepSeek-R1 2025): per-size AIME 2024 + MATH-500 for the six distills, teacher/o1-mini/QwQ/GPT-4o reference rows |

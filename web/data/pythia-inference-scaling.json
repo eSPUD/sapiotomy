@@ -1,0 +1,32 @@
+{
+  "points": [
+    { "x": 1.5, "y": 28 },
+    { "x": 4, "y": 38 },
+    { "x": 12, "y": 48 },
+    { "x": 40, "y": 55 },
+    { "x": 150, "y": 59 },
+    { "x": 400, "y": 60 },
+    { "x": 8, "y": 39 },
+    { "x": 20, "y": 50 },
+    { "x": 60, "y": 60 },
+    { "x": 150, "y": 66 },
+    { "x": 400, "y": 69 },
+    { "x": 1000, "y": 71 },
+    { "x": 40, "y": 43 },
+    { "x": 100, "y": 56 },
+    { "x": 300, "y": 67 },
+    { "x": 1000, "y": 73 },
+    { "x": 3000, "y": 77 }
+  ],
+  "fit": {
+    "kind": "multi-series",
+    "params": { "n410m": 6, "n2p8b": 6, "n12b": 5 }
+  },
+  "citation": {
+    "ref": "Wu et al. 2024",
+    "url": "https://arxiv.org/abs/2408.00724",
+    "venue": "NeurIPS 2024",
+    "preprint": false
+  },
+  "provenance": "Read off Wu et al. 2024's GSM8K inference-scaling figure (weighted majority voting, Pythia family) by eye — APPROXIMATE digitization, tolerance roughly +/-3 accuracy points and ~1.5x on FLOPs. x = inference FLOPs per question in units of 1e11; y = accuracy %, replotted as 100 minus the figure's test-error axis. Series order in `points`, with lengths in fit.params: Pythia-410M (6 points), Pythia-2.8B (6), Pythia-12B (5); the paper's 1.4B and 6.9B series are omitted for chart legibility, which does not change the finding. The finding preserved by the digitization: at small compute budgets, drawing more samples from a smaller model is the compute-optimal choice; each model's curve then flattens (saturates), and at large budgets the bigger model pulls ahead."
+}

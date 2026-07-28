@@ -66,10 +66,49 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText(/sampling alone never reaches 100%/i)).toBeInTheDocument();
   });
 
-  it("states the >4x compute-optimal claim and the ratio R fine print", () => {
+  it("defines what 14x actually multiplies: parameters, with absolute sizes undisclosed", () => {
     render(<Page11 />);
-    expect(screen.getByText(/>4×/)).toBeInTheDocument();
-    expect(screen.getByText(/R = inference tokens ÷ pretraining tokens/i)).toBeInTheDocument();
+    expect(screen.getByText(/14× means 14× the parameters/i)).toBeInTheDocument();
+    expect(screen.getByText(/never publish either absolute count/i)).toBeInTheDocument();
+  });
+
+  it("draws the whole curve family at once and only moves the marker", () => {
+    render(<Page11 />);
+    // every size's end-of-curve label is present without touching a knob
+    for (const label of ["1×", "2×", "4×"]) {
+      expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+    }
+    expect(screen.getByText(/the knobs never move them/i)).toBeInTheDocument();
+    expect(screen.getByText("14× · 1 answer")).toBeInTheDocument();
+  });
+
+  it("attaches a unit to the 4x claim: samples, 64 doing the work of 256", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/fewer samples than best-of-N/i)).toBeInTheDocument();
+    expect(screen.getByText(/64 samples doing the work of 256/i)).toBeInTheDocument();
+  });
+
+  it("states the R rule as its two limits", () => {
+    render(<Page11 />);
+    expect(
+      screen.getByText(/R = inference tokens served ÷ pretraining tokens/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/As R → 0, thinking wins/i)).toBeInTheDocument();
+    expect(screen.getByText(/As R → ∞, parameters win/i)).toBeInTheDocument();
+  });
+
+  it("grounds real parameter counts in the Pythia chart, not the game", () => {
+    render(<Page11 />);
+    expect(screen.getAllByText("410M").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("2.8B").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("12B").length).toBeGreaterThan(0);
+    expect(screen.getByText(/410M model is the\s+compute-optimal pick/i)).toBeInTheDocument();
+    expect(screen.getByText(/read off the paper[’']s figure by eye/i)).toBeInTheDocument();
+  });
+
+  it("leads the REBASE caption with the paper-level half-the-FLOPs finding", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/about half the total FLOPs/i)).toBeInTheDocument();
   });
 
   it("keeps both reference notes to bare cites, as pages 3-10 do", () => {
@@ -97,7 +136,10 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
 
   it("discloses which numbers are authored and which are digitized", () => {
     render(<Page11 />);
-    expect(screen.getByText(/authored, illustrative shapes pinned to the cited claims/i)).toBeInTheDocument();
-    expect(screen.getByText(/digitized verbatim from Table 1/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/authored illustrations pinned to the cited findings/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/transcribed\s+exactly from their MATH500 results table/i)).toBeInTheDocument();
+    expect(screen.getByText(/read off Wu et\s+al\.[’']s GSM8K figure by eye/i)).toBeInTheDocument();
   });
 });
