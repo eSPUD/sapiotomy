@@ -4,6 +4,7 @@ import {
   BIG_MODEL,
   ceiling,
   cheapestWin,
+  curvePoints,
   DIFFICULTIES,
   flopsOf,
   MAX_EXP,
@@ -73,6 +74,19 @@ describe("page 11 allocator model (authored shape, pinned)", () => {
     expect(cheapestWin("hard", 2)).toBeNull();
     expect(ceiling("hard", 1)).toBeLessThan(target("hard"));
     expect(ceiling("hard", 2)).toBeLessThan(target("hard"));
+  });
+
+  it("curvePoints traces the same trajectory the knobs walk", () => {
+    for (const d of DIFFICULTIES) {
+      for (const size of MODEL_SIZES) {
+        const pts = curvePoints(d, size);
+        expect(pts).toHaveLength(MAX_EXP + 1);
+        pts.forEach((p, e) => {
+          expect(p.x).toBe(flopsOf(size, 2 ** e));
+          expect(p.y).toBe(accuracy(d, size, 2 ** e));
+        });
+      }
+    }
   });
 
   // …and even a mid-size model that CAN reach it pays far more than 14 units,

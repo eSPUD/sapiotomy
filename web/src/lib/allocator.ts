@@ -2,26 +2,29 @@
  * Page 11: the two-knob compute allocator.
  *
  * An AUTHORED, illustrative accuracy model — closed-form, no randomness — whose
- * SHAPE is pinned to the verbatim findings of Snell et al. 2024 ("Scaling LLM
- * Test-Time Compute Optimally can be More Effective than Scaling Model
- * Parameters", arXiv:2408.03314):
+ * SHAPE follows the findings of Snell et al. 2024 ("Scaling LLM Test-Time
+ * Compute Optimally can be More Effective than Scaling Model Parameters",
+ * arXiv:2408.03314):
  *
- *   - FLOPs-matched, test-time compute can outperform a 14x larger model on
- *     problems where the smaller base model attains somewhat non-trivial
- *     success rates (here: easy and medium);
- *   - on the hardest problems, no amount of sampling closes the gap, because
- *     accuracy saturates below the larger model's one-shot score (here: hard),
- *     so pretraining the larger model is the better buy;
- *   - sampling gains saturate toward a ceiling set by the model (the
- *     exponential-convergence limit of Wu et al. 2024, arXiv:2408.00724).
+ *   - at matched FLOPs, test-time compute can beat a model ~14x the base
+ *     model's parameter count on problems the base model already solves some
+ *     of the time (here: easy and medium);
+ *   - on the hardest problems, no sample budget closes the gap, because
+ *     accuracy flattens out below the larger model's one-shot score (here:
+ *     hard), so the pretraining FLOPs of a bigger model buy more;
+ *   - sampling gains flatten toward a per-model ceiling (the convergence
+ *     limit analyzed by Wu et al. 2024, arXiv:2408.00724).
  *
  * No published per-difficulty curve fixes these exact numbers; what is cited
  * is the shape and the 14x anchor. Every constant below is pinned by tests.
  *
- * FLOPs accounting: transformer inference FLOPs scale with parameters x tokens,
- * so the unit is "one answer from the 1x model". One answer from an Sx model
- * costs S units; k sampled answers cost S*k units. The 14x model answering
- * once — the target the reader tries to beat — therefore sits at 14 units.
+ * Units. Snell et al. never disclose absolute parameter counts (the base model
+ * is PaLM 2-S*, size unpublished); their comparison is an exchange rate: Mx
+ * the parameters means Mx the inference FLOPs per answer, and Mx the
+ * pretraining FLOPs. So the knob here speaks in multiples of the base model,
+ * and the FLOPs unit is "one answer from the 1x model": one answer from an Sx
+ * model costs S units, k sampled answers cost S*k units, and the 14x model
+ * answering once — the target the reader tries to beat — sits at 14 units.
  */
 
 export type Difficulty = "easy" | "medium" | "hard";
@@ -38,7 +41,7 @@ export const MAX_EXP = 8;
 export const BIG_MODEL = 14;
 
 interface DifficultyParams {
-  /** pass@1 of the 1x model (%) — "somewhat non-trivial" on easy/medium only. */
+  /** pass@1 of the 1x model (%) — a real foothold on easy/medium only. */
   pass1Small: number;
   /** pass@1 of the 14x model (%) — the target line. */
   pass1Big: number;
@@ -90,6 +93,18 @@ export function flopsOf(size: number, k: number): number {
 /** The score to beat: the 14x model answering once (at BIG_MODEL FLOPs units). */
 export function target(d: Difficulty): number {
   return DIFFICULTY_PARAMS[d].pass1Big;
+}
+
+/**
+ * The full trajectory of an Sx model as the test-time knob turns: one point
+ * per power-of-two sample count, in FLOPs units on x. Drawn in full on the
+ * page; the knobs only move a marker along it.
+ */
+export function curvePoints(d: Difficulty, size: number): { x: number; y: number }[] {
+  return Array.from({ length: MAX_EXP + 1 }, (_, e) => ({
+    x: flopsOf(size, 2 ** e),
+    y: accuracy(d, size, 2 ** e),
+  }));
 }
 
 /**
