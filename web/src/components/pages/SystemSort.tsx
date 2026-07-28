@@ -139,8 +139,7 @@ export function SystemSort() {
         <div className="rounded-lg border-l-4 border-correct bg-correct/10 p-4">
           <p className="font-semibold text-correct">All six sorted.</p>
           <p className="text-sm text-ink-muted">
-            You just ran System 2 to tell System 1 from System 2. Perception, language and feeling
-            arrive on their own; arithmetic, parking and comparing have to be worked out.
+            You just ran System 2 to tell System 1 from System 2.
           </p>
         </div>
       ) : null}

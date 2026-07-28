@@ -29,6 +29,7 @@
 import { useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { System2Comic } from "@/components/pages/System2Comic";
 import {
   SPAIN_ALL_TITLES,
   SPAIN_IDEAL_ANSWER,
@@ -269,19 +270,7 @@ export function Page2() {
             committing to anything.
           </p>
 
-          <ol className="flex flex-col gap-3">
-            {SPAIN_SYSTEM2_TRACE.steps.map((step, i) => (
-              <li key={i} className="flex flex-col gap-0.5">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="text-xs uppercase tracking-wide text-ink-muted">
-                    Step #{i + 1}
-                  </span>
-                  <span className="font-semibold text-ink">{step.name}</span>
-                </div>
-                <p className="text-ink-muted">{step.text}</p>
-              </li>
-            ))}
-          </ol>
+          <System2Comic />
 
           <p className="text-ink">
             Which lands on <strong>{SPAIN_SYSTEM2_TRACE.answer}</strong>
