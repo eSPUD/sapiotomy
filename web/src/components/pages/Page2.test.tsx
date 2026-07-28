@@ -50,9 +50,8 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     expect(screen.getByText(/The fix is not to think harder/i)).toBeInTheDocument();
   });
 
-  it("shows the analysis, the retrieval framing, the teaser, and the flag", () => {
+  it("shows the retrieval framing, the teaser, and the flag", () => {
     render(<Page2 />);
-    expect(screen.getByText(/It only looks like a lookup/i)).toBeInTheDocument();
     expect(screen.getByText(/trained it on data that includes that final/)).toBeInTheDocument();
     expect(screen.getByText(/verify the final's result before shipping/)).toBeInTheDocument();
     expectRetrievalFraming();

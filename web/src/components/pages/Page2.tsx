@@ -140,26 +140,7 @@ export function Page2() {
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. Why recall fell short</h2>
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <p>
-              <strong>It only looks like a lookup.</strong> The count may pop. But a bare recall is
-              exactly the trap the machine fell into: it counted off a memory sealed before this
-              summer, <strong>{WC.trueCount}</strong> titles reported as{" "}
-              <strong>{WC.machine.answer === 1 ? "one" : WC.machine.answer}</strong>.
-            </p>
-            <p className="mt-2 text-ink-muted">
-              Answering it <em>well</em> means noticing the record can change, asking{" "}
-              <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and going to get the
-              fresh fact, the move the machine skipped.
-            </p>
-          </div>
-        </section>
-        <div aria-hidden="true" />
-
-        {/* Step 3 */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Two gaps, not one</h2>
+          <h2 className="text-xl font-semibold text-ink">2. Two gaps, not one</h2>
 
           {/* the gap is knowledge, and retrieval fills it (RAG) */}
           <div className="rounded-lg border-l-4 border-correct bg-surface p-4 text-ink">
