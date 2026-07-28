@@ -175,6 +175,27 @@ export const SPAIN_ALL_TITLES = {
 } as const;
 
 /**
+ * Page 2, section 3: the same question answered with a System 2 pass instead of
+ * a reflex. Authored/illustrative.
+ *
+ * The trace deliberately does NOT invent the post-cutoff fact. Thinking settles
+ * the ambiguity outright (step 1), because that needs no information the model
+ * lacks. For the cutoff it can only recognize the boundary and decide to check
+ * (steps 2 and 3), which is the honest limit of thinking without new input: it
+ * converts a confident wrong answer into a flagged one. Step 4 is what the model
+ * can say once it has looked.
+ */
+export const SPAIN_SYSTEM2_TRACE = {
+  steps: [
+    "Read the question again. It says FIFA World Cups, not men's World Cups. Spain fields a team in both tournaments, so both could count.",
+    "Check my own limits. A count of titles changes whenever a final is played, and my training was sealed in early 2025. Any final after that falls outside what I know.",
+    "So do not answer from memory alone. Say which tournaments I am counting, and check a current source before committing to a number.",
+    "Counting both tournaments: the men's team won in 2010 and 2026, and the women's team won in 2023.",
+  ],
+  answer: "Three.",
+} as const;
+
+/**
  * What the model actually SAYS, indexed by how many of Spain's titles fell
  * inside its training cutoff (0, 1, or 2). Authored/illustrative examples of a
  * flat, confident answer off frozen memory: notice that none of them hedges

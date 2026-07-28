@@ -15,11 +15,11 @@ const mm = (q: string) => ({
 vi.stubGlobal("matchMedia", mm);
 
 import { Page2 } from "./Page2";
-import { SPAIN_WORLD_CUPS } from "@/lib/authored";
+import { SPAIN_SYSTEM2_TRACE, SPAIN_WORLD_CUPS } from "@/lib/authored";
 
 const WC = SPAIN_WORLD_CUPS;
 
-describe("Page 2 (Knowing What You Know): a training-cutoff slider", () => {
+describe("Page 2 (System 1 fails on real-world tasks): a training-cutoff slider", () => {
   it("shows the question and the cutoff slider, answering one short by default", () => {
     render(<Page2 />);
     expect(screen.getByText(WC.question)).toBeInTheDocument();
@@ -52,18 +52,24 @@ describe("Page 2 (Knowing What You Know): a training-cutoff slider", () => {
   });
 
 
-  it("names the second miss: the model never judged that it should look it up", () => {
+  it("section 3 walks a System 2 trace that lands on three titles", () => {
     render(<Page2 />);
-    expect(screen.getByText(/Retrieval only helps if something decides to retrieve/i)).toBeInTheDocument();
-    expect(screen.getByText(/MetaTool benchmark found most struggle/i)).toBeInTheDocument();
-    // The judgment came from outside, via all three elicitation mechanisms.
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/judgment was supplied from outside/i);
-    expect(body).toMatch(/Prompting: show the pattern/i);
-    expect(body).toMatch(/Fine-tuning: train it in/i);
-    expect(body).toMatch(/Workflow: build the pipeline around it/i);
-    expect(body).toMatch(/ReAct/);
-    expect(body).toMatch(/Toolformer/);
+    // Every authored step is on screen, in order, as a numbered list.
+    for (const step of SPAIN_SYSTEM2_TRACE.steps) {
+      expect(screen.getByText(new RegExp(step.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")))
+        .toBeInTheDocument();
+    }
+    expect(body).toMatch(/Three\./);
+  });
+
+  it("is honest that thinking settles the bias but cannot conjure the missing fact", () => {
+    render(<Page2 />);
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/needed no new information/i);
+    expect(body).toMatch(/thinking cannot conjure a fact the\s*model was never shown/i);
+    // ...and that the model itself did not change, only the effort it spent.
+    expect(body).toMatch(/spent effort before answering/i);
   });
 
   it("keeps author-year citations out of the prose", () => {
@@ -74,30 +80,17 @@ describe("Page 2 (Knowing What You Know): a training-cutoff slider", () => {
 
   it("numbers every citation inline and lists the same numbers in the sidenotes", () => {
     const { container } = render(<Page2 />);
-    // Every inline marker is a <sup> carrying a reference number.
     const marks = Array.from(container.querySelectorAll("sup"));
-    expect(marks.length).toBeGreaterThan(0);
-    const cited = new Set(marks.map((m) => m.textContent?.replace(/\D/g, "")));
-    // One marker per work, at the claim it supports.
-    expect(marks).toHaveLength(5);
-    expect([...cited].sort()).toEqual(["1", "2", "3", "4", "5"]);
-    // ...and each number has a matching entry in a References note.
-    const body = document.body.textContent ?? "";
-    expect(body).toMatch(/1\.\s*Zhao et al/);
-    expect(body).toMatch(/2\.\s*Huang et al/);
-    expect(body).toMatch(/3\.\s*Yao et al/);
-    expect(body).toMatch(/4\.\s*Schick et al/);
-    expect(body).toMatch(/5\.\s*Qu et al/);
+    expect(marks).toHaveLength(1);
+    expect(marks[0].textContent).toMatch(/1$/);
+    expect(document.body.textContent ?? "").toMatch(/1\.\s*Zhao et al/);
   });
 
-  it("cites the tool-awareness sources in the references note", () => {
+  it("cites the bias source and flags the trace as authored", () => {
     render(<Page2 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/MetaTool: Benchmarking LLMs on Tool Usage Awareness/i);
-    expect(body).toMatch(/ReAct: Synergizing Reasoning and Acting/i);
-    expect(body).toMatch(/Toolformer: Language Models Can Teach Themselves to Use\s*Tools/i);
-    expect(body).toMatch(/Tool Learning with Large Language Models: A Survey/i);
     expect(body).toMatch(/Gender Bias in Coreference Resolution/i);
+    expect(body).toMatch(/authored teaching example, not a transcript/i);
   });
 
   it("keeps Act 1's em-dash-free copy rule", () => {
@@ -105,10 +98,11 @@ describe("Page 2 (Knowing What You Know): a training-cutoff slider", () => {
     expect(document.body.textContent ?? "").not.toMatch(/—/);
   });
 
-  it("closes on the bridge from looking it up to thinking harder", () => {
+  it("closes by handing the effort question to the rest of the story", () => {
     render(<Page2 />);
-    expect(screen.getByText(/does it know when to/i)).toBeInTheDocument();
-    expect(document.body.textContent ?? "").toMatch(/think harder/i);
+    expect(document.body.textContent ?? "").toMatch(
+      /the subject of the rest\s*of this story/i,
+    );
   });
 
   it("does not render the removed stepper, roads, or guess controls", () => {

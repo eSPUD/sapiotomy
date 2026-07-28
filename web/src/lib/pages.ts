@@ -29,7 +29,7 @@ export const ACTS: Record<Act, { title: string; range: string }> = {
 
 export const PAGES: PageMeta[] = [
   { n: 1, slug: "think-fast-think-slow", title: "Think Fast, Think Slow", act: 1, concept: "Feel your own two speeds: the size of the problem sets the thinking time.", milestone: "S1" },
-  { n: 2, slug: "knowledge-gap", title: "Knowing What You Know", act: 1, concept: "A question that looks like a lookup, but the record moved after the model's training cutoff, so it answers one short. Worse, it never judges that it might be stale: that awareness of its own limits had to be supplied from outside, by prompting, fine-tuning, or workflow.", milestone: "S1" },
+  { n: 2, slug: "knowledge-gap", title: "System 1 Thinking Fails Often on Real-World Tasks", act: 1, concept: "One question, answered on reflex, fails twice: the record moved after the training cutoff, and the question was read as the men's tournament when it never said so. A System 2 pass catches the second outright and flags the first.", milestone: "S1" },
   { n: 3, slug: "daily-training", title: "Training Daily?", act: 1, concept: "The obvious fix hits two walls: the bill for daily retraining compounds, and the stock of quality training data runs out.", milestone: "S1" },
   { n: 4, slug: "reasoning-in-multiplication", title: "Reasoning: Diverse Pathfinding", act: 1, concept: "Three cultures, three roads, one answer: reasoning as diverse pathfinding from prior knowledge, and the open question that hands Act 1 to the toolbox.", milestone: "S1" },
   { n: 5, slug: "how-to-reason", title: "How to Reason", act: 2, concept: "Show the model a worked road: few-shot chain-of-thought turns blurted answers into step-by-step ones, and a flat scaling curve turns steep.", milestone: "S2" },
