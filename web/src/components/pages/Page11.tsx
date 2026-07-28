@@ -87,6 +87,139 @@ function Key({ shape, className, label }: { shape: "circle" | "diamond" | "line"
   );
 }
 
+/* ------------------------------------------------------------------------- *
+ * Step 2's three findings as small panels, Page-2-comic style: a tiny
+ * decorative drawing (aria-hidden, currentColor via token classes) above a
+ * caption that carries the claim.
+ * ------------------------------------------------------------------------- */
+
+/** 4x: two runs land on the same accuracy line; one pays a quarter the samples. */
+function ArtFourX() {
+  return (
+    <svg viewBox="0 0 96 56" className="h-full w-full" aria-hidden="true">
+      <text x="48" y="9" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
+        same accuracy
+      </text>
+      <line
+        x1="10"
+        y1="14"
+        x2="86"
+        y2="14"
+        className="stroke-current text-ink-muted"
+        strokeWidth="1"
+        strokeDasharray="3 2"
+      />
+      <circle cx="28" cy="14" r="3" className="fill-current text-correct" />
+      <circle cx="68" cy="14" r="3" className="fill-current text-correct" />
+      {/* each run's sample bill, hanging from the same line */}
+      <rect x="20" y="18" width="16" height="28" className="fill-current text-compute/25" />
+      <rect x="20" y="18" width="16" height="28" className="stroke-current text-compute" fill="none" strokeWidth="1" />
+      <rect x="60" y="39" width="16" height="7" className="fill-current text-compute/25" />
+      <rect x="60" y="39" width="16" height="7" className="stroke-current text-compute" fill="none" strokeWidth="1" />
+      <line x1="10" y1="46" x2="86" y2="46" className="stroke-current text-ink-muted" strokeWidth="1" />
+      <text x="28" y="54" textAnchor="middle" fontSize="7" className="fill-current text-ink">
+        256
+      </text>
+      <text x="68" y="54" textAnchor="middle" fontSize="7" className="fill-current text-ink">
+        64
+      </text>
+    </svg>
+  );
+}
+
+/** 14x: a small model plus its sampled thoughts outscores the big one. */
+function ArtFourteenX() {
+  return (
+    <svg viewBox="0 0 96 56" className="h-full w-full" aria-hidden="true">
+      <rect x="14" y="26" width="13" height="13" className="fill-current text-correct/20" />
+      <rect x="14" y="26" width="13" height="13" className="stroke-current text-correct" fill="none" strokeWidth="1.2" />
+      {/* its sampled answers, fanned out above */}
+      <circle cx="12" cy="18" r="2" className="fill-current text-compute" />
+      <circle cx="20" cy="13" r="2" className="fill-current text-compute" />
+      <circle cx="28" cy="16" r="2" className="fill-current text-compute" />
+      <circle cx="33" cy="23" r="2" className="fill-current text-compute" />
+      <text x="20" y="51" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
+        1× + thinking
+      </text>
+      <text x="48" y="37" textAnchor="middle" fontSize="14" className="fill-current text-ink">
+        ≥
+      </text>
+      <rect x="61" y="10" width="26" height="26" className="fill-current text-ink-muted/15" />
+      <rect x="61" y="10" width="26" height="26" className="stroke-current text-ink-muted" fill="none" strokeWidth="1.2" />
+      <text x="74" y="51" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
+        14×, greedy
+      </text>
+    </svg>
+  );
+}
+
+/** R: one axis, two limits — thinking wins at one end, parameters at the other. */
+function ArtRatioR() {
+  return (
+    <svg viewBox="0 0 96 56" className="h-full w-full" aria-hidden="true">
+      <text x="48" y="14" textAnchor="middle" fontSize="10" className="fill-current text-wrong">
+        R
+      </text>
+      <line x1="14" y1="26" x2="82" y2="26" className="stroke-current text-ink-muted" strokeWidth="1" />
+      <path d="M18 23 L13 26 L18 29" className="stroke-current text-ink-muted" fill="none" strokeWidth="1" />
+      <path d="M78 23 L83 26 L78 29" className="stroke-current text-ink-muted" fill="none" strokeWidth="1" />
+      <text x="14" y="20" fontSize="7" className="fill-current text-ink-muted">
+        → 0
+      </text>
+      <text x="82" y="20" textAnchor="end" fontSize="7" className="fill-current text-ink-muted">
+        → ∞
+      </text>
+      <text x="14" y="38" fontSize="7" className="fill-current text-correct">
+        thinking wins
+      </text>
+      <text x="82" y="50" textAnchor="end" fontSize="7" className="fill-current text-ink">
+        parameters win
+      </text>
+    </svg>
+  );
+}
+
+/** One finding: the tiny drawing above, the claim below. */
+function LawPanel({
+  head,
+  headTone,
+  title,
+  art,
+  children,
+}: {
+  head: string;
+  headTone: string;
+  title: string;
+  art: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <figure className="m-0 flex h-full flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-3">
+      <div className="flex h-20 items-center justify-center rounded border border-grid bg-canvas px-2">
+        {art}
+      </div>
+      <figcaption className="flex flex-col gap-1">
+        <span className="text-sm font-semibold text-ink">
+          <span className={`font-mono ${headTone}`}>{head}</span> {title}
+        </span>
+        <span className="text-xs leading-snug text-ink-muted">{children}</span>
+      </figcaption>
+    </figure>
+  );
+}
+
+/**
+ * One hue per model size, Wu-figure style, so the family reads at a glance.
+ * The three semantic hues plus ink are the palette's only line colors; every
+ * curve carries its own end label, so identity is never color alone.
+ */
+const SIZE_HUES: Record<number, { stroke: string; fill: string }> = {
+  1: { stroke: "stroke-correct", fill: "fill-correct" },
+  2: { stroke: "stroke-compute", fill: "fill-compute" },
+  4: { stroke: "stroke-wrong", fill: "fill-wrong" },
+  14: { stroke: "stroke-ink", fill: "fill-ink" },
+};
+
 /**
  * The allocator chart: every model's full trajectory drawn at once, the
  * selected one highlighted, the knobs only moving the marker along it.
@@ -102,8 +235,8 @@ function FamilyChart({
   cost: number;
   acc: number;
 }) {
-  const width = 560;
-  const height = 300;
+  const width = 500;
+  const height = 290;
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
   const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
   const x = scaleLog().domain([1, 4096]).range([0, innerW]);
@@ -161,19 +294,20 @@ function FamilyChart({
       {family.map((f) => {
         const selected = f.s === size;
         const end = f.pts[f.pts.length - 1];
+        const hue = SIZE_HUES[f.s];
         return (
-          <g key={f.s} opacity={selected ? 1 : 0.4}>
+          <g key={f.s} opacity={selected ? 1 : 0.45}>
             <path
               d={path(f.pts)}
               fill="none"
-              className={selected ? "stroke-correct" : "stroke-ink-muted"}
-              strokeWidth={selected ? 2.5 : 1.25}
+              className={hue.stroke}
+              strokeWidth={selected ? 2.75 : 1.25}
             />
             <text
               x={x(end.x) + (f.s === BIG_MODEL ? -2 : 5)}
               y={y(end.y) + (f.s === BIG_MODEL ? -8 : 3)}
               textAnchor={f.s === BIG_MODEL ? "end" : "start"}
-              className={`text-[10px] ${selected ? "fill-ink font-semibold" : "fill-ink-muted"}`}
+              className={`text-[10px] ${hue.fill} ${selected ? "font-semibold" : ""}`}
             >
               {f.s}×
             </text>
@@ -193,11 +327,17 @@ function FamilyChart({
         x2={x(cost)}
         y1={0}
         y2={innerH}
-        className="stroke-compute"
+        className="stroke-ink-muted"
         strokeWidth={1}
         strokeDasharray="3 3"
       />
-      <circle cx={x(cost)} cy={y(acc)} r={5.5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
+      <circle
+        cx={x(cost)}
+        cy={y(acc)}
+        r={5.5}
+        className={`${SIZE_HUES[size].fill} stroke-canvas`}
+        strokeWidth={1.5}
+      />
     </ChartFrame>
   );
 }
@@ -456,7 +596,7 @@ export function Page11() {
               authored illustrative curves · no live model
             </span>
           </h2>
-          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <p className="text-ink">
               <strong>14× means 14× the base model&rsquo;s parameter count</strong> (Snell et al.
               report model scale only as a multiple),
@@ -464,113 +604,108 @@ export function Page11() {
               M units per answer, where one unit is a single answer from the 1× model. The 14×
               model&rsquo;s one greedy answer therefore costs <strong>14 units</strong> and scores{" "}
               <strong className="text-ink">{tgt.toFixed(0)}%</strong> here — the black dot below.
-            </p>
-            <p className="text-sm text-ink-muted">
-              All four model curves are drawn in full; the knobs never move them. Model size picks
-              which curve you stand on, test-time compute slides your marker along it. You win by
-              crossing the dashed line <em>left</em> of the 14× dot — same score, smaller bill.
+              All four model curves are drawn in full and the knobs never move them: model size
+              picks your curve, test-time compute slides your marker along it, and you win by
+              crossing the dashed line <em>left</em> of the 14× dot.
             </p>
 
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-ink-muted">Problem difficulty</p>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
-                {DIFFICULTIES.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    aria-pressed={difficulty === d}
-                    onClick={() => {
-                      setDifficulty(d);
-                      recordInteraction(PAGE_N);
-                    }}
-                    className={`rounded border px-3 py-1.5 text-sm capitalize ${
-                      difficulty === d
-                        ? "border-compute bg-compute/15 font-semibold text-ink"
-                        : "border-grid bg-surface-raised text-ink-muted"
-                    }`}
-                  >
-                    {d}
-                  </button>
+            {/* controls beside the chart, so the whole game fits one screen */}
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:items-center">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-ink-muted">Problem difficulty</p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
+                    {DIFFICULTIES.map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        aria-pressed={difficulty === d}
+                        onClick={() => {
+                          setDifficulty(d);
+                          recordInteraction(PAGE_N);
+                        }}
+                        className={`rounded border px-3 py-1.5 text-sm capitalize ${
+                          difficulty === d
+                            ? "border-compute bg-compute/15 font-semibold text-ink"
+                            : "border-grid bg-surface-raised text-ink-muted"
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-ink-muted">{DIFFICULTY_BLURB[difficulty]}</p>
+                </div>
+                <Slider
+                  label="Model size (× base parameters)"
+                  min={0}
+                  max={MODEL_SIZES.length - 1}
+                  value={sizeIdx}
+                  format={(v) => `${MODEL_SIZES[v]}×`}
+                  onChange={(v) => {
+                    setSizeIdx(v);
+                    recordInteraction(PAGE_N);
+                  }}
+                />
+                <Slider
+                  label="Test-time compute"
+                  min={0}
+                  max={MAX_EXP}
+                  value={exp}
+                  format={(v) => String(2 ** v)}
+                  suffix=" samples"
+                  onChange={(v) => {
+                    setExp(v);
+                    recordInteraction(PAGE_N);
+                  }}
+                />
+              </div>
+              <FamilyChart difficulty={difficulty} size={size} cost={cost} acc={acc} />
+            </div>
+
+            {/* the scoreboard: three numbers + the verdict, one strip */}
+            <div className="grid gap-2 md:grid-cols-[auto_minmax(0,1fr)]">
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  {
+                    label: "your accuracy",
+                    value: `${acc.toFixed(1)}%`,
+                    tone: beaten ? "text-correct" : "text-ink",
+                    note: `${size}× · ${k} sample${k === 1 ? "" : "s"}`,
+                  },
+                  {
+                    label: "your bill",
+                    value: String(cost),
+                    tone: "text-compute",
+                    note: "FLOPs units",
+                  },
+                  {
+                    label: "the target",
+                    value: `${tgt.toFixed(0)}%`,
+                    tone: "text-ink",
+                    note: "14× · 14 units",
+                  },
+                ].map((s) => (
+                  <div key={s.label} className="rounded-lg border border-grid bg-surface-raised px-3 py-2">
+                    <p className={`font-mono text-lg font-bold tabular-nums ${s.tone}`}>{s.value}</p>
+                    <p className="text-xs text-ink">{s.label}</p>
+                    <p className="text-xs text-ink-muted">{s.note}</p>
+                  </div>
                 ))}
               </div>
-              <p className="text-xs text-ink-muted">{DIFFICULTY_BLURB[difficulty]}</p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Slider
-                label="Model size (× base parameters)"
-                min={0}
-                max={MODEL_SIZES.length - 1}
-                value={sizeIdx}
-                format={(v) => `${MODEL_SIZES[v]}×`}
-                onChange={(v) => {
-                  setSizeIdx(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-              <Slider
-                label="Test-time compute"
-                min={0}
-                max={MAX_EXP}
-                value={exp}
-                format={(v) => String(2 ** v)}
-                suffix=" samples"
-                onChange={(v) => {
-                  setExp(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-            </div>
-
-            <FamilyChart difficulty={difficulty} size={size} cost={cost} acc={acc} />
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-              <Key shape="line" className="bg-correct" label="your curve" />
-              <Key shape="line" className="bg-grid" label="the other model sizes" />
-              <Key shape="circle" className="bg-compute" label="your marker" />
-              <Key shape="circle" className="bg-ink" label="14× model, one greedy answer" />
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-3">
-              {[
-                {
-                  label: "your accuracy",
-                  value: `${acc.toFixed(1)}%`,
-                  tone: beaten ? "text-correct" : "text-ink",
-                  note: `${size}× model · ${k} sample${k === 1 ? "" : "s"}`,
-                },
-                {
-                  label: "your bill",
-                  value: String(cost),
-                  tone: "text-compute",
-                  note: "FLOPs units spent",
-                },
-                {
-                  label: "the target",
-                  value: `${tgt.toFixed(0)}%`,
-                  tone: "text-ink",
-                  note: "14× model · 14 units",
-                },
-              ].map((s) => (
-                <div key={s.label} className="rounded-lg border border-grid bg-surface-raised p-3">
-                  <p className={`font-mono text-2xl font-bold tabular-nums ${s.tone}`}>{s.value}</p>
-                  <p className="text-xs text-ink">{s.label}</p>
-                  <p className="text-xs text-ink-muted">{s.note}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className={`rounded border-l-4 p-3 text-sm ${verdict.tone}`} role="status">
-              <p className={`font-semibold ${verdict.headTone}`}>{verdict.head}</p>
-              <p className="mt-1 text-ink">{verdict.body}</p>
+              <div className={`rounded border-l-4 p-3 text-sm ${verdict.tone}`} role="status">
+                <p className={`font-semibold ${verdict.headTone}`}>{verdict.head}</p>
+                <p className="mt-1 text-ink">{verdict.body}</p>
+              </div>
             </div>
           </div>
         </section>
         <Note kicker="Try it">
           <p>
-            The curves never move — the knobs move <em>you</em>. On medium, slide test-time compute
-            until your marker crosses the dashed line left of the 14× dot.
+            Drag <em>test-time compute</em> right until your marker crosses the dashed line —
+            before the black dot means you beat the 14× model for less.
           </p>
-          <p>Then switch to hard and try to cross at all.</p>
+          <p>Then set difficulty to hard and try to cross at all.</p>
         </Note>
 
         {/* Step 2 — the law, stated */}
@@ -585,33 +720,19 @@ export function Page11() {
               what they call compute-optimal.
               <Cite n={REF.snell} /> Three numbers carry the result:
             </p>
-            <div className="grid gap-2 sm:grid-cols-3">
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="font-mono text-2xl font-bold text-correct">4×</p>
-                <p className="text-xs text-ink">fewer samples than best-of-N</p>
-                <p className="text-xs text-ink-muted">
-                  difficulty-adaptive allocation reaches best-of-N&rsquo;s accuracy with as little
-                  as a quarter of the compute: 64 samples doing the work of 256
-                </p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="font-mono text-2xl font-bold text-correct">14×</p>
-                <p className="text-xs text-ink">the parameters, matched on FLOPs</p>
-                <p className="text-xs text-ink-muted">
-                  a small model plus adaptive test-time compute outscores a pretrained model ~14×
-                  its size answering greedily — on prompts the small model can already sometimes
-                  solve
-                </p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="font-mono text-2xl font-bold text-wrong">R</p>
-                <p className="text-xs text-ink">decides the regime</p>
-                <p className="text-xs text-ink-muted">
-                  R = inference tokens served ÷ pretraining tokens. As R → 0, thinking wins: the
-                  per-question surcharge is rarely paid. As R → ∞, parameters win: pretraining
-                  amortizes away, the surcharge never does.
-                </p>
-              </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <LawPanel head="4×" headTone="text-correct" title="fewer samples than best-of-N" art={<ArtFourX />}>
+                difficulty-adaptive allocation matches its accuracy for as little as a quarter of
+                the compute: 64 samples doing the work of 256
+              </LawPanel>
+              <LawPanel head="14×" headTone="text-correct" title="the parameters, matched on FLOPs" art={<ArtFourteenX />}>
+                a small model plus adaptive test-time compute outscores a pretrained model ~14× its
+                size answering greedily — on prompts it can already sometimes solve
+              </LawPanel>
+              <LawPanel head="R" headTone="text-wrong" title="decides the regime" art={<ArtRatioR />}>
+                R = inference tokens served ÷ pretraining tokens. As R → 0, thinking wins. As R →
+                ∞, parameters win: pretraining amortizes away, a per-question surcharge never does.
+              </LawPanel>
             </div>
             <p className="text-sm text-ink-muted">
               Hard mode is the other boundary: where the small model has no foothold, no budget
