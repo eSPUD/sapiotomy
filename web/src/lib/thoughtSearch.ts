@@ -4,7 +4,7 @@
  * This file knows nothing about the task being searched. It takes a SearchSpace
  * — a set of states, each with a score, a list of successors, and flags for
  * "goal" and "dead end" — and runs five strategies over it, counting honestly.
- * The crossword that page 10 actually searches is built in lib/crossword.ts.
+ * The word tree that page 10 actually searches is built in lib/nextWord.ts.
  *
  * Why a real engine and not a canned animation: the page claims that different
  * strategies explore the same space differently and cost different amounts of
@@ -50,31 +50,31 @@ export const STRATEGIES: { key: Strategy; label: string; blurb: string }[] = [
     key: "greedy",
     label: "Greedy",
     blurb:
-      "Always write in the answer it is surest of, and never reconsider. This is a plain chain of thought with a scorer bolted on: one line, no way back.",
+      "Take the likeliest next word every time and never look back. This is plain autocomplete, and it is what a chain of thought does: one line, written forward, no way to undo a word.",
   },
   {
     key: "bfs",
     label: "Breadth-first",
     blurb:
-      "Score every partial grid one whole layer at a time. It cannot be fooled by a confident wrong answer, and it pays for that by scoring almost everything.",
+      "Extend every unfinished line by every word, one whole position at a time. No confident wrong word can fool it, and it pays for that by scoring nearly every word in the tree.",
   },
   {
     key: "dfs",
     label: "Depth-first",
     blurb:
-      "Follow the surest-looking answer as far as it goes; when the grid jams, back up to the last untried answer and try that instead.",
+      "Follow the likeliest word to the end of the line; when that line turns out not to rhyme, back up to the last word it did not try and go again.",
   },
   {
     key: "beam",
     label: "Beam",
     blurb:
-      "Branch, then keep only the b most promising grids at each layer. The middle road that Tree-of-Thoughts actually uses: b is the branching dial.",
+      "Carry the b likeliest unfinished lines forward at each word and drop the rest. b = 1 is greedy exactly. This is what Tree-of-Thoughts does at each level.",
   },
   {
     key: "mcts",
     label: "MCTS",
     blurb:
-      "Run trial continuations from each partial grid and keep exploring wherever they tend to get furthest, balancing what looks best against what is barely explored. The AlphaGo family's answer.",
+      "Finish a few lines at random from each starting point, see which openings tend to end well, and spend the next tries there. The AlphaGo family's answer.",
   },
 ];
 

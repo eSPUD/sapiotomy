@@ -597,69 +597,95 @@ export const SUPERVISION = {
       prmVerdict: "Every step passes. Both graders agree, which is what agreement is supposed to look like.",
     },
   ] as readonly SupervisionTrace[],
-} as const;
-
-// --- Page 10: Searching Through Thoughts (the shaded-column mini) ----------
+} as const;// --- Page 10: Searching Through Thoughts (finishing a rhyme) --------------
 /**
- * THE RULE, ENTIRE: three answers stack, and the shaded first column has to
- * read down as the answer to a fourth clue. One sentence, and the reader needs
- * to know nothing else before they can watch the search work.
+ * A model finishing a couplet, one word at a time. Every branch below is an
+ * authored next-word distribution: what the model thinks might come next, and
+ * how likely each is. The probabilities at each choice sum to 1.
  *
- * THE TRAP is exactly one clue. "Add up" is SUM for anybody, and the model
- * agrees: SUM is its most confident answer on the board. It is also wrong,
- * because the column needs a T. TOT is the answer ("tot up"), and the model
- * rates it poorly precisely because it is the dated word. The other two clues
- * are honest — their best answer is also the right one — so the reader is not
- * asked to distrust everything, only to notice one thing.
+ * THE RULE, ENTIRE: the line has to rhyme with "night". A reader checks that by
+ * ear, which is the whole reason a rhyme is the constraint.
  *
- * THE FAILURE is one word long. Writing the best answer to all three clues
- * gives SUM / INN / PEN, and the shaded column reads SIP. That is a real word.
- * It is not a gratuity. The reader checks it against a single clue.
+ * THE TRAP is greedy decoding itself. "so I got up ..." is by far the likeliest
+ * opening and a perfectly good line, but nothing that can follow it lands on a
+ * rhyme. The only rhyming finish, "turned on the light", starts from a word the
+ * model rates well below "got". Taking the likeliest word every time therefore
+ * cannot reach it, however good each individual word looks on its own.
  *
- * The confidences follow a stated rule the page repeats: how well the answer
- * fits its OWN clue, ignoring the column. Tuned (see act2crossword.test.ts) so
- * greedy and beams of 1 and 2 fail, and a beam of 3 is the cheapest that works.
+ * The tree is SMALL ON PURPOSE — 29 words, 13 complete lines — because the page
+ * draws all of it at once and lets each strategy light up the part it actually
+ * scored. Tuned (see act2nextword.test.ts) so greedy fails and everything that
+ * searches finds the rhyme at visibly different prices.
  */
-export const ACROSTIC_SPEC = {
-  rows: [
+export const NEXT_WORD_SPEC = {
+  given: "I couldn't sleep at all last night,",
+  lead: "so I",
+  rhymesWith: "night",
+  rhymes: ["light", "bright", "white", "right", "sight", "tight", "quite"],
+  length: 4,
+  tree: [
     {
-      n: 1,
-      clue: "Add up",
-      candidates: [
-        { word: "SUM", confidence: 0.95, note: "Sum is add up. Nothing to argue with.", correct: false },
-        { word: "TOT", confidence: 0.55, note: "'Tot up' does mean add up, but nobody says it any more.", correct: true },
+      word: "got",
+      p: 0.5,
+      next: [
+        {
+          word: "up",
+          p: 0.7,
+          next: [
+            { word: "and", p: 0.6, next: [{ word: "paced", p: 0.7 }, { word: "worried", p: 0.3 }] },
+            { word: "before", p: 0.4, next: [{ word: "dawn", p: 1 }] },
+          ],
+        },
+        {
+          word: "dressed",
+          p: 0.3,
+          next: [
+            { word: "and", p: 1, next: [{ word: "left", p: 0.6 }, { word: "waited", p: 0.4 }] },
+          ],
+        },
       ],
     },
     {
-      n: 2,
-      clue: "Traveller's rest",
-      candidates: [
-        { word: "INN", confidence: 0.85, note: "Where a traveller stops for the night.", correct: true },
-        { word: "PUB", confidence: 0.68, note: "You can rest in one, but it is a drinking house.", correct: false },
+      word: "turned",
+      p: 0.3,
+      next: [
+        {
+          word: "on",
+          p: 0.6,
+          next: [
+            { word: "the", p: 1, next: [{ word: "light", p: 0.6 }, { word: "lamp", p: 0.4 }] },
+          ],
+        },
+        {
+          word: "over",
+          p: 0.4,
+          next: [
+            { word: "and", p: 1, next: [{ word: "sighed", p: 0.6 }, { word: "groaned", p: 0.4 }] },
+          ],
+        },
       ],
     },
     {
-      n: 3,
-      clue: "Animal enclosure",
-      candidates: [
-        { word: "PEN", confidence: 0.82, note: "A pen holds animals of any kind.", correct: true },
-        { word: "STY", confidence: 0.62, note: "An enclosure, but only ever for pigs.", correct: false },
+      word: "lay",
+      p: 0.2,
+      next: [
+        {
+          word: "awake",
+          p: 0.6,
+          next: [
+            { word: "until", p: 1, next: [{ word: "dawn", p: 0.6 }, { word: "morning", p: 0.4 }] },
+          ],
+        },
+        {
+          word: "there",
+          p: 0.4,
+          next: [
+            { word: "in", p: 1, next: [{ word: "silence", p: 0.6 }, { word: "darkness", p: 0.4 }] },
+          ],
+        },
       ],
     },
   ],
-  down: { clue: "Gratuity", answer: "TIP" },
-} as const;
-
-/** The single confident run: no scoring, no branching, no going back. */
-export const ACROSTIC_PLAIN_COT = {
-  steps: [
-    "Row 1, 'Add up'. That's SUM.",
-    "Row 2, 'Traveller's rest'. INN.",
-    "Row 3, 'Animal enclosure'. PEN.",
-    "Reading down the shaded column: S, I, P. SIP is a word, so that'll do.",
-  ],
-  answer: "SIP is a word. The clue asked for a gratuity.",
-  correct: false,
 } as const;
 
 /**

@@ -1,98 +1,160 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Page10 } from "./Page10";
 
-const readCount = () =>
+const word = (w: string) => screen.getByRole("button", { name: new RegExp(`^${w}\\s`) });
+const bill = () =>
   Number(
-    screen.getByRole("status", { name: /the compute bill/i }).querySelector("p")?.textContent ?? "0",
+    screen
+      .getByRole("status", { name: /the compute bill/i })
+      .querySelector("p")
+      ?.textContent?.split("/")[0] ?? "0",
   );
+const pick = (label: RegExp) =>
+  fireEvent.click(within(screen.getByRole("group", { name: /search strategy/i })).getByRole("button", { name: label }));
 
-const setStrategy = (value: string) =>
-  fireEvent.change(screen.getByRole("combobox", { name: /search strategy/i }), {
-    target: { value },
-  });
-
-describe("Page 10 (searching through thoughts) component", () => {
-  it("states the rule in the copy, so the reader knows the criterion", () => {
+describe("Page 10 — step 1, the reader writes the line", () => {
+  it("states the rule and shows the model's next-word candidates", () => {
     render(<Page10 />);
-    expect(screen.getAllByText(/shaded column/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Gratuity/)).toBeInTheDocument();
+    expect(screen.getByText(/rhyme with “night”/)).toBeInTheDocument();
+    expect(screen.getByText(/what the model thinks comes next/i)).toBeInTheDocument();
+    expect(word("got")).toBeInTheDocument();
+    expect(word("turned")).toBeInTheDocument();
   });
 
-  it("opens on greedy, whose column reads SIP", () => {
+  it("taking the likeliest word every time gives a line that does not rhyme", () => {
     render(<Page10 />);
-    expect(screen.getByRole("combobox", { name: /search strategy/i })).toHaveValue("greedy");
-    expect(screen.getByText(/✗ the column reads SIP/)).toBeInTheDocument();
-    expect(readCount()).toBe(12);
+    for (const w of ["got", "up", "and", "paced"]) fireEvent.click(word(w));
+    expect(screen.getByText(/✗ "paced" does not rhyme with "night"/)).toBeInTheDocument();
+    expect(screen.getByText(/The line still cannot rhyme\./)).toBeInTheDocument();
   });
 
-  it("says why SIP is wrong rather than just asserting failure", () => {
+  it("the reader can find the one rhyming line", () => {
     render(<Page10 />);
-    expect(screen.getByText(/SIP is a word\. The clue asked for a gratuity\./)).toBeInTheDocument();
+    for (const w of ["turned", "on", "the", "light"]) fireEvent.click(word(w));
+    expect(screen.getByText(/✓ "light" rhymes with "night"/)).toBeInTheDocument();
+    expect(screen.getByText(/exactly one rhyming line/i)).toBeInTheDocument();
   });
 
-  it("labels each tree node with the answer that branch wrote", () => {
-    // Grids are deduplicated, so a node must show the write on ITS path, not
-    // whichever write first reached that grid. The answer is TOT / INN / PEN,
-    // so a solved run's tree must contain a TOT node.
+  it("start over clears the line", () => {
     render(<Page10 />);
-    setStrategy("mcts");
-    expect(screen.getAllByText("TOT").length).toBeGreaterThan(1);
+    fireEvent.click(word("got"));
+    expect(screen.getByText(/1 of 4 words/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /start over/i }));
+    expect(screen.getByText(/0 of 4 words/)).toBeInTheDocument();
   });
+});
 
-  it("MCTS finishes it, for fewer thoughts than breadth-first", () => {
+describe("Page 10 — step 2, five buttons over one fixed tree", () => {
+  it("offers the five strategies as buttons, greedy named as the chain of thought", () => {
     render(<Page10 />);
-    setStrategy("mcts");
-    expect(screen.getByText(/✓ the column reads TIP/)).toBeInTheDocument();
-    const mcts = readCount();
-    expect(mcts).toBe(16);
-    setStrategy("bfs");
-    expect(readCount()).toBeGreaterThan(mcts);
+    const group = screen.getByRole("group", { name: /search strategy/i });
+    const labels = within(group)
+      .getAllByRole("button")
+      .map((b) => b.textContent);
+    expect(labels).toEqual([
+      "Greedy (chain of thought)",
+      "Breadth-first",
+      "Depth-first",
+      "Beam",
+      "MCTS",
+    ]);
+    expect(within(group).getByRole("button", { name: /greedy/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
-  it("exposes the beam-width dial only for the beam strategy", () => {
+  it("frames the searchers as best-of-N with the judge moved inside the loop", () => {
     render(<Page10 />);
-    expect(screen.queryByRole("slider", { name: /beam width/i })).not.toBeInTheDocument();
-    setStrategy("beam");
-    expect(screen.getByRole("slider", { name: /beam width/i })).toBeInTheDocument();
+    expect(screen.getByText(/best-of-N with the judge moved inside the/i)).toBeInTheDocument();
   });
 
-  it("shows all three clues with both candidate answers and a reason", () => {
+  it("opens on greedy: 9 of 29 scored, and no rhyme", () => {
     render(<Page10 />);
-    expect(screen.getByText("Add up")).toBeInTheDocument();
-    expect(screen.getAllByText("SUM").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("TOT").length).toBeGreaterThan(0);
-    expect(screen.getByText(/nobody says it any more/i)).toBeInTheDocument();
+    expect(bill()).toBe(9);
+    expect(screen.getByText(/✗ no rhyme/)).toBeInTheDocument();
+    expect(screen.getAllByText(/so I got up and paced/).length).toBeGreaterThan(0);
   });
 
-  it("states the scoring rule, so the dots are not arbitrary", () => {
+  it("the tree itself never changes across strategies", () => {
+    // every word in the space is rendered regardless of strategy — the
+    // strategy only changes what lights up
     render(<Page10 />);
-    expect(screen.getByText(/how sure the model is that an answer fits/i)).toBeInTheDocument();
+    const tree = () => screen.getByRole("img", { name: /word tree/i });
+    const greedyWords = within(tree()).getAllByText(/^[a-z]+$/).length;
+    pick(/breadth-first/i);
+    expect(within(tree()).getAllByText(/^[a-z]+$/).length).toBe(greedyWords);
+    for (const w of ["light", "silence", "groaned", "waited"]) {
+      expect(within(tree()).getAllByText(w).length, w).toBeGreaterThan(0);
+    }
   });
 
-  it("offers the plain chain-of-thought contrast", () => {
+  it("each strategy pays a different, pinned bill", () => {
     render(<Page10 />);
-    fireEvent.click(screen.getByRole("button", { name: /solve with plain cot/i }));
-    expect(screen.getByText(/no branching/i)).toBeInTheDocument();
+    const costs: Record<string, number> = {};
+    for (const [label, key] of [
+      [/greedy/i, "greedy"],
+      [/breadth-first/i, "bfs"],
+      [/depth-first/i, "dfs"],
+      [/mcts/i, "mcts"],
+    ] as const) {
+      pick(label);
+      costs[key] = bill();
+    }
+    expect(costs).toEqual({ greedy: 9, bfs: 23, dfs: 18, mcts: 14 });
   });
 
+  it("beam exposes its dial, and every extra line kept alive costs more", () => {
+    render(<Page10 />);
+    expect(screen.queryByRole("slider", { name: /lines kept alive/i })).not.toBeInTheDocument();
+    pick(/^Beam$/);
+    const dial = screen.getByRole("slider", { name: /lines kept alive/i });
+    expect(bill()).toBe(14); // opens at b=2, which rhymes
+    expect(screen.getByText(/✓ it rhymes/)).toBeInTheDocument();
+    let last = 14;
+    for (const v of ["3", "4", "5"]) {
+      fireEvent.change(dial, { target: { value: v } });
+      expect(bill(), `b=${v}`).toBeGreaterThan(last);
+      last = bill();
+    }
+  });
+
+  it("every searcher lands on the same rhyme, cheaper or dearer", () => {
+    render(<Page10 />);
+    for (const label of [/breadth-first/i, /depth-first/i, /mcts/i]) {
+      pick(label);
+      expect(screen.getByText(/✓ it rhymes/)).toBeInTheDocument();
+      expect(screen.getAllByText(/so I turned on the light/).length).toBeGreaterThan(0);
+    }
+  });
+
+  it("discloses that the words are authored and the search is real", () => {
+    render(<Page10 />);
+    expect(screen.getByText(/written by hand\. The search over them is real/i)).toBeInTheDocument();
+  });
+});
+
+describe("Page 10 — step 3 and house style", () => {
   it("cites the crosswords table and never mentions Game of 24", () => {
     const { container } = render(<Page10 />);
     expect(screen.getAllByText(/crossword/i).length).toBeGreaterThan(0);
     expect(container.textContent).not.toMatch(/game of 24/i);
   });
 
-  it("discloses that the puzzle is authored and the search is real", () => {
-    // House style (pages 3-8): caveats live in the step body, not a margin note.
-    render(<Page10 />);
-    expect(screen.getByText(/written by hand\. The search over them is real\./)).toBeInTheDocument();
-  });
-
   it("keeps the reference note to a bare cite, as pages 3-8 do", () => {
     render(<Page10 />);
     const note = screen.getByText("References").closest("aside")!;
     expect(note.textContent).toMatch(/Yao et al\. 2023, Tree of Thoughts/);
-    // no venue, table number, sample size or arXiv id in the note itself
     expect(note.textContent).not.toMatch(/NeurIPS|Table 3|20 puzzles|arXiv/);
+  });
+
+  it("has no footnote: the page ends at the citation chip", () => {
+    const { container } = render(<Page10 />);
+    const article = container.querySelector("article")!;
+    const kids = [...article.children];
+    // last two blocks are the citation chip row and the page nav
+    expect(kids.at(-1)?.querySelector("a[href*='p/']")).toBeTruthy();
+    expect(kids.at(-2)?.textContent).toMatch(/Yao et al\. 2023/);
   });
 });
