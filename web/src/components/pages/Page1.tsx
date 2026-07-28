@@ -15,9 +15,19 @@ const REF = { kahneman: 1 } as const;
 const fmt = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
 /** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+function Note({
+  kicker,
+  flush = false,
+  children,
+}: {
+  kicker: string;
+  /** Drop the top padding. That padding clears a step's h2 so the note lines up
+   *  with the prose under it; beside a headingless row it drops a line too low. */
+  flush?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${flush ? "" : "lg:pt-9"}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -94,7 +104,7 @@ export function Page1() {
           effortful.
           <Cite n={REF.kahneman} /> One operation, multiplication, flips you between them.
         </p>
-        <Note kicker="References">
+        <Note kicker="References" flush>
           <RefItem n={REF.kahneman}>
             Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
           </RefItem>
