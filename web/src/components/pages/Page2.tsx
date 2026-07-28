@@ -31,6 +31,7 @@ import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import {
   SPAIN_ALL_TITLES,
+  SPAIN_IDEAL_ANSWER,
   SPAIN_MACHINE_REPLIES,
   SPAIN_SYSTEM2_TRACE,
   SPAIN_WORLD_CUPS,
@@ -132,32 +133,23 @@ function CutoffWidget({
   );
 }
 
-/** The full record, section 2's point in one small card: two tournaments, three
- *  titles. Driven by SPAIN_ALL_TITLES so the years cannot drift from the prose. */
-function TitleRecord() {
-  const rows = [
-    { label: "Men's", years: SPAIN_ALL_TITLES.mens },
-    { label: "Women's", years: SPAIN_ALL_TITLES.womens },
-  ];
+/** The answer the model should have given, framed like the reply block in
+ *  section 1 so the contrast with the biased one is immediate. */
+function IdealAnswer() {
   return (
     <section
-      aria-label="Spain's full FIFA World Cup record"
-      className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+      aria-label="The ideal answer"
+      className="flex flex-col gap-2 rounded-lg border border-correct/60 bg-canvas p-4"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">the record</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          the ideal answer
+        </p>
         <span className="rounded-full border border-correct/60 bg-correct/15 px-2 py-0.5 text-xs text-correct">
-          {SPAIN_ALL_TITLES.total} titles
+          ✓ all {SPAIN_ALL_TITLES.total} titles
         </span>
       </div>
-      <dl className="flex flex-col gap-1">
-        {rows.map((r) => (
-          <div key={r.label} className="flex items-baseline gap-3">
-            <dt className="w-20 shrink-0 text-sm text-ink-muted">{r.label}</dt>
-            <dd className="font-mono text-ink">{r.years.join(" · ")}</dd>
-          </div>
-        ))}
-      </dl>
+      <p className="text-lg text-ink">&ldquo;{SPAIN_IDEAL_ANSWER}&rdquo;</p>
     </section>
   );
 }
@@ -217,26 +209,29 @@ export function Page2() {
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. Knowing correct and without bias</h2>
+          <h2 className="text-xl font-semibold text-ink">2. Answering a question without bias</h2>
 
           <p className="text-ink">
             <strong>The question never said men&apos;s.</strong> Spain fields a team in both
             tournaments, and has won three FIFA World Cups between them:
           </p>
 
-          <TitleRecord />
+          <IdealAnswer />
 
           <p className="text-ink">
-            Every answer above quietly counted only the men&apos;s tournament.
+            Every answer above quietly counted only the men&apos;s tournament. That is a{" "}
+            <strong>knowledge bias</strong>, and it is not the knowledge gap.
           </p>
 
           <p className="text-ink">
-            That is not the knowledge gap. The 2023 win happened <em>before</em> the cutoff, so the
-            model held the fact the whole time and left it out anyway. Handed an ambiguous question,
-            it resolved the ambiguity to whichever reading its training data talked about most, and
-            never mentioned that it had chosen. Models do this in the small too: given a sentence
-            that could refer to either of two people, they resolve it to the stereotype-consistent
-            reading rather than flagging that the sentence is ambiguous.
+            The 2023 win happened <em>before</em> the cutoff, so the model held the fact the whole
+            time and left it out anyway. Nothing was missing from its memory. Handed an ambiguous
+            question, it resolved the ambiguity to whichever reading its training data talked about
+            most, and never mentioned that it had chosen. That is what makes a knowledge bias
+            different from a knowledge gap: the gap is about what the model was never shown, the
+            bias about which part of what it holds it decides to use. Models do this in the small
+            too: given a sentence that could refer to either of two people, they resolve it to the
+            stereotype-consistent reading rather than flagging that the sentence is ambiguous.
             <Cite n={REF.winobias} />
           </p>
 

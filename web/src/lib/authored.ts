@@ -175,6 +175,14 @@ export const SPAIN_ALL_TITLES = {
 } as const;
 
 /**
+ * Page 2, section 2: the ideal answer, i.e. the question read literally. It
+ * names both teams instead of silently counting one tournament, which is the
+ * whole point of the section. Covers all three titles in SPAIN_ALL_TITLES.
+ */
+export const SPAIN_IDEAL_ANSWER =
+  "Spain has won three FIFA World Cups: the men's team in 2010 and 2026, and the women's team in 2023.";
+
+/**
  * Page 2, section 3: the same question answered with a System 2 pass instead of
  * a reflex. Authored/illustrative.
  *

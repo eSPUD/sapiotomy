@@ -45,13 +45,17 @@ describe("Page 2 (Answering Questions in the Real World): a training-cutoff slid
     render(<Page2 />);
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/The question never said men's/i);
-    // The record card carries the years, so they cannot drift from the prose.
-    const record = screen.getByRole("region", { name: /Spain's full FIFA World Cup record/i });
-    expect(within(record).getByText(/2010 · 2026/)).toBeInTheDocument();
-    expect(within(record).getByText(/2023/)).toBeInTheDocument();
-    expect(within(record).getByText(/3 titles/i)).toBeInTheDocument();
+    // The ideal answer is quoted like a model reply, naming both teams.
+    const ideal = screen.getByRole("region", { name: /The ideal answer/i });
+    expect(within(ideal).getByText(/men's team in 2010 and 2026, and the women's team in 2023/i))
+      .toBeInTheDocument();
+    expect(within(ideal).getByText(/all 3 titles/i)).toBeInTheDocument();
     // The point that makes it a DIFFERENT failure from the knowledge gap.
     expect(body).toMatch(/happened\s*before\s*the cutoff/i);
+    expect(body).toMatch(/knowledge bias/i);
+    expect(body).toMatch(
+      /the gap is about what the model was never shown, the\s*bias about which part of what it holds it decides to use/i,
+    );
   });
 
 
