@@ -32,12 +32,13 @@
  * accuracy/size trade is the interactive: pick a size, read AIME + MATH-500 +
  * how many times fewer parameters than the 671B teacher.
  *
- * Sidenotes follow the pages-3–8 convention: bare cites beside the step that
- * uses them, citation chips at the bottom, no footnotes.
+ * Sidenotes follow the page-2 convention: numbered cites (Cite/RefItem)
+ * beside the step that uses them, citation chips at the bottom, no footnotes.
  */
 
 import { useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -52,6 +53,9 @@ const MAX_STEP = 8000;
     provenance line under the trace). */
 const MID_STEP = 2500;
 const AHA_STEP = 5000;
+
+/** Page 14's references, numbered in order of first appearance. */
+const REF = { r1: 1, grpo: 2 } as const;
 
 const GRPO_CITATION: Citation = {
   ref: "Shao et al. 2024",
@@ -175,6 +179,7 @@ export function Page14() {
           Reward only verifiably correct final answers, and the pausing, checking, and backing-up
         </strong>{" "}
         you have spent this act building by hand emerges on its own.
+        <Cite n={REF.r1} />
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -197,6 +202,7 @@ export function Page14() {
               is <strong>Group Relative Policy Optimization</strong> — the group is the baseline,
               so there is no second &ldquo;critic&rdquo; model to train, which is what makes RL at
               this scale affordable.
+              <Cite n={REF.grpo} />
             </p>
 
             <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
@@ -256,13 +262,13 @@ export function Page14() {
         </section>
 
         <Note kicker="References">
-          <p>
-            Shao et al. 2024, <em>DeepSeekMath</em> (GRPO).
-          </p>
-          <p>
+          <RefItem n={REF.r1}>
             DeepSeek-AI 2025, <em>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via
             Reinforcement Learning</em>.
-          </p>
+          </RefItem>
+          <RefItem n={REF.grpo}>
+            Shao et al. 2024, <em>DeepSeekMath</em> (GRPO).
+          </RefItem>
         </Note>
 
         {/* Step 2 — the scrubber */}
@@ -316,6 +322,7 @@ export function Page14() {
                   From 15.6% to 71.0% pass@1 with no supervised examples. Add page 7&apos;s
                   majority vote across 64 samples and it reaches{" "}
                   <strong className="text-ink">{cons64}%</strong> — level with OpenAI-o1-0912.
+                  <Cite n={REF.r1} />
                 </p>
               </div>
               <LineChart
@@ -421,7 +428,8 @@ export function Page14() {
             <p className="text-ink">
               Then the give-away, twice over: the weights, and the reasoning itself. R1 wrote{" "}
               <strong>~{P.samplesK}K reasoning traces</strong>, and six small dense models (Qwen
-              and Llama bases, 1.5B–70B) were fine-tuned on them. No RL, no reward — the small
+              and Llama bases, 1.5B–70B) were fine-tuned on them.
+              <Cite n={REF.r1} /> No RL, no reward — the small
               models simply <em>imitate the big one&apos;s thinking</em>. Pick a size and read the
               accuracy/cost trade:
             </p>
@@ -492,9 +500,9 @@ export function Page14() {
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.r1}>
             DeepSeek-AI 2025, Tables 4–5. Distilled weights released under the MIT license.
-          </p>
+          </RefItem>
         </Note>
       </div>
 

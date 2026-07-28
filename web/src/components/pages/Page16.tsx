@@ -31,13 +31,14 @@
  * easy/medium problems) is where the "sample" verdict comes from.
  *
  * Layout follows pages 3–10: full-width intro, numbered steps in the reading
- * column, margin notes carry bare cites only (venues, ids and links live in the
- * badge row at the bottom), caveats live in step bodies, one short provenance
- * footnote.
+ * column, margin notes carry numbered cites (Cite/RefItem; venues, ids and
+ * links live in the badge row at the bottom), caveats live in step bodies, one
+ * short provenance footnote.
  */
 
 import { useMemo, useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -55,6 +56,9 @@ import {
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 16;
+
+/** Page 16's references, numbered in order of first appearance. */
+const REF = { arcPrize: 1, bender: 2, pricing: 3, brown: 4, stroebl: 5, snell: 6, r1: 7 } as const;
 
 /** Reasoning tokens one hard query is priced at (disclosed assumption). */
 const TOK_PER_QUERY = 10_000;
@@ -280,6 +284,7 @@ export function Page16() {
               December 2024: OpenAI&apos;s o3 attacks ARC-AGI, a benchmark of visual puzzles a
               person solves in minutes. Same model, two budgets — the only difference is how many
               reasoning chains it samples per task.
+              <Cite n={REF.arcPrize} />
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border border-grid bg-surface-raised p-3">
@@ -321,23 +326,25 @@ export function Page16() {
               Read it as a price list: the first {a.o3LowAcc}% cost about ${a.o3LowCost} a task; the
               last <strong>{gapPts} points cost {a.computeFactor}× the compute</strong>. ARC
               Prize&apos;s own framing: the low config fits the contest&apos;s $10k budget, the high
-              config is &ldquo;quite expensive.&rdquo; That is diminishing returns as an invoice.
+              config is &ldquo;quite expensive.&rdquo;
+              <Cite n={REF.arcPrize} /> That is diminishing returns as an invoice.
             </figcaption>
             <p className="text-xs text-ink-muted">
               The dollar signs are the soft part: OpenAI never published o3 pricing, and ARC Prize
               later revised its estimates upward, toward ~$30,000 per high-compute task. The sample
               counts and the {a.computeFactor}× multiplier are the stable facts; every $ figure here
               is estimate-dependent.
+              <Cite n={REF.bender} />
             </p>
           </figure>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.arcPrize}>
             ARC Prize Foundation 2024, <em>o3 Breakthrough on ARC-AGI-Pub</em>.
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.bender}>
             Bender et al. 2025, <em>OpenAI&apos;s o3 Is Not AGI</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 2 — prices fall, the shape stays */}
@@ -357,7 +364,8 @@ export function Page16() {
               <strong>
                 ~{pd.outputRatio}× (≈96%) below o1&apos;s list price
               </strong>
-              . The meter that step 1 ran on can drop by an order of magnitude in a season.
+              .<Cite n={REF.pricing} /> The meter that step 1 ran on can drop by an order of
+              magnitude in a season.
             </p>
             <div
               className="flex flex-col gap-2"
@@ -388,21 +396,23 @@ export function Page16() {
             </div>
             <figcaption className="text-sm text-ink">
               But a price cut moves the bill <em>down</em>, not the curve&apos;s <em>shape</em>.
-              Coverage still grows log-linearly — ten times the samples per fixed gain — and an
-              imperfect verifier still caps what any amount of sampling can reach.{" "}
+              Coverage still grows log-linearly — ten times the samples per fixed gain
+              <Cite n={REF.brown} /> — and an imperfect verifier still caps what any amount of
+              sampling can reach.
+              <Cite n={REF.stroebl} />{" "}
               <strong>Exponential spend, linear gains, hard ceiling</strong>: those survive every
               price cut, which is why the next dial exists.
             </figcaption>
           </figure>
         </section>
         <Note kicker="References">
-          <p>DeepSeek API pricing, January 2025.</p>
-          <p>
+          <RefItem n={REF.pricing}>DeepSeek API pricing, January 2025.</RefItem>
+          <RefItem n={REF.brown}>
             Brown et al. 2024, <em>Large Language Monkeys</em>.
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.stroebl}>
             Stroebl et al. 2024, <em>Inference Scaling fLaws</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 3 — the cost-accuracy dial */}
@@ -535,7 +545,8 @@ export function Page16() {
               <strong className="text-ink">answer-time compute wins</strong>: a small model plus
               sampling stands in for a far larger one — Snell et al. measure the substitution
               holding up against a {snell.fit!.params.largerModelFactor}× larger model on easy and
-              medium problems. Push the target up and the log-linear tax compounds ~10× per{" "}
+              medium problems.
+              <Cite n={REF.snell} /> Push the target up and the log-linear tax compounds ~10× per{" "}
               {ANCHORS.slopePerDecade} points until the big model is cheaper anyway; push the{" "}
               <em>volume</em> up and <strong className="text-ink">retraining wins</strong>, because
               a per-query price is paid forever and a training bill only once
@@ -551,7 +562,8 @@ export function Page16() {
               Illustrative calculator, not a quote: queries are priced at{" "}
               {TOK_PER_QUERY.toLocaleString()} reasoning tokens each at the cited o1 / R1 list
               rates; the retraining bill is DeepSeek&apos;s reported{" "}
-              {fmtUSD(pd.r1RlTrainUSD)} RL-stage cost for R1 (base model excluded); the
+              {fmtUSD(pd.r1RlTrainUSD)} RL-stage cost for R1 (base model excluded);
+              <Cite n={REF.r1} /> the
               small model&apos;s climb (+{ANCHORS.slopePerDecade} points per 10× samples from{" "}
               {ANCHORS.baseAcc}%, ceiling {ANCHORS.ceiling}%) is authored — the log-linear shape is
               Brown et al.&apos;s, the ceiling is Stroebl et al.&apos;s.
@@ -562,10 +574,10 @@ export function Page16() {
           <p>Hold 72% and push the volume: renting wins early, owning wins late.</p>
           <p>Then hold the volume and raise the target past ~77%: the samples stop paying.</p>
           <p className="pt-1 text-xs font-semibold uppercase tracking-wide">References</p>
-          <p>
+          <RefItem n={REF.snell}>
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
-          </p>
-          <p>DeepSeek-R1 2025 (the retraining bill).</p>
+          </RefItem>
+          <RefItem n={REF.r1}>DeepSeek-R1 2025 (the retraining bill).</RefItem>
         </Note>
       </div>
 

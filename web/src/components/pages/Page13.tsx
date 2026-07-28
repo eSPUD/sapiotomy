@@ -39,6 +39,7 @@
 import { useMemo, useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -49,6 +50,10 @@ import { twoAxisAccuracy } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 13;
+
+/** Page 13's references, numbered in order of first appearance. */
+const REF = { announce: 1, o3preview: 2, competitive: 3, systemCard: 4 } as const;
+
 const SCALING = curves.o1Scaling;
 const O3 = curves.o3Preview;
 const P = SCALING.fit!.params;
@@ -161,6 +166,7 @@ export function Page13() {
             <blockquote className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
               &ldquo;The performance of o1 consistently improves with more reinforcement learning
               (train-time compute) and with more time spent thinking (test-time compute).&rdquo;
+              <Cite n={REF.announce} />
               <span className="mt-1 block text-xs text-ink-muted">
                 OpenAI, announcing o1. Both charts in the announcement are log-linear: accuracy
                 against the <em>logarithm</em> of compute.
@@ -301,25 +307,27 @@ export function Page13() {
             </table>
             <p className="mt-2 text-xs text-ink-muted">
               o1&apos;s {P.o1Gpqa.toFixed(1)}% on GPQA Diamond is the first score above the{" "}
-              {P.expertGpqa}% of human PhD experts on their own fields&apos; questions. The o3 column is OpenAI&apos;s own
-              scoring of an announcement preview, not an independent measurement; its Codeforces
-              rating was later measured at 2724 in live contests (99.8th percentile of human
-              competitors). AIME and GPQA entries for o1 are pass@1 and cons@64 respectively, as
-              the source reports them.
+              {P.expertGpqa}% of human PhD experts on their own fields&apos; questions.
+              <Cite n={REF.announce} /> The o3 column is OpenAI&apos;s own scoring of an
+              announcement preview, not an independent measurement.
+              <Cite n={REF.o3preview} /> Its Codeforces rating was later measured at 2724 in live
+              contests (99.8th percentile of human competitors).
+              <Cite n={REF.competitive} /> AIME and GPQA entries for o1 are pass@1 and cons@64
+              respectively, as the source reports them.
             </p>
           </div>
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.announce}>
             OpenAI 2024, <em>Learning to Reason with LLMs</em>.
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.o3preview}>
             OpenAI 2024, <em>OpenAI o3 preview</em> (via ARC Prize).
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.competitive}>
             El-Kishky et al. 2025, <em>Competitive Programming with Large Reasoning Models</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 3 — the hidden chain */}
@@ -337,8 +345,9 @@ export function Page13() {
               <em>untrained</em>: start rewarding polite, policy-compliant thoughts and the model
               learns to think one thing and show another. So OpenAI keeps the raw chain unrestricted,
               reads it internally to catch things the answer never shows (their deception monitor
-              flagged about 0.17% of o1 responses), and shows you a summary. The raw chain is also,
-              plainly, the recipe&apos;s output, and the recipe was the product.
+              flagged about 0.17% of o1 responses), and shows you a summary.
+              <Cite n={REF.systemCard} /> The raw chain is also, plainly, the recipe&apos;s output,
+              and the recipe was the product.
             </div>
             <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-base text-ink">
               <strong>The price of hiding.</strong> Nobody outside can audit the reasoning behind an
@@ -356,9 +365,9 @@ export function Page13() {
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.systemCard}>
             OpenAI 2024, <em>OpenAI o1 System Card</em>.
-          </p>
+          </RefItem>
         </Note>
       </div>
 

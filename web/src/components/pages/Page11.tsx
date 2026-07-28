@@ -32,6 +32,7 @@ import { useState } from "react";
 import { scaleLinear, scaleLog } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import {
@@ -51,6 +52,9 @@ import { curves } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 11;
+
+/** Page 11's references, numbered in order of first appearance. */
+const REF = { snell: 1, wu: 2 } as const;
 
 const DIFFICULTY_BLURB: Record<Difficulty, string> = {
   easy: "the 1× model already lands most answers on its first try",
@@ -458,6 +462,7 @@ export function Page11() {
               First, the units. <strong>14× means 14× the parameters</strong> of the base model —
               Snell et al. compare against a pretrained model about 14× the size of theirs, and
               never publish either absolute count, so multiples are the only honest label.
+              <Cite n={REF.snell} />
               Parameters set the price of thinking: an answer from an M× model costs ≈M× the
               inference FLOPs. Counting in answers from the 1× model, the 14× model&rsquo;s single,
               no-thinking answer costs <strong>14 units</strong> and scores{" "}
@@ -580,7 +585,8 @@ export function Page11() {
               sampled steps under a process verifier (page 9&rsquo;s graders), or let the model
               redraft its own answer — and found that the right choice, and the right budget,
               depend on how hard the prompt is. Estimating difficulty first, then allocating, is
-              what they call compute-optimal. Three numbers carry the result:
+              what they call compute-optimal.
+              <Cite n={REF.snell} /> Three numbers carry the result:
             </p>
             <div className="grid gap-2 sm:grid-cols-3">
               <div className="rounded-lg border border-grid bg-surface-raised p-3">
@@ -617,10 +623,10 @@ export function Page11() {
           </div>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.snell}>
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally can be More Effective
             than Scaling Model Parameters</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 3 — the field data */}
@@ -632,6 +638,7 @@ export function Page11() {
               The game&rsquo;s picture, with real published sizes. Wu et al. gave three Pythia
               models — <strong className="text-ink">410M, 2.8B, and 12B parameters</strong> — a
               growing sample budget on GSM8K, under weighted majority voting.
+              <Cite n={REF.wu} />
             </p>
             <PythiaChart />
             <figcaption className="text-sm text-ink-muted">
@@ -664,17 +671,18 @@ export function Page11() {
               the 34B to reach comparable accuracy — and this table&rsquo;s sharpest instance is
               sharper still: 7B with tree search{" "}
               <strong className="text-ink">edges the 34B model&rsquo;s best sampling run with
-              roughly 8× fewer inference FLOPs</strong>. The fine print holds here too: gains from
+              roughly 8× fewer inference FLOPs</strong>.
+              <Cite n={REF.wu} /> The fine print holds here too: gains from
               more samples flatten toward a ceiling that the model&rsquo;s own answer distribution
               sets, so without a perfect external verifier, sampling alone never reaches 100%.
             </figcaption>
           </figure>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.wu}>
             Wu et al. 2024, <em>Inference Scaling Laws: An Empirical Analysis of Compute-Optimal
             Inference</em>.
-          </p>
+          </RefItem>
         </Note>
       </div>
 

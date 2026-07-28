@@ -13,6 +13,7 @@
 
 import { useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { Toggle } from "@/components/Toggle";
@@ -31,6 +32,9 @@ import {
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 19;
+
+/** Page 19's references, numbered in order of first appearance. */
+const REF = { coconut: 1, codi: 2, pause: 3, snell: 4, s1: 5, react: 6, ioi: 7 } as const;
 
 const REACT_CITATION: Citation = {
   ref: "Yao et al. 2023",
@@ -140,6 +144,7 @@ export function Page19() {
               saying one thing at a time, a continuous thought can hold{" "}
               <strong>several candidate paths at once</strong> and drop them as evidence arrives —
               a built-in breadth-first search, where a written chain must gamble on a single line.
+              <Cite n={REF.coconut} />
             </p>
             <div
               className="flex flex-col gap-3"
@@ -168,19 +173,24 @@ export function Page19() {
               truth; a latent chain removes the question by removing the page —{" "}
               <strong>there is nothing to read, faithful or not</strong>. Efficiency and
               monitorability are pulling in opposite directions, and much of this line of work
-              (self-distilled latent thought, pause tokens) is still preprint-stage research.
+              (self-distilled latent thought,
+              <Cite n={REF.codi} /> pause tokens
+              <Cite n={REF.pause} />) is still preprint-stage research.
             </div>
           </div>
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.coconut}>
             Hao et al. 2024, <em>Training Large Language Models to Reason in a Continuous Latent
             Space</em> (Coconut).
-          </p>
-          <p>
-            Shen et al. 2025, <em>CODI</em>; Goyal et al. 2024, pause tokens.
-          </p>
+          </RefItem>
+          <RefItem n={REF.codi}>
+            Shen et al. 2025, <em>CODI</em>.
+          </RefItem>
+          <RefItem n={REF.pause}>
+            Goyal et al. 2024, pause tokens.
+          </RefItem>
         </Note>
 
         {/* Step 2 — adaptive compute */}
@@ -194,21 +204,23 @@ export function Page19() {
               <strong>compute-optimal allocation</strong> is over{" "}
               {snell.fit!.params.efficiencyVsBestOfN}× more efficient than uniform best-of-N,
               enough for a small model to out-think one {snell.fit!.params.largerModelFactor}×
-              larger on a matched budget. Budget forcing is the same idea as a hand-held knob:
+              larger on a matched budget.
+              <Cite n={REF.snell} /> Budget forcing is the same idea as a hand-held knob:
               appending &ldquo;Wait&rdquo; stretches thinking from {s1.fit!.params.start}% to{" "}
-              {s1.fit!.params.end}% on AIME24 before the curve flattens. Deployed models now ship
-              exactly this dial, sold as <em>reasoning effort</em>.
+              {s1.fit!.params.end}% on AIME24 before the curve flattens.
+              <Cite n={REF.s1} /> Deployed models now ship exactly this dial, sold as{" "}
+              <em>reasoning effort</em>.
             </p>
           </div>
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.snell}>
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.s1}>
             Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 3 — agents */}
@@ -220,6 +232,7 @@ export function Page19() {
               action: think a step, call a tool, read what comes back, think again — so a chain
               can fetch facts it never memorized and test guesses against the world instead of
               itself.
+              <Cite n={REF.react} />
             </p>
             <p className="rounded border border-dashed border-grid bg-surface-raised p-2 text-center font-mono text-sm text-ink">
               thought → action → observation → thought …
@@ -231,17 +244,18 @@ export function Page19() {
               Every selection trick from this act, aimed at one contest. Its RL-trained successors
               then matched that <em>without</em> the scaffold: the strategy was learned, not
               engineered.
+              <Cite n={REF.ioi} />
             </p>
           </div>
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.react}>
             Yao et al. 2023, <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>.
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.ioi}>
             OpenAI 2025, <em>Competitive Programming with Large Reasoning Models</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 4 — the capstone panel */}

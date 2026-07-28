@@ -22,12 +22,13 @@
  * because the clean control run exists; a real monitor sees the trace alone.
  *
  * Layout: pages 1-10 shell — numbered steps in one reading column, margin
- * notes as bare cites or a one-line operating hint, CitationBadge stubs at
- * the bottom, no footnotes.
+ * notes as numbered cites (Cite/RefItem) or a one-line operating hint,
+ * CitationBadge stubs at the bottom, no footnotes.
  */
 
 import { useMemo, useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -42,6 +43,9 @@ import { useStore } from "@/store/useStore";
 
 const PAGE_N = 18;
 const P = FAITHFULNESS_PROBE;
+
+/** Page 18's references, numbered in order of first appearance. */
+const REF = { chen: 1, turpin: 2, baker: 3, korbak: 4 } as const;
 const MAX_RUNS = 400;
 const PRESSURES = Array.from({ length: 21 }, (_, i) => i / 2);
 
@@ -154,10 +158,11 @@ export function Page18() {
             </div>
 
             <p className="text-sm text-ink">
-              The experiment (Chen et al. 2025): ask a question clean, then ask again with a{" "}
-              <strong>hint</strong> slipped into the prompt, here an answer tag the model was never
-              meant to see. When the hint <em>changes the answer</em>, the model demonstrably used
-              it. Faithfulness asks: does the visible trace say so?
+              The experiment: ask a question clean, then ask again with a <strong>hint</strong>{" "}
+              slipped into the prompt, here an answer tag the model was never meant to see.
+              <Cite n={REF.chen} /> When the hint <em>changes the answer</em>, the model
+              demonstrably used it. Faithfulness asks: does the visible trace say so?
+              <Cite n={REF.turpin} />
             </p>
 
             {/* the prompt */}
@@ -275,7 +280,8 @@ export function Page18() {
                 </div>
                 <p className="text-sm text-ink-muted">
                   Converges to the paper&apos;s average for {modelName}:{" "}
-                  <strong className="font-mono text-ink">{admitPct}%</strong>. The other{" "}
+                  <strong className="font-mono text-ink">{admitPct}%</strong>.
+                  <Cite n={REF.chen} /> The other{" "}
                   {100 - admitPct}% of hint-flipped answers ship with a trace that never mentions
                   the hint. In this demo every planted run flips; in the paper, faithfulness is
                   scored only on the runs where the flip actually happened.
@@ -285,12 +291,12 @@ export function Page18() {
           </div>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.chen}>
             Chen et al. 2025, <em>Reasoning Models Don&apos;t Always Say What They Think</em>.
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.turpin}>
             Turpin et al. 2023, <em>Language Models Don&apos;t Always Say What They Think</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 2 — monitorability */}
@@ -301,7 +307,8 @@ export function Page18() {
               An imperfect window still beats a wall. Baker et al. trained a frontier coding agent
               with reinforcement learning and watched it <strong>reward-hack</strong>: make the
               tests pass by hollowing them out rather than by fixing the code. A second model read
-              the agent&apos;s output and flagged misbehavior. What the flagger is allowed to read
+              the agent&apos;s output and flagged misbehavior.
+              <Cite n={REF.baker} /> What the flagger is allowed to read
               decides everything, because in its thoughts the agent says the quiet part out loud
               (&ldquo;the tests only check this one function, so just stub it&rdquo;) before its
               code makes the hack look clean.
@@ -333,17 +340,18 @@ export function Page18() {
               perfectly faithful to be a working alarm, it only has to keep verbalizing intent. That
               is the &ldquo;new and fragile opportunity&rdquo; a joint position paper from OpenAI,
               Google DeepMind, and Anthropic urges the field to preserve.
+              <Cite n={REF.korbak} />
             </p>
           </figure>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.baker}>
             Baker et al. 2025, <em>Monitoring Reasoning Models for Misbehavior and the Risks of
             Promoting Obfuscation</em>.
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.korbak}>
             Korbak et al. 2025, <em>Chain of Thought Monitorability</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 3 — the obfuscation trap */}
@@ -357,6 +365,7 @@ export function Page18() {
               does hack less. Keep pushing and the agent finds the cheaper fix:{" "}
               <strong className="text-ink">obfuscated reward hacking</strong>. It still hacks about
               as often; it just stops writing thoughts the monitor can read it from.
+              <Cite n={REF.baker} />
             </p>
             <Slider
               label="Optimization pressure on the CoT"
