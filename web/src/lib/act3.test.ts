@@ -3,6 +3,8 @@ import { curves, interpolate } from "./curves";
 import {
   algorithmSolved,
   cheapestStrategy,
+  cotPressureRecall,
+  cotPressureReward,
   distillCrossover,
   enumerationSolved,
   faithfulnessAdmitRate,
@@ -196,6 +198,33 @@ describe("Page 19: faithfulness (preprint)", () => {
   it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
+describe("Page 18: CoT monitoring & obfuscation (Baker et al., preprint)", () => {
+  const d = curves.cotObfuscation;
+  const p = d.fit!.params;
+  it("a CoT monitor beats an action-only monitor, 95% vs 60% recall", () => {
+    expect(p.cotRecall).toBe(95);
+    expect(p.actionRecall).toBe(60);
+  });
+  it("recall holds near 95% at zero pressure and collapses to ~0 at full pressure", () => {
+    expect(Math.abs(cotPressureRecall(0, p.cotRecall, p.cliff, p.steep) - 95)).toBeLessThan(0.5);
+    expect(cotPressureRecall(10, p.cotRecall, p.cliff, p.steep)).toBeLessThan(1);
+  });
+  it("task reward keeps climbing while recall falls: the trap", () => {
+    for (let x = 1; x <= 10; x++) {
+      expect(cotPressureReward(x, p.rewardStart, p.rewardEnd)).toBeGreaterThan(
+        cotPressureReward(x - 1, p.rewardStart, p.rewardEnd),
+      );
+      expect(cotPressureRecall(x, p.cotRecall, p.cliff, p.steep)).toBeLessThan(
+        cotPressureRecall(x - 1, p.cotRecall, p.cliff, p.steep),
+      );
+    }
+  });
+  it("provenance labels the curve shapes as authored illustrations", () => {
+    expect(d.provenance.toLowerCase()).toContain("authored illustration");
+  });
+  it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
+});
+
 describe("Page 20: Illusion of Thinking (preprints, both sides)", () => {
   const d = curves.illusion;
   const { tokensPerMove, tokenBudget, riverCrossingImpossibleN } = d.fit!.params;
@@ -223,6 +252,7 @@ describe("preprint flagging (all Act 3 non-peer-reviewed sources)", () => {
     expect(curves.arcCost.citation.preprint).toBe(true);
     expect(curves.overthinking.citation.preprint).toBe(true);
     expect(curves.faithfulness.citation.preprint).toBe(true);
+    expect(curves.cotObfuscation.citation.preprint).toBe(true);
     expect(curves.illusion.citation.preprint).toBe(true);
   });
 });

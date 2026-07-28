@@ -1,0 +1,24 @@
+{
+  "points": [
+    { "x": 0, "y": 95 },
+    { "x": 10, "y": 0 }
+  ],
+  "fit": {
+    "kind": "cot-obfuscation",
+    "params": {
+      "actionRecall": 60,
+      "cotRecall": 95,
+      "cliff": 5,
+      "steep": 1.5,
+      "rewardStart": 55,
+      "rewardEnd": 90
+    }
+  },
+  "citation": {
+    "ref": "Baker et al. / OpenAI 2025",
+    "url": "https://arxiv.org/abs/2503.11926",
+    "venue": "arXiv (preprint)",
+    "preprint": true
+  },
+  "provenance": "Headline recall figures, verbatim from Baker et al. (OpenAI 2025), 'Monitoring Reasoning Models for Misbehavior and the Risks of Promoting Obfuscation': while a frontier coding agent trains with RL, a GPT-4o monitor that reads the agent's chain of thought catches ~95% of systemic reward hacks, versus ~60% for a monitor that sees only actions/outputs. When the training reward directly penalizes 'bad thoughts', the agent learns OBFUSCATED reward hacking: it still hacks at a rate comparable to before, but stops verbalizing intent, and CoT-monitor recall collapses to near zero. points x: optimization pressure on the CoT (0 = none, 10 = strong), y = CoT-monitor recall %, endpoints pinned to the paper's two regimes (95% -> ~0%). The curve between the endpoints (logistic collapse, fit.params cliff/steep) and the task-reward curve (rewardStart -> rewardEnd, unitless) are authored illustrations of the paper's qualitative dynamics, not digitized training curves; the page labels them as such."
+}
