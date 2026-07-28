@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 // No motion or timers to stub anymore: Page 2 is a static contrast diagram.
 const mm = (q: string) => ({
@@ -34,9 +34,21 @@ describe("Page 2 (The Knowledge Gap): a static two-road contrast", () => {
     // Both roads are present as labelled groups.
     expect(screen.getByRole("group", { name: /sealed memory · recall path/i })).toBeInTheDocument();
     expect(screen.getByRole("group", { name: /retrieval · fetch path/i })).toBeInTheDocument();
-    // Both endpoints are drawn: recall stops one short, retrieval fetches it.
+    // At the default cutoff (Jan 2025) recall stops one short; retrieval fetches it.
     expect(screen.getByText(/✗ “One\.”/)).toBeInTheDocument();
     expect(screen.getByText(/✓ “Two\.”/)).toBeInTheDocument();
+  });
+
+  it("the cutoff slider changes what sealed memory can recall", () => {
+    render(<Page2 />);
+    const slider = screen.getByRole("slider", { name: /training cutoff/i });
+    const recall = () => screen.getByRole("group", { name: /sealed memory · recall path/i });
+    // Before Spain's first title (2010) the model knows none of them.
+    fireEvent.change(slider, { target: { value: String(2007 * 12) } });
+    expect(within(recall()).getByText(/✗ “Zero\.”/)).toBeInTheDocument();
+    // Past the 2026 final, sealed memory catches up and the gap closes.
+    fireEvent.change(slider, { target: { value: String(2027 * 12 + 11) } });
+    expect(within(recall()).getByText(/✓ “Two\.”/)).toBeInTheDocument();
   });
 
   it("shows the analysis, the retrieval framing, the teaser, and the flag with no interaction", () => {

@@ -17,20 +17,35 @@
  * fetches the fact (✓ Two).
  */
 
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { PageNav } from "@/components/PageNav";
 import { SPAIN_WORLD_CUPS } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
+import { useStore } from "@/store/useStore";
 
 const PAGE_N = 2;
 const WC = SPAIN_WORLD_CUPS;
 
 const TWO = WC.trueCount === 2 ? "Two" : String(WC.trueCount);
 
-/** The two roads, node by node. Both start on the same question; only the last
- *  node carries a verdict tone. */
-const RECALL_NODES = ["the question", "reach into memory", "sealed before the final", "“One.”"] as const;
+/** The retrieval road, node by node. It fetches a current source, so its answer
+ *  is the true count regardless of any training cutoff. */
 const RETRIEVAL_NODES = ["the question", "“changed since the cutoff?”", "fetch a current source", `“${TWO}.”`] as const;
+/** The recall road's fixed prefix; its last two nodes depend on the cutoff. */
+const RECALL_PREFIX = ["the question", "reach into memory"] as const;
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const NUM_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six"];
+
+/** A cutoff is a month, encoded as years*12 + month(0-11), so it slides smoothly. */
+const monthIndex = (year: number, month0: number) => year * 12 + month0;
+const CUTOFF_MIN = monthIndex(2007, 0); // Jan 2007 (before any Spain title)
+const CUTOFF_MAX = monthIndex(2027, 11); // Dec 2027 (past the 2026 final)
+const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real seal
+/** Each of Spain's titles is decided at its July final (2010-07, 2026-07). */
+const WIN_FINALS = WC.wins.map((y) => monthIndex(y, 6));
+const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
+const numWord = (n: number) => NUM_WORDS[n] ?? String(n);
 
 /**
  * One road: a row of nodes joined by arrows, drawn in full. The endpoint takes a
@@ -98,6 +113,18 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
 
 export function Page2() {
   const page = getPage(PAGE_N)!;
+  const recordInteraction = useStore((s) => s.recordInteraction);
+
+  // The reader sets the model's training cutoff; sealed memory can only recall
+  // titles decided on or before it. Retrieval is unaffected.
+  const [cutoff, setCutoff] = useState(CUTOFF_DEFAULT);
+  const recallCount = WIN_FINALS.filter((f) => f <= cutoff).length;
+  const recallWord = numWord(recallCount);
+  const gap = WC.trueCount - recallCount;
+  const cutoffText = fmtCutoff(cutoff);
+  const recallNodes = [...RECALL_PREFIX, `sealed ${cutoffText}`, `“${recallWord}.”`];
+  const gapNote =
+    gap <= 0 ? "caught up — the gap closes" : `${gap === 1 ? "one" : gap} short — the knowledge gap`;
 
   return (
     <article className="flex flex-col gap-6">
@@ -127,25 +154,54 @@ export function Page2() {
           >
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
               <span>one question · two roads</span>
-              <span className="rounded-full border border-wrong/60 bg-wrong/15 px-2 py-0.5 text-wrong">
-                2026 result: authored placeholder · verify before shipping
-              </span>
             </div>
 
             <div className="flex flex-col gap-4 p-4">
               <p className="text-lg text-ink">{WC.question}</p>
 
+              {/* the reader sets the model's training cutoff */}
+              <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-3">
+                <label
+                  htmlFor="cutoff"
+                  className="flex flex-wrap items-baseline gap-2 text-sm text-ink-muted"
+                >
+                  <span>training cutoff:</span>
+                  <span className="font-mono text-base font-semibold text-ink">{cutoffText}</span>
+                </label>
+                <input
+                  id="cutoff"
+                  type="range"
+                  min={CUTOFF_MIN}
+                  max={CUTOFF_MAX}
+                  step={1}
+                  value={cutoff}
+                  onChange={(e) => {
+                    setCutoff(Number(e.target.value));
+                    recordInteraction(PAGE_N);
+                  }}
+                  aria-label="Training cutoff month and year"
+                  aria-valuetext={cutoffText}
+                  className="w-full accent-compute"
+                />
+                <p className="text-sm text-ink-muted">
+                  A model sealed in <strong className="text-ink">{cutoffText}</strong> knows{" "}
+                  <strong className="text-ink">{recallWord.toLowerCase()}</strong> of Spain&apos;s{" "}
+                  {WC.trueCount} titles, so from memory it answers{" "}
+                  <strong className="text-ink">&ldquo;{recallWord}.&rdquo;</strong>
+                </p>
+              </div>
+
               <div className="flex flex-col gap-3 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
                 <p className="text-xs text-ink-muted">
-                  the machine: {WC.machine.cutoffLabel} · {WC.machine.constraintLabel}
+                  the machine: memory sealed {cutoffText} · {WC.machine.constraintLabel}
                 </p>
                 <PathRow
                   label="sealed memory · recall"
                   labelClass="text-wrong"
-                  nodes={RECALL_NODES}
-                  endTone="wrong"
-                  endMark="✗"
-                  note="stops one short — the knowledge gap"
+                  nodes={recallNodes}
+                  endTone={gap <= 0 ? "correct" : "wrong"}
+                  endMark={gap <= 0 ? "✓" : "✗"}
+                  note={gapNote}
                 />
                 <PathRow
                   label="retrieval · fetch"
@@ -153,7 +209,7 @@ export function Page2() {
                   nodes={RETRIEVAL_NODES}
                   endTone="correct"
                   endMark="✓"
-                  note="fetches the missing fact"
+                  note="fetches the current count"
                 />
               </div>
             </div>
@@ -162,8 +218,8 @@ export function Page2() {
         <Note kicker="Read it">
           <p>Both roads start on the same question and run left to right.</p>
           <p>
-            The top road answers from the model&apos;s sealed memory; the bottom one stops to fetch a
-            current source.
+            Slide the training cutoff to change what sealed memory knows: recall only counts titles
+            won on or before it. Retrieval fetches a current source, so it is unaffected.
           </p>
         </Note>
 
