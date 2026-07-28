@@ -7,11 +7,18 @@
  * knowledge is fixed at training time while the world keeps producing facts,
  * so the gap reopens continuously.
  *
- * Narrative spine (two steps):
+ * Narrative spine (three steps), each a distinct failure:
  *   1. A training-cutoff slider (Jan 2017 to Dec 2026): sliding it changes which
  *      of Spain's titles sealed memory can recall, and so the answer it gives.
  *      That is the knowledge gap, a missing FACT.
- *   2. The second, quieter miss: the model never judged that it might be stale.
+ *   2. Bias, not staleness. The question never said MEN'S, and Spain's women won
+ *      in 2023, BEFORE the cutoff. The model held that fact and still left it
+ *      out, resolving an ambiguous question to the reading its training data
+ *      talks about most (cf. stereotype-consistent coreference, Zhao et al.
+ *      2018). The same widget with the question read literally gives the better
+ *      answer, and the beat that matters is that fixing the bias does NOT fix
+ *      the cutoff: the two failures are independent.
+ *   3. The third, quietest miss: the model never judged that it might be stale.
  *      MetaTool (Huang et al., ICLR 2024) benchmarked exactly this "tool usage
  *      awareness" and found most models struggle to recognize their own
  *      capability boundaries. The judgment was supplied from OUTSIDE, three
@@ -29,7 +36,12 @@
 import { useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import { SPAIN_MACHINE_REPLIES, SPAIN_WORLD_CUPS } from "@/lib/authored";
+import {
+  SPAIN_ALL_TITLES,
+  SPAIN_INCLUSIVE_REPLIES,
+  SPAIN_MACHINE_REPLIES,
+  SPAIN_WORLD_CUPS,
+} from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
@@ -43,12 +55,94 @@ const monthIndex = (year: number, month0: number) => year * 12 + month0;
 const CUTOFF_MIN = monthIndex(2017, 0); // Jan 2017 (the 2010 title is always known)
 const CUTOFF_MAX = monthIndex(2026, 11); // Dec 2026 (past the July final)
 const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real seal
-/** Each of Spain's titles is decided at its July final (2010-07, 2026-07). */
-const WIN_FINALS = WC.wins.map((y) => monthIndex(y, 6));
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
 
+/** Men's finals are played in July; the 2023 women's final was in August. */
+const MENS_FINALS = SPAIN_ALL_TITLES.mens.map((y) => monthIndex(y, 6));
+const WOMENS_FINALS = SPAIN_ALL_TITLES.womens.map((y) => monthIndex(y, 7));
+/** Section 1 counts only the men's tournament, the reading the model assumes. */
+const DEFAULT_READING_FINALS = MENS_FINALS;
+/** Section 2 counts every title, which is what the question actually asked. */
+const ALL_FINALS = [...MENS_FINALS, ...WOMENS_FINALS].sort((a, b) => a - b);
+
 /** Page 2's references, numbered in order of first appearance. */
-const REF = { metatool: 1, react: 2, toolformer: 3, survey: 4 } as const;
+const REF = { winobias: 1, metatool: 2, react: 3, toolformer: 4, survey: 5 } as const;
+
+/**
+ * The cutoff explorer, shared by sections 1 and 2. Same control, same question,
+ * different reading of it: `finals` decides which titles count as knowable and
+ * `replies` is indexed by how many of them fall on or before the cutoff.
+ */
+function CutoffWidget({
+  id,
+  finals,
+  replies,
+  total,
+}: {
+  id: string;
+  finals: readonly number[];
+  replies: readonly string[];
+  total: number;
+}) {
+  const recordInteraction = useStore((s) => s.recordInteraction);
+  const [cutoff, setCutoff] = useState(CUTOFF_DEFAULT);
+  const known = finals.filter((f) => f <= cutoff).length;
+  const gap = total - known;
+  const cutoffText = fmtCutoff(cutoff);
+
+  return (
+    <section
+      aria-label="Training cutoff explorer"
+      className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
+    >
+      <div className="flex flex-col gap-4 p-4">
+        <p className="text-lg text-ink">{WC.question}</p>
+
+        {/* the reader sets the model's training cutoff */}
+        <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-3">
+          <label htmlFor={id} className="flex flex-wrap items-baseline gap-2 text-sm text-ink-muted">
+            <span>training cutoff:</span>
+            <span className="font-mono text-base font-semibold text-ink">{cutoffText}</span>
+          </label>
+          <input
+            id={id}
+            type="range"
+            min={CUTOFF_MIN}
+            max={CUTOFF_MAX}
+            step={1}
+            value={cutoff}
+            onChange={(e) => {
+              setCutoff(Number(e.target.value));
+              recordInteraction(PAGE_N);
+            }}
+            aria-label="Training cutoff month and year"
+            aria-valuetext={cutoffText}
+            className="w-full accent-compute"
+          />
+        </div>
+
+        {/* what the model says, off a memory sealed at that cutoff */}
+        <div className="flex flex-col gap-2 rounded-lg border border-grid bg-canvas p-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              the model answers
+            </p>
+            <span
+              className={`rounded-full border px-2 py-0.5 text-xs ${
+                gap <= 0
+                  ? "border-correct/60 bg-correct/15 text-correct"
+                  : "border-wrong/60 bg-wrong/15 text-wrong"
+              }`}
+            >
+              {gap <= 0 ? "✓ current" : `✗ ${gap === 1 ? "one" : gap} short`}
+            </span>
+          </div>
+          <p className="text-lg text-ink">&ldquo;{replies[known]}&rdquo;</p>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
@@ -63,14 +157,6 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
 
 export function Page2() {
   const page = getPage(PAGE_N)!;
-  const recordInteraction = useStore((s) => s.recordInteraction);
-
-  // The reader sets the model's training cutoff; sealed memory can only recall
-  // titles decided on or before it. Retrieval is unaffected.
-  const [cutoff, setCutoff] = useState(CUTOFF_DEFAULT);
-  const recallCount = WIN_FINALS.filter((f) => f <= cutoff).length;
-  const gap = WC.trueCount - recallCount;
-  const cutoffText = fmtCutoff(cutoff);
 
   return (
     <article className="flex flex-col gap-6">
@@ -94,61 +180,12 @@ export function Page2() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Knowing the answer</h2>
 
-          <section
-            aria-label="Training cutoff explorer"
-            className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
-          >
-            <div className="flex flex-col gap-4 p-4">
-              <p className="text-lg text-ink">{WC.question}</p>
-
-              {/* the reader sets the model's training cutoff */}
-              <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-3">
-                <label
-                  htmlFor="cutoff"
-                  className="flex flex-wrap items-baseline gap-2 text-sm text-ink-muted"
-                >
-                  <span>training cutoff:</span>
-                  <span className="font-mono text-base font-semibold text-ink">{cutoffText}</span>
-                </label>
-                <input
-                  id="cutoff"
-                  type="range"
-                  min={CUTOFF_MIN}
-                  max={CUTOFF_MAX}
-                  step={1}
-                  value={cutoff}
-                  onChange={(e) => {
-                    setCutoff(Number(e.target.value));
-                    recordInteraction(PAGE_N);
-                  }}
-                  aria-label="Training cutoff month and year"
-                  aria-valuetext={cutoffText}
-                  className="w-full accent-compute"
-                />
-              </div>
-
-              {/* what the model actually says, off a memory sealed at that cutoff */}
-              <div className="flex flex-col gap-2 rounded-lg border border-grid bg-canvas p-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    the model answers
-                  </p>
-                  <span
-                    className={`rounded-full border px-2 py-0.5 text-xs ${
-                      gap <= 0
-                        ? "border-correct/60 bg-correct/15 text-correct"
-                        : "border-wrong/60 bg-wrong/15 text-wrong"
-                    }`}
-                  >
-                    {gap <= 0 ? "✓ current" : `✗ ${gap === 1 ? "one" : gap} short`}
-                  </span>
-                </div>
-                <p className="text-lg text-ink">
-                  &ldquo;{SPAIN_MACHINE_REPLIES[recallCount]}&rdquo;
-                </p>
-              </div>
-            </div>
-          </section>
+          <CutoffWidget
+            id="cutoff-default"
+            finals={DEFAULT_READING_FINALS}
+            replies={SPAIN_MACHINE_REPLIES}
+            total={WC.trueCount}
+          />
 
           <p className="text-ink">
             Based on the knowledge cutoff date, the model gives an answer without thinking it
@@ -162,9 +199,53 @@ export function Page2() {
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. Knowing what you know is correct or incorrect
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">2. Knowing correct and without bias</h2>
+
+          <p className="text-ink">
+            <strong>The question never said men&apos;s.</strong> Spain has won{" "}
+            <strong>three</strong> FIFA World Cups: the men&apos;s team in 2010 and 2026, and the
+            women&apos;s team in 2023. Every answer above quietly counted only the men&apos;s
+            tournament.
+          </p>
+
+          <p className="text-ink">
+            That is not the knowledge gap. The 2023 win happened <em>before</em> the cutoff, so the
+            model held the fact the whole time and left it out anyway. Handed an ambiguous question,
+            it resolved the ambiguity to whichever reading its training data talked about most, and
+            never mentioned that it had chosen. Models do this in the small too: given a sentence
+            that could refer to either of two people, they resolve it to the stereotype-consistent
+            reading rather than flagging that the sentence is ambiguous.
+            <Cite n={REF.winobias} />
+          </p>
+
+          <p className="text-ink">
+            Read the question literally and the same slider gives a better answer:
+          </p>
+
+          <CutoffWidget
+            id="cutoff-inclusive"
+            finals={ALL_FINALS}
+            replies={SPAIN_INCLUSIVE_REPLIES}
+            total={SPAIN_ALL_TITLES.total}
+          />
+
+          <p className="text-ink">
+            Notice what did and did not change. Naming the tournament fixes the bias at every
+            cutoff. It does not fix the cutoff: a model sealed in early 2025 now counts two titles
+            instead of one, and is still a title behind. <strong>Two separate failures</strong>, and
+            closing one leaves the other exactly where it was.
+          </p>
+        </section>
+        <Note kicker="References">
+          <RefItem n={REF.winobias}>
+            Zhao et al., &ldquo;Gender Bias in Coreference Resolution: Evaluation and Debiasing
+            Methods&rdquo; (NAACL 2018).
+          </RefItem>
+        </Note>
+
+        {/* Step 3 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. Knowing when to look it up</h2>
 
           {/* the deeper miss: it never reached for the fix */}
           <p className="text-ink">

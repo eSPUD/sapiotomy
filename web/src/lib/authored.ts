@@ -153,6 +153,28 @@ export const SPAIN_WORLD_CUPS = {
 } as const;
 
 /**
+ * Page 2, section 2: the question "How many FIFA World Cups has Spain won?"
+ * never said MEN'S, and the model silently read it that way. Spain's full FIFA
+ * World Cup record is three titles: the men's team in 2010 and 2026, and the
+ * women's team in 2023.
+ *
+ * The 2023 women's title is REAL and, crucially, it predates the machine's
+ * early-2025 cutoff. So this is NOT the knowledge gap section 1 shows: the
+ * model held the fact and still left it out, because it resolved an ambiguous
+ * question to the most common reading. (The 2026 men's title remains the
+ * flagged, verify-before-shipping placeholder; the point of this section holds
+ * either way, since it turns on 2010 vs 2023, both real.)
+ */
+export const SPAIN_ALL_TITLES = {
+  mens: [2010, 2026],
+  womens: [2023],
+  /** Men's plus women's: what a literal reading of the question would count. */
+  total: 3,
+  /** The reading the model picks without being asked to. */
+  defaultReading: "the men's tournament",
+} as const;
+
+/**
  * What the model actually SAYS, indexed by how many of Spain's titles fell
  * inside its training cutoff (0, 1, or 2). Authored/illustrative examples of a
  * flat, confident answer off frozen memory: notice that none of them hedges
@@ -163,6 +185,20 @@ export const SPAIN_MACHINE_REPLIES: string[] = [
   "Spain has not won the FIFA World Cup.",
   "Spain has won the FIFA World Cup once, in 2010.",
   "Spain has won the FIFA World Cup twice, in 2010 and 2026.",
+];
+
+/**
+ * The better answer: the same question, read literally. Indexed by how many of
+ * Spain's THREE titles (men's 2010 and 2026, women's 2023) fall inside the
+ * cutoff. Each reply names the tournament it is counting, so the reader can see
+ * the reading being made instead of having to guess it. Note that resolving the
+ * ambiguity does not close the cutoff gap: the two failures are independent.
+ */
+export const SPAIN_INCLUSIVE_REPLIES: string[] = [
+  "Counting both tournaments, Spain has not won a FIFA World Cup.",
+  "Counting both tournaments, Spain has won one FIFA World Cup: the men's team in 2010.",
+  "Counting both tournaments, Spain has won two FIFA World Cups: the men's team in 2010 and the women's team in 2023.",
+  "Counting both tournaments, Spain has won three FIFA World Cups: the men's team in 2010 and 2026, and the women's team in 2023.",
 ];
 
 // --- Page 4: Reasoning: Diverse Pathfinding (three roads, one destination) ----
