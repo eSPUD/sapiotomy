@@ -44,10 +44,12 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     expect(screen.getByText(/“Two\.”/)).toBeInTheDocument();
   });
 
-  it("explains, after the widget, that the fix is fetching the fact, not thinking harder", () => {
+  it("says the fix is fetching the fact, not thinking harder", () => {
     render(<Page2 />);
-    expect(screen.getByText(/answers one short/i)).toBeInTheDocument();
-    expect(screen.getByText(/The fix is not to think harder/i)).toBeInTheDocument();
+    expect(screen.getByText(/The gap is knowledge, not thinking/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Thinking harder never conjures a\s*fact the model was never shown/i),
+    ).toBeInTheDocument();
   });
 
   it("names the second miss: the model never judged that it should look it up", () => {

@@ -137,13 +137,6 @@ export function Page2() {
               </div>
             </div>
           </section>
-
-          <p className="text-ink">
-            Sealed memory can only recall a title if the cutoff falls after it was won, so any model
-            sealed before the 2026 final answers one short. The fix is not to think harder: the
-            missing win is a fact the model was never shown, not something it can reason out. Fetching
-            it from a current source, instead of reaching into memory, is what closes the gap.
-          </p>
         </section>
         <Note kicker="Try it">
           <p>Slide the training cutoff to move the model&apos;s memory back and forth in time.</p>
