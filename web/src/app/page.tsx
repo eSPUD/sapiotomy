@@ -79,7 +79,20 @@ export default function Home() {
 
       {/* About the series */}
       <section className="mt-16 flex flex-col gap-8">
-        <div className="grid gap-10 md:grid-cols-3">
+        <div className="flex flex-col gap-3">
+          <h2 className="text-2xl font-bold text-ink">How to read it</h2>
+          <p className="text-justify hyphens-auto text-ink-muted">
+            Chapters stand alone but build in order. Every figure is live: sliders re-derive the
+            curves, diagrams answer clicks, and the demos sample from a real model when one is
+            available; canned transcripts otherwise.
+          </p>
+          <p className="text-justify hyphens-auto text-ink-muted">
+            It is written for undergraduate students and other learners meeting these ideas for the
+            first time; no prior machine-learning background is assumed.
+          </p>
+        </div>
+
+        <div className="grid gap-10 md:grid-cols-2">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Authors</h2>
             <p className="text-justify hyphens-auto text-ink-muted">
@@ -92,19 +105,6 @@ export default function Home() {
                 shashankbl@utexas.edu
               </a>{" "}
               (corresponding author).
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-bold text-ink">How to read it</h2>
-            <p className="text-justify hyphens-auto text-ink-muted">
-              Chapters stand alone but build in order. Every figure is live: sliders re-derive the
-              curves, diagrams answer clicks, and the demos sample from a real model when one is
-              available; canned transcripts otherwise.
-            </p>
-            <p className="text-justify hyphens-auto text-ink-muted">
-              It is written for undergraduate students and other learners meeting these ideas for
-              the first time; no prior machine-learning background is assumed.
             </p>
           </div>
 
