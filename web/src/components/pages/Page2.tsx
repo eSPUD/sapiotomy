@@ -30,7 +30,7 @@
 
 import { useState } from "react";
 import { PageNav } from "@/components/PageNav";
-import { SPAIN_WORLD_CUPS } from "@/lib/authored";
+import { SPAIN_MACHINE_REPLIES, SPAIN_WORLD_CUPS } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
@@ -38,7 +38,6 @@ const PAGE_N = 2;
 const WC = SPAIN_WORLD_CUPS;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const NUM_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six"];
 
 /** A cutoff is a month, encoded as years*12 + month(0-11), so it slides smoothly. */
 const monthIndex = (year: number, month0: number) => year * 12 + month0;
@@ -48,7 +47,6 @@ const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real s
 /** Each of Spain's titles is decided at its July final (2010-07, 2026-07). */
 const WIN_FINALS = WC.wins.map((y) => monthIndex(y, 6));
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
-const numWord = (n: number) => NUM_WORDS[n] ?? String(n);
 
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
@@ -69,7 +67,6 @@ export function Page2() {
   // titles decided on or before it. Retrieval is unaffected.
   const [cutoff, setCutoff] = useState(CUTOFF_DEFAULT);
   const recallCount = WIN_FINALS.filter((f) => f <= cutoff).length;
-  const recallWord = numWord(recallCount);
   const gap = WC.trueCount - recallCount;
   const cutoffText = fmtCutoff(cutoff);
 
@@ -84,7 +81,9 @@ export function Page2() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         A model learns everything it knows before a fixed <strong>training cutoff</strong>, and the
-        record moved after that. The answer a model gives depends on when its memory was sealed.
+        answer it gives depends on when it was trained. This creates a perpetual{" "}
+        <strong>knowledge gap</strong> after the model is trained, as new data is created by the
+        world.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -124,13 +123,26 @@ export function Page2() {
                   aria-valuetext={cutoffText}
                   className="w-full accent-compute"
                 />
-                <p className="text-sm text-ink-muted">
-                  A model sealed in <strong className="text-ink">{cutoffText}</strong> knows{" "}
-                  <strong className="text-ink">{recallWord.toLowerCase()}</strong> of Spain&apos;s{" "}
-                  {WC.trueCount} titles, so from memory it answers{" "}
-                  <strong className={gap <= 0 ? "text-correct" : "text-wrong"}>
-                    &ldquo;{recallWord}.&rdquo;
-                  </strong>
+              </div>
+
+              {/* what the model actually says, off a memory sealed at that cutoff */}
+              <div className="flex flex-col gap-2 rounded-lg border border-grid bg-canvas p-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    the model answers
+                  </p>
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-xs ${
+                      gap <= 0
+                        ? "border-correct/60 bg-correct/15 text-correct"
+                        : "border-wrong/60 bg-wrong/15 text-wrong"
+                    }`}
+                  >
+                    {gap <= 0 ? "✓ current" : `✗ ${gap === 1 ? "one" : gap} short`}
+                  </span>
+                </div>
+                <p className="text-lg text-ink">
+                  &ldquo;{SPAIN_MACHINE_REPLIES[recallCount]}&rdquo;
                 </p>
               </div>
             </div>

@@ -152,6 +152,19 @@ export const SPAIN_WORLD_CUPS = {
   },
 } as const;
 
+/**
+ * What the model actually SAYS, indexed by how many of Spain's titles fell
+ * inside its training cutoff (0, 1, or 2). Authored/illustrative examples of a
+ * flat, confident answer off frozen memory: notice that none of them hedges
+ * about a cutoff or suggests checking a source, which is the page's whole
+ * point. The reader drives the index with the cutoff slider on Page 2.
+ */
+export const SPAIN_MACHINE_REPLIES: string[] = [
+  "Spain has not won the FIFA World Cup.",
+  "Spain has won the FIFA World Cup once, in 2010.",
+  "Spain has won the FIFA World Cup twice, in 2010 and 2026.",
+];
+
 // --- Page 4: Reasoning: Diverse Pathfinding (three roads, one destination) ----
 /**
  * Page 1's hardest round (GAME_ROUNDS[2], 350 × 638) solved three ways:

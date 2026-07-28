@@ -32,16 +32,22 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     render(<Page2 />);
     expect(screen.getByText(WC.question)).toBeInTheDocument();
     expect(screen.getByRole("slider", { name: /training cutoff/i })).toBeInTheDocument();
-    // At the default cutoff (Jan 2025) sealed memory answers "One."
-    expect(screen.getByText(/“One\.”/)).toBeInTheDocument();
+    // At the default cutoff (Jan 2025) it answers off a memory that predates 2026.
+    expect(screen.getByText(/won the FIFA World Cup once, in 2010/i)).toBeInTheDocument();
+    expect(screen.getByText(/one short/i)).toBeInTheDocument();
+    // The pedagogically critical property: the stale reply never names 2026.
+    expect(screen.getByText(/won the FIFA World Cup once, in 2010/i).textContent).not.toMatch(
+      /2026/,
+    );
   });
 
   it("the cutoff slider changes the recalled answer", () => {
     render(<Page2 />);
     const slider = screen.getByRole("slider", { name: /training cutoff/i });
-    // Past the 2026 final, sealed memory catches up: it answers "Two."
+    // Past the 2026 final, sealed memory catches up and names both titles.
     fireEvent.change(slider, { target: { value: String(2026 * 12 + 11) } });
-    expect(screen.getByText(/“Two\.”/)).toBeInTheDocument();
+    expect(screen.getByText(/twice, in 2010 and 2026/i)).toBeInTheDocument();
+    expect(screen.getByText("✓ current")).toBeInTheDocument();
   });
 
   it("says the fix is fetching the fact, not thinking harder", () => {
