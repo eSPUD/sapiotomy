@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 // No motion or timers to stub: Page 2 is a cutoff slider plus prose.
 const mm = (q: string) => ({
@@ -45,8 +45,11 @@ describe("Page 2 (Answering Questions in the Real World): a training-cutoff slid
     render(<Page2 />);
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/The question never said men's/i);
-    expect(body).toMatch(/three\s*FIFA World Cups/i);
-    expect(body).toMatch(/women's team in 2023/i);
+    // The record card carries the years, so they cannot drift from the prose.
+    const record = screen.getByRole("region", { name: /Spain's full FIFA World Cup record/i });
+    expect(within(record).getByText(/2010 · 2026/)).toBeInTheDocument();
+    expect(within(record).getByText(/2023/)).toBeInTheDocument();
+    expect(within(record).getByText(/3 titles/i)).toBeInTheDocument();
     // The point that makes it a DIFFERENT failure from the knowledge gap.
     expect(body).toMatch(/happened\s*before\s*the cutoff/i);
   });

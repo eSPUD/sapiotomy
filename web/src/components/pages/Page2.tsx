@@ -15,8 +15,9 @@
  *      in 2023, BEFORE the cutoff. The model held that fact and still left it
  *      out, resolving an ambiguous question to the reading its training data
  *      talks about most (cf. stereotype-consistent coreference, Zhao et al.
- *      2018). Told as prose: the widget in step 1 already showed the biased
- *      reading, so this step names it rather than re-running the control.
+ *      2018). The step 1 widget already showed the biased reading, so this step
+ *      names it and shows the full record in a small card instead of re-running
+ *      the control.
  *   3. What a System 2 pass would have done, as an authored trace. Rereading the
  *      question settles the BIAS outright (it needs no information the model
  *      lacks). It cannot close the knowledge GAP, since thinking never conjures
@@ -131,6 +132,36 @@ function CutoffWidget({
   );
 }
 
+/** The full record, section 2's point in one small card: two tournaments, three
+ *  titles. Driven by SPAIN_ALL_TITLES so the years cannot drift from the prose. */
+function TitleRecord() {
+  const rows = [
+    { label: "Men's", years: SPAIN_ALL_TITLES.mens },
+    { label: "Women's", years: SPAIN_ALL_TITLES.womens },
+  ];
+  return (
+    <section
+      aria-label="Spain's full FIFA World Cup record"
+      className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">the record</p>
+        <span className="rounded-full border border-correct/60 bg-correct/15 px-2 py-0.5 text-xs text-correct">
+          {SPAIN_ALL_TITLES.total} titles
+        </span>
+      </div>
+      <dl className="flex flex-col gap-1">
+        {rows.map((r) => (
+          <div key={r.label} className="flex items-baseline gap-3">
+            <dt className="w-20 shrink-0 text-sm text-ink-muted">{r.label}</dt>
+            <dd className="font-mono text-ink">{r.years.join(" · ")}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -154,13 +185,6 @@ export function Page2() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        A model learns everything it knows before a fixed <strong>training cutoff</strong>, and the
-        answer it gives depends on when it was trained. This creates a perpetual{" "}
-        <strong>knowledge gap</strong> after the model is trained, as new data is created by the
-        world.
-      </p>
-
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 */}
@@ -173,6 +197,13 @@ export function Page2() {
             replies={SPAIN_MACHINE_REPLIES}
             total={WC.trueCount}
           />
+
+          <p className="text-ink">
+            A model learns everything it knows before a fixed <strong>training cutoff</strong>, and
+            the answer it gives depends on when it was trained. This creates a perpetual{" "}
+            <strong>knowledge gap</strong> after the model is trained, as new data is created by the
+            world.
+          </p>
 
           <p className="text-ink">
             Based on the knowledge cutoff date, the model gives an answer without thinking it
@@ -189,10 +220,14 @@ export function Page2() {
           <h2 className="text-xl font-semibold text-ink">2. Knowing correct and without bias</h2>
 
           <p className="text-ink">
-            <strong>The question never said men&apos;s.</strong> Spain has won{" "}
-            <strong>three</strong> FIFA World Cups: the men&apos;s team in 2010 and 2026, and the
-            women&apos;s team in 2023. Every answer above quietly counted only the men&apos;s
-            tournament.
+            <strong>The question never said men&apos;s.</strong> Spain fields a team in both
+            tournaments, and has won three FIFA World Cups between them:
+          </p>
+
+          <TitleRecord />
+
+          <p className="text-ink">
+            Every answer above quietly counted only the men&apos;s tournament.
           </p>
 
           <p className="text-ink">
@@ -205,6 +240,9 @@ export function Page2() {
             <Cite n={REF.winobias} />
           </p>
 
+          <p className="text-ink">
+            Are knowledge biases addressable by <strong>System 2 thinking</strong>?
+          </p>
         </section>
         <Note kicker="References">
           <RefItem n={REF.winobias}>
