@@ -167,9 +167,23 @@ function PullQuote({ children }: { children: React.ReactNode }) {
 
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+function Note({
+  kicker,
+  bottom = false,
+  children,
+}: {
+  kicker: string;
+  /** Sit at the foot of the sidenote column instead of the top of the row. The
+   *  house position for "Further reading", which closes the column on a page. */
+  bottom?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside
+      className={`flex flex-col gap-2 text-sm text-ink-muted ${
+        bottom ? "lg:mt-auto lg:self-end" : "lg:pt-9"
+      }`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -290,7 +304,7 @@ export function Page2() {
             of this story: what it buys, how to buy more of it, and where buying more stops helping.
           </PullQuote>
         </section>
-        <Note kicker="Further reading">
+        <Note kicker="Further reading" bottom>
           <p>
             Askell et al.,{" "}
             <a
