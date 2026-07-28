@@ -130,6 +130,17 @@ function PathRow({
   );
 }
 
+/** A margin note that sits beside its step and scrolls with the page.
+ *  (Same shell as Page 1, so Act 1 reads as one layout.) */
+function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+  return (
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      {children}
+    </aside>
+  );
+}
+
 export function Page2() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
@@ -190,7 +201,7 @@ export function Page2() {
   const done = step >= MAX_STEP;
 
   return (
-    <article className="flex flex-col gap-5">
+    <article className="flex flex-col gap-6">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
@@ -204,6 +215,12 @@ export function Page2() {
         learns everything it knows before a fixed <strong>training cutoff</strong>, and the record
         moved after that. Watch the same question take two very different roads.
       </p>
+
+      {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
+      <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* Step 1 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">1. One question, two roads</h2>
 
       {/* ================= the single focal stage ================= */}
       <section
@@ -332,66 +349,88 @@ export function Page2() {
           </p>
         </div>
       </section>
+        </section>
+        <Note kicker="Walk it">
+          <p>Press Next, or Play, to walk both roads from the same question.</p>
+          <p>Your count only sits beside the machine&apos;s; it never gates anything.</p>
+        </Note>
 
-      {/* ================= the analysis (always on screen) ================= */}
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        <p>
-          <strong>It only looks like a lookup.</strong> The count may pop
-          {answered ? <>, the way it may have for you</> : null}. But a bare recall is exactly the
-          trap the machine fell into: it counted off a memory sealed before this summer,{" "}
-          <strong>{WC.trueCount}</strong> titles reported as{" "}
-          <strong>{WC.machine.answer === 1 ? "one" : WC.machine.answer}</strong>.
-        </p>
-        <p className="mt-2 text-ink-muted">
-          Answering it <em>well</em> means noticing the record can change, asking{" "}
-          <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and going to get the fresh
-          fact, the move the machine skipped.
-        </p>
+        {/* Step 2 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">2. Why recall fell short</h2>
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            <p>
+              <strong>It only looks like a lookup.</strong> The count may pop
+              {answered ? <>, the way it may have for you</> : null}. But a bare recall is exactly
+              the trap the machine fell into: it counted off a memory sealed before this summer,{" "}
+              <strong>{WC.trueCount}</strong> titles reported as{" "}
+              <strong>{WC.machine.answer === 1 ? "one" : WC.machine.answer}</strong>.
+            </p>
+            <p className="mt-2 text-ink-muted">
+              Answering it <em>well</em> means noticing the record can change, asking{" "}
+              <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and going to get the
+              fresh fact, the move the machine skipped.
+            </p>
+          </div>
+        </section>
+        <div aria-hidden="true" />
+
+        {/* Step 3 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. Two gaps, not one</h2>
+
+          {/* the gap is knowledge, and retrieval fills it (RAG) */}
+          <div className="rounded-lg border-l-4 border-correct bg-surface p-4 text-ink">
+            <p>
+              <strong>The gap is knowledge, not thinking.</strong> Thinking harder never conjures a
+              fact the model was never shown; it simply needed the <em>fact itself</em>. Fetch it
+              from a current source at answer time and you have{" "}
+              <strong>retrieval-augmented generation</strong> (RAG): retrieve the relevant document,
+              then answer <span className="text-ink-muted">[Lewis et al., 2020]</span>. Retrieval{" "}
+              <strong>adds facts</strong>.
+            </p>
+          </div>
+
+          {/* the explicit contrast this page plants */}
+          <div className="rounded-lg border border-compute bg-surface-raised p-4 text-ink">
+            <p className="text-lg">
+              <strong>Retrieval adds facts. Inference-time scaling adds thinking.</strong>
+            </p>
+            <p className="mt-2 text-ink-muted">
+              Two different gaps. Retrieval, and the retraining the next page tries, both close the{" "}
+              <strong className="text-ink">knowledge gap</strong> you just saw. But other problems
+              hand the model every fact it needs and still demand real work to reach the answer: a{" "}
+              <strong className="text-ink">reasoning gap</strong> no fetch can fill. That gap is
+              where this story turns from Page 4 on.
+            </p>
+          </div>
+
+          <p className="text-ink">
+            <em>
+              So there are two ways to hand the model the fact it lacked: fetch it at answer time
+              (retrieval, above), or bake it into the weights, what if we simply{" "}
+              <strong>trained it on data that includes that final</strong>? That retraining fix is
+              the next page. Both only add facts; teaching the model to <strong>think</strong> is
+              the harder problem this whole story is headed toward.
+            </em>
+          </p>
+        </section>
+        <Note kicker="References">
+          <p>
+            Lewis et al., &ldquo;Retrieval-Augmented Generation for Knowledge-Intensive NLP
+            Tasks&rdquo; (NeurIPS 2020).
+          </p>
+          <p>
+            Framing: Kahneman, <em>Thinking, Fast and Slow</em> (2011).
+          </p>
+        </Note>
       </div>
-
-      {/* ===== the gap is knowledge, and retrieval fills it (RAG) ===== */}
-      <div className="rounded-lg border-l-4 border-correct bg-surface p-4 text-ink">
-        <p>
-          <strong>The gap is knowledge, not thinking.</strong> Thinking harder never conjures a fact
-          the model was never shown; it simply needed the <em>fact itself</em>. Fetch it from a
-          current source at answer time and you have <strong>retrieval-augmented generation</strong>{" "}
-          (RAG): retrieve the relevant document, then answer{" "}
-          <span className="text-ink-muted">[Lewis et al., 2020]</span>. Retrieval{" "}
-          <strong>adds facts</strong>.
-        </p>
-      </div>
-
-      {/* ===== the explicit contrast this page plants ===== */}
-      <div className="rounded-lg border border-compute bg-surface-raised p-4 text-ink">
-        <p className="text-lg">
-          <strong>Retrieval adds facts. Inference-time scaling adds thinking.</strong>
-        </p>
-        <p className="mt-2 text-ink-muted">
-          Two different gaps. Retrieval, and the retraining the next page tries, both close the{" "}
-          <strong className="text-ink">knowledge gap</strong> you just saw. But other problems hand
-          the model every fact it needs and still demand real work to reach the answer: a{" "}
-          <strong className="text-ink">reasoning gap</strong> no fetch can fill. That gap is where
-          this story turns from Page 4 on.
-        </p>
-      </div>
-
-      <p className="max-w-2xl text-ink">
-        <em>
-          So there are two ways to hand the model the fact it lacked: fetch it at answer time
-          (retrieval, above), or bake it into the weights, what if we simply{" "}
-          <strong>trained it on data that includes that final</strong>? That retraining fix is the
-          next page. Both only add facts; teaching the model to <strong>think</strong> is the harder
-          problem this whole story is headed toward.
-        </em>
-      </p>
 
       <p className="text-xs text-ink-muted">
         the question is real and recent on purpose · Spain&apos;s 2010 title is real, but the 2026
         win (and so the count of two) is an authored placeholder; verify the final&apos;s result
         before shipping · the machine&apos;s reply is an authored example of a confident stale-memory
-        miss; a live open model with no web search replaces it later · retrieval framing: Lewis et
-        al., &ldquo;Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,&rdquo; NeurIPS
-        2020
+        miss; a live open model with no web search replaces it later
       </p>
 
       <div aria-live="polite" className="sr-only">
