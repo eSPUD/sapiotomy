@@ -80,7 +80,7 @@ export const SORTING_ITEMS: SortItem[] = [
   { id: "anger", text: "Hear that a voice is angry", system: "fast" },
   { id: "divide", text: "Divide 156 by 12 in your head", system: "slow" },
   { id: "park", text: "Park a car in a tight space", system: "slow" },
-  { id: "compare", text: "Compare two phones for value", system: "slow" },
+  { id: "compare", text: "Compare two laptop specs", system: "slow" },
 ];
 
 // --- Page 2: Two Systems (the "how many World Cups?" question) ------------
