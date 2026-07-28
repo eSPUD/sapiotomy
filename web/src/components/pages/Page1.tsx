@@ -118,6 +118,14 @@ export function Page1() {
                     </span>
                   </li>
                 ) : null}
+                {/* Two blank rows hold the height of System 2's extra steps, so the
+                    two panels keep the same vertical rhythm. Hidden from the a11y
+                    tree: they are spacing, not content. */}
+                {[0, 1].map((i) => (
+                  <li key={`spacer-${i}`} aria-hidden="true" className="invisible">
+                    &nbsp;
+                  </li>
+                ))}
               </ol>
               <div className="mt-auto flex flex-col gap-3">
                 {s1Revealed ? (
