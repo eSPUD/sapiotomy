@@ -41,7 +41,7 @@ export const PAGES: PageMeta[] = [
   { n: 11, slug: "maze-explorer", title: "The Maze Explorer (Tree Search)", act: 2, concept: "Tree-of-Thoughts: branch, evaluate, prune, backtrack.", milestone: "M4" },
   { n: 12, slug: "alphago", title: "Interlude: How AlphaGo Thought", act: 2, concept: "Monte Carlo Tree Search as the ancestor of test-time search.", milestone: "M4" },
   { n: 13, slug: "scaling-curve-lab", title: "The Scaling-Curve Lab (Log-Linear Coverage)", act: 2, concept: "Coverage grows roughly log-linearly with samples.", milestone: "M4" },
-  { n: 14, slug: "allocation-game", title: "The Allocation Game (Compute-Optimal Scaling)", act: 2, concept: "How you spend a fixed compute budget matters.", milestone: "M4" },
+  { n: 14, slug: "frontier-reasoners-deepseek-r1", title: "Frontier Reasoners II: DeepSeek-R1, GRPO, and the “Aha Moment”", act: 2, concept: "Open weights answer the black box: reward only verifiable right answers (GRPO) and the pausing and self-correcting emerge on their own — then get distilled into models 1.5B–70B.", milestone: "M4" },
   { n: 15, slug: "wait-button", title: "The 'Wait' Button (Budget Forcing)", act: 3, concept: "Force more thinking by appending 'Wait'.", milestone: "M5" },
   { n: 16, slug: "rl-training-curve", title: "Reasoning Models & the RL Training Curve", act: 3, concept: "RL teaches models to reason; the curve climbs as thinking lengthens.", milestone: "M5" },
   { n: 17, slug: "cost-of-thinking", title: "The Cost of Thinking (Economics Dashboard)", act: 3, concept: "Extra inference compute costs real money.", milestone: "M5" },

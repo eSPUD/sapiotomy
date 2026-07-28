@@ -51,7 +51,8 @@ figure/table, verbatim vs. interpolated). Summary:
 | coverage-scaling.json | 12 | Verbatim endpoints + log-linear fit (Brown et al. 2024) |
 | compute-optimal.json | 13 | Verbatim claims (Snell et al. 2024) |
 | budget-forcing.json | 14 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
-| deepseek-r1-training.json | 15 | Verbatim endpoints (DeepSeek-R1 2025) |
+| deepseek-r1-training.json | 14, 16 | Verbatim endpoints (DeepSeek-R1 2025): AIME 2024 pass@1 15.6 → 71.0, cons@64 86.7; intermediate points interpolated |
+| deepseek-r1-distill.json | 14 | Verbatim Table 4–5 values (DeepSeek-R1 2025): per-size AIME 2024 + MATH-500 for the six distills, teacher/o1-mini/QwQ/GPT-4o reference rows |
 | arc-cost.json | 16 | Reported **estimates** (ARC Prize blog, **not peer-reviewed**) |
 | overthinking.json | 17 | Authored inverse-U matching the 2025 literature (**PP**) |
 | faithfulness.json | 18 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
