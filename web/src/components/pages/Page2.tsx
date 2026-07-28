@@ -160,8 +160,7 @@ export function Page2() {
               never weighed its own memory and concluded it might be stale. It simply answered. That
               is a second, quieter miss: not the absent fact, but the absent judgment that a fact was
               missing. Asked directly whether models recognize the boundary of what they know and
-              call for outside help, the MetaTool benchmark found most struggle to{" "}
-              <span className="text-ink-muted">[Huang et al., 2024]</span>.
+              call for outside help, the MetaTool benchmark found most struggle to do so.
             </p>
           </div>
 
@@ -176,23 +175,21 @@ export function Page2() {
                 <dt className="font-semibold text-compute">Prompting: show the pattern.</dt>
                 <dd className="text-ink-muted">
                   ReAct interleaves reasoning with actions that query an external source, taught by a
-                  handful of worked examples <span>[Yao et al., 2022]</span>.
+                  handful of worked examples.
                 </dd>
               </div>
               <div>
                 <dt className="font-semibold text-compute">Fine-tuning: train it in.</dt>
                 <dd className="text-ink-muted">
                   Toolformer lets a model annotate text with candidate API calls, keeps only the
-                  calls that help it predict what comes next, then fine-tunes on those{" "}
-                  <span>[Schick et al., 2023]</span>.
+                  calls that help it predict what comes next, then fine-tunes on those.
                 </dd>
               </div>
               <div>
                 <dt className="font-semibold text-compute">Workflow: build the pipeline around it.</dt>
                 <dd className="text-ink-muted">
                   Surveys of tool learning organize the field as human-designed stages: plan the
-                  task, select the tool, call it, compose the reply{" "}
-                  <span>[Qu et al., 2025]</span>.
+                  task, select the tool, call it, compose the reply.
                 </dd>
               </div>
             </dl>
@@ -215,11 +212,20 @@ export function Page2() {
             know when to look something up: does it know when to <strong>think harder</strong>?
           </p>
         </section>
-        <Note kicker="The second miss">
+        <Note kicker="References">
           <p>
-            The page&apos;s first gap is a missing fact. This one is a missing judgment about the
-            model&apos;s own limits.
+            Huang et al., &ldquo;MetaTool: Benchmarking LLMs on Tool Usage Awareness&rdquo; (ICLR
+            2024).
           </p>
+          <p>
+            Yao et al., &ldquo;ReAct: Synergizing Reasoning and Acting in Language Models&rdquo;
+            (2022).
+          </p>
+          <p>
+            Schick et al., &ldquo;Toolformer: Language Models Can Teach Themselves to Use
+            Tools&rdquo; (NeurIPS 2023).
+          </p>
+          <p>Qu et al., &ldquo;Tool Learning with Large Language Models: A Survey&rdquo; (2025).</p>
         </Note>
 
         {/* Step 3 */}
@@ -233,7 +239,7 @@ export function Page2() {
               fact the model was never shown; it simply needed the <em>fact itself</em>. Fetch it
               from a current source at answer time and you have{" "}
               <strong>retrieval-augmented generation</strong> (RAG): retrieve the relevant document,
-              then answer <span className="text-ink-muted">[Lewis et al., 2020]</span>. Retrieval{" "}
+              then answer. Retrieval{" "}
               <strong>adds facts</strong>.
             </p>
           </div>
@@ -267,19 +273,6 @@ export function Page2() {
             Lewis et al., &ldquo;Retrieval-Augmented Generation for Knowledge-Intensive NLP
             Tasks&rdquo; (NeurIPS 2020).
           </p>
-          <p>
-            Huang et al., &ldquo;MetaTool: Benchmarking LLMs on Tool Usage Awareness&rdquo; (ICLR
-            2024).
-          </p>
-          <p>
-            Yao et al., &ldquo;ReAct: Synergizing Reasoning and Acting in Language Models&rdquo;
-            (2022).
-          </p>
-          <p>
-            Schick et al., &ldquo;Toolformer: Language Models Can Teach Themselves to Use
-            Tools&rdquo; (NeurIPS 2023).
-          </p>
-          <p>Qu et al., &ldquo;Tool Learning with Large Language Models: A Survey&rdquo; (2025).</p>
           <p>
             Framing: Kahneman, <em>Thinking, Fast and Slow</em> (2011).
           </p>

@@ -57,9 +57,17 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     // The judgment came from outside, via all three elicitation mechanisms.
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/judgment was supplied from outside/i);
+    expect(body).toMatch(/Prompting: show the pattern/i);
+    expect(body).toMatch(/Fine-tuning: train it in/i);
+    expect(body).toMatch(/Workflow: build the pipeline around it/i);
     expect(body).toMatch(/ReAct/);
     expect(body).toMatch(/Toolformer/);
-    expect(body).toMatch(/Qu et al\., 2025/);
+  });
+
+  it("keeps citations in the sidenotes, not inline in the prose", () => {
+    render(<Page2 />);
+    // No bracketed inline cites anywhere on the page.
+    expect(document.body.textContent ?? "").not.toMatch(/\[[A-Z][a-z]+ et al\.,? \d{4}\]/);
   });
 
   it("carries the honesty caveat that Toolformer is a partial counterexample", () => {
