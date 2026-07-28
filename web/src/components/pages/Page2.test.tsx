@@ -72,10 +72,28 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     expect(body).toMatch(/Toolformer/);
   });
 
-  it("keeps citations in the sidenotes, not inline in the prose", () => {
+  it("keeps author-year citations out of the prose", () => {
     render(<Page2 />);
-    // No bracketed inline cites anywhere on the page.
+    // Claims carry numbers; the works themselves live in the sidenotes.
     expect(document.body.textContent ?? "").not.toMatch(/\[[A-Z][a-z]+ et al\.,? \d{4}\]/);
+  });
+
+  it("numbers every citation inline and lists the same numbers in the sidenotes", () => {
+    const { container } = render(<Page2 />);
+    // Every inline marker is a <sup> carrying a reference number.
+    const marks = Array.from(container.querySelectorAll("sup"));
+    expect(marks.length).toBeGreaterThan(0);
+    const cited = new Set(marks.map((m) => m.textContent?.replace(/\D/g, "")));
+    // Toolformer is cited twice (mechanism + caveat), so 6 markers cover 5 works.
+    expect(marks).toHaveLength(6);
+    expect([...cited].sort()).toEqual(["1", "2", "3", "4", "5"]);
+    // ...and each number has a matching entry in a References note.
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/1\.\s*Huang et al/);
+    expect(body).toMatch(/2\.\s*Yao et al/);
+    expect(body).toMatch(/3\.\s*Schick et al/);
+    expect(body).toMatch(/4\.\s*Qu et al/);
+    expect(body).toMatch(/5\.\s*Lewis et al/);
   });
 
   it("carries the honesty caveat that Toolformer is a partial counterexample", () => {

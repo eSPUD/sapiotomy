@@ -48,6 +48,33 @@ const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real s
 const WIN_FINALS = WC.wins.map((y) => monthIndex(y, 6));
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
 
+/**
+ * Page 2's numbered references, in order of first appearance. Inline markers and
+ * the sidenote lists both read these constants, so a number can never drift from
+ * the work it points at. Kahneman is page-wide framing, not a numbered claim.
+ */
+const REF = { metatool: 1, react: 2, toolformer: 3, survey: 4, rag: 5 } as const;
+
+/** A superscript citation marker, e.g. the 1 in "found most struggle to do so.1" */
+function Cite({ n }: { n: number }) {
+  return (
+    <sup className="ml-0.5 font-semibold text-compute">
+      <span className="sr-only">reference </span>
+      {n}
+    </sup>
+  );
+}
+
+/** One numbered entry in a References margin note. */
+function RefItem({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <p className="flex gap-1.5">
+      <span className="font-semibold text-compute">{n}.</span>
+      <span>{children}</span>
+    </p>
+  );
+}
+
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -164,6 +191,7 @@ export function Page2() {
               is a second, quieter miss: not the absent fact, but the absent judgment that a fact was
               missing. Asked directly whether models recognize the boundary of what they know and
               call for outside help, the MetaTool benchmark found most struggle to do so.
+              <Cite n={REF.metatool} />
             </p>
           </div>
 
@@ -179,6 +207,7 @@ export function Page2() {
                 <dd className="text-ink-muted">
                   ReAct interleaves reasoning with actions that query an external source, taught by a
                   handful of worked examples.
+                  <Cite n={REF.react} />
                 </dd>
               </div>
               <div>
@@ -186,6 +215,7 @@ export function Page2() {
                 <dd className="text-ink-muted">
                   Toolformer lets a model annotate text with candidate API calls, keeps only the
                   calls that help it predict what comes next, then fine-tunes on those.
+                  <Cite n={REF.toolformer} />
                 </dd>
               </div>
               <div>
@@ -193,6 +223,7 @@ export function Page2() {
                 <dd className="text-ink-muted">
                   Surveys of tool learning organize the field as human-designed stages: plan the
                   task, select the tool, call it, compose the reply.
+                  <Cite n={REF.survey} />
                 </dd>
               </div>
             </dl>
@@ -201,7 +232,8 @@ export function Page2() {
           {/* the honesty caveat: Toolformer is the partial counterexample */}
           <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-4 text-ink">
             <p className="text-sm">
-              <strong>One honest complication.</strong> Toolformer is the closest thing to a
+              <strong>One honest complication.</strong> Toolformer
+              <Cite n={REF.toolformer} /> is the closest thing to a
               counterexample: its authors set out to build a model that decides for itself when and
               how to use which tool, and report that it learns to. So the point is not that such
               judgment was impossible. It is that the judgment was <em>engineered in</em>, through a
@@ -216,19 +248,21 @@ export function Page2() {
           </p>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.metatool}>
             Huang et al., &ldquo;MetaTool: Benchmarking LLMs on Tool Usage Awareness&rdquo; (ICLR
             2024).
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.react}>
             Yao et al., &ldquo;ReAct: Synergizing Reasoning and Acting in Language Models&rdquo;
             (2022).
-          </p>
-          <p>
+          </RefItem>
+          <RefItem n={REF.toolformer}>
             Schick et al., &ldquo;Toolformer: Language Models Can Teach Themselves to Use
             Tools&rdquo; (NeurIPS 2023).
-          </p>
-          <p>Qu et al., &ldquo;Tool Learning with Large Language Models: A Survey&rdquo; (2025).</p>
+          </RefItem>
+          <RefItem n={REF.survey}>
+            Qu et al., &ldquo;Tool Learning with Large Language Models: A Survey&rdquo; (2025).
+          </RefItem>
         </Note>
 
         {/* Step 3 */}
@@ -242,7 +276,8 @@ export function Page2() {
               fact the model was never shown; it simply needed the <em>fact itself</em>. Fetch it
               from a current source at answer time and you have{" "}
               <strong>retrieval-augmented generation</strong> (RAG): retrieve the relevant document,
-              then answer. Retrieval{" "}
+              then answer.
+              <Cite n={REF.rag} /> Retrieval{" "}
               <strong>adds facts</strong>.
             </p>
           </div>
@@ -272,10 +307,10 @@ export function Page2() {
           </p>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.rag}>
             Lewis et al., &ldquo;Retrieval-Augmented Generation for Knowledge-Intensive NLP
             Tasks&rdquo; (NeurIPS 2020).
-          </p>
+          </RefItem>
           <p>
             Framing: Kahneman, <em>Thinking, Fast and Slow</em> (2011).
           </p>
