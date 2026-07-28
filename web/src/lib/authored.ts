@@ -74,13 +74,16 @@ export interface SortItem {
   system: "fast" | "slow";
 }
 
+/** Interleaved on purpose: listing the three fast ones first would hand the
+ *  reader the answer before they sorted anything. SystemSort also shuffles on
+ *  mount, so the order differs from visit to visit. */
 export const SORTING_ITEMS: SortItem[] = [
-  { id: "face", text: "Recognize a friend's face", system: "fast" },
-  { id: "salt", text: "Finish the phrase 'salt and ___'", system: "fast" },
-  { id: "anger", text: "Hear that a voice is angry", system: "fast" },
   { id: "divide", text: "Divide 156 by 12 in your head", system: "slow" },
+  { id: "face", text: "Recognize a friend's face", system: "fast" },
   { id: "park", text: "Park a car in a tight space", system: "slow" },
+  { id: "salt", text: "Finish the phrase 'salt and ___'", system: "fast" },
   { id: "compare", text: "Compare two laptop specs", system: "slow" },
+  { id: "anger", text: "Hear that a voice is angry", system: "fast" },
 ];
 
 // --- Page 2: Two Systems (the "how many World Cups?" question) ------------
@@ -150,6 +153,71 @@ export const SPAIN_WORLD_CUPS = {
     /** The count it lands on once it has looked — the true total, not the blurt. */
     answer: "Two.",
   },
+} as const;
+
+/**
+ * Page 2, section 2: the question "How many FIFA World Cups has Spain won?"
+ * never said MEN'S, and the model silently read it that way. Spain's full FIFA
+ * World Cup record is three titles: the men's team in 2010 and 2026, and the
+ * women's team in 2023.
+ *
+ * The 2023 women's title is REAL and, crucially, it predates the machine's
+ * early-2025 cutoff. So this is NOT the knowledge gap section 1 shows: the
+ * model held the fact and still left it out, because it resolved an ambiguous
+ * question to the most common reading. (The 2026 men's title remains the
+ * flagged, verify-before-shipping placeholder; the point of this section holds
+ * either way, since it turns on 2010 vs 2023, both real.)
+ */
+export const SPAIN_ALL_TITLES = {
+  mens: [2010, 2026],
+  womens: [2023],
+  /** Men's plus women's: what a literal reading of the question would count. */
+  total: 3,
+  /** The reading the model picks without being asked to. */
+  defaultReading: "the men's tournament",
+} as const;
+
+/**
+ * Page 2, section 2: the ideal answer, i.e. the question read literally. It
+ * names both teams instead of silently counting one tournament, which is the
+ * whole point of the section. Covers all three titles in SPAIN_ALL_TITLES.
+ */
+export const SPAIN_IDEAL_ANSWER =
+  "Spain has won three FIFA World Cups: the men's team in 2010 and 2026, and the women's team in 2023.";
+
+/**
+ * Page 2, section 3: the same question answered with a System 2 pass instead of
+ * a reflex. Authored/illustrative.
+ *
+ * The trace deliberately does NOT invent the post-cutoff fact. Thinking settles
+ * the ambiguity outright (step 1), because that needs no information the model
+ * lacks. For the cutoff it can only recognize the boundary and decide to check
+ * (steps 2 and 3), which is the honest limit of thinking without new input: it
+ * converts a confident wrong answer into a flagged one. Step 4 is what the model
+ * can say once it has looked.
+ */
+export const SPAIN_SYSTEM2_TRACE = {
+  /** Each step is named for the move it makes, so the procedure reads at a
+   *  glance; the body carries the reasoning behind that move. */
+  steps: [
+    {
+      name: "Read the question again",
+      text: "It says FIFA World Cups, not men's World Cups. Spain fields a team in both tournaments, so both could count.",
+    },
+    {
+      name: "Check my own limits",
+      text: "A count of titles changes whenever a final is played, and my training was sealed in early 2025. Any final after that falls outside what I know.",
+    },
+    {
+      name: "Do not answer from memory alone",
+      text: "Say which tournaments I am counting, and check a current source before committing to a number.",
+    },
+    {
+      name: "Count what the question actually asked",
+      text: "The men's team won in 2010 and 2026, and the women's team won in 2023.",
+    },
+  ],
+  answer: "Three.",
 } as const;
 
 /**

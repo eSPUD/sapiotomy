@@ -29,6 +29,7 @@ export const tokens = {
   surface: "#eae9e9", // --color-surface
   surfaceRaised: "#eae7e7", // --color-neutral-200
   grid: "#d7d3d3", // --color-neutral-300 (hairline rules / gridlines)
+  quote: "#f5f0e4", // warm cream stock for pull quotes (ink and ink-muted stay AA on it)
   ink: "#201e1d", // --color-text (near-black)
   inkMuted: "#444141", // --color-neutral-800 (muted text; AA on colored tints too)
 

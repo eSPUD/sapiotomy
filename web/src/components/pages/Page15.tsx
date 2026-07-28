@@ -46,6 +46,7 @@ import { useMemo, useState } from "react";
 import { scaleLinear } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
 import { frontierOf, SCOREBOARD, type Benchmark, type ScoreEntry } from "@/lib/scoreboard";
@@ -54,6 +55,9 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 15;
 const W = 560;
 const H = 300;
+
+/** Page 15's references, numbered in order of first appearance. */
+const REF = { math: 1, gpqa: 2, openai: 3, deepseek: 4, swebench: 5, frontiermath: 6, epoch: 7 } as const;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -344,8 +348,9 @@ export function Page15() {
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
               Bar = from a benchmark&apos;s introduction to the day its own bar fell (the dashed
-              lines in step 1). MATH stood almost four years; GPQA eleven months; AIME 2024 fell
-              inside its own calendar year. Each replacement is deliberately harder, and dies
+              lines in step 1). MATH stood almost four years;
+              <Cite n={REF.math} /> GPQA eleven months;
+              <Cite n={REF.gpqa} /> AIME 2024 fell inside its own calendar year. Each replacement is deliberately harder, and dies
               faster anyway — <strong className="text-ink">the moving goalposts are the system
               working</strong>: a saturated test measures nothing, so retiring it is the honest
               move.
@@ -365,21 +370,27 @@ export function Page15() {
             <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
               <strong>The knob behind the number.</strong> On AIME, o1 scores 74, 83 or 93 —{" "}
               <em>one model</em>, under one sample, 64-vote consensus, or 1,000 re-ranked samples.
+              <Cite n={REF.openai} />
               Those are Act 2&apos;s levers running at someone else&apos;s expense; a headline that
               omits the setting is quoting the dial, not the machine.
             </div>
             <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
               <strong>The ruler changes under the name.</strong> &ldquo;MATH&rdquo; quietly became
               MATH-500, a 500-problem slice. The same GPT-4o scores 12% on AIME in OpenAI&apos;s
-              harness and 9.3% in DeepSeek&apos;s. On SWE-bench, the agent scaffold around the
-              model moves scores by double digits. Compare numbers only inside one report.
+              harness and 9.3% in DeepSeek&apos;s.
+              <Cite n={REF.openai} />
+              <Cite n={REF.deepseek} /> On SWE-bench, the agent scaffold around the model moves
+              scores by double digits.
+              <Cite n={REF.swebench} /> Compare numbers only inside one report.
             </div>
             <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
               <strong>The dispute, live.</strong> o3&apos;s famous 25.2% on FrontierMath was
               measured by OpenAI internally, at aggressive compute, on the 180-problem version —
-              and OpenAI had funded the benchmark, disclosed late. Epoch AI&apos;s independent run
-              of the <em>released</em> o3 on the newer 290-problem set: about 10%. Both dots are on
-              the FrontierMath tab; neither is a lie; the gap is the fine print.
+              and OpenAI had funded the benchmark, disclosed late.
+              <Cite n={REF.frontiermath} /> Epoch AI&apos;s independent run of the{" "}
+              <em>released</em> o3 on the newer 290-problem set: about 10%.
+              <Cite n={REF.epoch} /> Both dots are on the FrontierMath tab; neither is a lie; the
+              gap is the fine print.
             </div>
           </div>
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
@@ -392,13 +403,30 @@ export function Page15() {
         </section>
 
         <Note kicker="References">
+          <RefItem n={REF.math}>
+            Hendrycks et al. 2021, <em>MATH</em>.
+          </RefItem>
+          <RefItem n={REF.gpqa}>
+            Rein et al. 2023, <em>GPQA</em>.
+          </RefItem>
+          <RefItem n={REF.openai}>
+            OpenAI 2024, the o1 and o3 announcements.
+          </RefItem>
+          <RefItem n={REF.deepseek}>
+            DeepSeek-AI 2025.
+          </RefItem>
+          <RefItem n={REF.swebench}>
+            Jimenez et al. 2024, <em>SWE-bench</em>.
+          </RefItem>
+          <RefItem n={REF.frontiermath}>
+            Glazer et al. 2024, <em>FrontierMath</em>.
+          </RefItem>
+          <RefItem n={REF.epoch}>
+            Epoch AI and TechCrunch 2025, on the FrontierMath dispute.
+          </RefItem>
           <p>
-            Benchmarks: Cobbe et al. 2021; Hendrycks et al. 2021; Rein et al. 2023; Jimenez et al.
-            2024; Glazer et al. 2024.
-          </p>
-          <p>
-            Scores: OpenAI 2023, 2024; Anthropic 2024; Wei et al. 2022; DeepSeek-AI 2025; Epoch AI
-            and TechCrunch 2025 on the FrontierMath dispute.
+            The remaining dot-level sources (Cobbe et al. 2021; OpenAI 2023; Anthropic 2024; Wei et
+            al. 2022) travel with their dots — select one in step 1 for its receipt.
           </p>
         </Note>
       </div>

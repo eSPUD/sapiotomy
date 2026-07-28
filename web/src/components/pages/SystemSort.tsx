@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { SORTING_ITEMS } from "@/lib/authored";
+import { SORTING_ITEMS, type SortItem } from "@/lib/authored";
 import { useStore } from "@/store/useStore";
 
 type Zone = "fast" | "slow";
@@ -16,6 +16,21 @@ const byId = (id: string) => SORTING_ITEMS.find((x) => x.id === id);
  */
 export function SystemSort() {
   const recordInteraction = useStore((s) => s.recordInteraction);
+  // The pool is shuffled once per visit. It has to start in the authored order:
+  // randomising during render would make the server and client markup differ and
+  // trip hydration, so the shuffle waits for the effect.
+  const [order, setOrder] = useState<readonly SortItem[]>(SORTING_ITEMS);
+  useEffect(() => {
+    setOrder((items) => {
+      const next = [...items];
+      for (let i = next.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [next[i], next[j]] = [next[j], next[i]];
+      }
+      return next;
+    });
+  }, []);
+
   const [placed, setPlaced] = useState<Record<string, Zone>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [wrongId, setWrongId] = useState<string | null>(null);
@@ -26,7 +41,7 @@ export function SystemSort() {
   useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
 
   const done = Object.keys(placed).length === TOTAL;
-  const pool = SORTING_ITEMS.filter((x) => !placed[x.id]);
+  const pool = order.filter((x) => !placed[x.id]);
 
   const attempt = (id: string, zone: Zone) => {
     const item = byId(id);
@@ -139,8 +154,7 @@ export function SystemSort() {
         <div className="rounded-lg border-l-4 border-correct bg-correct/10 p-4">
           <p className="font-semibold text-correct">All six sorted.</p>
           <p className="text-sm text-ink-muted">
-            You just ran System 2 to tell System 1 from System 2. Perception, language and feeling
-            arrive on their own; arithmetic, parking and comparing have to be worked out.
+            You just ran System 2 to tell System 1 from System 2.
           </p>
         </div>
       ) : null}

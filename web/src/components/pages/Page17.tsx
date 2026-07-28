@@ -17,6 +17,7 @@
 
 import { useMemo, useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -29,6 +30,9 @@ import { useStore } from "@/store/useStore";
 
 const PAGE_N = 17;
 const P = SELF_CORRECTION;
+
+/** Page 17's references, numbered in order of first appearance. */
+const REF = { huang: 1, zeng: 2, wang: 3, stroebl: 4, balachandran: 5 } as const;
 
 const STROEBL: Citation = {
   ref: "Stroebl et al. 2024",
@@ -176,7 +180,8 @@ export function Page17() {
               The reason is structural: the same weights that produced the error are asked to find
               it, so the review mostly re-approves the answer — and when the model does change
               something, it flips correct answers to wrong{" "}
-              <em>more often than the reverse</em>. Nothing new enters the system; &ldquo;are you
+              <em>more often than the reverse</em>.
+              <Cite n={REF.huang} /> Nothing new enters the system; &ldquo;are you
               sure?&rdquo; just adds noise, and on CommonSenseQA one round of it cost GPT-3.5 half
               its score.
             </p>
@@ -184,11 +189,11 @@ export function Page17() {
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.huang}>
             Huang et al. 2024, <em>Large Language Models Cannot Self-Correct Reasoning Yet</em>{" "}
             (ICLR 2024), Table 3. &ldquo;Round&rdquo; = the model is shown its own answer and asked
             to review and revise it, with no external feedback.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 2 — the sweet spot and the cliff */}
@@ -285,12 +290,15 @@ export function Page17() {
             <p className="text-sm text-ink-muted">
               Both ends of this curve are measured in the wild. On o1-style models, correct
               solutions are consistently <em>shorter</em> than incorrect ones, and forcing extra
-              revision rounds steadily lowers the accuracy of weaker models. On hard AIME problems,
-              wrong answers burn ~225% more tokens than right ones while switching strategies ~4× as
-              often — the model isn&apos;t thinking deeper, it&apos;s thrashing. And the rescue on
-              the cyan curve is exactly as good as its judge: with an imperfect verifier, more
-              resampling eventually <em>lowers</em> true accuracy as false positives pile up, so the
-              plateau — not 100% — is the best the toggle can buy.
+              revision rounds steadily lowers the accuracy of weaker models.
+              <Cite n={REF.zeng} /> On hard AIME problems, wrong answers burn ~225% more tokens
+              than right ones while switching strategies ~4× as often — the model isn&apos;t
+              thinking deeper, it&apos;s thrashing.
+              <Cite n={REF.wang} /> And the rescue on the cyan curve is exactly as good as its
+              judge: with an imperfect verifier, more resampling eventually <em>lowers</em> true
+              accuracy as false positives pile up, so the plateau — not 100% — is the best the
+              toggle can buy.
+              <Cite n={REF.stroebl} />
             </p>
           </div>
         </section>
@@ -306,11 +314,17 @@ export function Page17() {
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
               References
             </p>
-            <p>
+            <RefItem n={REF.zeng}>
               Zeng et al. 2025, <em>Revisiting the Test-Time Scaling of o1-like Models</em> (ACL
-              2025). Wang et al. 2025, <em>Thoughts Are All Over the Place</em>. Stroebl et al.
-              2024, <em>Inference Scaling fLaws</em> — the verifier ceiling, from page 8.
-            </p>
+              2025).
+            </RefItem>
+            <RefItem n={REF.wang}>
+              Wang et al. 2025, <em>Thoughts Are All Over the Place</em>.
+            </RefItem>
+            <RefItem n={REF.stroebl}>
+              Stroebl et al. 2024, <em>Inference Scaling fLaws</em> — the verifier ceiling, from
+              page 8.
+            </RefItem>
           </aside>
         </div>
 
@@ -337,15 +351,16 @@ export function Page17() {
               trained, reasoning models scored 7–30 points below their 1983–2024 averages — and a
               conventional model fell from 40% to 1% — so part of every inference-time-scaling gain
               measured on old benchmarks is familiarity, not reasoning.
+              <Cite n={REF.balachandran} />
             </p>
           </div>
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.balachandran}>
             Balachandran et al. 2025, <em>Inference-Time Scaling for Complex Tasks: Where We Stand
             and What Lies Ahead</em>.
-          </p>
+          </RefItem>
         </Note>
       </div>
 

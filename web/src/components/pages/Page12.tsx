@@ -29,14 +29,15 @@
  * RL-from-verifiable-rewards recipe behind o1 and R1 (page 16) — and the fine
  * print: the filter is load-bearing, which the reader has just watched.
  *
- * Sidenote convention as on pages 3–8: one "Try it" note beside the
- * interactive, bare-cite References notes beside the steps that use them,
+ * Sidenote convention as on page 2: one "Try it" note beside the interactive,
+ * numbered References notes (Cite/RefItem) beside the steps that use them,
  * citation badges + provenance footnote at the bottom.
  */
 
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Toggle } from "@/components/Toggle";
@@ -57,6 +58,9 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 12;
 const POOL = starInit();
 const CHANCE = 100 / STAR_CHOICES;
+
+/** Page 12's references, numbered in order of first appearance. */
+const REF = { star: 1, quietStar: 2, restEm: 3, vStar: 4 } as const;
 
 const QUIET_STAR: Citation = {
   ref: "Zelikman et al. 2024",
@@ -164,6 +168,7 @@ export function Page12() {
         <strong className="text-ink">generate rationales, keep the ones that reach the right
         answer, fine-tune on them, repeat</strong> — so the model studies its own successful
         reasoning and gets <em>permanently</em> better.
+        <Cite n={REF.star} />
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -344,7 +349,8 @@ export function Page12() {
               <strong className="text-ink">{p.star}%</strong> — beside{" "}
               <strong className="text-ink">{p.gpt3Finetuned}%</strong> for a GPT-3{" "}
               <strong className="text-ink">30× its size</strong> fine-tuned on the full
-              human-labelled training set. And the gap above the {p.gptjFinetuned}% answer-only
+              human-labelled training set.
+              <Cite n={REF.star} /> And the gap above the {p.gptjFinetuned}% answer-only
               fine-tune is the page&apos;s point: the value was never the answers — it was{" "}
               <em>training on the reasoning</em>.
             </figcaption>
@@ -352,10 +358,10 @@ export function Page12() {
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.star}>
             Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
             2022.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 3 — lineage and fine print */}
@@ -368,9 +374,12 @@ export function Page12() {
               <em>generate → filter → train</em> is the conceptual ancestor of the
               RL-from-verifiable-rewards recipe behind today&apos;s reasoning models — o1, R1 —
               where Act 3 picks up the story. Its descendants each fix one gap: Quiet-STaR moves
-              the loop inside, learning to think before <em>every</em> token; ReST-EM formalizes
-              generate-filter-train as expectation-maximization and scales it; V-STaR keeps the
-              discarded wrong rationales too, and trains a verifier on the contrast.
+              the loop inside, learning to think before <em>every</em> token;
+              <Cite n={REF.quietStar} /> ReST-EM formalizes generate-filter-train as
+              expectation-maximization and scales it;
+              <Cite n={REF.restEm} /> V-STaR keeps the discarded wrong rationales too, and trains a
+              verifier on the contrast.
+              <Cite n={REF.vStar} />
             </div>
             <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-base text-ink">
               <strong>The filter is load-bearing.</strong> You watched it: with the answer key
@@ -385,10 +394,15 @@ export function Page12() {
         </section>
 
         <Note kicker="References">
-          <p>
-            Zelikman et al. 2024, <em>Quiet-STaR</em> · Singh et al. 2024, <em>Beyond Human Data
-            (ReST-EM)</em> · Hosseini et al. 2024, <em>V-STaR</em>.
-          </p>
+          <RefItem n={REF.quietStar}>
+            Zelikman et al. 2024, <em>Quiet-STaR</em>.
+          </RefItem>
+          <RefItem n={REF.restEm}>
+            Singh et al. 2024, <em>Beyond Human Data (ReST-EM)</em>.
+          </RefItem>
+          <RefItem n={REF.vStar}>
+            Hosseini et al. 2024, <em>V-STaR</em>.
+          </RefItem>
         </Note>
       </div>
 

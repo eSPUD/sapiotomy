@@ -54,6 +54,16 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     expect(within(s2).getByText(SYSTEMS.slow.answer)).toBeInTheDocument();
   });
 
+  it("numbers the Kahneman citation inline and in the references note", () => {
+    const { container } = render(<Page1 />);
+    // The two-systems framing carries an inline marker...
+    const marks = Array.from(container.querySelectorAll("sup"));
+    expect(marks).toHaveLength(1);
+    expect(marks[0].textContent).toMatch(/1$/);
+    // ...matching a numbered entry in the References note.
+    expect(document.body.textContent ?? "").toMatch(/1\.\s*Daniel Kahneman/);
+  });
+
   it("keeps the Page 2 → nav link the e2e traversal follows", () => {
     render(<Page1 />);
     expect(screen.getByRole("link", { name: /Page 2 →/ })).toBeInTheDocument();

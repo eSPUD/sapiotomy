@@ -32,6 +32,7 @@ import { useState } from "react";
 import { scaleLinear, scaleLog } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import {
@@ -51,6 +52,9 @@ import { curves } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 11;
+
+/** Page 11's references, numbered in order of first appearance. */
+const REF = { snell: 1, wu: 2 } as const;
 
 const DIFFICULTY_BLURB: Record<Difficulty, string> = {
   easy: "the 1× model already lands most answers on its first try",
@@ -455,10 +459,10 @@ export function Page11() {
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-ink">
               <strong>14× means 14× the base model&rsquo;s parameter count</strong> (Snell et al.
-              report model scale only as a multiple), and inference FLOPs scale with parameters:
-              an M× model spends M units per answer, where one unit is a single answer from the 1×
-              model. The 14× model&rsquo;s one greedy answer therefore costs{" "}
-              <strong>14 units</strong> and scores{" "}
+              report model scale only as a multiple),
+              <Cite n={REF.snell} /> and inference FLOPs scale with parameters: an M× model spends
+              M units per answer, where one unit is a single answer from the 1× model. The 14×
+              model&rsquo;s one greedy answer therefore costs <strong>14 units</strong> and scores{" "}
               <strong className="text-ink">{tgt.toFixed(0)}%</strong> here — the black dot below.
             </p>
             <p className="text-sm text-ink-muted">
@@ -578,7 +582,8 @@ export function Page11() {
               sampled steps under a process verifier (page 9&rsquo;s graders), or let the model
               redraft its own answer — and found that the right choice, and the right budget,
               depend on how hard the prompt is. Estimating difficulty first, then allocating, is
-              what they call compute-optimal. Three numbers carry the result:
+              what they call compute-optimal.
+              <Cite n={REF.snell} /> Three numbers carry the result:
             </p>
             <div className="grid gap-2 sm:grid-cols-3">
               <div className="rounded-lg border border-grid bg-surface-raised p-3">
@@ -615,10 +620,10 @@ export function Page11() {
           </div>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.snell}>
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally can be More Effective
             than Scaling Model Parameters</em>.
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 3 — the field data */}
@@ -630,6 +635,7 @@ export function Page11() {
               The game&rsquo;s picture, with real published sizes. Wu et al. gave three Pythia
               models — <strong className="text-ink">410M, 2.8B, and 12B parameters</strong> — a
               growing sample budget on GSM8K, under weighted majority voting.
+              <Cite n={REF.wu} />
             </p>
             <PythiaChart />
             <figcaption className="text-sm text-ink-muted">
@@ -662,17 +668,18 @@ export function Page11() {
               the 34B to reach comparable accuracy — and this table&rsquo;s sharpest instance is
               sharper still: 7B with tree search{" "}
               <strong className="text-ink">edges the 34B model&rsquo;s best sampling run with
-              roughly 8× fewer inference FLOPs</strong>. The fine print holds here too: gains from
+              roughly 8× fewer inference FLOPs</strong>.
+              <Cite n={REF.wu} /> The fine print holds here too: gains from
               more samples flatten toward a ceiling that the model&rsquo;s own answer distribution
               sets, so without a perfect external verifier, sampling alone never reaches 100%.
             </figcaption>
           </figure>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.wu}>
             Wu et al. 2024, <em>Inference Scaling Laws: An Empirical Analysis of Compute-Optimal
             Inference</em>.
-          </p>
+          </RefItem>
         </Note>
       </div>
 
