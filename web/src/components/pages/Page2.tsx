@@ -154,10 +154,10 @@ function IdealAnswer() {
   );
 }
 
-/** A question posed to the reader, set as a pull quote. Sections 1 and 2 each
- *  end on one, and section 3 answers both. */
-function PosedQuestion({ children }: { children: React.ReactNode }) {
-  return <p className="text-lg italic text-ink">{children}</p>;
+/** A line set apart from the running prose: the questions sections 1 and 2 end
+ *  on, and the closing statement section 3 lands. */
+function PullQuote({ children }: { children: React.ReactNode }) {
+  return <p className="border-l-2 border-compute pl-4 text-lg italic text-ink">{children}</p>;
 }
 
 /** A margin note that sits beside its step and scrolls with the page.
@@ -215,7 +215,7 @@ export function Page2() {
             through. System 1 thinking leads to an incorrect response.
           </p>
 
-          <PosedQuestion>Are knowledge gaps addressable by System 2 thinking?</PosedQuestion>
+          <PullQuote>Are knowledge gaps addressable by System 2 thinking?</PullQuote>
         </section>
         <Note kicker="Try it">
           <p>Slide the training cutoff to move the model&apos;s memory back and forth in time.</p>
@@ -249,7 +249,7 @@ export function Page2() {
             <Cite n={REF.winobias} />
           </p>
 
-          <PosedQuestion>Are knowledge biases addressable by System 2 thinking?</PosedQuestion>
+          <PullQuote>Are knowledge biases addressable by System 2 thinking?</PullQuote>
         </section>
         <Note kicker="References">
           <RefItem n={REF.winobias}>
@@ -291,12 +291,12 @@ export function Page2() {
             wrong answer into a flagged one, and a flagged one into a reason to go look.
           </p>
 
-          <p className="text-ink">
+          <PullQuote>
             Nothing about the model changed between the reflex and the trace. Same weights, same
             training data, same cutoff. The only difference is that it{" "}
             <strong>spent effort before answering</strong>. That effort is the subject of the rest
             of this story: what it buys, how to buy more of it, and where buying more stops helping.
-          </p>
+          </PullQuote>
         </section>
       </div>
 
