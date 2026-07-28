@@ -19,7 +19,7 @@ import { SPAIN_SYSTEM2_TRACE, SPAIN_WORLD_CUPS } from "@/lib/authored";
 
 const WC = SPAIN_WORLD_CUPS;
 
-describe("Page 2 (System 1 fails on real-world tasks): a training-cutoff slider", () => {
+describe("Page 2 (Answering Questions in the Real World): a training-cutoff slider", () => {
   it("shows the question and the cutoff slider, answering one short by default", () => {
     render(<Page2 />);
     expect(screen.getByText(WC.question)).toBeInTheDocument();

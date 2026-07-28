@@ -38,7 +38,7 @@ test.describe("Act 1 (pages 1–4)", () => {
     page,
   }) => {
     await page.goto("/p/2");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("System 1 Thinking Fails Often on Real-World Tasks");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Answering Questions in the Real World");
     // The machine panel and its example-reply label are on screen from the start.
     await expect(page.getByText("example reply, authored · live model to follow")).toBeVisible();
     // Run is grayed until the reader takes their turn.
