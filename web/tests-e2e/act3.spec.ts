@@ -2,14 +2,15 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Act 3 (pages 15–20)", () => {
-  test("Page 15: pressing Wait flips the answer to correct", async ({ page }) => {
+  test("Page 15: the scoreboard surfaces the FrontierMath dispute dot by dot", async ({ page }) => {
     await page.goto("/p/15");
-    await expect(page.getByText(/still wrong/i)).toBeVisible();
-    const wait = page.getByRole("button", { name: "Wait" });
-    await wait.click();
-    await wait.click();
-    await wait.click();
-    await expect(page.getByText(/24 ✓ \(correct\)/i)).toBeVisible();
+    // Opens on GSM8K with the latest score's receipt.
+    await expect(page.getByText(/reported in: Anthropic 2024/)).toBeVisible();
+    await page.getByRole("button", { name: "FrontierMath", exact: true }).click();
+    await page.getByRole("button", { name: /o3 — OpenAI, internal, Dec 2024: 25\.2%/ }).click();
+    await expect(page.getByText(/180-problem 2024-11 version/)).toBeVisible();
+    await page.getByRole("button", { name: /Epoch AI eval, Apr 2025: 10%/ }).click();
+    await expect(page.getByText(/290-problem 2025-02 set/)).toBeVisible();
   });
 
   test("Page 20: verdict flips between scoring modes at high N", async ({ page }) => {
