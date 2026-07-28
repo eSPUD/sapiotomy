@@ -49,7 +49,8 @@ figure/table, verbatim vs. interpolated). Summary:
 | prm-vs-orm.json | 9 | Verbatim (Lightman et al. 2023), MATH |
 | tree-of-thoughts.json | 10 | Verbatim endpoints (Yao et al. 2023), Game of 24 |
 | coverage-scaling.json | 12 | Verbatim endpoints + log-linear fit (Brown et al. 2024) |
-| compute-optimal.json | 13 | Verbatim claims (Snell et al. 2024) |
+| compute-optimal.json | 11, 13 | Verbatim claims (Snell et al. 2024) |
+| rebase-pareto.json | 11 | Verbatim table values (Wu et al. 2024, Table 1, MATH500 accuracy vs inference FLOPs) |
 | budget-forcing.json | 14 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
 | deepseek-r1-training.json | 15 | Verbatim endpoints (DeepSeek-R1 2025) |
 | arc-cost.json | 16 | Reported **estimates** (ARC Prize blog, **not peer-reviewed**) |
