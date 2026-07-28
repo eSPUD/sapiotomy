@@ -81,12 +81,12 @@ export default function Home() {
       <section className="mt-16 flex flex-col gap-8">
         <div className="flex flex-col gap-3">
           <h2 className="text-2xl font-bold text-ink">How to read it</h2>
-          <p className="text-justify hyphens-auto text-ink-muted">
+          <p className="text-justify text-sm hyphens-auto text-ink-muted">
             Chapters stand alone but build in order. Every figure is live: sliders re-derive the
             curves, diagrams answer clicks, and the demos sample from a real model when one is
             available; canned transcripts otherwise.
           </p>
-          <p className="text-justify hyphens-auto text-ink-muted">
+          <p className="text-justify text-sm hyphens-auto text-ink-muted">
             It is written for undergraduate students and other learners meeting these ideas for the
             first time; no prior machine-learning background is assumed.
           </p>
@@ -95,7 +95,7 @@ export default function Home() {
         <div className="grid gap-10 md:grid-cols-2">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Authors</h2>
-            <ol className="flex list-decimal flex-col gap-3 pl-5 text-ink-muted marker:text-ink-muted">
+            <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm text-ink-muted marker:text-ink-muted">
               <li className="text-justify hyphens-auto">
                 <span className="text-ink">Shashank Bangalore Lakshman</span>, Graduate Student (M.S.
                 in Artificial Intelligence), Department of Computer Science, The University of Texas
@@ -110,7 +110,7 @@ export default function Home() {
                 in Computer Science), Department of Computer Science, Western Governors University.
               </li>
             </ol>
-            <p className="text-sm text-ink-muted">The two authors contributed equally.</p>
+            <p className="text-xs text-ink-muted">The two authors contributed equally.</p>
           </div>
 
           <div className="flex flex-col gap-3">
