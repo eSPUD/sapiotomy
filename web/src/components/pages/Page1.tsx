@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { SystemSort } from "@/components/pages/SystemSort";
 import { ACTS, getPage } from "@/lib/pages";
@@ -8,6 +9,9 @@ import { SYSTEMS } from "@/lib/authored";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 1;
+
+/** Page 1's references, numbered in order of first appearance. */
+const REF = { kahneman: 1 } as const;
 const fmt = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
 /** A margin note that sits beside its step and scrolls with the page. */
@@ -84,7 +88,8 @@ export function Page1() {
       <p className="max-w-2xl text-lg text-ink-muted">
         Your mind runs two systems. <strong className="text-ink">System 1</strong> is fast,
         automatic, effortless. <strong className="text-ink">System 2</strong> is slow, deliberate,
-        effortful. One operation, multiplication, flips you between them.
+        effortful.
+        <Cite n={REF.kahneman} /> One operation, multiplication, flips you between them.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -175,9 +180,9 @@ export function Page1() {
           </div>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.kahneman}>
             Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
-          </p>
+          </RefItem>
         </Note>
       </div>
 

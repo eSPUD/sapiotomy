@@ -27,6 +27,7 @@
  */
 
 import { useState } from "react";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { SPAIN_MACHINE_REPLIES, SPAIN_WORLD_CUPS } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
@@ -46,32 +47,8 @@ const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real s
 const WIN_FINALS = WC.wins.map((y) => monthIndex(y, 6));
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
 
-/**
- * Page 2's numbered references, in order of first appearance. Inline markers and
- * the sidenote lists both read these constants, so a number can never drift from
- * the work it points at.
- */
+/** Page 2's references, numbered in order of first appearance. */
 const REF = { metatool: 1, react: 2, toolformer: 3, survey: 4 } as const;
-
-/** A superscript citation marker, e.g. the 1 in "found most struggle to do so.1" */
-function Cite({ n }: { n: number }) {
-  return (
-    <sup className="ml-0.5 font-semibold text-compute">
-      <span className="sr-only">reference </span>
-      {n}
-    </sup>
-  );
-}
-
-/** One numbered entry in a References margin note. */
-function RefItem({ n, children }: { n: number; children: React.ReactNode }) {
-  return (
-    <p className="flex gap-1.5">
-      <span className="font-semibold text-compute">{n}.</span>
-      <span>{children}</span>
-    </p>
-  );
-}
 
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
