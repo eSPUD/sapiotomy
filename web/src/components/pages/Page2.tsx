@@ -3,15 +3,11 @@
 /**
  * Page 2, "The Knowledge Gap". One question: how many FIFA World Cups has Spain
  * won? It looks like a plain lookup, but the record moved after the model's
- * training cutoff, so the machine's memory is stale. It blurts a confident
- * recall off a memory sealed before the 2026 final and lands one short. The
- * point of the page is the GAP itself: the model does not need to think harder
- * (thinking never invents a fact it was never shown); it needs the missing fact.
- * Fetching that fact at answer time is retrieval-augmented generation (RAG;
- * Lewis et al., 2020). The explicit contrast this page plants: retrieval adds
- * facts; inference-time scaling (Pages 4+) adds thinking. Two different gaps.
+ * training cutoff, so its memory is stale and it lands one short. A model's
+ * knowledge is fixed at training time while the world keeps producing facts,
+ * so the gap reopens continuously.
  *
- * Narrative spine (three steps):
+ * Narrative spine (two steps):
  *   1. A training-cutoff slider (Jan 2017 to Dec 2026): sliding it changes which
  *      of Spain's titles sealed memory can recall, and so the answer it gives.
  *      That is the knowledge gap, a missing FACT.
@@ -24,8 +20,8 @@
  *      Honesty caveat carried on the page: Toolformer is the strongest partial
  *      counterexample, since it does learn to choose tools for itself; the
  *      precise claim is that the judgment was engineered in, not spontaneous.
- *   3. Two gaps, not one: retrieval adds facts, inference-time scaling adds
- *      thinking, which hands the reasoning gap to Page 4 on.
+ *      Closes on the bridge to the reasoning gap: a model that does not know
+ *      when to look something up, does it know when to think harder?
  */
 
 import { useState } from "react";
@@ -53,7 +49,7 @@ const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i
  * the sidenote lists both read these constants, so a number can never drift from
  * the work it points at. Kahneman is page-wide framing, not a numbered claim.
  */
-const REF = { metatool: 1, react: 2, toolformer: 3, survey: 4, rag: 5 } as const;
+const REF = { metatool: 1, react: 2, toolformer: 3, survey: 4 } as const;
 
 /** A superscript citation marker, e.g. the 1 in "found most struggle to do so.1" */
 function Cite({ n }: { n: number }) {
@@ -259,57 +255,6 @@ export function Page2() {
           <RefItem n={REF.survey}>
             Qu et al., &ldquo;Tool Learning with Large Language Models: A Survey&rdquo; (2025).
           </RefItem>
-        </Note>
-
-        {/* Step 3 */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Two gaps, not one</h2>
-
-          {/* the gap is knowledge, and retrieval fills it (RAG) */}
-          <div className="rounded-lg border-l-4 border-correct bg-surface p-4 text-ink">
-            <p>
-              <strong>The gap is knowledge, not thinking.</strong> Thinking harder never conjures a
-              fact the model was never shown; it simply needed the <em>fact itself</em>. Fetch it
-              from a current source at answer time and you have{" "}
-              <strong>retrieval-augmented generation</strong> (RAG): retrieve the relevant document,
-              then answer.
-              <Cite n={REF.rag} /> Retrieval{" "}
-              <strong>adds facts</strong>.
-            </p>
-          </div>
-
-          {/* the explicit contrast this page plants */}
-          <div className="rounded-lg border border-compute bg-surface-raised p-4 text-ink">
-            <p className="text-lg">
-              <strong>Retrieval adds facts. Inference-time scaling adds thinking.</strong>
-            </p>
-            <p className="mt-2 text-ink-muted">
-              Two different gaps. Retrieval, and the retraining the next page tries, both close the{" "}
-              <strong className="text-ink">knowledge gap</strong> you just saw. But other problems
-              hand the model every fact it needs and still demand real work to reach the answer: a{" "}
-              <strong className="text-ink">reasoning gap</strong> no fetch can fill. That gap is
-              where this story turns from Page 4 on.
-            </p>
-          </div>
-
-          <p className="text-ink">
-            <em>
-              So there are two ways to hand the model the fact it lacked: fetch it at answer time
-              (retrieval, above), or bake it into the weights, what if we simply{" "}
-              <strong>trained it on data that includes that final</strong>? That retraining fix is
-              the next page. Both only add facts; teaching the model to <strong>think</strong> is
-              the harder problem this whole story is headed toward.
-            </em>
-          </p>
-        </section>
-        <Note kicker="References">
-          <RefItem n={REF.rag}>
-            Lewis et al., &ldquo;Retrieval-Augmented Generation for Knowledge-Intensive NLP
-            Tasks&rdquo; (NeurIPS 2020).
-          </RefItem>
-          <p>
-            Framing: Kahneman, <em>Thinking, Fast and Slow</em> (2011).
-          </p>
         </Note>
       </div>
 

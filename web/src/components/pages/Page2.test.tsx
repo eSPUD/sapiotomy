@@ -19,14 +19,6 @@ import { SPAIN_WORLD_CUPS } from "@/lib/authored";
 
 const WC = SPAIN_WORLD_CUPS;
 
-// This page deliberately plants the contrast "retrieval adds facts; inference-
-// time scaling adds thinking", and must name retrieval (RAG) as the fix.
-const expectRetrievalFraming = () => {
-  const body = document.body.textContent ?? "";
-  expect(body).toMatch(/retrieval-augmented generation/i);
-  expect(body).toMatch(/retrieval adds facts\. inference-time scaling adds thinking\./i);
-};
-
 describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
   it("shows the question and the cutoff slider, answering one short by default", () => {
     render(<Page2 />);
@@ -48,14 +40,6 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     fireEvent.change(slider, { target: { value: String(2026 * 12 + 11) } });
     expect(screen.getByText(/twice, in 2010 and 2026/i)).toBeInTheDocument();
     expect(screen.getByText("✓ current")).toBeInTheDocument();
-  });
-
-  it("says the fix is fetching the fact, not thinking harder", () => {
-    render(<Page2 />);
-    expect(screen.getByText(/The gap is knowledge, not thinking/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Thinking harder never conjures a\s*fact the model was never shown/i),
-    ).toBeInTheDocument();
   });
 
   it("names the second miss: the model never judged that it should look it up", () => {
@@ -84,16 +68,15 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     const marks = Array.from(container.querySelectorAll("sup"));
     expect(marks.length).toBeGreaterThan(0);
     const cited = new Set(marks.map((m) => m.textContent?.replace(/\D/g, "")));
-    // Toolformer is cited twice (mechanism + caveat), so 6 markers cover 5 works.
-    expect(marks).toHaveLength(6);
-    expect([...cited].sort()).toEqual(["1", "2", "3", "4", "5"]);
+    // Toolformer is cited twice (mechanism + caveat), so 5 markers cover 4 works.
+    expect(marks).toHaveLength(5);
+    expect([...cited].sort()).toEqual(["1", "2", "3", "4"]);
     // ...and each number has a matching entry in a References note.
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/1\.\s*Huang et al/);
     expect(body).toMatch(/2\.\s*Yao et al/);
     expect(body).toMatch(/3\.\s*Schick et al/);
     expect(body).toMatch(/4\.\s*Qu et al/);
-    expect(body).toMatch(/5\.\s*Lewis et al/);
   });
 
   it("carries the honesty caveat that Toolformer is a partial counterexample", () => {
@@ -119,10 +102,10 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     expect(document.body.textContent ?? "").not.toMatch(/—/);
   });
 
-  it("shows the retrieval framing and the teaser", () => {
+  it("closes on the bridge from looking it up to thinking harder", () => {
     render(<Page2 />);
-    expect(screen.getByText(/trained it on data that includes that final/)).toBeInTheDocument();
-    expectRetrievalFraming();
+    expect(screen.getByText(/does it know when to/i)).toBeInTheDocument();
+    expect(document.body.textContent ?? "").toMatch(/think harder/i);
   });
 
   it("does not render the removed stepper, roads, or guess controls", () => {
