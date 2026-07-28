@@ -99,7 +99,7 @@ export default function Home() {
               <li className="flex flex-col gap-0.5">
                 <span className="font-semibold text-ink">
                   Shashank Bangalore Lakshman
-                  <sup aria-hidden="true" className="text-compute">*</sup>
+                  <sup aria-hidden="true" className="text-compute">*&dagger;</sup>
                 </span>
                 <span>Graduate Student, M.S. in Artificial Intelligence</span>
                 <span>Department of Computer Science, The University of Texas at Austin</span>
@@ -108,15 +108,22 @@ export default function Home() {
                 </a>
               </li>
               <li className="flex flex-col gap-0.5">
-                <span className="font-semibold text-ink">Scott Lawrence Eiers</span>
+                <span className="font-semibold text-ink">
+                  Scott Lawrence Eiers
+                  <sup aria-hidden="true" className="text-compute">&dagger;</sup>
+                </span>
                 <span>Undergraduate Student, B.S. in Computer Science</span>
                 <span>Department of Computer Science, Western Governors University</span>
               </li>
             </ol>
-            <p className="text-xs text-ink-muted">
-              <span className="text-compute">*</span> Corresponding author. The two authors
-              contributed equally.
-            </p>
+            <div className="flex flex-col gap-1 text-xs text-ink-muted">
+              <p>
+                <span className="text-compute">*</span> Corresponding author.
+              </p>
+              <p>
+                <span className="text-compute">&dagger;</span> These authors contributed equally.
+              </p>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3">
