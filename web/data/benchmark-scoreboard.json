@@ -1,0 +1,177 @@
+{
+  "xDomain": [2021, 2025.6],
+  "benchmarks": [
+    {
+      "key": "gsm8k",
+      "name": "GSM8K",
+      "ask": "8,500 grade-school math word problems",
+      "status": "saturated — frontier models cluster at 95%+, so it no longer separates them",
+      "unit": "% solved",
+      "unitShort": "%",
+      "yDomain": [0, 100],
+      "refLines": [{ "y": 95, "label": "saturated" }],
+      "lifespan": { "introduced": 2021.8, "fell": 2024.2, "bar": "95% reached" },
+      "entries": [
+        { "x": 2022.3, "y": 17.9, "model": "PaLM 540B, direct answer", "source": "Wei et al. 2022", "note": "no reasoning steps: the model blurts (page 5's baseline)" },
+        { "x": 2022.3, "y": 56.9, "model": "PaLM 540B, chain of thought", "source": "Wei et al. 2022", "note": "same model, asked to show its work — page 5's founding result" },
+        { "x": 2023.2, "y": 92.0, "model": "GPT-4", "source": "OpenAI 2023", "note": "5-shot chain of thought" },
+        { "x": 2024.2, "y": 95.0, "model": "Claude 3 Opus", "source": "Anthropic 2024", "note": "frontier models now cluster at 95%+; remaining misses include ambiguous and mislabeled items" }
+      ],
+      "citation": {
+        "ref": "Cobbe et al. 2021",
+        "url": "https://arxiv.org/abs/2110.14168",
+        "venue": "arXiv",
+        "preprint": true
+      },
+      "provenance": "Benchmark: Cobbe et al. 2021 (GSM8K). Scores verbatim: PaLM 540B standard 17.9% / chain-of-thought 56.9% (Wei et al. 2022, NeurIPS, per-scale table — same source as data/wei-cot-scaling.json); GPT-4 92.0% 5-shot CoT (OpenAI GPT-4 technical report, 2023); Claude 3 Opus 95.0% (Anthropic Claude 3 model card, Mar 2024). x = calendar year, fractional part ≈ month/12 of the report."
+    },
+    {
+      "key": "math",
+      "name": "MATH → MATH-500",
+      "ask": "12,500 competition problems (AMC/AIME style), full written solutions",
+      "status": "effectively saturated on the MATH-500 subset; retired in favour of AIME and harder",
+      "unit": "% solved",
+      "unitShort": "%",
+      "yDomain": [0, 100],
+      "refLines": [{ "y": 90, "label": "3-time IMO gold medalist ≈ 90" }],
+      "lifespan": { "introduced": 2021.2, "fell": 2024.95, "bar": "past the 90% IMO-gold line" },
+      "entries": [
+        { "x": 2021.2, "y": 5.0, "model": "GPT-3 (best in paper)", "source": "Hendrycks et al. 2021", "note": "~5%: the paper argued scaling alone would not crack it, and set a 3-time IMO gold medalist's 90% as the human bar" },
+        { "x": 2023.2, "y": 42.5, "model": "GPT-4", "source": "OpenAI 2023" },
+        { "x": 2024.4, "y": 74.6, "model": "GPT-4o", "source": "DeepSeek-AI 2025, Table 4", "note": "from here on scores are on MATH-500, a 500-problem subset (Lightman et al.) — a quiet change of ruler" },
+        { "x": 2024.95, "y": 96.4, "model": "o1", "source": "DeepSeek-AI 2025, Table 4", "note": "MATH-500 pass@1" },
+        { "x": 2025.05, "y": 97.3, "model": "DeepSeek-R1", "source": "DeepSeek-AI 2025", "note": "MATH-500 pass@1, open weights — past the IMO-gold bar the 2021 paper set" }
+      ],
+      "citation": {
+        "ref": "Hendrycks et al. 2021",
+        "url": "https://arxiv.org/abs/2103.03874",
+        "venue": "NeurIPS 2021",
+        "preprint": false
+      },
+      "provenance": "Benchmark: Hendrycks et al. 2021 (MATH), which reports GPT-3-era models near 5% and a three-time IMO gold medalist at 90%. GPT-4 42.5% from OpenAI's GPT-4 launch report (2023). GPT-4o 74.6%, o1 96.4%, DeepSeek-R1 97.3% are MATH-500 pass@1, verbatim from DeepSeek-AI 2025 Table 4 (Nature); MATH-500 is the 500-problem subset introduced by Lightman et al. 2023. Subset switch flagged in-app."
+    },
+    {
+      "key": "aime",
+      "name": "AIME 2024",
+      "ask": "15 questions from the US olympiad-qualifier exam",
+      "status": "fell within its own year — and the same model's score moves 74→93 with inference settings",
+      "unit": "% solved",
+      "unitShort": "%",
+      "yDomain": [0, 100],
+      "refLines": [{ "y": 90, "label": "top-500 USAMO-qualifier territory" }],
+      "lifespan": { "introduced": 2024.1, "fell": 2024.97, "bar": "96.7% — one question missed" },
+      "entries": [
+        { "x": 2024.4, "y": 12, "model": "GPT-4o", "source": "OpenAI 2024", "note": "OpenAI reports 12%; DeepSeek's harness measures the same model at 9.3% pass@1 — the harness moves the number" },
+        { "x": 2024.7, "y": 74, "model": "o1, one sample", "source": "OpenAI 2024", "note": "83% with 64-sample voting, 93% re-ranking 1,000 samples — one model, three headline numbers" },
+        { "x": 2024.97, "y": 96.7, "model": "o3", "source": "OpenAI 2024 (Dec)", "note": "announcement figure at high test-time compute" },
+        { "x": 2025.05, "y": 79.8, "model": "DeepSeek-R1", "source": "DeepSeek-AI 2025", "note": "pass@1, open weights; 79.2% for o1 under the same harness" }
+      ],
+      "citation": {
+        "ref": "OpenAI 2024, Learning to reason with LLMs",
+        "url": "https://openai.com/index/learning-to-reason-with-llms/",
+        "venue": "OpenAI blog",
+        "preprint": true
+      },
+      "provenance": "AIME 2024 (Mathematical Association of America exam, Feb 2024). Verbatim from OpenAI's 'Learning to reason with LLMs' (Sep 2024): GPT-4o 12%; o1 74% single-sample, 83% consensus@64, 93% re-ranking 1,000 samples. o3 96.7% from OpenAI's Dec 2024 announcement (not peer-reviewed). DeepSeek-R1 79.8% pass@1 and GPT-4o 9.3% pass@1 from DeepSeek-AI 2025 Table 4 (Nature)."
+    },
+    {
+      "key": "gpqa",
+      "name": "GPQA Diamond",
+      "ask": "198 PhD-level science questions, written to be Google-proof",
+      "status": "models passed the PhD-expert line in under a year",
+      "unit": "% correct",
+      "unitShort": "%",
+      "yDomain": [0, 100],
+      "refLines": [
+        { "y": 69.7, "label": "PhD experts, own field" },
+        { "y": 25, "label": "random guessing" }
+      ],
+      "lifespan": { "introduced": 2023.85, "fell": 2024.7, "bar": "past the PhD-expert line" },
+      "entries": [
+        { "x": 2023.85, "y": 39.0, "model": "GPT-4", "source": "Rein et al. 2023", "note": "well under the experts the test was calibrated against" },
+        { "x": 2024.4, "y": 49.9, "model": "GPT-4o", "source": "DeepSeek-AI 2025, Table 4" },
+        { "x": 2024.7, "y": 77.3, "model": "o1", "source": "OpenAI 2024", "note": "first model past the 69.7% expert bar — on these questions, not at science in general" },
+        { "x": 2024.97, "y": 87.7, "model": "o3", "source": "OpenAI 2024 (Dec)", "note": "announcement figure" },
+        { "x": 2025.05, "y": 71.5, "model": "DeepSeek-R1", "source": "DeepSeek-AI 2025", "note": "pass@1" }
+      ],
+      "citation": {
+        "ref": "Rein et al. 2023",
+        "url": "https://arxiv.org/abs/2311.12022",
+        "venue": "COLM 2024",
+        "preprint": false
+      },
+      "provenance": "Benchmark: Rein et al. 2023 (GPQA), GPT-4 baseline ~39% from the paper. Expert baseline 69.7% (PhDs answering in their own field) and o1 77.3% from OpenAI's 'Learning to reason with LLMs' (Sep 2024). GPT-4o 49.9% and DeepSeek-R1 71.5% from DeepSeek-AI 2025 Table 4. o3 87.7% from OpenAI's Dec 2024 announcement (not peer-reviewed). Chance = 25% (four options)."
+    },
+    {
+      "key": "codeforces",
+      "name": "Codeforces",
+      "ask": "live competitive-programming contests, scored as an Elo rating",
+      "status": "no ceiling to saturate — the ladder just keeps going up",
+      "unit": "Elo rating",
+      "unitShort": " Elo",
+      "yDomain": [0, 3000],
+      "refLines": [{ "y": 2400, "label": "≈ 99th percentile of rated humans" }],
+      "lifespan": null,
+      "entries": [
+        { "x": 2024.4, "y": 759, "model": "GPT-4o", "source": "DeepSeek-AI 2025, Table 4", "note": "23.6th percentile of rated competitors" },
+        { "x": 2024.95, "y": 2061, "model": "o1", "source": "DeepSeek-AI 2025, Table 4", "note": "96.6th percentile" },
+        { "x": 2024.97, "y": 2727, "model": "o3", "source": "OpenAI 2024 (Dec)", "note": "announcement figure — reported as roughly the top 0.05% of rated competitors" },
+        { "x": 2025.05, "y": 2029, "model": "DeepSeek-R1", "source": "DeepSeek-AI 2025", "note": "96.3rd percentile, open weights" }
+      ],
+      "citation": {
+        "ref": "DeepSeek-R1 2025",
+        "url": "https://arxiv.org/abs/2501.12948",
+        "venue": "Nature 2025",
+        "preprint": false
+      },
+      "provenance": "Codeforces is a live contest platform, not a paper; ratings verbatim from DeepSeek-AI 2025 Table 4 (GPT-4o 759 / 23.6th pct, o1 2061 / 96.6th pct, DeepSeek-R1 2029 / 96.3rd pct). o3 2727 Elo from OpenAI's Dec 2024 announcement (not peer-reviewed); its 'top ~0.05%' framing is OpenAI's. 2400 marked as roughly the 99th percentile of rated humans."
+    },
+    {
+      "key": "swebench",
+      "name": "SWE-bench Verified",
+      "ask": "500 real GitHub issues: produce a patch that passes the repo's tests",
+      "status": "climbing fast, far from solved — and the agent scaffold matters as much as the model",
+      "unit": "% of issues resolved",
+      "unitShort": "%",
+      "yDomain": [0, 100],
+      "refLines": [],
+      "lifespan": { "introduced": 2023.8, "fell": null, "bar": "still standing" },
+      "entries": [
+        { "x": 2024.4, "y": 38.8, "model": "GPT-4o", "source": "DeepSeek-AI 2025, Table 4", "note": "the harness around the model (retry logic, tools) shifts these scores by double digits" },
+        { "x": 2024.95, "y": 48.9, "model": "o1", "source": "DeepSeek-AI 2025, Table 4" },
+        { "x": 2024.97, "y": 71.7, "model": "o3", "source": "OpenAI 2024 (Dec)", "note": "announcement figure" },
+        { "x": 2025.05, "y": 49.2, "model": "DeepSeek-R1", "source": "DeepSeek-AI 2025", "note": "pass@1" }
+      ],
+      "citation": {
+        "ref": "Jimenez et al. 2024",
+        "url": "https://arxiv.org/abs/2310.06770",
+        "venue": "ICLR 2024",
+        "preprint": false
+      },
+      "provenance": "Benchmark: Jimenez et al. 2024 (SWE-bench); 'Verified' is the 500-task human-validated subset released by OpenAI (Aug 2024). GPT-4o 38.8%, o1 48.9%, DeepSeek-R1 49.2% resolved, verbatim from DeepSeek-AI 2025 Table 4. o3 71.7% from OpenAI's Dec 2024 announcement (not peer-reviewed)."
+    },
+    {
+      "key": "frontiermath",
+      "name": "FrontierMath",
+      "ask": "unpublished research-grade problems; specialists need hours or days each",
+      "status": "standing — the headline 25% is disputed; an independent run of the released model measured ~10%",
+      "unit": "% solved",
+      "unitShort": "%",
+      "yDomain": [0, 100],
+      "refLines": [{ "y": 2, "label": "best models at launch: under 2" }],
+      "lifespan": { "introduced": 2024.85, "fell": null, "bar": "standing (25.2% claim disputed, ~10% independent)" },
+      "entries": [
+        { "x": 2024.85, "y": 2.0, "model": "best frontier models", "source": "Glazer et al. 2024", "note": "under 2% at launch — by design" },
+        { "x": 2024.97, "y": 25.2, "model": "o3 — OpenAI, internal", "source": "OpenAI 2024 (Dec)", "note": "aggressive test-time compute on an internal scaffold, using the 180-problem 2024-11 version of the test" },
+        { "x": 2025.3, "y": 10.0, "model": "o3 released — Epoch AI eval", "source": "Epoch AI / TechCrunch 2025", "note": "~10% on the released model, 290-problem 2025-02 set. Same benchmark name, different model settings and problem set — the dispute in one pair of dots" }
+      ],
+      "citation": {
+        "ref": "Glazer et al. 2024",
+        "url": "https://arxiv.org/abs/2411.04872",
+        "venue": "arXiv",
+        "preprint": true
+      },
+      "provenance": "Benchmark: Glazer et al. 2024 (FrontierMath, Epoch AI), which reports state-of-the-art models under 2% at launch. o3 25.2% claimed in OpenAI's Dec 2024 announcement (high test-time compute, internal scaffold, 180-problem 2024-11-26 set). Independent evaluation of the released o3 by Epoch AI measured ~10% on the 290-problem 2025-02-28 set (reported by TechCrunch, Apr 2025); Epoch attributes the gap to compute settings, scaffold, and the changed problem set. OpenAI's funding of the benchmark was disclosed only after the announcement (TechCrunch, Jan 2025). All figures non-peer-reviewed."
+    }
+  ]
+}

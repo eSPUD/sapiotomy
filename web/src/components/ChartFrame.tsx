@@ -9,6 +9,12 @@ export interface ChartFrameProps {
   yLabel?: string;
   /** Title announced to screen readers describing what the chart shows. */
   title: string;
+  /**
+   * ARIA role for the svg. The default "img" is right for a static chart;
+   * a chart with focusable marks inside must be a "group" instead — role
+   * img forbids interactive descendants (axe: nested-interactive).
+   */
+  role?: "img" | "group";
   children: ReactNode;
 }
 
@@ -25,6 +31,7 @@ export function ChartFrame({
   xLabel,
   yLabel,
   title,
+  role = "img",
   children,
 }: ChartFrameProps) {
   const innerW = width - MARGIN.left - MARGIN.right;
@@ -33,7 +40,7 @@ export function ChartFrame({
     <svg
       viewBox={`0 0 ${width} ${height}`}
       width="100%"
-      role="img"
+      role={role}
       aria-label={title}
       className="max-w-full"
     >

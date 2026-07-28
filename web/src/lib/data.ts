@@ -37,7 +37,7 @@ function isFiniteNumber(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v);
 }
 
-function validateCitation(c: unknown, where: string): Citation {
+export function validateCitation(c: unknown, where: string): Citation {
   if (typeof c !== "object" || c === null) {
     throw new DataValidationError(`${where}: missing 'citation'`);
   }
