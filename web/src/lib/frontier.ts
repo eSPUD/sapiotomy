@@ -23,6 +23,25 @@ export function faithfulnessAdmitRate(admitProb: number, trials: number, seed: n
   return (admitted / trials) * 100;
 }
 
+// --- Page 18: optimization pressure on the CoT (obfuscation) ---------------
+// Baker et al. 2025: grade the thoughts themselves and task reward keeps
+// climbing while the monitor goes blind. Endpoint recalls are the paper's
+// (95% -> ~0%); the shapes between them are authored illustrations
+// (data/cot-obfuscation.json documents both).
+/** Task reward climbs smoothly and saturates as pressure rises (unitless). */
+export function cotPressureReward(pressure: number, start: number, end: number): number {
+  return start + (end - start) * (1 - Math.exp(-pressure / 3));
+}
+/** Monitor recall holds near its no-pressure value, then collapses past the cliff. */
+export function cotPressureRecall(
+  pressure: number,
+  baseRecall: number,
+  cliff: number,
+  steep: number,
+): number {
+  return baseRecall / (1 + Math.exp(steep * (pressure - cliff)));
+}
+
 // --- Page 19: Tower of Hanoi token explosion -------------------------------
 export function hanoiMoves(n: number): number {
   return Math.pow(2, n) - 1;

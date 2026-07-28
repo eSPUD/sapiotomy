@@ -45,7 +45,7 @@ export const PAGES: PageMeta[] = [
   { n: 15, slug: "wait-button", title: "The 'Wait' Button (Budget Forcing)", act: 3, concept: "Force more thinking by appending 'Wait'.", milestone: "M5" },
   { n: 16, slug: "rl-training-curve", title: "Reasoning Models & the RL Training Curve", act: 3, concept: "RL teaches models to reason; the curve climbs as thinking lengthens.", milestone: "M5" },
   { n: 17, slug: "cost-of-thinking", title: "The Cost of Thinking (Economics Dashboard)", act: 3, concept: "Extra inference compute costs real money.", milestone: "M5" },
-  { n: 18, slug: "overthinking", title: "When More Thinking Hurts (Overthinking)", act: 3, concept: "Beyond a point, longer reasoning can reduce accuracy.", milestone: "M5" },
+  { n: 18, slug: "trust-the-thoughts", title: "Can We Trust the Thoughts? Faithfulness, Monitorability, and Safety", act: 3, concept: "The visible chain of thought may not be the real reason for the answer, and optimizing the trace teaches models to hide misbehavior instead of dropping it.", milestone: "M5" },
   { n: 19, slug: "faithfulness", title: "Do the Thoughts Tell the Truth? (Faithfulness)", act: 3, concept: "Stated chain-of-thought may not reflect real reasoning.", milestone: "M5" },
   { n: 20, slug: "you-be-the-judge", title: "You Be the Judge (The Illusion of Thinking Debate)", act: 3, concept: "Accuracy 'collapse' vs. the token-limit/evaluation rebuttal.", milestone: "M5" },
   { n: 21, slug: "grand-sandbox", title: "The Grand Sandbox + Your Toolkit", act: 3, concept: "All levers together, plus a pre/post quiz.", milestone: "M6" },

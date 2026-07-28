@@ -55,6 +55,7 @@ figure/table, verbatim vs. interpolated). Summary:
 | arc-cost.json | 16 | Reported **estimates** (ARC Prize blog, **not peer-reviewed**) |
 | overthinking.json | 17 | Authored inverse-U matching the 2025 literature (**PP**) |
 | faithfulness.json | 18 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
+| cot-obfuscation.json | 18 | Verbatim recall anchors 95%/60%→~0% (Baker et al./OpenAI 2025, **PP**); pressure/reward curve **shapes authored**, labeled in-app |
 | illusion-of-thinking.json | 19 | Derived Hanoi token math (Shojaee/Lawsen 2025, **PP, both sides**) |
 
 ### Resolved conflict — Page 18 misalignment-hint faithfulness
