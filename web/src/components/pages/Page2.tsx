@@ -211,7 +211,7 @@ export function Page2() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         No mental math this time. One plain question of record:{" "}
-        <strong>how many World Cups has Spain won?</strong> It looks like a lookup. But a model
+        <strong>how many FIFA World Cups has Spain won?</strong> It looks like a lookup. But a model
         learns everything it knows before a fixed <strong>training cutoff</strong>, and the record
         moved after that. Watch the same question take two very different roads.
       </p>

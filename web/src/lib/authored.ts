@@ -105,7 +105,7 @@ export const SORTING_ITEMS: SortItem[] = [
  * with no web search; the swap point is fetchMachineReply() in Page2.tsx.
  */
 export const SPAIN_WORLD_CUPS = {
-  question: "How many World Cups has Spain won?",
+  question: "How many FIFA World Cups has Spain won?",
   country: "Spain",
   /** Spain's titles as of the 2026 final. 2010 is real; 2026 is the flagged,
    *  verify-before-shipping part — the trap needs Spain to have won it. */
