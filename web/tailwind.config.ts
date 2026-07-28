@@ -10,6 +10,7 @@ const config: Config = {
         surface: tokens.surface,
         "surface-raised": tokens.surfaceRaised,
         grid: tokens.grid,
+        quote: tokens.quote,
         ink: tokens.ink,
         "ink-muted": tokens.inkMuted,
         // The three semantic hues

@@ -158,7 +158,11 @@ function IdealAnswer() {
 /** A line set apart from the running prose: the questions sections 1 and 2 end
  *  on, and the closing statement section 3 lands. */
 function PullQuote({ children }: { children: React.ReactNode }) {
-  return <p className="border-l-2 border-compute pl-4 text-lg italic text-ink">{children}</p>;
+  return (
+    <p className="rounded-lg border-l-2 border-compute bg-quote px-4 py-3 text-lg italic text-ink">
+      {children}
+    </p>
+  );
 }
 
 /** A margin note that sits beside its step and scrolls with the page.
@@ -271,10 +275,6 @@ export function Page2() {
           </p>
 
           <System2Comic />
-
-          <p className="text-ink">
-            Which lands on <strong>{SPAIN_SYSTEM2_TRACE.answer}</strong>
-          </p>
 
           <p className="text-ink">
             Look at what each step bought. Step 1 settles the{" "}

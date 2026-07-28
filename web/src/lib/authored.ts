@@ -74,13 +74,16 @@ export interface SortItem {
   system: "fast" | "slow";
 }
 
+/** Interleaved on purpose: listing the three fast ones first would hand the
+ *  reader the answer before they sorted anything. SystemSort also shuffles on
+ *  mount, so the order differs from visit to visit. */
 export const SORTING_ITEMS: SortItem[] = [
-  { id: "face", text: "Recognize a friend's face", system: "fast" },
-  { id: "salt", text: "Finish the phrase 'salt and ___'", system: "fast" },
-  { id: "anger", text: "Hear that a voice is angry", system: "fast" },
   { id: "divide", text: "Divide 156 by 12 in your head", system: "slow" },
+  { id: "face", text: "Recognize a friend's face", system: "fast" },
   { id: "park", text: "Park a car in a tight space", system: "slow" },
+  { id: "salt", text: "Finish the phrase 'salt and ___'", system: "fast" },
   { id: "compare", text: "Compare two laptop specs", system: "slow" },
+  { id: "anger", text: "Hear that a voice is angry", system: "fast" },
 ];
 
 // --- Page 2: Two Systems (the "how many World Cups?" question) ------------
