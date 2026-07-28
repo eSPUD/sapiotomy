@@ -95,19 +95,22 @@ export default function Home() {
         <div className="grid gap-10 md:grid-cols-2">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Authors</h2>
-            <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm text-ink-muted marker:text-ink-muted">
-              <li className="text-justify hyphens-auto">
-                <span className="text-ink">Shashank Bangalore Lakshman</span>, Graduate Student (M.S.
-                in Artificial Intelligence), Department of Computer Science, The University of Texas
-                at Austin. Corresponding author:{" "}
-                <a href="mailto:shashankbl@utexas.edu" className="text-compute underline">
+            <ol className="flex flex-col gap-4 text-sm text-ink-muted">
+              <li className="flex flex-col gap-0.5">
+                <span className="font-semibold text-ink">Shashank Bangalore Lakshman</span>
+                <span>Graduate Student, M.S. in Artificial Intelligence</span>
+                <span>Department of Computer Science, The University of Texas at Austin</span>
+                <a href="mailto:shashankbl@utexas.edu" className="w-fit text-compute underline">
                   shashankbl@utexas.edu
                 </a>
-                .
+                <span className="text-xs uppercase tracking-wide text-ink-muted">
+                  Corresponding author
+                </span>
               </li>
-              <li className="text-justify hyphens-auto">
-                <span className="text-ink">Scott Lawrence Eiers</span>, Undergraduate Student (B.S.
-                in Computer Science), Department of Computer Science, Western Governors University.
+              <li className="flex flex-col gap-0.5">
+                <span className="font-semibold text-ink">Scott Lawrence Eiers</span>
+                <span>Undergraduate Student, B.S. in Computer Science</span>
+                <span>Department of Computer Science, Western Governors University</span>
               </li>
             </ol>
             <p className="text-xs text-ink-muted">The two authors contributed equally.</p>
