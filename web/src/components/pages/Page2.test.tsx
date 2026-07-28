@@ -19,7 +19,7 @@ import { SPAIN_WORLD_CUPS } from "@/lib/authored";
 
 const WC = SPAIN_WORLD_CUPS;
 
-describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
+describe("Page 2 (Knowing What You Know): a training-cutoff slider", () => {
   it("shows the question and the cutoff slider, answering one short by default", () => {
     render(<Page2 />);
     expect(screen.getByText(WC.question)).toBeInTheDocument();

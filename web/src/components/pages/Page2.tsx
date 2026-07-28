@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Page 2, "The Knowledge Gap". One question: how many FIFA World Cups has Spain
+ * Page 2, "Knowing What You Know". One question: how many FIFA World Cups has Spain
  * won? It looks like a plain lookup, but the record moved after the model's
  * training cutoff, so its memory is stale and it lands one short. A model's
  * knowledge is fixed at training time while the world keeps producing facts,
@@ -49,7 +49,7 @@ const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i
 /**
  * Page 2's numbered references, in order of first appearance. Inline markers and
  * the sidenote lists both read these constants, so a number can never drift from
- * the work it points at. Kahneman is page-wide framing, not a numbered claim.
+ * the work it points at.
  */
 const REF = { metatool: 1, react: 2, toolformer: 3, survey: 4 } as const;
 
