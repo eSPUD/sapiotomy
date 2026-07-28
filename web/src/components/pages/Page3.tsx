@@ -20,13 +20,14 @@
  * No inference talk here.
  *
  * Layout rule: no reveals, no drag-to-unlock. Shell matches page 1 exactly —
- * numbered steps down the left, each followed by its margin cell. On this page
- * every margin cell is an empty <div aria-hidden="true" />: there is no "how to
- * read this page" rail (a slider, a dial and a text box need no instructions)
- * and no margin prose or references block either. The CitationBadge rows on the
- * border-t inside step 1's figure and step 2's section are the WHOLE citation
- * story — each source is cited once, inside the figure that uses it, which is
- * why the badge rows must stay put and must not be mirrored into the margin.
+ * numbered steps down the left, each followed by its margin cell. Citations
+ * follow the page-2 house style: numbered inline markers (Cite) at the claim
+ * they support, a References margin note (RefItem) beside the step that uses
+ * each source, and the linkable CitationBadge chips gathered once at the foot
+ * of the page. Steps 1 and 2 each get their own References note so a source
+ * never drifts from the step it backs; step 3 cites nothing, so its margin
+ * cell stays an empty <div aria-hidden="true" />. There is still no "how to
+ * read this page" rail (a slider, a dial and a text box need no instructions).
  * What is cited vs derived is said inline in each step's h2 annotation
  * ("derived from the two Epoch trends", "cited stock, derived demand"), the
  * DataWindowMeter's caption line carries the "cited window, not a burn rate"
@@ -44,6 +45,7 @@
  */
 
 import { useMemo, useRef, useState } from "react";
+import { Cite, RefItem } from "@/components/Cite";
 import { CitationBadge } from "@/components/CitationBadge";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
@@ -57,6 +59,19 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 3;
 const DAYS = 365;
 const COMBO_MONTHS = 60;
+
+/** Reference numbers, in order of first appearance on the page. */
+const REF = { computeGrowth: 1, trainTrend: 2, runCost: 3, chinchilla: 4, dataStock: 5 } as const;
+
+/** A margin note that sits beside its step and scrolls with the page. */
+function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+  return (
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      {children}
+    </aside>
+  );
+}
 
 /** "$78M" below a billion, "$1.0B" to a trillion, "$2.6T" past it. */
 const fmtM = (m: number) =>
@@ -295,7 +310,7 @@ export function Page3() {
         bill, then the data itself.
       </p>
 
-      {/* Each step (left) sits beside an empty margin cell; the cites live inside the figures. */}
+      {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 — the bill */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -313,6 +328,7 @@ export function Page3() {
               Every day of the plan costs more than the day before: training price is not a fixed
               number, and Epoch AI puts training-compute cost on a{" "}
               <strong>~5&times;-per-year</strong> climb.
+              <Cite n={REF.computeGrowth} />
             </p>
             <LineChart
               title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
@@ -358,19 +374,29 @@ export function Page3() {
             <figcaption className="text-sm text-ink">
               Combine the two rates: compute per frontier run grows about 5x a year; cheaper, better
               hardware absorbs part of that, so the <strong>bill</strong> per run grows ×
-              {tp.perYear} a year (Epoch&apos;s measured cost trend). Retrain{" "}
+              {tp.perYear} a year (Epoch&apos;s measured cost trend).
+              <Cite n={REF.trainTrend} /> Retrain{" "}
               <em>the frontier model of the day</em>, every day, and by year five the program is
               measured in trillions, and even the flat ${RUN_M}M-per-run estimate at the bottom of
               the chart burns {fmtM(DAYS * RUN_M)} a year.
+              <Cite n={REF.runCost} />
             </figcaption>
-            <div className="flex flex-wrap gap-2 border-t border-grid pt-3">
-              <CitationBadge citation={runCost.citation} />
-              <CitationBadge citation={computeGrowth.citation} />
-              <CitationBadge citation={trainTrend.citation} />
-            </div>
           </figure>
         </section>
-        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem n={REF.computeGrowth}>
+            Sevilla &amp; Rold&aacute;n 2024,{" "}
+            <em>Training Compute of Frontier AI Models Grows by 4&ndash;5x per Year</em> (Epoch
+            AI).
+          </RefItem>
+          <RefItem n={REF.trainTrend}>
+            Cottier et al. 2024, <em>How Much Does It Cost to Train Frontier AI Models?</em>{" "}
+            (Epoch AI).
+          </RefItem>
+          <RefItem n={REF.runCost}>
+            Epoch AI via the Stanford HAI <em>AI Index Report 2024</em>.
+          </RefItem>
+        </Note>
 
         {/* Step 2 — the data */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -388,12 +414,14 @@ export function Page3() {
               Suppose money were no object. It still fails. The other way to make a model smarter is
               to make it <strong>bigger</strong>, but a bigger model only pays off if it also{" "}
               <strong>reads more</strong>, in step: about {cp.tokensPerParam} tokens for every
-              parameter. Size and reading climb together: that is the scaling law. So the ceiling
-              was never the money. It is how much there is worth reading.
+              parameter. Size and reading climb together: that is the scaling law.
+              <Cite n={REF.chinchilla} /> So the ceiling was never the money. It is how much there
+              is worth reading.
             </p>
             <div className="rounded-lg border border-grid bg-surface-raised p-4">
               <p className="text-xs uppercase tracking-wide text-ink-muted">
                 every quality token humans have written
+                <Cite n={REF.dataStock} />
               </p>
               <p className="font-mono text-3xl font-bold tabular-nums text-ink">
                 ≈{ds.stockTrillionTokens}T tokens
@@ -427,13 +455,18 @@ export function Page3() {
               endY={ds.windowEndYear}
               medianY={ds.medianYear}
             />
-            <div className="flex flex-wrap gap-2 border-t border-grid pt-3">
-              <CitationBadge citation={chinchilla.citation} />
-              <CitationBadge citation={dataStock.citation} />
-            </div>
           </section>
         </section>
-        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem n={REF.chinchilla}>
+            Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS
+            2022).
+          </RefItem>
+          <RefItem n={REF.dataStock}>
+            Villalobos et al. 2024, <em>Will We Run Out of Data? Limits of LLM Scaling Based on
+            Human-Generated Data</em> (Epoch AI &middot; arXiv 2211.04325).
+          </RefItem>
+        </Note>
 
         {/* Step 3 — the guess */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -507,6 +540,14 @@ export function Page3() {
           </section>
         </section>
         <div aria-hidden="true" />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <CitationBadge citation={computeGrowth.citation} />
+        <CitationBadge citation={trainTrend.citation} />
+        <CitationBadge citation={runCost.citation} />
+        <CitationBadge citation={chinchilla.citation} />
+        <CitationBadge citation={dataStock.citation} />
       </div>
 
       <p className="text-xs text-ink-muted">

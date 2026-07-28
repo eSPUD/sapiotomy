@@ -151,35 +151,44 @@ describe("Page 3 (Training Daily?)", () => {
     expectClean();
   });
 
-  it("each step carries only the sources it uses", () => {
+  it("each step's References margin note carries only the sources that step uses", () => {
     render(<Page3 />);
-    const linkText = (root: HTMLElement) =>
-      Array.from(root.querySelectorAll("a"))
-        .map((a) => a.textContent ?? "")
-        .join(" | ");
-    const bill = screen.getByRole("figure", { name: /problem one/i });
-    const data = screen.getByRole("region", { name: /problem two/i });
+    const notes = Array.from(document.querySelectorAll("aside")).map((a) => a.textContent ?? "");
+    expect(notes).toHaveLength(2);
+    const [bill, data] = notes;
 
     // The bill cites Epoch's cost anchors; Villalobos and Hoffmann stay out of it.
-    expect(linkText(bill)).toMatch(/AI Index/);
-    expect(linkText(bill)).toMatch(/Cottier/);
-    expect(linkText(bill)).toMatch(/Sevilla/);
-    expect(linkText(bill)).not.toMatch(/Villalobos|Hoffmann/);
+    expect(bill).toMatch(/AI Index/);
+    expect(bill).toMatch(/Cottier/);
+    expect(bill).toMatch(/Sevilla/);
+    expect(bill).not.toMatch(/Villalobos|Hoffmann/);
     // The data wall cites the scaling law and the stock, and no cost trends.
-    expect(linkText(data)).toMatch(/Hoffmann/);
-    expect(linkText(data)).toMatch(/Villalobos/);
-    expect(linkText(data)).not.toMatch(/Cottier|AI Index|Sevilla/);
+    expect(data).toMatch(/Hoffmann/);
+    expect(data).toMatch(/Villalobos/);
+    expect(data).not.toMatch(/Cottier|AI Index|Sevilla/);
     expectClean();
   });
 
-  it("has no side rail and no margin prose: the figures carry their own cites", () => {
+  it("cites in the margin and at the page foot: the figures hold markers, not chips", () => {
     render(<Page3 />);
     expect(screen.queryByText(/how to read this page/i)).toBeNull();
     expect(screen.queryByText(/one dial runs the page/i)).toBeNull();
-    // The margin is empty: the old provenance notes are gone, not shrunk.
+    // The old provenance prose stays gone; the margin holds References notes only.
     expect(screen.queryByText(/where the bill comes from/i)).toBeNull();
     expect(screen.queryByText(/where the wall comes from/i)).toBeNull();
-    expect(document.querySelector("aside")).toBeNull();
+    expect(screen.getAllByText("References")).toHaveLength(2);
+    // The figures carry inline numbered markers; the link chips left the steps
+    // for a single row at the foot of the page.
+    const bill = screen.getByRole("figure", { name: /problem one/i });
+    const data = screen.getByRole("region", { name: /problem two/i });
+    expect(bill.querySelector("a")).toBeNull();
+    expect(data.querySelector("a")).toBeNull();
+    expect(bill.querySelectorAll("sup")).toHaveLength(3);
+    expect(data.querySelectorAll("sup")).toHaveLength(2);
+    const badges = screen.getAllByRole("link");
+    expect(badges.map((a) => a.textContent ?? "").join(" | ")).toMatch(
+      /Sevilla.*Cottier.*AI Index.*Hoffmann.*Villalobos/,
+    );
     // Provenance survives inline: the h2 annotations and the CC BY footnote.
     expect(screen.getByText(/derived from the two Epoch trends/i)).toBeInTheDocument();
     expect(screen.getByText(/cited stock, derived demand/i)).toBeInTheDocument();
