@@ -4,6 +4,7 @@ import "./globals.css";
 import { ProgressRail } from "@/components/ProgressRail";
 import { KeyboardNav } from "@/components/KeyboardNav";
 import { KeyboardHint } from "@/components/KeyboardHint";
+import { SubmissionFooter } from "@/components/SubmissionFooter";
 
 // Broadsheet's typeface — self-hosted by next/font (runtime stays offline-capable),
 // with the true italic loaded for emphasis and pull quotes.
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <KeyboardNav />
         <ProgressRail />
         <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <SubmissionFooter />
         <KeyboardHint />
       </body>
     </html>

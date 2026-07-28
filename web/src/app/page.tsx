@@ -131,19 +131,6 @@ export default function Home() {
             <CiteBlock citation={CITATION} filename="inference-time-scaling.bib" />
           </div>
         </div>
-
-        <p className="border-t border-grid pt-4 text-sm text-ink-muted">
-          Submitted to the Workshop on Visualization for AI Explainability (
-          <a
-            href="https://visxai.io/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-compute underline"
-          >
-            VISxAI
-          </a>
-          ), IEEE VIS 2026.
-        </p>
       </section>
     </div>
   );
