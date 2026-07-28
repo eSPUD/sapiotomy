@@ -1,14 +1,29 @@
 {
   "points": [
     { "x": 20, "y": 75.7 },
-    { "x": 3440, "y": 87.5 }
+    { "x": 3460, "y": 87.5 }
   ],
-  "fit": { "kind": "cost-accuracy", "params": { "o3LowCost": 20, "o3LowAcc": 75.7, "o3HighCost": 3440, "o3HighAcc": 87.5, "computeFactor": 172, "o1Acc": 32, "humanCost": 5 } },
+  "fit": {
+    "kind": "cost-accuracy",
+    "params": {
+      "o3LowCost": 20,
+      "o3LowAcc": 75.7,
+      "o3LowSamples": 6,
+      "o3HighCost": 3460,
+      "o3HighAcc": 87.5,
+      "o3HighSamples": 1024,
+      "computeFactor": 172,
+      "o1Acc": 32,
+      "humanCost": 5,
+      "humanFloorLow": 2,
+      "humanMeasuredCost": 17
+    }
+  },
   "citation": {
     "ref": "ARC Prize / OpenAI o3 (Dec 2024)",
     "url": "https://arcprize.org/blog/oai-o3-pub-breakthrough",
     "venue": "ARC Prize blog (not peer-reviewed)",
     "preprint": true
   },
-  "provenance": "ARC-AGI-Pub, OpenAI o3 (Dec 2024 preview). Reported estimates (NOT precise measurements): o3 low-compute ~75.7% at ~$17-20/task; o3 high-compute (172x the compute) 87.5% at thousands of $/task (ARC Prize Foundation estimated ~$3,000/task initially, later revised toward ~$30,000/task); o1 reached at most ~32%; a human costs ~$5/task. x = estimated $/task; y = accuracy (%). Present as reported estimates."
+  "provenance": "ARC-AGI-Pub, OpenAI o3 (Dec 2024 preview). Reported estimates (NOT precise measurements): low-compute config (6 samples/task) 75.7% on the semi-private set at ~$2,012 total = ~$20/attempted task; high-compute config (1024 samples/task, 172x the compute) 87.5% at ~$346,000 total = ~$3,460/task (per-task dollars as compiled by Bender et al. 2025, arXiv:2501.07458, from ARC Prize's estimates). OpenAI never published official o3 pricing, and ARC Prize later revised its dollar estimates upward (toward ~$30,000/task for the high config) using more expensive proxy pricing — the token counts and the 172x multiplier are the stable facts; dollars are estimate-dependent. o1 reached at most ~32%. Human anchors from ARC Prize: ~$17/task reflects the actual data collected; the true limit of human cost efficiency is likely $2-5/task. x = estimated $/task; y = accuracy (%). Present as reported estimates."
 }

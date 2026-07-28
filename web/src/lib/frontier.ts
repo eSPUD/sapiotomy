@@ -3,6 +3,87 @@
  */
 import { createRng } from "./rng";
 
+// --- Page 16: the bill comes due (rent vs sample vs retrain) ----------------
+// Three ways to buy the same target accuracy on a stream of hard queries:
+//   big     — rent a frontier reasoner, one call per query
+//   sample  — rent a small reasoner and sample it N times per query, where N
+//             follows Brown et al.'s log-linear coverage law and an imperfect
+//             verifier caps the reachable ceiling (Stroebl et al.)
+//   distill — pay a one-time retraining/distillation bill so the small model
+//             answers at target in a single call, then serve at its cheap rate
+// All functions are pure; the page derives per-query dollars from cited list
+// prices and discloses the authored (Brown-shaped, Stroebl-capped) parameters.
+export interface BillAnchors {
+  /** $ per hard query on the rented frontier model (one call solves it). */
+  bigPerQuery: number;
+  /** $ per single sample of the small model. */
+  smallPerSample: number;
+  /** One-time retraining/distillation bill, $. */
+  distillUSD: number;
+  /** Small model's single-sample accuracy, %. */
+  baseAcc: number;
+  /** Accuracy points bought per 10x samples (log-linear coverage). */
+  slopePerDecade: number;
+  /** Verifier-limited ceiling, %: no number of samples reaches past it. */
+  ceiling: number;
+}
+
+/** Samples the small model needs per query to hit `target`; null past the ceiling. */
+export function samplesForTarget(target: number, a: BillAnchors): number | null {
+  if (target >= a.ceiling) return null;
+  const n = Math.pow(10, (target - a.baseAcc) / a.slopePerDecade);
+  return Math.max(1, Math.ceil(n - 1e-9));
+}
+
+/** $ per query for each strategy at `target`. sample is null past the ceiling. */
+export function perQueryCosts(
+  target: number,
+  a: BillAnchors,
+): { big: number; sample: number | null; distilled: number } {
+  const n = samplesForTarget(target, a);
+  return {
+    big: a.bigPerQuery,
+    sample: n === null ? null : n * a.smallPerSample,
+    distilled: a.smallPerSample,
+  };
+}
+
+/** Cheapest pay-per-query rate: rent the big model, or sample the small one. */
+export function rentPerQuery(target: number, a: BillAnchors): number {
+  const c = perQueryCosts(target, a);
+  return c.sample === null ? c.big : Math.min(c.big, c.sample);
+}
+
+/** Total bills after `queries`: keep renting vs distill once then serve. */
+export function totalBills(
+  queries: number,
+  target: number,
+  a: BillAnchors,
+): { rent: number; distill: number } {
+  return {
+    rent: rentPerQuery(target, a) * queries,
+    distill: a.distillUSD + a.smallPerSample * queries,
+  };
+}
+
+/** Query volume past which owning undercuts renting; null if it never does. */
+export function distillCrossover(target: number, a: BillAnchors): number | null {
+  const margin = rentPerQuery(target, a) - a.smallPerSample;
+  return margin > 0 ? a.distillUSD / margin : null;
+}
+
+/** Which strategy is cheapest at this volume and target. */
+export function cheapestStrategy(
+  queries: number,
+  target: number,
+  a: BillAnchors,
+): "big" | "sample" | "distill" {
+  const c = perQueryCosts(target, a);
+  const rentBest: "big" | "sample" = c.sample !== null && c.sample <= c.big ? "sample" : "big";
+  const bills = totalBills(queries, target, a);
+  return bills.distill < bills.rent ? "distill" : rentBest;
+}
+
 // --- Page 17: overthinking inverse-U ---------------------------------------
 // A smooth hump: accuracy rises to a peak at `peak`, then falls. Easy problems
 // peak at a lower thinking-length than hard ones.

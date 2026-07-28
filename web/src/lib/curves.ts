@@ -17,6 +17,7 @@ import computeOptimalRaw from "@data/compute-optimal.json";
 import budgetForcingRaw from "@data/budget-forcing.json";
 import deepseekTrainingRaw from "@data/deepseek-r1-training.json";
 import arcCostRaw from "@data/arc-cost.json";
+import deepseekPricingRaw from "@data/deepseek-pricing.json";
 import overthinkingRaw from "@data/overthinking.json";
 import faithfulnessRaw from "@data/faithfulness.json";
 import illusionRaw from "@data/illusion-of-thinking.json";
@@ -41,6 +42,7 @@ export const curves: Record<string, CurveData> = {
   budgetForcing: parseCurveData(budgetForcingRaw, "budget-forcing.json"),
   deepseekTraining: parseCurveData(deepseekTrainingRaw, "deepseek-r1-training.json"),
   arcCost: parseCurveData(arcCostRaw, "arc-cost.json"),
+  deepseekPricing: parseCurveData(deepseekPricingRaw, "deepseek-pricing.json"),
   overthinking: parseCurveData(overthinkingRaw, "overthinking.json"),
   faithfulness: parseCurveData(faithfulnessRaw, "faithfulness.json"),
   illusion: parseCurveData(illusionRaw, "illusion-of-thinking.json"),
