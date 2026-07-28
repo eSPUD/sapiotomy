@@ -11,10 +11,21 @@
  * Lewis et al., 2020). The explicit contrast this page plants: retrieval adds
  * facts; inference-time scaling (Pages 4+) adds thinking. Two different gaps.
  *
- * Layout: a single interactive widget — a training-cutoff slider (Jan 2017 to
- * Dec 2026). Sliding it changes which of Spain's titles the model's sealed
- * memory can recall, and so the answer it gives from memory. A short prose
- * explanation follows the widget; Step 3 introduces retrieval (RAG) as the fix.
+ * Narrative spine (three steps):
+ *   1. A training-cutoff slider (Jan 2017 to Dec 2026): sliding it changes which
+ *      of Spain's titles sealed memory can recall, and so the answer it gives.
+ *      That is the knowledge gap, a missing FACT.
+ *   2. The second, quieter miss: the model never judged that it might be stale.
+ *      MetaTool (Huang et al., ICLR 2024) benchmarked exactly this "tool usage
+ *      awareness" and found most models struggle to recognize their own
+ *      capability boundaries. The judgment was supplied from OUTSIDE, three
+ *      ways: prompting (ReAct, Yao et al. 2022), fine-tuning (Toolformer,
+ *      Schick et al. 2023), and human-designed workflow (Qu et al. 2025 survey).
+ *      Honesty caveat carried on the page: Toolformer is the strongest partial
+ *      counterexample, since it does learn to choose tools for itself; the
+ *      precise claim is that the judgment was engineered in, not spontaneous.
+ *   3. Two gaps, not one: retrieval adds facts, inference-time scaling adds
+ *      thinking, which hands the reasoning gap to Page 4 on.
  */
 
 import { useState } from "react";
@@ -140,7 +151,80 @@ export function Page2() {
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. Two gaps, not one</h2>
+          <h2 className="text-xl font-semibold text-ink">2. Knowing when to look it up</h2>
+
+          {/* the deeper miss: it never reached for the fix */}
+          <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-ink">
+            <p>
+              <strong>Retrieval only helps if something decides to retrieve.</strong> The machine
+              never weighed its own memory and concluded it might be stale. It simply answered. That
+              is a second, quieter miss: not the absent fact, but the absent judgment that a fact was
+              missing. Asked directly whether models recognize the boundary of what they know and
+              call for outside help, the MetaTool benchmark found most struggle to{" "}
+              <span className="text-ink-muted">[Huang et al., 2024]</span>.
+            </p>
+          </div>
+
+          {/* the judgment was supplied from outside: three mechanisms */}
+          <div className="rounded-lg border border-grid bg-surface p-4 text-ink">
+            <p>
+              <strong>So the judgment was supplied from outside.</strong> Three ways, none of them
+              the model&apos;s own idea:
+            </p>
+            <dl className="mt-3 flex flex-col gap-2 text-sm">
+              <div>
+                <dt className="font-semibold text-compute">Prompting: show the pattern.</dt>
+                <dd className="text-ink-muted">
+                  ReAct interleaves reasoning with actions that query an external source, taught by a
+                  handful of worked examples <span>[Yao et al., 2022]</span>.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-compute">Fine-tuning: train it in.</dt>
+                <dd className="text-ink-muted">
+                  Toolformer lets a model annotate text with candidate API calls, keeps only the
+                  calls that help it predict what comes next, then fine-tunes on those{" "}
+                  <span>[Schick et al., 2023]</span>.
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-compute">Workflow: build the pipeline around it.</dt>
+                <dd className="text-ink-muted">
+                  Surveys of tool learning organize the field as human-designed stages: plan the
+                  task, select the tool, call it, compose the reply{" "}
+                  <span>[Qu et al., 2025]</span>.
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          {/* the honesty caveat: Toolformer is the partial counterexample */}
+          <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-4 text-ink">
+            <p className="text-sm">
+              <strong>One honest complication.</strong> Toolformer is the closest thing to a
+              counterexample: its authors set out to build a model that decides for itself when and
+              how to use which tool, and report that it learns to. So the point is not that such
+              judgment was impossible. It is that the judgment was <em>engineered in</em>, through a
+              training procedure, rather than being spontaneously present. MetaTool measured what
+              models do <em>without</em> that engineering, and found the awareness thin.
+            </p>
+          </div>
+
+          <p className="text-ink">
+            Which sharpens the question this story is really about. A model that does not reliably
+            know when to look something up: does it know when to <strong>think harder</strong>?
+          </p>
+        </section>
+        <Note kicker="The second miss">
+          <p>
+            The page&apos;s first gap is a missing fact. This one is a missing judgment about the
+            model&apos;s own limits.
+          </p>
+        </Note>
+
+        {/* Step 3 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. Two gaps, not one</h2>
 
           {/* the gap is knowledge, and retrieval fills it (RAG) */}
           <div className="rounded-lg border-l-4 border-correct bg-surface p-4 text-ink">
@@ -184,17 +268,23 @@ export function Page2() {
             Tasks&rdquo; (NeurIPS 2020).
           </p>
           <p>
+            Huang et al., &ldquo;MetaTool: Benchmarking LLMs on Tool Usage Awareness&rdquo; (ICLR
+            2024).
+          </p>
+          <p>
+            Yao et al., &ldquo;ReAct: Synergizing Reasoning and Acting in Language Models&rdquo;
+            (2022).
+          </p>
+          <p>
+            Schick et al., &ldquo;Toolformer: Language Models Can Teach Themselves to Use
+            Tools&rdquo; (NeurIPS 2023).
+          </p>
+          <p>Qu et al., &ldquo;Tool Learning with Large Language Models: A Survey&rdquo; (2025).</p>
+          <p>
             Framing: Kahneman, <em>Thinking, Fast and Slow</em> (2011).
           </p>
         </Note>
       </div>
-
-      <p className="text-xs text-ink-muted">
-        the question is real and recent on purpose · Spain&apos;s 2010 title is real, but the 2026
-        win (and so the count of two) is an authored placeholder; verify the final&apos;s result
-        before shipping · the machine&apos;s reply is an authored example of a confident stale-memory
-        miss; a live open model with no web search replaces it later
-      </p>
 
       <PageNav n={PAGE_N} />
     </article>

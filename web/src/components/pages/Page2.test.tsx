@@ -50,10 +50,44 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     expect(screen.getByText(/The fix is not to think harder/i)).toBeInTheDocument();
   });
 
-  it("shows the retrieval framing, the teaser, and the flag", () => {
+  it("names the second miss: the model never judged that it should look it up", () => {
+    render(<Page2 />);
+    expect(screen.getByText(/Retrieval only helps if something decides to retrieve/i)).toBeInTheDocument();
+    expect(screen.getByText(/MetaTool benchmark found most struggle/i)).toBeInTheDocument();
+    // The judgment came from outside, via all three elicitation mechanisms.
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/judgment was supplied from outside/i);
+    expect(body).toMatch(/ReAct/);
+    expect(body).toMatch(/Toolformer/);
+    expect(body).toMatch(/Qu et al\., 2025/);
+  });
+
+  it("carries the honesty caveat that Toolformer is a partial counterexample", () => {
+    render(<Page2 />);
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/closest thing to a\s*counterexample/i);
+    // The precise claim: engineered in, not that it was impossible.
+    expect(body).toMatch(/not that such\s*judgment was impossible/i);
+    expect(body).toMatch(/engineered in/i);
+  });
+
+  it("cites the tool-awareness sources in the references note", () => {
+    render(<Page2 />);
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/MetaTool: Benchmarking LLMs on Tool Usage Awareness/i);
+    expect(body).toMatch(/ReAct: Synergizing Reasoning and Acting/i);
+    expect(body).toMatch(/Toolformer: Language Models Can Teach Themselves to Use\s*Tools/i);
+    expect(body).toMatch(/Tool Learning with Large Language Models: A Survey/i);
+  });
+
+  it("keeps Act 1's em-dash-free copy rule", () => {
+    render(<Page2 />);
+    expect(document.body.textContent ?? "").not.toMatch(/—/);
+  });
+
+  it("shows the retrieval framing and the teaser", () => {
     render(<Page2 />);
     expect(screen.getByText(/trained it on data that includes that final/)).toBeInTheDocument();
-    expect(screen.getByText(/verify the final's result before shipping/)).toBeInTheDocument();
     expectRetrievalFraming();
   });
 
