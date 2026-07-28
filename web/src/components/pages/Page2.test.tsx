@@ -93,11 +93,9 @@ describe("Page 2 (Answering Questions in the Real World): a training-cutoff slid
     expect(document.body.textContent ?? "").toMatch(/1\.\s*Zhao et al/);
   });
 
-  it("cites the bias source and flags the trace as authored", () => {
+  it("cites the bias source", () => {
     render(<Page2 />);
-    const body = document.body.textContent ?? "";
-    expect(body).toMatch(/Gender Bias in Coreference Resolution/i);
-    expect(body).toMatch(/authored teaching example, not a transcript/i);
+    expect(document.body.textContent ?? "").toMatch(/Gender Bias in Coreference Resolution/i);
   });
 
   it("keeps Act 1's em-dash-free copy rule", () => {

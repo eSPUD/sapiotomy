@@ -154,6 +154,12 @@ function IdealAnswer() {
   );
 }
 
+/** A question posed to the reader, set as a pull quote. Sections 1 and 2 each
+ *  end on one, and section 3 answers both. */
+function PosedQuestion({ children }: { children: React.ReactNode }) {
+  return <p className="text-lg italic text-ink">{children}</p>;
+}
+
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -199,9 +205,10 @@ export function Page2() {
 
           <p className="text-ink">
             Based on the knowledge cutoff date, the model gives an answer without thinking it
-            through. System 1 thinking leads to an incorrect response. Are knowledge gaps addressable
-            by <strong>System 2 thinking</strong>?
+            through. System 1 thinking leads to an incorrect response.
           </p>
+
+          <PosedQuestion>Are knowledge gaps addressable by System 2 thinking?</PosedQuestion>
         </section>
         <Note kicker="Try it">
           <p>Slide the training cutoff to move the model&apos;s memory back and forth in time.</p>
@@ -235,9 +242,7 @@ export function Page2() {
             <Cite n={REF.winobias} />
           </p>
 
-          <p className="text-ink">
-            Are knowledge biases addressable by <strong>System 2 thinking</strong>?
-          </p>
+          <PosedQuestion>Are knowledge biases addressable by System 2 thinking?</PosedQuestion>
         </section>
         <Note kicker="References">
           <RefItem n={REF.winobias}>
@@ -251,7 +256,8 @@ export function Page2() {
           <h2 className="text-xl font-semibold text-ink">3. Thinking it through</h2>
 
           <p className="text-ink">
-            Both misses share a shape: the model answered <em>immediately</em>. It never reread the
+            Both misses share a shape: the model answered <em>immediately</em> (System 1 thinking).
+            It never reread the
             question, and it never weighed what it might not know. A System 2 pass does both before
             committing to anything.
           </p>
@@ -285,11 +291,6 @@ export function Page2() {
             of this story: what it buys, how to buy more of it, and where buying more stops helping.
           </p>
         </section>
-        <Note kicker="Note">
-          <p>
-            The trace is an authored teaching example, not a transcript from a live model.
-          </p>
-        </Note>
       </div>
 
       <PageNav n={PAGE_N} />
