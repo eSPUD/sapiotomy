@@ -179,7 +179,11 @@ export function Page1() {
             </section>
           </div>
         </section>
-        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem n={REF.kahneman}>
+            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
+          </RefItem>
+        </Note>
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -201,11 +205,7 @@ export function Page1() {
             answer and constructing one are not the same act.
           </p>
         </section>
-        <Note kicker="References">
-          <RefItem n={REF.kahneman}>
-            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
-          </RefItem>
-        </Note>
+        <div aria-hidden="true" />
       </div>
 
       <div aria-live="polite" className="sr-only">
