@@ -3,6 +3,24 @@
  */
 import { createRng } from "./rng";
 
+// --- Page 13: o1's two-axis log-linear scaling ------------------------------
+// One law, two knobs. Accuracy is log-linear in test-time compute AND in
+// train-time RL compute: a decade of either buys the same `slopePerDecade`
+// points. `intercept` is the accuracy at 1 relative unit of thinking on the
+// fully-trained run; pulling train-time compute below `maxTrainExp` decades
+// shifts the whole test-time curve down by the decades forgone.
+export function twoAxisAccuracy(
+  testExp: number,
+  trainExp: number,
+  intercept: number,
+  slopePerDecade: number,
+  maxTrainExp = 2,
+  floor = 1,
+): number {
+  const y = intercept + slopePerDecade * (testExp - (maxTrainExp - trainExp));
+  return Math.max(floor, y);
+}
+
 // --- Page 17: overthinking inverse-U ---------------------------------------
 // A smooth hump: accuracy rises to a peak at `peak`, then falls. Easy problems
 // peak at a lower thinking-length than hard ones.

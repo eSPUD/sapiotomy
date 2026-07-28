@@ -53,6 +53,8 @@ figure/table, verbatim vs. interpolated). Summary:
 | budget-forcing.json | 14 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
 | deepseek-r1-training.json | 15 | Verbatim endpoints (DeepSeek-R1 2025) |
 | arc-cost.json | 16 | Reported **estimates** (ARC Prize blog, **not peer-reviewed**) |
+| o1-scaling.json | 13 | **Authored** log-linear redrawing (y = 21 + 29.5·log10 x, relative units) of the o1 announcement's two scaling figures, whose compute axes are **unlabeled** in the source; all named anchors verbatim from the announcement text/figure (AIME 12 / 74.4 / 83.3 / 93; Codeforces 808 / 1807; GPQA 56.1 / 78.0 / expert 69.7) (OpenAI o1 blog, **not peer-reviewed**) |
+| o3-preview.json | 13 | Verbatim Dec 2024 o3 preview announcement figures (AIME 96.7, GPQA 87.7, SWE-bench Verified 48.9→71.7, Codeforces 2727), **OpenAI-scored, preview**, documented in the ARC Prize o3 write-up (**not peer-reviewed**); live-contest re-measurement 2724 in arXiv:2502.06807 noted in provenance |
 | overthinking.json | 17 | Authored inverse-U matching the 2025 literature (**PP**) |
 | faithfulness.json | 18 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
 | illusion-of-thinking.json | 19 | Derived Hanoi token math (Shojaee/Lawsen 2025, **PP, both sides**) |
