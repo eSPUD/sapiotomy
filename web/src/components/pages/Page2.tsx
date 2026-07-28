@@ -184,50 +184,46 @@ export function Page2() {
           <h2 className="text-xl font-semibold text-ink">2. Knowing when to look it up</h2>
 
           {/* the deeper miss: it never reached for the fix */}
-          <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-ink">
-            <p>
-              <strong>Retrieval only helps if something decides to retrieve.</strong> The machine
-              never weighed its own memory and concluded it might be stale. It simply answered. That
-              is a second, quieter miss: not the absent fact, but the absent judgment that a fact was
-              missing. Asked directly whether models recognize the boundary of what they know and
-              call for outside help, the MetaTool benchmark found most struggle to do so.
-              <Cite n={REF.metatool} />
-            </p>
-          </div>
+          <p className="text-ink">
+            <strong>Retrieval only helps if something decides to retrieve.</strong> The machine never
+            weighed its own memory and concluded it might be stale. It simply answered. That is a
+            second, quieter miss: not the absent fact, but the absent judgment that a fact was
+            missing. Asked directly whether models recognize the boundary of what they know and call
+            for outside help, the MetaTool benchmark found most struggle to do so.
+            <Cite n={REF.metatool} />
+          </p>
 
           {/* the judgment was supplied from outside: three mechanisms */}
-          <div className="rounded-lg border border-grid bg-surface p-4 text-ink">
-            <p>
-              <strong>So the judgment was supplied from outside.</strong> Three ways, none of them
-              the model&apos;s own idea:
-            </p>
-            <dl className="mt-3 flex flex-col gap-2 text-sm">
-              <div>
-                <dt className="font-semibold text-compute">Prompting: show the pattern.</dt>
-                <dd className="text-ink-muted">
-                  ReAct interleaves reasoning with actions that query an external source, taught by a
-                  handful of worked examples.
-                  <Cite n={REF.react} />
-                </dd>
-              </div>
-              <div>
-                <dt className="font-semibold text-compute">Fine-tuning: train it in.</dt>
-                <dd className="text-ink-muted">
-                  Toolformer lets a model annotate text with candidate API calls, keeps only the
-                  calls that help it predict what comes next, then fine-tunes on those.
-                  <Cite n={REF.toolformer} />
-                </dd>
-              </div>
-              <div>
-                <dt className="font-semibold text-compute">Workflow: build the pipeline around it.</dt>
-                <dd className="text-ink-muted">
-                  Surveys of tool learning organize the field as human-designed stages: plan the
-                  task, select the tool, call it, compose the reply.
-                  <Cite n={REF.survey} />
-                </dd>
-              </div>
-            </dl>
-          </div>
+          <p className="text-ink">
+            <strong>So the judgment was supplied from outside.</strong> Three ways, none of them the
+            model&apos;s own idea:
+          </p>
+          <dl className="flex flex-col gap-2">
+            <div>
+              <dt className="font-semibold text-ink">Prompting: show the pattern.</dt>
+              <dd className="text-ink-muted">
+                ReAct interleaves reasoning with actions that query an external source, taught by a
+                handful of worked examples.
+                <Cite n={REF.react} />
+              </dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-ink">Fine-tuning: train it in.</dt>
+              <dd className="text-ink-muted">
+                Toolformer lets a model annotate text with candidate API calls, keeps only the calls
+                that help it predict what comes next, then fine-tunes on those.
+                <Cite n={REF.toolformer} />
+              </dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-ink">Workflow: build the pipeline around it.</dt>
+              <dd className="text-ink-muted">
+                Surveys of tool learning organize the field as human-designed stages: plan the task,
+                select the tool, call it, compose the reply.
+                <Cite n={REF.survey} />
+              </dd>
+            </div>
+          </dl>
 
           {/* the honesty caveat: Toolformer is the partial counterexample */}
           <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-4 text-ink">
