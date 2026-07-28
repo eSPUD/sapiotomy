@@ -52,7 +52,8 @@ figure/table, verbatim vs. interpolated). Summary:
 | compute-optimal.json | 11, 13 | Verbatim claims (Snell et al. 2024) |
 | rebase-pareto.json | 11 | Verbatim table values (Wu et al. 2024, Table 1, MATH500 accuracy vs inference FLOPs) |
 | budget-forcing.json | 14 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
-| deepseek-r1-training.json | 15 | Verbatim endpoints (DeepSeek-R1 2025) |
+| deepseek-r1-training.json | 14, 16 | Verbatim endpoints (DeepSeek-R1 2025): AIME 2024 pass@1 15.6 → 71.0, cons@64 86.7; intermediate points interpolated |
+| deepseek-r1-distill.json | 14 | Verbatim Table 4–5 values (DeepSeek-R1 2025): per-size AIME 2024 + MATH-500 for the six distills, teacher/o1-mini/QwQ/GPT-4o reference rows |
 | arc-cost.json | 16 | Reported **estimates** (ARC Prize blog, **not peer-reviewed**) |
 | o1-scaling.json | 13 | **Authored** log-linear redrawing (y = 21 + 29.5·log10 x, relative units) of the o1 announcement's two scaling figures, whose compute axes are **unlabeled** in the source; all named anchors verbatim from the announcement text/figure (AIME 12 / 74.4 / 83.3 / 93; Codeforces 808 / 1807; GPQA 56.1 / 78.0 / expert 69.7) (OpenAI o1 blog, **not peer-reviewed**) |
 | o3-preview.json | 13 | Verbatim Dec 2024 o3 preview announcement figures (AIME 96.7, GPQA 87.7, SWE-bench Verified 48.9→71.7, Codeforces 2727), **OpenAI-scored, preview**, documented in the ARC Prize o3 write-up (**not peer-reviewed**); live-contest re-measurement 2724 in arXiv:2502.06807 noted in provenance |

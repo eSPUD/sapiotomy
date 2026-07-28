@@ -1,0 +1,39 @@
+{
+  "points": [
+    { "x": 1.5, "y": 28.9 },
+    { "x": 7, "y": 55.5 },
+    { "x": 8, "y": 50.4 },
+    { "x": 14, "y": 69.7 },
+    { "x": 32, "y": 72.6 },
+    { "x": 70, "y": 70.0 }
+  ],
+  "fit": {
+    "kind": "distill-table",
+    "params": {
+      "math1p5": 83.9,
+      "math7": 92.8,
+      "math8": 89.1,
+      "math14": 93.9,
+      "math32": 94.3,
+      "math70": 94.5,
+      "r1Aime": 79.8,
+      "r1Math": 97.3,
+      "r1Gpqa": 71.5,
+      "r1CfElo": 2029,
+      "r1CfPct": 96.3,
+      "o1miniAime": 63.6,
+      "qwqAime": 50.0,
+      "gpt4oAime": 9.3,
+      "samplesK": 800,
+      "teacherParamsB": 671,
+      "teacherActiveB": 37
+    }
+  },
+  "citation": {
+    "ref": "DeepSeek-R1 2025",
+    "url": "https://arxiv.org/abs/2501.12948",
+    "venue": "Nature 2025",
+    "preprint": false
+  },
+  "provenance": "Verbatim from DeepSeek-AI 2025, Tables 4-5. Distilled dense models, AIME 2024 pass@1 / MATH-500 pass@1: R1-Distill-Qwen-1.5B 28.9/83.9, Qwen-7B 55.5/92.8, Llama-8B 50.4/89.1, Qwen-14B 69.7/93.9, Qwen-32B 72.6/94.3, Llama-70B 70.0/94.5. References: GPT-4o-0513 AIME 9.3, o1-mini AIME 63.6, QwQ-32B-Preview AIME 50.0. Teacher DeepSeek-R1 (671B-total / 37B-active MoE): AIME 79.8, MATH-500 97.3, GPQA Diamond 71.5, Codeforces rating 2029 (96.3rd percentile). Distillation used ~800K R1-curated reasoning samples, SFT only (no RL); weights MIT-licensed. x = dense model size (billions of parameters); y = AIME 2024 pass@1 (%)."
+}
