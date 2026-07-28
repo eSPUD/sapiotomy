@@ -39,8 +39,8 @@ const NUM_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six"];
 
 /** A cutoff is a month, encoded as years*12 + month(0-11), so it slides smoothly. */
 const monthIndex = (year: number, month0: number) => year * 12 + month0;
-const CUTOFF_MIN = monthIndex(2007, 0); // Jan 2007 (before any Spain title)
-const CUTOFF_MAX = monthIndex(2027, 11); // Dec 2027 (past the 2026 final)
+const CUTOFF_MIN = monthIndex(2017, 0); // Jan 2017 (the 2010 title is always known)
+const CUTOFF_MAX = monthIndex(2026, 11); // Dec 2026 (past the July final)
 const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real seal
 /** Each of Spain's titles is decided at its July final (2010-07, 2026-07). */
 const WIN_FINALS = WC.wins.map((y) => monthIndex(y, 6));
@@ -153,7 +153,7 @@ export function Page2() {
             className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-              <span>one question · two roads</span>
+              <span>slide the training cutoff · watch the recalled answer follow</span>
             </div>
 
             <div className="flex flex-col gap-4 p-4">

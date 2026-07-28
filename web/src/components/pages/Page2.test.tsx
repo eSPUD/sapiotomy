@@ -43,11 +43,11 @@ describe("Page 2 (The Knowledge Gap): a static two-road contrast", () => {
     render(<Page2 />);
     const slider = screen.getByRole("slider", { name: /training cutoff/i });
     const recall = () => screen.getByRole("group", { name: /sealed memory · recall path/i });
-    // Before Spain's first title (2010) the model knows none of them.
-    fireEvent.change(slider, { target: { value: String(2007 * 12) } });
-    expect(within(recall()).getByText(/✗ “Zero\.”/)).toBeInTheDocument();
+    // Early in the range (before the 2026 final) memory holds only the 2010 title.
+    fireEvent.change(slider, { target: { value: String(2017 * 12) } });
+    expect(within(recall()).getByText(/✗ “One\.”/)).toBeInTheDocument();
     // Past the 2026 final, sealed memory catches up and the gap closes.
-    fireEvent.change(slider, { target: { value: String(2027 * 12 + 11) } });
+    fireEvent.change(slider, { target: { value: String(2026 * 12 + 11) } });
     expect(within(recall()).getByText(/✓ “Two\.”/)).toBeInTheDocument();
   });
 
