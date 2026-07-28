@@ -8,7 +8,7 @@ const CITATION = `@article{bangalorelakshman2026its,
   author = {Bangalore Lakshman, Shashank and Eiers, Scott Lawrence},
   journal = {VISxAI Workshop at IEEE VIS},
   year   = {2026},
-  url    = {https://example.org/inference-time-scaling}
+  url    = {https://sapiotomy.vercel.app}
 }`;
 
 export default function Home() {
