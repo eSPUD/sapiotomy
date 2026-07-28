@@ -107,6 +107,15 @@ export interface SearchTrace {
   solutionThoughts: number[];
   /** Thought id where a committed strategy ran out of moves, when it failed. */
   deadEndReached: number | null;
+  /**
+   * MCTS only: the path of each trial continuation, as thought ids in the
+   * order it walked them. Recorded so an animation can replay what MCTS
+   * actually does — whole lines tried, attention narrowing — rather than the
+   * misleading order in which states happened to be first scored.
+   */
+  rollouts?: number[][];
+  /** MCTS only: cumulative thoughts scored after each trial. */
+  rolloutScored?: number[];
 }
 
 export interface SearchOptions {
@@ -320,6 +329,8 @@ export function search(
 
       const c = 1.4;
       let solution: SearchNode | null = null;
+      const rolloutPaths: number[][] = [];
+      const rolloutScored: number[] = [];
 
       for (let r = 0; r < rollouts && !t.exhausted && !solution; r++) {
         const path: SearchNode[] = [root];
@@ -382,10 +393,23 @@ export function search(
           p.visits = v;
           p.kept = true;
         }
+
+        // Record the trial for replay. When the goal turned up while expanding
+        // this node's children, the walk itself never stepped onto it — append
+        // it so the animated trial ends where the search ended.
+        const ids = path.map((p) => p.thoughtId);
+        if (solution && ids[ids.length - 1] !== solution.thoughtId) {
+          ids.push(solution.thoughtId);
+        }
+        rolloutPaths.push(ids);
+        rolloutScored.push(t.examined);
       }
 
       for (const n of t.nodes) n.visits = visits.get(n.id) ?? 0;
-      return t.finish(strategy, solution, null);
+      const out = t.finish(strategy, solution, null);
+      out.rollouts = rolloutPaths;
+      out.rolloutScored = rolloutScored;
+      return out;
     }
   }
 }

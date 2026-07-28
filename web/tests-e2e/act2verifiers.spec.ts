@@ -29,19 +29,22 @@ test.describe("Act 2 verifiers (pages 8–10)", () => {
     await expect(page.getByText("step broken")).toBeVisible();
   });
 
-  test("Page 10: the dial changes what the model writes", async ({ page }) => {
+  test("Page 10: the replay steps through the search and prices it", async ({ page }) => {
     await page.goto("/p/10");
     const bill = page.getByRole("status", { name: /the compute bill/i });
-    // Keeping one line alive is greedy: the likeliest line, and it cannot rhyme.
+    // Opens dark: nothing scored until the reader presses play or scrubs.
+    await expect(bill).toContainText("0");
+    await expect(page.getByText(/press play to watch it search/i)).toBeVisible();
+    // Greedy to the end: 9 of 29, and the likeliest line cannot rhyme.
+    await page.getByRole("button", { name: /skip to end/i }).click();
+    await expect(bill).toContainText("9");
     await expect(page.getByText(/✗ no rhyme/)).toBeVisible();
-    await expect(page.getByText(/so I got up and paced/)).toBeVisible();
-    await expect(bill).toContainText("12");
-    // Keeping two finds the rhyme, and the counter is a real measurement.
-    const dial = page.getByRole("slider", { name: /lines kept alive/i });
-    await dial.fill("2");
+    // Breadth-first pays the most for the same tree.
+    await page.getByRole("button", { name: "Breadth-first" }).click();
+    await expect(bill).toContainText("0");
+    await page.getByRole("button", { name: /skip to end/i }).click();
+    await expect(bill).toContainText("23");
     await expect(page.getByText(/✓ it rhymes/)).toBeVisible();
-    await expect(page.getByText(/so I turned on the light/)).toBeVisible();
-    await expect(bill).toContainText("19");
   });
 
   test("Page 10: the reader can write the line themselves", async ({ page }) => {
