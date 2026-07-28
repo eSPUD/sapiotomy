@@ -189,10 +189,8 @@ export function Page2() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        On Page 1 the two systems were yours. A model has the same split: asked something it can
-        answer from memory, it answers at once, and that reflex is usually right, which is what makes
-        its failures easy to miss. Real questions age, and they are rarely as precise as they look.
-        Here is one plain question of record, and two different ways it catches a model out.
+        What does it take for an LLM to be useful (helpful, harmless and honest) in the real world?
+        What are the pitfalls of System 1 thinking in the real world?
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
