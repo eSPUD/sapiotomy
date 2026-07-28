@@ -50,12 +50,13 @@ figure/table, verbatim vs. interpolated). Summary:
 | tree-of-thoughts.json | 10 | Verbatim endpoints (Yao et al. 2023), Game of 24 |
 | coverage-scaling.json | 12 | Verbatim endpoints + log-linear fit (Brown et al. 2024) |
 | compute-optimal.json | 13 | Verbatim claims (Snell et al. 2024) |
-| budget-forcing.json | 14 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
-| deepseek-r1-training.json | 15 | Verbatim endpoints (DeepSeek-R1 2025) |
-| arc-cost.json | 16 | Reported **estimates** (ARC Prize blog, **not peer-reviewed**) |
-| overthinking.json | 17 | Authored inverse-U matching the 2025 literature (**PP**) |
-| faithfulness.json | 18 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
-| illusion-of-thinking.json | 19 | Derived Hanoi token math (Shojaee/Lawsen 2025, **PP, both sides**) |
+| budget-forcing.json | 15 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
+| deepseek-r1-training.json | 16 | Verbatim endpoints (DeepSeek-R1 2025) |
+| arc-cost.json | — (reserved) | Reported **estimates** (ARC Prize blog, **not peer-reviewed**); retained after Page 17 became "When Reasoning Breaks" |
+| self-correction.json | 17 | Verbatim Table 3 values (Huang et al., ICLR 2024, arXiv:2310.01798): GPT-4/GSM8K 95.5→91.5→89.0 and GPT-3.5/CommonSenseQA 75.8→38.1→41.8 across intrinsic self-correction rounds; the page's slider demo is a separate authored three-state chain (labeled in-app, constants pinned in `act3.test.ts`) |
+| overthinking.json | 18 | Authored inverse-U matching the 2025 literature (**PP**) |
+| faithfulness.json | 19 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
+| illusion-of-thinking.json | 20 | Derived Hanoi token math (Shojaee/Lawsen 2025, **PP, both sides**) |
 
 ### Resolved conflict — Page 18 misalignment-hint faithfulness
 

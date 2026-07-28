@@ -7,11 +7,13 @@ import {
   hanoiMoves,
   hanoiTokens,
   inverseU,
+  SELF_CORRECTION,
+  selfCorrectionCurve,
 } from "./frontier";
 
 const TOL = 1.0;
 
-describe("Page 14: budget forcing (Muennighoff et al., preprint)", () => {
+describe("Page 15: budget forcing (Muennighoff et al., preprint)", () => {
   const d = curves.budgetForcing;
   it("advances 50% -> 57% across 'Wait' presses", () => {
     expect(Math.abs(interpolate(d, 0) - 50)).toBeLessThan(TOL);
@@ -24,7 +26,7 @@ describe("Page 14: budget forcing (Muennighoff et al., preprint)", () => {
   it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 15: DeepSeek-R1 RL training (Nature)", () => {
+describe("Page 16: DeepSeek-R1 RL training (Nature)", () => {
   const d = curves.deepseekTraining;
   it("pass@1 rises 15.6% -> 71.0%, cons@64 = 86.7%", () => {
     expect(Math.abs(interpolate(d, 0) - 15.6)).toBeLessThan(TOL);
@@ -41,7 +43,7 @@ describe("Page 15: DeepSeek-R1 RL training (Nature)", () => {
   });
 });
 
-describe("Page 16: ARC-AGI cost (reported estimates, not peer-reviewed)", () => {
+describe("ARC-AGI cost (reserved — retired with the old Page 17)", () => {
   const d = curves.arcCost;
   it("matches o3 low/high, o1, human anchors", () => {
     const p = d.fit!.params;
@@ -54,7 +56,45 @@ describe("Page 16: ARC-AGI cost (reported estimates, not peer-reviewed)", () => 
   it("is flagged as non-peer-reviewed", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 17: overthinking inverse-U (preprint)", () => {
+describe("Page 17: self-correction (Huang et al., ICLR 2024) + revision chain", () => {
+  const d = curves.selfCorrection;
+  it("GPT-4 on GSM8K declines 95.5 -> 91.5 -> 89.0 across rounds (verbatim)", () => {
+    expect(interpolate(d, 0)).toBe(95.5);
+    expect(interpolate(d, 1)).toBe(91.5);
+    expect(interpolate(d, 2)).toBe(89.0);
+  });
+  it("GPT-3.5 on CommonSenseQA collapses 75.8 -> 38.1 in one round (verbatim)", () => {
+    const p = d.fit!.params;
+    expect(p.gpt35Csqa0).toBe(75.8);
+    expect(p.gpt35Csqa1).toBe(38.1);
+    expect(p.gpt35Csqa2).toBe(41.8);
+  });
+  it("is peer-reviewed (ICLR 2024), not preprint-flagged", () => {
+    expect(d.citation.preprint).toBe(false);
+    expect(d.citation.venue).toBe("ICLR 2024");
+  });
+
+  const unaided = selfCorrectionCurve(SELF_CORRECTION.maxSteps, {
+    ...SELF_CORRECTION,
+    reliability: null,
+  });
+  const checked = selfCorrectionCurve(SELF_CORRECTION.maxSteps, { ...SELF_CORRECTION });
+  const peak = unaided.reduce((a, p) => (p.y > a.y ? p : a));
+  it("unaided chain rises to an interior peak, then falls below its start", () => {
+    expect(peak.x).toBe(3);
+    expect(Math.abs(peak.y - 62.1)).toBeLessThan(TOL);
+    expect(Math.abs(unaided[0].y - 38.3)).toBeLessThan(TOL);
+    expect(unaided[12].y).toBeLessThan(unaided[0].y); // the cliff
+  });
+  it("verifier flattens the cliff into a plateau, capped below the ceiling", () => {
+    const ceiling = (1 - SELF_CORRECTION.unsolvable) * 100;
+    for (let t = 1; t <= 12; t++) expect(checked[t].y).toBeGreaterThan(unaided[t].y);
+    expect(Math.abs(checked[12].y - 77.3)).toBeLessThan(TOL);
+    for (const p of checked) expect(p.y).toBeLessThan(ceiling); // imperfect verifier
+  });
+});
+
+describe("Page 18: overthinking inverse-U (preprint)", () => {
   const d = curves.overthinking;
   const { easyPeak, hardPeak, easyPeakAcc, hardPeakAcc, curvature } = d.fit!.params;
   it("each curve is an inverse-U (single interior maximum)", () => {
@@ -69,7 +109,7 @@ describe("Page 17: overthinking inverse-U (preprint)", () => {
   void hardPeakAcc;
 });
 
-describe("Page 18: faithfulness (preprint)", () => {
+describe("Page 19: faithfulness (preprint)", () => {
   const d = curves.faithfulness;
   it("admission Monte Carlo converges to 25% / 39%", () => {
     expect(Math.abs(faithfulnessAdmitRate(0.25, 20000, 1) - 25)).toBeLessThan(1.5);
@@ -81,7 +121,7 @@ describe("Page 18: faithfulness (preprint)", () => {
   it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 19: Illusion of Thinking (preprints, both sides)", () => {
+describe("Page 20: Illusion of Thinking (preprints, both sides)", () => {
   const d = curves.illusion;
   const { tokensPerMove, tokenBudget, riverCrossingImpossibleN } = d.fit!.params;
   it("Hanoi requires 2^N - 1 moves and tokens grow with N", () => {
@@ -103,7 +143,7 @@ describe("Page 19: Illusion of Thinking (preprints, both sides)", () => {
 });
 
 describe("preprint flagging (all Act 3 non-peer-reviewed sources)", () => {
-  it("pages 14, 16, 17, 18, 19 data are preprint/non-peer-reviewed", () => {
+  it("pages 15, 18, 19, 20 data (and reserved arc-cost) are preprint/non-peer-reviewed", () => {
     expect(curves.budgetForcing.citation.preprint).toBe(true);
     expect(curves.arcCost.citation.preprint).toBe(true);
     expect(curves.overthinking.citation.preprint).toBe(true);

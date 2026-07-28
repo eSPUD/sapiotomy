@@ -1,0 +1,25 @@
+{
+  "points": [
+    { "x": 0, "y": 95.5 },
+    { "x": 1, "y": 91.5 },
+    { "x": 2, "y": 89.0 }
+  ],
+  "fit": {
+    "kind": "table",
+    "params": {
+      "gpt4Gsm8k0": 95.5,
+      "gpt4Gsm8k1": 91.5,
+      "gpt4Gsm8k2": 89.0,
+      "gpt35Csqa0": 75.8,
+      "gpt35Csqa1": 38.1,
+      "gpt35Csqa2": 41.8
+    }
+  },
+  "citation": {
+    "ref": "Huang et al. 2024",
+    "url": "https://arxiv.org/abs/2310.01798",
+    "venue": "ICLR 2024",
+    "preprint": false
+  },
+  "provenance": "Verbatim from Table 3 of 'Large Language Models Cannot Self-Correct Reasoning Yet' (Huang et al., ICLR 2024, arXiv:2310.01798), intrinsic self-correction with no external feedback. points = GPT-4 on GSM8K across rounds (x = self-correction round: 0 standard prompting, 1, 2): 95.5 -> 91.5 -> 89.0. fit.params also carries GPT-3.5-Turbo on CommonSenseQA: 75.8 -> 38.1 -> 41.8 (the collapse case). Accuracy in %."
+}
