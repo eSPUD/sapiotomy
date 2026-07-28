@@ -8,6 +8,10 @@ const bill = () =>
     screen.getByRole("status", { name: /the compute bill/i }).querySelector("p")?.textContent ?? "0",
   );
 const dial = () => screen.getByRole("slider", { name: /lines kept alive/i });
+const setStrategy = (value: string) =>
+  fireEvent.change(screen.getByRole("combobox", { name: /search strategy/i }), {
+    target: { value },
+  });
 
 describe("Page 10 — step 1, the reader writes the line", () => {
   it("states the rule and shows the model's next-word candidates", () => {
@@ -41,25 +45,29 @@ describe("Page 10 — step 1, the reader writes the line", () => {
   });
 });
 
-describe("Page 10 — step 2, the dial", () => {
-  it("opens keeping one line alive, which cannot rhyme, for 12 words scored", () => {
+describe("Page 10 — step 2, the strategies", () => {
+  it("opens on greedy, which cannot rhyme, for 12 words scored", () => {
     render(<Page10 />);
-    expect(dial()).toHaveValue("1");
+    expect(screen.getByRole("combobox", { name: /search strategy/i })).toHaveValue("greedy");
     expect(bill()).toBe(12);
     expect(screen.getByText(/✗ no rhyme/)).toBeInTheDocument();
-    expect(screen.getByText(/so I got up and paced/)).toBeInTheDocument();
+    // the line appears in the verdict and again in the finished-lines list
+    expect(screen.getAllByText(/so I got up and paced/).length).toBeGreaterThan(0);
   });
 
-  it("keeping two lines alive finds the rhyme, and costs more", () => {
+  it("a beam of two finds the rhyme, and costs more", () => {
     render(<Page10 />);
+    setStrategy("beam");
     fireEvent.change(dial(), { target: { value: "2" } });
     expect(screen.getByText(/✓ it rhymes/)).toBeInTheDocument();
-    expect(screen.getByText(/so I turned on the light/)).toBeInTheDocument();
+    expect(screen.getAllByText(/so I turned on the light/).length).toBeGreaterThan(0);
     expect(bill()).toBe(19);
   });
 
   it("every extra line kept alive costs more still", () => {
     render(<Page10 />);
+    setStrategy("beam");
+    fireEvent.change(dial(), { target: { value: "1" } });
     let last = bill();
     for (const v of ["2", "3", "4", "5"]) {
       fireEvent.change(dial(), { target: { value: v } });
@@ -68,9 +76,34 @@ describe("Page 10 — step 2, the dial", () => {
     }
   });
 
-  it("has no strategy dropdown: the dial is the only control", () => {
+  it("offers all five strategies, and each really runs", () => {
     render(<Page10 />);
-    expect(screen.queryByRole("combobox", { name: /search strategy/i })).not.toBeInTheDocument();
+    const costs: Record<string, number> = {};
+    for (const s of ["greedy", "bfs", "dfs", "beam", "mcts"]) {
+      setStrategy(s);
+      costs[s] = bill();
+      expect(costs[s], s).toBeGreaterThan(0);
+    }
+    // breadth-first pays the most; greedy the least
+    expect(costs.bfs).toBe(43);
+    expect(costs.greedy).toBe(12);
+    expect(costs.mcts).toBe(23);
+    expect(costs.dfs).toBe(29);
+  });
+
+  it("shows the beam dial only for beam", () => {
+    render(<Page10 />);
+    expect(screen.queryByRole("slider", { name: /lines kept alive/i })).not.toBeInTheDocument();
+    setStrategy("beam");
+    expect(dial()).toBeInTheDocument();
+  });
+
+  it("lists the finished lines as readable sentences", () => {
+    render(<Page10 />);
+    setStrategy("bfs");
+    expect(screen.getByText(/lines it finished/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/so I turned on the light/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("rhymes").length).toBeGreaterThan(0);
   });
 });
 

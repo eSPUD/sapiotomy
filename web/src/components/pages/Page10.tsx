@@ -35,7 +35,7 @@ import { NEXT_WORD_SPEC } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { buildNextWord, type NextWordSpec } from "@/lib/nextWord";
-import { search, type SearchNode } from "@/lib/thoughtSearch";
+import { search, STRATEGIES, type SearchNode, type Strategy } from "@/lib/thoughtSearch";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 10;
@@ -43,10 +43,10 @@ const NW_ = buildNextWord(NEXT_WORD_SPEC as unknown as NextWordSpec);
 const SPEC = NW_.spec;
 
 /* Tree geometry: fixed node size and pitch, so connectors are arithmetic. */
-const NODE_W = 84;
+const NODE_W = 108;
 const NODE_H = 24;
 const PITCH = 32;
-const COL = 112;
+const COL = 136;
 const PAD = 10;
 const HEAD = 22;
 
@@ -103,17 +103,34 @@ export function Page10() {
 
   // Step 1 — the reader taps words.
   const [myState, setMyState] = useState(NW_.space.root);
-  // Step 2 — how many lines the model keeps alive. 1 is greedy.
-  const [keep, setKeep] = useState(1);
+  // Step 2 — which search, and for beam, how many lines it keeps alive.
+  const [strategy, setStrategy] = useState<Strategy>("greedy");
+  const [keep, setKeep] = useState(2);
 
   const mine = NW_.states[myState];
   const myChoices = NW_.choices(mine);
   const myDone = mine.words.length === SPEC.length;
 
   const trace = useMemo(
-    () => search(NW_.space, "beam", { beamWidth: keep, maxNodes: 3000 }),
-    [keep],
+    () => search(NW_.space, strategy, { beamWidth: keep, maxNodes: 3000, rollouts: 80 }),
+    [strategy, keep],
   );
+  const meta = STRATEGIES.find((s) => s.key === strategy)!;
+
+  /* Every line this run actually finished, likeliest first. Reading these is
+     the point: they are sentences, not nodes. */
+  const finishedLines = useMemo(() => {
+    const seen = new Set<number>();
+    return trace.nodes
+      .filter((n) => {
+        const st = NW_.states[n.thoughtId];
+        if (st.words.length !== SPEC.length || seen.has(n.thoughtId)) return false;
+        seen.add(n.thoughtId);
+        return true;
+      })
+      .map((n) => NW_.states[n.thoughtId])
+      .sort((a, b) => b.probability - a.probability);
+  }, [trace]);
 
   /* Where the model ended up: the rhyming line, or the likeliest one it kept. */
   const endId = useMemo(() => {
@@ -167,8 +184,8 @@ export function Page10() {
   };
 
   const aria = trace.solved
-    ? `Word tree. Keeping ${keep} lines alive, the model scored ${trace.thoughtsScored} words and finished on a rhyme: ${NW_.line(modelLine)}.`
-    : `Word tree. Keeping ${keep} lines alive, the model scored ${trace.thoughtsScored} words and finished on ${NW_.line(modelLine)}, which does not rhyme.`;
+    ? `Word tree. ${meta.label} scored ${trace.thoughtsScored} words and finished on a rhyme: ${NW_.line(modelLine)}.`
+    : `Word tree. ${meta.label} scored ${trace.thoughtsScored} words and finished on ${NW_.line(modelLine)}, which does not rhyme.`;
 
   const bars = [
     { label: "Input-output prompting", value: io, tone: "bg-grid" },
@@ -280,21 +297,44 @@ export function Page10() {
           <h2 className="text-xl font-semibold text-ink">2. Let it keep more than one line</h2>
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Same words, same probabilities. The only thing that changes is how many unfinished
-              lines the model carries forward at each step. Keeping one is exactly what you just
-              did.
+              Same words, same probabilities. The only thing that changes is which unfinished
+              lines the model carries forward, and how many. Greedy is exactly what you just did.
             </p>
 
-            <Slider
-              label="Lines kept alive"
-              min={1}
-              max={5}
-              value={keep}
-              onChange={(v) => {
-                setKeep(v);
-                recordInteraction(PAGE_N);
-              }}
-            />
+            <div className="flex flex-col gap-2">
+              <label htmlFor="strategy" className="text-sm text-ink-muted">
+                Search strategy
+              </label>
+              <select
+                id="strategy"
+                value={strategy}
+                onChange={(e) => {
+                  setStrategy(e.target.value as Strategy);
+                  recordInteraction(PAGE_N);
+                }}
+                className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
+              >
+                {STRATEGIES.map((s) => (
+                  <option key={s.key} value={s.key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-ink-muted">{meta.blurb}</p>
+            </div>
+
+            {strategy === "beam" ? (
+              <Slider
+                label="Lines kept alive (b)"
+                min={1}
+                max={5}
+                value={keep}
+                onChange={(v) => {
+                  setKeep(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
+            ) : null}
 
             <div
               className="max-h-[24rem] overflow-auto rounded-lg border border-dashed border-grid bg-surface-raised p-2"
@@ -372,11 +412,15 @@ export function Page10() {
                       <text x={p.x + 7} y={p.y + 16} className="fill-canvas text-[10px]">
                         {wordOf(n)}
                       </text>
-                      {n.isGoal ? (
-                        <text x={p.x + NODE_W - 7} y={p.y + 16} textAnchor="end" className="fill-canvas text-[10px]">
-                          ✓
-                        </text>
-                      ) : null}
+                      <text
+                        x={p.x + NODE_W - 7}
+                        y={p.y + 16}
+                        textAnchor="end"
+                        className="fill-canvas text-[9px]"
+                        opacity={0.75}
+                      >
+                        {n.isGoal ? "✓" : pct(NW_.states[n.thoughtId].probability)}
+                      </text>
                     </g>
                   );
                 })}
@@ -387,6 +431,33 @@ export function Page10() {
               <Key className="bg-correct" label="the rhyming line" />
               <Key className="bg-compute" label="kept alive" />
               <Key className="border border-dashed border-grid bg-surface" label="scored, then dropped" />
+            </div>
+
+            {/* The tree, read as sentences. This is the part that makes it legible. */}
+            <div className="flex flex-col gap-1">
+              <p className="text-xs uppercase tracking-wide text-ink-muted">
+                lines it finished ({finishedLines.length} of 36)
+              </p>
+              <ul className="flex flex-col gap-0.5">
+                {finishedLines.slice(0, 6).map((l) => (
+                  <li key={l.id} className="flex items-baseline gap-2 text-sm">
+                    <span className="w-10 shrink-0 text-right font-mono text-xs text-compute">
+                      {pct(l.probability)}
+                    </span>
+                    <span className={`italic ${l.rhymed ? "font-semibold text-correct" : "text-ink"}`}>
+                      {NW_.line(l)}
+                    </span>
+                    <span className="text-xs text-ink-muted">
+                      {l.rhymed ? "rhymes" : "no rhyme"}
+                    </span>
+                  </li>
+                ))}
+                {finishedLines.length > 6 ? (
+                  <li className="pl-12 text-xs text-ink-muted">
+                    and {finishedLines.length - 6} more
+                  </li>
+                ) : null}
+              </ul>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)]">
@@ -412,7 +483,7 @@ export function Page10() {
                 <p className="mt-1 text-lg italic text-ink">{NW_.line(modelLine)}</p>
                 <p className="mt-1 text-xs text-ink-muted">
                   {trace.solved
-                    ? `The rhyming line is only ${pct(modelLine.probability)} likely. The likeliest line, at 13%, is the one that cannot rhyme, which is why keeping one is not enough.`
+                    ? `The rhyming line is only ${pct(modelLine.probability)} likely. The likeliest line, at 13%, is the one that cannot rhyme, which is why following the likeliest word is not enough.`
                     : `This is the likeliest line in the whole tree, at ${pct(modelLine.probability)}. Being likeliest is not the same as being right.`}
                 </p>
               </div>
