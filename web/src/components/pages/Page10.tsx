@@ -448,6 +448,18 @@ export function Page10() {
               </button>
               <button
                 type="button"
+                disabled={done}
+                onClick={() => {
+                  setPlaying(false);
+                  setStep((s) => Math.min(s + 1, totalSteps));
+                  recordInteraction(PAGE_N);
+                }}
+                className="rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink disabled:opacity-50"
+              >
+                Next {isMcts ? "trial" : "step"}
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   setPlaying(false);
                   setStep(totalSteps);

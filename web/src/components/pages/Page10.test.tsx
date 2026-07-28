@@ -86,6 +86,27 @@ describe("Page 10 — step 2, the replay", () => {
     expect(screen.getByRole("button", { name: /^play$/i })).toBeInTheDocument();
   });
 
+  it("next advances one word at a time, pausing playback, and stops at the end", () => {
+    render(<Page10 />);
+    const next = screen.getByRole("button", { name: /next step/i });
+    fireEvent.click(next);
+    expect(bill()).toBe(1);
+    fireEvent.click(next);
+    expect(bill()).toBe(2);
+    // while playing, next pauses
+    fireEvent.click(screen.getByRole("button", { name: /^play$/i }));
+    fireEvent.click(next);
+    expect(screen.getByRole("button", { name: /^play$/i })).toBeInTheDocument();
+    // at the end it disables
+    skipToEnd();
+    expect(screen.getByRole("button", { name: /next step/i })).toBeDisabled();
+    // and MCTS steps by trial, not by word
+    pick(/mcts/i);
+    expect(screen.getByRole("button", { name: /next trial/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /next trial/i }));
+    expect(bill()).toBe(9); // trial 1 scored 9 words
+  });
+
   it("play toggles to pause; scrubbing pauses", () => {
     render(<Page10 />);
     fireEvent.click(screen.getByRole("button", { name: /^play$/i }));
