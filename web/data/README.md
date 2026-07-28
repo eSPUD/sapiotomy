@@ -48,6 +48,8 @@ at load time, so a missing `citation`/`provenance` fails the build and the tests
 | `compute-optimal.json` | 13 | >4× vs BoN; beats 14× larger | Snell et al. 2024 |
 | `budget-forcing.json` | 14 | AIME24 50%→57% | Muennighoff et al. 2025 (PP) |
 | `deepseek-r1-training.json` | 15 | AIME 15.6%→71.0%; cons@64 86.7% | DeepSeek-R1 2025 |
+| `o1-scaling.json` | 13 | AIME 12→74.4/83.3/93; two-axis log-linear (authored shape, unlabeled source axes) | OpenAI o1 blog (PP) |
+| `o3-preview.json` | 13 | AIME 96.7; GPQA 87.7; SWE 48.9→71.7; CF 2727 | OpenAI o3 preview via ARC Prize (PP) |
 | `arc-cost.json` | 16 | o3 75.7%→87.5%; est. $3K–$30K | ARC Prize blog (est.) |
 | `overthinking.json` | 17 | inverse-U; easy peaks earlier | inverse-scaling lit. (PP) |
 | `faithfulness.json` | 18 | admit 25% / 39% | Chen et al./Anthropic (PP) |
