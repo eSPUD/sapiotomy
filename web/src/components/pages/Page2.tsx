@@ -88,10 +88,6 @@ export function Page2() {
             aria-label="Training cutoff explorer"
             className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
-              <span>slide the training cutoff · watch the recalled answer follow</span>
-            </div>
-
             <div className="flex flex-col gap-4 p-4">
               <p className="text-lg text-ink">{WC.question}</p>
 
@@ -140,10 +136,6 @@ export function Page2() {
         </section>
         <Note kicker="Try it">
           <p>Slide the training cutoff to move the model&apos;s memory back and forth in time.</p>
-          <p>
-            Recall only counts titles won on or before it; a current source (retrieval) always has
-            them all.
-          </p>
         </Note>
 
         {/* Step 2 */}
