@@ -12,6 +12,7 @@ import votingPlateauRaw from "@data/voting-plateau.json";
 import prmVsOrmRaw from "@data/prm-vs-orm.json";
 import treeOfThoughtsRaw from "@data/tree-of-thoughts.json";
 import totCrosswordsRaw from "@data/tot-crosswords.json";
+import starCqaRaw from "@data/star-cqa.json";
 import coverageScalingRaw from "@data/coverage-scaling.json";
 import computeOptimalRaw from "@data/compute-optimal.json";
 import budgetForcingRaw from "@data/budget-forcing.json";
@@ -36,6 +37,7 @@ export const curves: Record<string, CurveData> = {
   prmVsOrm: parseCurveData(prmVsOrmRaw, "prm-vs-orm.json"),
   treeOfThoughts: parseCurveData(treeOfThoughtsRaw, "tree-of-thoughts.json"),
   totCrosswords: parseCurveData(totCrosswordsRaw, "tot-crosswords.json"),
+  starCqa: parseCurveData(starCqaRaw, "star-cqa.json"),
   coverageScaling: parseCurveData(coverageScalingRaw, "coverage-scaling.json"),
   computeOptimal: parseCurveData(computeOptimalRaw, "compute-optimal.json"),
   budgetForcing: parseCurveData(budgetForcingRaw, "budget-forcing.json"),
