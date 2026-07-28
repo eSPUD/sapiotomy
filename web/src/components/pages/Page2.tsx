@@ -83,10 +83,8 @@ export function Page2() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        No mental math this time. One plain question of record:{" "}
-        <strong>how many FIFA World Cups has Spain won?</strong> It looks like a lookup. But a model
-        learns everything it knows before a fixed <strong>training cutoff</strong>, and the record
-        moved after that. The answer a model gives depends on when its memory was sealed.
+        A model learns everything it knows before a fixed <strong>training cutoff</strong>, and the
+        record moved after that. The answer a model gives depends on when its memory was sealed.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
