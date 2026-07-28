@@ -22,6 +22,7 @@ import o1ScalingRaw from "@data/o1-scaling.json";
 import o3PreviewRaw from "@data/o3-preview.json";
 import deepseekDistillRaw from "@data/deepseek-r1-distill.json";
 import arcCostRaw from "@data/arc-cost.json";
+import deepseekPricingRaw from "@data/deepseek-pricing.json";
 import overthinkingRaw from "@data/overthinking.json";
 import faithfulnessRaw from "@data/faithfulness.json";
 import illusionRaw from "@data/illusion-of-thinking.json";
@@ -51,6 +52,7 @@ export const curves: Record<string, CurveData> = {
   o3Preview: parseCurveData(o3PreviewRaw, "o3-preview.json"),
   deepseekDistill: parseCurveData(deepseekDistillRaw, "deepseek-r1-distill.json"),
   arcCost: parseCurveData(arcCostRaw, "arc-cost.json"),
+  deepseekPricing: parseCurveData(deepseekPricingRaw, "deepseek-pricing.json"),
   overthinking: parseCurveData(overthinkingRaw, "overthinking.json"),
   faithfulness: parseCurveData(faithfulnessRaw, "faithfulness.json"),
   illusion: parseCurveData(illusionRaw, "illusion-of-thinking.json"),
