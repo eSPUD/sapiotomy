@@ -172,12 +172,12 @@ export function Page1() {
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. The difference</h2>
-          <div className="rounded-lg border border-grid bg-surface p-4 leading-relaxed text-ink">
+          <p className="leading-relaxed text-ink">
             Same operation, two different machines. <strong>System 1</strong> recognizes the answer;{" "}
             <strong>System 2</strong> builds it. One arrives whole, instant, effortless, automatic.
             The other comes line by line, slow, deliberate, and you feel every step. Recognizing an
             answer and constructing one are not the same act.
-          </div>
+          </p>
         </section>
         <Note kicker="References">
           <RefItem n={REF.kahneman}>
