@@ -1,19 +1,19 @@
 "use client";
 
 /**
- * Page 2, "Two Systems" (docs/page_2_refactor.md). One question: how many World
- * Cups has Spain won? It looks like a System-1 lookup, but answering it well is
- * a System-2 move: you have to reason that the record can change, ask "have they
- * won recently?", and go get the fresh fact. The machine skips that move: it
- * blurts a confident recall off a memory sealed before the 2026 final and lands
- * one short. It misses twice — it lacks the recent result AND never reasons that
- * it might be missing one. The "just retrain it" fix is the closing teaser. No
- * inference talk here yet.
+ * Page 2, "The Knowledge Gap". One question: how many World Cups has Spain won?
+ * It looks like a plain lookup, but the record moved after the model's training
+ * cutoff, so the machine's memory is stale. It blurts a confident recall off a
+ * memory sealed before the 2026 final and lands one short. The point of the page
+ * is the GAP itself: the model does not need to think harder (thinking never
+ * invents a fact it was never shown); it needs the missing fact. Fetching that
+ * fact at answer time is retrieval-augmented generation (RAG; Lewis et al.,
+ * 2020). The explicit contrast this page plants: retrieval adds facts;
+ * inference-time scaling (Pages 4+) adds thinking. Two different gaps.
  *
- * REDESIGN (matches the "drive one stage" feel of pages 1 & 4): a SINGLE focal
- * "two paths, one question" stage — no left-to-right read-both-panels. A
- * Back/Next/Play stepper walks the recall path (System 1, the machine) and the
- * reasoning path (System 2) forward in lockstep, with a live narration line.
+ * A Back/Next/Play stepper walks two roads from the same question in lockstep:
+ * the sealed-memory recall (one short) and retrieval (fetch the fresh fact),
+ * with a live narration line.
  *
  * Layout rule (hard): NOTHING pops or is gated. Every node of both paths, the
  * machine's actual reply, the analysis band, the teaser and the flag are ALL on
@@ -35,19 +35,19 @@ const PLAY_MS = 1100;
 
 const TWO = WC.trueCount === 2 ? "Two" : String(WC.trueCount);
 
-/** The two paths, node by node. Both start on the same question and walk in
+/** The two roads, node by node. Both start on the same question and walk in
  *  lockstep; only the last node carries a verdict tone. */
-const RECALL_NODES = ["the question", "reach into memory", "sealed early 2025", "“One.”"] as const;
-const REASON_NODES = ["the question", "“won it recently?”", "check the latest", `“${TWO}.”`] as const;
+const RECALL_NODES = ["the question", "reach into memory", "sealed before the final", "“One.”"] as const;
+const RETRIEVAL_NODES = ["the question", "“changed since the cutoff?”", "fetch a current source", `“${TWO}.”`] as const;
 const MAX_STEP = RECALL_NODES.length; // 4
 
 /** Narration for each beat (step 0 is the setup prompt). */
 const BEATS: readonly string[] = [
-  "Press Next, or Play, to walk both paths from the same question.",
-  "The same question hits both. It looks like a plain fact to fetch: a System 1 lookup.",
-  "System 1 reaches straight into memory. System 2 pauses first: could this record have changed since it last learned it?",
-  "The machine's memory was sealed in early 2025, before this summer's final. System 2 goes to check a current source instead.",
-  `Recall commits: “${WC.machine.reply[0]}” (one short). The reasoner checked, and lands on ${TWO}.`,
+  "Press Next, or Play, to walk both roads from the same question.",
+  "The same question hits both. It looks like a plain fact to fetch.",
+  "One road reaches straight into the model's trained memory. The other asks first: could this record have changed since the cutoff?",
+  "The machine's memory was sealed before this summer's final. Retrieval goes to fetch a current source instead.",
+  `Recall commits: “${WC.machine.reply[0]}” (one short). Retrieval fetched the missing fact, and lands on ${TWO}.`,
 ];
 
 function prefersReducedMotion(): boolean {
@@ -200,8 +200,9 @@ export function Page2() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         No mental math this time. One plain question of record:{" "}
-        <strong>how many World Cups has Spain won?</strong> It looks like a lookup. Watch the same
-        question take two very different roads.
+        <strong>how many World Cups has Spain won?</strong> It looks like a lookup. But a model
+        learns everything it knows before a fixed <strong>training cutoff</strong>, and the record
+        moved after that. Watch the same question take two very different roads.
       </p>
 
       {/* ================= the single focal stage ================= */}
@@ -272,21 +273,21 @@ export function Page2() {
               the machine: {WC.machine.cutoffLabel} · {WC.machine.constraintLabel}
             </p>
             <PathRow
-              label="System 1 · recall"
+              label="sealed memory · recall"
               labelClass="text-wrong"
               nodes={RECALL_NODES}
               endTone="wrong"
               endMark="✗"
-              note="stops one short"
+              note="stops one short — the knowledge gap"
               step={step}
             />
             <PathRow
-              label="System 2 · reason"
+              label="retrieval · fetch"
               labelClass="text-correct"
-              nodes={REASON_NODES}
+              nodes={RETRIEVAL_NODES}
               endTone="correct"
               endMark="✓"
-              note="checks, then commits"
+              note="fetches the missing fact"
               step={step}
             />
           </div>
@@ -342,27 +343,55 @@ export function Page2() {
           <strong>{WC.machine.answer === 1 ? "one" : WC.machine.answer}</strong>.
         </p>
         <p className="mt-2 text-ink-muted">
-          Answering it <em>well</em> is a System 2 move: notice the record can change, ask{" "}
-          <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and go get the fresh fact,
-          the move the machine skipped.
+          Answering it <em>well</em> means noticing the record can change, asking{" "}
+          <em>&ldquo;won it recently? I&apos;d better check,&rdquo;</em> and going to get the fresh
+          fact, the move the machine skipped.
+        </p>
+      </div>
+
+      {/* ===== the gap is knowledge, and retrieval fills it (RAG) ===== */}
+      <div className="rounded-lg border-l-4 border-correct bg-surface p-4 text-ink">
+        <p>
+          <strong>The gap is knowledge, not thinking.</strong> Thinking harder never conjures a fact
+          the model was never shown; it simply needed the <em>fact itself</em>. Fetch it from a
+          current source at answer time and you have <strong>retrieval-augmented generation</strong>{" "}
+          (RAG): retrieve the relevant document, then answer{" "}
+          <span className="text-ink-muted">[Lewis et al., 2020]</span>. Retrieval{" "}
+          <strong>adds facts</strong>.
+        </p>
+      </div>
+
+      {/* ===== the explicit contrast this page plants ===== */}
+      <div className="rounded-lg border border-compute bg-surface-raised p-4 text-ink">
+        <p className="text-lg">
+          <strong>Retrieval adds facts. Inference-time scaling adds thinking.</strong>
+        </p>
+        <p className="mt-2 text-ink-muted">
+          Two different gaps. Retrieval, and the retraining the next page tries, both close the{" "}
+          <strong className="text-ink">knowledge gap</strong> you just saw. But other problems hand
+          the model every fact it needs and still demand real work to reach the answer: a{" "}
+          <strong className="text-ink">reasoning gap</strong> no fetch can fill. That gap is where
+          this story turns from Page 4 on.
         </p>
       </div>
 
       <p className="max-w-2xl text-ink">
         <em>
-          So the machine missed on two counts: it lacked the recent result, and it never paused to
-          wonder whether it might be missing one. The easy fix goes after the first: what if we
-          simply <strong>trained it on data that includes that final</strong>? That is the next
-          page. The second miss is the harder fix, and where this whole story is headed.
+          So there are two ways to hand the model the fact it lacked: fetch it at answer time
+          (retrieval, above), or bake it into the weights, what if we simply{" "}
+          <strong>trained it on data that includes that final</strong>? That retraining fix is the
+          next page. Both only add facts; teaching the model to <strong>think</strong> is the harder
+          problem this whole story is headed toward.
         </em>
       </p>
 
       <p className="text-xs text-ink-muted">
         the question is real and recent on purpose · Spain&apos;s 2010 title is real, but the 2026
         win (and so the count of two) is an authored placeholder; verify the final&apos;s result
-        before shipping · the machine&apos;s reply is an authored example of a confident System-1
-        miss; a live open model with no web search replaces it later · framing: Kahneman,{" "}
-        <em>Thinking, Fast and Slow</em>
+        before shipping · the machine&apos;s reply is an authored example of a confident stale-memory
+        miss; a live open model with no web search replaces it later · retrieval framing: Lewis et
+        al., &ldquo;Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks,&rdquo; NeurIPS
+        2020
       </p>
 
       <div aria-live="polite" className="sr-only">

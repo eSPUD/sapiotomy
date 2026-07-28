@@ -22,11 +22,13 @@ import { SPAIN_WORLD_CUPS } from "@/lib/authored";
 
 const WC = SPAIN_WORLD_CUPS;
 
-// The spec's hard rule for this page: no inference talk. ("training" is
-// allowed, but only in the closing teaser.)
-const BANNED = /inference/i;
-const expectClean = () => {
-  expect(document.body.textContent ?? "").not.toMatch(BANNED);
+// This page deliberately plants the contrast "retrieval adds facts; inference-
+// time scaling adds thinking", so the earlier no-inference rule is lifted here.
+// It must still name retrieval (RAG) as the knowledge-gap fix.
+const expectRetrievalFraming = () => {
+  const body = document.body.textContent ?? "";
+  expect(body).toMatch(/retrieval-augmented generation/i);
+  expect(body).toMatch(/retrieval adds facts\. inference-time scaling adds thinking\./i);
 };
 
 const answerBox = () =>
@@ -40,31 +42,32 @@ const walk = () => {
   for (let i = 0; i < WC.machine.reply.length + 3; i++) fireEvent.click(nextBtn());
 };
 
-describe("Page 2 (Two Systems): all content visible, no popping", () => {
+describe("Page 2 (The Knowledge Gap): all content visible, no popping", () => {
   beforeEach(() => {
     reducedMotion = true;
   });
 
-  it("shows everything up front: the question, both paths, the machine's reply, the analysis", () => {
+  it("shows everything up front: the question, both roads, the machine's reply, the analysis", () => {
     render(<Page2 />);
     // The question and the reader's optional count are present.
     expect(screen.getByText(WC.question)).toBeInTheDocument();
     expect(answerBox()).toBeInTheDocument();
-    // Both paths are on screen from first paint (dimmed, never hidden).
-    expect(screen.getByRole("group", { name: /System 1 · recall path/i })).toBeInTheDocument();
-    expect(screen.getByRole("group", { name: /System 2 · reason path/i })).toBeInTheDocument();
+    // Both roads are on screen from first paint (dimmed, never hidden).
+    expect(screen.getByRole("group", { name: /sealed memory · recall path/i })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /retrieval · fetch path/i })).toBeInTheDocument();
     // The machine's endpoint node ("One.") is visible before any step (not gated).
     expect(screen.getByText(/“One\.”/)).toBeInTheDocument();
     // The analysis, the teaser, and the flag are all present with no interaction.
     expect(screen.getByText(/It only looks like a lookup/i)).toBeInTheDocument();
     expect(screen.getByText(/trained it on data that includes that final/)).toBeInTheDocument();
     expect(screen.getByText(/verify the final's result before shipping/)).toBeInTheDocument();
-    expectClean();
+    // The knowledge-gap / retrieval contrast is the point of the page.
+    expectRetrievalFraming();
   });
 
   it("the walkthrough starts on the setup prompt and lands on the one-short recall", () => {
     render(<Page2 />);
-    expect(screen.getAllByText(/press next, or play, to walk both paths/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/press next, or play, to walk both roads/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/step 0 of 4/i)).toBeInTheDocument();
     walk();
     // The confident, one-short reply is the recall endpoint of the walkthrough.
@@ -72,7 +75,6 @@ describe("Page 2 (Two Systems): all content visible, no popping", () => {
       screen.getAllByText(new RegExp(`recall commits.*${WC.machine.reply[0]}`, "i")).length,
     ).toBeGreaterThan(0);
     expect(screen.getByText(/step 4 of 4/i)).toBeInTheDocument();
-    expectClean();
   });
 
   it("answering the true count annotates in place without hiding anything", () => {
@@ -84,7 +86,6 @@ describe("Page 2 (Two Systems): all content visible, no popping", () => {
     expect(answerBox()).toBeInTheDocument();
     // The walkthrough is still fully available.
     expect(nextBtn()).toBeEnabled();
-    expectClean();
   });
 
   it("a wrong count annotates the record without gating the rest", () => {
@@ -93,7 +94,6 @@ describe("Page 2 (Two Systems): all content visible, no popping", () => {
     expect(screen.getByText(/✗ you said 5;/i)).toBeInTheDocument();
     expect(screen.getByText(/can't be counted from memory/i)).toBeInTheDocument();
     expect(answerBox()).toBeInTheDocument();
-    expectClean();
   });
 
   it("the 'may have for you' clause only appears once the reader has answered", () => {
@@ -101,15 +101,13 @@ describe("Page 2 (Two Systems): all content visible, no popping", () => {
     expect(screen.queryByText(/the way it may have for you/)).toBeNull();
     answer(String(WC.trueCount));
     expect(screen.getByText(/the way it may have for you/)).toBeInTheDocument();
-    expectClean();
   });
 
-  it("never says the banned word at any stage of the journey", () => {
+  it("names retrieval (RAG) as the fix even after the reader plays through", () => {
     render(<Page2 />);
-    expectClean();
     answer("5");
     walk();
-    expectClean();
+    expectRetrievalFraming();
   });
 });
 
@@ -139,6 +137,5 @@ describe("Page 2 animated walkthrough (no reduced motion)", () => {
     expect(
       screen.getAllByText(new RegExp(`recall commits.*${WC.machine.reply[0]}`, "i")).length,
     ).toBeGreaterThan(0);
-    expect(document.body.textContent ?? "").not.toMatch(BANNED);
   });
 });

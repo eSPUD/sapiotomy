@@ -29,7 +29,7 @@ export const ACTS: Record<Act, { title: string; range: string }> = {
 
 export const PAGES: PageMeta[] = [
   { n: 1, slug: "think-fast-think-slow", title: "Think Fast, Think Slow", act: 1, concept: "Feel your own two speeds: the size of the problem sets the thinking time.", milestone: "S1" },
-  { n: 2, slug: "two-systems", title: "Two Systems", act: 1, concept: "A question that looks like a lookup: the reader recalls it instantly; a machine whose memory predates the fact cannot, and thinking harder does not create the fact.", milestone: "S1" },
+  { n: 2, slug: "knowledge-gap", title: "The Knowledge Gap", act: 1, concept: "A question that looks like a lookup, but the record moved after the model's training cutoff: recall answers one short, and thinking harder cannot invent a fact the model never saw. Retrieval (RAG) fetches it. This is the knowledge gap; the reasoning gap the rest of the story tackles is a different one.", milestone: "S1" },
   { n: 3, slug: "daily-training", title: "Training Daily?", act: 1, concept: "The obvious fix hits two walls: the bill for daily retraining compounds, and the stock of quality training data runs out.", milestone: "S1" },
   { n: 4, slug: "reasoning-in-multiplication", title: "Reasoning: Diverse Pathfinding", act: 1, concept: "Three cultures, three roads, one answer: reasoning as diverse pathfinding from prior knowledge, and the open question that hands Act 1 to the toolbox.", milestone: "S1" },
   { n: 5, slug: "how-to-reason", title: "How to Reason", act: 2, concept: "Show the model a worked road: few-shot chain-of-thought turns blurted answers into step-by-step ones, and a flat scaling curve turns steep.", milestone: "S2" },
