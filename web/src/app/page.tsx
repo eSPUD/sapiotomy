@@ -102,6 +102,10 @@ export default function Home() {
               curves, diagrams answer clicks, and the demos sample from a real model when one is
               available; canned transcripts otherwise.
             </p>
+            <p className="text-justify hyphens-auto text-ink-muted">
+              It is written for undergraduate students and other learners meeting these ideas for
+              the first time; no prior machine-learning background is assumed.
+            </p>
           </div>
 
           <div className="flex flex-col gap-3">
