@@ -440,11 +440,10 @@ export function Page11() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Every tool in this act buys accuracy with inference compute. Here is the law that makes the
-        spending strategic: a bigger model and a longer think are{" "}
-        <strong className="text-ink">two ways to spend the same FLOPs</strong>. Pretraining burns
-        them once, up front, into parameters; test-time compute burns them at question time, on the
-        question that needs them. Matched budget for budget —{" "}
+        A bigger model and a longer think are{" "}
+        <strong className="text-ink">two ways to spend the same FLOPs</strong>: pretraining burns
+        them once into parameters, test-time compute burns them at answer time, on the question
+        that needs them. Matched budget for budget —{" "}
         <strong className="text-ink">which buys more accuracy?</strong>
       </p>
 
@@ -459,13 +458,11 @@ export function Page11() {
           </h2>
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-ink">
-              First, the units. <strong>14× means 14× the parameters</strong> of the base model —
-              Snell et al. compare against a pretrained model about 14× the size of theirs, and
-              never publish either absolute count, so multiples are the only honest label.
-              <Cite n={REF.snell} />
-              Parameters set the price of thinking: an answer from an M× model costs ≈M× the
-              inference FLOPs. Counting in answers from the 1× model, the 14× model&rsquo;s single,
-              no-thinking answer costs <strong>14 units</strong> and scores{" "}
+              <strong>14× means 14× the base model&rsquo;s parameter count</strong> (Snell et al.
+              report model scale only as a multiple),
+              <Cite n={REF.snell} /> and inference FLOPs scale with parameters: an M× model spends
+              M units per answer, where one unit is a single answer from the 1× model. The 14×
+              model&rsquo;s one greedy answer therefore costs <strong>14 units</strong> and scores{" "}
               <strong className="text-ink">{tgt.toFixed(0)}%</strong> here — the black dot below.
             </p>
             <p className="text-sm text-ink-muted">
