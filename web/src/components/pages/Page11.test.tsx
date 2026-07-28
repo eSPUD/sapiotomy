@@ -66,10 +66,12 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText(/sampling alone never reaches 100%/i)).toBeInTheDocument();
   });
 
-  it("defines what 14x actually multiplies: parameters, with absolute sizes undisclosed", () => {
+  it("defines what 14x actually multiplies: the base model's parameter count", () => {
     render(<Page11 />);
-    expect(screen.getByText(/14× means 14× the parameters/i)).toBeInTheDocument();
-    expect(screen.getByText(/never publish either absolute count/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/14× means 14× the base model[’']s parameter count/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/report model scale only as a multiple/i)).toBeInTheDocument();
   });
 
   it("draws the whole curve family at once and only moves the marker", () => {
