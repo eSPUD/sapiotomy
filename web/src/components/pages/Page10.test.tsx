@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Page10 } from "./Page10";
 
 const word = (w: string) => screen.getByRole("button", { name: new RegExp(`^${w}\\s`) });
 const bill = () =>
   Number(
-    screen.getByRole("status", { name: /the compute bill/i }).querySelector("p")?.textContent ?? "0",
+    screen
+      .getByRole("status", { name: /the compute bill/i })
+      .querySelector("p")
+      ?.textContent?.split("/")[0] ?? "0",
   );
-const dial = () => screen.getByRole("slider", { name: /lines kept alive/i });
-const setStrategy = (value: string) =>
-  fireEvent.change(screen.getByRole("combobox", { name: /search strategy/i }), {
-    target: { value },
-  });
+const pick = (label: RegExp) =>
+  fireEvent.click(within(screen.getByRole("group", { name: /search strategy/i })).getByRole("button", { name: label }));
 
 describe("Page 10 — step 1, the reader writes the line", () => {
   it("states the rule and shows the model's next-word candidates", () => {
@@ -45,72 +45,93 @@ describe("Page 10 — step 1, the reader writes the line", () => {
   });
 });
 
-describe("Page 10 — step 2, the strategies", () => {
-  it("opens on greedy, which cannot rhyme, for 12 words scored", () => {
+describe("Page 10 — step 2, five buttons over one fixed tree", () => {
+  it("offers the five strategies as buttons, greedy named as the chain of thought", () => {
     render(<Page10 />);
-    expect(screen.getByRole("combobox", { name: /search strategy/i })).toHaveValue("greedy");
-    expect(bill()).toBe(12);
+    const group = screen.getByRole("group", { name: /search strategy/i });
+    const labels = within(group)
+      .getAllByRole("button")
+      .map((b) => b.textContent);
+    expect(labels).toEqual([
+      "Greedy (chain of thought)",
+      "Breadth-first",
+      "Depth-first",
+      "Beam",
+      "MCTS",
+    ]);
+    expect(within(group).getByRole("button", { name: /greedy/i })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("frames the searchers as best-of-N with the judge moved inside the loop", () => {
+    render(<Page10 />);
+    expect(screen.getByText(/best-of-N with the judge moved inside the/i)).toBeInTheDocument();
+  });
+
+  it("opens on greedy: 9 of 29 scored, and no rhyme", () => {
+    render(<Page10 />);
+    expect(bill()).toBe(9);
     expect(screen.getByText(/✗ no rhyme/)).toBeInTheDocument();
-    // the line appears in the verdict and again in the finished-lines list
     expect(screen.getAllByText(/so I got up and paced/).length).toBeGreaterThan(0);
   });
 
-  it("a beam of two finds the rhyme, and costs more", () => {
+  it("the tree itself never changes across strategies", () => {
+    // every word in the space is rendered regardless of strategy — the
+    // strategy only changes what lights up
     render(<Page10 />);
-    setStrategy("beam");
-    fireEvent.change(dial(), { target: { value: "2" } });
-    expect(screen.getByText(/✓ it rhymes/)).toBeInTheDocument();
-    expect(screen.getAllByText(/so I turned on the light/).length).toBeGreaterThan(0);
-    expect(bill()).toBe(19);
+    const tree = () => screen.getByRole("img", { name: /word tree/i });
+    const greedyWords = within(tree()).getAllByText(/^[a-z]+$/).length;
+    pick(/breadth-first/i);
+    expect(within(tree()).getAllByText(/^[a-z]+$/).length).toBe(greedyWords);
+    for (const w of ["light", "silence", "groaned", "waited"]) {
+      expect(within(tree()).getAllByText(w).length, w).toBeGreaterThan(0);
+    }
   });
 
-  it("every extra line kept alive costs more still", () => {
+  it("each strategy pays a different, pinned bill", () => {
     render(<Page10 />);
-    setStrategy("beam");
-    fireEvent.change(dial(), { target: { value: "1" } });
-    let last = bill();
-    for (const v of ["2", "3", "4", "5"]) {
-      fireEvent.change(dial(), { target: { value: v } });
-      expect(bill(), `keep ${v}`).toBeGreaterThan(last);
+    const costs: Record<string, number> = {};
+    for (const [label, key] of [
+      [/greedy/i, "greedy"],
+      [/breadth-first/i, "bfs"],
+      [/depth-first/i, "dfs"],
+      [/mcts/i, "mcts"],
+    ] as const) {
+      pick(label);
+      costs[key] = bill();
+    }
+    expect(costs).toEqual({ greedy: 9, bfs: 23, dfs: 18, mcts: 14 });
+  });
+
+  it("beam exposes its dial, and every extra line kept alive costs more", () => {
+    render(<Page10 />);
+    expect(screen.queryByRole("slider", { name: /lines kept alive/i })).not.toBeInTheDocument();
+    pick(/^Beam$/);
+    const dial = screen.getByRole("slider", { name: /lines kept alive/i });
+    expect(bill()).toBe(14); // opens at b=2, which rhymes
+    expect(screen.getByText(/✓ it rhymes/)).toBeInTheDocument();
+    let last = 14;
+    for (const v of ["3", "4", "5"]) {
+      fireEvent.change(dial, { target: { value: v } });
+      expect(bill(), `b=${v}`).toBeGreaterThan(last);
       last = bill();
     }
   });
 
-  it("offers all five strategies, and each really runs", () => {
+  it("every searcher lands on the same rhyme, cheaper or dearer", () => {
     render(<Page10 />);
-    const costs: Record<string, number> = {};
-    for (const s of ["greedy", "bfs", "dfs", "beam", "mcts"]) {
-      setStrategy(s);
-      costs[s] = bill();
-      expect(costs[s], s).toBeGreaterThan(0);
+    for (const label of [/breadth-first/i, /depth-first/i, /mcts/i]) {
+      pick(label);
+      expect(screen.getByText(/✓ it rhymes/)).toBeInTheDocument();
+      expect(screen.getAllByText(/so I turned on the light/).length).toBeGreaterThan(0);
     }
-    // breadth-first pays the most; greedy the least
-    expect(costs.bfs).toBe(43);
-    expect(costs.greedy).toBe(12);
-    expect(costs.mcts).toBe(23);
-    expect(costs.dfs).toBe(29);
   });
 
-  it("shows the beam dial only for beam", () => {
+  it("discloses that the words are authored and the search is real", () => {
     render(<Page10 />);
-    expect(screen.queryByRole("slider", { name: /lines kept alive/i })).not.toBeInTheDocument();
-    setStrategy("beam");
-    expect(dial()).toBeInTheDocument();
-  });
-
-  it("draws every word it scored, so the bill can be counted", () => {
-    // no summary chips: the tree shows one box per scored word
-    const { container } = render(<Page10 />);
-    expect(container.textContent).not.toMatch(/dropped\b.*\+|\+\d+ dropped/);
-    expect(screen.getByText(/of 65 words in the tree/)).toBeInTheDocument();
-  });
-
-  it("lists the finished lines as readable sentences", () => {
-    render(<Page10 />);
-    setStrategy("bfs");
-    expect(screen.getByText(/lines it finished/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/so I turned on the light/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("rhymes").length).toBeGreaterThan(0);
+    expect(screen.getByText(/written by hand\. The search over them is real/i)).toBeInTheDocument();
   });
 });
 
@@ -128,10 +149,12 @@ describe("Page 10 — step 3 and house style", () => {
     expect(note.textContent).not.toMatch(/NeurIPS|Table 3|20 puzzles|arXiv/);
   });
 
-  it("discloses that the words are authored and the search is real", () => {
-    render(<Page10 />);
-    expect(
-      screen.getByText(/written by hand\. The search over them is real/i),
-    ).toBeInTheDocument();
+  it("has no footnote: the page ends at the citation chip", () => {
+    const { container } = render(<Page10 />);
+    const article = container.querySelector("article")!;
+    const kids = [...article.children];
+    // last two blocks are the citation chip row and the page nav
+    expect(kids.at(-1)?.querySelector("a[href*='p/']")).toBeTruthy();
+    expect(kids.at(-2)?.textContent).toMatch(/Yao et al\. 2023/);
   });
 });

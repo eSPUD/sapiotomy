@@ -597,8 +597,7 @@ export const SUPERVISION = {
       prmVerdict: "Every step passes. Both graders agree, which is what agreement is supposed to look like.",
     },
   ] as readonly SupervisionTrace[],
-} as const;
-// --- Page 10: Searching Through Thoughts (finishing a rhyme) --------------
+} as const;// --- Page 10: Searching Through Thoughts (finishing a rhyme) --------------
 /**
  * A model finishing a couplet, one word at a time. Every branch below is an
  * authored next-word distribution: what the model thinks might come next, and
@@ -613,8 +612,10 @@ export const SUPERVISION = {
  * model rates well below "got". Taking the likeliest word every time therefore
  * cannot reach it, however good each individual word looks on its own.
  *
- * Tuned (see act2nextword.test.ts) so greedy writes four words and fails, and
- * keeping two lines alive is enough to find the rhyme.
+ * The tree is SMALL ON PURPOSE — 29 words, 13 complete lines — because the page
+ * draws all of it at once and lets each strategy light up the part it actually
+ * scored. Tuned (see act2nextword.test.ts) so greedy fails and everything that
+ * searches finds the rhyme at visibly different prices.
  */
 export const NEXT_WORD_SPEC = {
   given: "I couldn't sleep at all last night,",
@@ -625,93 +626,61 @@ export const NEXT_WORD_SPEC = {
   tree: [
     {
       word: "got",
-      p: 0.45,
+      p: 0.5,
       next: [
         {
           word: "up",
-          p: 0.85,
+          p: 0.7,
           next: [
-            { word: "and", p: 0.6, next: [
-              { word: "paced", p: 0.55 }, { word: "waited", p: 0.25 }, { word: "worried", p: 0.2 },
-            ] },
-            { word: "at", p: 0.2, next: [{ word: "dawn", p: 0.6 }, { word: "three", p: 0.4 }] },
-            { word: "before", p: 0.2, next: [{ word: "dawn", p: 0.7 }, { word: "sunrise", p: 0.3 }] },
+            { word: "and", p: 0.6, next: [{ word: "paced", p: 0.7 }, { word: "worried", p: 0.3 }] },
+            { word: "before", p: 0.4, next: [{ word: "dawn", p: 1 }] },
           ],
         },
         {
           word: "dressed",
-          p: 0.15,
+          p: 0.3,
           next: [
-            { word: "and", p: 0.7, next: [{ word: "left", p: 0.6 }, { word: "waited", p: 0.4 }] },
-            { word: "in", p: 0.3, next: [{ word: "silence", p: 0.6 }, { word: "darkness", p: 0.4 }] },
+            { word: "and", p: 1, next: [{ word: "left", p: 0.6 }, { word: "waited", p: 0.4 }] },
           ],
         },
       ],
     },
     {
       word: "turned",
-      p: 0.28,
+      p: 0.3,
       next: [
         {
           word: "on",
-          p: 0.65,
+          p: 0.6,
           next: [
-            { word: "the", p: 0.8, next: [
-              { word: "light", p: 0.55 }, { word: "lamp", p: 0.3 }, { word: "radio", p: 0.15 },
-            ] },
-            { word: "my", p: 0.2, next: [{ word: "lamp", p: 0.6 }, { word: "phone", p: 0.4 }] },
+            { word: "the", p: 1, next: [{ word: "light", p: 0.6 }, { word: "lamp", p: 0.4 }] },
           ],
         },
         {
           word: "over",
-          p: 0.35,
+          p: 0.4,
           next: [
-            { word: "and", p: 0.7, next: [{ word: "sighed", p: 0.6 }, { word: "waited", p: 0.4 }] },
-            { word: "twice", p: 0.3, next: [{ word: "more", p: 0.6 }, { word: "again", p: 0.4 }] },
-          ],
-        },
-      ],
-    },
-    {
-      word: "watched",
-      p: 0.15,
-      next: [
-        {
-          word: "the",
-          p: 0.7,
-          next: [
-            { word: "clock", p: 0.6, next: [{ word: "tick", p: 0.6 }, { word: "crawl", p: 0.4 }] },
-            { word: "ceiling", p: 0.4, next: [{ word: "crack", p: 0.5 }, { word: "above", p: 0.5 }] },
-          ],
-        },
-        {
-          word: "a",
-          p: 0.3,
-          next: [
-            { word: "film", p: 0.6, next: [{ word: "alone", p: 0.6 }, { word: "instead", p: 0.4 }] },
-            { word: "while", p: 0.4, next: [{ word: "longer", p: 0.6 }, { word: "more", p: 0.4 }] },
+            { word: "and", p: 1, next: [{ word: "sighed", p: 0.6 }, { word: "groaned", p: 0.4 }] },
           ],
         },
       ],
     },
     {
       word: "lay",
-      p: 0.12,
+      p: 0.2,
       next: [
         {
-          word: "there",
+          word: "awake",
           p: 0.6,
           next: [
-            { word: "until", p: 0.5, next: [{ word: "dawn", p: 0.6 }, { word: "morning", p: 0.4 }] },
-            { word: "in", p: 0.5, next: [{ word: "silence", p: 0.6 }, { word: "darkness", p: 0.4 }] },
+            { word: "until", p: 1, next: [{ word: "dawn", p: 0.6 }, { word: "morning", p: 0.4 }] },
           ],
         },
         {
-          word: "awake",
+          word: "there",
           p: 0.4,
           next: [
-            { word: "until", p: 0.6, next: [{ word: "dawn", p: 0.5 }, { word: "morning", p: 0.5 }] },
-            { word: "counting", p: 0.4, next: [{ word: "sheep", p: 0.6 }, { word: "hours", p: 0.4 }] },
+            { word: "in", p: 1, next: [{ word: "silence", p: 0.6 }, { word: "darkness", p: 0.4 }] },
           ],
         },
       ],

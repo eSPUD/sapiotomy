@@ -1,26 +1,28 @@
 /**
- * Page 10 — finishing a line one word at a time.
+ * Page 10 — finishing a line one word at a time, searched five ways.
  *
- * The page prints a "words scored" counter and claims that keeping one line
- * alive cannot find the rhyme while keeping two can. That is only honest if the
- * search is real, so these tests pin it: the likeliest line does not rhyme, the
- * only rhyming line is less likely than it, greedy decoding therefore cannot
- * reach it, and every extra line kept alive costs more.
+ * The page draws ONE fixed tree (29 words, 13 complete lines) and lets each
+ * strategy light up the part it scored, with the bill shown as "N of 29". That
+ * is only honest if the search is real, so these tests pin it: the two
+ * likeliest lines do not rhyme, the only rhyming line is less likely than both,
+ * greedy decoding therefore cannot reach it, and the five strategies pay
+ * visibly different bills for the same answer.
  *
  * Every number here was measured, not chosen.
  */
 import { describe, expect, it } from "vitest";
 import { NEXT_WORD_SPEC } from "./authored";
 import { buildNextWord, type NextWordSpec } from "./nextWord";
-import { search } from "./thoughtSearch";
+import { search, STRATEGIES, type Strategy } from "./thoughtSearch";
 
 const N = buildNextWord(NEXT_WORD_SPEC as unknown as NextWordSpec);
 const SPEC = N.spec;
 const SPACE = N.space;
-const OPTS = { maxNodes: 3000 };
-const keep = (b: number) => search(SPACE, "beam", { ...OPTS, beamWidth: b });
+const OPTS = { maxNodes: 3000, rollouts: 80 };
+const run = (s: Strategy, b?: number) => search(SPACE, s, { ...OPTS, beamWidth: b });
+const cost = (s: Strategy, b?: number) => run(s, b).thoughtsScored;
 const finished = N.states.filter((s) => s.words.length === SPEC.length);
-const likeliest = [...finished].sort((a, b) => b.probability - a.probability)[0];
+const byLikelihood = [...finished].sort((a, b) => b.probability - a.probability);
 
 describe("The distributions", () => {
   it("every choice is a real distribution: the candidates sum to 1", () => {
@@ -34,103 +36,96 @@ describe("The distributions", () => {
     walk(SPEC.tree as readonly { p: number; next?: readonly unknown[] }[]);
   });
 
-  it("writes a four-word line, and there are 36 possible lines", () => {
-    expect(SPEC.length).toBe(4);
-    expect(finished).toHaveLength(36);
+  it("is small enough to draw whole: 29 words, 13 complete lines", () => {
+    expect(N.states.length - 1).toBe(29);
+    expect(finished).toHaveLength(13);
   });
 
   it("the probabilities of all finished lines sum to 1", () => {
     const total = finished.reduce((a, s) => a + s.probability, 0);
     expect(Math.abs(total - 1)).toBeLessThan(1e-9);
   });
-});
 
-describe("The trap: likeliest is not right", () => {
-  it("exactly one line rhymes", () => {
-    const rhyming = finished.filter((s) => s.rhymed);
-    expect(rhyming).toHaveLength(1);
-    expect(N.line(rhyming[0])).toBe("so I turned on the light");
-  });
-
-  it("the likeliest line does not rhyme", () => {
-    expect(likeliest.rhymed).toBe(false);
-    expect(N.line(likeliest)).toBe("so I got up and paced");
-  });
-
-  it("the rhyming line is genuinely less likely than the likeliest one", () => {
-    const rhyming = finished.find((s) => s.rhymed)!;
-    expect(rhyming.probability).toBeLessThan(likeliest.probability);
-    expect(Math.round(likeliest.probability * 1000) / 10).toBe(12.6);
-    expect(Math.round(rhyming.probability * 1000) / 10).toBe(8);
-  });
-
-  it("greedy loses at the very first word: 'got' beats 'turned'", () => {
-    const first = N.choices(N.states[SPACE.root]);
-    expect(first[0].word).toBe("got");
-    expect(first[1].word).toBe("turned");
-    // and nothing under "got" can rhyme
-    const got = N.states[first[0].stateId];
-    const under = N.states.filter(
-      (s) => s.words.length === SPEC.length && s.words[0] === got.words[0],
-    );
-    expect(under.length).toBeGreaterThan(0);
-    expect(under.some((s) => s.rhymed)).toBe(false);
+  it("has exactly one rhyming line, and it is 'so I turned on the light'", () => {
+    const rhymes = finished.filter((s) => s.rhymed);
+    expect(rhymes).toHaveLength(1);
+    expect(N.line(rhymes[0])).toBe("so I turned on the light");
+    expect(SPACE.thoughts[rhymes[0].id].isGoal).toBe(true);
   });
 });
 
-describe("The dial", () => {
-  it("keeping one line alive cannot rhyme, and is greedy exactly", () => {
-    const one = keep(1);
-    expect(one.solved).toBe(false);
-    expect(one.thoughtsScored).toBe(12);
-    const greedy = search(SPACE, "greedy", OPTS);
-    expect(greedy.thoughtsScored).toBe(one.thoughtsScored);
-    expect(greedy.solved).toBe(false);
+describe("The trap", () => {
+  it("the two likeliest lines do not rhyme; the rhyme is only third", () => {
+    expect(byLikelihood[0].rhymed).toBe(false);
+    expect(N.line(byLikelihood[0])).toBe("so I got up and paced");
+    expect(byLikelihood[1].rhymed).toBe(false);
+    expect(byLikelihood[2].rhymed).toBe(true);
   });
 
-  it("keeping two is enough to find the rhyme", () => {
-    const two = keep(2);
-    expect(two.solved).toBe(true);
-    expect(two.thoughtsScored).toBe(19);
-    expect(N.line(N.states[two.solutionThoughts.at(-1)!])).toBe("so I turned on the light");
+  it("greedy — a chain of thought — cannot reach the rhyme", () => {
+    const r = run("greedy");
+    expect(r.solved).toBe(false);
+    expect(r.thoughtsScored).toBe(9);
+    // it commits to the likeliest word at every step, so it lands on the
+    // likeliest line, which does not rhyme
+    const end = r.nodes
+      .filter((n) => N.states[n.thoughtId].words.length === SPEC.length)
+      .sort((a, b) => b.score - a.score)[0];
+    expect(N.line(N.states[end.thoughtId])).toBe("so I got up and paced");
+  });
+
+  it("a full line that does not rhyme is a dead end, not a win", () => {
+    for (const s of finished) {
+      if (s.rhymed) continue;
+      expect(SPACE.thoughts[s.id].deadEnd).toBe(true);
+      expect(SPACE.thoughts[s.id].progress).toBeLessThan(1);
+    }
+  });
+});
+
+describe("The strategies, on the one fixed tree", () => {
+  it("a beam of 1 is greedy exactly; a beam of 2 finds the rhyme", () => {
+    expect(cost("beam", 1)).toBe(cost("greedy"));
+    expect(run("beam", 1).solved).toBe(false);
+    const b2 = run("beam", 2);
+    expect(b2.solved).toBe(true);
+    expect(b2.thoughtsScored).toBe(14);
+    expect(N.line(N.states[b2.solutionThoughts.at(-1)!])).toBe("so I turned on the light");
   });
 
   it("every extra line kept alive costs more", () => {
-    expect([1, 2, 3, 4, 5].map((b) => keep(b).thoughtsScored)).toEqual([12, 19, 25, 31, 35]);
+    const costs = [1, 2, 3, 4, 5].map((b) => cost("beam", b));
+    expect(costs[0]).toBe(9);
+    expect(costs[1]).toBe(14);
+    for (let i = 1; i < costs.length; i++) expect(costs[i]).toBeGreaterThan(costs[i - 1]);
   });
 
-  it("every width from two up finds the same, only, rhyme", () => {
-    for (const b of [2, 3, 4, 5]) {
-      const r = keep(b);
-      expect(r.solved, `keep ${b}`).toBe(true);
-      expect(N.line(N.states[r.solutionThoughts.at(-1)!]), `keep ${b}`).toBe(
-        "so I turned on the light",
-      );
+  it("all five strategies run, and the bills separate", () => {
+    expect(STRATEGIES.map((s) => s.key)).toEqual(["greedy", "bfs", "dfs", "beam", "mcts"]);
+    expect(cost("greedy")).toBe(9);
+    expect(cost("mcts")).toBe(14);
+    expect(cost("dfs")).toBe(18);
+    expect(cost("bfs")).toBe(23);
+    // and every searcher finds the same, only, rhyme
+    for (const s of ["bfs", "dfs", "mcts"] as Strategy[]) {
+      const r = run(s);
+      expect(r.solved, s).toBe(true);
+      expect(N.line(N.states[r.solutionThoughts.at(-1)!]), s).toBe("so I turned on the light");
+    }
+  });
+
+  it("no strategy scores a word twice: the bill never exceeds the tree", () => {
+    for (const s of ["greedy", "bfs", "dfs", "mcts"] as Strategy[]) {
+      const r = run(s);
+      const seen = new Set(r.nodes.filter((n) => n.parentId !== null).map((n) => n.thoughtId));
+      expect(r.thoughtsScored, s).toBe(seen.size);
+      expect(r.thoughtsScored, s).toBeLessThanOrEqual(29);
     }
   });
 
   it("is deterministic", () => {
-    for (const b of [1, 3, 5]) expect(keep(b).thoughtsScored).toBe(keep(b).thoughtsScored);
-  });
-});
-
-describe("Page copy guardrails", () => {
-  it("the tree stays drawable at every width", () => {
-    for (const b of [1, 2, 3, 4, 5]) {
-      const cols = new Map<number, number>();
-      for (const n of keep(b).nodes) if (n.kept) cols.set(n.depth, (cols.get(n.depth) ?? 0) + 1);
-      expect(Math.max(...cols.values()), `keep ${b}`).toBeLessThanOrEqual(6);
+    for (const s of ["greedy", "bfs", "dfs", "mcts"] as Strategy[]) {
+      expect(cost(s), s).toBe(cost(s));
     }
-  });
-
-  it("a finished line that does not rhyme never scores as progress", () => {
-    for (const s of finished) {
-      if (!s.rhymed) expect(SPACE.thoughts[s.id].progress).toBeLessThan(1);
-    }
-  });
-
-  it("the rhyme list actually rhymes with the given word", () => {
-    expect(SPEC.rhymesWith).toBe("night");
-    for (const r of SPEC.rhymes) expect(r.endsWith("ight") || r.endsWith("ite")).toBe(true);
   });
 });
