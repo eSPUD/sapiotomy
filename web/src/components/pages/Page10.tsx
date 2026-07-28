@@ -1,51 +1,56 @@
 "use client";
 
 /**
- * Page 10, "Searching Through Thoughts". Page 7 ran many reasoning chains in
- * parallel; page 9 learned to grade a chain while it is still being written.
- * Put those together and the chain becomes a TREE: branch, evaluate, prune, and
- * when a branch dies, back up and try another.
+ * Page 10, "Searching Through Thoughts", as a next-word predictor.
  *
- * Step 1 is a live search (lib/thoughtSearch.ts) over an authored puzzle
- * (ACROSTIC_SPEC in lib/authored.ts, states derived in lib/crossword.ts). The
- * rule is one sentence: three answers stack, and the shaded column must read
- * down as the answer to a fourth clue. A thought is one line of the model's
- * chain — a clue it picked and the answer it wrote — and a state is the grid.
+ * This is the thing a language model actually is: at every position it has a
+ * few words it thinks might come next, each with a probability, and it picks
+ * one. Take the likeliest word every time and you are doing greedy decoding,
+ * which is a chain of thought with no way back. Keep several partial lines
+ * alive and you are searching a tree of thoughts.
  *
- * The trap is exactly one clue. "Add up" is SUM for anybody, and the model
- * agrees; it is also wrong, because the column needs a T. Writing the best
- * answer to all three clues gives SUM/INN/PEN and a column reading SIP: a real
- * word, and not a gratuity. Measured (act2crossword.test.ts): greedy and beams
- * of 1 and 2 fail, a beam of 3 is the cheapest that works, MCTS is cheapest of
- * all, breadth-first pays double greedy.
+ * The algorithm is on screen but is not the subject. There is no strategy
+ * dropdown: the single dial is HOW MANY LINES IT KEEPS ALIVE, and 1 is greedy.
+ * That is beam search, which is what Tree-of-Thoughts does at each level, and
+ * it is the only control a reader needs to feel the trade.
  *
- * Step 2 is Yao et al. 2023 (data/tot-crosswords.json), 5x5 mini crosswords
- * with GPT-4, Table 3. The two ablation bars isolate the mechanism the reader
- * just operated rather than merely reporting that search scored higher.
+ * The figure is split in three:
+ *   1. YOU write the line, tapping a word at a time. Take the top suggestion
+ *      every time — as everyone does with autocomplete — and you get the
+ *      likeliest line, which does not rhyme.
+ *   2. THE MODEL writes it, with the keep-alive dial and the tree.
+ *   3. WHAT SEARCH BUYS, measured — Yao et al. 2023.
+ *
+ * Authored distributions in NEXT_WORD_SPEC (lib/authored.ts), states derived in
+ * lib/nextWord.ts, search in lib/thoughtSearch.ts. Measured and pinned in
+ * act2nextword.test.ts: keeping 1 line scores 12 words and cannot rhyme;
+ * keeping 2 scores 19 and finds "so I turned on the light".
  */
 
 import { useMemo, useState } from "react";
 import { CitationBadge } from "@/components/CitationBadge";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { ACROSTIC_PLAIN_COT, ACROSTIC_SPEC } from "@/lib/authored";
+import { NEXT_WORD_SPEC } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import { buildAcrostic, type AcrosticSpec } from "@/lib/crossword";
-import { search, STRATEGIES, type SearchNode, type Strategy } from "@/lib/thoughtSearch";
+import { buildNextWord, type NextWordSpec } from "@/lib/nextWord";
+import { search, type SearchNode } from "@/lib/thoughtSearch";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 10;
-const A = buildAcrostic(ACROSTIC_SPEC as unknown as AcrosticSpec);
-const ROWS = A.spec.rows.length;
+const NW_ = buildNextWord(NEXT_WORD_SPEC as unknown as NextWordSpec);
+const SPEC = NW_.spec;
 
-/* Tree geometry. Fixed node size and pitch, so connectors are arithmetic. */
-const NW = 76;
-const NH = 24;
+/* Tree geometry: fixed node size and pitch, so connectors are arithmetic. */
+const NODE_W = 84;
+const NODE_H = 24;
 const PITCH = 32;
-const COL = 104;
+const COL = 112;
 const PAD = 10;
 const HEAD = 22;
+
+const pct = (p: number) => `${Math.round(p * 100)}%`;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -57,45 +62,35 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
-/** The model's confidence in one answer, as dots. */
-function Dots({ score }: { score: number }) {
-  const filled = Math.round(score * 5);
+/** The couplet as written so far. */
+function Line({
+  words,
+  tone,
+}: {
+  words: readonly string[];
+  tone: "plain" | "good" | "bad";
+}) {
+  const last =
+    tone === "good" ? "text-correct" : tone === "bad" ? "text-wrong" : "text-ink";
   return (
-    <span className="inline-flex gap-0.5" aria-hidden="true">
-      {[0, 1, 2, 3, 4].map((i) => (
-        <span
-          key={i}
-          className={`inline-block h-1.5 w-1.5 rounded-full ${i < filled ? "bg-compute" : "bg-grid"}`}
-        />
-      ))}
-    </span>
-  );
-}
-
-/** The grid: three stacked answers, with the first column shaded. */
-function Grid({ words, tone }: { words: readonly (string | null)[]; tone: "plain" | "good" | "bad" }) {
-  const colTone =
-    tone === "good"
-      ? "border-correct bg-correct/25 text-correct"
-      : tone === "bad"
-        ? "border-wrong bg-wrong/25 text-wrong"
-        : "border-compute bg-compute/15 text-ink";
-  return (
-    <div className="inline-flex flex-col gap-0.5">
-      {words.map((w, r) => (
-        <div key={r} className="flex gap-0.5">
-          {Array.from({ length: 3 }, (_, c) => (
-            <div
-              key={c}
-              className={`flex h-8 w-8 items-center justify-center border font-mono text-sm font-semibold ${
-                c === 0 ? colTone : "border-grid bg-surface-raised text-ink"
-              }`}
-            >
-              {w ? w[c] : ""}
-            </div>
-          ))}
-        </div>
-      ))}
+    <div className="flex flex-col gap-1">
+      <p className="text-lg italic text-ink-muted">{SPEC.given}</p>
+      <p className="text-lg text-ink">
+        <span className="italic">{SPEC.lead}</span>{" "}
+        {words.map((w, i) => (
+          <span
+            key={i}
+            className={`italic ${i === SPEC.length - 1 ? `font-semibold ${last}` : ""}`}
+          >
+            {w}{" "}
+          </span>
+        ))}
+        {Array.from({ length: SPEC.length - words.length }, (_, i) => (
+          <span key={`b${i}`} className="text-ink-muted">
+            ___{" "}
+          </span>
+        ))}
+      </p>
     </div>
   );
 }
@@ -106,34 +101,36 @@ export function Page10() {
   const cross = curves.totCrosswords;
   const { io, cot, totNoBacktrack, totNoPrune, tot } = cross.fit!.params;
 
-  const [strategy, setStrategy] = useState<Strategy>("greedy");
-  const [beamWidth, setBeamWidth] = useState(3);
-  const [showCot, setShowCot] = useState(false);
+  // Step 1 — the reader taps words.
+  const [myState, setMyState] = useState(NW_.space.root);
+  // Step 2 — how many lines the model keeps alive. 1 is greedy.
+  const [keep, setKeep] = useState(1);
+
+  const mine = NW_.states[myState];
+  const myChoices = NW_.choices(mine);
+  const myDone = mine.words.length === SPEC.length;
 
   const trace = useMemo(
-    () => search(A.space, strategy, { beamWidth, maxNodes: 3000, rollouts: 80 }),
-    [strategy, beamWidth],
+    () => search(NW_.space, "beam", { beamWidth: keep, maxNodes: 3000 }),
+    [keep],
   );
-  const meta = STRATEGIES.find((s) => s.key === strategy)!;
 
-  /* Where the search ended up: the answer, or the best full grid it settled on. */
-  const finalId = useMemo(() => {
-    if (trace.solved) return A.space.goal;
-    if (trace.deadEndReached !== null) return trace.deadEndReached;
-    const dead = trace.nodes.filter((n) => n.deadEnd && n.kept).sort((a, b) => b.score - a.score);
-    return dead.length ? dead[0].thoughtId : A.space.root;
+  /* Where the model ended up: the rhyming line, or the likeliest one it kept. */
+  const endId = useMemo(() => {
+    if (trace.solved) return trace.solutionThoughts.at(-1)!;
+    const finished = trace.nodes
+      .filter((n) => NW_.states[n.thoughtId].words.length === SPEC.length)
+      .sort((a, b) => b.score - a.score);
+    return finished.length ? finished[0].thoughtId : NW_.space.root;
   }, [trace]);
-  const finalState = A.states[finalId];
+  const modelLine = NW_.states[endId];
 
-  /* Kept thoughts become labelled boxes; thoughts a strategy scored and then
-     dropped collapse into one "+N pruned" chip under the parent that proposed
-     them, so the tree stays readable while the counter reports every thought. */
   const layout = useMemo(() => {
     const byId = new Map(trace.nodes.map((n) => [n.id, n]));
-    const pruned = new Map<number, number>();
+    const dropped = new Map<number, number>();
     for (const n of trace.nodes) {
       if (n.kept || n.parentId === null) continue;
-      pruned.set(n.parentId, (pruned.get(n.parentId) ?? 0) + 1);
+      dropped.set(n.parentId, (dropped.get(n.parentId) ?? 0) + 1);
     }
     type Item =
       | { kind: "node"; key: string; depth: number; order: number; node: SearchNode }
@@ -142,7 +139,7 @@ export function Page10() {
     for (const n of trace.nodes) {
       if (n.kept) items.push({ kind: "node", key: `n${n.id}`, depth: n.depth, order: n.order, node: n });
     }
-    for (const [parentId, count] of pruned) {
+    for (const [parentId, count] of dropped) {
       const p = byId.get(parentId)!;
       items.push({ kind: "chip", key: `c${parentId}`, depth: p.depth + 1, order: p.order + 0.5, parentId, count });
     }
@@ -158,29 +155,20 @@ export function Page10() {
     return {
       items,
       pos,
-      width: PAD * 2 + maxDepth * COL + NW,
+      width: PAD * 2 + maxDepth * COL + NODE_W,
       height: HEAD + Math.max(...rows.values(), 1) * PITCH + PAD,
     };
   }, [trace]);
 
-  const solutionSet = useMemo(() => new Set(trace.solutionPath), [trace]);
-  const byNodeId = useMemo(() => new Map(trace.nodes.map((n) => [n.id, n])), [trace]);
-
-  /* The answer THIS node wrote. Grids are deduplicated, so `placed` records
-     whichever write first reached the grid, which is not necessarily the write
-     on this branch — diff against the parent instead. */
+  const onPath = useMemo(() => new Set(trace.solutionPath), [trace]);
   const wordOf = (n: SearchNode) => {
-    if (n.parentId === null) return "empty";
-    const before = A.states[byNodeId.get(n.parentId)!.thoughtId].words;
-    const after = A.states[n.thoughtId].words;
-    const i = after.findIndex((w, k) => w !== before[k]);
-    return i >= 0 ? after[i]! : "";
+    const w = NW_.states[n.thoughtId].words;
+    return w.length ? w[w.length - 1] : SPEC.lead;
   };
 
-  const colText = A.columnText(finalState);
   const aria = trace.solved
-    ? `Search tree. The ${meta.label} strategy scored ${trace.thoughtsScored} thoughts and finished the puzzle.`
-    : `Search tree. The ${meta.label} strategy scored ${trace.thoughtsScored} thoughts and ended with a shaded column reading ${colText}, which does not answer the clue.`;
+    ? `Word tree. Keeping ${keep} lines alive, the model scored ${trace.thoughtsScored} words and finished on a rhyme: ${NW_.line(modelLine)}.`
+    : `Word tree. Keeping ${keep} lines alive, the model scored ${trace.thoughtsScored} words and finished on ${NW_.line(modelLine)}, which does not rhyme.`;
 
   const bars = [
     { label: "Input-output prompting", value: io, tone: "bg-grid" },
@@ -200,102 +188,116 @@ export function Page10() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        A chain of thought is a line: one thought after another, no way back. That is fine until a
-        thought that looked right turns out to have ruled out the answer. Let the model branch
-        instead, keep several partial answers alive and score them as it goes, and the line becomes
-        a <strong className="text-ink">tree</strong>:{" "}
-        <strong className="text-ink">branch, evaluate, prune, backtrack</strong>.
+        A model writes one word at a time. At every word it has a few candidates and a hunch about
+        how likely each is, and it picks one. Always pick the likeliest and you have a{" "}
+        <strong className="text-ink">chain</strong>: a single line, written forward, with no way
+        back. Keep a few unfinished lines alive instead and you have a{" "}
+        <strong className="text-ink">tree</strong>.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the live search */}
+        {/* Step 1 — the reader writes the line. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. Fill in three answers</h2>
-
+          <h2 className="text-xl font-semibold text-ink">1. Finish the line</h2>
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-ink">
-              Three answers stack. The <strong>shaded column</strong> then has to read downward as
-              the answer to a fourth clue. That is the whole rule.
+              Tap a word to add it. The finished line has to{" "}
+              <strong>rhyme with &ldquo;{SPEC.rhymesWith}&rdquo;</strong>. That is the whole rule.
             </p>
 
-            <div className="flex flex-wrap items-start gap-6">
-              <div className="flex shrink-0 flex-col gap-1">
-                <Grid words={[null, null, null]} tone="plain" />
-                <p className="text-xs text-ink-muted">
-                  shaded column: <span className="text-ink">{A.spec.down.clue}</span>
+            <Line
+              words={mine.words}
+              tone={myDone ? (mine.rhymed ? "good" : "bad") : "plain"}
+            />
+
+            {!myDone ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs uppercase tracking-wide text-ink-muted">
+                  what the model thinks comes next
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {myChoices.map((c) => (
+                    <button
+                      key={c.word}
+                      type="button"
+                      onClick={() => {
+                        setMyState(c.stateId);
+                        recordInteraction(PAGE_N);
+                      }}
+                      className="flex items-baseline gap-2 rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink hover:border-compute"
+                    >
+                      <span className="font-semibold">{c.word}</span>
+                      <span className="font-mono text-xs text-compute">{pct(c.p)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`rounded-lg border-l-4 p-3 ${
+                  mine.rhymed ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
+                }`}
+                role="status"
+              >
+                <p className={`font-semibold ${mine.rhymed ? "text-correct" : "text-wrong"}`}>
+                  {mine.rhymed
+                    ? `✓ "${mine.words[SPEC.length - 1]}" rhymes with "${SPEC.rhymesWith}"`
+                    : `✗ "${mine.words[SPEC.length - 1]}" does not rhyme with "${SPEC.rhymesWith}"`}
+                </p>
+                <p className="mt-1 text-sm text-ink">
+                  This line is {pct(mine.probability)} likely overall.{" "}
+                  {mine.rhymed
+                    ? "There is exactly one rhyming line in the whole tree, and you found it."
+                    : "Every word you picked was a reasonable next word. The line still cannot rhyme."}
                 </p>
               </div>
-              <ul className="flex min-w-0 flex-1 flex-col gap-2">
-                {A.spec.rows.map((r) => (
-                  <li key={r.n} className="flex flex-col gap-0.5">
-                    <span className="text-sm text-ink">
-                      <span className="mr-2 font-mono text-xs text-ink-muted">{r.n}</span>
-                      {r.clue}
-                    </span>
-                    {[...r.candidates]
-                      .sort((a, b) => b.confidence - a.confidence)
-                      .map((c) => (
-                        <span key={c.word} className="flex flex-wrap items-baseline gap-2 pl-6 text-sm">
-                          <Dots score={c.confidence} />
-                          <span className="font-mono font-semibold text-ink">{c.word}</span>
-                          <span className="text-xs text-ink-muted">{c.note}</span>
-                        </span>
-                      ))}
-                  </li>
-                ))}
-              </ul>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm text-ink-muted">
+                {mine.words.length} of {SPEC.length} words
+              </p>
+              {mine.words.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setMyState(NW_.space.root)}
+                  className="rounded border border-grid bg-surface-raised px-3 py-1 text-xs text-ink"
+                >
+                  Start over
+                </button>
+              ) : null}
             </div>
+          </div>
+        </section>
 
-            <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              The dots are how sure the model is that an answer fits <em>its own clue</em>. That is
-              the only thing it judges. It does not look at the shaded column until the grid is
-              full, which is exactly what a chain of thought does: it writes the best next thing and
-              finds out later.
+        <Note kicker="Try it">
+          <p>Take the likeliest word every time, the way you would with autocomplete.</p>
+          <p>That is what a chain of thought does.</p>
+        </Note>
+
+        {/* Step 2 — the model writes it, with the one dial that matters. */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">2. Let it keep more than one line</h2>
+          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-sm text-ink-muted">
+              Same words, same probabilities. The only thing that changes is how many unfinished
+              lines the model carries forward at each step. Keeping one is exactly what you just
+              did.
             </p>
-            <p className="text-xs text-ink-muted">
-              The puzzle and its scores are written by hand. The search over them is real.
-            </p>
 
-            {/* strategy picker */}
-            <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
-              <label htmlFor="strategy" className="text-sm text-ink-muted">
-                Search strategy
-              </label>
-              <select
-                id="strategy"
-                value={strategy}
-                onChange={(e) => {
-                  setStrategy(e.target.value as Strategy);
-                  setShowCot(false);
-                  recordInteraction(PAGE_N);
-                }}
-                className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
-              >
-                {STRATEGIES.map((s) => (
-                  <option key={s.key} value={s.key}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-              <p className="text-sm text-ink-muted">{meta.blurb}</p>
-            </div>
+            <Slider
+              label="Lines kept alive"
+              min={1}
+              max={5}
+              value={keep}
+              onChange={(v) => {
+                setKeep(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
 
-            {strategy === "beam" ? (
-              <Slider
-                label="Beam width (b)"
-                min={1}
-                max={5}
-                value={beamWidth}
-                onChange={(v) => {
-                  setBeamWidth(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-            ) : null}
-
-            {/* the tree */}
             <div
-              className="max-h-[26rem] overflow-auto rounded-lg border border-dashed border-grid bg-surface-raised p-2"
+              className="max-h-[24rem] overflow-auto rounded-lg border border-dashed border-grid bg-surface-raised p-2"
               role="img"
               aria-label={aria}
             >
@@ -305,9 +307,9 @@ export function Page10() {
                 height={layout.height}
                 className="max-w-none"
               >
-                {Array.from({ length: ROWS + 1 }, (_, d) => (
+                {Array.from({ length: SPEC.length + 1 }, (_, d) => (
                   <text key={d} x={PAD + d * COL} y={12} className="fill-ink-muted text-[9px]">
-                    {d === 0 ? "start" : `${d} written`}
+                    {d === 0 ? "so I" : `word ${d}`}
                   </text>
                 ))}
 
@@ -317,19 +319,19 @@ export function Page10() {
                   const a = layout.pos.get(`n${parentId}`);
                   const b = layout.pos.get(it.key);
                   if (!a || !b) return null;
-                  const x1 = a.x + NW;
-                  const y1 = a.y + NH / 2;
+                  const x1 = a.x + NODE_W;
+                  const y1 = a.y + NODE_H / 2;
                   const x2 = b.x;
-                  const y2 = b.y + NH / 2;
+                  const y2 = b.y + NODE_H / 2;
                   const mid = (x1 + x2) / 2;
-                  const onPath = it.kind === "node" && solutionSet.has(it.node.id);
+                  const win = it.kind === "node" && onPath.has(it.node.id);
                   return (
                     <path
                       key={`e${it.key}`}
                       d={`M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`}
                       fill="none"
-                      className={onPath ? "stroke-correct" : "stroke-grid"}
-                      strokeWidth={onPath ? 2 : 1}
+                      className={win ? "stroke-correct" : "stroke-grid"}
+                      strokeWidth={win ? 2 : 1}
                     />
                   );
                 })}
@@ -342,15 +344,15 @@ export function Page10() {
                         <rect
                           x={p.x}
                           y={p.y + 4}
-                          width={NW}
-                          height={NH - 8}
+                          width={NODE_W}
+                          height={NODE_H - 8}
                           rx={8}
                           className="fill-surface stroke-grid"
                           strokeWidth={1}
                           strokeDasharray="3 2"
                         />
-                        <text x={p.x + NW / 2} y={p.y + 16} textAnchor="middle" className="fill-ink-muted text-[9px]">
-                          +{it.count} pruned
+                        <text x={p.x + NODE_W / 2} y={p.y + 16} textAnchor="middle" className="fill-ink-muted text-[9px]">
+                          +{it.count} dropped
                         </text>
                       </g>
                     );
@@ -359,24 +361,20 @@ export function Page10() {
                   const tone =
                     n.parentId === null
                       ? "fill-ink"
-                      : solutionSet.has(n.id)
+                      : onPath.has(n.id)
                         ? "fill-correct"
                         : n.deadEnd
                           ? "fill-wrong"
                           : "fill-compute";
                   return (
                     <g key={it.key}>
-                      <rect x={p.x} y={p.y} width={NW} height={NH} rx={5} className={tone} />
-                      <text x={p.x + 8} y={p.y + 16} className="fill-canvas text-[10px]">
+                      <rect x={p.x} y={p.y} width={NODE_W} height={NODE_H} rx={5} className={tone} />
+                      <text x={p.x + 7} y={p.y + 16} className="fill-canvas text-[10px]">
                         {wordOf(n)}
                       </text>
                       {n.isGoal ? (
-                        <text x={p.x + NW - 7} y={p.y + 16} textAnchor="end" className="fill-canvas text-[10px]">
+                        <text x={p.x + NODE_W - 7} y={p.y + 16} textAnchor="end" className="fill-canvas text-[10px]">
                           ✓
-                        </text>
-                      ) : n.deadEnd ? (
-                        <text x={p.x + NW - 7} y={p.y + 16} textAnchor="end" className="fill-canvas text-[10px]">
-                          ✗
                         </text>
                       ) : null}
                     </g>
@@ -386,106 +384,55 @@ export function Page10() {
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
               <Key className="bg-ink" label="start" />
-              <Key className="bg-correct" label="the answer" />
-              <Key className="bg-compute" label="kept and expanded" />
-              <Key className="bg-wrong" label="column reads wrong" />
+              <Key className="bg-correct" label="the rhyming line" />
+              <Key className="bg-compute" label="kept alive" />
               <Key className="border border-dashed border-grid bg-surface" label="scored, then dropped" />
             </div>
 
-            {/* The bill and the verdict. */}
             <div className="grid gap-2 sm:grid-cols-[auto_minmax(0,1fr)]">
               <div
                 className="rounded-lg border border-grid bg-surface-raised p-3"
                 role="status"
-                aria-label={`The compute bill: ${trace.thoughtsScored} thoughts scored`}
+                aria-label={`The compute bill: ${trace.thoughtsScored} words scored`}
               >
                 <p className="font-mono text-3xl font-bold tabular-nums text-compute">
                   {trace.thoughtsScored}
                 </p>
-                <p className="text-xs text-ink">thoughts scored</p>
+                <p className="text-xs text-ink">words scored</p>
                 <p className="text-xs text-ink-muted">the compute bill</p>
               </div>
               <div
-                className={`flex flex-wrap items-center gap-4 rounded-lg border-l-4 p-3 ${
+                className={`rounded-lg border-l-4 p-3 ${
                   trace.solved ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
                 }`}
               >
-                <Grid words={finalState.words} tone={trace.solved ? "good" : "bad"} />
-                <div className="min-w-0 flex-1">
-                  {trace.solved ? (
-                    <>
-                      <p className="font-semibold text-correct">
-                        ✓ the column reads {colText}
-                      </p>
-                      <p className="mt-1 text-sm text-ink">
-                        &ldquo;{A.spec.down.clue}&rdquo; is {A.spec.down.answer}.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="font-semibold text-wrong">
-                        ✗ the column reads {colText}
-                      </p>
-                      <p className="mt-1 text-sm text-ink">
-                        {colText} is a word. The clue asked for a{" "}
-                        {A.spec.down.clue.toLowerCase()}.
-                      </p>
-                    </>
-                  )}
-                </div>
+                <p className={`font-semibold ${trace.solved ? "text-correct" : "text-wrong"}`}>
+                  {trace.solved ? "✓ it rhymes" : "✗ no rhyme"}
+                </p>
+                <p className="mt-1 text-lg italic text-ink">{NW_.line(modelLine)}</p>
+                <p className="mt-1 text-xs text-ink-muted">
+                  {trace.solved
+                    ? `The rhyming line is only ${pct(modelLine.probability)} likely. The likeliest line, at 13%, is the one that cannot rhyme, which is why keeping one is not enough.`
+                    : `This is the likeliest line in the whole tree, at ${pct(modelLine.probability)}. Being likeliest is not the same as being right.`}
+                </p>
               </div>
-            </div>
-
-            {/* the plain-CoT contrast */}
-            <div className="border-t border-dashed border-grid pt-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCot((s) => !s);
-                  recordInteraction(PAGE_N);
-                }}
-                aria-expanded={showCot}
-                className="rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink"
-              >
-                {showCot ? "Hide plain chain-of-thought" : "Solve with plain CoT instead ▸"}
-              </button>
-              {showCot ? (
-                <div className="mt-3 rounded-lg border-l-4 border-wrong bg-wrong/10 p-3">
-                  <p className="mb-2 text-xs uppercase tracking-wide text-ink-muted">
-                    one run · nothing scored · no branching
-                  </p>
-                  <ol className="flex flex-col gap-1">
-                    {ACROSTIC_PLAIN_COT.steps.map((s, i) => (
-                      <li key={i} className="text-sm text-ink">
-                        <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
-                        {s}
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="mt-2 text-sm text-wrong">✗ {ACROSTIC_PLAIN_COT.answer}</p>
-                  <p className="mt-1 text-xs text-ink-muted">
-                    This is greedy with the scoring taken away, and it lands in the same grid,
-                    because greedy is a chain of thought that keeps score. Neither can undo SUM.
-                  </p>
-                </div>
-              ) : null}
             </div>
           </div>
         </section>
 
-        <Note kicker="Try it">
-          <p>Greedy first, then Beam at width 3.</p>
-          <p>Watch the counter. That is the bill.</p>
+        <Note kicker="The dial">
+          <p>One line kept alive is a chain of thought.</p>
+          <p>Two is already a tree, and already costs more.</p>
         </Note>
 
-        {/* Step 2 — what search buys */}
+        {/* Step 3 — what search buys, measured. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. What search buys</h2>
+          <h2 className="text-xl font-semibold text-ink">3. What search buys</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              You just did three clues by hand. Here is GPT-4 on a 5&times;5 crossword, with and
-              without the ability to back up. The two middle bars are the ones that matter, because
-              they take the same search apart one piece at a time.
+              A couplet is a toy. Here is the same mechanism measured on a real task: GPT-4 filling
+              5&times;5 crosswords, with and without the ability to back up. The two middle bars are
+              the ones that matter, because they take the same search apart one piece at a time.
             </p>
             <div
               className="flex flex-col gap-2"
@@ -506,8 +453,8 @@ export function Page10() {
             </div>
             <p className="text-sm text-ink-muted">
               Chain of thought fills <strong className="text-ink">{cot}%</strong> of the words,
-              barely above no reasoning at all, because one chain commits to its first answer just
-              as yours did. Take the full search and switch off{" "}
+              barely above no reasoning at all, because one chain commits to its first guess just as
+              your line did. Take the full search and switch off{" "}
               <strong className="text-ink">pruning</strong> and it drops to {totNoPrune}%. Switch
               off <strong className="text-ink">backtracking</strong> instead and it collapses to{" "}
               {totNoBacktrack}%, almost back to plain chain of thought. That is the whole argument in
@@ -530,8 +477,8 @@ export function Page10() {
         <CitationBadge citation={cross.citation} />
       </div>
       <p className="text-xs text-ink-muted">
-        Every count above is measured from the search running in your browser, and pinned in the
-        test suite.
+        The words and their probabilities are written by hand. The search over them is real, and
+        every count above is measured from it and pinned in the test suite.
       </p>
 
       <PageNav n={PAGE_N} />
