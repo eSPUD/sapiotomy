@@ -22,14 +22,11 @@ const WC = SPAIN_WORLD_CUPS;
 describe("Page 2 (Knowing What You Know): a training-cutoff slider", () => {
   it("shows the question and the cutoff slider, answering one short by default", () => {
     render(<Page2 />);
-    // Both widgets pose the same question; only the reading of it differs.
-    expect(screen.getAllByText(WC.question)).toHaveLength(2);
-    expect(screen.getAllByRole("slider", { name: /training cutoff/i })).toHaveLength(2);
+    expect(screen.getByText(WC.question)).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /training cutoff/i })).toBeInTheDocument();
     // At the default cutoff (Jan 2025) it answers off a memory that predates 2026.
     expect(screen.getByText(/won the FIFA World Cup once, in 2010/i)).toBeInTheDocument();
-    // Both widgets sit one title behind at the default cutoff: section 1 misses
-    // 2026, section 2 names 2023 but is still missing 2026.
-    expect(screen.getAllByText(/one short/i)).toHaveLength(2);
+    expect(screen.getByText(/one short/i)).toBeInTheDocument();
     // The pedagogically critical property: the stale reply never names 2026.
     expect(screen.getByText(/won the FIFA World Cup once, in 2010/i).textContent).not.toMatch(
       /2026/,
@@ -38,7 +35,7 @@ describe("Page 2 (Knowing What You Know): a training-cutoff slider", () => {
 
   it("the cutoff slider changes the recalled answer", () => {
     render(<Page2 />);
-    const slider = screen.getAllByRole("slider", { name: /training cutoff/i })[0];
+    const slider = screen.getByRole("slider", { name: /training cutoff/i });
     // Past the 2026 final, sealed memory catches up and names both men's titles.
     fireEvent.change(slider, { target: { value: String(2026 * 12 + 11) } });
     expect(screen.getByText(/twice, in 2010 and 2026/i)).toBeInTheDocument();
@@ -54,22 +51,6 @@ describe("Page 2 (Knowing What You Know): a training-cutoff slider", () => {
     expect(body).toMatch(/happened\s*before\s*the cutoff/i);
   });
 
-  it("section 2's widget reads the question literally and answers better", () => {
-    render(<Page2 />);
-    const inclusive = screen.getAllByRole("slider", { name: /training cutoff/i })[1];
-    // At the default cutoff it already counts the 2023 women's title...
-    expect(
-      screen.getByText(/two FIFA World Cups: the men's team in 2010 and the women's team in 2023/i),
-    ).toBeInTheDocument();
-    // ...and past the 2026 final it reaches all three.
-    fireEvent.change(inclusive, { target: { value: String(2026 * 12 + 11) } });
-    expect(screen.getByText(/three FIFA World Cups/i)).toBeInTheDocument();
-  });
-
-  it("says fixing the bias does not fix the cutoff", () => {
-    render(<Page2 />);
-    expect(document.body.textContent ?? "").toMatch(/Two separate failures/i);
-  });
 
   it("names the second miss: the model never judged that it should look it up", () => {
     render(<Page2 />);

@@ -15,9 +15,8 @@
  *      in 2023, BEFORE the cutoff. The model held that fact and still left it
  *      out, resolving an ambiguous question to the reading its training data
  *      talks about most (cf. stereotype-consistent coreference, Zhao et al.
- *      2018). The same widget with the question read literally gives the better
- *      answer, and the beat that matters is that fixing the bias does NOT fix
- *      the cutoff: the two failures are independent.
+ *      2018). Told as prose: the widget in step 1 already showed the biased
+ *      reading, so this step names it rather than re-running the control.
  *   3. The third, quietest miss: the model never judged that it might be stale.
  *      MetaTool (Huang et al., ICLR 2024) benchmarked exactly this "tool usage
  *      awareness" and found most models struggle to recognize their own
@@ -36,12 +35,7 @@
 import { useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import {
-  SPAIN_ALL_TITLES,
-  SPAIN_INCLUSIVE_REPLIES,
-  SPAIN_MACHINE_REPLIES,
-  SPAIN_WORLD_CUPS,
-} from "@/lib/authored";
+import { SPAIN_ALL_TITLES, SPAIN_MACHINE_REPLIES, SPAIN_WORLD_CUPS } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
@@ -57,20 +51,15 @@ const CUTOFF_MAX = monthIndex(2026, 11); // Dec 2026 (past the July final)
 const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real seal
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
 
-/** Men's finals are played in July; the 2023 women's final was in August. */
-const MENS_FINALS = SPAIN_ALL_TITLES.mens.map((y) => monthIndex(y, 6));
-const WOMENS_FINALS = SPAIN_ALL_TITLES.womens.map((y) => monthIndex(y, 7));
-/** Section 1 counts only the men's tournament, the reading the model assumes. */
-const DEFAULT_READING_FINALS = MENS_FINALS;
-/** Section 2 counts every title, which is what the question actually asked. */
-const ALL_FINALS = [...MENS_FINALS, ...WOMENS_FINALS].sort((a, b) => a - b);
+/** Men's finals are played in July. Section 1 counts only the men's tournament,
+ *  which is the reading the model silently assumes; section 2 is about that. */
+const DEFAULT_READING_FINALS = SPAIN_ALL_TITLES.mens.map((y) => monthIndex(y, 6));
 
 /** Page 2's references, numbered in order of first appearance. */
 const REF = { winobias: 1, metatool: 2, react: 3, toolformer: 4, survey: 5 } as const;
 
 /**
- * The cutoff explorer, shared by sections 1 and 2. Same control, same question,
- * different reading of it: `finals` decides which titles count as knowable and
+ * The cutoff explorer. `finals` decides which titles count as knowable and
  * `replies` is indexed by how many of them fall on or before the cutoff.
  */
 function CutoffWidget({
@@ -218,23 +207,6 @@ export function Page2() {
             <Cite n={REF.winobias} />
           </p>
 
-          <p className="text-ink">
-            Read the question literally and the same slider gives a better answer:
-          </p>
-
-          <CutoffWidget
-            id="cutoff-inclusive"
-            finals={ALL_FINALS}
-            replies={SPAIN_INCLUSIVE_REPLIES}
-            total={SPAIN_ALL_TITLES.total}
-          />
-
-          <p className="text-ink">
-            Notice what did and did not change. Naming the tournament fixes the bias at every
-            cutoff. It does not fix the cutoff: a model sealed in early 2025 now counts two titles
-            instead of one, and is still a title behind. <strong>Two separate failures</strong>, and
-            closing one leaves the other exactly where it was.
-          </p>
         </section>
         <Note kicker="References">
           <RefItem n={REF.winobias}>

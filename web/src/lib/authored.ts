@@ -187,20 +187,6 @@ export const SPAIN_MACHINE_REPLIES: string[] = [
   "Spain has won the FIFA World Cup twice, in 2010 and 2026.",
 ];
 
-/**
- * The better answer: the same question, read literally. Indexed by how many of
- * Spain's THREE titles (men's 2010 and 2026, women's 2023) fall inside the
- * cutoff. Each reply names the tournament it is counting, so the reader can see
- * the reading being made instead of having to guess it. Note that resolving the
- * ambiguity does not close the cutoff gap: the two failures are independent.
- */
-export const SPAIN_INCLUSIVE_REPLIES: string[] = [
-  "Counting both tournaments, Spain has not won a FIFA World Cup.",
-  "Counting both tournaments, Spain has won one FIFA World Cup: the men's team in 2010.",
-  "Counting both tournaments, Spain has won two FIFA World Cups: the men's team in 2010 and the women's team in 2023.",
-  "Counting both tournaments, Spain has won three FIFA World Cups: the men's team in 2010 and 2026, and the women's team in 2023.",
-];
-
 // --- Page 4: Reasoning: Diverse Pathfinding (three roads, one destination) ----
 /**
  * Page 1's hardest round (GAME_ROUNDS[2], 350 × 638) solved three ways:
