@@ -85,15 +85,21 @@ export function Page1() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        Your mind runs two systems. <strong className="text-ink">System 1</strong> is fast,
-        automatic, effortless. <strong className="text-ink">System 2</strong> is slow, deliberate,
-        effortful.
-        <Cite n={REF.kahneman} /> One operation, multiplication, flips you between them.
-      </p>
-
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* The intro is a grid row of its own so its citation can sit beside it. */}
+        <p className="max-w-2xl text-lg text-ink-muted">
+          Your mind runs two systems. <strong className="text-ink">System 1</strong> is fast,
+          automatic, effortless. <strong className="text-ink">System 2</strong> is slow, deliberate,
+          effortful.
+          <Cite n={REF.kahneman} /> One operation, multiplication, flips you between them.
+        </p>
+        <Note kicker="References">
+          <RefItem n={REF.kahneman}>
+            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
+          </RefItem>
+        </Note>
+
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Meet the two systems</h2>
@@ -179,11 +185,7 @@ export function Page1() {
             </section>
           </div>
         </section>
-        <Note kicker="References">
-          <RefItem n={REF.kahneman}>
-            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
-          </RefItem>
-        </Note>
+        <div aria-hidden="true" />
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
