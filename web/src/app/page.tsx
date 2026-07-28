@@ -95,17 +95,22 @@ export default function Home() {
         <div className="grid gap-10 md:grid-cols-2">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Authors</h2>
-            <p className="text-justify hyphens-auto text-ink-muted">
-              <span className="text-ink">Shashank Bangalore Lakshman</span>, Graduate Student (M.S.
-              in Artificial Intelligence), Department of Computer Science, The University of Texas at
-              Austin, and <span className="text-ink">Scott Lawrence Eiers</span>, Undergraduate
-              Student (B.S. in Computer Science), Department of Computer Science, Western Governors
-              University. The two authors contributed equally. Correspondence to{" "}
-              <a href="mailto:shashankbl@utexas.edu" className="text-compute underline">
-                shashankbl@utexas.edu
-              </a>{" "}
-              (corresponding author).
-            </p>
+            <ol className="flex list-decimal flex-col gap-3 pl-5 text-ink-muted marker:text-ink-muted">
+              <li className="text-justify hyphens-auto">
+                <span className="text-ink">Shashank Bangalore Lakshman</span>, Graduate Student (M.S.
+                in Artificial Intelligence), Department of Computer Science, The University of Texas
+                at Austin. Corresponding author:{" "}
+                <a href="mailto:shashankbl@utexas.edu" className="text-compute underline">
+                  shashankbl@utexas.edu
+                </a>
+                .
+              </li>
+              <li className="text-justify hyphens-auto">
+                <span className="text-ink">Scott Lawrence Eiers</span>, Undergraduate Student (B.S.
+                in Computer Science), Department of Computer Science, Western Governors University.
+              </li>
+            </ol>
+            <p className="text-sm text-ink-muted">The two authors contributed equally.</p>
           </div>
 
           <div className="flex flex-col gap-3">
