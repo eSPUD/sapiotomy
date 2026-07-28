@@ -149,6 +149,12 @@ export function Page2() {
               </div>
             </div>
           </section>
+
+          <p className="text-ink">
+            Based on the knowledge cutoff date, the model gives an answer without thinking it
+            through. System 1 thinking leads to an incorrect response. Are knowledge gaps addressable
+            by <strong>System 2 thinking</strong>?
+          </p>
         </section>
         <Note kicker="Try it">
           <p>Slide the training cutoff to move the model&apos;s memory back and forth in time.</p>
