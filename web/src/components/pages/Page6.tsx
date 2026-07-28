@@ -11,8 +11,8 @@
  * in. System 1 vs System 2 carries over from Act 1: blurting takes no time;
  * showing your work takes focus and time — for a model, that focus-and-time
  * currency IS tokens. The measured version of the trade is the cited s1 result
- * (budget forcing, 50% -> 57% on AIME24), teased here and treated fully on
- * page 15.
+ * (budget forcing, 50% -> 57% on AIME24), measured on step 3's "Wait" dial —
+ * this page is its full treatment.
  *
  * UNITS (load-bearing): the meter counts WORDS, not tokenizer tokens. The
  * authored costs are whitespace word counts and nothing on this page may label

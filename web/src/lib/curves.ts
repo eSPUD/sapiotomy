@@ -12,13 +12,22 @@ import votingPlateauRaw from "@data/voting-plateau.json";
 import prmVsOrmRaw from "@data/prm-vs-orm.json";
 import treeOfThoughtsRaw from "@data/tree-of-thoughts.json";
 import totCrosswordsRaw from "@data/tot-crosswords.json";
+import starCqaRaw from "@data/star-cqa.json";
 import coverageScalingRaw from "@data/coverage-scaling.json";
 import computeOptimalRaw from "@data/compute-optimal.json";
+import rebaseParetoRaw from "@data/rebase-pareto.json";
 import budgetForcingRaw from "@data/budget-forcing.json";
 import deepseekTrainingRaw from "@data/deepseek-r1-training.json";
+import o1ScalingRaw from "@data/o1-scaling.json";
+import o3PreviewRaw from "@data/o3-preview.json";
+import deepseekDistillRaw from "@data/deepseek-r1-distill.json";
 import arcCostRaw from "@data/arc-cost.json";
+import deepseekPricingRaw from "@data/deepseek-pricing.json";
+import selfCorrectionRaw from "@data/self-correction.json";
 import overthinkingRaw from "@data/overthinking.json";
 import faithfulnessRaw from "@data/faithfulness.json";
+import cotObfuscationRaw from "@data/cot-obfuscation.json";
+import coconutRaw from "@data/coconut.json";
 import illusionRaw from "@data/illusion-of-thinking.json";
 import epochTrainingCostsRaw from "@data/epoch-training-costs.json";
 import epochRunCostRaw from "@data/epoch-run-cost.json";
@@ -36,13 +45,22 @@ export const curves: Record<string, CurveData> = {
   prmVsOrm: parseCurveData(prmVsOrmRaw, "prm-vs-orm.json"),
   treeOfThoughts: parseCurveData(treeOfThoughtsRaw, "tree-of-thoughts.json"),
   totCrosswords: parseCurveData(totCrosswordsRaw, "tot-crosswords.json"),
+  starCqa: parseCurveData(starCqaRaw, "star-cqa.json"),
   coverageScaling: parseCurveData(coverageScalingRaw, "coverage-scaling.json"),
   computeOptimal: parseCurveData(computeOptimalRaw, "compute-optimal.json"),
+  rebasePareto: parseCurveData(rebaseParetoRaw, "rebase-pareto.json"),
   budgetForcing: parseCurveData(budgetForcingRaw, "budget-forcing.json"),
   deepseekTraining: parseCurveData(deepseekTrainingRaw, "deepseek-r1-training.json"),
+  o1Scaling: parseCurveData(o1ScalingRaw, "o1-scaling.json"),
+  o3Preview: parseCurveData(o3PreviewRaw, "o3-preview.json"),
+  deepseekDistill: parseCurveData(deepseekDistillRaw, "deepseek-r1-distill.json"),
   arcCost: parseCurveData(arcCostRaw, "arc-cost.json"),
+  deepseekPricing: parseCurveData(deepseekPricingRaw, "deepseek-pricing.json"),
+  selfCorrection: parseCurveData(selfCorrectionRaw, "self-correction.json"),
   overthinking: parseCurveData(overthinkingRaw, "overthinking.json"),
   faithfulness: parseCurveData(faithfulnessRaw, "faithfulness.json"),
+  cotObfuscation: parseCurveData(cotObfuscationRaw, "cot-obfuscation.json"),
+  coconut: parseCurveData(coconutRaw, "coconut.json"),
   illusion: parseCurveData(illusionRaw, "illusion-of-thinking.json"),
   epochTrainingCosts: parseCurveData(epochTrainingCostsRaw, "epoch-training-costs.json"),
   epochRunCost: parseCurveData(epochRunCostRaw, "epoch-run-cost.json"),

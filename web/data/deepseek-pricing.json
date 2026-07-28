@@ -1,0 +1,24 @@
+{
+  "points": [
+    { "x": 0, "y": 60.0 },
+    { "x": 1, "y": 2.19 }
+  ],
+  "fit": {
+    "kind": "price-anchors",
+    "params": {
+      "o1InputPerM": 15.0,
+      "o1OutputPerM": 60.0,
+      "r1InputMissPerM": 0.55,
+      "r1OutputPerM": 2.19,
+      "outputRatio": 27.4,
+      "r1RlTrainUSD": 294000
+    }
+  },
+  "citation": {
+    "ref": "DeepSeek API pricing (Jan 2025)",
+    "url": "https://api-docs.deepseek.com/quick_start/pricing",
+    "venue": "DeepSeek API docs",
+    "preprint": true
+  },
+  "provenance": "List prices per million tokens at DeepSeek-R1's API launch (Jan 2025): R1 $0.55 input (cache miss) / $2.19 output, vs OpenAI o1 $15 input / $60 output — a ~27x (~96%) reduction on both meters (60/2.19 = 27.4; 15/0.55 = 27.3). points encode the output-price bars (x=0: o1, x=1: R1; y = $/M output tokens). r1RlTrainUSD is the one-time RL-stage training cost DeepSeek reported in the Nature version of the R1 paper (~$294,000 on 512 H800s); it EXCLUDES the ~$6M base-model (V3) pretraining bill and is used in-app only as an order-of-magnitude anchor for a one-time retraining/distillation run. Vendor-published prices, not peer-reviewed; flagged in-app."
+}

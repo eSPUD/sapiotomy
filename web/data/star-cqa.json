@@ -1,0 +1,30 @@
+{
+  "points": [
+    { "x": 0, "y": 20.9 },
+    { "x": 1, "y": 36.6 },
+    { "x": 2, "y": 60.0 },
+    { "x": 3, "y": 68.8 },
+    { "x": 4, "y": 72.5 },
+    { "x": 5, "y": 73.0 }
+  ],
+  "fit": {
+    "kind": "method-index",
+    "params": {
+      "fewShotDirect": 20.9,
+      "fewShotCot": 36.6,
+      "gptjFinetuned": 60.0,
+      "starNoRationalization": 68.8,
+      "star": 72.5,
+      "gpt3Finetuned": 73.0,
+      "trainDataNoRationalization": 69.7,
+      "trainDataRationalization": 86.7
+    }
+  },
+  "citation": {
+    "ref": "Zelikman et al. 2022",
+    "url": "https://arxiv.org/abs/2203.14465",
+    "venue": "NeurIPS 2022",
+    "preprint": false
+  },
+  "provenance": "CommonsenseQA dev accuracy, verbatim from Zelikman et al. 2022 'STaR: Bootstrapping Reasoning With Reasoning' (arXiv:2203.14465), Table 1: GPT-J few-shot direct 20.9%, GPT-J few-shot CoT 36.6%, GPT-J direct finetuned 60.0%, STaR without rationalization 68.8% (rationales generated for 69.7% of the training set), STaR with rationalization 72.5% (86.7% of the training set), GPT-3 direct finetuned 73.0%. x encodes the method: 0=few-shot direct, 1=few-shot CoT, 2=GPT-J finetuned, 3=STaR w/o rationalization, 4=STaR, 5=GPT-3 finetuned (the 30x-larger comparison)."
+}

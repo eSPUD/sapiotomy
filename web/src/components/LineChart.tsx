@@ -37,6 +37,8 @@ export interface LineChartProps {
   logY?: boolean;
   /** Custom y tick text (e.g. "10²³" for FLOP counts). */
   yTickFormat?: (t: number) => string;
+  /** Custom x tick text (e.g. "100k" for query counts). */
+  xTickFormat?: (t: number) => string;
   /**
    * Explicit x tick positions. Worth setting on a log axis, where d3 ignores the
    * requested tick count and returns every decade subdivision — enough labels to
@@ -72,6 +74,7 @@ export function LineChart({
   logX = false,
   logY = false,
   yTickFormat,
+  xTickFormat,
   xTicks: xTicksProp,
   dots,
   width = 480,
@@ -150,7 +153,7 @@ export function LineChart({
           textAnchor="middle"
           className="fill-ink-muted text-[10px]"
         >
-          {t}
+          {xTickFormat ? xTickFormat(t) : t}
         </text>
       ))}
 

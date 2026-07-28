@@ -49,13 +49,21 @@ figure/table, verbatim vs. interpolated). Summary:
 | prm-vs-orm.json | 9 | Verbatim (Lightman et al. 2023), MATH |
 | tree-of-thoughts.json | 10 | Verbatim endpoints (Yao et al. 2023), Game of 24 |
 | coverage-scaling.json | 12 | Verbatim endpoints + log-linear fit (Brown et al. 2024) |
-| compute-optimal.json | 13 | Verbatim claims (Snell et al. 2024) |
+| compute-optimal.json | 11, 13 | Verbatim claims (Snell et al. 2024) |
+| rebase-pareto.json | 11 | Verbatim table values (Wu et al. 2024, Table 1, MATH500 accuracy vs inference FLOPs) |
 | budget-forcing.json | 14 | Verbatim endpoints (Muennighoff et al. 2025, **PP**) |
-| deepseek-r1-training.json | 15 | Verbatim endpoints (DeepSeek-R1 2025) |
+| deepseek-r1-training.json | 14, 16 | Verbatim endpoints (DeepSeek-R1 2025): AIME 2024 pass@1 15.6 → 71.0, cons@64 86.7; intermediate points interpolated |
+| deepseek-r1-distill.json | 14 | Verbatim Table 4–5 values (DeepSeek-R1 2025): per-size AIME 2024 + MATH-500 for the six distills, teacher/o1-mini/QwQ/GPT-4o reference rows |
 | arc-cost.json | 16 | Reported **estimates** (ARC Prize blog, **not peer-reviewed**) |
+| o1-scaling.json | 13 | **Authored** log-linear redrawing (y = 21 + 29.5·log10 x, relative units) of the o1 announcement's two scaling figures, whose compute axes are **unlabeled** in the source; all named anchors verbatim from the announcement text/figure (AIME 12 / 74.4 / 83.3 / 93; Codeforces 808 / 1807; GPQA 56.1 / 78.0 / expert 69.7) (OpenAI o1 blog, **not peer-reviewed**) |
+| o3-preview.json | 13 | Verbatim Dec 2024 o3 preview announcement figures (AIME 96.7, GPQA 87.7, SWE-bench Verified 48.9→71.7, Codeforces 2727), **OpenAI-scored, preview**, documented in the ARC Prize o3 write-up (**not peer-reviewed**); live-contest re-measurement 2724 in arXiv:2502.06807 noted in provenance |
+| self-correction.json | 17 | Verbatim Table 3 values (Huang et al., ICLR 2024, arXiv:2310.01798): GPT-4/GSM8K 95.5→91.5→89.0 and GPT-3.5/CommonSenseQA 75.8→38.1→41.8 across intrinsic self-correction rounds; the page's slider demo is a separate authored three-state chain (labeled in-app, constants pinned in `act3.test.ts`) |
 | overthinking.json | 17 | Authored inverse-U matching the 2025 literature (**PP**) |
 | faithfulness.json | 18 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
+| cot-obfuscation.json | 18 | Verbatim recall anchors 95%/60%→~0% (Baker et al./OpenAI 2025, **PP**); pressure/reward curve **shapes authored**, labeled in-app |
 | illusion-of-thinking.json | 19 | Derived Hanoi token math (Shojaee/Lawsen 2025, **PP, both sides**) |
+| benchmark-scoreboard.json | 15 (app route /p/15, The Scoreboard) | Verbatim headline scores per benchmark, each dot carrying its own source + caveat in the JSON: GSM8K (Wei et al. 2022 per-scale table — must agree with wei-cot-scaling.json, cross-checked in scoreboard.test.ts; GPT-4 TR 92.0; Claude 3 model card 95.0); MATH/MATH-500 (Hendrycks et al. 2021 ~5%; GPT-4 42.5; o1 96.4 / R1 97.3 from DeepSeek-AI 2025 Table 4, subset switch flagged in-app); AIME 2024 + GPQA Diamond (OpenAI "Learning to reason with LLMs" Sep 2024, **not peer-reviewed**: GPT-4o 12, o1 74/83/93, o1 77.3 vs 69.7 experts); Codeforces + SWE-bench Verified (DeepSeek-AI 2025 Table 4); o3 Dec-2024 figures (AIME 96.7, GPQA 87.7, Elo 2727, SWE 71.7, FrontierMath 25.2) are **announcement numbers, not peer-reviewed**; FrontierMath dispute (Glazer et al. 2024 <2%; Epoch AI independent ~10% on released o3, 180- vs 290-problem sets, funding disclosure — via TechCrunch 2025) shown as two dots with conditions. Validated by its own loader (src/lib/scoreboard.ts), same citation+provenance schema |
+| coconut.json | 19 (frontier) | Verbatim main-table accuracy + token counts (Hao et al. 2024, COLM 2025), GPT-2-scale |
 
 ### Resolved conflict — Page 18 misalignment-hint faithfulness
 

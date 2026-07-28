@@ -1,0 +1,23 @@
+{
+  "points": [
+    { "x": 0, "y": 48.9 },
+    { "x": 1, "y": 71.7 }
+  ],
+  "fit": {
+    "kind": "benchmark-anchors",
+    "params": {
+      "o1Swe": 48.9,
+      "o3Swe": 71.7,
+      "o3Aime": 96.7,
+      "o3Gpqa": 87.7,
+      "o3Elo": 2727
+    }
+  },
+  "citation": {
+    "ref": "OpenAI o3 preview (Dec 2024)",
+    "url": "https://arcprize.org/blog/oai-o3-pub-breakthrough",
+    "venue": "ARC Prize blog (not peer-reviewed)",
+    "preprint": true
+  },
+  "provenance": "OpenAI o3 as previewed 20 Dec 2024 (announcement figures, scored by OpenAI, model unreleased at the time; documented publicly in the ARC Prize o3 write-up). AIME 2024 96.7%, GPQA Diamond 87.7%, SWE-bench Verified 71.7% vs o1's 48.9%, Codeforces rating 2727. Points encode the SWE-bench Verified jump: x=0 is o1, x=1 is o3. The later live-contest measurement in El-Kishky et al. 2025 (arXiv:2502.06807) puts o3 at 2724 Codeforces Elo (99.8th percentile), consistent with the announced 2727."
+}

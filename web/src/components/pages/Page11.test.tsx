@@ -1,0 +1,103 @@
+import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { Page11 } from "./Page11";
+
+const setSlider = (name: RegExp, value: number) =>
+  fireEvent.change(screen.getByRole("slider", { name }), { target: { value } });
+
+const clickDifficulty = (name: RegExp) =>
+  fireEvent.click(screen.getByRole("button", { name }));
+
+describe("Page 11 (the test-time compute scaling law) component", () => {
+  it("renders the keystone title and states the two-currencies framing", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/The Keystone: The Test-Time Compute Scaling Law/)).toBeInTheDocument();
+    expect(screen.getByText(/two ways to spend the same FLOPs/i)).toBeInTheDocument();
+  });
+
+  it("opens on medium difficulty with one small-model answer, short of the target", () => {
+    render(<Page11 />);
+    expect(screen.getByRole("button", { name: /^medium$/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /^hard$/i })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("status")).toHaveTextContent(/30\.0% so far — the 14× model gets 62%/);
+  });
+
+  it("beats the 14x model on medium with 8 samples, for 1.8x less compute", () => {
+    render(<Page11 />);
+    setSlider(/test-time compute/i, 3); // 2^3 = 8 samples, 8 FLOPs units
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /✓ matched the 14× model's 62% — for 1\.8× less compute/,
+    );
+  });
+
+  it("stops one notch earlier, at 4 samples, still short of the target", () => {
+    render(<Page11 />);
+    setSlider(/test-time compute/i, 2);
+    expect(screen.getByRole("status")).toHaveTextContent(/so far — the 14× model gets 62%/);
+  });
+
+  it("on hard, reports saturation below the target and points back to pretraining", () => {
+    render(<Page11 />);
+    clickDifficulty(/^hard$/i);
+    setSlider(/test-time compute/i, 8); // even 256 samples cannot reach it
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent(/✗ this model saturates near 14% — the target is out of reach/);
+    expect(status).toHaveTextContent(/pretraining the larger model is the better buy/i);
+  });
+
+  it("turning the model knob to 14x reproduces the target at the same price", () => {
+    render(<Page11 />);
+    setSlider(/model size/i, 3); // 14x model, 1 sample = 14 units
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /matched it — but you spent 14 units, and the 14× model needs only 14/,
+    );
+  });
+
+  it("plots the Wu et al. Pareto pair: same accuracy, 8x fewer FLOPs", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/same accuracy · 8× fewer FLOPs/)).toBeInTheDocument();
+    expect(screen.getAllByText("Llemma-7B").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Llemma-34B").length).toBeGreaterThan(0);
+    expect(screen.getByText(/edges the 34B model[’']s best sampling run/i)).toBeInTheDocument();
+  });
+
+  it("carries the saturation caveat: no oracle verifier, no 100%", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/sampling alone never reaches 100%/i)).toBeInTheDocument();
+  });
+
+  it("states the >4x compute-optimal claim and the ratio R fine print", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/>4×/)).toBeInTheDocument();
+    expect(screen.getByText(/R = inference tokens ÷ pretraining tokens/i)).toBeInTheDocument();
+  });
+
+  it("keeps both reference notes to bare cites, as pages 3-10 do", () => {
+    render(<Page11 />);
+    const notes = screen.getAllByText("References").map((el) => el.closest("aside")!);
+    expect(notes).toHaveLength(2);
+    expect(notes[0].textContent).toMatch(/Snell et al\. 2024, Scaling LLM Test-Time Compute/);
+    expect(notes[1].textContent).toMatch(/Wu et al\. 2024, Inference Scaling Laws/);
+    for (const note of notes) {
+      expect(note.textContent).not.toMatch(/ICLR|NeurIPS|arXiv|Table 1/);
+    }
+  });
+
+  it("links both citation badges to their papers", () => {
+    render(<Page11 />);
+    expect(screen.getByRole("link", { name: /Snell et al\. 2024/ })).toHaveAttribute(
+      "href",
+      "https://arxiv.org/abs/2408.03314",
+    );
+    expect(screen.getByRole("link", { name: /Wu et al\. 2024/ })).toHaveAttribute(
+      "href",
+      "https://arxiv.org/abs/2408.00724",
+    );
+  });
+
+  it("discloses which numbers are authored and which are digitized", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/authored, illustrative shapes pinned to the cited claims/i)).toBeInTheDocument();
+    expect(screen.getByText(/digitized verbatim from Table 1/i)).toBeInTheDocument();
+  });
+});
