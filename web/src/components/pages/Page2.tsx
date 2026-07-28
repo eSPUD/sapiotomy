@@ -269,11 +269,16 @@ export function Page2() {
             committing to anything.
           </p>
 
-          <ol className="flex flex-col gap-2 border-l-2 border-compute pl-4">
+          <ol className="flex flex-col gap-3">
             {SPAIN_SYSTEM2_TRACE.steps.map((step, i) => (
-              <li key={i} className="text-ink-muted">
-                <span className="font-mono text-sm text-compute">{i + 1}. </span>
-                {step}
+              <li key={i} className="flex flex-col gap-0.5">
+                <div className="flex flex-wrap items-baseline gap-2">
+                  <span className="text-xs uppercase tracking-wide text-ink-muted">
+                    Step #{i + 1}
+                  </span>
+                  <span className="font-semibold text-ink">{step.name}</span>
+                </div>
+                <p className="text-ink-muted">{step.text}</p>
               </li>
             ))}
           </ol>

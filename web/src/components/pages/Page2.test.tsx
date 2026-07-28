@@ -62,11 +62,13 @@ describe("Page 2 (Answering Questions in the Real World): a training-cutoff slid
   it("section 3 walks a System 2 trace that lands on three titles", () => {
     render(<Page2 />);
     const body = document.body.textContent ?? "";
-    // Every authored step is on screen, in order, as a numbered list.
-    for (const step of SPAIN_SYSTEM2_TRACE.steps) {
-      expect(screen.getByText(new RegExp(step.slice(0, 40).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i")))
-        .toBeInTheDocument();
-    }
+    // Every authored step is on screen, named and numbered.
+    const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    SPAIN_SYSTEM2_TRACE.steps.forEach((step, i) => {
+      expect(screen.getByText(`Step #${i + 1}`)).toBeInTheDocument();
+      expect(screen.getByText(step.name)).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(esc(step.text.slice(0, 40)), "i"))).toBeInTheDocument();
+    });
     expect(body).toMatch(/Three\./);
   });
 

@@ -194,11 +194,25 @@ export const SPAIN_IDEAL_ANSWER =
  * can say once it has looked.
  */
 export const SPAIN_SYSTEM2_TRACE = {
+  /** Each step is named for the move it makes, so the procedure reads at a
+   *  glance; the body carries the reasoning behind that move. */
   steps: [
-    "Read the question again. It says FIFA World Cups, not men's World Cups. Spain fields a team in both tournaments, so both could count.",
-    "Check my own limits. A count of titles changes whenever a final is played, and my training was sealed in early 2025. Any final after that falls outside what I know.",
-    "So do not answer from memory alone. Say which tournaments I am counting, and check a current source before committing to a number.",
-    "Counting both tournaments: the men's team won in 2010 and 2026, and the women's team won in 2023.",
+    {
+      name: "Read the question again",
+      text: "It says FIFA World Cups, not men's World Cups. Spain fields a team in both tournaments, so both could count.",
+    },
+    {
+      name: "Check my own limits",
+      text: "A count of titles changes whenever a final is played, and my training was sealed in early 2025. Any final after that falls outside what I know.",
+    },
+    {
+      name: "Do not answer from memory alone",
+      text: "Say which tournaments I am counting, and check a current source before committing to a number.",
+    },
+    {
+      name: "Count what the question actually asked",
+      text: "The men's team won in 2010 and 2026, and the women's team won in 2023.",
+    },
   ],
   answer: "Three.",
 } as const;
