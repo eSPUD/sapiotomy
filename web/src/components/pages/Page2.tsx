@@ -159,7 +159,7 @@ function IdealAnswer() {
  *  on, and the closing statement section 3 lands. */
 function PullQuote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-lg border-l-2 border-compute bg-quote px-4 py-3 text-lg italic text-ink">
+    <p className="rounded-lg border-l-2 border-compute bg-quote px-4 py-3 text-lg italic text-compute">
       {children}
     </p>
   );
