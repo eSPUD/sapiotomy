@@ -107,6 +107,18 @@ export function Page1() {
                 </span>
               </div>
               <p className="font-mono text-3xl text-ink">{SYSTEMS.fast.prompt}</p>
+              {/* System 1's whole workings: one step, in the same slot where
+                  System 2 stacks three, so the counts sit side by side. */}
+              <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
+                {s1Revealed ? (
+                  <li className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-xs uppercase tracking-wide text-ink-muted">Step #1</span>
+                    <span>
+                      {SYSTEMS.fast.prompt} = {SYSTEMS.fast.answer}
+                    </span>
+                  </li>
+                ) : null}
+              </ol>
               <div className="mt-auto flex flex-col gap-3">
                 {s1Revealed ? (
                   <>
