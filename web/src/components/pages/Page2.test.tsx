@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
-// No motion or timers to stub anymore: Page 2 is a static contrast diagram.
+// No motion or timers to stub: Page 2 is a cutoff slider plus prose.
 const mm = (q: string) => ({
   matches: false,
   media: q,
@@ -27,31 +27,30 @@ const expectRetrievalFraming = () => {
   expect(body).toMatch(/retrieval adds facts\. inference-time scaling adds thinking\./i);
 };
 
-describe("Page 2 (The Knowledge Gap): a static two-road contrast", () => {
-  it("shows the question and both roads, fully drawn, from first paint", () => {
+describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
+  it("shows the question and the cutoff slider, answering one short by default", () => {
     render(<Page2 />);
     expect(screen.getByText(WC.question)).toBeInTheDocument();
-    // Both roads are present as labelled groups.
-    expect(screen.getByRole("group", { name: /sealed memory · recall path/i })).toBeInTheDocument();
-    expect(screen.getByRole("group", { name: /retrieval · fetch path/i })).toBeInTheDocument();
-    // At the default cutoff (Jan 2025) recall stops one short; retrieval fetches it.
-    expect(screen.getByText(/✗ “One\.”/)).toBeInTheDocument();
-    expect(screen.getByText(/✓ “Two\.”/)).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /training cutoff/i })).toBeInTheDocument();
+    // At the default cutoff (Jan 2025) sealed memory answers "One."
+    expect(screen.getByText(/“One\.”/)).toBeInTheDocument();
   });
 
-  it("the cutoff slider changes what sealed memory can recall", () => {
+  it("the cutoff slider changes the recalled answer", () => {
     render(<Page2 />);
     const slider = screen.getByRole("slider", { name: /training cutoff/i });
-    const recall = () => screen.getByRole("group", { name: /sealed memory · recall path/i });
-    // Early in the range (before the 2026 final) memory holds only the 2010 title.
-    fireEvent.change(slider, { target: { value: String(2017 * 12) } });
-    expect(within(recall()).getByText(/✗ “One\.”/)).toBeInTheDocument();
-    // Past the 2026 final, sealed memory catches up and the gap closes.
+    // Past the 2026 final, sealed memory catches up: it answers "Two."
     fireEvent.change(slider, { target: { value: String(2026 * 12 + 11) } });
-    expect(within(recall()).getByText(/✓ “Two\.”/)).toBeInTheDocument();
+    expect(screen.getByText(/“Two\.”/)).toBeInTheDocument();
   });
 
-  it("shows the analysis, the retrieval framing, the teaser, and the flag with no interaction", () => {
+  it("explains, after the widget, that the fix is fetching the fact, not thinking harder", () => {
+    render(<Page2 />);
+    expect(screen.getByText(/answers one short/i)).toBeInTheDocument();
+    expect(screen.getByText(/The fix is not to think harder/i)).toBeInTheDocument();
+  });
+
+  it("shows the analysis, the retrieval framing, the teaser, and the flag", () => {
     render(<Page2 />);
     expect(screen.getByText(/It only looks like a lookup/i)).toBeInTheDocument();
     expect(screen.getByText(/trained it on data that includes that final/)).toBeInTheDocument();
@@ -59,11 +58,11 @@ describe("Page 2 (The Knowledge Gap): a static two-road contrast", () => {
     expectRetrievalFraming();
   });
 
-  it("no longer renders the removed stepper or guess controls", () => {
+  it("does not render the removed stepper, roads, or guess controls", () => {
     render(<Page2 />);
     expect(screen.queryByRole("button", { name: /next ▸/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /▶ play/i })).toBeNull();
-    expect(screen.queryByText(/step 0 of 4/i)).toBeNull();
+    expect(screen.queryByRole("group", { name: /recall path/i })).toBeNull();
     expect(screen.queryByRole("textbox")).toBeNull();
   });
 });

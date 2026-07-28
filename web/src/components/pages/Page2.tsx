@@ -11,13 +11,13 @@
  * Lewis et al., 2020). The explicit contrast this page plants: retrieval adds
  * facts; inference-time scaling (Pages 4+) adds thinking. Two different gaps.
  *
- * Layout: the page's rule was always "nothing pops, everything on screen from
- * first paint", so the two roads are simply drawn in full — a static contrast,
- * no stepper. The sealed-memory road ends one short (✗ One); the retrieval road
- * fetches the fact (✓ Two).
+ * Layout: a single interactive widget — a training-cutoff slider (Jan 2017 to
+ * Dec 2026). Sliding it changes which of Spain's titles the model's sealed
+ * memory can recall, and so the answer it gives from memory. A short prose
+ * explanation follows the widget; Step 3 introduces retrieval (RAG) as the fix.
  */
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { PageNav } from "@/components/PageNav";
 import { SPAIN_WORLD_CUPS } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
@@ -25,14 +25,6 @@ import { useStore } from "@/store/useStore";
 
 const PAGE_N = 2;
 const WC = SPAIN_WORLD_CUPS;
-
-const TWO = WC.trueCount === 2 ? "Two" : String(WC.trueCount);
-
-/** The retrieval road, node by node. It fetches a current source, so its answer
- *  is the true count regardless of any training cutoff. */
-const RETRIEVAL_NODES = ["the question", "“changed since the cutoff?”", "fetch a current source", `“${TWO}.”`] as const;
-/** The recall road's fixed prefix; its last two nodes depend on the cutoff. */
-const RECALL_PREFIX = ["the question", "reach into memory"] as const;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const NUM_WORDS = ["Zero", "One", "Two", "Three", "Four", "Five", "Six"];
@@ -46,59 +38,6 @@ const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real s
 const WIN_FINALS = WC.wins.map((y) => monthIndex(y, 6));
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
 const numWord = (n: number) => NUM_WORDS[n] ?? String(n);
-
-/**
- * One road: a row of nodes joined by arrows, drawn in full. The endpoint takes a
- * verdict tone (wrong/correct); the rest are neutral compute-toned steps.
- */
-function PathRow({
-  label,
-  labelClass,
-  nodes,
-  endTone,
-  endMark,
-  note,
-}: {
-  label: string;
-  labelClass: string;
-  nodes: readonly string[];
-  endTone: "wrong" | "correct";
-  endMark: string;
-  note: string;
-}) {
-  return (
-    <div
-      className="flex flex-wrap items-center gap-x-2 gap-y-1.5"
-      role="group"
-      aria-label={`${label} path: ${nodes.join(", then ")}`}
-    >
-      <span className={`w-full text-xs font-semibold uppercase tracking-wide sm:w-40 ${labelClass}`}>
-        {label}
-      </span>
-      {nodes.map((n, i) => {
-        const isEnd = i === nodes.length - 1;
-        const toneClass = isEnd
-          ? endTone === "wrong"
-            ? "border-wrong/60 bg-wrong/15 text-ink"
-            : "border-correct/60 bg-correct/15 text-ink"
-          : "border-compute/40 bg-surface-raised text-ink";
-        return (
-          <Fragment key={i}>
-            {i > 0 ? (
-              <span aria-hidden="true" className="text-ink-muted">
-                →
-              </span>
-            ) : null}
-            <span className={`rounded border px-2 py-1 text-xs ${toneClass}`}>
-              {isEnd ? `${endMark} ${n}` : n}
-            </span>
-          </Fragment>
-        );
-      })}
-      <span className="text-xs text-ink-muted">· {note}</span>
-    </div>
-  );
-}
 
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
@@ -122,9 +61,6 @@ export function Page2() {
   const recallWord = numWord(recallCount);
   const gap = WC.trueCount - recallCount;
   const cutoffText = fmtCutoff(cutoff);
-  const recallNodes = [...RECALL_PREFIX, `sealed ${cutoffText}`, `“${recallWord}.”`];
-  const gapNote =
-    gap <= 0 ? "caught up — the gap closes" : `${gap === 1 ? "one" : gap} short — the knowledge gap`;
 
   return (
     <article className="flex flex-col gap-6">
@@ -139,17 +75,17 @@ export function Page2() {
         No mental math this time. One plain question of record:{" "}
         <strong>how many FIFA World Cups has Spain won?</strong> It looks like a lookup. But a model
         learns everything it knows before a fixed <strong>training cutoff</strong>, and the record
-        moved after that. Here the same question takes two very different roads.
+        moved after that. The answer a model gives depends on when its memory was sealed.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. One question, two roads</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Knowing what you know is correct</h2>
 
           <section
-            aria-label="One question, two roads"
+            aria-label="Training cutoff explorer"
             className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
           >
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-grid px-4 py-2 text-xs text-ink-muted">
@@ -187,39 +123,26 @@ export function Page2() {
                   A model sealed in <strong className="text-ink">{cutoffText}</strong> knows{" "}
                   <strong className="text-ink">{recallWord.toLowerCase()}</strong> of Spain&apos;s{" "}
                   {WC.trueCount} titles, so from memory it answers{" "}
-                  <strong className="text-ink">&ldquo;{recallWord}.&rdquo;</strong>
+                  <strong className={gap <= 0 ? "text-correct" : "text-wrong"}>
+                    &ldquo;{recallWord}.&rdquo;
+                  </strong>
                 </p>
-              </div>
-
-              <div className="flex flex-col gap-3 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
-                <p className="text-xs text-ink-muted">
-                  the machine: memory sealed {cutoffText} · {WC.machine.constraintLabel}
-                </p>
-                <PathRow
-                  label="sealed memory · recall"
-                  labelClass="text-wrong"
-                  nodes={recallNodes}
-                  endTone={gap <= 0 ? "correct" : "wrong"}
-                  endMark={gap <= 0 ? "✓" : "✗"}
-                  note={gapNote}
-                />
-                <PathRow
-                  label="retrieval · fetch"
-                  labelClass="text-correct"
-                  nodes={RETRIEVAL_NODES}
-                  endTone="correct"
-                  endMark="✓"
-                  note="fetches the current count"
-                />
               </div>
             </div>
           </section>
+
+          <p className="text-ink">
+            Sealed memory can only recall a title if the cutoff falls after it was won, so any model
+            sealed before the 2026 final answers one short. The fix is not to think harder: the
+            missing win is a fact the model was never shown, not something it can reason out. Fetching
+            it from a current source, instead of reaching into memory, is what closes the gap.
+          </p>
         </section>
-        <Note kicker="Read it">
-          <p>Both roads start on the same question and run left to right.</p>
+        <Note kicker="Try it">
+          <p>Slide the training cutoff to move the model&apos;s memory back and forth in time.</p>
           <p>
-            Slide the training cutoff to change what sealed memory knows: recall only counts titles
-            won on or before it. Retrieval fetches a current source, so it is unaffected.
+            Recall only counts titles won on or before it; a current source (retrieval) always has
+            them all.
           </p>
         </Note>
 
