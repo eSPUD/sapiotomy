@@ -183,6 +183,13 @@ export function Page2() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
+      <p className="max-w-2xl text-lg text-ink-muted">
+        On Page 1 the two systems were yours. A model has the same split: asked something it can
+        answer from memory, it answers at once, and that reflex is usually right, which is what makes
+        its failures easy to miss. Real questions age, and they are rarely as precise as they look.
+        Here is one plain question of record, and two different ways it catches a model out.
+      </p>
+
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 */}
