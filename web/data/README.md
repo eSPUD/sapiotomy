@@ -52,6 +52,7 @@ at load time, so a missing `citation`/`provenance` fails the build and the tests
 | `overthinking.json` | 17 | inverse-U; easy peaks earlier | inverse-scaling lit. (PP) |
 | `faithfulness.json` | 18 | admit 25% / 39% | Chen et al./Anthropic (PP) |
 | `illusion-of-thinking.json` | 19 | Hanoi token wall; verdict flips | Shojaee/Lawsen 2025 (PP) |
+| `coconut.json` | 19 (frontier) | ProsQA 77.5→97.0; GSM8K 42.9→34.1; tokens ÷3–÷10 | Hao et al. 2024 |
 
 Authored (illustrative, non-paper) content for Pages 1-3 lives in
 `src/lib/authored.ts` and is labelled as such in-app: the Page-1 game rounds and

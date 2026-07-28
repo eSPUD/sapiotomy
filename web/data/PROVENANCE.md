@@ -56,6 +56,7 @@ figure/table, verbatim vs. interpolated). Summary:
 | overthinking.json | 17 | Authored inverse-U matching the 2025 literature (**PP**) |
 | faithfulness.json | 18 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
 | illusion-of-thinking.json | 19 | Derived Hanoi token math (Shojaee/Lawsen 2025, **PP, both sides**) |
+| coconut.json | 19 (frontier) | Verbatim main-table accuracy + token counts (Hao et al. 2024, COLM 2025), GPT-2-scale |
 
 ### Resolved conflict — Page 18 misalignment-hint faithfulness
 

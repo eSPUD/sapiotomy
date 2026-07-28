@@ -19,6 +19,7 @@ import deepseekTrainingRaw from "@data/deepseek-r1-training.json";
 import arcCostRaw from "@data/arc-cost.json";
 import overthinkingRaw from "@data/overthinking.json";
 import faithfulnessRaw from "@data/faithfulness.json";
+import coconutRaw from "@data/coconut.json";
 import illusionRaw from "@data/illusion-of-thinking.json";
 import epochTrainingCostsRaw from "@data/epoch-training-costs.json";
 import epochRunCostRaw from "@data/epoch-run-cost.json";
@@ -43,6 +44,7 @@ export const curves: Record<string, CurveData> = {
   arcCost: parseCurveData(arcCostRaw, "arc-cost.json"),
   overthinking: parseCurveData(overthinkingRaw, "overthinking.json"),
   faithfulness: parseCurveData(faithfulnessRaw, "faithfulness.json"),
+  coconut: parseCurveData(coconutRaw, "coconut.json"),
   illusion: parseCurveData(illusionRaw, "illusion-of-thinking.json"),
   epochTrainingCosts: parseCurveData(epochTrainingCostsRaw, "epoch-training-costs.json"),
   epochRunCost: parseCurveData(epochRunCostRaw, "epoch-run-cost.json"),
