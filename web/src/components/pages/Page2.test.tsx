@@ -68,8 +68,8 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     const marks = Array.from(container.querySelectorAll("sup"));
     expect(marks.length).toBeGreaterThan(0);
     const cited = new Set(marks.map((m) => m.textContent?.replace(/\D/g, "")));
-    // Toolformer is cited twice (mechanism + caveat), so 5 markers cover 4 works.
-    expect(marks).toHaveLength(5);
+    // One marker per work, at the claim it supports.
+    expect(marks).toHaveLength(4);
     expect([...cited].sort()).toEqual(["1", "2", "3", "4"]);
     // ...and each number has a matching entry in a References note.
     const body = document.body.textContent ?? "";
@@ -77,15 +77,6 @@ describe("Page 2 (The Knowledge Gap): a training-cutoff slider", () => {
     expect(body).toMatch(/2\.\s*Yao et al/);
     expect(body).toMatch(/3\.\s*Schick et al/);
     expect(body).toMatch(/4\.\s*Qu et al/);
-  });
-
-  it("carries the honesty caveat that Toolformer is a partial counterexample", () => {
-    render(<Page2 />);
-    const body = document.body.textContent ?? "";
-    expect(body).toMatch(/closest thing to a\s*counterexample/i);
-    // The precise claim: engineered in, not that it was impossible.
-    expect(body).toMatch(/not that such\s*judgment was impossible/i);
-    expect(body).toMatch(/engineered in/i);
   });
 
   it("cites the tool-awareness sources in the references note", () => {

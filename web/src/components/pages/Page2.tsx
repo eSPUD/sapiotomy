@@ -17,9 +17,11 @@
  *      capability boundaries. The judgment was supplied from OUTSIDE, three
  *      ways: prompting (ReAct, Yao et al. 2022), fine-tuning (Toolformer,
  *      Schick et al. 2023), and human-designed workflow (Qu et al. 2025 survey).
- *      Honesty caveat carried on the page: Toolformer is the strongest partial
- *      counterexample, since it does learn to choose tools for itself; the
- *      precise claim is that the judgment was engineered in, not spontaneous.
+ *      Note for anyone revisiting the claim: Toolformer is the strongest partial
+ *      counterexample, since it does learn to choose tools for itself. The
+ *      precise claim the page makes is the narrow one, that the judgment was
+ *      engineered in rather than spontaneously present, which is what MetaTool
+ *      measured in models lacking that engineering.
  *      Closes on the bridge to the reasoning gap: a model that does not know
  *      when to look something up, does it know when to think harder?
  */
@@ -220,19 +222,6 @@ export function Page2() {
               </dd>
             </div>
           </dl>
-
-          {/* the honesty caveat: Toolformer is the partial counterexample */}
-          <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-4 text-ink">
-            <p className="text-sm">
-              <strong>One honest complication.</strong> Toolformer
-              <Cite n={REF.toolformer} /> is the closest thing to a
-              counterexample: its authors set out to build a model that decides for itself when and
-              how to use which tool, and report that it learns to. So the point is not that such
-              judgment was impossible. It is that the judgment was <em>engineered in</em>, through a
-              training procedure, rather than being spontaneously present. MetaTool measured what
-              models do <em>without</em> that engineering, and found the awareness thin.
-            </p>
-          </div>
 
           <p className="text-ink">
             Which sharpens the question this story is really about. A model that does not reliably
