@@ -133,11 +133,13 @@ export function Page1() {
                 </span>
               </div>
               <p className="font-mono text-3xl text-ink">{SYSTEMS.slow.prompt}</p>
-              <ol className="flex flex-col gap-1 font-mono text-sm text-ink">
+              <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
                 {SYSTEMS.slow.steps.slice(0, s2Step).map((line, i) => (
-                  <li key={i}>
-                    <span className="text-ink-muted">{i + 1}. </span>
-                    {line}
+                  <li key={i} className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-xs uppercase tracking-wide text-ink-muted">
+                      Step #{i + 1}
+                    </span>
+                    <span>{line}</span>
                   </li>
                 ))}
               </ol>
