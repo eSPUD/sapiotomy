@@ -51,6 +51,9 @@ const PAD = 10;
 const HEAD = 22;
 
 const pct = (p: number) => `${Math.round(p * 100)}%`;
+/** Every word in the whole tree, so the compute bill has a denominator. */
+const TREE_WORDS = NW_.states.length - 1;
+const TOTAL_LINES = NW_.states.filter((s) => s.words.length === NW_.spec.length).length;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -142,37 +145,24 @@ export function Page10() {
   }, [trace]);
   const modelLine = NW_.states[endId];
 
+  /* Every word the run scored gets its own node — nothing is hidden behind a
+     summary chip, so the counter above can be checked by counting boxes. Nodes
+     carry the ORDER they were scored in, which is the only thing that actually
+     separates these strategies: breadth-first sweeps a column at a time, while
+     depth-first runs 1-2-3-4 straight down a line and then jumps back. */
   const layout = useMemo(() => {
-    const byId = new Map(trace.nodes.map((n) => [n.id, n]));
-    const dropped = new Map<number, number>();
-    for (const n of trace.nodes) {
-      if (n.kept || n.parentId === null) continue;
-      dropped.set(n.parentId, (dropped.get(n.parentId) ?? 0) + 1);
-    }
-    type Item =
-      | { kind: "node"; key: string; depth: number; order: number; node: SearchNode }
-      | { kind: "chip"; key: string; depth: number; order: number; parentId: number; count: number };
-    const items: Item[] = [];
-    for (const n of trace.nodes) {
-      if (n.kept) items.push({ kind: "node", key: `n${n.id}`, depth: n.depth, order: n.order, node: n });
-    }
-    for (const [parentId, count] of dropped) {
-      const p = byId.get(parentId)!;
-      items.push({ kind: "chip", key: `c${parentId}`, depth: p.depth + 1, order: p.order + 0.5, parentId, count });
-    }
-    items.sort((a, b) => a.depth - b.depth || a.order - b.order);
     const rows = new Map<number, number>();
-    const pos = new Map<string, { x: number; y: number }>();
-    for (const it of items) {
-      const r = rows.get(it.depth) ?? 0;
-      rows.set(it.depth, r + 1);
-      pos.set(it.key, { x: PAD + it.depth * COL, y: HEAD + r * PITCH });
+    const pos = new Map<number, { x: number; y: number }>();
+    const ordered = [...trace.nodes].sort((a, b) => a.depth - b.depth || a.order - b.order);
+    for (const n of ordered) {
+      const r = rows.get(n.depth) ?? 0;
+      rows.set(n.depth, r + 1);
+      pos.set(n.id, { x: PAD + n.depth * COL, y: HEAD + r * PITCH });
     }
-    const maxDepth = Math.max(...items.map((i) => i.depth), 0);
     return {
-      items,
+      nodes: ordered,
       pos,
-      width: PAD * 2 + maxDepth * COL + NODE_W,
+      width: PAD * 2 + SPEC.length * COL + NODE_W,
       height: HEAD + Math.max(...rows.values(), 1) * PITCH + PAD,
     };
   }, [trace]);
@@ -353,77 +343,80 @@ export function Page10() {
                   </text>
                 ))}
 
-                {layout.items.map((it) => {
-                  const parentId = it.kind === "node" ? it.node.parentId : it.parentId;
-                  if (parentId === null) return null;
-                  const a = layout.pos.get(`n${parentId}`);
-                  const b = layout.pos.get(it.key);
-                  if (!a || !b) return null;
-                  const x1 = a.x + NODE_W;
-                  const y1 = a.y + NODE_H / 2;
-                  const x2 = b.x;
-                  const y2 = b.y + NODE_H / 2;
+                {/* connectors: dark enough to actually see */}
+                {layout.nodes.map((n) => {
+                  if (n.parentId === null) return null;
+                  const from = layout.pos.get(n.parentId);
+                  const to = layout.pos.get(n.id);
+                  if (!from || !to) return null;
+                  const x1 = from.x + NODE_W;
+                  const y1 = from.y + NODE_H / 2;
+                  const x2 = to.x;
+                  const y2 = to.y + NODE_H / 2;
                   const mid = (x1 + x2) / 2;
-                  const win = it.kind === "node" && onPath.has(it.node.id);
+                  const win = onPath.has(n.id);
                   return (
                     <path
-                      key={`e${it.key}`}
+                      key={`e${n.id}`}
                       d={`M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`}
                       fill="none"
-                      className={win ? "stroke-correct" : "stroke-grid"}
-                      strokeWidth={win ? 2 : 1}
+                      className={win ? "stroke-correct" : "stroke-ink-muted"}
+                      strokeWidth={win ? 3 : 1.5}
+                      opacity={win ? 1 : 0.55}
                     />
                   );
                 })}
 
-                {layout.items.map((it) => {
-                  const p = layout.pos.get(it.key)!;
-                  if (it.kind === "chip") {
-                    return (
-                      <g key={it.key}>
-                        <rect
-                          x={p.x}
-                          y={p.y + 4}
-                          width={NODE_W}
-                          height={NODE_H - 8}
-                          rx={8}
-                          className="fill-surface stroke-grid"
-                          strokeWidth={1}
-                          strokeDasharray="3 2"
-                        />
-                        <text x={p.x + NODE_W / 2} y={p.y + 16} textAnchor="middle" className="fill-ink-muted text-[9px]">
-                          +{it.count} dropped
-                        </text>
-                      </g>
-                    );
-                  }
-                  const n = it.node;
-                  const tone =
-                    n.parentId === null
-                      ? "fill-ink"
-                      : onPath.has(n.id)
-                        ? "fill-correct"
-                        : n.deadEnd
-                          ? "fill-wrong"
-                          : "fill-compute";
+                {layout.nodes.map((n) => {
+                  const p = layout.pos.get(n.id)!;
+                  const root = n.parentId === null;
+                  const win = onPath.has(n.id);
+                  const fill = root
+                    ? "fill-ink"
+                    : win
+                      ? "fill-correct"
+                      : n.kept
+                        ? "fill-compute"
+                        : "fill-surface";
+                  const ink = root || win || n.kept ? "fill-canvas" : "fill-ink-muted";
                   return (
-                    <g key={it.key}>
-                      <rect x={p.x} y={p.y} width={NODE_W} height={NODE_H} rx={5} className={tone} />
-                      <text x={p.x + 7} y={p.y + 16} className="fill-canvas text-[10px]">
+                    <g key={n.id}>
+                      <rect
+                        x={p.x}
+                        y={p.y}
+                        width={NODE_W}
+                        height={NODE_H}
+                        rx={5}
+                        className={`${fill} ${n.kept || root ? "" : "stroke-ink-muted"}`}
+                        strokeWidth={n.kept || root ? 0 : 1}
+                        strokeDasharray={n.kept || root ? undefined : "3 2"}
+                      />
+                      {root ? null : (
+                        <text
+                          x={p.x + 6}
+                          y={p.y + 16}
+                          className={`${ink} font-mono text-[9px]`}
+                          opacity={0.85}
+                        >
+                          {n.order}
+                        </text>
+                      )}
+                      <text x={p.x + (root ? 8 : 24)} y={p.y + 16} className={`${ink} text-[10px]`}>
                         {wordOf(n)}
                       </text>
                       <text
                         x={p.x + NODE_W - 7}
                         y={p.y + 16}
                         textAnchor="end"
-                        className="fill-canvas text-[9px]"
-                        opacity={0.75}
+                        className={`${ink} text-[9px]`}
+                        opacity={0.8}
                       >
-                        {n.isGoal ? "✓" : pct(NW_.states[n.thoughtId].probability)}
+                        {root ? "" : n.isGoal ? "✓" : pct(NW_.states[n.thoughtId].probability)}
                       </text>
                     </g>
                   );
                 })}
+
               </svg>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
@@ -436,7 +429,7 @@ export function Page10() {
             {/* The tree, read as sentences. This is the part that makes it legible. */}
             <div className="flex flex-col gap-1">
               <p className="text-xs uppercase tracking-wide text-ink-muted">
-                lines it finished ({finishedLines.length} of 36)
+                lines it finished ({finishedLines.length} of {TOTAL_LINES})
               </p>
               <ul className="flex flex-col gap-0.5">
                 {finishedLines.slice(0, 6).map((l) => (
@@ -464,12 +457,14 @@ export function Page10() {
               <div
                 className="rounded-lg border border-grid bg-surface-raised p-3"
                 role="status"
-                aria-label={`The compute bill: ${trace.thoughtsScored} words scored`}
+                aria-label={`The compute bill: ${trace.thoughtsScored} of ${TREE_WORDS} words in the tree scored`}
               >
                 <p className="font-mono text-3xl font-bold tabular-nums text-compute">
                   {trace.thoughtsScored}
                 </p>
-                <p className="text-xs text-ink">words scored</p>
+                <p className="text-xs text-ink">
+                  of {TREE_WORDS} words in the tree
+                </p>
                 <p className="text-xs text-ink-muted">the compute bill</p>
               </div>
               <div

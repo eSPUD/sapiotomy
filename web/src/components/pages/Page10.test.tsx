@@ -98,6 +98,13 @@ describe("Page 10 — step 2, the strategies", () => {
     expect(dial()).toBeInTheDocument();
   });
 
+  it("draws every word it scored, so the bill can be counted", () => {
+    // no summary chips: the tree shows one box per scored word
+    const { container } = render(<Page10 />);
+    expect(container.textContent).not.toMatch(/dropped\b.*\+|\+\d+ dropped/);
+    expect(screen.getByText(/of 65 words in the tree/)).toBeInTheDocument();
+  });
+
   it("lists the finished lines as readable sentences", () => {
     render(<Page10 />);
     setStrategy("bfs");
