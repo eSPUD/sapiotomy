@@ -84,6 +84,6 @@ test.describe("M0 smoke", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Think Fast, Think Slow");
     await page.getByRole("link", { name: "Page 2 →" }).click();
     await expect(page).toHaveURL(/\/p\/2$/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Knowing What You Know");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Answering Questions in the Real World");
   });
 });

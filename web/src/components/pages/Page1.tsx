@@ -15,9 +15,19 @@ const REF = { kahneman: 1 } as const;
 const fmt = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 
 /** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+function Note({
+  kicker,
+  flush = false,
+  children,
+}: {
+  kicker: string;
+  /** Drop the top padding. That padding clears a step's h2 so the note lines up
+   *  with the prose under it; beside a headingless row it drops a line too low. */
+  flush?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${flush ? "" : "lg:pt-9"}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -85,15 +95,21 @@ export function Page1() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
-        Your mind runs two systems. <strong className="text-ink">System 1</strong> is fast,
-        automatic, effortless. <strong className="text-ink">System 2</strong> is slow, deliberate,
-        effortful.
-        <Cite n={REF.kahneman} /> One operation, multiplication, flips you between them.
-      </p>
-
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* The intro is a grid row of its own so its citation can sit beside it. */}
+        <p className="max-w-2xl text-lg text-ink-muted">
+          Your mind runs two systems. <strong className="text-ink">System 1</strong> is fast,
+          automatic, effortless. <strong className="text-ink">System 2</strong> is slow, deliberate,
+          effortful.
+          <Cite n={REF.kahneman} /> One operation, multiplication, flips you between them.
+        </p>
+        <Note kicker="References" flush>
+          <RefItem n={REF.kahneman}>
+            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
+          </RefItem>
+        </Note>
+
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Meet the two systems</h2>
@@ -107,6 +123,26 @@ export function Page1() {
                 </span>
               </div>
               <p className="font-mono text-3xl text-ink">{SYSTEMS.fast.prompt}</p>
+              {/* System 1's whole workings: one step, in the same slot where
+                  System 2 stacks three, so the counts sit side by side. */}
+              <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
+                {s1Revealed ? (
+                  <li className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-xs uppercase tracking-wide text-ink-muted">Step #1</span>
+                    <span>
+                      {SYSTEMS.fast.prompt} = {SYSTEMS.fast.answer}
+                    </span>
+                  </li>
+                ) : null}
+                {/* Two blank rows hold the height of System 2's extra steps, so the
+                    two panels keep the same vertical rhythm. Hidden from the a11y
+                    tree: they are spacing, not content. */}
+                {[0, 1].map((i) => (
+                  <li key={`spacer-${i}`} aria-hidden="true" className="invisible">
+                    &nbsp;
+                  </li>
+                ))}
+              </ol>
               <div className="mt-auto flex flex-col gap-3">
                 {s1Revealed ? (
                   <>
@@ -133,11 +169,13 @@ export function Page1() {
                 </span>
               </div>
               <p className="font-mono text-3xl text-ink">{SYSTEMS.slow.prompt}</p>
-              <ol className="flex flex-col gap-1 font-mono text-sm text-ink">
+              <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
                 {SYSTEMS.slow.steps.slice(0, s2Step).map((line, i) => (
-                  <li key={i}>
-                    <span className="text-ink-muted">{i + 1}. </span>
-                    {line}
+                  <li key={i} className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-xs uppercase tracking-wide text-ink-muted">
+                      Step #{i + 1}
+                    </span>
+                    <span>{line}</span>
                   </li>
                 ))}
               </ol>
@@ -172,18 +210,14 @@ export function Page1() {
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. The difference</h2>
-          <div className="rounded-lg border border-grid bg-surface p-4 leading-relaxed text-ink">
+          <p className="leading-relaxed text-ink">
             Same operation, two different machines. <strong>System 1</strong> recognizes the answer;{" "}
             <strong>System 2</strong> builds it. One arrives whole, instant, effortless, automatic.
             The other comes line by line, slow, deliberate, and you feel every step. Recognizing an
             answer and constructing one are not the same act.
-          </div>
+          </p>
         </section>
-        <Note kicker="References">
-          <RefItem n={REF.kahneman}>
-            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
-          </RefItem>
-        </Note>
+        <div aria-hidden="true" />
       </div>
 
       <div aria-live="polite" className="sr-only">

@@ -74,13 +74,16 @@ export interface SortItem {
   system: "fast" | "slow";
 }
 
+/** Interleaved on purpose: listing the three fast ones first would hand the
+ *  reader the answer before they sorted anything. SystemSort also shuffles on
+ *  mount, so the order differs from visit to visit. */
 export const SORTING_ITEMS: SortItem[] = [
-  { id: "face", text: "Recognize a friend's face", system: "fast" },
-  { id: "salt", text: "Finish the phrase 'salt and ___'", system: "fast" },
-  { id: "anger", text: "Hear that a voice is angry", system: "fast" },
   { id: "divide", text: "Divide 156 by 12 in your head", system: "slow" },
+  { id: "face", text: "Recognize a friend's face", system: "fast" },
   { id: "park", text: "Park a car in a tight space", system: "slow" },
+  { id: "salt", text: "Finish the phrase 'salt and ___'", system: "fast" },
   { id: "compare", text: "Compare two laptop specs", system: "slow" },
+  { id: "anger", text: "Hear that a voice is angry", system: "fast" },
 ];
 
 // --- Page 2: Two Systems (the "how many World Cups?" question) ------------
@@ -175,6 +178,49 @@ export const SPAIN_ALL_TITLES = {
 } as const;
 
 /**
+ * Page 2, section 2: the ideal answer, i.e. the question read literally. It
+ * names both teams instead of silently counting one tournament, which is the
+ * whole point of the section. Covers all three titles in SPAIN_ALL_TITLES.
+ */
+export const SPAIN_IDEAL_ANSWER =
+  "Spain has won three FIFA World Cups: the men's team in 2010 and 2026, and the women's team in 2023.";
+
+/**
+ * Page 2, section 3: the same question answered with a System 2 pass instead of
+ * a reflex. Authored/illustrative.
+ *
+ * The trace deliberately does NOT invent the post-cutoff fact. Thinking settles
+ * the ambiguity outright (step 1), because that needs no information the model
+ * lacks. For the cutoff it can only recognize the boundary and decide to check
+ * (steps 2 and 3), which is the honest limit of thinking without new input: it
+ * converts a confident wrong answer into a flagged one. Step 4 is what the model
+ * can say once it has looked.
+ */
+export const SPAIN_SYSTEM2_TRACE = {
+  /** Each step is named for the move it makes, so the procedure reads at a
+   *  glance; the body carries the reasoning behind that move. */
+  steps: [
+    {
+      name: "Read the question again",
+      text: "It says FIFA World Cups, not men's World Cups. Spain fields a team in both tournaments, so both could count.",
+    },
+    {
+      name: "Check my own limits",
+      text: "A count of titles changes whenever a final is played, and my training was sealed in early 2025. Any final after that falls outside what I know.",
+    },
+    {
+      name: "Do not answer from memory alone",
+      text: "Say which tournaments I am counting, and check a current source before committing to a number.",
+    },
+    {
+      name: "Count what the question actually asked",
+      text: "The men's team won in 2010 and 2026, and the women's team won in 2023.",
+    },
+  ],
+  answer: "Three.",
+} as const;
+
+/**
  * What the model actually SAYS, indexed by how many of Spain's titles fell
  * inside its training cutoff (0, 1, or 2). Authored/illustrative examples of a
  * flat, confident answer off frozen memory: notice that none of them hedges
@@ -185,20 +231,6 @@ export const SPAIN_MACHINE_REPLIES: string[] = [
   "Spain has not won the FIFA World Cup.",
   "Spain has won the FIFA World Cup once, in 2010.",
   "Spain has won the FIFA World Cup twice, in 2010 and 2026.",
-];
-
-/**
- * The better answer: the same question, read literally. Indexed by how many of
- * Spain's THREE titles (men's 2010 and 2026, women's 2023) fall inside the
- * cutoff. Each reply names the tournament it is counting, so the reader can see
- * the reading being made instead of having to guess it. Note that resolving the
- * ambiguity does not close the cutoff gap: the two failures are independent.
- */
-export const SPAIN_INCLUSIVE_REPLIES: string[] = [
-  "Counting both tournaments, Spain has not won a FIFA World Cup.",
-  "Counting both tournaments, Spain has won one FIFA World Cup: the men's team in 2010.",
-  "Counting both tournaments, Spain has won two FIFA World Cups: the men's team in 2010 and the women's team in 2023.",
-  "Counting both tournaments, Spain has won three FIFA World Cups: the men's team in 2010 and 2026, and the women's team in 2023.",
 ];
 
 // --- Page 4: Reasoning: Diverse Pathfinding (three roads, one destination) ----

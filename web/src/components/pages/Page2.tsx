@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Page 2, "Knowing What You Know". One question: how many FIFA World Cups has Spain
+ * Page 2, "Answering Questions in the Real World". One question: how many FIFA World Cups has Spain
  * won? It looks like a plain lookup, but the record moved after the model's
  * training cutoff, so its memory is stale and it lands one short. A model's
  * knowledge is fixed at training time while the world keeps producing facts,
@@ -15,31 +15,26 @@
  *      in 2023, BEFORE the cutoff. The model held that fact and still left it
  *      out, resolving an ambiguous question to the reading its training data
  *      talks about most (cf. stereotype-consistent coreference, Zhao et al.
- *      2018). The same widget with the question read literally gives the better
- *      answer, and the beat that matters is that fixing the bias does NOT fix
- *      the cutoff: the two failures are independent.
- *   3. The third, quietest miss: the model never judged that it might be stale.
- *      MetaTool (Huang et al., ICLR 2024) benchmarked exactly this "tool usage
- *      awareness" and found most models struggle to recognize their own
- *      capability boundaries. The judgment was supplied from OUTSIDE, three
- *      ways: prompting (ReAct, Yao et al. 2022), fine-tuning (Toolformer,
- *      Schick et al. 2023), and human-designed workflow (Qu et al. 2025 survey).
- *      Note for anyone revisiting the claim: Toolformer is the strongest partial
- *      counterexample, since it does learn to choose tools for itself. The
- *      precise claim the page makes is the narrow one, that the judgment was
- *      engineered in rather than spontaneously present, which is what MetaTool
- *      measured in models lacking that engineering.
- *      Closes on the bridge to the reasoning gap: a model that does not know
- *      when to look something up, does it know when to think harder?
+ *      2018). The step 1 widget already showed the biased reading, so this step
+ *      names it and shows the full record in a small card instead of re-running
+ *      the control.
+ *   3. What a System 2 pass would have done, as an authored trace. Rereading the
+ *      question settles the BIAS outright (it needs no information the model
+ *      lacks). It cannot close the knowledge GAP, since thinking never conjures
+ *      an unseen fact, but it converts a confident wrong answer into a flagged
+ *      one. The closing beat: nothing about the model changed, only that it
+ *      spent effort before answering, which hands off to the rest of the deck.
  */
 
 import { useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { System2Comic } from "@/components/pages/System2Comic";
 import {
   SPAIN_ALL_TITLES,
-  SPAIN_INCLUSIVE_REPLIES,
+  SPAIN_IDEAL_ANSWER,
   SPAIN_MACHINE_REPLIES,
+  SPAIN_SYSTEM2_TRACE,
   SPAIN_WORLD_CUPS,
 } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
@@ -57,20 +52,15 @@ const CUTOFF_MAX = monthIndex(2026, 11); // Dec 2026 (past the July final)
 const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real seal
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
 
-/** Men's finals are played in July; the 2023 women's final was in August. */
-const MENS_FINALS = SPAIN_ALL_TITLES.mens.map((y) => monthIndex(y, 6));
-const WOMENS_FINALS = SPAIN_ALL_TITLES.womens.map((y) => monthIndex(y, 7));
-/** Section 1 counts only the men's tournament, the reading the model assumes. */
-const DEFAULT_READING_FINALS = MENS_FINALS;
-/** Section 2 counts every title, which is what the question actually asked. */
-const ALL_FINALS = [...MENS_FINALS, ...WOMENS_FINALS].sort((a, b) => a - b);
+/** Men's finals are played in July. Section 1 counts only the men's tournament,
+ *  which is the reading the model silently assumes; section 2 is about that. */
+const DEFAULT_READING_FINALS = SPAIN_ALL_TITLES.mens.map((y) => monthIndex(y, 6));
 
 /** Page 2's references, numbered in order of first appearance. */
-const REF = { winobias: 1, metatool: 2, react: 3, toolformer: 4, survey: 5 } as const;
+const REF = { winobias: 1 } as const;
 
 /**
- * The cutoff explorer, shared by sections 1 and 2. Same control, same question,
- * different reading of it: `finals` decides which titles count as knowable and
+ * The cutoff explorer. `finals` decides which titles count as knowable and
  * `replies` is indexed by how many of them fall on or before the cutoff.
  */
 function CutoffWidget({
@@ -144,11 +134,56 @@ function CutoffWidget({
   );
 }
 
+/** The answer the model should have given, framed like the reply block in
+ *  section 1 so the contrast with the biased one is immediate. */
+function IdealAnswer() {
+  return (
+    <section
+      aria-label="The ideal answer"
+      className="flex flex-col gap-2 rounded-lg border border-correct/60 bg-canvas p-4"
+    >
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          the ideal answer
+        </p>
+        <span className="rounded-full border border-correct/60 bg-correct/15 px-2 py-0.5 text-xs text-correct">
+          ✓ all {SPAIN_ALL_TITLES.total} titles
+        </span>
+      </div>
+      <p className="text-lg text-ink">&ldquo;{SPAIN_IDEAL_ANSWER}&rdquo;</p>
+    </section>
+  );
+}
+
+/** A line set apart from the running prose: the questions sections 1 and 2 end
+ *  on, and the closing statement section 3 lands. */
+function PullQuote({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="rounded-lg border-l-2 border-compute bg-quote px-4 py-3 text-lg italic text-compute">
+      {children}
+    </p>
+  );
+}
+
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+function Note({
+  kicker,
+  bottom = false,
+  children,
+}: {
+  kicker: string;
+  /** Sit at the foot of the sidenote column instead of the top of the row. The
+   *  house position for "Further reading", which closes the column on a page. */
+  bottom?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside
+      className={`flex flex-col gap-2 text-sm text-ink-muted ${
+        bottom ? "lg:mt-auto lg:self-end" : "lg:pt-9"
+      }`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -168,17 +203,15 @@ export function Page2() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        A model learns everything it knows before a fixed <strong>training cutoff</strong>, and the
-        answer it gives depends on when it was trained. This creates a perpetual{" "}
-        <strong>knowledge gap</strong> after the model is trained, as new data is created by the
-        world.
+        What does it take for an LLM to be useful (helpful, harmless and honest) in the real world?
+        What are the pitfalls of System 1 thinking in the real world?
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. Knowing the answer</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Answering a question</h2>
 
           <CutoffWidget
             id="cutoff-default"
@@ -188,10 +221,18 @@ export function Page2() {
           />
 
           <p className="text-ink">
-            Based on the knowledge cutoff date, the model gives an answer without thinking it
-            through. System 1 thinking leads to an incorrect response. Are knowledge gaps addressable
-            by <strong>System 2 thinking</strong>?
+            A model learns everything it knows before a fixed <strong>training cutoff</strong>, and
+            the answer it gives depends on when it was trained. This creates a perpetual{" "}
+            <strong>knowledge gap</strong> after the model is trained, as new data is created by the
+            world.
           </p>
+
+          <p className="text-ink">
+            Based on the knowledge cutoff date, the model gives an answer without thinking it
+            through. System 1 thinking leads to an incorrect response.
+          </p>
+
+          <PullQuote>Are knowledge gaps addressable by System 2 thinking?</PullQuote>
         </section>
         <Note kicker="Try it">
           <p>Slide the training cutoff to move the model&apos;s memory back and forth in time.</p>
@@ -199,42 +240,33 @@ export function Page2() {
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. Knowing correct and without bias</h2>
+          <h2 className="text-xl font-semibold text-ink">2. Answering a question without bias</h2>
 
           <p className="text-ink">
-            <strong>The question never said men&apos;s.</strong> Spain has won{" "}
-            <strong>three</strong> FIFA World Cups: the men&apos;s team in 2010 and 2026, and the
-            women&apos;s team in 2023. Every answer above quietly counted only the men&apos;s
-            tournament.
+            <strong>The question never said men&apos;s.</strong> Spain fields a team in both
+            tournaments, and has won three FIFA World Cups between them:
+          </p>
+
+          <IdealAnswer />
+
+          <p className="text-ink">
+            Every answer above quietly counted only the men&apos;s tournament. That is a{" "}
+            <strong>knowledge bias</strong>, and it is not the knowledge gap.
           </p>
 
           <p className="text-ink">
-            That is not the knowledge gap. The 2023 win happened <em>before</em> the cutoff, so the
-            model held the fact the whole time and left it out anyway. Handed an ambiguous question,
-            it resolved the ambiguity to whichever reading its training data talked about most, and
-            never mentioned that it had chosen. Models do this in the small too: given a sentence
-            that could refer to either of two people, they resolve it to the stereotype-consistent
-            reading rather than flagging that the sentence is ambiguous.
+            The 2023 win happened <em>before</em> the cutoff, so the model held the fact the whole
+            time and left it out anyway. Nothing was missing from its memory. Handed an ambiguous
+            question, it resolved the ambiguity to whichever reading its training data talked about
+            most, and never mentioned that it had chosen. That is what makes a knowledge bias
+            different from a knowledge gap: the gap is about what the model was never shown, the
+            bias about which part of what it holds it decides to use. Models do this in the small
+            too: given a sentence that could refer to either of two people, they resolve it to the
+            stereotype-consistent reading rather than flagging that the sentence is ambiguous.
             <Cite n={REF.winobias} />
           </p>
 
-          <p className="text-ink">
-            Read the question literally and the same slider gives a better answer:
-          </p>
-
-          <CutoffWidget
-            id="cutoff-inclusive"
-            finals={ALL_FINALS}
-            replies={SPAIN_INCLUSIVE_REPLIES}
-            total={SPAIN_ALL_TITLES.total}
-          />
-
-          <p className="text-ink">
-            Notice what did and did not change. Naming the tournament fixes the bias at every
-            cutoff. It does not fix the cutoff: a model sealed in early 2025 now counts two titles
-            instead of one, and is still a title behind. <strong>Two separate failures</strong>, and
-            closing one leaves the other exactly where it was.
-          </p>
+          <PullQuote>Are knowledge biases addressable by System 2 thinking?</PullQuote>
         </section>
         <Note kicker="References">
           <RefItem n={REF.winobias}>
@@ -245,71 +277,46 @@ export function Page2() {
 
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Knowing when to look it up</h2>
-
-          {/* the deeper miss: it never reached for the fix */}
-          <p className="text-ink">
-            <strong>Retrieval only helps if something decides to retrieve.</strong> The machine never
-            weighed its own memory and concluded it might be stale. It simply answered. That is a
-            second, quieter miss: not the absent fact, but the absent judgment that a fact was
-            missing. Asked directly whether models recognize the boundary of what they know and call
-            for outside help, the MetaTool benchmark found most struggle to do so.
-            <Cite n={REF.metatool} />
-          </p>
-
-          {/* the judgment was supplied from outside: three mechanisms */}
-          <p className="text-ink">
-            <strong>So the judgment was supplied from outside.</strong> Three ways, none of them the
-            model&apos;s own idea:
-          </p>
-          <dl className="flex flex-col gap-2">
-            <div>
-              <dt className="font-semibold text-ink">Prompting: show the pattern.</dt>
-              <dd className="text-ink-muted">
-                ReAct interleaves reasoning with actions that query an external source, taught by a
-                handful of worked examples.
-                <Cite n={REF.react} />
-              </dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-ink">Fine-tuning: train it in.</dt>
-              <dd className="text-ink-muted">
-                Toolformer lets a model annotate text with candidate API calls, keeps only the calls
-                that help it predict what comes next, then fine-tunes on those.
-                <Cite n={REF.toolformer} />
-              </dd>
-            </div>
-            <div>
-              <dt className="font-semibold text-ink">Workflow: build the pipeline around it.</dt>
-              <dd className="text-ink-muted">
-                Surveys of tool learning organize the field as human-designed stages: plan the task,
-                select the tool, call it, compose the reply.
-                <Cite n={REF.survey} />
-              </dd>
-            </div>
-          </dl>
+          <h2 className="text-xl font-semibold text-ink">3. Thinking it through</h2>
 
           <p className="text-ink">
-            Which sharpens the question this story is really about. A model that does not reliably
-            know when to look something up: does it know when to <strong>think harder</strong>?
+            Both misses share a shape: the model answered <em>immediately</em> (System 1 thinking).
+            It never reread the
+            question, and it never weighed what it might not know. A System 2 pass does both before
+            committing to anything.
           </p>
+
+          <System2Comic />
+
+          <p className="text-ink">
+            Look at what each step bought. Step 1 settles the{" "}
+            <strong>bias</strong> outright, and it needed no new information: the ambiguity was
+            sitting in the question the whole time, and reading it carefully was enough. Step 2 does
+            not close the <strong>knowledge gap</strong>, because thinking cannot conjure a fact the
+            model was never shown. What it does is notice the boundary, which turns a confident
+            wrong answer into a flagged one, and a flagged one into a reason to go look.
+          </p>
+
+          <PullQuote>
+            Nothing about the model changed between the reflex and the trace. Same weights, same
+            training data, same cutoff. The only difference is that it{" "}
+            <strong>spent effort before answering</strong>. That effort is the subject of the rest
+            of this story: what it buys, how to buy more of it, and where buying more stops helping.
+          </PullQuote>
         </section>
-        <Note kicker="References">
-          <RefItem n={REF.metatool}>
-            Huang et al., &ldquo;MetaTool: Benchmarking LLMs on Tool Usage Awareness&rdquo; (ICLR
-            2024).
-          </RefItem>
-          <RefItem n={REF.react}>
-            Yao et al., &ldquo;ReAct: Synergizing Reasoning and Acting in Language Models&rdquo;
-            (2022).
-          </RefItem>
-          <RefItem n={REF.toolformer}>
-            Schick et al., &ldquo;Toolformer: Language Models Can Teach Themselves to Use
-            Tools&rdquo; (NeurIPS 2023).
-          </RefItem>
-          <RefItem n={REF.survey}>
-            Qu et al., &ldquo;Tool Learning with Large Language Models: A Survey&rdquo; (2025).
-          </RefItem>
+        <Note kicker="Further reading" bottom>
+          <p>
+            Askell et al.,{" "}
+            <a
+              href="https://arxiv.org/abs/2112.00861"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-compute underline"
+            >
+              &ldquo;A General Language Assistant as a Laboratory for Alignment&rdquo;
+            </a>{" "}
+            (2021), which introduced the helpful, honest and harmless framing this page opens on.
+          </p>
         </Note>
       </div>
 
