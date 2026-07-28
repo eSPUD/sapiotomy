@@ -165,7 +165,7 @@ export function Page2() {
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. Knowing the answer</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Answering a question</h2>
 
           <CutoffWidget
             id="cutoff-default"
