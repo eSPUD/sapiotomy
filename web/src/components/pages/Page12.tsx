@@ -33,8 +33,9 @@
  * fine-tuned on the full human-labelled training set.
  *
  * Section 3 is the loop written down: the paper's Algorithm 1 compressed to
- * ten annotated pseudocode lines — the annotation column doubles as the
- * plain-English reading and the RL mapping — followed by exactly two blocks:
+ * ten annotated pseudocode lines. A plain-language walkthrough sits above the
+ * listing for readers who don't parse pseudocode; the annotation column
+ * carries the RL mapping. Below the listing, exactly two blocks:
  * the page's one counterweight (the filter reads answers, never arguments; the
  * paper's own stated limitation, and the only place the page admits the loop
  * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
@@ -542,9 +543,21 @@ export function Page12() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. The loop, written down</h2>
 
+          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">The algorithm, explained.</strong> Start with a
+            pretrained model and a stack of problems whose correct answers you know. There are no
+            worked solutions, only the answers. For each problem, the model writes out its
+            reasoning and ends with an answer. If that answer matches the key, the reasoning is
+            kept. If it misses, the model gets one more try with the correct answer shown as a
+            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
+            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
+            everything kept, and the loop starts over with a slightly better model writing the
+            next round of reasoning.
+          </p>
+
           <p className="text-sm text-ink">
-            The loop you just ran, compressed to ten lines. Read it once as an algorithm. Then
-            read it again — the annotations on lines 5 and 6 name what it secretly is.
+            The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
+            again — the annotations on lines 5 and 6 name what it secretly is.
           </p>
 
           <figure
@@ -563,28 +576,12 @@ export function Page12() {
             </figcaption>
           </figure>
 
-          <div className="flex flex-col gap-3 rounded border-l-4 border-wrong bg-surface p-4 text-base text-ink">
-            <p>
-              <strong className="text-ink">The filter reads answers, never arguments.</strong>{" "}
-              Wrong reasoning that lands on a right answer is kept and multiplied.
-              <Cite n={REF.star} /> The loop is only ever as sound as its filter — which is why
-              the next papers build verifiers that read the reasoning itself.
-            </p>
-            <div className="flex max-w-sm items-stretch gap-2" aria-hidden="true">
-              <div className="min-w-0 flex-[2] rounded-lg border border-dashed border-grid bg-surface-raised p-2.5">
-                <p className="text-sm font-semibold text-ink-muted">reasoning</p>
-                <p className="text-xs text-ink-muted">right or wrong, unread</p>
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <div className="rounded-lg border-2 border-correct bg-surface-raised p-2.5">
-                  <p className="text-sm font-semibold text-ink">answer ✓</p>
-                </div>
-                <p className="mt-1 border-t-2 border-correct pt-1 text-[10px] uppercase tracking-wide text-ink-muted">
-                  the key reads only this
-                </p>
-              </div>
-            </div>
-          </div>
+          <p className="rounded border-l-4 border-wrong bg-surface p-4 text-base text-ink">
+            <strong className="text-ink">The filter reads answers, never arguments.</strong>{" "}
+            Wrong reasoning that lands on a right answer is kept and multiplied.
+            <Cite n={REF.star} /> The loop is only ever as sound as its filter — page 9&apos;s
+            outcome-versus-process trade, now deciding what the model becomes.
+          </p>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
             o1 and R1 keep exactly this loop — sample reasoning, score it, reinforce what

@@ -59,11 +59,19 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeInTheDocument();
   });
 
+  it("explains the algorithm in plain language above the listing", () => {
+    render(<Page12 />);
+    const explained = screen.getByText(/The algorithm, explained/);
+    const listing = screen.getByText(/hint = y/);
+    expect(
+      explained.compareDocumentPosition(listing) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("keeps one counterweight below the listing: the filter reads answers, never arguments", () => {
     render(<Page12 />);
     expect(screen.getByText(/The filter reads answers, never arguments/)).toBeInTheDocument();
     expect(screen.getByText(/only ever as sound as its filter/)).toBeInTheDocument();
-    expect(screen.getByText(/the key reads only this/)).toBeInTheDocument();
     // The RL reading lives in the annotation column, not a separate block.
     expect(screen.getAllByText(/in RL terms:/).length).toBe(2);
     expect(screen.queryByText(/V-STaR/)).not.toBeInTheDocument();
