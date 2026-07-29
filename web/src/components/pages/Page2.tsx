@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Page 2, "Answering Questions in the Real World". One question: how many FIFA World Cups has Spain
+ * Page 2, "Thinking in Reality". One question: how many FIFA World Cups has Spain
  * won? It looks like a plain lookup, but the record moved after the model's
  * training cutoff, so its memory is stale and it lands one short. A model's
  * knowledge is fixed at training time while the world keeps producing facts,
