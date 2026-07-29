@@ -363,23 +363,48 @@ export function Page3() {
               suffix=" months"
               ticks={MONTH_TICKS}
             />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  the frontier of the day, daily
-                </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
-                  {fmtM(frontierAtM)}
-                </p>
+            {/* The two curves read at the slider's month. Both are running
+                totals, which the heading has to say: a bare "$17.9B" reads just
+                as easily as a daily or per-run price. */}
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                total spent after {months} {months === 1 ? "month" : "months"}
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-1 rounded-lg border border-grid bg-surface-raised p-3">
+                  <p className="text-sm font-semibold text-ink">
+                    Retrain the <em>newest</em> model each day
+                  </p>
+                  <p className="text-xs text-ink-muted">
+                    its price climbs ×{tp.perYear} a year, so the total curves upward
+                  </p>
+                  <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-wrong">
+                    {fmtM(frontierAtM)}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1 rounded-lg border border-grid bg-surface-raised p-3">
+                  <p className="text-sm font-semibold text-ink">
+                    Retrain the <em>same</em> model each day
+                  </p>
+                  <p className="text-xs text-ink-muted">
+                    a flat ${RUN_M}M a run, so the total climbs in a straight line
+                  </p>
+                  <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-ink">
+                    {fmtM(sameAtM)}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  the same model, daily
+              {months > 0 ? (
+                <p className="text-sm text-ink-muted">
+                  Chasing the frontier costs{" "}
+                  <strong className="text-ink">{fmtM(frontierAtM - sameAtM)}</strong> more so far,
+                  and the gap widens every month.
                 </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-                  {fmtM(sameAtM)}
+              ) : (
+                <p className="text-sm text-ink-muted">
+                  Nothing spent yet. Drag the slider to run the plan forward.
                 </p>
-              </div>
+              )}
             </div>
             <figcaption className="text-sm text-ink">
               Compute per frontier run grows about 5x a year.
