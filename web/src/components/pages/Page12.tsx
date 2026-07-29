@@ -8,8 +8,11 @@
  * model wrote for itself — training data. Generate, keep what checks out,
  * fine-tune, repeat.
  *
- * Section 1 is the loop itself (lib/star.ts), run iteration by iteration. The
- * mechanism is illustrative and seeded, not a digitized curve: 60 problems with
+ * Section 1 is the loop itself (lib/star.ts), run iteration by iteration. Each
+ * press runs one training round, then a held-out test, and the readouts are
+ * split into labelled Training/Test panels so the reader always knows which
+ * regime a number belongs to — the chart's two lines carry the same labels.
+ * The mechanism is illustrative and seeded, not a digitized curve: 60 problems with
  * fixed per-problem solvability thresholds, so the solved set grows exactly
  * when skill grows and every run is reproducible. Three behaviours to feel:
  * the ratchet (each round's better model writes correct rationales for harder
@@ -299,11 +302,13 @@ export function Page12() {
               This is <strong>STaR</strong>&apos;s loop.
               <Cite n={REF.star} /> It still needs a dataset — questions <em>with correct
               answers</em> — but nobody has to write the reasoning; the model authors that itself.
-              Sixty problems, easy on the left, hard on the right. Each pass, the model writes a
-              rationale for every one; the answer key keeps those that land; the base model is
-              fine-tuned on the survivors. The ratchet: a slightly better model writes correct
-              rationales for slightly <em>harder</em> problems — a training set it could not have
-              written last time.
+              Sixty problems, easy on the left, hard on the right. Each press of Run does both
+              halves: one <strong>training</strong> round — the model writes a rationale for every
+              problem, the answer key keeps those that land, the base model is fine-tuned on the
+              survivors — and then a <strong>test</strong>, measuring the new model on held-out
+              problems the loop never touches. The panels below keep the two apart. The ratchet: a
+              slightly better model writes correct rationales for slightly <em>harder</em>{" "}
+              problems — a training set it could not have written last time.
             </p>
 
             {/* controls */}
@@ -345,6 +350,10 @@ export function Page12() {
                   }}
                 />
               </div>
+              <p className="text-xs text-ink-muted sm:col-span-2">
+                Filter alone is the paper&apos;s ablation; filter <em>plus</em> rationalization is
+                full STaR, the algorithm section 3 writes down; filter off is the degenerate loop.
+              </p>
             </div>
             {!filter ? (
               <p className="rounded border-l-4 border-wrong bg-wrong/10 p-2 text-sm text-ink">
@@ -353,15 +362,12 @@ export function Page12() {
               </p>
             ) : null}
 
-            {/* readouts */}
-            <div className="grid gap-4 md:grid-cols-[auto_minmax(0,1fr)] md:items-center">
-              <BigNumber
-                value={now.accuracy}
-                suffix="%"
-                tone={now.wrong > 0 ? "wrong" : "correct"}
-                label={`held-out accuracy after iteration ${iter}`}
-              />
-              <div className="flex min-w-0 flex-col gap-2">
+            {/* readouts — the two regimes, kept apart and labelled */}
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-stretch">
+              <div className="flex min-w-0 flex-col gap-2 rounded border border-dashed border-grid p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Training · what this round produced
+                </p>
                 <div
                   className="flex flex-wrap gap-1"
                   role="img"
@@ -378,21 +384,32 @@ export function Page12() {
                   <Key className="bg-grid" label={`not in the set (${STAR_POOL - trainSize})`} />
                 </div>
                 <p className="text-xs text-ink-muted">
-                  this iteration&apos;s training set: {trainSize} rationales · easy → hard
+                  fine-tuned on {trainSize} rationales this round · problems easy → hard
                 </p>
+              </div>
+              <div className="flex flex-col justify-center gap-1 rounded border border-dashed border-grid p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  Test · how good did it get?
+                </p>
+                <BigNumber
+                  value={now.accuracy}
+                  suffix="%"
+                  tone={now.wrong > 0 ? "wrong" : "correct"}
+                  label={`on held-out problems, after iteration ${iter}`}
+                />
               </div>
             </div>
 
             <LineChart
-              title={`Accuracy and training-set size across ${iter} iterations`}
+              title={`Train, then test — both lines after each of ${iter} iterations`}
               points={history.map((s, i) => ({ x: i, y: s.accuracy }))}
-              primaryLabel="held-out accuracy"
+              primaryLabel="test: held-out accuracy"
               secondary={{
                 points: history.map((s, i) => ({
                   x: i,
                   y: ((s.verified + s.rationalized + s.wrong) / STAR_POOL) * 100,
                 })),
-                label: "training set |Dₙ| (% of pool)",
+                label: "training: set size |Dₙ| (% of pool)",
               }}
               secondaryFaint
               xDomain={[0, STAR_MAX_ITERS]}
@@ -424,7 +441,9 @@ export function Page12() {
               without rationalization (STaR&apos;s 68.8%), bottoms out at the 20% floor of
               five-way multiple choice, and its plateau training set covers 60% of the pool
               (the paper generates rationales for 69.7% of its training set).
-              <Cite n={REF.star} />
+              <Cite n={REF.star} /> One simplification: the paper seeds generation with a few-shot
+              prompt of example rationales; here that seed is simply the model&apos;s starting
+              skill.
             </p>
           </div>
         </section>

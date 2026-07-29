@@ -19,6 +19,13 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getAllByText("73.0%").length).toBeGreaterThanOrEqual(1);
   });
 
+  it("keeps the training and test regimes apart with labelled panels", () => {
+    render(<Page12 />);
+    expect(screen.getByText(/Training · what this round produced/)).toBeInTheDocument();
+    expect(screen.getByText(/Test · how good did it get\?/)).toBeInTheDocument();
+    expect(screen.getByText(/full STaR/)).toBeInTheDocument();
+  });
+
   it("carries the GSM8K caveat on the rationalization claim", () => {
     render(<Page12 />);
     expect(screen.getByText(/did not substantially improve GSM8K/)).toBeInTheDocument();
