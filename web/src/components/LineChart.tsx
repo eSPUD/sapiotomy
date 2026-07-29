@@ -374,14 +374,16 @@ export function LineChart({
         <g>
           {primaryLabel ? (
             <>
-              <rect x={8} y={8} width={10} height={3} className={FILL[primaryTone]} />
-              <text x={22} y={12} className="fill-ink text-[10px]">{primaryLabel}</text>
+              {/* A longer dash reads as a line sample, not a bullet, and matches
+                  the 3px stroke it stands for. */}
+              <rect x={8} y={8} width={26} height={3} rx={1.5} className={FILL[primaryTone]} />
+              <text x={40} y={12} className="fill-ink text-[10px]">{primaryLabel}</text>
             </>
           ) : null}
           {secondary?.label ? (
             <>
-              <rect x={8} y={22} width={10} height={3} className={FILL[secondaryTone]} />
-              <text x={22} y={26} className="fill-ink text-[10px]">{secondary.label}</text>
+              <rect x={8} y={22} width={26} height={3} rx={1.5} className={FILL[secondaryTone]} />
+              <text x={40} y={26} className="fill-ink text-[10px]">{secondary.label}</text>
             </>
           ) : null}
         </g>
