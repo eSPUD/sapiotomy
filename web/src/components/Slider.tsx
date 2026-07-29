@@ -17,6 +17,12 @@ export interface SliderProps {
    * visible value and aria-valuetext, so the two never drift apart.
    */
   format?: (value: number) => string;
+  /**
+   * Draw a mark under every one of these values. For a short, countable range
+   * (twelve months, say) it shows the reader what the step actually is; leave
+   * it unset on wide ranges, where a mark per step is noise.
+   */
+  ticks?: number[];
   disabled?: boolean;
 }
 
@@ -33,9 +39,11 @@ export function Slider({
   onChange,
   suffix = "",
   format,
+  ticks,
   disabled = false,
 }: SliderProps) {
   const id = useId();
+  const listId = `${id}-ticks`;
   const readout = `${format ? format(value) : value}${suffix}`;
   return (
     <div className="flex flex-col gap-1">
@@ -54,9 +62,29 @@ export function Slider({
         value={value}
         disabled={disabled}
         aria-valuetext={readout}
+        list={ticks ? listId : undefined}
         onChange={(e) => onChange(Number(e.target.value))}
         className="h-2 w-full cursor-pointer appearance-none rounded-full bg-grid accent-compute disabled:opacity-50"
       />
+      {ticks ? (
+        <>
+          {/* Native marks where the browser draws them, plus our own readable
+              row: the numbers are the point, and Safari renders no datalist. */}
+          <datalist id={listId}>
+            {ticks.map((t) => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
+          <div
+            aria-hidden="true"
+            className="flex justify-between px-0.5 font-mono text-[10px] tabular-nums text-ink-muted"
+          >
+            {ticks.map((t) => (
+              <span key={t}>{t}</span>
+            ))}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

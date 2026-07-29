@@ -61,6 +61,8 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 3;
 const DAYS = 365;
 const COMBO_MONTHS = 12;
+/** One mark per month, on both the chart axis and the slider. */
+const MONTH_TICKS = Array.from({ length: COMBO_MONTHS + 1 }, (_, i) => i);
 
 /** Reference numbers, in order of first appearance on the page. */
 const REF = { computeGrowth: 1, trainTrend: 2, runCost: 3, chinchilla: 4, dataStock: 5 } as const;
@@ -348,6 +350,7 @@ export function Page3() {
               xLabel="months of keeping it up"
               yLabel="cumulative bill ($ billions)"
               yDomain={[0, 52]}
+              xTicks={MONTH_TICKS}
               width={640}
               height={300}
             />
@@ -358,6 +361,7 @@ export function Page3() {
               value={months}
               onChange={onMonths}
               suffix=" months"
+              ticks={MONTH_TICKS}
             />
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-grid bg-surface-raised p-3">
