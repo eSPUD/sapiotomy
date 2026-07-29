@@ -2,9 +2,11 @@
 
 /**
  * Page 3, "Training Daily?" (restructure, 2026-07: scaling-laws pivot).
- * Page 2 ended on the question: what if the model HAD been trained on data
- * that includes last night? The obvious fix, retrain every day, hits two
- * independent walls:
+ * Page 2 ends on a limit, not a proposal: a System 2 pass settles the question's
+ * ambiguity for free, but thinking cannot produce a fact the model was never
+ * shown. So the gap wants new KNOWLEDGE, and this page takes the obvious way to
+ * supply it, retrain the model every day, and shows it hitting two independent
+ * walls:
  *   Problem 1 — the bill: daily runs whose per-run price rides Epoch's
  *     x2.4/year training-cost trend (the dollar shadow of ~5x/year frontier
  *     compute growth) across five years, vs the flat $78M/run rate (Epoch via
@@ -304,10 +306,11 @@ export function Page3() {
       </h1>
 
       <p className="max-w-2xl text-lg text-ink-muted">
-        Page 2&apos;s machine lost to one fact born after its memory was sealed. The obvious fix
-        stares right at you: reseal the memory <strong className="text-ink">every morning</strong>.
-        Retrain the model daily and it is never a day out of date. That plan fails twice: first the
-        bill, then the data itself.
+        Page 2 ended one step short. Thinking settled which tournament the question meant, but no
+        amount of it could produce a title the model had never seen. That gap wants new knowledge,
+        not more thought, and there is an obvious way to hand a model new knowledge: train it again.
+        Do it <strong className="text-ink">every morning</strong> and the memory is never a day out
+        of date. That plan fails twice: first the bill, then the data itself.
       </p>
 
       {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
@@ -482,7 +485,8 @@ export function Page3() {
           >
             <p className="text-lg text-ink">
               Both walls come from the same habit: paying for smarts <strong>up front</strong>, all
-              at once, before a single question is asked. That is what the bill buys, and what the
+              at once, before a single question is asked. Page 2 left the other option on the table
+              without naming its price. That is what the bill buys, and what the
               data runs out on. So turn it around, and instead of front-loading everything to make
               the model <strong>know</strong> the answer, what if we spent that effort{" "}
               <strong>when the question arrives</strong>, and let it{" "}
