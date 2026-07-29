@@ -65,30 +65,19 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByText(/no worked solutions, only the answers/)).toBeInTheDocument();
   });
 
-  it("reads the listing a second time, as reinforcement learning in disguise", () => {
+  it("wraps up in one dense block: RL in disguise, luck into skill, the filter caveat, Quiet-STaR", () => {
     render(<Page12 />);
-    expect(screen.getByText(/Reinforcement learning in disguise/)).toBeInTheDocument();
-    expect(screen.getByText(/binary reward/)).toBeInTheDocument();
+    expect(screen.getByText(/reinforcement learning in disguise/)).toBeInTheDocument();
     expect(screen.getByText(/distills luck into skill/)).toBeInTheDocument();
-  });
-
-  it("carries the poisoning caveat: the filter checks answers, not reasoning", () => {
-    render(<Page12 />);
     expect(screen.getByText(/only ever as sound as its filter/)).toBeInTheDocument();
-  });
-
-  it("introduces Quiet-STaR as a generalization, with the lineage gone", () => {
-    render(<Page12 />);
-    expect(screen.getByText(/Quiet-STaR, in one move/)).toBeInTheDocument();
-    expect(screen.getByText(/the sentence that follows it/)).toBeInTheDocument();
+    expect(screen.getByText(/carries its own answer key/)).toBeInTheDocument();
     expect(screen.queryByText(/V-STaR/)).not.toBeInTheDocument();
     expect(screen.queryByText(/ReST/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /2024/ })).not.toBeInTheDocument();
   });
 
-  it("closes on the hand-off to o1-class reasoners", () => {
+  it("closes on the hand-off to page 13's frontier reasoners", () => {
     render(<Page12 />);
-    expect(screen.getByText(/with the disguise off/)).toBeInTheDocument();
+    expect(screen.getByText(/Page 13 picks it up from there/)).toBeInTheDocument();
   });
 
   it("labels the footer provenance as Simulated and Cited", () => {

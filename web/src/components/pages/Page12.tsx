@@ -34,20 +34,18 @@
  * fine-tuned on the full human-labelled training set.
  *
  * Section 3 is the loop written down: the paper's Algorithm 1 compressed to
- * ten annotated pseudocode lines, then read a second time as reinforcement
- * learning in disguise (sample from the policy, binary reward, imitate what
- * scored). The intuition blocks carry the content the papers don't spell out:
- * why self-training isn't circular (the filter distills lucky samples into
- * reliable skill), rationalization as hindsight learning and its failure mode
- * (the filter checks answers, not reasoning), and Quiet-STaR as the one-move
- * generalization (every sentence has an answer key: the text that follows).
- * The V-STaR/ReST^EM lineage is deliberately omitted — technical intuition
- * over history — and the closing card hands off to the Frontier Reasoners
- * pages: o1-class models run this same loop with the RL made explicit.
+ * ten annotated pseudocode lines, a plain-language walkthrough for readers who
+ * don't parse pseudocode, and one dense wrap-up in place of separate intuition
+ * blocks: RL in disguise (sample, reward, imitate), non-circular (the filter
+ * distills lucky samples into reliable skill), only as sound as its filter
+ * (answers are checked, reasoning is not), Quiet-STaR as the limit case (any
+ * text; every sentence carries its own answer key). The V-STaR/ReST^EM lineage
+ * is deliberately omitted — technical intuition over history — and the closing
+ * card hands off to page 13: o1 and R1 run this loop with the RL made explicit.
  *
- * Sidenote convention as on page 2: one "Try it" note beside the interactive,
+ * Sidenote convention as on page 2: a state-matrix note beside the interactive,
  * numbered References notes (Cite/RefItem) beside the steps that use them,
- * citation badges + provenance footnote at the bottom.
+ * provenance footnote at the bottom.
  */
 
 import { useState } from "react";
@@ -56,7 +54,6 @@ import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Toggle } from "@/components/Toggle";
-import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import {
@@ -76,13 +73,6 @@ const CHANCE = 100 / STAR_CHOICES;
 
 /** Page 12's references, numbered in order of first appearance. */
 const REF = { star: 1, quietStar: 2 } as const;
-
-const QUIET_STAR: Citation = {
-  ref: "Zelikman et al. 2024",
-  url: "https://arxiv.org/abs/2403.09629",
-  venue: "arXiv",
-  preprint: true,
-};
 
 /**
  * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. Each line
@@ -584,52 +574,25 @@ export function Page12() {
           </p>
 
           <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">Reinforcement learning in disguise.</strong> Line 5
-            samples from a policy. Line 6 assigns a reward: 1 if the answer checks out, 0
-            otherwise. Line 10 raises the probability of whatever earned the reward. No gradient
-            ever flows from the reward — it only decides <em>what gets imitated</em> — which makes
-            STaR rejection sampling plus imitation: expert iteration where the expert is the model
-            itself, on a lucky day. Hold that framing; it is the door the frontier walks through.
-          </p>
-
-          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">Why it isn&apos;t circular.</strong> A model training on
-            its own output sounds like lifting yourself by your bootstraps. The escape is that
-            generation is stochastic: the model <em>sometimes</em> produces a chain of reasoning
-            it cannot yet produce <em>reliably</em>. The filter finds those flukes, and
-            fine-tuning converts sometimes into always — the loop distills luck into skill. That
-            is also exactly why section 1 plateaus: once &ldquo;sometimes&rdquo; hits zero on the
-            problems that remain, there is nothing left to distill. Rationalization exists to
-            push that boundary out.
-          </p>
-
-          <p className="rounded border-l-4 border-wrong bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">Hindsight, and its danger.</strong> Line 8 is hindsight
-            learning: knowing the destination makes the route easier to find, so it manufactures
-            worked solutions for problems just past the model&apos;s reach. But notice what line 6
-            actually checks: the <em>answer</em>, never the <em>reasoning</em>. A wrong argument
-            that happens to land on the right answer passes the filter, gets trained on, and next
-            round the model produces more of it — STaR&apos;s authors watched scratchpads drift
-            toward the meaningless while the answers stayed right, and learning stalled.
-            <Cite n={REF.star} /> The loop is only ever as sound as its filter.
-          </p>
-
-          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">Quiet-STaR, in one move.</strong> Generalize line 4:
-            replace &ldquo;a problem with an answer key&rdquo; with <em>any text at all</em>. The
-            model thinks briefly before each token, and a thought is reinforced if it made the
-            next few tokens of real text more predictable than they would have been without it.
-            <Cite n={REF.quietStar} /> Every sentence has an answer key — the sentence that
-            follows it. Same loop, different filter; the opener&apos;s question, answered: you can
-            remove the answer key, but something automatic must still decide what gets learned.
+            <strong className="text-ink">Read it again: reinforcement learning in disguise.</strong>{" "}
+            Line 5 samples from a policy, line 6 pays the reward, line 10 imitates what got paid.
+            Nothing circular here — sampling is stochastic, so the model <em>sometimes</em> writes
+            reasoning it cannot yet write <em>reliably</em>, and the filter distills luck into
+            skill; when nothing new passes, that is section 1&apos;s plateau, the boundary
+            rationalization pushes out. The soft spot: the filter checks <em>answers</em>, never{" "}
+            <em>reasoning</em>, so a wrong argument with a right answer trains and multiplies —
+            the loop is only ever as sound as its filter.
+            <Cite n={REF.star} /> Quiet-STaR takes the shape to its limit: think before every
+            token of <em>any</em> text, rewarding a thought when it makes the next tokens more
+            predictable — every sentence carries its own answer key.
+            <Cite n={REF.quietStar} />
           </p>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            o1-class reasoners keep exactly this loop — sample reasoning, score it, reinforce
-            what scored — and drop the disguise: the filter becomes an explicit RL reward on
-            tasks with checkable answers, and the loop runs at a scale where the model&apos;s own
-            sampling, not any dataset, is the training set.{" "}
-            <em>The next two pages are what that looks like with the disguise off.</em>
+            o1 and R1 keep exactly this loop — sample reasoning, score it, reinforce what
+            scored — and drop the disguise: the filter becomes an explicit RL reward on checkable
+            tasks, and the model&apos;s own sampling becomes the training set.{" "}
+            <em>Page 13 picks it up from there.</em>
           </p>
         </section>
 
