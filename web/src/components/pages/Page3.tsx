@@ -25,8 +25,8 @@
  * numbered steps down the left, each followed by its margin cell. Citations
  * follow the page-2 house style: numbered inline markers (Cite) at the claim
  * they support, a References margin note (RefItem) beside the step that uses
- * each source, and the linkable CitationBadge chips gathered once at the foot
- * of the page. Steps 1 and 2 each get their own References note so a source
+ * each source. References live only in those margin notes; non-peer-reviewed
+ * sources carry a preprint flag there. Steps 1 and 2 each get their own References note so a source
  * never drifts from the step it backs; step 3 cites nothing, so its margin
  * cell stays an empty <div aria-hidden="true" />. There is still no "how to
  * read this page" rail (a slider, a dial and a text box need no instructions).
@@ -48,7 +48,6 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
-import { CitationBadge } from "@/components/CitationBadge";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -420,16 +419,16 @@ export function Page3() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.computeGrowth} href="https://epoch.ai/blog/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year">
+          <RefItem n={REF.computeGrowth} href="https://epoch.ai/blog/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year" preprint>
             Sevilla &amp; Rold&aacute;n 2024,{" "}
             <em>Training Compute of Frontier AI Models Grows by 4&ndash;5x per Year</em> (Epoch
             AI).
           </RefItem>
-          <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models">
+          <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models" preprint>
             Cottier et al. 2024, <em>How Much Does It Cost to Train Frontier AI Models?</em>{" "}
             (Epoch AI).
           </RefItem>
-          <RefItem n={REF.runCost} href="https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf">
+          <RefItem n={REF.runCost} href="https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf" preprint>
             Epoch AI via the Stanford HAI <em>AI Index Report 2024</em>.
           </RefItem>
         </Note>
@@ -498,7 +497,7 @@ export function Page3() {
             Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS
             2022).
           </RefItem>
-          <RefItem n={REF.dataStock} href="https://arxiv.org/abs/2211.04325">
+          <RefItem n={REF.dataStock} href="https://arxiv.org/abs/2211.04325" preprint>
             Villalobos et al. 2024, <em>Will We Run Out of Data? Limits of LLM Scaling Based on
             Human-Generated Data</em> (Epoch AI &middot; arXiv 2211.04325).
           </RefItem>
@@ -579,13 +578,7 @@ export function Page3() {
         <div aria-hidden="true" />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={computeGrowth.citation} />
-        <CitationBadge citation={trainTrend.citation} />
-        <CitationBadge citation={runCost.citation} />
-        <CitationBadge citation={chinchilla.citation} />
-        <CitationBadge citation={dataStock.citation} />
-      </div>
+      
 
       <p className="text-xs text-ink-muted">
         the frontier compute trend (about 5x per year for language models since mid-2020) is an

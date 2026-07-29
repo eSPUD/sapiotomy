@@ -30,14 +30,18 @@ export function Cite({ n }: { n: number }) {
 export function RefItem({
   n,
   href,
+  preprint = false,
   children,
 }: {
   n: number;
   href?: string;
+  /** Flag non-peer-reviewed sources, the guardrail the citation chips carried
+   *  before references moved into the sidenotes. */
+  preprint?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <p className="flex gap-1.5">
+    <p className="flex flex-wrap gap-1.5">
       <span className="font-semibold text-compute">{n}.</span>
       {href ? (
         <a
@@ -51,6 +55,11 @@ export function RefItem({
       ) : (
         <span>{children}</span>
       )}
+      {preprint ? (
+        <span className="rounded bg-wrong/20 px-1.5 text-[10px] font-semibold text-wrong">
+          preprint
+        </span>
+      ) : null}
     </p>
   );
 }

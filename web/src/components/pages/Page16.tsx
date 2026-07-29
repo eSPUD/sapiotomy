@@ -37,7 +37,6 @@
  */
 
 import { useMemo, useState } from "react";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
@@ -339,10 +338,10 @@ export function Page16() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.arcPrize} href="https://arcprize.org/blog/oai-o3-pub-breakthrough">
+          <RefItem n={REF.arcPrize} href="https://arcprize.org/blog/oai-o3-pub-breakthrough" preprint>
             ARC Prize Foundation 2024, <em>o3 Breakthrough on ARC-AGI-Pub</em>.
           </RefItem>
-          <RefItem n={REF.bender} href="https://arxiv.org/abs/2501.07458">
+          <RefItem n={REF.bender} href="https://arxiv.org/abs/2501.07458" preprint>
             Bender et al. 2025, <em>OpenAI&apos;s o3 Is Not AGI</em>.
           </RefItem>
         </Note>
@@ -406,11 +405,11 @@ export function Page16() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.pricing} href="https://api-docs.deepseek.com/quick_start/pricing">DeepSeek API pricing, January 2025.</RefItem>
-          <RefItem n={REF.brown} href="https://arxiv.org/abs/2407.21787">
+          <RefItem n={REF.pricing} href="https://api-docs.deepseek.com/quick_start/pricing" preprint>DeepSeek API pricing, January 2025.</RefItem>
+          <RefItem n={REF.brown} href="https://arxiv.org/abs/2407.21787" preprint>
             Brown et al. 2024, <em>Large Language Monkeys</em>.
           </RefItem>
-          <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
+          <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
             Stroebl et al. 2024, <em>Inference Scaling fLaws</em>.
           </RefItem>
         </Note>
@@ -581,15 +580,7 @@ export function Page16() {
         </Note>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={arc.citation} />
-        <CitationBadge citation={BENDER} />
-        <CitationBadge citation={pricing.citation} />
-        <CitationBadge citation={brown.citation} />
-        <CitationBadge citation={snell.citation} />
-        <CitationBadge citation={STROEBL} />
-        <CitationBadge citation={nature.citation} />
-      </div>
+      
       <p className="text-xs text-ink-muted">
         every dollar figure on this page is a reported estimate or a list price, presented as
         reported · the step-3 calculator is derived arithmetic over those cited anchors plus the

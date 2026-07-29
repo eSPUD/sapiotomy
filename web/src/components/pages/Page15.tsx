@@ -45,7 +45,6 @@
 import { useMemo, useState } from "react";
 import { scaleLinear } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
@@ -57,7 +56,7 @@ const W = 560;
 const H = 300;
 
 /** Page 15's references, numbered in order of first appearance. */
-const REF = { math: 1, gpqa: 2, openai: 3, deepseek: 4, swebench: 5, frontiermath: 6, epoch: 7 } as const;
+const REF = { gsm8k: 1, math: 2, gpqa: 3, openai: 4, deepseek: 5, swebench: 6, frontiermath: 7, epoch: 8 } as const;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -403,13 +402,16 @@ export function Page15() {
         </section>
 
         <Note kicker="References">
+          <RefItem n={REF.gsm8k} href="https://arxiv.org/abs/2110.14168">
+            Cobbe et al. 2021, <em>GSM8K</em>.
+          </RefItem>
           <RefItem n={REF.math} href="https://arxiv.org/abs/2103.03874">
             Hendrycks et al. 2021, <em>MATH</em>.
           </RefItem>
           <RefItem n={REF.gpqa} href="https://arxiv.org/abs/2311.12022">
             Rein et al. 2023, <em>GPQA</em>.
           </RefItem>
-          <RefItem n={REF.openai} href="https://openai.com/index/learning-to-reason-with-llms/">
+          <RefItem n={REF.openai} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
             OpenAI 2024, the o1 and o3 announcements.
           </RefItem>
           <RefItem n={REF.deepseek} href="https://arxiv.org/abs/2501.12948">
@@ -425,17 +427,12 @@ export function Page15() {
             Epoch AI and TechCrunch 2025, on the FrontierMath dispute.
           </RefItem>
           <p>
-            The remaining dot-level sources (Cobbe et al. 2021; OpenAI 2023; Anthropic 2024; Wei et
-            al. 2022) travel with their dots — select one in step 1 for its receipt.
+            Dot-level sources not listed above (OpenAI 2023; Anthropic 2024; Wei et al. 2022) travel
+            with their dots: select one in step 1 for its receipt.
           </p>
         </Note>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {benchmarks.map((b) => (
-          <CitationBadge key={b.key} citation={b.citation} />
-        ))}
-      </div>
       <p className="text-xs text-ink-muted">
         every dot is transcribed verbatim from the cited report — announcement figures (o3,
         FrontierMath) are vendor-reported and not peer-reviewed, and each one&apos;s caveat travels

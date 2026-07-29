@@ -46,7 +46,6 @@
 
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
@@ -604,10 +603,7 @@ export function Page12() {
         </Note>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={paper.citation} />
-        <CitationBadge citation={QUIET_STAR} />
-      </div>
+      
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
           <strong className="text-ink">Simulated</strong> — the loop in section 1 is a seeded

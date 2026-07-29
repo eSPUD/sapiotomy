@@ -23,11 +23,10 @@
  *
  * Layout: pages 1-10 shell — numbered steps in one reading column, margin
  * notes as numbered cites (Cite/RefItem) or a one-line operating hint,
- * CitationBadge stubs at the bottom, no footnotes.
+ * references in the margin notes only, no footnotes.
  */
 
 import { useMemo, useState } from "react";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
@@ -291,7 +290,7 @@ export function Page18() {
           </div>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.chen} href="https://arxiv.org/abs/2505.05410">
+          <RefItem n={REF.chen} href="https://arxiv.org/abs/2505.05410" preprint>
             Chen et al. 2025, <em>Reasoning Models Don&apos;t Always Say What They Think</em>.
           </RefItem>
           <RefItem n={REF.turpin} href="https://arxiv.org/abs/2305.04388">
@@ -345,11 +344,11 @@ export function Page18() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.baker} href="https://arxiv.org/abs/2503.11926">
+          <RefItem n={REF.baker} href="https://arxiv.org/abs/2503.11926" preprint>
             Baker et al. 2025, <em>Monitoring Reasoning Models for Misbehavior and the Risks of
             Promoting Obfuscation</em>.
           </RefItem>
-          <RefItem n={REF.korbak} href="https://arxiv.org/abs/2507.11473">
+          <RefItem n={REF.korbak} href="https://arxiv.org/abs/2507.11473" preprint>
             Korbak et al. 2025, <em>Chain of Thought Monitorability</em>.
           </RefItem>
         </Note>
@@ -461,12 +460,7 @@ export function Page18() {
         <div aria-hidden="true" />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={faith.citation} />
-        <CitationBadge citation={obf.citation} />
-        <CitationBadge citation={KORBAK} />
-        <CitationBadge citation={TURPIN} />
-      </div>
+      
       <p className="text-xs text-ink-muted">
         The probe&apos;s traces and the pressure-curve shapes are written for this page; every
         percentage is the cited paper&apos;s, pinned in the test suite. The misalignment-hint

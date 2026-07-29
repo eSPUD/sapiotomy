@@ -42,7 +42,6 @@
 
 import { useMemo, useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
@@ -317,7 +316,7 @@ export function Page13() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/">
+          <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
             OpenAI 2024, <em>Learning to Reason with LLMs</em>.
           </RefItem>
         </Note>
@@ -409,10 +408,10 @@ export function Page13() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.o3preview} href="https://arcprize.org/blog/oai-o3-pub-breakthrough">
+          <RefItem n={REF.o3preview} href="https://arcprize.org/blog/oai-o3-pub-breakthrough" preprint>
             OpenAI 2024, <em>OpenAI o3 preview</em> (via ARC Prize).
           </RefItem>
-          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807">
+          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807" preprint>
             El-Kishky et al. 2025, <em>Competitive Programming with Large Reasoning Models</em>.
           </RefItem>
         </Note>
@@ -498,18 +497,13 @@ export function Page13() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.systemCard} href="https://openai.com/index/openai-o1-system-card/">
+          <RefItem n={REF.systemCard} href="https://openai.com/index/openai-o1-system-card/" preprint>
             OpenAI 2024, <em>OpenAI o1 System Card</em>.
           </RefItem>
         </Note>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={SCALING.citation} />
-        <CitationBadge citation={O3.citation} />
-        <CitationBadge citation={SYSTEM_CARD} />
-        <CitationBadge citation={COMPETITIVE_PROGRAMMING} />
-      </div>
+      
       <p className="text-xs text-ink-muted">
         <strong className="text-ink">Simulated</strong> — the section 1 curve is a redrawing of an
         unlabeled-axis figure, preserving its log-linear shape and two-decade span; the absolute

@@ -48,7 +48,6 @@
 import { useEffect, useRef, useState } from "react";
 import { scaleLinear, scaleLog } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -795,10 +794,7 @@ export function Page14() {
         </Note>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={distill.citation} />
-        <CitationBadge citation={GRPO_CITATION} />
-      </div>
+      
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
           <strong className="text-ink">Simulated</strong> — the training curve&apos;s intermediate

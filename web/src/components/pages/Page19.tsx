@@ -12,7 +12,6 @@
  */
 
 import { useState } from "react";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -218,7 +217,7 @@ export function Page19() {
           <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
           </RefItem>
-          <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393">
+          <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
             Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em>.
           </RefItem>
         </Note>
@@ -253,7 +252,7 @@ export function Page19() {
           <RefItem n={REF.react} href="https://arxiv.org/abs/2210.03629">
             Yao et al. 2023, <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>.
           </RefItem>
-          <RefItem n={REF.ioi} href="https://arxiv.org/abs/2502.06807">
+          <RefItem n={REF.ioi} href="https://arxiv.org/abs/2502.06807" preprint>
             OpenAI 2025, <em>Competitive Programming with Large Reasoning Models</em>.
           </RefItem>
         </Note>
@@ -442,12 +441,7 @@ export function Page19() {
         once.
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={coco.citation} />
-        <CitationBadge citation={snell.citation} />
-        <CitationBadge citation={s1.citation} />
-        <CitationBadge citation={REACT_CITATION} />
-      </div>
+      
       <p className="text-xs text-ink-muted">
         Step 1&apos;s bars are verbatim from the Coconut results table (GPT-2-scale experiments;
         accuracy and thought-token counts). Step 4 is an illustrative composite, not a live model.

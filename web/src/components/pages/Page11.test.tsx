@@ -140,16 +140,15 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     }
   });
 
-  it("links every mention of a paper to that paper, badge and reference alike", () => {
+  it("links each reference to its paper, opening in a new tab", () => {
     render(<Page11 />);
-    // Each work is now linked twice: the inline citation badge and the numbered
-    // entry in the References note. Both must point at the same paper.
+    // References live in the margin notes only, so each work is linked once.
     for (const [name, href] of [
       [/Snell et al\. 2024/, "https://arxiv.org/abs/2408.03314"],
       [/Wu et al\. 2024/, "https://arxiv.org/abs/2408.00724"],
     ] as const) {
       const links = screen.getAllByRole("link", { name });
-      expect(links.length).toBeGreaterThanOrEqual(2);
+      expect(links.length).toBeGreaterThanOrEqual(1);
       for (const a of links) {
         expect(a).toHaveAttribute("href", href);
         expect(a).toHaveAttribute("target", "_blank");

@@ -16,7 +16,6 @@
  */
 
 import { useMemo, useState } from "react";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
@@ -321,7 +320,7 @@ export function Page17() {
             <RefItem n={REF.wang} href="https://arxiv.org/abs/2501.18585">
               Wang et al. 2025, <em>Thoughts Are All Over the Place</em>.
             </RefItem>
-            <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
+            <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
               Stroebl et al. 2024, <em>Inference Scaling fLaws</em> — the verifier ceiling, from
               page 8.
             </RefItem>
@@ -357,20 +356,14 @@ export function Page17() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.balachandran} href="https://arxiv.org/abs/2504.00294">
+          <RefItem n={REF.balachandran} href="https://arxiv.org/abs/2504.00294" preprint>
             Balachandran et al. 2025, <em>Inference-Time Scaling for Complex Tasks: Where We Stand
             and What Lies Ahead</em>.
           </RefItem>
         </Note>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={huang.citation} />
-        <CitationBadge citation={ZENG} />
-        <CitationBadge citation={WANG} />
-        <CitationBadge citation={STROEBL} />
-        <CitationBadge citation={BALACHANDRAN} />
-      </div>
+      
       <p className="text-xs text-ink-muted">
         the bar panels are verbatim Table 3 values from Huang et al. (ICLR 2024, arXiv:2310.01798)
         · the slider demo is an exact three-state chain, not a digitized curve: no paper fixes its

@@ -39,7 +39,6 @@
 import { useState } from "react";
 import { scaleLinear, scaleLog } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
-import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -848,10 +847,7 @@ export function Page11() {
         </section>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={curves.computeOptimal.citation} />
-        <CitationBadge citation={curves.rebasePareto.citation} />
-      </div>
+      
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
           <strong className="text-ink">Simulated</strong> — the allocator curves in section 1 are
