@@ -345,6 +345,8 @@ export function Page3() {
                 label: "the frontier model of the day, daily",
               }}
               primaryLabel={`the same model, daily (flat GPT-4-class $${RUN_M}M rate)`}
+              primaryTone="ink"
+              secondaryTone="wrong"
               markerX={months}
               onMarkerChange={onMonths}
               markerLabel="Drag through the first year of keeping the plan up"

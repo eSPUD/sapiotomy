@@ -4,6 +4,21 @@ import { useId, useRef } from "react";
 import { scaleLinear, scaleLog, line as d3line } from "d3";
 import { ChartFrame, CHART_MARGIN } from "./ChartFrame";
 
+/** The hues a line may take, mapped to the theme's stroke/fill utilities. */
+export type ChartTone = "correct" | "compute" | "wrong" | "ink";
+const STROKE: Record<ChartTone, string> = {
+  correct: "stroke-correct",
+  compute: "stroke-compute",
+  wrong: "stroke-wrong",
+  ink: "stroke-ink",
+};
+const FILL: Record<ChartTone, string> = {
+  correct: "fill-correct",
+  compute: "fill-compute",
+  wrong: "fill-wrong",
+  ink: "fill-ink",
+};
+
 export interface LineChartProps {
   title: string;
   points: { x: number; y: number }[];
@@ -34,6 +49,13 @@ export interface LineChartProps {
   /** Draw the secondary line fainter and thinner — context, not a co-star. */
   secondaryFaint?: boolean;
   primaryLabel?: string;
+  /**
+   * Hue for each line and its legend swatch. Default to the house pair
+   * (correct/compute); override when a page already colours the same two
+   * quantities elsewhere, so the chart and its readouts agree.
+   */
+  primaryTone?: ChartTone;
+  secondaryTone?: ChartTone;
   /** Shade the area between the primary and secondary lines (the gap itself). */
   fillBetween?: boolean;
   /** Opacity of the fillBetween band (raise it when the band IS the point). */
@@ -105,6 +127,8 @@ export function LineChart({
   secondary,
   secondaryFaint = false,
   primaryLabel,
+  primaryTone = "correct",
+  secondaryTone = "compute",
   fillBetween = false,
   fillOpacity = 0.12,
   arrows,
@@ -273,12 +297,14 @@ export function LineChart({
         <path
           d={secondaryPath}
           fill="none"
-          className="stroke-compute"
-          strokeWidth={secondaryFaint ? 1.5 : 2.5}
+          className={STROKE[secondaryTone]}
+          strokeWidth={secondaryFaint ? 1.5 : 3}
           strokeOpacity={secondaryFaint ? 0.55 : 1}
         />
       ) : null}
-      {path ? <path d={path} fill="none" className="stroke-correct" strokeWidth={2.5} /> : null}
+      {path ? (
+        <path d={path} fill="none" className={STROKE[primaryTone]} strokeWidth={3} />
+      ) : null}
 
       {/* dot every real data point on both lines (surface ring keeps them off the line) */}
       {markPoints ? (
@@ -335,13 +361,13 @@ export function LineChart({
         <g>
           {primaryLabel ? (
             <>
-              <rect x={8} y={8} width={10} height={3} className="fill-correct" />
+              <rect x={8} y={8} width={10} height={3} className={FILL[primaryTone]} />
               <text x={22} y={12} className="fill-ink text-[10px]">{primaryLabel}</text>
             </>
           ) : null}
           {secondary?.label ? (
             <>
-              <rect x={8} y={22} width={10} height={3} className="fill-compute" />
+              <rect x={8} y={22} width={10} height={3} className={FILL[secondaryTone]} />
               <text x={22} y={26} className="fill-ink text-[10px]">{secondary.label}</text>
             </>
           ) : null}
