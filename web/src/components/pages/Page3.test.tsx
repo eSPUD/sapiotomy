@@ -128,8 +128,8 @@ describe("Page 3 (Training Daily?)", () => {
   it("the size dial converts parameters into reading, and says when it exceeds the stock", () => {
     render(<Page3 />);
     // Default 1000B x 20 tokens/param = 20T tokens, under the 300T stock. The
-    // bar's readout and the sentence beneath it quote the same figure.
-    expect(screen.getAllByText("≈20T")).toHaveLength(2);
+    // bar carries the figure; the prose no longer restates it.
+    expect(screen.getAllByText("≈20T")).toHaveLength(1);
     expect(screen.getByText(/6\.67% of everything ever written/)).toBeInTheDocument();
     // 20,000B x 20 = 400T: more text than humans have written.
     dragParams(20000);

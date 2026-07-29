@@ -443,12 +443,11 @@ export function Page3() {
             className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
           >
             <p className="text-sm text-ink">
-              Suppose money were no object. It still fails. The other way to make a model smarter is
-              to make it <strong>bigger</strong>, but a bigger model only pays off if it also{" "}
-              <strong>reads more</strong>, in step: about {cp.tokensPerParam} tokens for every
-              parameter. Size and reading climb together: that is the scaling law.
-              <Cite n={REF.chinchilla} /> So the ceiling was never the money. It is how much there
-              is worth reading.
+              Suppose money were no object. It still fails. A <strong>bigger</strong> model only pays
+              off if it also <strong>reads more</strong>, in step: about {cp.tokensPerParam} tokens
+              per parameter. Size and reading climb together, and that is the scaling law.
+              <Cite n={REF.chinchilla} /> So the ceiling was never money. It is how much there is
+              worth reading.
             </p>
             <div className="rounded-lg border border-grid bg-surface-raised p-4">
               <p className="text-xs uppercase tracking-wide text-ink-muted">
@@ -474,12 +473,9 @@ export function Page3() {
             />
             <ReadingBar tokensT={tokensT} stockT={STOCK_T} />
             <p className="text-sm text-ink-muted">
-              A <strong className="text-ink">{fmtParams(paramsB)}</strong>
-              -parameter model wants <strong className="text-ink">≈{fmtT(tokensT)}</strong> tokens
-              of training text. Push the dial to{" "}
-              <strong className="text-ink">{fmtParams(paramsAtFullStock)}</strong> and the recipe
-              asks for every
-              quality token humans have written — and the field is already on course to use the lot.{" "}
+              Push the dial to <strong className="text-ink">{fmtParams(paramsAtFullStock)}</strong>{" "}
+              and the recipe asks for every quality token humans have written, and the field is
+              already on course to use the lot.{" "}
               <strong className="text-ink">No budget buys tokens that do not exist.</strong>
             </p>
             <DataWindowMeter
