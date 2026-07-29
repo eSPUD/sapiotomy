@@ -21,8 +21,11 @@
  * only on this page; the answer-time alternative is the next page's business.
  * No inference talk here.
  *
- * Layout rule: no reveals, no drag-to-unlock. Shell matches page 1 exactly —
- * numbered steps down the left, each followed by its margin cell. Citations
+ * Layout rule: no reveals, no drag-to-unlock. TWO numbered sections down the
+ * left, one per failure page 2 raises: the knowledge gap (cost, lag, aim, data)
+ * and the bias. The figures are h3 sub-heads inside them, so the page reads as
+ * two arguments rather than a list of walls. Each section is followed by its
+ * margin cell. Citations
  * follow the page-2 house style: numbered inline markers (Cite) at the claim
  * they support, a References margin note (RefItem) beside the step that uses
  * each source. References live only in those margin notes; non-peer-reviewed
@@ -350,14 +353,18 @@ export function Page3() {
 
       {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the bill */}
-        <section className="flex min-w-0 flex-col gap-3">
+        {/* Section 1 — everything that stands between retraining and the knowledge gap */}
+        <section className="flex min-w-0 flex-col gap-4">
           <h2 className="text-xl font-semibold text-ink">
-            1. The bill compounds
+            1. Challenges in addressing knowledge gaps
+          </h2>
+
+          <h3 className="text-lg font-semibold text-ink">
+            The bill compounds
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               derived from the two Epoch trends
             </span>
-          </h2>
+          </h3>
           <figure
             aria-label="Problem one: the bill compounds"
             className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
@@ -455,30 +462,13 @@ export function Page3() {
             You buy the whole distribution to obtain a single result, which is a wild mismatch
             between what you pay for and what you needed.
           </p>
-        </section>
-        <Note kicker="References">
-          <RefItem n={REF.computeGrowth} href="https://epoch.ai/blog/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year" preprint>
-            Sevilla &amp; Rold&aacute;n 2024,{" "}
-            <em>Training Compute of Frontier AI Models Grows by 4&ndash;5x per Year</em> (Epoch
-            AI).
-          </RefItem>
-          <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models" preprint>
-            Cottier et al. 2024, <em>How Much Does It Cost to Train Frontier AI Models?</em>{" "}
-            (Epoch AI).
-          </RefItem>
-          <RefItem n={REF.runCost} href="https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf" preprint>
-            Epoch AI via the Stanford HAI <em>AI Index Report 2024</em>.
-          </RefItem>
-        </Note>
 
-        {/* Step 2 — the data */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. Bigger models, finite data
+          <h3 className="text-lg font-semibold text-ink">
+            Bigger models, finite data
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               cited stock, derived demand
             </span>
-          </h2>
+          </h3>
           <section
             aria-label="Problem two: the data runs out"
             className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
@@ -575,7 +565,20 @@ export function Page3() {
 
           </section>
         </section>
+
         <Note kicker="References">
+          <RefItem n={REF.computeGrowth} href="https://epoch.ai/blog/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year" preprint>
+            Sevilla &amp; Rold&aacute;n 2024,{" "}
+            <em>Training Compute of Frontier AI Models Grows by 4&ndash;5x per Year</em> (Epoch
+            AI).
+          </RefItem>
+          <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models" preprint>
+            Cottier et al. 2024, <em>How Much Does It Cost to Train Frontier AI Models?</em>{" "}
+            (Epoch AI).
+          </RefItem>
+          <RefItem n={REF.runCost} href="https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf" preprint>
+            Epoch AI via the Stanford HAI <em>AI Index Report 2024</em>.
+          </RefItem>
           <RefItem n={REF.chinchilla} href="https://arxiv.org/abs/2203.15556">
             Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS
             2022).
@@ -594,10 +597,13 @@ export function Page3() {
           </RefItem>
         </Note>
 
-        {/* Step 3 — the failure retraining was never going to reach */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. None of it touches the bias</h2>
-          <p className="text-ink">
+        {/* Section 2 — the failure retraining was never going to reach, and the pivot */}
+        <section className="flex min-w-0 flex-col gap-4">
+          <h2 className="text-xl font-semibold text-ink">
+            2. Challenges in addressing knowledge bias
+          </h2>
+
+                    <p className="text-ink">
             Everything above answers one of Page 2&apos;s two failures. The model held the 2023 title
             the whole time and dropped it anyway, so that miss was never about what it had read.
           </p>
@@ -614,25 +620,13 @@ export function Page3() {
             honest is a training procedure of its own, applied after the fact.
             <Cite n={REF.hhh} /> A bigger pretraining run does not hand it to you.
           </p>
-        </section>
-        <Note kicker="References">
-          <RefItem n={REF.collapse} href="https://www.nature.com/articles/s41586-024-07566-y">
-            Shumailov et al. 2024, <em>AI models collapse when trained on recursively generated
-            data</em> (Nature).
-          </RefItem>
-          <RefItem n={REF.hhh} href="https://arxiv.org/abs/2112.00861" preprint>
-            Askell et al. 2021, <em>A General Language Assistant as a Laboratory for Alignment</em>.
-          </RefItem>
-        </Note>
 
-        {/* Step 4 — the guess */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            4. So what is left?
+          <h3 className="text-lg font-semibold text-ink">
+            So what is left?
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               optional · skip freely
             </span>
-          </h2>
+          </h3>
           <section
             aria-label="The guess"
             className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
@@ -698,6 +692,16 @@ export function Page3() {
             )}
           </section>
         </section>
+
+        <Note kicker="References">
+          <RefItem n={REF.collapse} href="https://www.nature.com/articles/s41586-024-07566-y">
+            Shumailov et al. 2024, <em>AI models collapse when trained on recursively generated
+            data</em> (Nature).
+          </RefItem>
+          <RefItem n={REF.hhh} href="https://arxiv.org/abs/2112.00861" preprint>
+            Askell et al. 2021, <em>A General Language Assistant as a Laboratory for Alignment</em>.
+          </RefItem>
+        </Note>
         <div aria-hidden="true" />
       </div>
 
