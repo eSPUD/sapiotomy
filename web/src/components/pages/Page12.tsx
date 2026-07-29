@@ -14,8 +14,7 @@
  * regime a number belongs to — the chart's two lines carry the same labels.
  * The pool renders as a single easy→hard strip with a marker at the solve
  * frontier (the difficulty where solving is a coin flip — per-problem
- * threshold noise means squares scatter around it, which is the point:
- * sampling is stochastic). Squares gained this pass are outlined, so the
+ * threshold noise scatters squares around it). Squares gained this pass are outlined, so the
  * plateau arrives visibly as the highlights dry up, before the chart says so.
  * The mechanism is illustrative and seeded, not a digitized curve: 60 problems with
  * fixed per-problem solvability thresholds, so the solved set grows exactly
@@ -34,14 +33,17 @@
  * fine-tuned on the full human-labelled training set.
  *
  * Section 3 is the loop written down: the paper's Algorithm 1 compressed to
- * ten annotated pseudocode lines, a plain-language walkthrough for readers who
- * don't parse pseudocode, and one dense wrap-up in place of separate intuition
- * blocks: RL in disguise (sample, reward, imitate), non-circular (the filter
- * distills lucky samples into reliable skill), only as sound as its filter
- * (answers are checked, reasoning is not), Quiet-STaR as the limit case (any
- * text; every sentence carries its own answer key). The V-STaR/ReST^EM lineage
- * is deliberately omitted — technical intuition over history — and the closing
- * card hands off to page 13: o1 and R1 run this loop with the RL made explicit.
+ * ten annotated pseudocode lines — the annotation column doubles as the
+ * plain-English reading and the RL mapping — followed by exactly two blocks:
+ * the page's one counterweight (the filter reads answers, never arguments; the
+ * paper's own stated limitation, and the only place the page admits the loop
+ * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
+ * to page 13. A correction that must hold: STaR decodes greedily, one attempt
+ * per problem — the paper reports higher temperatures reach more right answers
+ * through wrong reasoning — so improvement is generalization, not distilled
+ * luck: each round's fine-tuned model is a different model whose greedy output
+ * reaches harder problems. That is the ratchet, stated in section 1's caption.
+ * The V-STaR/ReST^EM lineage is deliberately omitted — intuition over history.
  *
  * Sidenote convention as on page 2: a state-matrix note beside the interactive,
  * numbered References notes (Cite/RefItem) beside the steps that use them,
@@ -72,7 +74,7 @@ const POOL = starInit();
 const CHANCE = 100 / STAR_CHOICES;
 
 /** Page 12's references, numbered in order of first appearance. */
-const REF = { star: 1, quietStar: 2 } as const;
+const REF = { star: 1 } as const;
 
 /**
  * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. Each line
@@ -561,32 +563,28 @@ export function Page12() {
             </figcaption>
           </figure>
 
-          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">The algorithm, explained.</strong> Start with a
-            pretrained model and a stack of problems whose correct answers you know. There are no
-            worked solutions, only the answers. For each problem, the model writes out its
-            reasoning and ends with an answer. If that answer matches the key, the reasoning is
-            kept. If it misses, the model gets one more try with the correct answer shown as a
-            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
-            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
-            everything kept, and the loop starts over with a slightly better model writing the
-            next round of reasoning.
-          </p>
-
-          <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">Read it again: reinforcement learning in disguise.</strong>{" "}
-            Line 5 samples from a policy, line 6 pays the reward, line 10 imitates what got paid.
-            Nothing circular here — sampling is stochastic, so the model <em>sometimes</em> writes
-            reasoning it cannot yet write <em>reliably</em>, and the filter distills luck into
-            skill; when nothing new passes, that is section 1&apos;s plateau, the boundary
-            rationalization pushes out. The soft spot: the filter checks <em>answers</em>, never{" "}
-            <em>reasoning</em>, so a wrong argument with a right answer trains and multiplies —
-            the loop is only ever as sound as its filter.
-            <Cite n={REF.star} /> Quiet-STaR takes the shape to its limit: think before every
-            token of <em>any</em> text, rewarding a thought when it makes the next tokens more
-            predictable — every sentence carries its own answer key.
-            <Cite n={REF.quietStar} />
-          </p>
+          <div className="flex flex-col gap-3 rounded border-l-4 border-wrong bg-surface p-4 text-base text-ink">
+            <p>
+              <strong className="text-ink">The filter reads answers, never arguments.</strong>{" "}
+              Wrong reasoning that lands on a right answer is kept and multiplied.
+              <Cite n={REF.star} /> The loop is only ever as sound as its filter — which is why
+              the next papers build verifiers that read the reasoning itself.
+            </p>
+            <div className="flex max-w-sm items-stretch gap-2" aria-hidden="true">
+              <div className="min-w-0 flex-[2] rounded-lg border border-dashed border-grid bg-surface-raised p-2.5">
+                <p className="text-sm font-semibold text-ink-muted">reasoning</p>
+                <p className="text-xs text-ink-muted">right or wrong, unread</p>
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <div className="rounded-lg border-2 border-correct bg-surface-raised p-2.5">
+                  <p className="text-sm font-semibold text-ink">answer ✓</p>
+                </div>
+                <p className="mt-1 border-t-2 border-correct pt-1 text-[10px] uppercase tracking-wide text-ink-muted">
+                  the key reads only this
+                </p>
+              </div>
+            </div>
+          </div>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
             o1 and R1 keep exactly this loop — sample reasoning, score it, reinforce what
@@ -595,12 +593,6 @@ export function Page12() {
             <em>Page 13 picks it up from there.</em>
           </p>
         </section>
-
-        <Note kicker="References">
-          <RefItem n={REF.quietStar} href="https://arxiv.org/abs/2403.09629">
-            Zelikman et al. 2024, <em>Quiet-STaR</em>.
-          </RefItem>
-        </Note>
       </div>
 
       
