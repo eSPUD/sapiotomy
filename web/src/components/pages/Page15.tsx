@@ -403,22 +403,22 @@ export function Page15() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.math}>
+          <RefItem n={REF.math} href="https://arxiv.org/abs/2103.03874">
             Hendrycks et al. 2021, <em>MATH</em>.
           </RefItem>
-          <RefItem n={REF.gpqa}>
+          <RefItem n={REF.gpqa} href="https://arxiv.org/abs/2311.12022">
             Rein et al. 2023, <em>GPQA</em>.
           </RefItem>
-          <RefItem n={REF.openai}>
+          <RefItem n={REF.openai} href="https://openai.com/index/learning-to-reason-with-llms/">
             OpenAI 2024, the o1 and o3 announcements.
           </RefItem>
-          <RefItem n={REF.deepseek}>
+          <RefItem n={REF.deepseek} href="https://arxiv.org/abs/2501.12948">
             DeepSeek-AI 2025.
           </RefItem>
-          <RefItem n={REF.swebench}>
+          <RefItem n={REF.swebench} href="https://arxiv.org/abs/2310.06770">
             Jimenez et al. 2024, <em>SWE-bench</em>.
           </RefItem>
-          <RefItem n={REF.frontiermath}>
+          <RefItem n={REF.frontiermath} href="https://arxiv.org/abs/2411.04872">
             Glazer et al. 2024, <em>FrontierMath</em>.
           </RefItem>
           <RefItem n={REF.epoch}>

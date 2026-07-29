@@ -391,16 +391,16 @@ export function Page3() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.computeGrowth}>
+          <RefItem n={REF.computeGrowth} href="https://epoch.ai/blog/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year">
             Sevilla &amp; Rold&aacute;n 2024,{" "}
             <em>Training Compute of Frontier AI Models Grows by 4&ndash;5x per Year</em> (Epoch
             AI).
           </RefItem>
-          <RefItem n={REF.trainTrend}>
+          <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models">
             Cottier et al. 2024, <em>How Much Does It Cost to Train Frontier AI Models?</em>{" "}
             (Epoch AI).
           </RefItem>
-          <RefItem n={REF.runCost}>
+          <RefItem n={REF.runCost} href="https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf">
             Epoch AI via the Stanford HAI <em>AI Index Report 2024</em>.
           </RefItem>
         </Note>
@@ -465,11 +465,11 @@ export function Page3() {
           </section>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.chinchilla}>
+          <RefItem n={REF.chinchilla} href="https://arxiv.org/abs/2203.15556">
             Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS
             2022).
           </RefItem>
-          <RefItem n={REF.dataStock}>
+          <RefItem n={REF.dataStock} href="https://arxiv.org/abs/2211.04325">
             Villalobos et al. 2024, <em>Will We Run Out of Data? Limits of LLM Scaling Based on
             Human-Generated Data</em> (Epoch AI &middot; arXiv 2211.04325).
           </RefItem>

@@ -269,7 +269,7 @@ export function Page2() {
           <PullQuote>Are knowledge biases addressable by System 2 thinking?</PullQuote>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.winobias}>
+          <RefItem n={REF.winobias} href="https://arxiv.org/abs/1804.06876">
             Zhao et al., &ldquo;Gender Bias in Coreference Resolution: Evaluation and Debiasing
             Methods&rdquo; (NAACL 2018).
           </RefItem>

@@ -140,16 +140,22 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     }
   });
 
-  it("links both citation badges to their papers", () => {
+  it("links every mention of a paper to that paper, badge and reference alike", () => {
     render(<Page11 />);
-    expect(screen.getByRole("link", { name: /Snell et al\. 2024/ })).toHaveAttribute(
-      "href",
-      "https://arxiv.org/abs/2408.03314",
-    );
-    expect(screen.getByRole("link", { name: /Wu et al\. 2024/ })).toHaveAttribute(
-      "href",
-      "https://arxiv.org/abs/2408.00724",
-    );
+    // Each work is now linked twice: the inline citation badge and the numbered
+    // entry in the References note. Both must point at the same paper.
+    for (const [name, href] of [
+      [/Snell et al\. 2024/, "https://arxiv.org/abs/2408.03314"],
+      [/Wu et al\. 2024/, "https://arxiv.org/abs/2408.00724"],
+    ] as const) {
+      const links = screen.getAllByRole("link", { name });
+      expect(links.length).toBeGreaterThanOrEqual(2);
+      for (const a of links) {
+        expect(a).toHaveAttribute("href", href);
+        expect(a).toHaveAttribute("target", "_blank");
+        expect(a).toHaveAttribute("rel", "noopener noreferrer");
+      }
+    }
   });
 
   it("discloses simulated vs cited in the two-label footer, page-12 style", () => {

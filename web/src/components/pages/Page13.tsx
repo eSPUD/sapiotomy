@@ -317,7 +317,7 @@ export function Page13() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.announce}>
+          <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/">
             OpenAI 2024, <em>Learning to Reason with LLMs</em>.
           </RefItem>
         </Note>
@@ -409,10 +409,10 @@ export function Page13() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.o3preview}>
+          <RefItem n={REF.o3preview} href="https://arcprize.org/blog/oai-o3-pub-breakthrough">
             OpenAI 2024, <em>OpenAI o3 preview</em> (via ARC Prize).
           </RefItem>
-          <RefItem n={REF.competitive}>
+          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807">
             El-Kishky et al. 2025, <em>Competitive Programming with Large Reasoning Models</em>.
           </RefItem>
         </Note>
@@ -498,7 +498,7 @@ export function Page13() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.systemCard}>
+          <RefItem n={REF.systemCard} href="https://openai.com/index/openai-o1-system-card/">
             OpenAI 2024, <em>OpenAI o1 System Card</em>.
           </RefItem>
         </Note>

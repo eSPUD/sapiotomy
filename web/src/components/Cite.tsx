@@ -18,12 +18,39 @@ export function Cite({ n }: { n: number }) {
   );
 }
 
-/** One numbered entry in a References margin note. */
-export function RefItem({ n, children }: { n: number; children: React.ReactNode }) {
+/**
+ * One numbered entry in a References margin note.
+ *
+ * Pass `href` for anything with a canonical page (arXiv abstract, DOI, lab
+ * post). The entry then becomes a link that opens in a new tab, permanently
+ * underlined: axe flags underline-on-hover-only links inside text blocks, and
+ * the reader needs to see it is clickable without hovering. Entries without a
+ * stable URL, printed books for instance, stay plain text.
+ */
+export function RefItem({
+  n,
+  href,
+  children,
+}: {
+  n: number;
+  href?: string;
+  children: React.ReactNode;
+}) {
   return (
     <p className="flex gap-1.5">
       <span className="font-semibold text-compute">{n}.</span>
-      <span>{children}</span>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline decoration-grid underline-offset-2 hover:text-ink"
+        >
+          {children}
+        </a>
+      ) : (
+        <span>{children}</span>
+      )}
     </p>
   );
 }

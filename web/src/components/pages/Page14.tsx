@@ -556,11 +556,11 @@ export function Page14() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.r1}>
+          <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
             DeepSeek-AI 2025, <em>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via
             Reinforcement Learning</em>.
           </RefItem>
-          <RefItem n={REF.grpo}>
+          <RefItem n={REF.grpo} href="https://arxiv.org/abs/2402.03300">
             Shao et al. 2024, <em>DeepSeekMath</em> (GRPO).
           </RefItem>
         </Note>
@@ -789,7 +789,7 @@ export function Page14() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.r1}>
+          <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
             DeepSeek-AI 2025, Tables 4–5. Distilled weights released under the MIT license.
           </RefItem>
         </Note>

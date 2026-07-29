@@ -339,10 +339,10 @@ export function Page16() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.arcPrize}>
+          <RefItem n={REF.arcPrize} href="https://arcprize.org/blog/oai-o3-pub-breakthrough">
             ARC Prize Foundation 2024, <em>o3 Breakthrough on ARC-AGI-Pub</em>.
           </RefItem>
-          <RefItem n={REF.bender}>
+          <RefItem n={REF.bender} href="https://arxiv.org/abs/2501.07458">
             Bender et al. 2025, <em>OpenAI&apos;s o3 Is Not AGI</em>.
           </RefItem>
         </Note>
@@ -406,11 +406,11 @@ export function Page16() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.pricing}>DeepSeek API pricing, January 2025.</RefItem>
-          <RefItem n={REF.brown}>
+          <RefItem n={REF.pricing} href="https://api-docs.deepseek.com/quick_start/pricing">DeepSeek API pricing, January 2025.</RefItem>
+          <RefItem n={REF.brown} href="https://arxiv.org/abs/2407.21787">
             Brown et al. 2024, <em>Large Language Monkeys</em>.
           </RefItem>
-          <RefItem n={REF.stroebl}>
+          <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
             Stroebl et al. 2024, <em>Inference Scaling fLaws</em>.
           </RefItem>
         </Note>
@@ -574,10 +574,10 @@ export function Page16() {
           <p>Hold 72% and push the volume: renting wins early, owning wins late.</p>
           <p>Then hold the volume and raise the target past ~77%: the samples stop paying.</p>
           <p className="pt-1 text-xs font-semibold uppercase tracking-wide">References</p>
-          <RefItem n={REF.snell}>
+          <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
           </RefItem>
-          <RefItem n={REF.r1}>DeepSeek-R1 2025 (the retraining bill).</RefItem>
+          <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">DeepSeek-R1 2025 (the retraining bill).</RefItem>
         </Note>
       </div>
 

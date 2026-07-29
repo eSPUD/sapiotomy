@@ -777,7 +777,7 @@ export function Page11() {
           </div>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.snell}>
+          <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally can be More Effective
             than Scaling Model Parameters</em>.
           </RefItem>
@@ -808,7 +808,7 @@ export function Page11() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.wu}>
+          <RefItem n={REF.wu} href="https://arxiv.org/abs/2408.00724">
             Wu et al. 2024, <em>Inference Scaling Laws: An Empirical Analysis of Compute-Optimal
             Inference</em>.
           </RefItem>

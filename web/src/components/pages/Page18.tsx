@@ -291,10 +291,10 @@ export function Page18() {
           </div>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.chen}>
+          <RefItem n={REF.chen} href="https://arxiv.org/abs/2505.05410">
             Chen et al. 2025, <em>Reasoning Models Don&apos;t Always Say What They Think</em>.
           </RefItem>
-          <RefItem n={REF.turpin}>
+          <RefItem n={REF.turpin} href="https://arxiv.org/abs/2305.04388">
             Turpin et al. 2023, <em>Language Models Don&apos;t Always Say What They Think</em>.
           </RefItem>
         </Note>
@@ -345,11 +345,11 @@ export function Page18() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.baker}>
+          <RefItem n={REF.baker} href="https://arxiv.org/abs/2503.11926">
             Baker et al. 2025, <em>Monitoring Reasoning Models for Misbehavior and the Risks of
             Promoting Obfuscation</em>.
           </RefItem>
-          <RefItem n={REF.korbak}>
+          <RefItem n={REF.korbak} href="https://arxiv.org/abs/2507.11473">
             Korbak et al. 2025, <em>Chain of Thought Monitorability</em>.
           </RefItem>
         </Note>

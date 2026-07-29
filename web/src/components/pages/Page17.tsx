@@ -189,7 +189,7 @@ export function Page17() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.huang}>
+          <RefItem n={REF.huang} href="https://arxiv.org/abs/2310.01798">
             Huang et al. 2024, <em>Large Language Models Cannot Self-Correct Reasoning Yet</em>{" "}
             (ICLR 2024), Table 3. &ldquo;Round&rdquo; = the model is shown its own answer and asked
             to review and revise it, with no external feedback.
@@ -314,14 +314,14 @@ export function Page17() {
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
               References
             </p>
-            <RefItem n={REF.zeng}>
+            <RefItem n={REF.zeng} href="https://arxiv.org/abs/2502.12215">
               Zeng et al. 2025, <em>Revisiting the Test-Time Scaling of o1-like Models</em> (ACL
               2025).
             </RefItem>
-            <RefItem n={REF.wang}>
+            <RefItem n={REF.wang} href="https://arxiv.org/abs/2501.18585">
               Wang et al. 2025, <em>Thoughts Are All Over the Place</em>.
             </RefItem>
-            <RefItem n={REF.stroebl}>
+            <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
               Stroebl et al. 2024, <em>Inference Scaling fLaws</em> — the verifier ceiling, from
               page 8.
             </RefItem>
@@ -357,7 +357,7 @@ export function Page17() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.balachandran}>
+          <RefItem n={REF.balachandran} href="https://arxiv.org/abs/2504.00294">
             Balachandran et al. 2025, <em>Inference-Time Scaling for Complex Tasks: Where We Stand
             and What Lies Ahead</em>.
           </RefItem>

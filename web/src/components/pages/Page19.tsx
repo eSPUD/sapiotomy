@@ -181,14 +181,14 @@ export function Page19() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.coconut}>
+          <RefItem n={REF.coconut} href="https://arxiv.org/abs/2412.06769">
             Hao et al. 2024, <em>Training Large Language Models to Reason in a Continuous Latent
             Space</em> (Coconut).
           </RefItem>
-          <RefItem n={REF.codi}>
+          <RefItem n={REF.codi} href="https://arxiv.org/abs/2502.21074">
             Shen et al. 2025, <em>CODI</em>.
           </RefItem>
-          <RefItem n={REF.pause}>
+          <RefItem n={REF.pause} href="https://arxiv.org/abs/2310.02226">
             Goyal et al. 2024, pause tokens.
           </RefItem>
         </Note>
@@ -215,10 +215,10 @@ export function Page19() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.snell}>
+          <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
           </RefItem>
-          <RefItem n={REF.s1}>
+          <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393">
             Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em>.
           </RefItem>
         </Note>
@@ -250,10 +250,10 @@ export function Page19() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.react}>
+          <RefItem n={REF.react} href="https://arxiv.org/abs/2210.03629">
             Yao et al. 2023, <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>.
           </RefItem>
-          <RefItem n={REF.ioi}>
+          <RefItem n={REF.ioi} href="https://arxiv.org/abs/2502.06807">
             OpenAI 2025, <em>Competitive Programming with Large Reasoning Models</em>.
           </RefItem>
         </Note>

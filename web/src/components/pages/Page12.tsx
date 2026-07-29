@@ -504,7 +504,7 @@ export function Page12() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.star}>
+          <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
             Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
             2022.
           </RefItem>
@@ -598,7 +598,7 @@ export function Page12() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.quietStar}>
+          <RefItem n={REF.quietStar} href="https://arxiv.org/abs/2403.09629">
             Zelikman et al. 2024, <em>Quiet-STaR</em>.
           </RefItem>
         </Note>
