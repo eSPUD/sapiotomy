@@ -11,19 +11,19 @@
  * Section 1 is the loop itself (lib/star.ts), run iteration by iteration. Each
  * press runs one training round, then a held-out test, and the readouts are
  * split into labelled Training/Test panels so the reader always knows which
- * regime a number belongs to — the chart's two lines carry the same labels.
- * The pool renders as a single easy→hard strip with a marker at the solve
- * frontier (the difficulty where solving is a coin flip — per-problem
- * threshold noise scatters squares around it). Squares gained this pass are outlined, so the
- * plateau arrives visibly as the highlights dry up, before the chart says so.
+ * regime a number belongs to — the Test panel carries a sparkline of held-out
+ * accuracy, the figure's only chart. The pool renders as a single easy→hard
+ * strip with a marker at the solve frontier (the difficulty where solving is
+ * a coin flip — per-problem threshold noise scatters squares around it).
+ * Squares gained this pass are outlined, so the plateau arrives visibly as
+ * the highlights dry up, before the sparkline says so.
  * The mechanism is illustrative and seeded, not a digitized curve: 60 problems with
  * fixed per-problem solvability thresholds, so the solved set grows exactly
  * when skill grows and every run is reproducible. Three behaviours to feel:
  * the ratchet (each round's better model writes correct rationales for harder
  * problems), the plateau (problems the model can never solve unaided never
- * enter the set — the chart plots the count of problems it can learn from
- * beside accuracy so the stall is visible, not asserted), and rationalization
- * lifting the plateau. The filter toggle is the page's flag for Act 3: switch
+ * enter the set — the strip's dwindling new-this-pass highlights make the
+ * stall visible, not asserted), and rationalization lifting the plateau. The filter toggle is the page's flag for Act 3: switch
  * the answer key off and the loop trains on its own mistakes until accuracy
  * sinks toward chance.
  *
@@ -55,7 +55,6 @@
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { Cite, RefItem } from "@/components/Cite";
-import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
@@ -155,6 +154,53 @@ function Key({ className, label }: { className: string; label: string }) {
       <span className={`inline-block h-3 w-3 rounded-sm ${className}`} aria-hidden="true" />
       {label}
     </span>
+  );
+}
+
+/**
+ * A sparkline of held-out accuracy, one point per iteration, drawn inside the
+ * Test panel — the figure's only chart. The dashed baseline is chance.
+ */
+function Spark({ history }: { history: StarIteration[] }) {
+  const W = 176;
+  const H = 44;
+  const x = (i: number) => 2 + (i / STAR_MAX_ITERS) * (W - 4);
+  const y = (acc: number) => H - 2 - (acc / 100) * (H - 4);
+  const last = history[history.length - 1];
+  const d = history
+    .map((s, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(s.accuracy).toFixed(1)}`)
+    .join(" ");
+  return (
+    <div className="flex flex-col gap-0.5">
+      <svg
+        width={W}
+        height={H}
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        aria-label={`Held-out accuracy across ${history.length - 1} iterations, from ${history[0].accuracy.toFixed(1)}% to ${last.accuracy.toFixed(1)}%. Guessing is ${CHANCE}%.`}
+      >
+        <line
+          x1={2}
+          x2={W - 2}
+          y1={y(CHANCE)}
+          y2={y(CHANCE)}
+          stroke="currentColor"
+          strokeDasharray="3 3"
+          className="text-grid"
+        />
+        <path d={d} fill="none" stroke="currentColor" strokeWidth={1.5} className="text-ink" />
+        <circle
+          cx={x(history.length - 1)}
+          cy={y(last.accuracy)}
+          r={2.5}
+          fill="currentColor"
+          className="text-ink"
+        />
+      </svg>
+      <p className="text-[10px] uppercase tracking-wide text-ink-muted">
+        per iteration · dashed = guessing ({CHANCE}%)
+      </p>
+    </div>
   );
 }
 
@@ -308,11 +354,8 @@ export function Page12() {
               This is <strong>STaR</strong>&apos;s loop.
               <Cite n={REF.star} /> It still needs a dataset — questions <em>with correct
               answers</em> — but nobody has to write the reasoning; the model authors that itself.
-              Sixty problems, easy on the left, hard on the right. Each press of Run does both
-              halves: one <strong>training</strong> round — the model writes a rationale for every
-              problem, the answer key keeps those that land, the base model is fine-tuned on the
-              survivors — and then a <strong>test</strong>, measuring the new model on held-out
-              problems the loop never touches. The panels below keep the two apart.
+              Each press runs one training round, then tests on held-out problems the loop never
+              touches.
             </p>
 
             {/* controls */}
@@ -394,11 +437,21 @@ export function Page12() {
                   />
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                  <Key className="bg-correct" label={`verified rationale (${now.verified})`} />
-                  <Key className="bg-compute" label={`rationalized from a hint (${now.rationalized})`} />
-                  <Key className="bg-wrong" label={`wrong, but kept (${now.wrong})`} />
-                  <Key className="bg-grid" label={`not in the set (${STAR_POOL - trainSize})`} />
-                  <Key className="bg-correct ring-1 ring-ink" label={`new this pass (${newCount})`} />
+                  {now.verified > 0 ? (
+                    <Key className="bg-correct" label={`verified rationale (${now.verified})`} />
+                  ) : null}
+                  {now.rationalized > 0 ? (
+                    <Key className="bg-compute" label={`rationalized from a hint (${now.rationalized})`} />
+                  ) : null}
+                  {now.wrong > 0 ? (
+                    <Key className="bg-wrong" label={`wrong, but kept (${now.wrong})`} />
+                  ) : null}
+                  {STAR_POOL - trainSize > 0 ? (
+                    <Key className="bg-grid" label={`not in the set (${STAR_POOL - trainSize})`} />
+                  ) : null}
+                  {newCount > 0 ? (
+                    <Key className="bg-correct ring-1 ring-ink" label={`new this pass (${newCount})`} />
+                  ) : null}
                   <span className="flex items-center gap-1.5">
                     <span className="inline-block h-3 w-0.5 rounded bg-ink" aria-hidden="true" />
                     solve frontier (50/50 odds)
@@ -410,7 +463,7 @@ export function Page12() {
                   have written last time.
                 </p>
               </div>
-              <div className="flex flex-col justify-center gap-1 rounded border border-dashed border-grid p-3">
+              <div className="flex flex-col justify-center gap-2 rounded border border-dashed border-grid p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
                   Test · how good did it get?
                 </p>
@@ -420,42 +473,12 @@ export function Page12() {
                   tone={now.wrong > 0 ? "wrong" : "correct"}
                   label={`on held-out problems, after iteration ${iter}`}
                 />
+                <Spark history={history} />
               </div>
             </div>
 
-            <LineChart
-              title={`Train, then test — both lines after each of ${iter} iterations`}
-              points={history.map((s, i) => ({ x: i, y: s.accuracy }))}
-              primaryLabel="test: held-out accuracy"
-              secondary={{
-                points: history.map((s, i) => ({
-                  x: i,
-                  y: ((s.verified + s.rationalized + s.wrong) / STAR_POOL) * 100,
-                })),
-                label: "training: problems it can learn from (% of pool)",
-              }}
-              secondaryFaint
-              xDomain={[0, STAR_MAX_ITERS]}
-              yDomain={[0, 100]}
-              xLabel="iteration"
-              yLabel="accuracy · learnable problems (%)"
-              referenceY={CHANCE}
-              referenceLabel="guessing (1 in 5)"
-              markPoints
-              width={560}
-              height={230}
-            />
-
             <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              The climb saturates, and the fainter line shows why: problems the model can never
-              solve unaided never enter the training set, so the count of problems it can learn
-              from stalls — and accuracy plateaus with it. <strong>Rationalization</strong> is STaR&apos;s answer —
-              show the model the answer it missed and let it reason <em>backwards</em>; the
-              rationale, not the answer, joins the set, and the plateau lifts. The correct answer
-              acts as the external signal deciding what the model may study. One caveat travels
-              with it: rationalization helped substantially on CommonsenseQA and dramatically on
-              arithmetic, but did not substantially improve GSM8K.
-              <Cite n={REF.star} />
+              The correct answer is the external signal deciding what the model may study.
             </p>
 
             <p className="text-xs text-ink-muted">
@@ -464,7 +487,9 @@ export function Page12() {
               without rationalization (STaR&apos;s 68.8%), bottoms out at the 20% floor of
               five-way multiple choice, and its plateau training set covers 60% of the pool
               (the paper generates rationales for 69.7% of its training set).
-              <Cite n={REF.star} /> One simplification: the paper seeds generation with a few-shot
+              <Cite n={REF.star} /> Rationalization&apos;s caveat: it helped substantially on
+              CommonsenseQA and dramatically on arithmetic, but did not substantially improve
+              GSM8K. One simplification: the paper seeds generation with a few-shot
               prompt of example rationales; here that seed is simply the model&apos;s starting
               skill.
             </p>
