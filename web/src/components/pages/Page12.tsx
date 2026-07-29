@@ -77,43 +77,62 @@ const QUIET_STAR: Citation = {
 };
 
 /**
- * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. Indentation
- * is baked into the code strings (whitespace-pre); tones tie the filter line
- * and the rationalization branch to section 1's legend colours. Structural
- * lines carry no annotation.
+ * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. Each line
+ * carries an indent level rendered outside the highlighted span, so a tone
+ * border sits at the code's own column; tones tie the filter line and the
+ * rationalization branch to section 1's legend colours. Structural lines carry
+ * no annotation.
  */
 const CODE_LINES: {
-  code: string;
+  indent: number;
+  code: React.ReactNode;
   note?: React.ReactNode;
   tone?: string;
 }[] = [
-  { code: "M ← M₀", note: "one model is both student and teacher" },
-  { code: "loop:" },
-  { code: "  kept ← ∅" },
   {
-    code: "  for (x, y) in problems:",
+    indent: 0,
+    code: (
+      <>
+        M ← M<sub>0</sub>
+      </>
+    ),
+    note: "one model is both student and teacher",
+  },
+  { indent: 0, code: "loop:" },
+  { indent: 1, code: "kept ← ∅" },
+  {
+    indent: 1,
+    code: "for (x, y) in problems:",
     note: "the only supervision that exists: answers, never reasoning",
   },
-  { code: "    r, ŷ ← M(x)", note: "in RL terms: sample from the current policy" },
+  { indent: 2, code: "r, ŷ ← M(x)", note: "in RL terms: sample from the current policy" },
   {
-    code: "    if ŷ = y: keep (x, r, y)",
-    note: "in RL terms: a binary reward, checked for free — section 1's answer key",
+    indent: 2,
+    code: "if ŷ = y: keep (x, r, y)",
+    note: "in RL terms: a binary reward, checked for free by section 1's answer key",
     tone: "border-correct",
   },
-  { code: "    else:" },
+  { indent: 2, code: "else:" },
   {
-    code: "      r′, ŷ′ ← M(x, hint = y)",
+    indent: 3,
+    code: "r′, ŷ′ ← M(x, hint = y)",
     note: "hindsight: knowing the destination makes the route easier to find",
     tone: "border-compute",
   },
   {
-    code: "      if ŷ′ = y: keep (x, r′, y)",
-    note: "the hint is stripped — the model will train as if it had found the route unaided",
+    indent: 3,
+    code: "if ŷ′ = y: keep (x, r′, y)",
+    note: "the hint is stripped, so the model trains as if it had found the route unaided",
     tone: "border-compute",
   },
   {
-    code: "  M ← finetune(M₀, kept)",
-    note: "from the base model, every round — early quirks never compound into the weights",
+    indent: 1,
+    code: (
+      <>
+        M ← finetune(M<sub>0</sub>, kept)
+      </>
+    ),
+    note: "restart from the base model every round, so early quirks never compound into the weights",
   },
 ];
 
@@ -158,12 +177,14 @@ function Arrow({ glyph = "→" }: { glyph?: string }) {
  */
 function CodeLine({
   n,
+  indent,
   code,
   note,
   tone,
 }: {
   n: number;
-  code: string;
+  indent: number;
+  code: React.ReactNode;
   note?: React.ReactNode;
   tone?: string;
 }) {
@@ -172,13 +193,20 @@ function CodeLine({
       <span className="w-5 select-none text-right font-mono text-xs tabular-nums text-ink-muted" aria-hidden="true">
         {n}
       </span>
-      <code
-        className={`whitespace-pre font-mono text-sm text-ink ${
-          tone ? `-mx-1 rounded border-l-4 bg-surface-raised px-1 ${tone}` : ""
-        }`}
-      >
-        {code}
-      </code>
+      <span className="flex items-baseline font-mono text-sm text-ink">
+        {indent > 0 ? (
+          <span className="whitespace-pre" aria-hidden="true">
+            {"  ".repeat(indent)}
+          </span>
+        ) : null}
+        <code
+          className={`whitespace-pre rounded border-l-4 px-1 ${
+            tone ? `bg-surface-raised ${tone}` : "border-transparent"
+          }`}
+        >
+          {code}
+        </code>
+      </span>
       {note ? (
         <span className="col-start-2 text-xs text-ink-muted sm:col-start-3">{note}</span>
       ) : null}
@@ -478,7 +506,7 @@ export function Page12() {
           >
             <div className="flex flex-col">
               {CODE_LINES.map((l, i) => (
-                <CodeLine key={i} n={i + 1} code={l.code} note={l.note} tone={l.tone} />
+                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} tone={l.tone} />
               ))}
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
@@ -487,6 +515,18 @@ export function Page12() {
               filter, and the rationalization branch it enables.
             </figcaption>
           </figure>
+
+          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">The algorithm, explained.</strong> Start with a
+            pretrained model and a stack of problems whose correct answers you know. There are no
+            worked solutions, only the answers. For each problem, the model writes out its
+            reasoning and ends with an answer. If that answer matches the key, the reasoning is
+            kept. If it misses, the model gets one more try with the correct answer shown as a
+            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
+            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
+            everything kept, and the loop starts over with a slightly better model writing the
+            next round of reasoning.
+          </p>
 
           <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
             <strong className="text-ink">Reinforcement learning in disguise.</strong> Line 5
