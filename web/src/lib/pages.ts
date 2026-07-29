@@ -3,8 +3,12 @@
  *
  * Three Acts (Nicky Case's "this happens, THEREFORE that, BUT that…"):
  *   Act 1 — Building Intuition (pages 1–4)
- *   Act 2 — The Toolbox       (pages 5–14)
- *   Act 3 — Frontier & Caveats(pages 15–21)
+ *   Act 2 — The Toolbox       (pages 5–12)
+ *   Act 3 — Frontier & Caveats(pages 13–21)
+ *
+ * The frontier-reasoner pair (13–14) sits in Act 3, not Act 2: page 12's
+ * closing card hands off with "where Act 3 picks up the story", and o1/R1 are
+ * that story — frontier systems built FROM the toolbox, not toolbox techniques.
  *
  * Titles/concepts are drawn from InferenceTimeScaling_Explainable.md §C.
  * Routes are stubs in M0; each page is built in a later milestone.
@@ -23,8 +27,8 @@ export interface PageMeta {
 
 export const ACTS: Record<Act, { title: string; range: string }> = {
   1: { title: "Building Intuition", range: "Pages 1–4" },
-  2: { title: "The Toolbox", range: "Pages 5–14" },
-  3: { title: "Frontier & Caveats", range: "Pages 15–21" },
+  2: { title: "The Toolbox", range: "Pages 5–12" },
+  3: { title: "Frontier & Caveats", range: "Pages 13–21" },
 };
 
 export const PAGES: PageMeta[] = [
@@ -40,8 +44,8 @@ export const PAGES: PageMeta[] = [
   { n: 10, slug: "searching-thoughts", title: "Searching Through Thoughts", act: 2, concept: "Reasoning as a maze: branch, evaluate, prune, backtrack. And pay for every node you look at.", milestone: "M4" },
   { n: 11, slug: "test-time-compute-scaling-law", title: "The Keystone: The Test-Time Compute Scaling Law", act: 2, concept: "Parameters and thinking time spend the same FLOPs: matched budget for budget, a small model that thinks can beat a 14x larger one — except on the hardest problems.", milestone: "M4" },
   { n: 12, slug: "star-self-improvement", title: "Teaching Models to Reason: STaR and Self-Improvement", act: 2, concept: "Generate rationales, keep only the ones that reach the right answer, fine-tune on them, repeat: the model becomes its own teacher — for exactly as long as an external check filters what it studies.", milestone: "M4" },
-  { n: 13, slug: "frontier-reasoners-o1", title: "Frontier Reasoners I: o1, o3, and the Two-Axis Scaling Curve", act: 2, concept: "The first commercial model trained by RL to reason in a long private chain: accuracy climbs log-linearly with train-time RL compute and with test-time thinking, and the chain itself is hidden.", milestone: "M5" },
-  { n: 14, slug: "frontier-reasoners-deepseek-r1", title: "Frontier Reasoners II: DeepSeek-R1, GRPO, and the “Aha Moment”", act: 2, concept: "Open weights answer the black box: reward only verifiable right answers (GRPO) and the pausing and self-correcting emerge on their own — then get distilled into models 1.5B–70B.", milestone: "M4" },
+  { n: 13, slug: "frontier-reasoners-o1", title: "Frontier Reasoners I: o1, o3, and the Two-Axis Scaling Curve", act: 3, concept: "The first commercial model trained by RL to reason in a long private chain: accuracy climbs log-linearly with train-time RL compute and with test-time thinking, and the chain itself is hidden.", milestone: "M5" },
+  { n: 14, slug: "frontier-reasoners-deepseek-r1", title: "Frontier Reasoners II: DeepSeek-R1, GRPO, and the “Aha Moment”", act: 3, concept: "Open weights answer the black box: reward only verifiable right answers (GRPO) and the pausing and self-correcting emerge on their own — then get distilled into models 1.5B–70B.", milestone: "M4" },
   { n: 15, slug: "the-scoreboard", title: "The Scoreboard: Benchmarks That Track Reasoning", act: 3, concept: "Every reasoning claim arrives as a benchmark score; each benchmark has a shelf life, and the headline number depends on the harness and the compute behind it.", milestone: "M5" },
   { n: 16, slug: "bill-comes-due", title: "The Bill Comes Due: Economics and Diminishing Returns", act: 3, concept: "Thinking longer is metered: when does spending compute at answer time beat retraining, and where does it become uneconomical?", milestone: "M5" },
   { n: 17, slug: "when-reasoning-breaks", title: "When Reasoning Breaks: Self-Correction, Verifier Reliability, Overthinking", act: 3, concept: "More thinking can make things worse: unaided self-correction degrades answers, longer reasoning can subtract, and the verifiers doing the rescuing are fallible themselves.", milestone: "M5" },

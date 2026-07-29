@@ -7,8 +7,8 @@
  * model that had LEARNED the toolbox: o1 is trained with large-scale RL to
  * think in a long private chain of thought, and its signature artifact is a
  * pair of charts showing AIME accuracy log-linear in BOTH train-time RL
- * compute and test-time thinking compute. This page and the next (R1) close
- * the act; Act 3 asks what the scores are worth.
+ * compute and test-time thinking compute. This page and the next (R1) open
+ * Act 3; the rest of the act asks what the scores are worth.
  *
  * Step 1 reproduces that chart as a lab with the two knobs on it. The model is
  * one authored log-linear law (lib/frontier.ts twoAxisAccuracy): a decade of
@@ -34,7 +34,7 @@
  * hidden. A boundary diagram — dashed divider, lab left, user right, a summary
  * crossing one way and billing crossing the other — replaces prose: the
  * asymmetry IS the argument. Hands the deck to R1 (open weights, visible
- * chain) next page and seeds the faithfulness question of Act 3.
+ * chain) next page and seeds the faithfulness question later in the act.
  *
  * Anchored to data/o1-scaling.json and data/o3-preview.json; the law and both
  * files' anchors are pinned in frontier.test.ts.
