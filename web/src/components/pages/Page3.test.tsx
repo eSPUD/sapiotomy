@@ -37,10 +37,10 @@ const dragMonths = (v: number) => {
   for (let i = 0; i < v; i++) fireEvent.keyDown(yearSlider(), { key: "ArrowRight" });
 };
 
-describe("Page 3 (Scaling Training)", () => {
+describe("Page 3 (Training-Time Scaling)", () => {
   it("shows both problems, the slider, and the guess box up front", () => {
     render(<Page3 />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Scaling Training");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training-Time Scaling");
     // Step 1: the combined cost curve. The old one-year meter stays gone.
     expect(
       screen.getByRole("heading", { level: 2, name: /1\. The bill compounds/i }),

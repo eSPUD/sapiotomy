@@ -65,7 +65,7 @@ test.describe("Act 1 (pages 1–4)", () => {
     page,
   }) => {
     await page.goto("/p/3");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Scaling Training");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Training-Time Scaling");
     // The spec's hard rule: no inference talk anywhere on this page.
     expect(await page.locator("article").innerText()).not.toMatch(/inference/i);
     // No drag-to-reveal: both problems are on from paint, on one numbered spine.

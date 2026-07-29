@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Page 3, "Scaling Training" (restructure, 2026-07: scaling-laws pivot).
+ * Page 3, "Training-Time Scaling" (restructure, 2026-07: scaling-laws pivot).
  * Page 2 ends on a limit, not a proposal: a System 2 pass settles the question's
  * ambiguity for free, but thinking cannot produce a fact the model was never
  * shown. So the gap wants new KNOWLEDGE, and this page takes the obvious way to
