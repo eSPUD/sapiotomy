@@ -343,11 +343,9 @@ export function Page3() {
       </h1>
 
       <p className="max-w-2xl text-lg text-ink-muted">
-        Thinking cannot produce a fact the model never saw. That gap needs new knowledge, and the
-        obvious way to supply it is to train the model again. Do it{" "}
-        <strong className="text-ink">every morning</strong> and it is never a day out of date. The
-        bill says no, then the data says no. And even if both said yes, retraining would leave Page
-        2&apos;s other failure exactly where it was.
+        A missing fact needs new knowledge, and the obvious way to supply it is to{" "}
+        <strong className="text-ink">train the model again</strong>. The bill says no, then the data
+        says no. And even if both said yes, it would do nothing about the bias.
       </p>
 
       {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
