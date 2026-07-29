@@ -6,26 +6,34 @@
  * that spending strategic: parameters and test-time thinking draw on the SAME
  * currency, and on all but the hardest prompts, thinking is the better buy.
  *
- * Step 1 is the two-knob allocator (lib/allocator.ts). All four model curves
- * are drawn in full, Wu-figure style; the knobs never move a line — model size
- * selects which curve is highlighted and test-time compute slides the marker
- * along it (the page-3 idiom), so the reader SEES the crossings the game is
- * about. Sizes are labeled as multiples (1x..14x) because Snell et al. never
- * publish absolute parameter counts; the card states the exchange rate
- * explicitly (Mx parameters => ~Mx inference FLOPs per answer). The curves are
- * AUTHORED shapes following Snell et al. 2024's claims, pinned in
- * act2allocator.test.ts.
+ * Step 1 is the two-knob allocator (lib/allocator.ts). The chart is the
+ * centerpiece: full card width, all four model curves drawn in full,
+ * Wu-figure style, with the controls in a strip beneath it. The knobs never
+ * move a line — model size selects which curve is highlighted and test-time
+ * compute slides the marker along it (the page-3 idiom), so the reader SEES
+ * the crossings the game is about. Sizes are labeled as multiples (1x..14x)
+ * because Snell et al. never publish absolute parameter counts (disclosed in
+ * the Simulated footer, not the setup prose). The curves are AUTHORED shapes
+ * following Snell et al. 2024's claims, pinned in act2allocator.test.ts.
  *
  * Step 2 states the law with a unit on every number: 4x fewer samples than
  * best-of-N (64 vs 256), 14x the parameters matched on FLOPs, and the ratio R
  * given as its two limits (R -> 0 thinking wins, R -> inf parameters win).
+ * The hard-mode boundary closes the step as a deliberate callout, page-12's
+ * closing-statement treatment.
  *
- * Step 3 is field data from Wu et al. 2024, where parameter counts ARE
- * published: (a) the Pythia inference-scaling curves on GSM8K
- * (data/pythia-inference-scaling.json, by-eye digitization of their figure,
- * replotted as accuracy) — the game's picture with real sizes; (b) the MATH500
- * results table (data/rebase-pareto.json, exact values) — REBASE tree search
- * shifting the whole frontier, led by their ~2x-less-total-FLOPs finding.
+ * Steps 3 and 4 are field data from Wu et al. 2024, where parameter counts
+ * ARE published — split into two sections because they carry two different
+ * claims. Step 3 (data/pythia-inference-scaling.json, by-eye digitization,
+ * replotted as accuracy): how MUCH compute — each Pythia scale owns a band of
+ * the GSM8K budget axis, the measured version of step 1's crossings. Step 4
+ * (data/rebase-pareto.json, exact table values): how it is SPENT — REBASE
+ * tree search shifts the whole MATH500 frontier, each model's sampling and
+ * search points tied by a hairline connector, led by their
+ * ~2x-less-total-FLOPs finding.
+ *
+ * Provenance: each chart's fidelity caveat sits directly under that chart;
+ * the page footer uses page-12's two-label Simulated / Cited pattern.
  */
 
 import { useState } from "react";
@@ -213,6 +221,13 @@ function LawPanel({
  * The three semantic hues plus ink are the palette's only line colors; every
  * curve carries its own end label, so identity is never color alone.
  */
+/**
+ * Round an SVG coordinate to 2 decimals. Log-scale outputs differ in the last
+ * float bits between the server and client render, which React reports as a
+ * hydration mismatch; rounding makes both sides emit the same string.
+ */
+const px = (v: number) => Math.round(v * 100) / 100;
+
 const SIZE_HUES: Record<number, { stroke: string; fill: string }> = {
   1: { stroke: "stroke-correct", fill: "fill-correct" },
   2: { stroke: "stroke-compute", fill: "fill-compute" },
@@ -235,12 +250,14 @@ function FamilyChart({
   cost: number;
   acc: number;
 }) {
-  const width = 500;
-  const height = 290;
+  const width = 640;
+  const height = 300;
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
   const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
-  const x = scaleLog().domain([1, 4096]).range([0, innerW]);
-  const y = scaleLinear().domain([0, 100]).range([innerH, 0]);
+  const xScale = scaleLog().domain([1, 4096]).range([0, innerW]);
+  const yScale = scaleLinear().domain([0, 100]).range([innerH, 0]);
+  const x = (v: number) => px(xScale(v));
+  const y = (v: number) => px(yScale(v));
   const tgt = target(difficulty);
 
   const family = MODEL_SIZES.map((s) => ({ s, pts: curvePoints(difficulty, s) }));
@@ -359,8 +376,10 @@ function PythiaChart() {
   const height = 260;
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
   const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
-  const x = scaleLog().domain([1, 4096]).range([0, innerW]);
-  const y = scaleLinear().domain([20, 80]).range([innerH, 0]);
+  const xScale = scaleLog().domain([1, 4096]).range([0, innerW]);
+  const yScale = scaleLinear().domain([20, 80]).range([innerH, 0]);
+  const x = (v: number) => px(xScale(v));
+  const y = (v: number) => px(yScale(v));
   const path = (pts: { x: number; y: number }[]) =>
     pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.x)},${y(p.y)}`).join("");
 
@@ -441,8 +460,10 @@ function ParetoScatter() {
   const height = 280;
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
   const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
-  const x = scaleLog().domain([1, 20]).range([0, innerW]);
-  const y = scaleLinear().domain([40, 52]).range([innerH, 0]);
+  const xScale = scaleLog().domain([1, 20]).range([0, innerW]);
+  const yScale = scaleLinear().domain([40, 52]).range([innerH, 0]);
+  const x = (v: number) => px(xScale(v));
+  const y = (v: number) => px(yScale(v));
 
   // The headline pair: 7B + tree search vs 34B + sampling, same accuracy.
   const a = rows[3];
@@ -454,7 +475,7 @@ function ParetoScatter() {
       (r) =>
         `${r.model} with ${r.rebase ? "REBASE tree search" : "sampling"}: ${r.acc} percent at ${r.flops} times ten to the fourteen FLOPs`,
     )
-    .join("; ")}. Llemma-7B with tree search matches Llemma-34B's sampling accuracy with about ${savings} times fewer FLOPs.`;
+    .join("; ")}. A thin connector ties each model's sampling point to its tree-search point: same model, better strategy, up and to the left. Llemma-7B with tree search matches Llemma-34B's sampling accuracy with about ${savings} times fewer FLOPs.`;
 
   return (
     <ChartFrame
@@ -476,6 +497,22 @@ function ParetoScatter() {
         <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
           {t}
         </text>
+      ))}
+
+      {/* each model's sampling → REBASE pair, tied by a hairline: same model,
+          better strategy, up and to the left */}
+      {[0, 2, 4].map((i) => (
+        <line
+          key={rows[i].model}
+          data-testid="pair-connector"
+          x1={x(rows[i].flops)}
+          y1={y(rows[i].acc)}
+          x2={x(rows[i + 1].flops)}
+          y2={y(rows[i + 1].acc)}
+          className="stroke-ink-muted"
+          strokeWidth={0.75}
+          opacity={0.45}
+        />
       ))}
 
       {/* the headline pair, tied together: same accuracy, ~8x fewer FLOPs */}
@@ -598,69 +635,68 @@ export function Page11() {
           </h2>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <p className="text-ink">
-              <strong>14× means 14× the base model&rsquo;s parameter count</strong> (Snell et al.
-              report model scale only as a multiple),
-              <Cite n={REF.snell} /> and inference FLOPs scale with parameters: an M× model spends
-              M units per answer, where one unit is a single answer from the 1× model. The 14×
-              model&rsquo;s one greedy answer therefore costs <strong>14 units</strong> and scores{" "}
-              <strong className="text-ink">{tgt.toFixed(0)}%</strong> here — the black dot below.
-              All four model curves are drawn in full and the knobs never move them: model size
-              picks your curve, test-time compute slides your marker along it, and you win by
-              crossing the dashed line <em>left</em> of the 14× dot.
+              One unit is one answer from the 1× model. An M× model costs M units per answer, so
+              the 14× model&rsquo;s single greedy answer costs <strong>14 units</strong> and scores{" "}
+              <strong className="text-ink">{tgt.toFixed(0)}%</strong> — the black dot.
+              <Cite n={REF.snell} /> <strong>Model size picks your curve; test-time compute slides
+              you along it.</strong> Win by crossing the dashed line <em>left</em> of the dot.
             </p>
 
-            {/* controls beside the chart, so the whole game fits one screen */}
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] lg:items-center">
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-ink-muted">Problem difficulty</p>
-                  <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
-                    {DIFFICULTIES.map((d) => (
-                      <button
-                        key={d}
-                        type="button"
-                        aria-pressed={difficulty === d}
-                        onClick={() => {
-                          setDifficulty(d);
-                          recordInteraction(PAGE_N);
-                        }}
-                        className={`rounded border px-3 py-1.5 text-sm capitalize ${
-                          difficulty === d
-                            ? "border-compute bg-compute/15 font-semibold text-ink"
-                            : "border-grid bg-surface-raised text-ink-muted"
-                        }`}
-                      >
-                        {d}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-ink-muted">{DIFFICULTY_BLURB[difficulty]}</p>
+            {/* the centerpiece at full card width, controls in a strip beneath */}
+            <FamilyChart difficulty={difficulty} size={size} cost={cost} acc={acc} />
+            <p className="text-xs text-ink-muted">
+              all four model curves are drawn in full and the knobs never move them — only the
+              highlight and your marker
+            </p>
+
+            <div className="grid gap-4 border-t border-dashed border-grid pt-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-ink-muted">Problem difficulty</p>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
+                  {DIFFICULTIES.map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      aria-pressed={difficulty === d}
+                      onClick={() => {
+                        setDifficulty(d);
+                        recordInteraction(PAGE_N);
+                      }}
+                      className={`rounded border px-3 py-1.5 text-sm capitalize ${
+                        difficulty === d
+                          ? "border-compute bg-compute/15 font-semibold text-ink"
+                          : "border-grid bg-surface-raised text-ink-muted"
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
                 </div>
-                <Slider
-                  label="Model size (× base parameters)"
-                  min={0}
-                  max={MODEL_SIZES.length - 1}
-                  value={sizeIdx}
-                  format={(v) => `${MODEL_SIZES[v]}×`}
-                  onChange={(v) => {
-                    setSizeIdx(v);
-                    recordInteraction(PAGE_N);
-                  }}
-                />
-                <Slider
-                  label="Test-time compute"
-                  min={0}
-                  max={MAX_EXP}
-                  value={exp}
-                  format={(v) => String(2 ** v)}
-                  suffix=" samples"
-                  onChange={(v) => {
-                    setExp(v);
-                    recordInteraction(PAGE_N);
-                  }}
-                />
+                <p className="text-xs text-ink-muted">{DIFFICULTY_BLURB[difficulty]}</p>
               </div>
-              <FamilyChart difficulty={difficulty} size={size} cost={cost} acc={acc} />
+              <Slider
+                label="Model size (× base parameters)"
+                min={0}
+                max={MODEL_SIZES.length - 1}
+                value={sizeIdx}
+                format={(v) => `${MODEL_SIZES[v]}×`}
+                onChange={(v) => {
+                  setSizeIdx(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
+              <Slider
+                label="Test-time compute"
+                min={0}
+                max={MAX_EXP}
+                value={exp}
+                format={(v) => String(2 ** v)}
+                suffix=" samples"
+                onChange={(v) => {
+                  setExp(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
             </div>
 
             {/* the scoreboard: three numbers + the verdict, one strip */}
@@ -734,9 +770,9 @@ export function Page11() {
                 ∞, parameters win: pretraining amortizes away, a per-question surcharge never does.
               </LawPanel>
             </div>
-            <p className="text-sm text-ink-muted">
-              Hard mode is the other boundary: where the small model has no foothold, no budget
-              rescues it.
+            <p className="rounded border-l-4 border-wrong bg-wrong/10 p-3 text-sm text-ink">
+              <strong>Hard mode is the other boundary:</strong> where the small model has no
+              foothold, no budget rescues it.
             </p>
           </div>
         </section>
@@ -747,10 +783,9 @@ export function Page11() {
           </RefItem>
         </Note>
 
-        {/* Step 3 — the field data */}
-        <section className="flex min-w-0 flex-col gap-6">
-          <h2 className="text-xl font-semibold text-ink">3. The frontier, measured</h2>
-
+        {/* Step 3 — how MUCH compute: each scale's band, measured */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. Each scale owns a band of the budget</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
               The game&rsquo;s picture, with real published sizes. Wu et al. gave three Pythia
@@ -771,12 +806,23 @@ export function Page11() {
               of their five model sizes omitted for legibility
             </p>
           </figure>
+        </section>
+        <Note kicker="References">
+          <RefItem n={REF.wu}>
+            Wu et al. 2024, <em>Inference Scaling Laws: An Empirical Analysis of Compute-Optimal
+            Inference</em>.
+          </RefItem>
+        </Note>
 
+        {/* Step 4 — how it is SPENT: better search shifts the frontier */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">4. Better search moves the whole frontier</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Smarter inference then shifts the whole frontier. The same paper&rsquo;s results
-              table on MATH500: three models, each under plain sampling and under their REBASE
-              tree search. Up and to the left is better.
+              Section 3 varied how <em>much</em> compute; this one varies how it is{" "}
+              <em>spent</em>. The same paper&rsquo;s results table on MATH500: three models, each
+              under plain sampling and under their REBASE tree search, a hairline tying each
+              model&rsquo;s pair. Up and to the left is better.
             </p>
             <ParetoScatter />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
@@ -794,31 +840,35 @@ export function Page11() {
               more samples flatten toward a ceiling that the model&rsquo;s own answer distribution
               sets, so without a perfect external verifier, sampling alone never reaches 100%.
             </figcaption>
+            <p className="text-xs text-ink-muted">
+              exact values from the paper&rsquo;s MATH500 results table (Table 1) — no
+              digitization involved
+            </p>
           </figure>
         </section>
-        <Note kicker="References">
-          <RefItem n={REF.wu}>
-            Wu et al. 2024, <em>Inference Scaling Laws: An Empirical Analysis of Compute-Optimal
-            Inference</em>.
-          </RefItem>
-        </Note>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <CitationBadge citation={curves.computeOptimal.citation} />
         <CitationBadge citation={curves.rebasePareto.citation} />
       </div>
-      <p className="text-xs text-ink-muted">
-        the allocator&rsquo;s curves are authored illustrations pinned to the cited findings, not
-        digitized data: Snell et al. report difficulty-adaptive allocation matching best-of-N with
-        up to 4× fewer samples, and — at matched total FLOPs — beating a pretrained model about
-        14× their base model&rsquo;s parameter count (absolute sizes undisclosed) on prompts the
-        base model can already sometimes solve; the exact shapes here are ours, and every
-        on-screen behaviour is pinned in the test suite · the Pythia chart is read off Wu et
-        al.&rsquo;s GSM8K figure by eye and replotted as accuracy; the REBASE chart is transcribed
-        exactly from their MATH500 results table · FLOPs per answer are counted in proportion to
-        parameter count throughout
-      </p>
+      <div className="flex flex-col gap-1 text-xs text-ink-muted">
+        <p>
+          <strong className="text-ink">Simulated</strong> — the allocator curves in section 1 are
+          authored illustrations pinned to the cited findings, not digitized data: Snell et al.
+          report model scale only as a multiple (absolute parameter counts undisclosed), so 14×
+          means 14× the base model&rsquo;s parameter count, and FLOPs per answer are counted in
+          proportion to parameters throughout. The curves reproduce the reported shapes —
+          crossings ordered by scale, saturation at every scale, no budget rescuing the small
+          model on hard prompts — and every on-screen behaviour is pinned in the test suite.
+        </p>
+        <p>
+          <strong className="text-ink">Cited</strong> — section 3 is read off Wu et
+          al.&rsquo;s GSM8K figure by eye (±3 points, two of five model sizes omitted for
+          legibility); section 4 is transcribed exactly from the same paper&rsquo;s MATH500
+          results table.
+        </p>
+      </div>
 
       <PageNav n={PAGE_N} />
     </article>

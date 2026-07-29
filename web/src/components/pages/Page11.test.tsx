@@ -61,6 +61,22 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText(/edges the 34B model[’']s best sampling run/i)).toBeInTheDocument();
   });
 
+  it("splits the field data into two claims: budget bands, then better search", () => {
+    render(<Page11 />);
+    expect(
+      screen.getByRole("heading", { name: /3\. Each scale owns a band of the budget/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /4\. Better search moves the whole frontier/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/this one varies how it is/i)).toBeInTheDocument();
+  });
+
+  it("ties each model's sampling point to its REBASE point with a connector", () => {
+    render(<Page11 />);
+    expect(screen.getAllByTestId("pair-connector")).toHaveLength(3);
+  });
+
   it("carries the saturation caveat: no oracle verifier, no 100%", () => {
     render(<Page11 />);
     expect(screen.getByText(/sampling alone never reaches 100%/i)).toBeInTheDocument();
@@ -136,12 +152,28 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     );
   });
 
-  it("discloses which numbers are authored and which are digitized", () => {
+  it("discloses simulated vs cited in the two-label footer, page-12 style", () => {
     render(<Page11 />);
+    expect(screen.getByText("Simulated")).toBeInTheDocument();
+    expect(screen.getByText("Cited")).toBeInTheDocument();
     expect(
       screen.getByText(/authored illustrations pinned to the cited findings/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/transcribed\s+exactly from their MATH500 results table/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/transcribed exactly from the same paper[’']s MATH500 results table/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/read off Wu et\s+al\.[’']s GSM8K figure by eye/i)).toBeInTheDocument();
+  });
+
+  it("keeps each chart's fidelity caveat directly under that chart", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/read off the paper[’']s figure by eye \(±3 points\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/exact values from the paper[’']s MATH500 results table/i)).toBeInTheDocument();
+  });
+
+  it("opens the game with the unit, the dot's price, and the win condition", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/One unit is one answer from the 1× model/i)).toBeInTheDocument();
+    expect(screen.getByText(/Model size picks your curve; test-time compute slides/i)).toBeInTheDocument();
   });
 });
