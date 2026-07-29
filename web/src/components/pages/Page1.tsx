@@ -105,7 +105,10 @@ export function Page1() {
           <Cite n={REF.kahneman} /> One operation, multiplication, flips you between them.
         </p>
         <Note kicker="References" flush>
-          <RefItem n={REF.kahneman}>
+          <RefItem
+            n={REF.kahneman}
+            href="https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow"
+          >
             Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
           </RefItem>
         </Note>
