@@ -59,20 +59,17 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeInTheDocument();
   });
 
-  it("explains the algorithm in plain language below the listing", () => {
+  it("keeps one counterweight below the listing: the filter reads answers, never arguments", () => {
     render(<Page12 />);
-    expect(screen.getByText(/The algorithm, explained/)).toBeInTheDocument();
-    expect(screen.getByText(/no worked solutions, only the answers/)).toBeInTheDocument();
-  });
-
-  it("wraps up in one dense block: RL in disguise, luck into skill, the filter caveat, Quiet-STaR", () => {
-    render(<Page12 />);
-    expect(screen.getByText(/reinforcement learning in disguise/)).toBeInTheDocument();
-    expect(screen.getByText(/distills luck into skill/)).toBeInTheDocument();
+    expect(screen.getByText(/The filter reads answers, never arguments/)).toBeInTheDocument();
     expect(screen.getByText(/only ever as sound as its filter/)).toBeInTheDocument();
-    expect(screen.getByText(/carries its own answer key/)).toBeInTheDocument();
+    expect(screen.getByText(/the key reads only this/)).toBeInTheDocument();
+    // The RL reading lives in the annotation column, not a separate block.
+    expect(screen.getAllByText(/in RL terms:/).length).toBe(2);
     expect(screen.queryByText(/V-STaR/)).not.toBeInTheDocument();
     expect(screen.queryByText(/ReST/)).not.toBeInTheDocument();
+    // STaR decodes greedily — the "distills luck into skill" story is wrong and must stay out.
+    expect(screen.queryByText(/luck into skill/)).not.toBeInTheDocument();
   });
 
   it("closes on the hand-off to page 13's frontier reasoners", () => {
