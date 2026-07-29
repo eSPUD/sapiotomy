@@ -346,21 +346,16 @@ export function Page3() {
               }}
               primaryLabel={`the same model, daily (flat GPT-4-class $${RUN_M}M rate)`}
               markerX={months}
+              onMarkerChange={onMonths}
+              markerLabel="Drag through the first year of keeping the plan up"
+              markerStep={1}
+              markerValueText={(m) => `${m} ${m === 1 ? "month" : "months"}`}
               xLabel="months of keeping it up"
               yLabel="cumulative bill ($ billions)"
               yDomain={[0, 52]}
               xTicks={MONTH_TICKS}
               width={640}
               height={300}
-            />
-            <Slider
-              label="Drag through the first year of keeping the plan up"
-              min={0}
-              max={COMBO_MONTHS}
-              value={months}
-              onChange={onMonths}
-              suffix=" months"
-              ticks={MONTH_TICKS}
             />
             {/* The two curves read at the slider's month. Both are running
                 totals, which the heading has to say: a bare "$17.9B" reads just

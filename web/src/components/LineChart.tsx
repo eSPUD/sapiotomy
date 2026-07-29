@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useRef } from "react";
 import { scaleLinear, scaleLog, line as d3line } from "d3";
 import { ChartFrame, CHART_MARGIN } from "./ChartFrame";
 
@@ -13,6 +13,19 @@ export interface LineChartProps {
   xDomain?: [number, number];
   /** Highlight the value at this x with a marker + guide line. */
   markerX?: number;
+  /**
+   * Make the marker a draggable handle. Supplying this turns the marker into a
+   * real slider: pointer drag along the plot, plus arrow/Home/End keys, since a
+   * drag-only control would be unusable by keyboard. The chart's svg switches to
+   * role="group" because role="img" forbids interactive descendants.
+   */
+  onMarkerChange?: (x: number) => void;
+  /** Accessible name for the draggable marker. Required with onMarkerChange. */
+  markerLabel?: string;
+  /** Snap step for the dragged marker, in x units. */
+  markerStep?: number;
+  /** Spoken value at the marker, e.g. "6 months". */
+  markerValueText?: (x: number) => string;
   /** Draw a dashed horizontal reference line (e.g. the reader's prediction). */
   referenceY?: number;
   referenceLabel?: string;
@@ -83,6 +96,10 @@ export function LineChart({
   yDomain,
   xDomain,
   markerX,
+  onMarkerChange,
+  markerLabel,
+  markerStep = 1,
+  markerValueText,
   referenceY,
   referenceLabel,
   secondary,
@@ -104,6 +121,7 @@ export function LineChart({
   height = 320,
 }: LineChartProps) {
   const arrowId = useId();
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
   const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
 
@@ -158,8 +176,56 @@ export function LineChart({
     : y.ticks(5);
   const xTicks = xTicksProp ?? x.ticks(5);
 
+  const draggable = onMarkerChange !== undefined && markerX !== undefined;
+  const [xLo, xHi] = [xd[0], xd[1]];
+  const clampSnap = (v: number) => {
+    const snapped = Math.round(v / markerStep) * markerStep;
+    return Math.min(xHi, Math.max(xLo, snapped));
+  };
+  /** Map a client pixel to an x value, going through the svg's own coordinate
+   *  space so it stays correct when the chart is scaled to fit its column. */
+  const xFromClient = (clientX: number) => {
+    const svg = svgRef.current;
+    if (!svg) return markerX!;
+    const r = svg.getBoundingClientRect();
+    const scale = r.width / width;
+    const local = (clientX - r.left) / (scale || 1) - CHART_MARGIN.left;
+    return clampSnap(x.invert(local));
+  };
+  const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
+    if (!draggable) return;
+    if (e.type === "pointerdown") e.currentTarget.setPointerCapture(e.pointerId);
+    else if (!(e.buttons & 1)) return;
+    const next = xFromClient(e.clientX);
+    if (next !== markerX) onMarkerChange!(next);
+  };
+  const onMarkerKey = (e: React.KeyboardEvent<SVGGElement>) => {
+    if (!draggable) return;
+    const big = Math.max(markerStep, (xHi - xLo) / 4);
+    const move: Record<string, number> = {
+      ArrowLeft: -markerStep, ArrowDown: -markerStep,
+      ArrowRight: markerStep, ArrowUp: markerStep,
+      PageDown: -big, PageUp: big,
+    };
+    let next: number | null = null;
+    if (e.key in move) next = clampSnap(markerX! + move[e.key]);
+    else if (e.key === "Home") next = xLo;
+    else if (e.key === "End") next = xHi;
+    if (next === null) return;
+    e.preventDefault();
+    if (next !== markerX) onMarkerChange!(next);
+  };
+
   return (
-    <ChartFrame title={title} width={width} height={height} xLabel={xLabel} yLabel={yLabel}>
+    <ChartFrame
+      title={title}
+      width={width}
+      height={height}
+      xLabel={xLabel}
+      yLabel={yLabel}
+      role={draggable ? "group" : "img"}
+      svgRef={svgRef}
+    >
       {/* gridlines + y ticks */}
       {yTicks.map((t) => (
         <g key={`y${t}`}>
@@ -344,17 +410,73 @@ export function LineChart({
         );
       })}
 
+      {/* Drag surface: the whole plot, so the reader can grab anywhere along it
+          rather than having to hit the 1px rule. */}
+      {draggable ? (
+        <rect
+          x={0}
+          y={0}
+          width={innerW}
+          height={innerH}
+          fill="transparent"
+          className="cursor-ew-resize"
+          onPointerDown={onPointer}
+          onPointerMove={onPointer}
+        />
+      ) : null}
+
       {markerPoint ? (
-        <g>
+        <g
+          role={draggable ? "slider" : undefined}
+          tabIndex={draggable ? 0 : undefined}
+          aria-label={draggable ? markerLabel : undefined}
+          aria-valuemin={draggable ? xLo : undefined}
+          aria-valuemax={draggable ? xHi : undefined}
+          aria-valuenow={draggable ? markerX : undefined}
+          aria-valuetext={
+            draggable ? (markerValueText ? markerValueText(markerX!) : String(markerX)) : undefined
+          }
+          onKeyDown={draggable ? onMarkerKey : undefined}
+          className={draggable ? "cursor-ew-resize focus:outline-none" : undefined}
+        >
           <line
             x1={x(markerPoint.x)}
             x2={x(markerPoint.x)}
             y1={0}
             y2={innerH}
             className="stroke-compute"
-            strokeWidth={1}
+            strokeWidth={draggable ? 1.5 : 1}
             strokeDasharray="3 3"
           />
+          {draggable ? (
+            <>
+              {/* grab handle at the top of the rule */}
+              <rect
+                x={x(markerPoint.x) - 7}
+                y={-9}
+                width={14}
+                height={14}
+                rx={3}
+                className="fill-compute"
+              />
+              <path
+                d={`M${x(markerPoint.x) - 3} -5 v6 M${x(markerPoint.x) + 3} -5 v6`}
+                className="stroke-canvas"
+                strokeWidth={1}
+              />
+              {/* focus ring, drawn only when the handle has keyboard focus */}
+              <rect
+                x={x(markerPoint.x) - 10}
+                y={-12}
+                width={20}
+                height={innerH + 20}
+                rx={4}
+                fill="none"
+                className="stroke-ink opacity-0 group-focus:opacity-100 [g:focus>&]:opacity-100"
+                strokeWidth={1.5}
+              />
+            </>
+          ) : null}
           <circle cx={x(markerPoint.x)} cy={y(markerPoint.y)} r={5} className="fill-compute" />
         </g>
       ) : null}

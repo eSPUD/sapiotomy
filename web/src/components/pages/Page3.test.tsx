@@ -26,8 +26,16 @@ const expectClean = () => {
 };
 
 const yearSlider = () => screen.getByRole("slider", { name: /drag through the first year/i });
-const dragMonths = (v: number) =>
-  fireEvent.change(yearSlider(), { target: { value: String(v) } });
+/**
+ * The months control is the chart's own marker now, an SVG handle rather than
+ * an <input type="range">, so it is driven by key presses. Home parks it at
+ * month 0 and each ArrowRight steps one month, which also keeps a standing
+ * check that the marker is operable without a pointer.
+ */
+const dragMonths = (v: number) => {
+  fireEvent.keyDown(yearSlider(), { key: "Home" });
+  for (let i = 0; i < v; i++) fireEvent.keyDown(yearSlider(), { key: "ArrowRight" });
+};
 
 const sizeSlider = () => screen.getByRole("slider", { name: /size the model/i });
 const dragParams = (v: number) =>
@@ -41,7 +49,9 @@ describe("Page 3 (Training Daily?)", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: /1\. The bill compounds/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /the first year/i })).toBeInTheDocument();
+    // The cost chart carries the draggable marker, so its svg is a group: role
+    // img forbids interactive descendants (axe: nested-interactive).
+    expect(screen.getByRole("group", { name: /the first year/i })).toBeInTheDocument();
     expect(screen.queryByRole("img", { name: /cumulative bill/i })).toBeNull();
     expect(screen.queryByRole("slider", { name: /drag through the year/i })).toBeNull();
     expect(screen.getByText(/Training price is not a fixed number/i)).toBeInTheDocument();

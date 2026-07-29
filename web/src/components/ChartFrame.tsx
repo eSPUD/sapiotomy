@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, type Ref } from "react";
 
 export interface ChartFrameProps {
   width?: number;
@@ -20,6 +20,8 @@ export interface ChartFrameProps {
    * second y axis on the right needs a wider right margin for its ticks.
    */
   margin?: { top: number; right: number; bottom: number; left: number };
+  /** Handle on the <svg>, for charts that map pointer positions to data. */
+  svgRef?: Ref<SVGSVGElement>;
   children: ReactNode;
 }
 
@@ -38,12 +40,14 @@ export function ChartFrame({
   title,
   role = "img",
   margin = MARGIN,
+  svgRef,
   children,
 }: ChartFrameProps) {
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${width} ${height}`}
       width="100%"
       role={role}
