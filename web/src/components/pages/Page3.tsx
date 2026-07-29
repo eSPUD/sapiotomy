@@ -88,6 +88,7 @@ const REF = {
   chinchilla: 4,
   dataStock: 5,
   datasetSizes: 6,
+  collapse: 7,
 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
@@ -343,8 +344,9 @@ export function Page3() {
       <p className="max-w-2xl text-lg text-ink-muted">
         Thinking cannot produce a fact the model never saw. That gap needs new knowledge, and the
         obvious way to supply it is to train the model again. Do it{" "}
-        <strong className="text-ink">every morning</strong> and it is never a day out of date. That
-        plan fails twice: first the bill, then the data itself.
+        <strong className="text-ink">every morning</strong> and it is never a day out of date. The
+        bill says no, then the data says no. And even if both said yes, retraining would leave Page
+        2&apos;s other failure exactly where it was.
       </p>
 
       {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
@@ -559,6 +561,12 @@ export function Page3() {
               endY={ds.windowEndYear}
               medianY={ds.medianYear}
             />
+
+            <p className="text-sm text-ink-muted">
+              Two smaller walls sit behind those: a training run takes weeks, so a fresh model ships
+              already behind, and you cannot retrain for one fact, you buy the whole distribution to
+              get it.
+            </p>
           </section>
         </section>
         <Note kicker="References">
@@ -580,10 +588,33 @@ export function Page3() {
           </RefItem>
         </Note>
 
-        {/* Step 3 — the guess */}
+        {/* Step 3 — the failure retraining was never going to reach */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. None of it touches the bias</h2>
+          <p className="text-ink">
+            Everything above answers one of Page 2&apos;s two failures. The model held the 2023 title
+            the whole time and dropped it anyway, so that miss was never about what it had read.
+          </p>
+          <p className="text-ink">
+            More reading cannot change which reading gets picked. It points the wrong way, in fact:
+            the default is whatever the corpus says most, and more text from the same world sharpens
+            that majority. The obvious escape from the data wall is worse still, since a model
+            trained on generated text loses the rare cases a round at a time until the tails are
+            gone.
+            <Cite n={REF.collapse} />
+          </p>
+        </section>
+        <Note kicker="References">
+          <RefItem n={REF.collapse} href="https://www.nature.com/articles/s41586-024-07566-y">
+            Shumailov et al. 2024, <em>AI models collapse when trained on recursively generated
+            data</em> (Nature).
+          </RefItem>
+        </Note>
+
+        {/* Step 4 — the guess */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            3. So what is left?
+            4. So what is left?
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               optional · skip freely
             </span>
@@ -593,9 +624,10 @@ export function Page3() {
             className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
           >
             <p className="text-lg text-ink">
-              Both walls come from the same habit: paying for smarts <strong>up front</strong>, all
-              at once, before a single question is asked. Page 2 left the other option on the table
-              without naming its price. That is what the bill buys, and what the
+              Every wall above comes from the same habit: paying for smarts <strong>up front</strong>,
+              all at once, before a single question is asked. And the bias never needed more paid
+              for at all, only a second look at the question. Page 2 left that other option on the
+              table without naming its price. That is what the bill buys, and what the
               data runs out on. So turn it around, and instead of front-loading everything to make
               the model <strong>know</strong> the answer, what if we spent that effort{" "}
               <strong>when the question arrives</strong>, and let it{" "}
