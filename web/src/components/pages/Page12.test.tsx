@@ -33,7 +33,18 @@ describe("Page 12 (STaR and self-improvement)", () => {
   it("writes the loop down, with the rationalization branch and fine-tune-from-base", () => {
     render(<Page12 />);
     expect(screen.getByText(/hint = y/)).toBeInTheDocument();
-    expect(screen.getByText(/finetune\(M₀, kept\)/)).toBeInTheDocument();
+    // M₀ is markup (M<sub>0</sub>), so match the assembled text of the code line.
+    expect(
+      screen.getByText(
+        (_, el) => el?.tagName === "CODE" && el.textContent === "M ← finetune(M0, kept)",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("explains the algorithm in plain language below the listing", () => {
+    render(<Page12 />);
+    expect(screen.getByText(/The algorithm, explained/)).toBeInTheDocument();
+    expect(screen.getByText(/no worked solutions, only the answers/)).toBeInTheDocument();
   });
 
   it("reads the listing a second time, as reinforcement learning in disguise", () => {
