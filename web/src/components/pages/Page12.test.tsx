@@ -23,7 +23,18 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     expect(screen.getByText(/Training · what this round produced/)).toBeInTheDocument();
     expect(screen.getByText(/Test · how good did it get\?/)).toBeInTheDocument();
-    expect(screen.getByText(/full STaR/)).toBeInTheDocument();
+  });
+
+  it("draws the strip as an abstraction: frontier, state matrix, no notation", () => {
+    render(<Page12 />);
+    expect(screen.getByText(/solve frontier \(50\/50 odds\)/)).toBeInTheDocument();
+    // The sidenote matrix maps each toggle state to what the reader watches.
+    expect(screen.getByText("filter on · rationalization off")).toBeInTheDocument();
+    expect(screen.getByText(/Full STaR/)).toBeInTheDocument();
+    expect(screen.getByText(/No reward, no loop/)).toBeInTheDocument();
+    // |Dₙ| is gone everywhere in favour of "problems it can learn from".
+    expect(screen.queryByText(/Dₙ/)).not.toBeInTheDocument();
+    expect(screen.getByText(/a training set it could not/)).toBeInTheDocument();
   });
 
   it("carries the GSM8K caveat on the rationalization claim", () => {
