@@ -68,10 +68,10 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeTruthy();
   });
 
-  it("keeps one counterweight below the listing: the filter reads answers, never arguments", () => {
+  it("keeps one counterweight below the listing: trained on reasoning, graded on answers", () => {
     render(<Page12 />);
-    expect(screen.getByText(/The filter reads answers, never arguments/)).toBeInTheDocument();
-    expect(screen.getByText(/only ever as sound as its filter/)).toBeInTheDocument();
+    expect(screen.getByText(/Trained on reasoning, graded on answers/)).toBeInTheDocument();
+    expect(screen.getByText(/it's imitated/)).toBeInTheDocument();
     // The RL reading lives in the annotation column, not a separate block.
     expect(screen.getAllByText(/in RL terms:/).length).toBe(2);
     expect(screen.queryByText(/V-STaR/)).not.toBeInTheDocument();
