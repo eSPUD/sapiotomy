@@ -8,26 +8,28 @@
  * model wrote for itself — training data. Generate, keep what checks out,
  * fine-tune, repeat.
  *
- * Step 1 is the loop itself (lib/star.ts), run iteration by iteration. The
+ * Section 1 is the loop itself (lib/star.ts), run iteration by iteration. The
  * mechanism is illustrative and seeded, not a digitized curve: 60 problems with
  * fixed per-problem solvability thresholds, so the solved set grows exactly
  * when skill grows and every run is reproducible. Three behaviours to feel:
  * the ratchet (each round's better model writes correct rationales for harder
  * problems), the plateau (problems the model can never solve unaided never
- * enter the set), and rationalization lifting the plateau (show the model the
- * missed answer, let it reason backwards, train on the rationale). The filter
+ * enter the set — the chart plots |D_n| beside accuracy so the stall is
+ * visible, not asserted), and rationalization lifting the plateau. The filter
  * toggle is the page's flag for Act 3: switch the answer key off and the loop
  * trains on its own mistakes until accuracy sinks toward chance.
  *
- * Step 2 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
- * GPT-J plus its own filtered rationales lands at 72.5% on CommonsenseQA,
- * beside 73.0% for a 30x larger GPT-3 fine-tuned on the full human-labelled
- * training set.
+ * Section 2 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
+ * GPT-J plus its own filtered rationales lands at 72.5% on CommonsenseQA —
+ * past a 23x larger LaMDA doing few-shot CoT, beside a 30x larger GPT-3
+ * fine-tuned on the full human-labelled training set.
  *
- * Step 3 names the lineage — generate → filter → train is sampling, a
- * verifiable reward, and policy improvement, the conceptual ancestor of the
- * RL-from-verifiable-rewards recipe behind o1 and R1 (page 16) — and the fine
- * print: the filter is load-bearing, which the reader has just watched.
+ * Section 3 is the lineage as a morphing flowchart: STaR (2022) → V-STaR
+ * (2024) → Quiet-STaR (2024), one diagram mutated step by step, with the
+ * deltas annotated — they, not the diagrams, are the pedagogical content.
+ * ReST^EM is deliberately not a step (its changes don't draw); it appears as
+ * a cited scaling claim in the transition paragraph, which hands the arc to
+ * the Frontier Reasoners pages: keep the filter, change what it is.
  *
  * Sidenote convention as on page 2: one "Try it" note beside the interactive,
  * numbered References notes (Cite/RefItem) beside the steps that use them,
@@ -60,7 +62,7 @@ const POOL = starInit();
 const CHANCE = 100 / STAR_CHOICES;
 
 /** Page 12's references, numbered in order of first appearance. */
-const REF = { star: 1, quietStar: 2, restEm: 3, vStar: 4 } as const;
+const REF = { star: 1, vStar: 2, quietStar: 3, restEm: 4 } as const;
 
 const QUIET_STAR: Citation = {
   ref: "Zelikman et al. 2024",
@@ -80,6 +82,13 @@ const V_STAR: Citation = {
   venue: "arXiv",
   preprint: true,
 };
+
+/** The three-position stepper of section 3's morphing flowchart. */
+const ARC = [
+  { label: "STaR", year: "2022" },
+  { label: "V-STaR", year: "2024" },
+  { label: "Quiet-STaR", year: "2024" },
+] as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -111,6 +120,28 @@ function Stage({ tone, title, sub }: { tone: string; title: string; sub: string 
   );
 }
 
+/** An arrow between stages, matching section 1's strip. */
+function Arrow({ glyph = "→" }: { glyph?: string }) {
+  return <span className="shrink-0 self-center text-ink-muted">{glyph}</span>;
+}
+
+/** One annotated delta on a flowchart step — the mutation, spelled out. */
+function Delta({
+  kind,
+  children,
+}: {
+  kind: "changed" | "dropped" | "deleted";
+  children: React.ReactNode;
+}) {
+  const tone = kind === "changed" ? "border-compute" : "border-wrong";
+  const text = kind === "changed" ? "text-compute" : "text-wrong";
+  return (
+    <p className={`rounded border-l-4 ${tone} bg-surface-raised p-2 text-sm text-ink`}>
+      <strong className={`uppercase ${text}`}>{kind}</strong> — {children}
+    </p>
+  );
+}
+
 const STATUS_TONE = {
   verified: "bg-correct",
   rationalized: "bg-compute",
@@ -127,6 +158,7 @@ export function Page12() {
   const [history, setHistory] = useState<StarIteration[]>(() => [starBase(POOL)]);
   const [rationalize, setRationalize] = useState(false);
   const [filter, setFilter] = useState(true);
+  const [arcStep, setArcStep] = useState(0);
 
   const iter = history.length - 1;
   const now = history[iter];
@@ -145,6 +177,7 @@ export function Page12() {
   const bars = [
     { label: "GPT-J, few-shot, answer only", value: p.fewShotDirect, tone: "bg-grid", note: "no reasoning, no training" },
     { label: "GPT-J, few-shot CoT", value: p.fewShotCot, tone: "bg-grid", note: "reasons, learns nothing" },
+    { label: "LaMDA 137B, few-shot CoT", value: p.fewShotCotLamda, tone: "bg-grid", note: "23× larger, same recipe" },
     { label: "GPT-J fine-tuned on human answers", value: p.gptjFinetuned, tone: "bg-grid", note: "the whole labelled training set" },
     { label: "STaR without rationalization", value: p.starNoRationalization, tone: "bg-compute", note: `its own rationales for ${p.trainDataNoRationalization}% of the set` },
     { label: "STaR", value: p.star, tone: "bg-correct", note: `rationalization reaches ${p.trainDataRationalization}% of the set` },
@@ -161,18 +194,13 @@ export function Page12() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Everything in the toolbox so far spends its compute at answer time — and then throws the
-        thinking away. But a chain that reached a <em>verified</em> answer is a worked solution the
-        model just wrote for itself: training data no human had to author.{" "}
-        <strong className="text-ink">STaR</strong> closes that loop —{" "}
-        <strong className="text-ink">generate rationales, keep the ones that reach the right
-        answer, fine-tune on them, repeat</strong> — so the model studies its own successful
-        reasoning and gets <em>permanently</em> better.
-        <Cite n={REF.star} />
+        A model writes its own reasoning, an answer key discards what&apos;s wrong, and the
+        survivors become its next training set.{" "}
+        <strong className="text-ink">What happens when you take the answer key away?</strong>
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the loop, run by hand */}
+        {/* Section 1 — the loop, run by hand */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
             1. Run the loop
@@ -185,18 +213,21 @@ export function Page12() {
             {/* the loop itself */}
             <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
               <Stage tone="border-ink" title="generate" sub="one rationale per problem" />
-              <span className="shrink-0 self-center text-ink-muted">→</span>
+              <Arrow />
               <Stage
                 tone={filter ? "border-correct" : "border-wrong"}
                 title={filter ? "filter" : "filter (off)"}
                 sub={filter ? "keep it only if the answer checks" : "keep everything, right or wrong"}
               />
-              <span className="shrink-0 self-center text-ink-muted">→</span>
+              <Arrow />
               <Stage tone="border-compute" title="fine-tune" sub="base model, on what survived" />
-              <span className="shrink-0 self-center text-ink-muted">↺</span>
+              <Arrow glyph="↺" />
             </div>
 
             <p className="text-sm text-ink">
+              This is <strong>STaR</strong>&apos;s loop.
+              <Cite n={REF.star} /> It still needs a dataset — questions <em>with correct
+              answers</em> — but nobody has to write the reasoning; the model authors that itself.
               Sixty problems, easy on the left, hard on the right. Each pass, the model writes a
               rationale for every one; the answer key keeps those that land; the base model is
               fine-tuned on the survivors. The ratchet: a slightly better model writes correct
@@ -282,12 +313,21 @@ export function Page12() {
             </div>
 
             <LineChart
-              title={`Held-out accuracy across ${iter} self-improvement iterations`}
+              title={`Accuracy and training-set size across ${iter} iterations`}
               points={history.map((s, i) => ({ x: i, y: s.accuracy }))}
+              primaryLabel="held-out accuracy"
+              secondary={{
+                points: history.map((s, i) => ({
+                  x: i,
+                  y: ((s.verified + s.rationalized + s.wrong) / STAR_POOL) * 100,
+                })),
+                label: "training set |Dₙ| (% of pool)",
+              }}
+              secondaryFaint
               xDomain={[0, STAR_MAX_ITERS]}
               yDomain={[0, 100]}
               xLabel="iteration"
-              yLabel="accuracy (%)"
+              yLabel="accuracy · |Dₙ| (%)"
               referenceY={CHANCE}
               referenceLabel="guessing (1 in 5)"
               markPoints
@@ -296,25 +336,40 @@ export function Page12() {
             />
 
             <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              The climb saturates: problems the model can never solve unaided never enter the
-              training set, so the loop plateaus below the ceiling.{" "}
-              <strong>Rationalization</strong> is STaR&apos;s answer — show the model the answer it
-              missed and let it reason <em>backwards</em>; the rationale, not the answer, joins the
-              set, and the plateau lifts. The correct answer acts as the external signal deciding
-              what the model may study.
+              The climb saturates, and the fainter line shows why: problems the model can never
+              solve unaided never enter the training set, so |D<sub>n</sub>| stalls and the
+              accuracy plateaus with it. <strong>Rationalization</strong> is STaR&apos;s answer —
+              show the model the answer it missed and let it reason <em>backwards</em>; the
+              rationale, not the answer, joins the set, and the plateau lifts. The correct answer
+              acts as the external signal deciding what the model may study. One caveat travels
+              with it: rationalization helped substantially on CommonsenseQA and dramatically on
+              arithmetic, but did not substantially improve GSM8K.
+              <Cite n={REF.star} />
+            </p>
+
+            <p className="text-xs text-ink-muted">
+              <strong className="text-ink">Calibration.</strong> The anchors this mechanism
+              reproduces: it starts near 35% (GPT-J few-shot CoT: 36.6%), plateaus near 68%
+              without rationalization (STaR&apos;s 68.8%), bottoms out at the 20% floor of
+              five-way multiple choice, and its plateau training set covers 60% of the pool
+              (the paper generates rationales for 69.7% of its training set).
+              <Cite n={REF.star} />
             </p>
           </div>
         </section>
 
         <Note kicker="Try it">
-          <p>Run to the plateau, reset, and climb again with rationalization on.</p>
+          <p>
+            Run to the plateau and watch the fainter |D<sub>n</sub>| line stall at the same time
+            accuracy does. Reset, and climb again with rationalization on.
+          </p>
           <p>
             Then switch the correctness filter off at the top of a climb, keep iterating, and watch
             the loop eat its own mistakes.
           </p>
         </Note>
 
-        {/* Step 2 — the paper's result */}
+        {/* Section 2 — the paper's result */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
             2. What the loop bought
@@ -326,7 +381,7 @@ export function Page12() {
             <div
               className="flex flex-col gap-2"
               role="img"
-              aria-label={`CommonsenseQA accuracy: GPT-J few-shot direct ${p.fewShotDirect} percent, GPT-J few-shot chain of thought ${p.fewShotCot} percent, GPT-J fine-tuned on human answers ${p.gptjFinetuned} percent, STaR without rationalization ${p.starNoRationalization} percent, STaR ${p.star} percent, GPT-3 thirty times larger fine-tuned ${p.gpt3Finetuned} percent.`}
+              aria-label={`CommonsenseQA accuracy: GPT-J few-shot direct ${p.fewShotDirect} percent, GPT-J few-shot chain of thought ${p.fewShotCot} percent, LaMDA 137B few-shot chain of thought ${p.fewShotCotLamda} percent, GPT-J fine-tuned on human answers ${p.gptjFinetuned} percent, STaR without rationalization ${p.starNoRationalization} percent, STaR ${p.star} percent, GPT-3 thirty times larger fine-tuned ${p.gpt3Finetuned} percent.`}
             >
               {bars.map((b) => (
                 <div key={b.label} className="flex items-center gap-2 text-sm">
@@ -346,9 +401,10 @@ export function Page12() {
             <figcaption className="text-sm text-ink-muted">
               GPT-J has 6B parameters, and nobody wrote it a single worked solution. Fine-tuned on
               rationales it generated and filtered itself, it lands at{" "}
-              <strong className="text-ink">{p.star}%</strong> — beside{" "}
-              <strong className="text-ink">{p.gpt3Finetuned}%</strong> for a GPT-3{" "}
-              <strong className="text-ink">30× its size</strong> fine-tuned on the full
+              <strong className="text-ink">{p.star}%</strong> — clear past the{" "}
+              {p.fewShotCotLamda}% of a LaMDA <strong className="text-ink">23× its size</strong>{" "}
+              prompted the same way, beside <strong className="text-ink">{p.gpt3Finetuned.toFixed(1)}%</strong>{" "}
+              for a GPT-3 <strong className="text-ink">30× its size</strong> fine-tuned on the full
               human-labelled training set.
               <Cite n={REF.star} /> And the gap above the {p.gptjFinetuned}% answer-only
               fine-tune is the page&apos;s point: the value was never the answers — it was{" "}
@@ -364,63 +420,189 @@ export function Page12() {
           </RefItem>
         </Note>
 
-        {/* Step 3 — lineage and fine print */}
+        {/* Section 3 — the lineage, one diagram mutated step by step */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. The ancestor, and the fine print</h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-base text-ink">
-              <strong>Read the loop as reinforcement learning.</strong> Sampled attempts, a
-              verifiable reward (the answer key), improvement on the successes:{" "}
-              <em>generate → filter → train</em> is the conceptual ancestor of the
-              RL-from-verifiable-rewards recipe behind today&apos;s reasoning models — o1, R1 —
-              where Act 3 picks up the story. Its descendants each fix one gap: Quiet-STaR moves
-              the loop inside, learning to think before <em>every</em> token;
-              <Cite n={REF.quietStar} /> ReST-EM formalizes generate-filter-train as
-              expectation-maximization and scales it;
-              <Cite n={REF.restEm} /> V-STaR keeps the discarded wrong rationales too, and trains a
-              verifier on the contrast.
-              <Cite n={REF.vStar} />
+          <h2 className="text-xl font-semibold text-ink">3. What came next</h2>
+
+          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-sm text-ink">
+              STaR is the foundation of a short lineage, and each successor mutates the loop you
+              just ran rather than replacing it. Step through the arc — the <em>deltas</em> are the
+              content.
+            </p>
+
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Lineage step">
+              {ARC.map((s, i) => (
+                <button
+                  key={s.label}
+                  type="button"
+                  aria-pressed={arcStep === i}
+                  onClick={() => {
+                    setArcStep(i);
+                    recordInteraction(PAGE_N);
+                  }}
+                  className={`rounded border px-3 py-1.5 text-sm ${
+                    arcStep === i
+                      ? "border-compute bg-compute/15 font-semibold text-ink"
+                      : "border-grid bg-surface-raised text-ink-muted"
+                  }`}
+                >
+                  <span className="font-mono text-xs text-ink-muted">{i + 1}·</span> {s.label}{" "}
+                  <span className="text-xs text-ink-muted">{s.year}</span>
+                </button>
+              ))}
             </div>
-            <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-base text-ink">
-              <strong>The filter is load-bearing.</strong> You watched it: with the answer key
-              removed, every mistake trains, the next generation imitates the last one&apos;s
-              errors, and accuracy sinks toward chance —{" "}
-              <strong className="text-wrong">model collapse</strong>. A model can only pull itself
-              up by its own rationales while a <em>reliable external signal</em> decides what
-              enters the training set. Hold onto that: it returns when the reward, not the answer
-              key, is the filter.
-            </div>
+
+            {arcStep === 0 ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
+                  <Stage tone="border-ink" title="generate" sub="one rationale per problem, greedy" />
+                  <Arrow />
+                  <Stage tone="border-correct" title="check" sub="right answer → keep the rationale" />
+                  <Arrow />
+                  <Stage tone="border-compute" title="fine-tune" sub="the base model, on what survived" />
+                  <Arrow glyph="↺" />
+                </div>
+                <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center sm:pl-8" aria-hidden="true">
+                  <span className="shrink-0 self-center text-xs text-ink-muted">wrong ↳</span>
+                  <Stage tone="border-compute" title="retry with a hint" sub="the correct answer is shown" />
+                  <Arrow />
+                  <Stage tone="border-compute" title="keep, hint stripped" sub="if it still fails, discard" />
+                </div>
+                <p className="text-sm text-ink">
+                  The loop from section 1, with the rationalization branch drawn in: a wrong answer
+                  earns one retry with the correct answer as a hint, and the survivor joins the set
+                  with the hint stripped out.
+                  <Cite n={REF.star} /> One detail to hold: each round fine-tunes the{" "}
+                  <em>base</em> model again — the dataset accumulates, not the weights.
+                </p>
+              </div>
+            ) : arcStep === 1 ? (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
+                  <Stage tone="border-ink" title="generate" sub="sample many solutions per problem" />
+                  <Arrow />
+                  <Stage tone="border-correct" title="check" sub="the answer key forks — nothing is discarded" />
+                  <Arrow />
+                  <div className="flex min-w-0 flex-[2] flex-col gap-1">
+                    <Stage
+                      tone="border-compute"
+                      title="D_GEN → fine-tune the generator"
+                      sub="the correct solutions, as before"
+                    />
+                    <Stage
+                      tone="border-compute"
+                      title="D_VER → train a verifier (DPO)"
+                      sub="correct and incorrect solutions, as preference pairs"
+                    />
+                  </div>
+                  <Arrow glyph="↺" />
+                </div>
+                <div className="flex flex-col items-stretch gap-1 border-t border-dashed border-grid pt-2 sm:flex-row sm:items-center" aria-hidden="true">
+                  <span className="shrink-0 self-center text-xs uppercase tracking-wide text-ink-muted">
+                    at test time
+                  </span>
+                  <Stage tone="border-ink" title="sample k candidates" sub="the generator" />
+                  <Arrow />
+                  <Stage tone="border-compute" title="rank" sub="the verifier scores each" />
+                  <Arrow />
+                  <Stage tone="border-correct" title="answer" sub="best solution returned" />
+                </div>
+                <Delta kind="changed">
+                  the generator samples <strong>many solutions per problem</strong> instead of one
+                  greedy attempt. This is the precondition for everything else in this step:
+                  correct/incorrect preference pairs are impossible to build from a single sample.
+                </Delta>
+                <Delta kind="changed">
+                  the discard pile is gone. The check forks instead: correct solutions still train
+                  the generator, and correct <em>and</em> incorrect solutions become preference
+                  pairs that train a separate verifier.
+                  <Cite n={REF.vStar} />
+                </Delta>
+                <Delta kind="dropped">
+                  the hint retry. V-STaR&apos;s failures leave via the fork, not via a second
+                  attempt — both papers are answering &ldquo;we&apos;re wasting the wrong
+                  answers,&rdquo; with opposite solutions. And both of V-STaR&apos;s models persist
+                  at test time: the verifier is page 8&apos;s best-of-N judge, trained by the loop
+                  itself.
+                </Delta>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
+                  <Stage tone="border-ink" title="corpus" sub="any text — no questions, no answers" />
+                  <Arrow />
+                  <Stage tone="border-ink" title="think" sub="a thought at every token, in parallel" />
+                  <Arrow />
+                  <Stage tone="border-compute" title="predict" sub="the next tokens, with the thought" />
+                  <Arrow />
+                  <Stage tone="border-correct" title="compare" sub="did the thought beat predicting without it?" />
+                  <Arrow />
+                  <Stage tone="border-compute" title="reinforce / suppress" sub="keep the thoughts that helped" />
+                  <Arrow glyph="↺" />
+                </div>
+                <Delta kind="deleted">
+                  the oracle, entirely. The reward is next-token likelihood — did thinking make the
+                  following text more predictable? — so any text works, and the dataset requirement
+                  (questions with correct answers) disappears with the answer key.
+                  <Cite n={REF.quietStar} />
+                </Delta>
+                <p className="text-sm text-ink">
+                  This is the opener&apos;s question, answered carefully: Quiet-STaR removes the
+                  answer key but not the <em>filter</em> — a thought is reinforced only if it beats
+                  the no-thought baseline. Something automatic still decides what gets learned.
+                </p>
+              </div>
+            )}
           </div>
+
+          <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
+            Each of these fixes one limit of the original, and none of them is how a frontier
+            reasoner is trained today. ReST<sup>EM</sup>, in between, showed the loop scales with
+            model size and that self-generated data can beat human-annotated data outright — the
+            result that made this worth pursuing at frontier scale.
+            <Cite n={REF.restEm} /> What carried forward is the shape:{" "}
+            <strong>sample, check against something automatic, train on what passed</strong>. The
+            filter was always load-bearing — with the answer key removed, the loop eats its own
+            errors and degenerates. That is not just the simulation talking: STaR&apos;s authors
+            report that looser sampling reaches more right answers through <em>wrong</em>{" "}
+            reasoning, and training on those rationales blocks generalization — on arithmetic the
+            scratchpads drift into meaninglessness and the model stagnates.
+            <Cite n={REF.star} /> Frontier reasoners keep the filter and change what it is.
+          </p>
         </section>
 
         <Note kicker="References">
+          <RefItem n={REF.vStar}>
+            Hosseini et al. 2024, <em>V-STaR</em>.
+          </RefItem>
           <RefItem n={REF.quietStar}>
             Zelikman et al. 2024, <em>Quiet-STaR</em>.
           </RefItem>
           <RefItem n={REF.restEm}>
             Singh et al. 2024, <em>Beyond Human Data (ReST-EM)</em>.
           </RefItem>
-          <RefItem n={REF.vStar}>
-            Hosseini et al. 2024, <em>V-STaR</em>.
-          </RefItem>
         </Note>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <CitationBadge citation={paper.citation} />
+        <CitationBadge citation={V_STAR} />
         <CitationBadge citation={QUIET_STAR} />
         <CitationBadge citation={REST_EM} />
-        <CitationBadge citation={V_STAR} />
       </div>
-      <p className="text-xs text-ink-muted">
-        the loop in step 1 is a seeded, ILLUSTRATIVE mechanism, not a digitized curve: no published
-        result fixes what &ldquo;60 problems&rdquo; or the hint boost mean numerically · what is
-        cited is quoted verbatim in step 2 (Zelikman et al. 2022, Table 1, CommonsenseQA dev) ·
-        the shapes the mechanism teaches — bootstrapping to a plateau, rationalization lifting it —
-        are the paper&apos;s reported behaviour, and the collapse without a correctness filter is
-        the standard failure mode of self-training on unfiltered model output · every trajectory
-        above is pinned in the test suite
-      </p>
+      <div className="flex flex-col gap-1 text-xs text-ink-muted">
+        <p>
+          <strong className="text-ink">Simulated</strong> — the loop in section 1 is a seeded
+          mechanism, not digitized data. No published result fixes what &ldquo;60 problems&rdquo;
+          or the hint boost mean numerically. It reproduces the shapes: bootstrapping to a plateau,
+          rationalization lifting it, degeneration without the filter.
+        </p>
+        <p>
+          <strong className="text-ink">Cited</strong> — every figure in section 2 is from Zelikman
+          et al. 2022, Table 1, CommonsenseQA dev.
+        </p>
+      </div>
 
       <PageNav n={PAGE_N} />
     </article>

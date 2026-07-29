@@ -130,6 +130,7 @@ describe("Page 12: the quoted CommonsenseQA table", () => {
   it("matches Zelikman et al. 2022, Table 1, digit for digit", () => {
     expect(p.fewShotDirect).toBe(20.9);
     expect(p.fewShotCot).toBe(36.6);
+    expect(p.fewShotCotLamda).toBe(55.6);
     expect(p.gptjFinetuned).toBe(60.0);
     expect(p.starNoRationalization).toBe(68.8);
     expect(p.star).toBe(72.5);
@@ -141,6 +142,8 @@ describe("Page 12: the quoted CommonsenseQA table", () => {
   it("tells the story the page's copy tells", () => {
     // Self-generated rationales beat fine-tuning on human answers alone…
     expect(p.starNoRationalization).toBeGreaterThan(p.gptjFinetuned);
+    // …the 6B model beats a 23x larger LaMDA prompted the same way…
+    expect(p.star).toBeGreaterThan(p.fewShotCotLamda);
     // …rationalization adds more…
     expect(p.star).toBeGreaterThan(p.starNoRationalization);
     // …to within half a point of a 30x larger fine-tuned model.
