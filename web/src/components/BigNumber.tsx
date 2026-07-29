@@ -4,11 +4,14 @@ import { useEffect, useRef, useState } from "react";
 
 export interface BigNumberProps {
   value: number;
+  prefix?: string;
   suffix?: string;
   decimals?: number;
   label?: string;
   /** Semantic hue for the number. */
   tone?: "compute" | "correct" | "wrong" | "ink";
+  /** `md` fits two readouts side by side at equal weight. */
+  size?: "md" | "lg";
 }
 
 const toneClass: Record<NonNullable<BigNumberProps["tone"]>, string> = {
@@ -27,7 +30,15 @@ function prefersReducedMotion(): boolean {
  * Big animated counter (signalling: one number, spotlighted). Motion is
  * purposeful and respects prefers-reduced-motion (jumps straight to the value).
  */
-export function BigNumber({ value, suffix = "", decimals = 1, label, tone = "ink" }: BigNumberProps) {
+export function BigNumber({
+  value,
+  prefix = "",
+  suffix = "",
+  decimals = 1,
+  label,
+  tone = "ink",
+  size = "lg",
+}: BigNumberProps) {
   const [display, setDisplay] = useState(value);
   const fromRef = useRef(value);
 
@@ -53,7 +64,10 @@ export function BigNumber({ value, suffix = "", decimals = 1, label, tone = "ink
 
   return (
     <div className="flex flex-col items-center">
-      <span className={`font-mono text-6xl font-bold tabular-nums ${toneClass[tone]}`}>
+      <span
+        className={`font-mono ${size === "lg" ? "text-6xl" : "text-4xl"} font-bold tabular-nums ${toneClass[tone]}`}
+      >
+        {prefix}
         {display.toFixed(decimals)}
         {suffix}
       </span>

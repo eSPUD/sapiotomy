@@ -373,7 +373,7 @@ export function Page12() {
               verifiable reward (the answer key), improvement on the successes:{" "}
               <em>generate → filter → train</em> is the conceptual ancestor of the
               RL-from-verifiable-rewards recipe behind today&apos;s reasoning models — o1, R1 —
-              where Act 3 picks up the story. Its descendants each fix one gap: Quiet-STaR moves
+              where the next two pages close this act. Its descendants each fix one gap: Quiet-STaR moves
               the loop inside, learning to think before <em>every</em> token;
               <Cite n={REF.quietStar} /> ReST-EM formalizes generate-filter-train as
               expectation-maximization and scales it;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { scaleLinear, scaleLog, line as d3line } from "d3";
 import { ChartFrame, CHART_MARGIN } from "./ChartFrame";
 
@@ -20,6 +21,23 @@ export interface LineChartProps {
   primaryLabel?: string;
   /** Shade the area between the primary and secondary lines (the gap itself). */
   fillBetween?: boolean;
+  /** Opacity of the fillBetween band (raise it when the band IS the point). */
+  fillOpacity?: number;
+  /**
+   * Annotation arrows in data coordinates, with an optional label at the
+   * midpoint (e.g. slope callouts: "×10 → +29.5").
+   */
+  arrows?: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    label?: string;
+    labelAnchor?: "start" | "middle" | "end";
+    /** Pixel nudges for the label, from the arrow's midpoint. */
+    labelDx?: number;
+    labelDy?: number;
+  }[];
   /** Circle every data point on both lines, not just the marker. */
   markPoints?: boolean;
   /**
@@ -68,6 +86,8 @@ export function LineChart({
   secondary,
   primaryLabel,
   fillBetween = false,
+  fillOpacity = 0.12,
+  arrows,
   markPoints = false,
   inlineLabels = false,
   markerDelta = false,
@@ -80,6 +100,7 @@ export function LineChart({
   width = 480,
   height = 320,
 }: LineChartProps) {
+  const arrowId = useId();
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
   const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
 
@@ -177,7 +198,7 @@ export function LineChart({
       ) : null}
 
       {/* the gap between the lines, shaded (drawn under the lines) */}
-      {bandPath ? <path d={bandPath} className="fill-compute" fillOpacity={0.12} /> : null}
+      {bandPath ? <path d={bandPath} className="fill-compute" fillOpacity={fillOpacity} /> : null}
 
       {secondaryPath ? (
         <path d={secondaryPath} fill="none" className="stroke-compute" strokeWidth={2.5} />
@@ -248,6 +269,49 @@ export function LineChart({
               <text x={22} y={26} className="fill-ink text-[10px]">{secondary.label}</text>
             </>
           ) : null}
+        </g>
+      ) : null}
+
+      {/* annotation arrows (e.g. the two slope callouts on page 13) */}
+      {arrows?.length ? (
+        <g>
+          <defs>
+            <marker
+              id={arrowId}
+              viewBox="0 0 10 10"
+              refX={8}
+              refY={5}
+              markerWidth={6}
+              markerHeight={6}
+              orient="auto-start-reverse"
+            >
+              <path d="M0,0L10,5L0,10Z" className="fill-ink" />
+            </marker>
+          </defs>
+          {arrows.map((a, i) => (
+            <g key={i}>
+              <line
+                x1={x(a.x1)}
+                y1={y(a.y1)}
+                x2={x(a.x2)}
+                y2={y(a.y2)}
+                className="stroke-ink"
+                strokeWidth={1.5}
+                markerEnd={`url(#${arrowId})`}
+              />
+              {a.label ? (
+                <text
+                  x={(x(a.x1) + x(a.x2)) / 2 + (a.labelDx ?? 0)}
+                  y={(y(a.y1) + y(a.y2)) / 2 + (a.labelDy ?? 0)}
+                  dy="0.32em"
+                  textAnchor={a.labelAnchor ?? "middle"}
+                  className="fill-ink text-[10px] font-semibold"
+                >
+                  {a.label}
+                </text>
+              ) : null}
+            </g>
+          ))}
         </g>
       ) : null}
 
