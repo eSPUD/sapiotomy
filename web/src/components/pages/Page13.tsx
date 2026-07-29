@@ -30,7 +30,7 @@
  * hidden. OpenAI's argument (monitorable chains must stay untrained, plus
  * competitive advantage) and its price (unauditable, billed sight unseen) in
  * two cards, which hands the deck to R1 (open weights, visible chain) next
- * page and seeds the faithfulness question of Act 3.
+ * page and seeds the faithfulness question later in the act.
  *
  * Anchored to data/o1-scaling.json and data/o3-preview.json; the law and both
  * files' anchors are pinned in frontier.test.ts.
@@ -149,7 +149,7 @@ export function Page13() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Everything in this act so far was scaffolding bolted on from outside: prompts that ask for
+        Everything in Act 2 was scaffolding bolted on from outside: prompts that ask for
         steps, votes over many chains, judges, search. In September 2024 OpenAI shipped{" "}
         <strong className="text-ink">o1</strong>, the first commercial model trained with
         large-scale reinforcement learning to do the reasoning <em>itself</em>: before answering, it

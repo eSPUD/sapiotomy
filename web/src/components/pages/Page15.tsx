@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * Page 15, "The Scoreboard: Benchmarks That Track Reasoning" — Act 3 opener.
- * Act 2 taught the levers; Act 3 asks what they are worth. Every claim the
- * rest of this act weighs ("o1 reasons", "R1 matches it", "the collapse is
+ * Page 15, "The Scoreboard: Benchmarks That Track Reasoning" — where Act 3
+ * turns from the frontier pair (13–14) to the caveats. Every claim this act
+ * has made or weighs ("o1 reasons", "R1 matches it", "the collapse is
  * an artifact") arrives as a benchmark score, so before weighing any of them
  * the reader needs to know how the scoreboard works — and how it fails.
  *

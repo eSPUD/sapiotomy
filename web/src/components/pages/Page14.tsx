@@ -6,40 +6,50 @@
  * works and hid how; in January 2025 DeepSeek published the recipe, the
  * training curve, and the weights (MIT license). The page's one idea: reward
  * ONLY verifiable right answers and the pausing / second-guessing /
- * self-correcting of this whole act emerges on its own — nobody writes it in.
+ * self-correcting emerges on its own — nobody writes it in.
  *
  * Step 1 is the recipe, GRPO, shown as the thing it actually is: the group of
  * sampled answers IS the baseline. Four sampled answers to page 1's 17 × 24, a
  * rule-based checker (= 408?), and each answer pushed by (its reward − the
- * group mean). Clicking a slot resamples it, so the reader can feel the two
- * properties that matter: the same right answer earns a smaller push in a
- * luckier group, and a group that is all-right or all-wrong teaches nothing.
- * No critic network anywhere — that is what made RL at this scale affordable.
+ * group mean). Clicking a slot resamples it — the cue sits ABOVE the widget so
+ * the page's only step-1 interaction is actually found — and the reader can
+ * feel the two properties that matter: the same right answer earns a smaller
+ * push in a luckier group, and a uniform group teaches nothing. No critic
+ * network anywhere — that is what made RL at this scale affordable.
  *
- * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining):
- * AIME pass@1 15.6 → 71.0 while average response length grows ~1k → ~9k
- * tokens, accuracy and thinking time climbing TOGETHER. The scratchpad below
- * the chart stages the paper's Table-3 trace: early = square once and stop;
+ * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining). The
+ * chart plots BOTH of the section's variables against training step on a dual
+ * y-axis: AIME pass@1 (left, 15.6 → 71.0) and average response length (right,
+ * ~1k → ~9k tokens). The divergence IS the argument — accuracy saturates while
+ * length keeps climbing; the model spends more to buy less and chooses to
+ * anyway. A dashed rule at the aha step ties the chart to the scratchpad
+ * below, which stages the paper's Table-3 trace: early = square once and stop;
  * mid = longer but strictly forward; past the aha step the verbatim "Wait,
- * wait. Wait. That's an aha moment I can flag here." interruption appears.
- * The paper places that trace only at "an intermediate version", so its slider
- * position here is an illustrative placement — said in the provenance line
- * under the trace, where Page 9 puts the same kind of caveat.
+ * wait. Wait." interruption appears and a gutter arrow draws the loop — the
+ * trace visibly returns to its own first line. The paper places that trace
+ * only at "an intermediate version", so its position here is an illustrative
+ * placement — said under the trace and again in the footer.
  *
  * Step 3 is the give-away: full R1's headline numbers (cold start + more RL),
- * then the six distilled dense models (curves.deepseekDistill, Table 5). The
- * bars double as the picker; teacher and o1-mini are fixed reference rows. The
- * accuracy/size trade is the interactive: pick a size, read AIME + MATH-500 +
- * how many times fewer parameters than the 671B teacher.
+ * then the six distilled dense models (curves.deepseekDistill, Table 5) as a
+ * scatter of AIME pass@1 against parameters (log x). The scatter draws what
+ * the section promises: the ~48× gap between Qwen-14B and the 671B teacher as
+ * a horizontal span (page 11's annotation grammar), Qwen-32B beating Llama-70B
+ * as a visible non-monotonicity, and the distillation frontier as a shape.
+ * o1-mini's parameter count is undisclosed, so it is a dashed reference line
+ * (page 13's GPT-4o idiom), not a point. Chips below the chart pick a size;
+ * the picked point is ringed on the plot.
  *
- * Sidenotes follow the page-2 convention: numbered cites (Cite/RefItem)
- * beside the step that uses them, citation chips at the bottom, no footnotes.
+ * Footer follows the deck-wide two-label provenance pattern: Simulated (the
+ * interpolated curve, the illustrative aha placement) and Cited (every number
+ * pinned to DeepSeek-AI 2025, the verbatim Table-3 passage).
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { scaleLinear, scaleLog } from "d3";
+import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { CitationBadge } from "@/components/CitationBadge";
 import { Cite, RefItem } from "@/components/Cite";
-import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
@@ -105,17 +115,28 @@ const STAGE_NOTE: Record<Stage, string> = {
 interface Distill {
   size: number;
   label: string;
+  family: "qwen" | "llama";
   mathKey: string;
   note: string;
 }
 const DISTILLS: Distill[] = [
-  { size: 1.5, label: "Qwen-1.5B", mathKey: "math1p5", note: "On AIME it beats GPT-4o-0513 (9.3%) — from a model that fits on a phone." },
-  { size: 7, label: "Qwen-7B", mathKey: "math7", note: "Most of the way to o1-mini (63.6%), at laptop scale." },
-  { size: 8, label: "Llama-8B", mathKey: "math8", note: "A Llama base instead of Qwen: the same 800K traces teach a different family." },
-  { size: 14, label: "Qwen-14B", mathKey: "math14", note: "Beats QwQ-32B-Preview (50.0%), the strongest open reasoning model of its day, at less than half the size." },
-  { size: 32, label: "Qwen-32B", mathKey: "math32", note: "Within ~7 points of the 671B teacher." },
-  { size: 70, label: "Llama-70B", mathKey: "math70", note: "Bigger is not automatically better: the 32B Qwen edges it on AIME." },
+  { size: 1.5, label: "Qwen-1.5B", family: "qwen", mathKey: "math1p5", note: "On AIME it beats GPT-4o-0513 (9.3%) — from a model that fits on a phone." },
+  { size: 7, label: "Qwen-7B", family: "qwen", mathKey: "math7", note: "Most of the way to o1-mini (63.6%), at laptop scale." },
+  { size: 8, label: "Llama-8B", family: "llama", mathKey: "math8", note: "A Llama base instead of Qwen: the same 800K traces teach a different family." },
+  { size: 14, label: "Qwen-14B", family: "qwen", mathKey: "math14", note: "Beats QwQ-32B-Preview (50.0%) — the leading open reasoning model when R1 shipped — at less than half the size." },
+  { size: 32, label: "Qwen-32B", family: "qwen", mathKey: "math32", note: "Within ~7 points of the 671B teacher." },
+  { size: 70, label: "Llama-70B", family: "llama", mathKey: "math70", note: "Bigger is not automatically better: the 32B Qwen edges it on AIME." },
 ];
+
+/** Per-point label offsets on the scatter, tuned against the log-x layout. */
+const SCATTER_LABEL: Record<number, { dx: number; dy: number; anchor: "start" | "end" | "middle" }> = {
+  1.5: { dx: 8, dy: 4, anchor: "start" },
+  7: { dx: -8, dy: 4, anchor: "end" },
+  8: { dx: 8, dy: 12, anchor: "start" },
+  14: { dx: -8, dy: 4, anchor: "end" },
+  32: { dx: 0, dy: -10, anchor: "middle" },
+  70: { dx: 0, dy: -8, anchor: "middle" },
+};
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -124,6 +145,254 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
+  );
+}
+
+/** A small legend swatch + label (page-11 idiom). */
+function Key({ shape, className, label }: { shape: "circle" | "diamond" | "line" | "dash"; className: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span
+        aria-hidden="true"
+        className={`inline-block ${
+          shape === "line"
+            ? "h-0.5 w-4"
+            : shape === "dash"
+              ? "h-0 w-4 border-t border-dashed"
+              : shape === "diamond"
+                ? "h-3 w-3 rotate-45"
+                : "h-3 w-3 rounded-full"
+        } ${className}`}
+      />
+      {label}
+    </span>
+  );
+}
+
+/**
+ * The section-2 chart: BOTH of the section's variables against training step.
+ * Accuracy (left axis, correct hue) saturates while average response length
+ * (right axis, compute hue) keeps climbing — that divergence is the argument,
+ * so both series live on one plot. A dashed rule marks the (illustrative) aha
+ * step so the chart and the scratchpad are visibly the same moment.
+ */
+function TrainingChart({ step, pass, length }: { step: number; pass: number; length: number }) {
+  const training = curves.deepseekTraining;
+  const { lengthStart, lengthEnd } = training.fit!.params;
+
+  const width = 480;
+  const height = 300;
+  const margin = { ...CHART_MARGIN, right: 44 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const x = scaleLinear().domain([0, MAX_STEP]).range([0, innerW]);
+  const yAcc = scaleLinear().domain([0, 90]).range([innerH, 0]);
+  const yLen = scaleLinear().domain([0, 10000]).range([innerH, 0]);
+
+  const lengthAt = (s: number) => lengthStart + (lengthEnd - lengthStart) * (s / MAX_STEP);
+  const accPath = training.points.map((p, i) => `${i ? "L" : "M"}${x(p.x)},${yAcc(p.y)}`).join("");
+  const lenPath = training.points
+    .map((p, i) => `${i ? "L" : "M"}${x(p.x)},${yLen(lengthAt(p.x))}`)
+    .join("");
+
+  const title = `R1-Zero across RL training, two y axes. Left axis, AIME 2024 pass at 1: from 15.6 percent at step 0 to 71.0 percent at step ${MAX_STEP}, flattening late. Right axis, average response length: from about ${lengthStart.toLocaleString()} to about ${lengthEnd.toLocaleString()} tokens, still climbing after accuracy flattens. A dashed rule at step ${AHA_STEP.toLocaleString()} marks where the aha trace appears (illustrative placement). Marker at step ${step.toLocaleString()}: ${pass.toFixed(1)} percent, about ${length.toLocaleString()} tokens.`;
+
+  return (
+    <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="RL training step">
+      {/* gridlines + left (accuracy) ticks */}
+      {[0, 20, 40, 60, 80].map((t) => (
+        <g key={`y${t}`}>
+          <line x1={0} x2={innerW} y1={yAcc(t)} y2={yAcc(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-6} y={yAcc(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t}
+          </text>
+        </g>
+      ))}
+      {/* right (length) ticks, in the length line's hue */}
+      {[0, 5000, 10000].map((t) => (
+        <text
+          key={`r${t}`}
+          x={innerW + 6}
+          y={yLen(t)}
+          dy="0.32em"
+          textAnchor="start"
+          className="fill-compute text-[10px]"
+        >
+          {t === 0 ? "0" : `${t / 1000}k`}
+        </text>
+      ))}
+      {[0, 2000, 4000, 6000, 8000].map((t) => (
+        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+          {t === 0 ? "0" : `${t / 1000}k`}
+        </text>
+      ))}
+
+      {/* axis titles, color-bound to their series */}
+      <text
+        transform={`translate(-32,${innerH / 2}) rotate(-90)`}
+        textAnchor="middle"
+        className="fill-correct text-xs"
+      >
+        pass@1 (%)
+      </text>
+      <text
+        transform={`translate(${innerW + 36},${innerH / 2}) rotate(90)`}
+        textAnchor="middle"
+        className="fill-compute text-xs"
+      >
+        avg response (tokens)
+      </text>
+
+      {/* the aha step: the chart's moment is the scratchpad's moment */}
+      <line
+        x1={x(AHA_STEP)}
+        x2={x(AHA_STEP)}
+        y1={0}
+        y2={innerH}
+        className="stroke-ink-muted"
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+      <text x={x(AHA_STEP) + 4} y={12} textAnchor="start" className="fill-ink-muted text-[9px]">
+        the aha appears
+      </text>
+
+      <path d={lenPath} fill="none" className="stroke-compute" strokeWidth={2.5} />
+      <path d={accPath} fill="none" className="stroke-correct" strokeWidth={2.5} />
+
+      {/* legend, top-left (the curves start bottom-left) */}
+      <rect x={8} y={8} width={10} height={3} className="fill-correct" />
+      <text x={22} y={12} className="fill-ink text-[10px]">AIME pass@1 · left axis</text>
+      <rect x={8} y={22} width={10} height={3} className="fill-compute" />
+      <text x={22} y={26} className="fill-ink text-[10px]">avg response length · right axis</text>
+
+      {/* the slider's marker, dotted onto both series */}
+      <line
+        x1={x(step)}
+        x2={x(step)}
+        y1={0}
+        y2={innerH}
+        className="stroke-compute"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
+      <circle cx={x(step)} cy={yLen(length)} r={5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
+      <circle cx={x(step)} cy={yAcc(pass)} r={5} className="fill-correct stroke-canvas" strokeWidth={1.5} />
+    </ChartFrame>
+  );
+}
+
+/**
+ * The section-3 chart: the accuracy/size trade actually drawn. x = total
+ * parameters (log), y = AIME 2024 pass@1; Qwen circles, Llama diamonds (shape
+ * as well as colour), the 671B MoE teacher top-right, o1-mini as a dashed
+ * reference line (its parameter count is undisclosed, so it has no x), and the
+ * ~48× Qwen-14B → teacher gap as a horizontal span annotation.
+ */
+function DistillScatter({ picked, onPick }: { picked: number; onPick: (size: number) => void }) {
+  const distill = curves.deepseekDistill;
+  const P = distill.fit!.params;
+  const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
+
+  const width = 560;
+  const height = 300;
+  const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
+  const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
+  const x = scaleLog().domain([1, 1000]).range([0, innerW]);
+  const y = scaleLinear().domain([20, 90]).range([innerH, 0]);
+
+  const spanRatio = Math.round(P.teacherParamsB / 14);
+  const spanY = y(87);
+
+  const title = `AIME 2024 pass at 1 against total parameters, log x axis. Distilled models: ${DISTILLS.map(
+    (d) => `${d.label} ${aimeOf(d.size)} percent`,
+  ).join(", ")}. The R1 teacher, a ${P.teacherParamsB}B mixture-of-experts, sits at ${P.r1Aime} percent; a dashed reference line marks OpenAI o1-mini at ${P.o1miniAime} percent (parameter count undisclosed). A span annotation marks the roughly ${spanRatio} times parameter gap between Qwen-14B and the teacher. ${DISTILLS.find((d) => d.size === picked)?.label} is selected.`;
+
+  return (
+    <ChartFrame title={title} width={width} height={height} xLabel="total parameters (B, log scale)" yLabel="AIME 2024 pass@1 (%)">
+      {[20, 40, 60, 80].map((t) => (
+        <g key={`y${t}`}>
+          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-6} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t}
+          </text>
+        </g>
+      ))}
+      {[1, 10, 100, 1000].map((t) => (
+        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+          {t}
+        </text>
+      ))}
+
+      {/* o1-mini: a reference line, page-13 style — its size is undisclosed */}
+      <line
+        x1={0}
+        x2={innerW}
+        y1={y(P.o1miniAime)}
+        y2={y(P.o1miniAime)}
+        className="stroke-ink-muted"
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+      <text x={innerW - 4} y={y(P.o1miniAime) - 5} textAnchor="end" className="fill-ink-muted text-[10px]">
+        OpenAI o1-mini · {P.o1miniAime}% (size undisclosed)
+      </text>
+
+      {/* the ~48× gap, drawn as a horizontal span (page 11's annotation grammar) */}
+      <line x1={x(14)} x2={x(P.teacherParamsB)} y1={spanY} y2={spanY} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="4 3" />
+      <line x1={x(14)} x2={x(14)} y1={spanY} y2={y(aimeOf(14)) - 7} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="2 2" />
+      <line x1={x(P.teacherParamsB)} x2={x(P.teacherParamsB)} y1={spanY} y2={y(P.r1Aime) - 9} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="2 2" />
+      <text
+        x={(x(14) + x(P.teacherParamsB)) / 2}
+        y={spanY - 5}
+        textAnchor="middle"
+        className="fill-ink text-[10px] font-semibold"
+      >
+        ~{spanRatio}× the parameters
+      </text>
+
+      {/* the teacher */}
+      <g aria-hidden="true">
+        <circle cx={x(P.teacherParamsB)} cy={y(P.r1Aime)} r={6} className="fill-correct stroke-canvas" strokeWidth={1.5} />
+        <text x={x(P.teacherParamsB) - 10} y={y(P.r1Aime) + 4} textAnchor="end" className="fill-ink text-[9px] font-semibold">
+          R1 teacher · {P.teacherParamsB}B MoE
+        </text>
+      </g>
+
+      {/* the six distills; the picked one is ringed */}
+      {DISTILLS.map((d) => {
+        const px = x(d.size);
+        const py = y(aimeOf(d.size));
+        const lab = SCATTER_LABEL[d.size];
+        const active = d.size === picked;
+        return (
+          <g key={d.size} onClick={() => onPick(d.size)} className="cursor-pointer" aria-hidden="true">
+            {active ? <circle cx={px} cy={py} r={8.5} fill="none" className="stroke-ink" strokeWidth={1.5} /> : null}
+            {d.family === "llama" ? (
+              <rect
+                x={px - 4}
+                y={py - 4}
+                width={8}
+                height={8}
+                transform={`rotate(45 ${px} ${py})`}
+                className="fill-wrong stroke-canvas"
+                strokeWidth={1.5}
+              />
+            ) : (
+              <circle cx={px} cy={py} r={4.5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
+            )}
+            <text
+              x={px + lab.dx}
+              y={py + lab.dy}
+              textAnchor={lab.anchor}
+              className={`text-[9px] ${active ? "fill-ink font-semibold" : "fill-ink-muted"}`}
+            >
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
   );
 }
 
@@ -152,14 +421,37 @@ export function Page14() {
   const pass = interpolate(training, step);
   const length = Math.round(lengthStart + (lengthEnd - lengthStart) * (step / MAX_STEP));
   const stage: Stage = step >= AHA_STEP ? "aha" : step >= MID_STEP ? "mid" : "early";
-  const chartPoints = training.points;
+
+  /* The gutter arrow beside the trace: measured from the rendered lines so the
+     loop connects the aha interruption back to the trace's own first line. */
+  const firstLineRef = useRef<HTMLLIElement>(null);
+  const ahaLineRef = useRef<HTMLLIElement>(null);
+  const [loop, setLoop] = useState<{ from: number; to: number } | null>(null);
+  useEffect(() => {
+    const measure = () => {
+      const first = firstLineRef.current;
+      const aha = ahaLineRef.current;
+      if (stage !== "aha" || !first || !aha) {
+        setLoop(null);
+        return;
+      }
+      const from = aha.offsetTop + aha.offsetHeight / 2;
+      const to = first.offsetTop + first.offsetHeight / 2;
+      setLoop(from - to > 24 ? { from, to } : null);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [stage]);
 
   /* — step 3: the distills — */
   const picked = DISTILLS.find((d) => d.size === pickedSize)!;
   const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
   const paramRatio = Math.round(P.teacherParamsB / picked.size);
-
-  const barAria = `AIME 2024 pass at 1: DeepSeek-R1 teacher ${P.r1Aime} percent, OpenAI o1-mini ${P.o1miniAime} percent, distilled models from ${aimeOf(1.5)} percent at 1.5B to ${aimeOf(32)} percent at 32B.`;
+  const pick = (size: number) => {
+    setPickedSize(size);
+    recordInteraction(PAGE_N);
+  };
 
   return (
     <article className="flex flex-col gap-6">
@@ -171,14 +463,9 @@ export function Page14() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        OpenAI&apos;s o1 proved that RL-trained reasoning works — and hid the recipe. In January
-        2025 the Chinese lab DeepSeek published it: paper, training curve, and MIT-licensed weights
-        for <strong className="text-ink">R1</strong>, a model matching o1 on many reasoning
-        benchmarks. The headline is what the recipe <em>leaves out</em>: no worked examples at all.{" "}
-        <strong className="text-ink">
-          Reward only verifiably correct final answers, and the pausing, checking, and backing-up
-        </strong>{" "}
-        you have spent this act building by hand emerges on its own.
+        o1 proved RL-trained reasoning works and kept the recipe. DeepSeek published one in January
+        2025 — weights, curve, and <strong className="text-ink">no worked examples at all</strong>:
+        so <strong className="text-ink">where does the backtracking come from?</strong>
         <Cite n={REF.r1} />
       </p>
 
@@ -194,13 +481,14 @@ export function Page14() {
 
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-ink">
-              <strong>R1-Zero</strong> starts from a plain base model and deletes the usual
-              supervised warm-up entirely. The reward is a program, not a network: did the final
-              answer match? is the reasoning wrapped in the right tags? Sample a{" "}
-              <strong>group</strong> of answers to one problem, score each with the rule, and push
-              each one up or down by how far it beats <em>the group&apos;s own average</em>. That
-              is <strong>Group Relative Policy Optimization</strong> — the group is the baseline,
-              so there is no second &ldquo;critic&rdquo; model to train, which is what makes RL at
+              <strong>R1-Zero</strong> deletes the usual supervised warm-up entirely and starts RL
+              from a plain base model. The reward is{" "}
+              <strong>a program, not a network</strong>: did the final answer match, and is the
+              thinking wrapped in the right tags? Sample a <strong>group</strong> of answers to one
+              problem, score each with the rule, and push each one up or down by how far it beats{" "}
+              <em>the group&apos;s own average</em>. That is{" "}
+              <strong>Group Relative Policy Optimization</strong> — the group is the baseline, so
+              there is no second &ldquo;critic&rdquo; model to train, which is what makes RL at
               this scale affordable.
               <Cite n={REF.grpo} />
             </p>
@@ -212,6 +500,10 @@ export function Page14() {
                 <span className="ml-2 text-xs text-ink-muted">
                   the rule checks one thing: does the answer equal 408?
                 </span>
+              </p>
+              <p className="text-sm font-semibold text-ink">
+                <span aria-hidden="true" className="text-compute">↻ </span>
+                Click any answer to resample it — watch every push move.
               </p>
               <div className="grid gap-2 sm:grid-cols-4" role="group" aria-label="Four sampled answers">
                 {rightSlots.map((right, i) => {
@@ -226,7 +518,9 @@ export function Page14() {
                         right ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
                       }`}
                     >
-                      <span className="text-xs text-ink-muted">sample {i + 1}</span>
+                      <span className="text-xs text-ink-muted">
+                        sample {i + 1} <span aria-hidden="true">· ↻</span>
+                      </span>
                       <span className="font-mono font-semibold text-ink">
                         {right ? RIGHT_ANSWER : SLOT_WRONGS[i]}
                       </span>
@@ -248,7 +542,7 @@ export function Page14() {
               <p className="text-sm text-ink-muted">
                 group average: <span className="font-mono text-ink">{mean.toFixed(2)}</span> · each
                 sample&apos;s push is its reward minus that average (GRPO then divides by the
-                group&apos;s spread) · click an answer to resample it
+                group&apos;s spread)
               </p>
               {uniform ? (
                 <p className="rounded border-l-4 border-compute bg-surface p-2 text-sm text-ink">
@@ -283,7 +577,8 @@ export function Page14() {
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-ink">
               Nothing in the setup mentions reflection. Watch what the reward alone buys — and
-              notice that accuracy and <em>thinking length</em> climb together: the model is
+              notice the two curves diverging: accuracy flattens while <em>thinking length</em>{" "}
+              keeps climbing. The model is spending more to buy less, and chooses to anyway — it is
               learning to <strong>allocate itself more thinking time</strong>.
             </p>
 
@@ -300,23 +595,19 @@ export function Page14() {
                     recordInteraction(PAGE_N);
                   }}
                 />
-                <div>
-                  <p className="font-mono text-5xl font-bold tabular-nums text-correct">
-                    {pass.toFixed(1)}%
-                  </p>
-                  <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <div className="h-4 w-full rounded bg-surface-raised">
-                    <div
-                      className="h-4 rounded bg-compute"
-                      style={{ width: `${(length / 10000) * 100}%` }}
-                    />
+                <div className="flex items-end gap-6">
+                  <div>
+                    <p className="font-mono text-5xl font-bold tabular-nums text-correct">
+                      {pass.toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
                   </div>
-                  <p className="text-xs text-ink-muted">
-                    avg response ≈{" "}
-                    <span className="font-mono text-ink">{length.toLocaleString()}</span> tokens
-                  </p>
+                  <div>
+                    <p className="font-mono text-2xl font-bold tabular-nums text-compute">
+                      ≈{length.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-ink-muted">avg response tokens</p>
+                  </div>
                 </div>
                 <p className="text-sm text-ink-muted">
                   From 15.6% to 71.0% pass@1 with no supervised examples. Add page 7&apos;s
@@ -325,15 +616,7 @@ export function Page14() {
                   <Cite n={REF.r1} />
                 </p>
               </div>
-              <LineChart
-                title="R1-Zero AIME 2024 pass@1 across RL training"
-                points={chartPoints}
-                xLabel="training step"
-                yLabel="pass@1 (%)"
-                yDomain={[0, 90]}
-                xDomain={[0, MAX_STEP]}
-                markerX={step}
-              />
+              <TrainingChart step={step} pass={pass} length={length} />
             </div>
 
             {/* the scratchpad */}
@@ -342,9 +625,34 @@ export function Page14() {
                 the model&apos;s scratchpad · {STAGE_CHIP[stage]}
               </p>
               <p className="text-sm text-ink-muted">{TRACE_PROBLEM}</p>
-              <ol className="flex flex-col gap-1.5">
+              {/* The gutter carries the structure: empty while the trace runs
+                  strictly forward, a return arrow once the aha appears. */}
+              <ol className="relative flex flex-col gap-1.5 pl-8">
+                {loop ? (
+                  <svg aria-hidden="true" className="absolute inset-y-0 left-0 w-8">
+                    <defs>
+                      <marker
+                        id="trace-loop-arrowhead"
+                        markerWidth="7"
+                        markerHeight="7"
+                        refX="5"
+                        refY="3.5"
+                        orient="auto"
+                      >
+                        <path d="M0,0 L6,3.5 L0,7" fill="none" className="stroke-correct" strokeWidth={1.2} />
+                      </marker>
+                    </defs>
+                    <path
+                      d={`M 26 ${loop.from} C 2 ${loop.from - 10}, 2 ${loop.to + 10}, 22 ${loop.to}`}
+                      fill="none"
+                      className="stroke-correct"
+                      strokeWidth={1.5}
+                      markerEnd="url(#trace-loop-arrowhead)"
+                    />
+                  </svg>
+                ) : null}
                 {TRACE_OPEN.map((line, i) => (
-                  <li key={`o${i}`} className="text-sm text-ink">
+                  <li key={`o${i}`} ref={i === 0 ? firstLineRef : undefined} className="text-sm text-ink">
                     {line}
                   </li>
                 ))}
@@ -359,6 +667,7 @@ export function Page14() {
                   ? TRACE_AHA.map((line, i) => (
                       <li
                         key={`a${i}`}
+                        ref={i === 0 ? ahaLineRef : undefined}
                         className={
                           i === 0
                             ? "rounded border-l-4 border-correct bg-correct/10 p-2 text-sm font-semibold text-ink"
@@ -383,18 +692,14 @@ export function Page14() {
               the &ldquo;Wait, wait. Wait.&rdquo; passage is verbatim from Table 3 of DeepSeek-AI
               2025, where R1-Zero produced it unprompted at &ldquo;an intermediate version&rdquo;
               of training; the earlier stages are that same trace abridged, and where the aha lands
-              on the slider is an illustrative placement — the paper gives the behaviour, not a
-              step number
+              on the slider and the chart is an illustrative placement — the paper gives the
+              behaviour, not a step number
             </p>
           </div>
         </section>
 
         <Note kicker="Try it">
           <p>Drag past step {AHA_STEP.toLocaleString()}.</p>
-          <p>
-            Watch the scratchpad interrupt itself — and the length bar keep growing after the
-            accuracy curve starts to flatten.
-          </p>
         </Note>
 
         {/* Step 3 — the give-away */}
@@ -434,23 +739,23 @@ export function Page14() {
               accuracy/cost trade:
             </p>
 
-            <div className="flex flex-col gap-2" role="img" aria-label={barAria}>
-              {[
-                { label: `R1 (teacher, ${P.teacherParamsB}B MoE)`, value: P.r1Aime, cls: "bg-correct" },
-                { label: "OpenAI o1-mini", value: P.o1miniAime, cls: "bg-grid" },
-              ].map((b) => (
-                <div key={b.label} className="flex items-center gap-2 text-sm">
-                  <span className="w-44 shrink-0 text-ink-muted">{b.label}</span>
-                  <div className="h-5 flex-1 rounded bg-surface-raised">
-                    <div className={`h-5 rounded ${b.cls}`} style={{ width: `${b.value}%` }} />
-                  </div>
-                  <span className="w-14 shrink-0 text-right font-mono tabular-nums text-ink">
-                    {b.value.toFixed(1)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col gap-2">
+            <figure className="m-0 flex flex-col gap-2">
+              <DistillScatter picked={pickedSize} onPick={pick} />
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                <Key shape="circle" className="bg-compute" label="Qwen base" />
+                <Key shape="diamond" className="bg-wrong" label="Llama base" />
+                <Key shape="circle" className="bg-correct" label="R1 teacher (671B MoE)" />
+                <Key shape="dash" className="border-ink-muted" label="o1-mini reference" />
+              </div>
+              <figcaption className="text-xs text-ink-muted">
+                the parameter axis counts total parameters; the {P.teacherParamsB}B teacher is a
+                mixture-of-experts that activates ~{P.teacherActiveB}B per token, so the drawn gap
+                overstates its per-token compute · o1-mini&apos;s parameter count is undisclosed,
+                so it is a reference line, not a point
+              </figcaption>
+            </figure>
+
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Pick a distilled model">
               {DISTILLS.map((d) => {
                 const active = d.size === pickedSize;
                 return (
@@ -458,26 +763,14 @@ export function Page14() {
                     key={d.label}
                     type="button"
                     aria-pressed={active}
-                    onClick={() => {
-                      setPickedSize(d.size);
-                      recordInteraction(PAGE_N);
-                    }}
-                    className={`flex items-center gap-2 rounded text-left text-sm ${
-                      active ? "ring-1 ring-compute" : ""
+                    onClick={() => pick(d.size)}
+                    className={`rounded border px-3 py-1.5 text-sm ${
+                      active
+                        ? "border-compute bg-compute/15 font-semibold text-ink"
+                        : "border-grid bg-surface-raised text-ink-muted"
                     }`}
                   >
-                    <span className={`w-44 shrink-0 ${active ? "text-ink" : "text-ink-muted"}`}>
-                      {d.label}
-                    </span>
-                    <span className="h-5 flex-1 rounded bg-surface-raised">
-                      <span
-                        className={`block h-5 rounded bg-compute ${active ? "" : "opacity-40"}`}
-                        style={{ width: `${aimeOf(d.size)}%` }}
-                      />
-                    </span>
-                    <span className="w-14 shrink-0 text-right font-mono tabular-nums text-ink">
-                      {aimeOf(d.size).toFixed(1)}%
-                    </span>
+                    {d.label}
                   </button>
                 );
               })}
@@ -492,10 +785,6 @@ export function Page14() {
               </p>
               <p className="mt-1 text-ink-muted">{picked.note}</p>
             </div>
-            <p className="text-xs text-ink-muted">
-              size ratios compare total parameters; the {P.teacherParamsB}B teacher is a
-              mixture-of-experts that activates ~{P.teacherActiveB}B per token
-            </p>
           </div>
         </section>
 
@@ -510,11 +799,19 @@ export function Page14() {
         <CitationBadge citation={distill.citation} />
         <CitationBadge citation={GRPO_CITATION} />
       </div>
-      <p className="text-xs text-ink-muted">
-        Every benchmark number above is transcribed from DeepSeek-AI 2025 (Tables 3–5, Fig. 2–3)
-        and pinned in the test suite; the training curve&apos;s intermediate points are
-        interpolated along the reported 15.6% → 71.0% climb.
-      </p>
+      <div className="flex flex-col gap-1 text-xs text-ink-muted">
+        <p>
+          <strong className="text-ink">Simulated</strong> — the training curve&apos;s intermediate
+          points are interpolated along the reported 15.6% → 71.0% climb, and where the aha lands
+          on the slider is an illustrative placement; the paper gives the behaviour, not a step
+          number.
+        </p>
+        <p>
+          <strong className="text-ink">Cited</strong> — every benchmark number is transcribed from
+          DeepSeek-AI 2025 (Tables 3–5, Fig. 2–3) and pinned in the test suite. The &ldquo;Wait,
+          wait. Wait.&rdquo; passage is verbatim from Table 3.
+        </p>
+      </div>
 
       <PageNav n={PAGE_N} />
     </article>

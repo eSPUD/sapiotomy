@@ -31,18 +31,49 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
   it("opens at step 0: 15.6% pass@1 and a scratchpad with no second thoughts", () => {
     render(<Page14 />);
     expect(screen.getByText("15.6%")).toBeInTheDocument();
+    // The length readout sits beside the accuracy readout, at its starting value.
+    expect(screen.getByText("≈1,000")).toBeInTheDocument();
     expect(screen.queryByText(/aha moment I can flag here/)).not.toBeInTheDocument();
   });
 
-  it("scrubbing to the end reaches 71.0% and surfaces the verbatim aha passage", () => {
+  it("scrubbing to the end reaches 71.0% / ≈9,000 tokens and surfaces the verbatim aha passage", () => {
     render(<Page14 />);
     setStep(8000);
     expect(screen.getByText("71.0%")).toBeInTheDocument();
+    expect(screen.getByText("≈9,000")).toBeInTheDocument();
     expect(
       screen.getByText(/Wait, wait\. Wait\. That's an aha moment I can flag here\./),
     ).toBeInTheDocument();
     // cons@64 matching o1-0912 is stated alongside.
     expect(screen.getByText(/86\.7/)).toBeInTheDocument();
+  });
+
+  it("plots both training variables on one dual-axis chart, with the aha step marked", () => {
+    render(<Page14 />);
+    const chart = screen.getByRole("img", { name: /two y axes/i });
+    expect(chart.getAttribute("aria-label")).toMatch(/15\.6 percent .* 71\.0 percent/);
+    expect(chart.getAttribute("aria-label")).toMatch(/1,000 to about 9,000 tokens/);
+    expect(chart.getAttribute("aria-label")).toMatch(/aha trace appears \(illustrative placement\)/);
+  });
+
+  it("draws the distillation trade as a scatter: families, teacher, o1-mini line, ~48× span", () => {
+    render(<Page14 />);
+    const scatter = screen.getByRole("img", { name: /against total parameters/i });
+    const label = scatter.getAttribute("aria-label")!;
+    expect(label).toMatch(/Qwen-14B 69\.7 percent/);
+    expect(label).toMatch(/Qwen-32B 72\.6 percent/);
+    expect(label).toMatch(/Llama-70B 70 percent/);
+    expect(label).toMatch(/671B mixture-of-experts, sits at 79\.8 percent/);
+    expect(label).toMatch(/o1-mini at 63\.6 percent \(parameter count undisclosed\)/);
+    expect(label).toMatch(/48 times parameter gap/);
+  });
+
+  it("tags the page Act 3 and closes with the two-label provenance footer", () => {
+    render(<Page14 />);
+    expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
+    expect(screen.getByText("Simulated")).toBeInTheDocument();
+    expect(screen.getByText("Cited")).toBeInTheDocument();
+    expect(screen.getByText(/verbatim from Table 3\./)).toBeInTheDocument();
   });
 
   it("keeps the mid stage strictly forward: longer trace, still no aha", () => {

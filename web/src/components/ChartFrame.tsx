@@ -15,6 +15,11 @@ export interface ChartFrameProps {
    * img forbids interactive descendants (axe: nested-interactive).
    */
   role?: "img" | "group";
+  /**
+   * Margin override — the default fits a single left axis; a chart carrying a
+   * second y axis on the right needs a wider right margin for its ticks.
+   */
+  margin?: { top: number; right: number; bottom: number; left: number };
   children: ReactNode;
 }
 
@@ -32,10 +37,11 @@ export function ChartFrame({
   yLabel,
   title,
   role = "img",
+  margin = MARGIN,
   children,
 }: ChartFrameProps) {
-  const innerW = width - MARGIN.left - MARGIN.right;
-  const innerH = height - MARGIN.top - MARGIN.bottom;
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
@@ -45,7 +51,7 @@ export function ChartFrame({
       className="max-w-full"
     >
       <rect x={0} y={0} width={width} height={height} fill="transparent" />
-      <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
+      <g transform={`translate(${margin.left},${margin.top})`}>
         {/* Plot border */}
         <rect
           x={0}
@@ -59,7 +65,7 @@ export function ChartFrame({
       </g>
       {xLabel ? (
         <text
-          x={MARGIN.left + innerW / 2}
+          x={margin.left + innerW / 2}
           y={height - 6}
           textAnchor="middle"
           className="fill-ink-muted text-xs"
@@ -69,7 +75,7 @@ export function ChartFrame({
       ) : null}
       {yLabel ? (
         <text
-          x={-(MARGIN.top + innerH / 2)}
+          x={-(margin.top + innerH / 2)}
           y={14}
           textAnchor="middle"
           transform="rotate(-90)"
