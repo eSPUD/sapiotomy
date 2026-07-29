@@ -209,6 +209,7 @@ export function Page3() {
   const runCost = curves.epochRunCost;
   const rp = runCost.fit!.params;
   const RUN_M = rp.usdMillionPerRun;
+  const GEMINI_M = rp.geminiUltraUSDMillion;
   const trainTrend = curves.epochTrainingCosts;
   const tp = trainTrend.fit!.params;
   const computeGrowth = curves.epochComputeGrowth;
@@ -327,19 +328,17 @@ export function Page3() {
             className="m-0 flex flex-col gap-4 rounded-lg border-l-4 border-wrong bg-surface p-4"
           >
             <p className="text-sm text-ink">
-              Every day of the plan costs more than the day before: training price is not a fixed
-              number, and Epoch AI puts training-compute cost on a{" "}
-              <strong>~5&times;-per-year</strong> climb.
-              <Cite n={REF.computeGrowth} />
+              Training price is not a fixed number, so every day of the plan costs more than the day
+              before.
             </p>
             <LineChart
-              title={`The combination across five years: retraining the same model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
+              title={`The combination across five years: retraining the same GPT-4-class model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
               points={comboSame}
               secondary={{
                 points: comboFrontier,
                 label: "the frontier model of the day, daily",
               }}
-              primaryLabel="the same model, daily (flat $78M rate)"
+              primaryLabel={`the same model, daily (flat GPT-4-class $${RUN_M}M rate)`}
               markerX={months}
               xLabel="months of keeping it up"
               yLabel="cumulative bill ($ billions)"
@@ -374,13 +373,13 @@ export function Page3() {
               </div>
             </div>
             <figcaption className="text-sm text-ink">
-              Combine the two rates: compute per frontier run grows about 5x a year; cheaper, better
-              hardware absorbs part of that, so the <strong>bill</strong> per run grows ×
-              {tp.perYear} a year (Epoch&apos;s measured cost trend).
-              <Cite n={REF.trainTrend} /> Retrain{" "}
-              <em>the frontier model of the day</em>, every day, and by year five the program is
-              measured in trillions, and even the flat ${RUN_M}M-per-run estimate at the bottom of
-              the chart burns {fmtM(DAYS * RUN_M)} a year.
+              Compute per frontier run grows about 5x a year.
+              <Cite n={REF.computeGrowth} /> Cheaper hardware absorbs part of that, so the{" "}
+              <strong>bill</strong> per run grows ×{tp.perYear} a year.
+              <Cite n={REF.trainTrend} /> Retrain <em>the frontier model of the day</em>, every day,
+              and by year five the program runs to trillions. Even a flat rate burns{" "}
+              {fmtM(DAYS * RUN_M)} a year: one <strong>GPT-4</strong>-class run costs an estimated $
+              {RUN_M}M of compute, and <strong>Gemini Ultra</strong> an estimated ${GEMINI_M}M.
               <Cite n={REF.runCost} />
             </figcaption>
           </figure>
