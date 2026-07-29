@@ -306,11 +306,10 @@ export function Page3() {
       </h1>
 
       <p className="max-w-2xl text-lg text-ink-muted">
-        Page 2 ended one step short. Thinking settled which tournament the question meant, but no
-        amount of it could produce a title the model had never seen. That gap wants new knowledge,
-        not more thought, and there is an obvious way to hand a model new knowledge: train it again.
-        Do it <strong className="text-ink">every morning</strong> and the memory is never a day out
-        of date. That plan fails twice: first the bill, then the data itself.
+        Thinking cannot produce a fact the model never saw. That gap needs new knowledge, and the
+        obvious way to supply it is to train the model again. Do it{" "}
+        <strong className="text-ink">every morning</strong> and it is never a day out of date. That
+        plan fails twice: first the bill, then the data itself.
       </p>
 
       {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
