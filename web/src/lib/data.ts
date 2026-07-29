@@ -27,6 +27,12 @@ export interface CurveData {
   /** Optional fitted-function description for smooth interpolation. */
   fit?: { kind: string; params: Record<string, number> };
   citation: Citation;
+  /**
+   * Optional per-point annotations, keyed by the point's x as a string, e.g.
+   * which system held a record in a given year. Values are strings, so they stay
+   * out of `params`, which callers treat as numbers and do arithmetic on.
+   */
+  labels?: Record<string, string>;
   /** How the points were obtained (figure/table + extraction method). */
   provenance: string;
 }
@@ -88,6 +94,18 @@ export function parseCurveData(raw: unknown, where = "curve"): CurveData {
   }
 
   const result: CurveData = { points, citation, provenance: obj.provenance };
+  if (obj.labels !== undefined) {
+    const labels = obj.labels as Record<string, unknown>;
+    if (typeof labels !== "object" || labels === null) {
+      throw new DataValidationError(`${where}: 'labels' must be an object`);
+    }
+    for (const [k, v] of Object.entries(labels)) {
+      if (typeof v !== "string") {
+        throw new DataValidationError(`${where}: label '${k}' must be a string`);
+      }
+    }
+    result.labels = labels as Record<string, string>;
+  }
   if (obj.fit !== undefined) {
     const fit = obj.fit as Record<string, unknown>;
     if (typeof fit.kind !== "string" || typeof fit.params !== "object" || fit.params === null) {

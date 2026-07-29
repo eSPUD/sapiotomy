@@ -138,6 +138,46 @@ describe("Page 3 daily-training meter (Epoch run-cost anchor)", () => {
   });
 });
 
+describe("Page 3 observed dataset sizes (Epoch data-stock repo)", () => {
+  it("is a monotonic running maximum, so the frontier never appears to shrink", () => {
+    const pts = curves.epochDatasetSizes.points;
+    for (let i = 1; i < pts.length; i++) {
+      expect(pts[i].y).toBeGreaterThanOrEqual(pts[i - 1].y);
+      expect(pts[i].x).toBe(pts[i - 1].x + 1); // one point per year, no gaps
+    }
+  });
+
+  it("anchors on the table it was derived from, and stops at the last observed year", () => {
+    const d = curves.epochDatasetSizes;
+    const p = d.fit!.params;
+    expect(p.systemsCounted).toBe(80);
+    expect(p.firstYear).toBe(2010);
+    expect(p.lastYear).toBe(2023);
+    expect(d.points[0].x).toBe(p.firstYear);
+    expect(d.points[d.points.length - 1].x).toBe(p.lastYear);
+    // The last point is the largest set observed, and its share of the stock is
+    // arithmetic on the two, not a separate claim.
+    expect(d.points[d.points.length - 1].y).toBe(p.largestObservedTokensT);
+    expect(p.shareOfStockPercent).toBeCloseTo(
+      (100 * p.largestObservedTokensT) / p.stockTrillionTokens,
+      2,
+    );
+    // The stock line is the figure this page already cites elsewhere.
+    expect(p.stockTrillionTokens).toBe(curves.epochDataStock.fit!.params.stockTrillionTokens);
+  });
+
+  it("names the record holder for every plotted year, and projects nothing", () => {
+    const d = curves.epochDatasetSizes;
+    for (const pt of d.points) {
+      expect(d.labels?.[String(pt.x)]).toBeTruthy();
+    }
+    expect(d.citation.url).toContain("github.com/epoch-research/data-stock");
+    expect(d.provenance).toMatch(/dataset_sizes\.csv/);
+    expect(d.provenance).toMatch(/running maximum/i);
+    expect(d.provenance).toMatch(/No projection is drawn/i);
+  });
+});
+
 describe("Page 3 data stock (Villalobos et al. 2024, Epoch AI)", () => {
   it("anchors: ~300T-token effective stock, fully utilized 2026-2032", () => {
     const d = curves.epochDataStock;

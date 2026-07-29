@@ -1,0 +1,94 @@
+{
+  "points": [
+    {
+      "x": 2010,
+      "y": 3.7e-05
+    },
+    {
+      "x": 2011,
+      "y": 0.000852
+    },
+    {
+      "x": 2012,
+      "y": 0.000852
+    },
+    {
+      "x": 2013,
+      "y": 0.033
+    },
+    {
+      "x": 2014,
+      "y": 0.042
+    },
+    {
+      "x": 2015,
+      "y": 0.042
+    },
+    {
+      "x": 2016,
+      "y": 0.042
+    },
+    {
+      "x": 2017,
+      "y": 0.1
+    },
+    {
+      "x": 2018,
+      "y": 0.1
+    },
+    {
+      "x": 2019,
+      "y": 0.15
+    },
+    {
+      "x": 2020,
+      "y": 5.0
+    },
+    {
+      "x": 2021,
+      "y": 5.0
+    },
+    {
+      "x": 2022,
+      "y": 5.0
+    },
+    {
+      "x": 2023,
+      "y": 5.1
+    }
+  ],
+  "fit": {
+    "kind": "observed-frontier",
+    "params": {
+      "systemsCounted": 80,
+      "firstYear": 2010,
+      "lastYear": 2023,
+      "largestObservedTokensT": 5.1,
+      "stockTrillionTokens": 300,
+      "shareOfStockPercent": 1.7
+    }
+  },
+  "citation": {
+    "ref": "Villalobos et al. 2024 (Epoch AI), data-stock repo",
+    "url": "https://github.com/epoch-research/data-stock",
+    "venue": "Epoch AI \u00b7 arXiv 2211.04325",
+    "preprint": true
+  },
+  "provenance": "Training-set sizes read from data/dataset_sizes.csv in epoch-research/data-stock (master, 80 Language systems dated 2010-2023; the file carries system, category, date, comp, dataset). DERIVED: per-year maximum of the `dataset` column, then a running maximum across years, expressed in trillions of tokens. The running max is used so a year whose sample happens to hold no large system does not read as the field shrinking; it answers 'largest training set observed by year X'. The 300T stock line is the same effective-stock figure this page already cites from Villalobos et al. 2024, not a quantity in the CSV. No projection is drawn: the series stops at the last observed year, and nothing here forecasts when the stock is exhausted. The repo carries no licence file, so only derived aggregates are shipped, no verbatim copy of the CSV.",
+  "labels": {
+    "2010": "Word Representations",
+    "2011": "NLP from scratch",
+    "2012": "NLP from scratch",
+    "2013": "Word2Vec (large)",
+    "2014": "GloVe (32B)",
+    "2015": "GloVe (32B)",
+    "2016": "GloVe (32B)",
+    "2017": "MoE",
+    "2018": "MoE",
+    "2019": "T5-11B",
+    "2020": "mT5-XXL",
+    "2021": "mT5-XXL",
+    "2022": "mT5-XXL",
+    "2023": "Skywork-13B"
+  }
+}

@@ -60,11 +60,28 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 3;
 const DAYS = 365;
 const COMBO_MONTHS = 12;
+/** Observed frontier of training-set sizes, from Epoch's data-stock repo. */
+const OBSERVED = curves.epochDatasetSizes;
+const OP = OBSERVED.fit!.params;
+/** Which system held the record in a given year, from the file's labels. */
+const observedLeader = (year: number) => {
+  const y = Math.round(year);
+  const pt = OBSERVED.points.reduce((best, p) => (p.x <= y ? p : best), OBSERVED.points[0]);
+  return { year: pt.x, tokensT: pt.y, system: OBSERVED.labels?.[String(pt.x)] ?? "" };
+};
+
 /** One mark per month, on both the chart axis and the slider. */
 const MONTH_TICKS = Array.from({ length: COMBO_MONTHS + 1 }, (_, i) => i);
 
 /** Reference numbers, in order of first appearance on the page. */
-const REF = { computeGrowth: 1, trainTrend: 2, runCost: 3, chinchilla: 4, dataStock: 5 } as const;
+const REF = {
+  computeGrowth: 1,
+  trainTrend: 2,
+  runCost: 3,
+  chinchilla: 4,
+  dataStock: 5,
+  datasetSizes: 6,
+} as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -234,6 +251,10 @@ export function Page3() {
   const tokensT = (paramsB * cp.tokensPerParam) / 1000;
   /** The size whose compute-optimal appetite is exactly the whole stock. */
   const paramsAtFullStock = (STOCK_T * 1000) / cp.tokensPerParam;
+
+  // The observed-frontier figure's own year handle, independent of step 1's.
+  const [obsYear, setObsYear] = useState(OP.lastYear);
+  const obsLeader = observedLeader(obsYear);
 
   // The five-year combination: same model (linear) vs the frontier model of
   // the day (per-run price riding Epoch's x2.4/year cost trend). Derived.
@@ -478,6 +499,47 @@ export function Page3() {
               already on course to use the lot.{" "}
               <strong className="text-ink">No budget buys tokens that do not exist.</strong>
             </p>
+            {/* What has actually been read, against the ceiling. The dial above
+                asks what a model WANTS; this asks what the field has managed so
+                far, from Epoch's own dataset-size table. */}
+            <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
+              <figcaption className="text-sm text-ink">
+                And this is how far the field has got. Drag the year: each point is the largest
+                language training set observed by then, across {OP.systemsCounted} systems in
+                Epoch&apos;s table.
+                <Cite n={REF.datasetSizes} />
+              </figcaption>
+              <LineChart
+                title={`Largest language training set observed by year, ${OP.firstYear} to ${OP.lastYear}, on a log scale in trillions of tokens, against the ${OP.stockTrillionTokens}T effective stock. Running maximum, derived from Epoch's dataset-size table.`}
+                points={OBSERVED.points}
+                primaryTone="compute-bright"
+                primaryLabel="largest training set observed"
+                logY
+                yDomain={[0.03, OP.stockTrillionTokens]}
+                yTickFormat={(t) => (t >= 1 ? `${t}T` : `${Math.round(t * 1000)}B`)}
+                xTickFormat={(t) => String(Math.round(t))}
+                referenceY={OP.stockTrillionTokens}
+                referenceLabel={`${OP.stockTrillionTokens}T stock`}
+                markerX={obsYear}
+                onMarkerChange={setObsYear}
+                markerLabel="Drag through the observed years"
+                markerStep={1}
+                markerValueText={(v) => String(Math.round(v))}
+                width={640}
+                height={260}
+              />
+              <p className="text-sm text-ink-muted">
+                By <strong className="text-ink">{obsLeader.year}</strong> the largest was{" "}
+                <strong className="text-ink">{obsLeader.system}</strong> at{" "}
+                <strong className="text-ink">≈{fmtT(obsLeader.tokensT)}</strong> tokens,{" "}
+                <strong className="text-ink">
+                  {((100 * obsLeader.tokensT) / OP.stockTrillionTokens).toFixed(1)}%
+                </strong>{" "}
+                of the stock. Note the axis: it climbs by powers of ten, so a straight line means
+                the size is multiplying, not adding.
+              </p>
+            </figure>
+
             <DataWindowMeter
               startY={ds.windowStartYear}
               endY={ds.windowEndYear}
@@ -493,6 +555,14 @@ export function Page3() {
           <RefItem n={REF.dataStock} href="https://arxiv.org/abs/2211.04325" preprint>
             Villalobos et al. 2024, <em>Will We Run Out of Data? Limits of LLM Scaling Based on
             Human-Generated Data</em> (Epoch AI &middot; arXiv 2211.04325).
+          </RefItem>
+          <RefItem
+            n={REF.datasetSizes}
+            href="https://github.com/epoch-research/data-stock"
+            preprint
+          >
+            Epoch AI, <em>data-stock</em> repository, <code>data/dataset_sizes.csv</code> (the
+            training-set table behind Villalobos et al. 2024).
           </RefItem>
         </Note>
 

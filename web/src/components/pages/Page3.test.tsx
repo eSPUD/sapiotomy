@@ -195,7 +195,8 @@ describe("Page 3 (Training Daily?)", () => {
     expect(bill.querySelector("a")).toBeNull();
     expect(data.querySelector("a")).toBeNull();
     expect(bill.querySelectorAll("sup")).toHaveLength(3);
-    expect(data.querySelectorAll("sup")).toHaveLength(2);
+    // three now: the scaling law, the stock, and the observed dataset-size table
+    expect(data.querySelectorAll("sup")).toHaveLength(3);
     const badges = screen.getAllByRole("link");
     expect(badges.map((a) => a.textContent ?? "").join(" | ")).toMatch(
       /Sevilla.*Cottier.*AI Index.*Hoffmann.*Villalobos/,
