@@ -138,43 +138,76 @@ describe("Page 3 daily-training meter (Epoch run-cost anchor)", () => {
   });
 });
 
-describe("Page 3 observed dataset sizes (Epoch data-stock repo)", () => {
-  it("is a monotonic running maximum, so the frontier never appears to shrink", () => {
-    const pts = curves.epochDatasetSizes.points;
-    for (let i = 1; i < pts.length; i++) {
-      expect(pts[i].y).toBeGreaterThanOrEqual(pts[i - 1].y);
-      expect(pts[i].x).toBe(pts[i - 1].x + 1); // one point per year, no gaps
+describe("Page 3 dataset-size projection (Epoch's own historical projection)", () => {
+  const d = curves.epochDatasetProjection;
+  const p = d.fit!.params;
+
+  it("reproduces the growth rate the source script prints", () => {
+    // dataset_size_projections.py prints "Median: 0.37" log10/year with a 95% CI
+    // of [0.26, 0.49]. Our seeded rerun of that regression has to land there, or
+    // the projection is not the one Epoch published.
+    expect(p.log10PerYearMedian).toBeCloseTo(0.37, 1);
+    expect(p.growthPerYearMedian).toBeCloseTo(10 ** p.log10PerYearMedian, 1);
+    expect(p.growthPerYearLow).toBeLessThan(p.growthPerYearMedian);
+    expect(p.growthPerYearHigh).toBeGreaterThan(p.growthPerYearMedian);
+    expect(p.systemsRegressed).toBe(80);
+    expect(p.bootstrapDraws).toBe(10000);
+  });
+
+  it("starts from the script's stated 2024 anchor, not the regression intercept", () => {
+    expect(p.anchorYear).toBe(2024);
+    expect(p.anchorLowTokensT).toBe(3);
+    expect(p.anchorHighTokensT).toBe(13);
+    // lognormal median of the anchor is the geometric mean of its bounds
+    expect(p.anchorMedianTokensT).toBeCloseTo(Math.sqrt(3 * 13), 2);
+    expect(d.points[0].x).toBe(p.anchorYear);
+    expect(d.points[0].y).toBeCloseTo(p.anchorMedianTokensT, 2);
+  });
+
+  it("compounds at the fitted rate and runs to 2030", () => {
+    expect(d.points[d.points.length - 1].x).toBe(p.lastProjectedYear);
+    expect(p.lastProjectedYear).toBe(2030);
+    for (let i = 1; i < d.points.length; i++) {
+      expect(d.points[i].x).toBe(d.points[i - 1].x + 1);
+      // each year multiplies by the fitted factor, within rounding
+      expect(d.points[i].y / d.points[i - 1].y).toBeCloseTo(p.growthPerYearMedian, 1);
     }
   });
 
-  it("anchors on the table it was derived from, and stops at the last observed year", () => {
-    const d = curves.epochDatasetSizes;
-    const p = d.fit!.params;
-    expect(p.systemsCounted).toBe(80);
-    expect(p.firstYear).toBe(2010);
-    expect(p.lastYear).toBe(2023);
-    expect(d.points[0].x).toBe(p.firstYear);
-    expect(d.points[d.points.length - 1].x).toBe(p.lastYear);
-    // The last point is the largest set observed, and its share of the stock is
-    // arithmetic on the two, not a separate claim.
-    expect(d.points[d.points.length - 1].y).toBe(p.largestObservedTokensT);
-    expect(p.shareOfStockPercent).toBeCloseTo(
-      (100 * p.largestObservedTokensT) / p.stockTrillionTokens,
-      2,
-    );
-    // The stock line is the figure this page already cites elsewhere.
-    expect(p.stockTrillionTokens).toBe(curves.epochDataStock.fit!.params.stockTrillionTokens);
+  it("carries a band that brackets the median at every year", () => {
+    expect(d.band).toBeDefined();
+    expect(p.bandCredibility).toBe(90);
+    d.points.forEach((pt, i) => {
+      expect(d.band!.lower[i].x).toBe(pt.x);
+      expect(d.band!.upper[i].x).toBe(pt.x);
+      expect(d.band!.lower[i].y).toBeLessThanOrEqual(pt.y);
+      expect(d.band!.upper[i].y).toBeGreaterThanOrEqual(pt.y);
+    });
   });
 
-  it("names the record holder for every plotted year, and projects nothing", () => {
-    const d = curves.epochDatasetSizes;
-    for (const pt of d.points) {
-      expect(d.labels?.[String(pt.x)]).toBeTruthy();
-    }
+  it("crosses the cited stock inside Villalobos's own utilization window", () => {
+    // The whole point of the figure: the trend meets the ceiling, and it does so
+    // when the paper says the stock is fully used, which is a real corroboration
+    // rather than a number we chose.
+    const stock = p.stockTrillionTokens;
+    expect(stock).toBe(curves.epochDataStock.fit!.params.stockTrillionTokens);
+    const window = curves.epochDataStock.fit!.params;
+    expect(p.medianCrossesStockYear).toBeGreaterThanOrEqual(window.windowStartYear);
+    expect(p.medianCrossesStockYear).toBeLessThanOrEqual(window.windowEndYear);
+    const before = d.points.filter((pt) => pt.x < p.medianCrossesStockYear).at(-1)!;
+    const after = d.points.find((pt) => pt.x > p.medianCrossesStockYear)!;
+    expect(before.y).toBeLessThan(stock);
+    expect(after.y).toBeGreaterThan(stock);
+  });
+
+  it("says how it was derived, and what it leaves out", () => {
     expect(d.citation.url).toContain("github.com/epoch-research/data-stock");
-    expect(d.provenance).toMatch(/dataset_sizes\.csv/);
-    expect(d.provenance).toMatch(/running maximum/i);
-    expect(d.provenance).toMatch(/No projection is drawn/i);
+    expect(d.provenance).toMatch(/dataset_size_projections\.py/);
+    expect(d.provenance).toMatch(/words to\s+tokens by x4\/5/);
+    expect(d.provenance).toMatch(/seeded at 20240101/);
+    // the compute-based projection is NOT drawn, and the file must admit it
+    expect(d.provenance).toMatch(/NOT included/);
+    expect(d.provenance).toMatch(/dataset_size_comp/);
   });
 });
 

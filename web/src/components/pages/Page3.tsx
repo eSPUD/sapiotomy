@@ -60,14 +60,21 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 3;
 const DAYS = 365;
 const COMBO_MONTHS = 12;
-/** Observed frontier of training-set sizes, from Epoch's data-stock repo. */
-const OBSERVED = curves.epochDatasetSizes;
-const OP = OBSERVED.fit!.params;
-/** Which system held the record in a given year, from the file's labels. */
-const observedLeader = (year: number) => {
+/** Epoch's own historical projection of the largest training set, reproduced
+ *  from src/dataset_size_projections.py in their data-stock repo. */
+const PROJ = curves.epochDatasetProjection;
+const PP = PROJ.fit!.params;
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** Median and 90% band at a projected year. */
+const projAt = (year: number) => {
   const y = Math.round(year);
-  const pt = OBSERVED.points.reduce((best, p) => (p.x <= y ? p : best), OBSERVED.points[0]);
-  return { year: pt.x, tokensT: pt.y, system: OBSERVED.labels?.[String(pt.x)] ?? "" };
+  const i = Math.max(0, PROJ.points.findIndex((p) => p.x === y));
+  return {
+    year: PROJ.points[i].x,
+    med: PROJ.points[i].y,
+    lo: PROJ.band!.lower[i].y,
+    hi: PROJ.band!.upper[i].y,
+  };
 };
 
 /** One mark per month, on both the chart axis and the slider. */
@@ -253,8 +260,8 @@ export function Page3() {
   const paramsAtFullStock = (STOCK_T * 1000) / cp.tokensPerParam;
 
   // The observed-frontier figure's own year handle, independent of step 1's.
-  const [obsYear, setObsYear] = useState(OP.lastYear);
-  const obsLeader = observedLeader(obsYear);
+  const [projYear, setProjYear] = useState(PP.medianCrossesStockYear);
+  const proj = projAt(projYear);
 
   // The five-year combination: same model (linear) vs the frontier model of
   // the day (per-run price riding Epoch's x2.4/year cost trend). Derived.
@@ -482,61 +489,68 @@ export function Page3() {
                 tokens: the pieces of text a model reads, roughly a word each
               </p>
             </div>
-            <Slider
-              label="Size the model you want to train next"
-              min={PARAMS_MIN}
-              max={PARAMS_MAX}
-              step={PARAMS_STEP}
-              value={paramsB}
-              onChange={onParams}
-              format={fmtParams}
-              suffix=" parameters"
-            />
-            <ReadingBar tokensT={tokensT} stockT={STOCK_T} />
             <p className="text-sm text-ink-muted">
-              Push the dial to <strong className="text-ink">{fmtParams(paramsAtFullStock)}</strong>{" "}
-              and the recipe asks for every quality token humans have written, and the field is
-              already on course to use the lot.{" "}
+              A model wants about {cp.tokensPerParam} tokens per parameter, so{" "}
+              <strong className="text-ink">{fmtParams(paramsAtFullStock)}</strong> of parameters
+              would ask for every quality token humans have written.{" "}
               <strong className="text-ink">No budget buys tokens that do not exist.</strong>
             </p>
-            {/* What has actually been read, against the ceiling. The dial above
-                asks what a model WANTS; this asks what the field has managed so
-                far, from Epoch's own dataset-size table. */}
+            {/* Where the trend lands. Epoch's own historical projection, run
+                forward from their dataset-size regression to 2030. */}
             <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
               <figcaption className="text-sm text-ink">
-                And this is how far the field has got. Drag the year: each point is the largest
-                language training set observed by then, across {OP.systemsCounted} systems in
-                Epoch&apos;s table.
+                So when does the field actually reach the ceiling? Epoch project the largest training
+                set forward from its own trend, about{" "}
+                <strong>&times;{PP.growthPerYearMedian.toFixed(1)} a year</strong>. Drag the year.
                 <Cite n={REF.datasetSizes} />
               </figcaption>
               <LineChart
-                title={`Largest language training set observed by year, ${OP.firstYear} to ${OP.lastYear}, on a log scale in trillions of tokens, against the ${OP.stockTrillionTokens}T effective stock. Running maximum, derived from Epoch's dataset-size table.`}
-                points={OBSERVED.points}
-                primaryTone="compute-bright"
-                primaryLabel="largest training set observed"
+                title={`Projected largest training set, ${PROJ.points[0].x} to ${PP.lastProjectedYear}, on a log scale in trillions of tokens, with a ${PP.bandCredibility}% band, against the ${PP.stockTrillionTokens}T effective stock. Reproduced from Epoch's historical projection.`}
+                points={PROJ.points}
+                band={PROJ.band}
+                primaryTone="wrong-bright"
+                primaryLabel="projected largest training set"
                 logY
-                yDomain={[0.03, OP.stockTrillionTokens]}
-                yTickFormat={(t) => (t >= 1 ? `${t}T` : `${Math.round(t * 1000)}B`)}
+                yDomain={[1, 5000]}
+                yTickFormat={(t) => (t >= 1000 ? `${t / 1000}Q` : `${t}T`)}
                 xTickFormat={(t) => String(Math.round(t))}
-                referenceY={OP.stockTrillionTokens}
-                referenceLabel={`${OP.stockTrillionTokens}T stock`}
-                markerX={obsYear}
-                onMarkerChange={setObsYear}
-                markerLabel="Drag through the observed years"
+                xTicks={PROJ.points.map((p) => p.x)}
+                referenceY={PP.stockTrillionTokens}
+                referenceLabel={`${PP.stockTrillionTokens}T stock`}
+                markerX={projYear}
+                onMarkerChange={setProjYear}
+                markerLabel="Drag through the projected years"
                 markerStep={1}
                 markerValueText={(v) => String(Math.round(v))}
                 width={640}
                 height={260}
               />
               <p className="text-sm text-ink-muted">
-                By <strong className="text-ink">{obsLeader.year}</strong> the largest was{" "}
-                <strong className="text-ink">{obsLeader.system}</strong> at{" "}
-                <strong className="text-ink">≈{fmtT(obsLeader.tokensT)}</strong> tokens,{" "}
+                By <strong className="text-ink">{proj.year}</strong> the trend points at{" "}
+                <strong className="text-ink">≈{fmtT(proj.med)}</strong> tokens, with a{" "}
+                {PP.bandCredibility}% band from{" "}
+                <strong className="text-ink">{fmtT(proj.lo)}</strong> to{" "}
+                <strong className="text-ink">{fmtT(proj.hi)}</strong>.{" "}
+                {proj.med >= PP.stockTrillionTokens ? (
+                  <strong className="text-wrong-bright">
+                    That is past the whole stock, so the recipe is asking for text that does not
+                    exist.
+                  </strong>
+                ) : (
+                  <>
+                    That is{" "}
+                    {((100 * proj.med) / PP.stockTrillionTokens).toFixed(0)}% of the stock.
+                  </>
+                )}{" "}
+                On this projection the median crosses the stock in{" "}
                 <strong className="text-ink">
-                  {((100 * obsLeader.tokensT) / OP.stockTrillionTokens).toFixed(1)}%
-                </strong>{" "}
-                of the stock. Note the axis: it climbs by powers of ten, so a straight line means
-                the size is multiplying, not adding.
+                  {MONTH_NAMES[PP.medianCrossesStockMonth - 1]} {PP.medianCrossesStockYear}
+                </strong>
+                , inside the {ds.windowStartYear}&ndash;{ds.windowEndYear} window below.
+              </p>
+              <p className="text-xs text-ink-muted">
+                the trend projection only · Epoch also run a compute-based projection, which is not
+                drawn here
               </p>
             </figure>
 

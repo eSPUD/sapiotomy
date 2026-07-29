@@ -37,10 +37,6 @@ const dragMonths = (v: number) => {
   for (let i = 0; i < v; i++) fireEvent.keyDown(yearSlider(), { key: "ArrowRight" });
 };
 
-const sizeSlider = () => screen.getByRole("slider", { name: /size the model/i });
-const dragParams = (v: number) =>
-  fireEvent.change(sizeSlider(), { target: { value: String(v) } });
-
 describe("Page 3 (Training Daily?)", () => {
   it("shows both problems, the slider, and the guess box up front", () => {
     render(<Page3 />);
@@ -75,9 +71,10 @@ describe("Page 3 (Training Daily?)", () => {
     expect(
       screen.getByRole("img", { name: /cited full-utilization window/i }),
     ).toBeInTheDocument();
-    // Step 2 owns a dial of its own: model size against the finite stock.
-    expect(sizeSlider()).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /reading demand against the stock/i })).toBeInTheDocument();
+    // Step 2 owns a control of its own: the projection's year marker.
+    expect(
+      screen.getByRole("slider", { name: /drag through the projected years/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/No budget buys tokens that do not exist/i)).toBeInTheDocument();
     // The guess, hinting back at page 1's multiplication round.
     expect(screen.getByText(/paying for smarts/i)).toBeInTheDocument();
@@ -110,31 +107,37 @@ describe("Page 3 (Training Daily?)", () => {
 
   it("each figure answers only to its own control", () => {
     render(<Page3 />);
-    const stockShare = () => screen.getByRole("img", { name: /reading demand against the stock/i });
-    const before = stockShare().getAttribute("aria-label");
-
-    // Step 1's slider moves step 1's totals and leaves step 2's bar alone.
+    const projMarker = screen.getByRole("slider", { name: /drag through the projected years/i });
+    const projBefore = projMarker.getAttribute("aria-valuenow")!;
+    // Step 1's marker moves step 1's totals and leaves the projection alone.
     dragMonths(12);
     expect(screen.getByText("$45.5B")).toBeInTheDocument();
-    expect(stockShare()).toHaveAttribute("aria-label", before);
-
-    // Step 2's dial moves step 2's bar and leaves step 1's totals alone.
-    dragParams(5000);
-    expect(stockShare().getAttribute("aria-label")).not.toBe(before);
+    expect(projMarker).toHaveAttribute("aria-valuenow", projBefore);
+    // ...and step 2's marker moves the projection without touching step 1.
+    fireEvent.keyDown(projMarker, { key: "ArrowLeft" });
+    expect(projMarker).not.toHaveAttribute("aria-valuenow", projBefore);
     expect(screen.getByText("$45.5B")).toBeInTheDocument();
     expectClean();
   });
 
-  it("the size dial converts parameters into reading, and says when it exceeds the stock", () => {
+  it("the projection reads out its median and band, and flags passing the stock", () => {
     render(<Page3 />);
-    // Default 1000B x 20 tokens/param = 20T tokens, under the 300T stock. The
-    // bar carries the figure; the prose no longer restates it.
-    expect(screen.getAllByText("≈20T")).toHaveLength(1);
-    expect(screen.getByText(/6\.67% of everything ever written/)).toBeInTheDocument();
-    // 20,000B x 20 = 400T: more text than humans have written.
-    dragParams(20000);
-    expect(screen.getByText(/133% — more text than exists/)).toBeInTheDocument();
-    expect(screen.getByText(/more text than humans have written/)).toBeInTheDocument();
+    const marker = screen.getByRole("slider", { name: /drag through the projected years/i });
+    // Opens on the crossing year. The median at that January is still under the
+    // ceiling (it crosses mid-year), so the readout reports a share, and the
+    // crossing date is stated alongside it either way.
+    expect(screen.getByText(/% of the stock/)).toBeInTheDocument();
+    expect(screen.getByText(/the median crosses the stock in/i)).toBeInTheDocument();
+    // Step forward and the median is past the whole stock.
+    fireEvent.keyDown(marker, { key: "ArrowRight" });
+    expect(screen.getByText(/past the whole stock/i)).toBeInTheDocument();
+    expectClean();
+  });
+
+  it("names the projection as the trend one, not the compute one", () => {
+    render(<Page3 />);
+    expect(screen.getByText(/the trend projection only/i)).toBeInTheDocument();
+    expect(screen.getByText(/compute-based projection, which is not/i)).toBeInTheDocument();
     expectClean();
   });
 

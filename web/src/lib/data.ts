@@ -28,6 +28,12 @@ export interface CurveData {
   fit?: { kind: string; params: Record<string, number> };
   citation: Citation;
   /**
+   * Optional uncertainty interval around `points`, e.g. the 5th/95th percentiles
+   * of a projection. Kept beside the points rather than inside `params`, which
+   * callers treat as numbers.
+   */
+  band?: { lower: DataPoint[]; upper: DataPoint[] };
+  /**
    * Optional per-point annotations, keyed by the point's x as a string, e.g.
    * which system held a record in a given year. Values are strings, so they stay
    * out of `params`, which callers treat as numbers and do arithmetic on.
@@ -38,6 +44,24 @@ export interface CurveData {
 }
 
 export class DataValidationError extends Error {}
+
+/** Validate a non-empty array of finite {x,y} points. Shared by `points` and the
+ *  optional band bounds so both reject the same malformed input. */
+function parsePoints(value: unknown, where: string): DataPoint[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    throw new DataValidationError(`${where} must be a non-empty array`);
+  }
+  return value.map((p, i) => {
+    if (typeof p !== "object" || p === null) {
+      throw new DataValidationError(`${where}[${i}] is not an object`);
+    }
+    const pt = p as Record<string, unknown>;
+    if (!isFiniteNumber(pt.x) || !isFiniteNumber(pt.y)) {
+      throw new DataValidationError(`${where}[${i}] needs finite x,y`);
+    }
+    return { x: pt.x, y: pt.y };
+  });
+}
 
 function isFiniteNumber(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v);
@@ -73,19 +97,7 @@ export function parseCurveData(raw: unknown, where = "curve"): CurveData {
   }
   const obj = raw as Record<string, unknown>;
 
-  if (!Array.isArray(obj.points) || obj.points.length === 0) {
-    throw new DataValidationError(`${where}: 'points' must be a non-empty array`);
-  }
-  const points: DataPoint[] = obj.points.map((p, i) => {
-    if (typeof p !== "object" || p === null) {
-      throw new DataValidationError(`${where}: points[${i}] is not an object`);
-    }
-    const pt = p as Record<string, unknown>;
-    if (!isFiniteNumber(pt.x) || !isFiniteNumber(pt.y)) {
-      throw new DataValidationError(`${where}: points[${i}] needs finite x,y`);
-    }
-    return { x: pt.x, y: pt.y };
-  });
+  const points = parsePoints(obj.points, `${where}: 'points'`);
 
   const citation = validateCitation(obj.citation, where);
 
@@ -94,6 +106,23 @@ export function parseCurveData(raw: unknown, where = "curve"): CurveData {
   }
 
   const result: CurveData = { points, citation, provenance: obj.provenance };
+  if (obj.band !== undefined) {
+    const band = obj.band as Record<string, unknown>;
+    const lower = parsePoints(band.lower, `${where}: band.lower`);
+    const upper = parsePoints(band.upper, `${where}: band.upper`);
+    if (lower.length !== upper.length) {
+      throw new DataValidationError(`${where}: band bounds must be the same length`);
+    }
+    for (let i = 0; i < lower.length; i++) {
+      if (lower[i].x !== upper[i].x) {
+        throw new DataValidationError(`${where}: band bounds must share their x values`);
+      }
+      if (lower[i].y > upper[i].y) {
+        throw new DataValidationError(`${where}: band lower exceeds upper at x=${lower[i].x}`);
+      }
+    }
+    result.band = { lower, upper };
+  }
   if (obj.labels !== undefined) {
     const labels = obj.labels as Record<string, unknown>;
     if (typeof labels !== "object" || labels === null) {

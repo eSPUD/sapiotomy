@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef } from "react";
-import { scaleLinear, scaleLog, line as d3line } from "d3";
+import { scaleLinear, scaleLog, line as d3line, area as d3area } from "d3";
 import { ChartFrame, CHART_MARGIN } from "./ChartFrame";
 
 /** The hues a line may take, mapped to the theme's stroke/fill utilities. */
@@ -69,6 +69,12 @@ export interface LineChartProps {
    */
   primaryTone?: ChartTone;
   secondaryTone?: ChartTone;
+  /**
+   * Shade an interval around the primary line, e.g. a projection's 90% band.
+   * Drawn behind the lines in the primary hue, so the line reads as the central
+   * estimate and the shading as the range around it.
+   */
+  band?: { lower: { x: number; y: number }[]; upper: { x: number; y: number }[] };
   /** Shade the area between the primary and secondary lines (the gap itself). */
   fillBetween?: boolean;
   /** Opacity of the fillBetween band (raise it when the band IS the point). */
@@ -142,6 +148,7 @@ export function LineChart({
   primaryLabel,
   primaryTone = "correct",
   secondaryTone = "compute",
+  band,
   fillBetween = false,
   fillOpacity = 0.12,
   arrows,
@@ -315,6 +322,17 @@ export function LineChart({
           strokeOpacity={secondaryFaint ? 0.55 : 1}
         />
       ) : null}
+      {band ? (
+        <path
+          d={`${d3area<{ x: number; y: number }>()
+            .x((p) => x(p.x))
+            .y0((_, i) => y(band.lower[i]?.y ?? band.lower[0].y))
+            .y1((p) => y(p.y))(band.upper)}`}
+          className={FILL[primaryTone]}
+          opacity={0.16}
+        />
+      ) : null}
+
       {path ? (
         <path d={path} fill="none" className={STROKE[primaryTone]} strokeWidth={3} />
       ) : null}

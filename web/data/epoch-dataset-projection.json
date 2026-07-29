@@ -1,0 +1,121 @@
+{
+  "points": [
+    {
+      "x": 2024,
+      "y": 6.245
+    },
+    {
+      "x": 2025,
+      "y": 14.86
+    },
+    {
+      "x": 2026,
+      "y": 35.273
+    },
+    {
+      "x": 2027,
+      "y": 83.732
+    },
+    {
+      "x": 2028,
+      "y": 198.763
+    },
+    {
+      "x": 2029,
+      "y": 472.941
+    },
+    {
+      "x": 2030,
+      "y": 1122.667
+    }
+  ],
+  "band": {
+    "lower": [
+      {
+        "x": 2024,
+        "y": 3.0
+      },
+      {
+        "x": 2025,
+        "y": 6.922
+      },
+      {
+        "x": 2026,
+        "y": 15.085
+      },
+      {
+        "x": 2027,
+        "y": 31.576
+      },
+      {
+        "x": 2028,
+        "y": 64.336
+      },
+      {
+        "x": 2029,
+        "y": 129.058
+      },
+      {
+        "x": 2030,
+        "y": 255.454
+      }
+    ],
+    "upper": [
+      {
+        "x": 2024,
+        "y": 13.0
+      },
+      {
+        "x": 2025,
+        "y": 31.9
+      },
+      {
+        "x": 2026,
+        "y": 82.479
+      },
+      {
+        "x": 2027,
+        "y": 222.037
+      },
+      {
+        "x": 2028,
+        "y": 614.065
+      },
+      {
+        "x": 2029,
+        "y": 1733.119
+      },
+      {
+        "x": 2030,
+        "y": 4933.881
+      }
+    ]
+  },
+  "fit": {
+    "kind": "epoch-historical-projection",
+    "params": {
+      "anchorYear": 2024,
+      "anchorMedianTokensT": 6.245,
+      "anchorLowTokensT": 3.0,
+      "anchorHighTokensT": 13.0,
+      "growthPerYearMedian": 2.374,
+      "growthPerYearLow": 1.839,
+      "growthPerYearHigh": 3.064,
+      "log10PerYearMedian": 0.371,
+      "systemsRegressed": 80,
+      "bootstrapDraws": 10000,
+      "bandCredibility": 90,
+      "stockTrillionTokens": 300,
+      "medianCrossesStockYear": 2028,
+      "medianCrossesStockMonth": 6,
+      "lastProjectedYear": 2030
+    }
+  },
+  "citation": {
+    "ref": "Villalobos et al. 2024 (Epoch AI), data-stock repo",
+    "url": "https://github.com/epoch-research/data-stock",
+    "venue": "Epoch AI \u00b7 arXiv 2211.04325",
+    "preprint": true
+  },
+  "provenance": "Reproduces the HISTORICAL projection in src/dataset_size_projections.py from epoch-research/data-stock (master), function dataset_size_hist. Method as written there: read data/dataset_sizes.csv, keep dates after 2010-01-01, convert the `dataset` column from words to tokens by x4/5, regress log10(tokens) on days since 2024-01-01, bootstrap 10,000 resamples for the slope's 95% CI. Our run returns a median of 0.371 log10/year (x2.37/year), 95% CI [0.265, 0.486] (x1.84 to x3.06), matching the median 0.37 and CI [0.26, 0.49] the script itself prints. Bootstrap seeded at 20240101 for reproducibility. Projection = growth^days x anchor, the anchor being the script's own stated prior for the largest 2024 training set, squigglepy sq.to(3e12, 13e12), a lognormal with a 90% CI of 3T-13T tokens; the script uses that literal rather than the regression intercept. Both factors are lognormal, so the product is lognormal and the band is computed in closed form rather than by Monte Carlo: exact for this model, and free of sampling noise. Band is the 90% interval. NOT included: the script's second, compute-based projection (dataset_size_comp), which needs the 33MB compute_projection.csv and a separate compute-growth regression; this figure plots the historical-trend projection only and the page says so. The 300T stock line is the effective-stock figure already cited on this page from Villalobos et al. 2024, not an output of this script."
+}
