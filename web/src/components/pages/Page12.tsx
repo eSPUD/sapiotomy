@@ -12,15 +12,21 @@
  * press runs one training round, then a held-out test, and the readouts are
  * split into labelled Training/Test panels so the reader always knows which
  * regime a number belongs to — the chart's two lines carry the same labels.
+ * The pool renders as a single easy→hard strip with a marker at the solve
+ * frontier (the difficulty where solving is a coin flip — per-problem
+ * threshold noise means squares scatter around it, which is the point:
+ * sampling is stochastic). Squares gained this pass are outlined, so the
+ * plateau arrives visibly as the highlights dry up, before the chart says so.
  * The mechanism is illustrative and seeded, not a digitized curve: 60 problems with
  * fixed per-problem solvability thresholds, so the solved set grows exactly
  * when skill grows and every run is reproducible. Three behaviours to feel:
  * the ratchet (each round's better model writes correct rationales for harder
  * problems), the plateau (problems the model can never solve unaided never
- * enter the set — the chart plots |D_n| beside accuracy so the stall is
- * visible, not asserted), and rationalization lifting the plateau. The filter
- * toggle is the page's flag for Act 3: switch the answer key off and the loop
- * trains on its own mistakes until accuracy sinks toward chance.
+ * enter the set — the chart plots the count of problems it can learn from
+ * beside accuracy so the stall is visible, not asserted), and rationalization
+ * lifting the plateau. The filter toggle is the page's flag for Act 3: switch
+ * the answer key off and the loop trains on its own mistakes until accuracy
+ * sinks toward chance.
  *
  * Section 2 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
  * GPT-J plus its own filtered rationales lands at 72.5% on CommonsenseQA —
@@ -238,6 +244,13 @@ export function Page12() {
   const now = history[iter];
   const done = iter >= STAR_MAX_ITERS;
   const trainSize = now.verified + now.rationalized + now.wrong;
+  const prevStatus = iter > 0 ? history[iter - 1].status : null;
+  const isNew = now.status.map(
+    (s, i) => prevStatus !== null && s !== "unsolved" && prevStatus[i] === "unsolved",
+  );
+  const newCount = isNew.filter(Boolean).length;
+  // The difficulty at which solving is a coin flip, as a position on the strip.
+  const frontierPct = Math.min(1, Math.max(0, now.skill)) * 100;
 
   const runIteration = () => {
     recordInteraction(PAGE_N);
@@ -306,9 +319,7 @@ export function Page12() {
               halves: one <strong>training</strong> round — the model writes a rationale for every
               problem, the answer key keeps those that land, the base model is fine-tuned on the
               survivors — and then a <strong>test</strong>, measuring the new model on held-out
-              problems the loop never touches. The panels below keep the two apart. The ratchet: a
-              slightly better model writes correct rationales for slightly <em>harder</em>{" "}
-              problems — a training set it could not have written last time.
+              problems the loop never touches. The panels below keep the two apart.
             </p>
 
             {/* controls */}
@@ -350,10 +361,6 @@ export function Page12() {
                   }}
                 />
               </div>
-              <p className="text-xs text-ink-muted sm:col-span-2">
-                Filter alone is the paper&apos;s ablation; filter <em>plus</em> rationalization is
-                full STaR, the algorithm section 3 writes down; filter off is the degenerate loop.
-              </p>
             </div>
             {!filter ? (
               <p className="rounded border-l-4 border-wrong bg-wrong/10 p-2 text-sm text-ink">
@@ -368,23 +375,46 @@ export function Page12() {
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
                   Training · what this round produced
                 </p>
-                <div
-                  className="flex flex-wrap gap-1"
-                  role="img"
-                  aria-label={`The training pool after iteration ${iter}: ${now.verified} problems contributed a verified rationale, ${now.rationalized} a rationale written backwards from the given answer, ${now.wrong} a wrong rationale kept because the filter is off, and ${STAR_POOL - trainSize} contributed nothing.`}
-                >
-                  {now.status.map((s, i) => (
-                    <span key={i} className={`h-3 w-3 rounded-sm ${STATUS_TONE[s]}`} />
-                  ))}
+                <div className="flex justify-between font-mono text-[10px] uppercase tracking-wide text-ink-muted" aria-hidden="true">
+                  <span>easy</span>
+                  <span>hard</span>
+                </div>
+                <div className="relative">
+                  <div
+                    className="flex h-5 w-full gap-px"
+                    role="img"
+                    aria-label={`The training pool after iteration ${iter}, one strip of ${STAR_POOL} problems from easy to hard: ${now.verified} contributed a verified rationale, ${now.rationalized} a rationale written backwards from the given answer, ${now.wrong} a wrong rationale kept because the filter is off, and ${STAR_POOL - trainSize} contributed nothing. ${newCount} are new this pass. The solve frontier, where solving is a coin flip, sits ${Math.round(frontierPct)}% of the way along.`}
+                  >
+                    {now.status.map((s, i) => (
+                      <span
+                        key={i}
+                        className={`min-w-0 flex-1 rounded-[1px] ${STATUS_TONE[s]} ${
+                          isNew[i] ? "ring-1 ring-ink" : ""
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div
+                    className="pointer-events-none absolute -bottom-1 -top-1 w-[2px] -translate-x-1/2 rounded bg-ink"
+                    style={{ left: `${frontierPct}%` }}
+                    aria-hidden="true"
+                  />
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                   <Key className="bg-correct" label={`verified rationale (${now.verified})`} />
                   <Key className="bg-compute" label={`rationalized from a hint (${now.rationalized})`} />
                   <Key className="bg-wrong" label={`wrong, but kept (${now.wrong})`} />
                   <Key className="bg-grid" label={`not in the set (${STAR_POOL - trainSize})`} />
+                  <Key className="bg-correct ring-1 ring-ink" label={`new this pass (${newCount})`} />
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-3 w-0.5 rounded bg-ink" aria-hidden="true" />
+                    solve frontier (50/50 odds)
+                  </span>
                 </div>
                 <p className="text-xs text-ink-muted">
-                  fine-tuned on {trainSize} rationales this round · problems easy → hard
+                  fine-tuned on {trainSize} rationales — a slightly better model writes correct
+                  rationales for slightly <em>harder</em> problems: a training set it could not
+                  have written last time.
                 </p>
               </div>
               <div className="flex flex-col justify-center gap-1 rounded border border-dashed border-grid p-3">
@@ -409,13 +439,13 @@ export function Page12() {
                   x: i,
                   y: ((s.verified + s.rationalized + s.wrong) / STAR_POOL) * 100,
                 })),
-                label: "training: set size |Dₙ| (% of pool)",
+                label: "training: problems it can learn from (% of pool)",
               }}
               secondaryFaint
               xDomain={[0, STAR_MAX_ITERS]}
               yDomain={[0, 100]}
               xLabel="iteration"
-              yLabel="accuracy · |Dₙ| (%)"
+              yLabel="accuracy · learnable problems (%)"
               referenceY={CHANCE}
               referenceLabel="guessing (1 in 5)"
               markPoints
@@ -425,8 +455,8 @@ export function Page12() {
 
             <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
               The climb saturates, and the fainter line shows why: problems the model can never
-              solve unaided never enter the training set, so |D<sub>n</sub>| stalls and the
-              accuracy plateaus with it. <strong>Rationalization</strong> is STaR&apos;s answer —
+              solve unaided never enter the training set, so the count of problems it can learn
+              from stalls — and accuracy plateaus with it. <strong>Rationalization</strong> is STaR&apos;s answer —
               show the model the answer it missed and let it reason <em>backwards</em>; the
               rationale, not the answer, joins the set, and the plateau lifts. The correct answer
               acts as the external signal deciding what the model may study. One caveat travels
@@ -448,15 +478,22 @@ export function Page12() {
           </div>
         </section>
 
-        <Note kicker="Try it">
-          <p>
-            Run to the plateau and watch the fainter |D<sub>n</sub>| line stall at the same time
-            accuracy does. Reset, and climb again with rationalization on.
-          </p>
-          <p>
-            Then switch the correctness filter off at the top of a climb, keep iterating, and watch
-            the loop eat its own mistakes.
-          </p>
+        <Note kicker="What you're watching">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs font-semibold text-ink">filter on · rationalization off</p>
+            <p>
+              The bare loop: sample, keep what checks out, imitate. The frontier advances, then
+              stalls.
+            </p>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs font-semibold text-ink">filter on · rationalization on</p>
+            <p>Full STaR — reach past the frontier with the answer in hand. The plateau lifts.</p>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs font-semibold text-ink">filter off</p>
+            <p>No reward, no loop. The frontier rots and accuracy walks off the cliff.</p>
+          </div>
         </Note>
 
         {/* Section 2 — the paper's result */}
