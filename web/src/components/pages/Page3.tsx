@@ -345,8 +345,8 @@ export function Page3() {
                 label: "the frontier model of the day, daily",
               }}
               primaryLabel={`the same model, daily (flat GPT-4-class $${RUN_M}M rate)`}
-              primaryTone="ink"
-              secondaryTone="wrong"
+              primaryTone="compute-bright"
+              secondaryTone="wrong-bright"
               markerX={months}
               onMarkerChange={onMonths}
               markerLabel="Drag through the first year of keeping the plan up"
@@ -374,7 +374,7 @@ export function Page3() {
                   <p className="text-xs text-ink-muted">
                     its price climbs ×{tp.perYear} a year, so the total curves upward
                   </p>
-                  <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-wrong">
+                  <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-wrong-bright">
                     {fmtM(frontierAtM)}
                   </p>
                 </div>
@@ -385,7 +385,7 @@ export function Page3() {
                   <p className="text-xs text-ink-muted">
                     a flat ${RUN_M}M a run, so the total climbs in a straight line
                   </p>
-                  <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-ink">
+                  <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-compute-bright">
                     {fmtM(sameAtM)}
                   </p>
                 </div>

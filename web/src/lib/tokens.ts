@@ -38,6 +38,14 @@ export const tokens = {
   compute: "#004961", // --color-accent-800 (process cyan)
   correct: "#0f5129", // deep press green (documented exception; AA on tints)
   wrong: "#790e3d", // --color-accent-2-800 (process magenta)
+
+  // Brighter siblings for chart lines, which have to carry across a wide plot
+  // rather than sit inside a word. Each still clears 4.5:1 on the paper ground
+  // (compute 4.51, wrong 5.26, correct 4.91), so a readout may reuse the hue as
+  // text and stay AA. Measured in tokens.test.ts.
+  computeBright: "#00789c",
+  wrongBright: "#c2185b",
+  correctBright: "#047857",
 } as const;
 
 /** The three semantic hues that carry meaning across every page. */

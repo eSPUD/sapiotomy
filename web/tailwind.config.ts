@@ -11,6 +11,9 @@ const config: Config = {
         "surface-raised": tokens.surfaceRaised,
         grid: tokens.grid,
         quote: tokens.quote,
+        "compute-bright": tokens.computeBright,
+        "wrong-bright": tokens.wrongBright,
+        "correct-bright": tokens.correctBright,
         ink: tokens.ink,
         "ink-muted": tokens.inkMuted,
         // The three semantic hues

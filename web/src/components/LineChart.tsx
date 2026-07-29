@@ -5,18 +5,31 @@ import { scaleLinear, scaleLog, line as d3line } from "d3";
 import { ChartFrame, CHART_MARGIN } from "./ChartFrame";
 
 /** The hues a line may take, mapped to the theme's stroke/fill utilities. */
-export type ChartTone = "correct" | "compute" | "wrong" | "ink";
+export type ChartTone =
+  | "correct"
+  | "compute"
+  | "wrong"
+  | "ink"
+  | "correct-bright"
+  | "compute-bright"
+  | "wrong-bright";
 const STROKE: Record<ChartTone, string> = {
   correct: "stroke-correct",
   compute: "stroke-compute",
   wrong: "stroke-wrong",
   ink: "stroke-ink",
+  "correct-bright": "stroke-correct-bright",
+  "compute-bright": "stroke-compute-bright",
+  "wrong-bright": "stroke-wrong-bright",
 };
 const FILL: Record<ChartTone, string> = {
   correct: "fill-correct",
   compute: "fill-compute",
   wrong: "fill-wrong",
   ink: "fill-ink",
+  "correct-bright": "fill-correct-bright",
+  "compute-bright": "fill-compute-bright",
+  "wrong-bright": "fill-wrong-bright",
 };
 
 export interface LineChartProps {
