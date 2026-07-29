@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Page12 } from "./Page12";
 
 describe("Page 12 (STaR and self-improvement)", () => {
@@ -30,39 +30,36 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByText(/STaR's 68\.8%/)).toBeInTheDocument();
   });
 
-  it("opens the lineage stepper on STaR, with the hint retry drawn in", () => {
+  it("writes the loop down, with the rationalization branch and fine-tune-from-base", () => {
     render(<Page12 />);
-    expect(screen.getByRole("button", { name: /STaR 2022/ })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByText("retry with a hint")).toBeInTheDocument();
-    expect(screen.getByText(/the dataset accumulates, not the weights/)).toBeInTheDocument();
+    expect(screen.getByText(/hint = y/)).toBeInTheDocument();
+    expect(screen.getByText(/finetune\(M₀, kept\)/)).toBeInTheDocument();
   });
 
-  it("V-STaR mutates the diagram: many samples, the fork, no hint retry", () => {
+  it("reads the listing a second time, as reinforcement learning in disguise", () => {
     render(<Page12 />);
-    fireEvent.click(screen.getByRole("button", { name: /V-STaR 2024/ }));
-    expect(screen.getByText("sample many solutions per problem")).toBeInTheDocument();
-    expect(screen.getByText(/D_GEN/)).toBeInTheDocument();
-    expect(screen.getByText(/D_VER/)).toBeInTheDocument();
-    expect(screen.queryByText("retry with a hint")).not.toBeInTheDocument();
-    // The inference row: both models persist at test time.
-    expect(screen.getByText("sample k candidates")).toBeInTheDocument();
+    expect(screen.getByText(/Reinforcement learning in disguise/)).toBeInTheDocument();
+    expect(screen.getByText(/binary reward/)).toBeInTheDocument();
+    expect(screen.getByText(/distills luck into skill/)).toBeInTheDocument();
   });
 
-  it("Quiet-STaR deletes the oracle and needs no question-answer pairs", () => {
+  it("carries the poisoning caveat: the filter checks answers, not reasoning", () => {
     render(<Page12 />);
-    fireEvent.click(screen.getByRole("button", { name: /Quiet-STaR 2024/ }));
-    expect(screen.getByText("any text — no questions, no answers")).toBeInTheDocument();
-    expect(screen.getByText(/deleted/i)).toBeInTheDocument();
-    expect(screen.queryByText(/D_GEN/)).not.toBeInTheDocument();
+    expect(screen.getByText(/only ever as sound as its filter/)).toBeInTheDocument();
   });
 
-  it("mentions ReST-EM as a cited claim in the transition, not a stepper position", () => {
+  it("introduces Quiet-STaR as a generalization, with the lineage gone", () => {
     render(<Page12 />);
-    expect(screen.queryByRole("button", { name: /ReST/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/scales with model size/)).toBeInTheDocument();
+    expect(screen.getByText(/Quiet-STaR, in one move/)).toBeInTheDocument();
+    expect(screen.getByText(/the sentence that follows it/)).toBeInTheDocument();
+    expect(screen.queryByText(/V-STaR/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ReST/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /2024/ })).not.toBeInTheDocument();
+  });
+
+  it("closes on the hand-off to o1-class reasoners", () => {
+    render(<Page12 />);
+    expect(screen.getByText(/with the disguise off/)).toBeInTheDocument();
   });
 
   it("labels the footer provenance as Simulated and Cited", () => {

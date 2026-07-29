@@ -24,12 +24,17 @@
  * past a 23x larger LaMDA doing few-shot CoT, beside a 30x larger GPT-3
  * fine-tuned on the full human-labelled training set.
  *
- * Section 3 is the lineage as a morphing flowchart: STaR (2022) → V-STaR
- * (2024) → Quiet-STaR (2024), one diagram mutated step by step, with the
- * deltas annotated — they, not the diagrams, are the pedagogical content.
- * ReST^EM is deliberately not a step (its changes don't draw); it appears as
- * a cited scaling claim in the transition paragraph, which hands the arc to
- * the Frontier Reasoners pages: keep the filter, change what it is.
+ * Section 3 is the loop written down: the paper's Algorithm 1 compressed to
+ * ten annotated pseudocode lines, then read a second time as reinforcement
+ * learning in disguise (sample from the policy, binary reward, imitate what
+ * scored). The intuition blocks carry the content the papers don't spell out:
+ * why self-training isn't circular (the filter distills lucky samples into
+ * reliable skill), rationalization as hindsight learning and its failure mode
+ * (the filter checks answers, not reasoning), and Quiet-STaR as the one-move
+ * generalization (every sentence has an answer key: the text that follows).
+ * The V-STaR/ReST^EM lineage is deliberately omitted — technical intuition
+ * over history — and the closing card hands off to the Frontier Reasoners
+ * pages: o1-class models run this same loop with the RL made explicit.
  *
  * Sidenote convention as on page 2: one "Try it" note beside the interactive,
  * numbered References notes (Cite/RefItem) beside the steps that use them,
@@ -62,7 +67,7 @@ const POOL = starInit();
 const CHANCE = 100 / STAR_CHOICES;
 
 /** Page 12's references, numbered in order of first appearance. */
-const REF = { star: 1, vStar: 2, quietStar: 3, restEm: 4 } as const;
+const REF = { star: 1, quietStar: 2 } as const;
 
 const QUIET_STAR: Citation = {
   ref: "Zelikman et al. 2024",
@@ -70,25 +75,47 @@ const QUIET_STAR: Citation = {
   venue: "arXiv",
   preprint: true,
 };
-const REST_EM: Citation = {
-  ref: "Singh et al. 2024",
-  url: "https://arxiv.org/abs/2312.06585",
-  venue: "arXiv",
-  preprint: true,
-};
-const V_STAR: Citation = {
-  ref: "Hosseini et al. 2024",
-  url: "https://arxiv.org/abs/2402.06457",
-  venue: "arXiv",
-  preprint: true,
-};
 
-/** The three-position stepper of section 3's morphing flowchart. */
-const ARC = [
-  { label: "STaR", year: "2022" },
-  { label: "V-STaR", year: "2024" },
-  { label: "Quiet-STaR", year: "2024" },
-] as const;
+/**
+ * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. Indentation
+ * is baked into the code strings (whitespace-pre); tones tie the filter line
+ * and the rationalization branch to section 1's legend colours. Structural
+ * lines carry no annotation.
+ */
+const CODE_LINES: {
+  code: string;
+  note?: React.ReactNode;
+  tone?: string;
+}[] = [
+  { code: "M ← M₀", note: "one model is both student and teacher" },
+  { code: "loop:" },
+  { code: "  kept ← ∅" },
+  {
+    code: "  for (x, y) in problems:",
+    note: "the only supervision that exists: answers, never reasoning",
+  },
+  { code: "    r, ŷ ← M(x)", note: "in RL terms: sample from the current policy" },
+  {
+    code: "    if ŷ = y: keep (x, r, y)",
+    note: "in RL terms: a binary reward, checked for free — section 1's answer key",
+    tone: "border-correct",
+  },
+  { code: "    else:" },
+  {
+    code: "      r′, ŷ′ ← M(x, hint = y)",
+    note: "hindsight: knowing the destination makes the route easier to find",
+    tone: "border-compute",
+  },
+  {
+    code: "      if ŷ′ = y: keep (x, r′, y)",
+    note: "the hint is stripped — the model will train as if it had found the route unaided",
+    tone: "border-compute",
+  },
+  {
+    code: "  M ← finetune(M₀, kept)",
+    note: "from the base model, every round — early quirks never compound into the weights",
+  },
+];
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -125,20 +152,37 @@ function Arrow({ glyph = "→" }: { glyph?: string }) {
   return <span className="shrink-0 self-center text-ink-muted">{glyph}</span>;
 }
 
-/** One annotated delta on a flowchart step — the mutation, spelled out. */
-function Delta({
-  kind,
-  children,
+/**
+ * One line of section 3's listing: numbered code on the left, intuition on the
+ * right. On narrow screens the annotation stacks under the code.
+ */
+function CodeLine({
+  n,
+  code,
+  note,
+  tone,
 }: {
-  kind: "changed" | "dropped" | "deleted";
-  children: React.ReactNode;
+  n: number;
+  code: string;
+  note?: React.ReactNode;
+  tone?: string;
 }) {
-  const tone = kind === "changed" ? "border-compute" : "border-wrong";
-  const text = kind === "changed" ? "text-compute" : "text-wrong";
   return (
-    <p className={`rounded border-l-4 ${tone} bg-surface-raised p-2 text-sm text-ink`}>
-      <strong className={`uppercase ${text}`}>{kind}</strong> — {children}
-    </p>
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:gap-x-4">
+      <span className="w-5 select-none text-right font-mono text-xs tabular-nums text-ink-muted" aria-hidden="true">
+        {n}
+      </span>
+      <code
+        className={`whitespace-pre font-mono text-sm text-ink ${
+          tone ? `-mx-1 rounded border-l-4 bg-surface-raised px-1 ${tone}` : ""
+        }`}
+      >
+        {code}
+      </code>
+      {note ? (
+        <span className="col-start-2 text-xs text-ink-muted sm:col-start-3">{note}</span>
+      ) : null}
+    </div>
   );
 }
 
@@ -158,7 +202,6 @@ export function Page12() {
   const [history, setHistory] = useState<StarIteration[]>(() => [starBase(POOL)]);
   const [rationalize, setRationalize] = useState(false);
   const [filter, setFilter] = useState(true);
-  const [arcStep, setArcStep] = useState(0);
 
   const iter = history.length - 1;
   const now = history[iter];
@@ -420,176 +463,91 @@ export function Page12() {
           </RefItem>
         </Note>
 
-        {/* Section 3 — the lineage, one diagram mutated step by step */}
+        {/* Section 3 — the algorithm, written down and read twice */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. What came next</h2>
+          <h2 className="text-xl font-semibold text-ink">3. The loop, written down</h2>
 
-          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-sm text-ink">
-              STaR is the foundation of a short lineage, and each successor mutates the loop you
-              just ran rather than replacing it. Step through the arc — the <em>deltas</em> are the
-              content.
-            </p>
+          <p className="text-sm text-ink">
+            The loop you just ran, compressed to ten lines. Read it once as an algorithm. Then
+            read it again — the annotations on lines 5 and 6 name what it secretly is.
+          </p>
 
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Lineage step">
-              {ARC.map((s, i) => (
-                <button
-                  key={s.label}
-                  type="button"
-                  aria-pressed={arcStep === i}
-                  onClick={() => {
-                    setArcStep(i);
-                    recordInteraction(PAGE_N);
-                  }}
-                  className={`rounded border px-3 py-1.5 text-sm ${
-                    arcStep === i
-                      ? "border-compute bg-compute/15 font-semibold text-ink"
-                      : "border-grid bg-surface-raised text-ink-muted"
-                  }`}
-                >
-                  <span className="font-mono text-xs text-ink-muted">{i + 1}·</span> {s.label}{" "}
-                  <span className="text-xs text-ink-muted">{s.year}</span>
-                </button>
+          <figure
+            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+            aria-label="STaR pseudocode: generate a rationale per problem, keep it if the answer checks out, otherwise retry with the answer as a hint and keep the survivor with the hint stripped, then fine-tune the base model on everything kept, and repeat."
+          >
+            <div className="flex flex-col">
+              {CODE_LINES.map((l, i) => (
+                <CodeLine key={i} n={i + 1} code={l.code} note={l.note} tone={l.tone} />
               ))}
             </div>
+            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
+              STaR&apos;s Algorithm 1, compressed.
+              <Cite n={REF.star} /> The coloured lines are section 1&apos;s legend: the answer-key
+              filter, and the rationalization branch it enables.
+            </figcaption>
+          </figure>
 
-            {arcStep === 0 ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
-                  <Stage tone="border-ink" title="generate" sub="one rationale per problem, greedy" />
-                  <Arrow />
-                  <Stage tone="border-correct" title="check" sub="right answer → keep the rationale" />
-                  <Arrow />
-                  <Stage tone="border-compute" title="fine-tune" sub="the base model, on what survived" />
-                  <Arrow glyph="↺" />
-                </div>
-                <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center sm:pl-8" aria-hidden="true">
-                  <span className="shrink-0 self-center text-xs text-ink-muted">wrong ↳</span>
-                  <Stage tone="border-compute" title="retry with a hint" sub="the correct answer is shown" />
-                  <Arrow />
-                  <Stage tone="border-compute" title="keep, hint stripped" sub="if it still fails, discard" />
-                </div>
-                <p className="text-sm text-ink">
-                  The loop from section 1, with the rationalization branch drawn in: a wrong answer
-                  earns one retry with the correct answer as a hint, and the survivor joins the set
-                  with the hint stripped out.
-                  <Cite n={REF.star} /> One detail to hold: each round fine-tunes the{" "}
-                  <em>base</em> model again — the dataset accumulates, not the weights.
-                </p>
-              </div>
-            ) : arcStep === 1 ? (
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
-                  <Stage tone="border-ink" title="generate" sub="sample many solutions per problem" />
-                  <Arrow />
-                  <Stage tone="border-correct" title="check" sub="the answer key forks — nothing is discarded" />
-                  <Arrow />
-                  <div className="flex min-w-0 flex-[2] flex-col gap-1">
-                    <Stage
-                      tone="border-compute"
-                      title="D_GEN → fine-tune the generator"
-                      sub="the correct solutions, as before"
-                    />
-                    <Stage
-                      tone="border-compute"
-                      title="D_VER → train a verifier (DPO)"
-                      sub="correct and incorrect solutions, as preference pairs"
-                    />
-                  </div>
-                  <Arrow glyph="↺" />
-                </div>
-                <div className="flex flex-col items-stretch gap-1 border-t border-dashed border-grid pt-2 sm:flex-row sm:items-center" aria-hidden="true">
-                  <span className="shrink-0 self-center text-xs uppercase tracking-wide text-ink-muted">
-                    at test time
-                  </span>
-                  <Stage tone="border-ink" title="sample k candidates" sub="the generator" />
-                  <Arrow />
-                  <Stage tone="border-compute" title="rank" sub="the verifier scores each" />
-                  <Arrow />
-                  <Stage tone="border-correct" title="answer" sub="best solution returned" />
-                </div>
-                <Delta kind="changed">
-                  the generator samples <strong>many solutions per problem</strong> instead of one
-                  greedy attempt. This is the precondition for everything else in this step:
-                  correct/incorrect preference pairs are impossible to build from a single sample.
-                </Delta>
-                <Delta kind="changed">
-                  the discard pile is gone. The check forks instead: correct solutions still train
-                  the generator, and correct <em>and</em> incorrect solutions become preference
-                  pairs that train a separate verifier.
-                  <Cite n={REF.vStar} />
-                </Delta>
-                <Delta kind="dropped">
-                  the hint retry. V-STaR&apos;s failures leave via the fork, not via a second
-                  attempt — both papers are answering &ldquo;we&apos;re wasting the wrong
-                  answers,&rdquo; with opposite solutions. And both of V-STaR&apos;s models persist
-                  at test time: the verifier is page 8&apos;s best-of-N judge, trained by the loop
-                  itself.
-                </Delta>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
-                  <Stage tone="border-ink" title="corpus" sub="any text — no questions, no answers" />
-                  <Arrow />
-                  <Stage tone="border-ink" title="think" sub="a thought at every token, in parallel" />
-                  <Arrow />
-                  <Stage tone="border-compute" title="predict" sub="the next tokens, with the thought" />
-                  <Arrow />
-                  <Stage tone="border-correct" title="compare" sub="did the thought beat predicting without it?" />
-                  <Arrow />
-                  <Stage tone="border-compute" title="reinforce / suppress" sub="keep the thoughts that helped" />
-                  <Arrow glyph="↺" />
-                </div>
-                <Delta kind="deleted">
-                  the oracle, entirely. The reward is next-token likelihood — did thinking make the
-                  following text more predictable? — so any text works, and the dataset requirement
-                  (questions with correct answers) disappears with the answer key.
-                  <Cite n={REF.quietStar} />
-                </Delta>
-                <p className="text-sm text-ink">
-                  This is the opener&apos;s question, answered carefully: Quiet-STaR removes the
-                  answer key but not the <em>filter</em> — a thought is reinforced only if it beats
-                  the no-thought baseline. Something automatic still decides what gets learned.
-                </p>
-              </div>
-            )}
-          </div>
+          <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">Reinforcement learning in disguise.</strong> Line 5
+            samples from a policy. Line 6 assigns a reward: 1 if the answer checks out, 0
+            otherwise. Line 10 raises the probability of whatever earned the reward. No gradient
+            ever flows from the reward — it only decides <em>what gets imitated</em> — which makes
+            STaR rejection sampling plus imitation: expert iteration where the expert is the model
+            itself, on a lucky day. Hold that framing; it is the door the frontier walks through.
+          </p>
+
+          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">Why it isn&apos;t circular.</strong> A model training on
+            its own output sounds like lifting yourself by your bootstraps. The escape is that
+            generation is stochastic: the model <em>sometimes</em> produces a chain of reasoning
+            it cannot yet produce <em>reliably</em>. The filter finds those flukes, and
+            fine-tuning converts sometimes into always — the loop distills luck into skill. That
+            is also exactly why section 1 plateaus: once &ldquo;sometimes&rdquo; hits zero on the
+            problems that remain, there is nothing left to distill. Rationalization exists to
+            push that boundary out.
+          </p>
+
+          <p className="rounded border-l-4 border-wrong bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">Hindsight, and its danger.</strong> Line 8 is hindsight
+            learning: knowing the destination makes the route easier to find, so it manufactures
+            worked solutions for problems just past the model&apos;s reach. But notice what line 6
+            actually checks: the <em>answer</em>, never the <em>reasoning</em>. A wrong argument
+            that happens to land on the right answer passes the filter, gets trained on, and next
+            round the model produces more of it — STaR&apos;s authors watched scratchpads drift
+            toward the meaningless while the answers stayed right, and learning stalled.
+            <Cite n={REF.star} /> The loop is only ever as sound as its filter.
+          </p>
+
+          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">Quiet-STaR, in one move.</strong> Generalize line 4:
+            replace &ldquo;a problem with an answer key&rdquo; with <em>any text at all</em>. The
+            model thinks briefly before each token, and a thought is reinforced if it made the
+            next few tokens of real text more predictable than they would have been without it.
+            <Cite n={REF.quietStar} /> Every sentence has an answer key — the sentence that
+            follows it. Same loop, different filter; the opener&apos;s question, answered: you can
+            remove the answer key, but something automatic must still decide what gets learned.
+          </p>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            Each of these fixes one limit of the original, and none of them is how a frontier
-            reasoner is trained today. ReST<sup>EM</sup>, in between, showed the loop scales with
-            model size and that self-generated data can beat human-annotated data outright — the
-            result that made this worth pursuing at frontier scale.
-            <Cite n={REF.restEm} /> What carried forward is the shape:{" "}
-            <strong>sample, check against something automatic, train on what passed</strong>. The
-            filter was always load-bearing — with the answer key removed, the loop eats its own
-            errors and degenerates. That is not just the simulation talking: STaR&apos;s authors
-            report that looser sampling reaches more right answers through <em>wrong</em>{" "}
-            reasoning, and training on those rationales blocks generalization — on arithmetic the
-            scratchpads drift into meaninglessness and the model stagnates.
-            <Cite n={REF.star} /> Frontier reasoners keep the filter and change what it is.
+            o1-class reasoners keep exactly this loop — sample reasoning, score it, reinforce
+            what scored — and drop the disguise: the filter becomes an explicit RL reward on
+            tasks with checkable answers, and the loop runs at a scale where the model&apos;s own
+            sampling, not any dataset, is the training set.{" "}
+            <em>The next two pages are what that looks like with the disguise off.</em>
           </p>
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.vStar}>
-            Hosseini et al. 2024, <em>V-STaR</em>.
-          </RefItem>
           <RefItem n={REF.quietStar}>
             Zelikman et al. 2024, <em>Quiet-STaR</em>.
-          </RefItem>
-          <RefItem n={REF.restEm}>
-            Singh et al. 2024, <em>Beyond Human Data (ReST-EM)</em>.
           </RefItem>
         </Note>
       </div>
 
       <div className="flex flex-wrap gap-2">
         <CitationBadge citation={paper.citation} />
-        <CitationBadge citation={V_STAR} />
         <CitationBadge citation={QUIET_STAR} />
-        <CitationBadge citation={REST_EM} />
       </div>
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
