@@ -17,6 +17,8 @@ export interface LineChartProps {
   referenceLabel?: string;
   /** Optional second line (drawn in the compute hue) for a contrast. */
   secondary?: { points: { x: number; y: number }[]; label?: string };
+  /** Draw the secondary line fainter and thinner — context, not a co-star. */
+  secondaryFaint?: boolean;
   primaryLabel?: string;
   /** Shade the area between the primary and secondary lines (the gap itself). */
   fillBetween?: boolean;
@@ -66,6 +68,7 @@ export function LineChart({
   referenceY,
   referenceLabel,
   secondary,
+  secondaryFaint = false,
   primaryLabel,
   fillBetween = false,
   markPoints = false,
@@ -180,7 +183,13 @@ export function LineChart({
       {bandPath ? <path d={bandPath} className="fill-compute" fillOpacity={0.12} /> : null}
 
       {secondaryPath ? (
-        <path d={secondaryPath} fill="none" className="stroke-compute" strokeWidth={2.5} />
+        <path
+          d={secondaryPath}
+          fill="none"
+          className="stroke-compute"
+          strokeWidth={secondaryFaint ? 1.5 : 2.5}
+          strokeOpacity={secondaryFaint ? 0.55 : 1}
+        />
       ) : null}
       {path ? <path d={path} fill="none" className="stroke-correct" strokeWidth={2.5} /> : null}
 
@@ -202,9 +211,10 @@ export function LineChart({
               key={`sp${p.x}`}
               cx={x(p.x)}
               cy={y(p.y)}
-              r={3.5}
+              r={secondaryFaint ? 2.5 : 3.5}
               className="fill-compute stroke-canvas"
               strokeWidth={2}
+              fillOpacity={secondaryFaint ? 0.55 : 1}
             />
           ))}
         </g>
