@@ -36,10 +36,11 @@
  * ten annotated pseudocode lines. A plain-language walkthrough sits above the
  * listing for readers who don't parse pseudocode; the annotation column
  * carries the RL mapping. Below the listing, exactly two blocks:
- * the page's one counterweight (the filter reads answers, never arguments; the
+ * the page's one counterweight (trained on reasoning, graded on answers; the
  * paper's own stated limitation, and the only place the page admits the loop
  * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
- * to page 13. A correction that must hold: STaR decodes greedily, one attempt
+ * to page 13 ("this shape", not "this loop": R1's reward is documented, o1's
+ * never was — page 13 owns o1's specifics). A correction that must hold: STaR decodes greedily, one attempt
  * per problem — the paper reports higher temperatures reach more right answers
  * through wrong reasoning — so improvement is generalization, not distilled
  * luck: each round's fine-tuned model is a different model whose greedy output
@@ -577,14 +578,16 @@ export function Page12() {
           </figure>
 
           <p className="rounded border-l-4 border-wrong bg-surface p-4 text-base text-ink">
-            <strong className="text-ink">The filter reads answers, never arguments.</strong>{" "}
-            Wrong reasoning that lands on a right answer is kept and multiplied.
-            <Cite n={REF.star} /> The loop is only ever as sound as its filter — page 9&apos;s
-            outcome-versus-process trade, now deciding what the model becomes.
+            <strong className="text-ink">Trained on reasoning, graded on answers.</strong> The
+            rationale is what enters the weights; the answer key is all that decides whether it
+            gets there. A flawed argument that lands correctly isn&apos;t merely kept — it&apos;s
+            imitated.
+            <Cite n={REF.star} /> Page 9&apos;s outcome-versus-process trade, now deciding what
+            the model becomes.
           </p>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            o1 and R1 keep exactly this loop — sample reasoning, score it, reinforce what
+            o1 and R1 keep exactly this shape — sample reasoning, score it, reinforce what
             scored — and drop the disguise: the filter becomes an explicit RL reward on checkable
             tasks, and the model&apos;s own sampling becomes the training set.{" "}
             <em>Page 13 picks it up from there.</em>
