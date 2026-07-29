@@ -23,6 +23,11 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     expect(screen.getByText(/Training · what this round produced/)).toBeInTheDocument();
     expect(screen.getByText(/Test · how good did it get\?/)).toBeInTheDocument();
+    // The Test panel carries the figure's only chart: an accuracy sparkline.
+    expect(screen.getByRole("img", { name: /Held-out accuracy across 0 iterations/ })).toBeInTheDocument();
+    // The legend renders only non-empty categories; nothing is verified yet.
+    expect(screen.queryByText(/verified rationale/)).not.toBeInTheDocument();
+    expect(screen.getByText(/not in the set \(60\)/)).toBeInTheDocument();
   });
 
   it("draws the strip as an abstraction: frontier, state matrix, no notation", () => {
@@ -32,7 +37,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByText("filter on · rationalization off")).toBeInTheDocument();
     expect(screen.getByText(/Full STaR/)).toBeInTheDocument();
     expect(screen.getByText(/No reward, no loop/)).toBeInTheDocument();
-    // |Dₙ| is gone everywhere in favour of "problems it can learn from".
+    // No notation anywhere: the strip and sparkline carry the mechanism.
     expect(screen.queryByText(/Dₙ/)).not.toBeInTheDocument();
     expect(screen.getByText(/a training set it could not/)).toBeInTheDocument();
   });
