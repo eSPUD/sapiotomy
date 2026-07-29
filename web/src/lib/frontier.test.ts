@@ -56,7 +56,7 @@ describe("o1 / o3 published anchors (pages print these verbatim)", () => {
     expect(P.o1Cons64).toBe(83.3);
     expect(P.o1Rerank1000).toBe(93);
     expect(P.gpt4oElo).toBe(808);
-    expect(P.o1Elo).toBe(1807);
+    expect(P.o1Elo).toBe(1673);
     expect(P.gpt4oGpqa).toBe(56.1);
     expect(P.o1Gpqa).toBe(78.0);
     expect(P.expertGpqa).toBe(69.7);

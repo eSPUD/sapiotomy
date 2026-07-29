@@ -19,7 +19,7 @@
       "o1Cons64": 83.3,
       "o1Rerank1000": 93,
       "gpt4oElo": 808,
-      "o1Elo": 1807,
+      "o1Elo": 1673,
       "gpt4oCfPercentile": 11,
       "o1CfPercentile": 89,
       "gpt4oGpqa": 56.1,
@@ -33,5 +33,5 @@
     "venue": "OpenAI blog (not peer-reviewed)",
     "preprint": true
   },
-  "provenance": "AIME 2024, OpenAI o1. The source's two scaling charts ('Learning to Reason with LLMs', Sept 2024) plot AIME pass@1 against log train-time and log test-time compute with the compute axes UNLABELED (relative units); both climb roughly log-linearly across about two visual decades, from roughly 20% to roughly 80%. Points here are an authored log-linear redrawing y = 21 + 29.5*log10(x), x = relative test-time compute in [1, 100], matching that visual span; slopes are illustrative of the figure's shape, NOT digitized values. Verbatim anchors from the source text: GPT-4o 12% on AIME (1.8/15); o1 74.4% pass@1, 83.3% with consensus among 64 samples, 93% re-ranking 1000 samples with a learned scorer; Codeforces Elo 808 (11th percentile) vs 1807 (89th); GPQA diamond 56.1 vs 78.0 (cons@64, from the headline figure), human PhD experts 69.7."
+  "provenance": "AIME 2024, OpenAI o1. The source's two scaling charts ('Learning to Reason with LLMs', Sept 2024) plot AIME pass@1 against log train-time and log test-time compute with the compute axes UNLABELED (relative units); both climb roughly log-linearly across about two visual decades, from roughly 20% to roughly 80%. Points here are an authored log-linear redrawing y = 21 + 29.5*log10(x), x = relative test-time compute in [1, 100], matching that visual span; slopes are illustrative of the figure's shape, NOT digitized values. Verbatim anchors from the source text: GPT-4o 12% on AIME (1.8/15); o1 74.4% pass@1, 83.3% with consensus among 64 samples, 93% re-ranking 1000 samples with a learned scorer; Codeforces Elo 808 (11th percentile) vs o1's 1673 (89th percentile, Appendix A; the announcement's 1807 Elo / 93rd percentile belongs to the further fine-tuned o1-ioi coding model, corroborated by El-Kishky et al. 2025); GPQA diamond 56.1 vs 78.0 (both cons@64, from the headline figure; o1 pass@1 is 77.3), human PhD experts 69.7 — the announcement's own claim is that o1 was 'the first model to do so' (surpass the recruited experts)."
 }
