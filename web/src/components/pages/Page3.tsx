@@ -331,7 +331,7 @@ export function Page3() {
           </h2>
           <figure
             aria-label="Problem one: the bill compounds"
-            className="m-0 flex flex-col gap-4 rounded-lg border-l-4 border-wrong bg-surface p-4"
+            className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <p className="text-sm text-ink">
               Training price is not a fixed number, so every day of the plan costs more than the day
@@ -365,7 +365,7 @@ export function Page3() {
                 total spent after {months} {months === 1 ? "month" : "months"}
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex flex-col gap-1 rounded-lg border border-grid bg-surface-raised p-3">
+                <div className="flex flex-col gap-1 rounded-lg border border-grid bg-canvas p-3">
                   <p className="text-sm font-semibold text-ink">
                     Retrain the <em>newest</em> model each day
                   </p>
@@ -376,7 +376,7 @@ export function Page3() {
                     {fmtM(frontierAtM)}
                   </p>
                 </div>
-                <div className="flex flex-col gap-1 rounded-lg border border-grid bg-surface-raised p-3">
+                <div className="flex flex-col gap-1 rounded-lg border border-grid bg-canvas p-3">
                   <p className="text-sm font-semibold text-ink">
                     Retrain the <em>same</em> model each day
                   </p>
@@ -438,7 +438,7 @@ export function Page3() {
           </h2>
           <section
             aria-label="Problem two: the data runs out"
-            className="flex flex-col gap-3 rounded-lg border-l-4 border-wrong bg-surface p-4"
+            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
           >
             <p className="text-sm text-ink">
               Suppose money were no object. It still fails. The other way to make a model smarter is
@@ -508,7 +508,7 @@ export function Page3() {
           </h2>
           <section
             aria-label="The guess"
-            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
           >
             <p className="text-lg text-ink">
               Both walls come from the same habit: paying for smarts <strong>up front</strong>, all
