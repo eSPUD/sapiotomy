@@ -182,6 +182,7 @@ describe("Page 3 (Scaling Training)", () => {
     expect(data).not.toMatch(/Cottier|AI Index|Sevilla|Shumailov/);
     // The bias step cites only model collapse.
     expect(bias).toMatch(/Shumailov/);
+    expect(bias).toMatch(/Askell/);
     expect(bias).not.toMatch(/Cottier|AI Index|Sevilla|Hoffmann|Villalobos/);
     expectClean();
   });

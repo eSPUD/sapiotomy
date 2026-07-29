@@ -89,6 +89,7 @@ const REF = {
   dataStock: 5,
   datasetSizes: 6,
   collapse: 7,
+  hhh: 8,
 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
@@ -444,6 +445,18 @@ export function Page3() {
               <Cite n={REF.runCost} />
             </figcaption>
           </figure>
+
+          <p className="text-ink">
+            <strong>The lag is structural.</strong> A training run takes weeks. Give the plan
+            unlimited money and unlimited text and the model still ships stale: the cutoff moves
+            forward, but it never reaches <em>now</em>. Retraining resets the clock. It does not
+            stop it.
+          </p>
+          <p className="text-ink">
+            <strong>And it cannot be aimed.</strong> There is no retraining for one missing fact.
+            You buy the whole distribution to obtain a single result, which is a wild mismatch
+            between what you pay for and what you needed.
+          </p>
         </section>
         <Note kicker="References">
           <RefItem n={REF.computeGrowth} href="https://epoch.ai/blog/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year" preprint>
@@ -562,11 +575,6 @@ export function Page3() {
               medianY={ds.medianYear}
             />
 
-            <p className="text-sm text-ink-muted">
-              Two smaller walls sit behind those: a training run takes weeks, so a fresh model ships
-              already behind, and you cannot retrain for one fact, you buy the whole distribution to
-              get it.
-            </p>
           </section>
         </section>
         <Note kicker="References">
@@ -603,11 +611,19 @@ export function Page3() {
             gone.
             <Cite n={REF.collapse} />
           </p>
+          <p className="text-ink">
+            Nor does size confer the rest of what makes an assistant usable. Helpful, harmless and
+            honest is a training procedure of its own, applied after the fact.
+            <Cite n={REF.hhh} /> A bigger pretraining run does not hand it to you.
+          </p>
         </section>
         <Note kicker="References">
           <RefItem n={REF.collapse} href="https://www.nature.com/articles/s41586-024-07566-y">
             Shumailov et al. 2024, <em>AI models collapse when trained on recursively generated
             data</em> (Nature).
+          </RefItem>
+          <RefItem n={REF.hhh} href="https://arxiv.org/abs/2112.00861" preprint>
+            Askell et al. 2021, <em>A General Language Assistant as a Laboratory for Alignment</em>.
           </RefItem>
         </Note>
 
