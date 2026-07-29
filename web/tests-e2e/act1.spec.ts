@@ -82,11 +82,11 @@ test.describe("Act 1 (pages 1–4)", () => {
     await expect(page.getByText("2026–2032", { exact: true })).toBeVisible();
     // The old one-year meter is gone (scaling-laws pivot).
     await expect(page.getByRole("slider", { name: /drag through the year/i })).toHaveCount(0);
-    // Drag five years out with the keyboard: End jumps the slider to month 60.
-    const months = page.getByRole("slider", { name: /drag through five years/i });
+    // Drag the year out with the keyboard: End jumps the slider to month 12.
+    const months = page.getByRole("slider", { name: /drag through the first year/i });
     await months.focus();
     await months.press("End");
-    await expect(page.getByText("$2.6T", { exact: true })).toBeVisible();
+    await expect(page.getByText("$45.5B", { exact: true })).toBeVisible();
     // The optional guess box hands off to the next page.
     await page.getByRole("textbox", { name: /your guess/i }).fill("let it look things up");
     await page.getByRole("button", { name: /lock it in/i }).click();
@@ -98,7 +98,7 @@ test.describe("Act 1 (pages 1–4)", () => {
     page,
   }) => {
     await page.goto("/p/3");
-    const months = page.getByRole("slider", { name: /drag through five years/i });
+    const months = page.getByRole("slider", { name: /drag through the first year/i });
     await months.focus();
     await months.press("End");
     await page.getByRole("button", { name: "Skip" }).click();

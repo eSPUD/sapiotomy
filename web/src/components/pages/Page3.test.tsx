@@ -25,9 +25,9 @@ const expectClean = () => {
   expect(document.body.textContent ?? "").not.toMatch(BANNED);
 };
 
-const fiveYearSlider = () => screen.getByRole("slider", { name: /drag through five years/i });
+const yearSlider = () => screen.getByRole("slider", { name: /drag through the first year/i });
 const dragMonths = (v: number) =>
-  fireEvent.change(fiveYearSlider(), { target: { value: String(v) } });
+  fireEvent.change(yearSlider(), { target: { value: String(v) } });
 
 const sizeSlider = () => screen.getByRole("slider", { name: /size the model/i });
 const dragParams = (v: number) =>
@@ -41,11 +41,11 @@ describe("Page 3 (Training Daily?)", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: /1\. The bill compounds/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /combination across five years/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /the first year/i })).toBeInTheDocument();
     expect(screen.queryByRole("img", { name: /cumulative bill/i })).toBeNull();
     expect(screen.queryByRole("slider", { name: /drag through the year/i })).toBeNull();
     expect(screen.getByText(/Training price is not a fixed number/i)).toBeInTheDocument();
-    expect(fiveYearSlider()).toBeInTheDocument();
+    expect(yearSlider()).toBeInTheDocument();
     // Step 2: the data wall, with the two cited anchors.
     expect(
       screen.getByRole("heading", { level: 2, name: /2\. Bigger models, finite data/i }),
@@ -82,18 +82,19 @@ describe("Page 3 (Training Daily?)", () => {
 
   it("the combined figure shows year one already beating the flat plan", () => {
     render(<Page3 />);
-    // months defaults to 12; the frontier tile reads its year-one compounding
-    // total and the same-model tile reads the flat year rate.
+    // The slider opens mid-year, so drag it out to read the full twelve months:
+    // the compounding plan lands above the flat plan's whole-year total.
+    dragMonths(12);
     expect(screen.getByText("$45.5B")).toBeInTheDocument();
     expect(screen.getByText("$28.5B")).toBeInTheDocument();
     expectClean();
   });
 
-  it("dragging the five-year meter lands in the trillions and announces the crossing", () => {
+  it("dragging the year out overtakes the flat rate and announces the crossing", () => {
     render(<Page3 />);
-    dragMonths(60);
-    expect(screen.getByText("$2.6T")).toBeInTheDocument();
-    expect(screen.getByText(/passed one trillion dollars/)).toBeInTheDocument();
+    dragMonths(12);
+    expect(screen.getByText("$45.5B")).toBeInTheDocument();
+    expect(screen.getByText(/outspent a full year at the flat rate/)).toBeInTheDocument();
     expectClean();
   });
 
@@ -103,14 +104,14 @@ describe("Page 3 (Training Daily?)", () => {
     const before = stockShare().getAttribute("aria-label");
 
     // Step 1's slider moves step 1's totals and leaves step 2's bar alone.
-    dragMonths(60);
-    expect(screen.getByText("$2.6T")).toBeInTheDocument();
+    dragMonths(12);
+    expect(screen.getByText("$45.5B")).toBeInTheDocument();
     expect(stockShare()).toHaveAttribute("aria-label", before);
 
     // Step 2's dial moves step 2's bar and leaves step 1's totals alone.
     dragParams(5000);
     expect(stockShare().getAttribute("aria-label")).not.toBe(before);
-    expect(screen.getByText("$2.6T")).toBeInTheDocument();
+    expect(screen.getByText("$45.5B")).toBeInTheDocument();
     expectClean();
   });
 

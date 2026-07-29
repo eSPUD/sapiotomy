@@ -9,8 +9,8 @@
  * walls:
  *   Problem 1 — the bill: daily runs whose per-run price rides Epoch's
  *     x2.4/year training-cost trend (the dollar shadow of ~5x/year frontier
- *     compute growth) across five years, vs the flat $78M/run rate (Epoch via
- *     AI Index 2024).
+ *     compute growth) across the first year, vs the flat $78M/run GPT-4-class
+ *     rate (Epoch via AI Index 2024).
  *   Problem 2 — the data: even with an unlimited budget, the effective stock
  *     of quality human text is ~300T tokens, fully utilized between 2026 and
  *     2032 if trends continue (Villalobos et al. 2024, Epoch AI).
@@ -60,7 +60,7 @@ import { useStore } from "@/store/useStore";
 
 const PAGE_N = 3;
 const DAYS = 365;
-const COMBO_MONTHS = 60;
+const COMBO_MONTHS = 12;
 
 /** Reference numbers, in order of first appearance on the page. */
 const REF = { computeGrowth: 1, trainTrend: 2, runCost: 3, chinchilla: 4, dataStock: 5 } as const;
@@ -218,14 +218,14 @@ export function Page3() {
   const chinchilla = curves.chinchilla;
   const cp = chinchilla.fit!.params;
 
-  const [months, setMonths] = useState(12);
+  const [months, setMonths] = useState(6); // mid-range: room to drag either way
   const [paramsB, setParamsB] = useState(1000);
   const [guessText, setGuessText] = useState("");
   const [guessState, setGuessState] = useState<GuessState>("open");
   const [announcement, setAnnouncement] = useState("");
   const monthsTouchedRef = useRef(false);
   const paramsTouchedRef = useRef(false);
-  const crossedTrillionRef = useRef(false);
+  const crossedFlatYearRef = useRef(false);
   const crossedStockRef = useRef(false);
 
   const STOCK_T = ds.stockTrillionTokens;
@@ -262,9 +262,14 @@ export function Page3() {
       recordInteraction(PAGE_N);
     }
     setMonths(v);
-    if (!crossedTrillionRef.current && frontierCumulativeUSDM(v) >= 1e6) {
-      crossedTrillionRef.current = true;
-      setAnnouncement(`Month ${v}: the combined bill passed one trillion dollars.`);
+    // The trillion crossing sat at month 48, outside this chart's year. The
+    // milestone that does land inside it: the compounding plan overtaking a
+    // whole year of the flat rate, which it manages before the year is out.
+    if (!crossedFlatYearRef.current && frontierCumulativeUSDM(v) >= sameModelCumulativeUSDM(DAYS)) {
+      crossedFlatYearRef.current = true;
+      setAnnouncement(
+        `Month ${v}: the frontier plan has already outspent a full year at the flat rate.`,
+      );
     }
   };
 
@@ -332,7 +337,7 @@ export function Page3() {
               before.
             </p>
             <LineChart
-              title={`The combination across five years: retraining the same GPT-4-class model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(5 * DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
+              title={`The first year: retraining the same GPT-4-class model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
               points={comboSame}
               secondary={{
                 points: comboFrontier,
@@ -342,12 +347,12 @@ export function Page3() {
               markerX={months}
               xLabel="months of keeping it up"
               yLabel="cumulative bill ($ billions)"
-              yDomain={[0, 2600]}
+              yDomain={[0, 52]}
               width={640}
               height={300}
             />
             <Slider
-              label="Drag through five years of keeping the plan up"
+              label="Drag through the first year of keeping the plan up"
               min={0}
               max={COMBO_MONTHS}
               value={months}
@@ -377,7 +382,8 @@ export function Page3() {
               <Cite n={REF.computeGrowth} /> Cheaper hardware absorbs part of that, so the{" "}
               <strong>bill</strong> per run grows ×{tp.perYear} a year.
               <Cite n={REF.trainTrend} /> Retrain <em>the frontier model of the day</em>, every day,
-              and by year five the program runs to trillions. Even a flat rate burns{" "}
+              and year one alone runs to {fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Even a flat rate
+              burns{" "}
               {fmtM(DAYS * RUN_M)} a year: one <strong>GPT-4</strong>-class run costs an estimated $
               {RUN_M}M of compute, and <strong>Gemini Ultra</strong> an estimated ${GEMINI_M}M.
               <Cite n={REF.runCost} />
