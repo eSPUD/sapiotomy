@@ -87,6 +87,7 @@ import {
   starStep,
   type StarIteration,
 } from "@/lib/star";
+import { STAR_LINES } from "@/lib/starListing";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 12;
@@ -97,72 +98,44 @@ const CHANCE = 100 / STAR_CHOICES;
 const REF = { star: 1, exit: 2, rft: 3, gvm: 4 } as const;
 
 /**
- * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. Each line
- * carries an indent level rendered outside the highlighted span, so a tone
- * border sits at the code's own column; tones tie the filter line and the
- * rationalization branch to section 1's legend colours. Structural lines carry
- * no annotation.
+ * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. The code
+ * column is shared with page 13 (lib/starListing), which diffs the frontier
+ * rewrite against these exact lines; only the annotations are this page's.
+ * Each line carries an indent level rendered outside the highlighted span, so
+ * a tone border sits at the code's own column; tones tie the filter line and
+ * the rationalization branch to section 1's legend colours. Structural lines
+ * carry no annotation.
  */
+const CODE_NOTES: Record<number, { note?: React.ReactNode; tone?: string }> = {
+  0: { note: "one model is both student and teacher" },
+  1: { note: "expert iteration (Anthony et al. 2017) — the same loop, before LLMs" },
+  3: { note: "the only supervision that exists: answers, never reasoning" },
+  4: {
+    note: "one greedy rollout — low variance, biased exploration; RFT (Yuan et al. 2023) samples k instead",
+  },
+  5: {
+    note: "in RL terms: a binary reward, checked for free by section 1's answer key",
+    tone: "border-correct",
+  },
+  7: {
+    note: "hindsight: knowing the destination makes the route easier to find",
+    tone: "border-compute",
+  },
+  8: {
+    note: "the hint is stripped, so the model trains as if it had found the route unaided",
+    tone: "border-compute",
+  },
+  9: {
+    note: "restart from the base model every round, so early quirks never compound into the weights",
+  },
+};
+
 const CODE_LINES: {
   indent: number;
   code: React.ReactNode;
   note?: React.ReactNode;
   tone?: string;
-}[] = [
-  {
-    indent: 0,
-    code: (
-      <>
-        M ← M<sub>0</sub>
-      </>
-    ),
-    note: "one model is both student and teacher",
-  },
-  {
-    indent: 0,
-    code: "loop: until accuracy plateaus",
-    note: "expert iteration (Anthony et al. 2017) — the same loop, before LLMs",
-  },
-  { indent: 1, code: "kept ← ∅" },
-  {
-    indent: 1,
-    code: "for (x, y) in problems:",
-    note: "the only supervision that exists: answers, never reasoning",
-  },
-  {
-    indent: 2,
-    code: "r, ŷ ← M(x)",
-    note: "one greedy rollout — low variance, biased exploration; RFT (Yuan et al. 2023) samples k instead",
-  },
-  {
-    indent: 2,
-    code: "if ŷ = y: keep (x, r, y)",
-    note: "in RL terms: a binary reward, checked for free by section 1's answer key",
-    tone: "border-correct",
-  },
-  { indent: 2, code: "else:" },
-  {
-    indent: 3,
-    code: "r′, ŷ′ ← M(x, hint = y)",
-    note: "hindsight: knowing the destination makes the route easier to find",
-    tone: "border-compute",
-  },
-  {
-    indent: 3,
-    code: "if ŷ′ = y: keep (x, r′, y)",
-    note: "the hint is stripped, so the model trains as if it had found the route unaided",
-    tone: "border-compute",
-  },
-  {
-    indent: 1,
-    code: (
-      <>
-        M ← finetune(M<sub>0</sub>, kept)
-      </>
-    ),
-    note: "restart from the base model every round, so early quirks never compound into the weights",
-  },
-];
+}[] = STAR_LINES.map((line, i) => ({ ...line, ...CODE_NOTES[i] }));
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {

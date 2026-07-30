@@ -2,42 +2,49 @@
 
 /**
  * Page 13, "Frontier Reasoners I: o1, o3, and the Two-Axis Scaling Curve".
- * Act 2 built the toolbox by hand: long chains (5-6), voting (7), verifiers
- * (8-9), search (10). In September 2024 OpenAI shipped the first commercial
- * model that had LEARNED the toolbox: o1 is trained with large-scale RL to
- * think in a long private chain of thought, and its signature artifact is a
- * pair of charts showing AIME accuracy log-linear in BOTH train-time RL
- * compute and test-time thinking compute. This page and the next (R1) open
- * Act 3; the rest of the act asks what the scores are worth.
+ * Page 12 closed on a promise — o1 keeps the loop's shape and drops the
+ * disguise — and this page holds it to that promise with abstractions, not
+ * announcement transcription. The reader should leave with three things the
+ * literature never states in one place: the loop-diff (section 1), the
+ * unified two-knob law (section 2), and the visibility boundary (section 4).
  *
- * Step 1 reproduces that chart as a lab with the two knobs on it. The model is
- * one authored log-linear law (lib/frontier.ts twoAxisAccuracy): a decade of
- * either compute buys the same slope, so the "thinking" slider walks along the
- * curve and the "training" slider shifts the whole curve. The thesis is drawn
- * ON the chart as two equal slope arrows (×10 thinking right, ×10 RL up, same
- * +29.5), and the shaded band between the runs — what the missing RL would
- * have bought — is the protagonist, labelled with the live delta beside the
- * accuracy readout at equal weight. OpenAI published the source figures with
- * the compute axes UNLABELED (log, relative units); the fidelity note under
- * the chart says so out loud, and provenance in data/o1-scaling.json records
- * exactly which numbers are verbatim (GPT-4o 12%, o1 pass@1 74.4%) and which
- * are the redrawing's.
+ * Section 1 renders page 12's ten-line listing (shared via lib/starListing —
+ * never forked, so the two pages cannot drift) behind a "drop the disguise"
+ * toggle: four lines rewritten (plateau exit → compute budget, one greedy
+ * rollout → k sampled chains, filter → explicit reward, finetune-from-base →
+ * reinforce-in-place) and three struck (the hint branch — sampling explores
+ * instead). Honesty is load-bearing: OpenAI confirmed the FRAME — large-scale
+ * RL on a long private chain, and its researchers' own LRM definition — but
+ * never published the algorithm, so the rewrite is labelled rumor in the h2
+ * badge, the caption, and the footer. The callout under the listing carries
+ * the page's two build-ons: no human anywhere in the loop (vs RLHF), and no
+ * draw on page 3's finite stock of human text.
  *
- * Step 2 lands the curve as a waterfall: the AIME sampling ladder drawn as
- * increments (12 base, +62.4 learned chain, +8.9 page 7's majority vote over
- * 64 chains, +9.7 page 8's learned re-ranker over 1000) — the toolbox as a
- * second storey on the learned chain. Step 3 is the GPT-4o / o1 / o3
- * scoreboard: the o3 column (Dec 2024 preview, three months later) is the
- * two-axis law applied again.
+ * Section 2 keeps the two-knob lab and re-aims its copy at page 11's idiom
+ * ("model size picks your curve; test-time compute slides you along it") with
+ * the curve-picker swapped for RL. The training slider translating the whole
+ * line IS the claim; the missing-RL delta is the protagonist; the equality
+ * law(2,0) = law(0,2) is the Try-it note's punchline (thinking cannot spend
+ * training's decades). The unlabeled-axis fidelity note is unchanged: the
+ * slope is authored, the anchors verbatim.
  *
- * Step 4 is the design choice with teeth: the chain that does all this is
- * hidden. A boundary diagram — dashed divider, lab left, user right, a summary
- * crossing one way and billing crossing the other — replaces prose: the
- * asymmetry IS the argument. Hands the deck to R1 (open weights, visible
- * chain) next page and seeds the faithfulness question later in the act.
+ * Section 3 is deliberately not a scoreboard — the old GPT-4o/o1/o3 table
+ * read as product chronology and regurgitated announcement numbers, and was
+ * reviewed out. The waterfall stays (Act 2's tricks as a second storey on the
+ * learned chain; rows are mechanisms, model names demoted to parentheses),
+ * and o3 appears exactly once, as the law applied again, inside the paper's
+ * own generality ablation: o1-ioi's hand-engineered contest pipeline vs an
+ * early o3's unaided gold (El-Kishky et al. 2025).
  *
- * Anchored to data/o1-scaling.json and data/o3-preview.json; the law and both
- * files' anchors are pinned in frontier.test.ts.
+ * Section 4 replaces the old boundary diagram (three visual systems, no
+ * shared grammar) with a ledger — what exists / who can read it / who pays —
+ * so the asymmetry is a column the eye can scan. The three closing blocks
+ * (the case for hiding, the price, the R1 handoff) are kept verbatim and in
+ * place by review request.
+ *
+ * Anchored to data/o1-scaling.json and data/o3-preview.json; the law and the
+ * printed anchors are pinned in frontier.test.ts, the page's structure in
+ * Page13.test.tsx.
  */
 
 import { useMemo, useState } from "react";
@@ -46,16 +53,17 @@ import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
+import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import type { Citation } from "@/lib/data";
 import { twoAxisAccuracy } from "@/lib/frontier";
+import { STAR_LINES } from "@/lib/starListing";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 13;
 
 /** Page 13's references, numbered in order of first appearance. */
-const REF = { announce: 1, o3preview: 2, competitive: 3, systemCard: 4 } as const;
+const REF = { announce: 1, competitive: 2, o3preview: 3, systemCard: 4 } as const;
 
 const SCALING = curves.o1Scaling;
 const O3 = curves.o3Preview;
@@ -97,19 +105,53 @@ const SLOPE_ARROWS = [
   },
 ];
 
-/* Sources cited in the copy but not backing a data file. */
-const SYSTEM_CARD: Citation = {
-  ref: "OpenAI o1 System Card (2024)",
-  url: "https://openai.com/index/openai-o1-system-card/",
-  venue: "OpenAI (not peer-reviewed)",
-  preprint: true,
-};
-const COMPETITIVE_PROGRAMMING: Citation = {
-  ref: "El-Kishky et al. 2025",
-  url: "https://arxiv.org/abs/2502.06807",
-  venue: "arXiv",
-  preprint: true,
-};
+/**
+ * Section 1's diff against the shared STaR listing, indexed line for line.
+ * "same" lines survive the rewrite untouched, "changed" lines carry the
+ * rumored replacement, "dropped" lines are struck — the hint branch, made
+ * redundant by sampled exploration. The rewrite is a reconstruction, not a
+ * publication; the copy around it says so.
+ */
+type RlPatch =
+  | { kind: "same"; note?: React.ReactNode }
+  | { kind: "changed"; code: React.ReactNode; note: React.ReactNode; tone: string }
+  | { kind: "dropped"; note?: React.ReactNode };
+
+const RL_PATCH: RlPatch[] = [
+  { kind: "same", note: "unchanged — one pretrained model, still its own teacher" },
+  {
+    kind: "changed",
+    code: "loop: while the compute budget lasts",
+    note: "the exit is a budget now, not a plateau — section 2's training axis is this line",
+    tone: "border-compute",
+  },
+  { kind: "dropped", note: "no survivor pile — every chain carries its reward straight into the update" },
+  { kind: "same", note: "unchanged — questions with checkable answers are still the only supervision" },
+  {
+    kind: "changed",
+    code: "r₁…r_k, ŷ₁…ŷ_k ← M(x)",
+    note: "k sampled chains per problem — exploration by sampling, not one greedy try",
+    tone: "border-compute",
+  },
+  {
+    kind: "changed",
+    code: "rewardᵢ ← check(ŷᵢ, y)",
+    note: "page 12's filter, promoted to an explicit reward — still the answer key, still graded for free",
+    tone: "border-correct",
+  },
+  { kind: "dropped" },
+  {
+    kind: "dropped",
+    note: "the hint branch goes — with k chains exploring, hindsight is not needed",
+  },
+  { kind: "dropped" },
+  {
+    kind: "changed",
+    code: "M ← reinforce(M, rewards)",
+    note: "update the current model, not the base — this round's gains compound into the next",
+    tone: "border-compute",
+  },
+];
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -121,9 +163,56 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
+/**
+ * One line of section 1's listing: numbered code on the left, intuition on
+ * the right, page 12's rendering with a struck state added for the diff.
+ */
+function CodeLine({
+  n,
+  indent,
+  code,
+  note,
+  tone,
+  struck,
+}: {
+  n: number;
+  indent: number;
+  code: React.ReactNode;
+  note?: React.ReactNode;
+  tone?: string;
+  struck?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:gap-x-4">
+      <span className="w-5 select-none text-right font-mono text-xs tabular-nums text-ink-muted" aria-hidden="true">
+        {n}
+      </span>
+      <span className={`flex items-baseline font-mono text-sm ${struck ? "text-ink-muted" : "text-ink"}`}>
+        {indent > 0 ? (
+          <span className="whitespace-pre" aria-hidden="true">
+            {"  ".repeat(indent)}
+          </span>
+        ) : null}
+        <code
+          className={`whitespace-pre rounded border-l-4 px-1 ${
+            tone ? `bg-surface-raised ${tone}` : "border-transparent"
+          } ${struck ? "line-through" : ""}`}
+        >
+          {code}
+        </code>
+      </span>
+      {note ? (
+        <span className="col-start-2 text-xs text-ink-muted sm:col-start-3">{note}</span>
+      ) : null}
+    </div>
+  );
+}
+
 export function Page13() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
+
+  const [rl, setRl] = useState(false);
 
   const [testExp, setTestExp] = useState(0);
   const [trainExp, setTrainExp] = useState(2);
@@ -140,8 +229,8 @@ export function Page13() {
 
   const waterfall = [
     {
-      label: "GPT-4o, one answer",
-      note: "no long chain at all",
+      label: "no learned chain",
+      note: "one instant answer from a strong LLM (GPT-4o)",
       start: 0,
       gain: P.gpt4oAime,
       total: P.gpt4oAime,
@@ -149,8 +238,8 @@ export function Page13() {
       base: true,
     },
     {
-      label: "o1, one chain",
-      note: "the learned private chain of thought",
+      label: "the learned chain",
+      note: "one long private chain, trained in by section 1's loop",
       start: P.gpt4oAime,
       gain: chainGain,
       total: P.o1Pass1,
@@ -158,8 +247,8 @@ export function Page13() {
       base: false,
     },
     {
-      label: "o1, majority of 64 chains",
-      note: "page 7's frequency voting, stacked on top",
+      label: "+ page 7's voting",
+      note: "majority across 64 chains",
       start: P.o1Pass1,
       gain: voteGain,
       total: P.o1Cons64,
@@ -167,8 +256,8 @@ export function Page13() {
       base: false,
     },
     {
-      label: "o1, best of 1000 re-ranked",
-      note: "page 8's learned judge, stacked on top",
+      label: "+ page 8's re-ranker",
+      note: "a learned judge picks from 1000 chains",
       start: P.o1Cons64,
       gain: rerankGain,
       total: P.o1Rerank1000,
@@ -177,30 +266,27 @@ export function Page13() {
     },
   ];
 
-  const scoreboard = [
+  const ledger = [
     {
-      bench: "AIME 2024 (competition maths)",
-      gpt4o: `${P.gpt4oAime}%`,
-      o1: `${P.o1Pass1}%`,
-      o3: `${Q.o3Aime}%`,
+      what: "The raw chain of thought",
+      detail: "the tokens that do the work — unrestricted, left untrained",
+      reads: "the lab only",
+      pays: "you — every thinking token billed, sight unseen",
+      paysWrong: true,
     },
     {
-      bench: "GPQA Diamond (PhD science)",
-      gpt4o: `${P.gpt4oGpqa}%`,
-      o1: `${P.o1Gpqa.toFixed(1)}%`,
-      o3: `${Q.o3Gpqa}%`,
+      what: "A model-written summary",
+      detail: "a paraphrase written after the fact",
+      reads: "you — it is all you ever see",
+      pays: "—",
+      paysWrong: false,
     },
     {
-      bench: "Codeforces (competitive coding)",
-      gpt4o: `${P.gpt4oElo} Elo · ${P.gpt4oCfPercentile}th pct`,
-      o1: `${P.o1Elo} Elo · ${P.o1CfPercentile}th pct`,
-      o3: `${Q.o3Elo} Elo`,
-    },
-    {
-      bench: "SWE-bench Verified (real bug fixes)",
-      gpt4o: "n/a",
-      o1: `${Q.o1Swe}%`,
-      o3: `${Q.o3Swe}%`,
+      what: "The monitor's verdict",
+      detail: "a deception check that reads the raw chain",
+      reads: "the lab only",
+      pays: "—",
+      paysWrong: false,
     },
   ];
 
@@ -215,21 +301,151 @@ export function Page13() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Everything so far bolted reasoning on from outside — prompts, votes, judges, search.{" "}
-        <strong className="text-ink">o1</strong> trained it in, and its signature is{" "}
-        <strong className="text-ink">a curve with two compute axes</strong>: how much of the score
-        did the training buy, and how much did the thinking?
+        <strong className="text-ink">o1</strong> trained it in — and kept the recipe. Its
+        signature is <strong className="text-ink">a curve with two compute axes</strong>: how much
+        of the score did the training buy, and how much did the thinking?
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the two-axis lab */}
+        {/* Step 1 — the loop-diff */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">1. One law, two knobs</h2>
+          <h2 className="text-xl font-semibold text-ink">
+            1. The human leaves the loop
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              confirmed frame · rumored recipe
+            </span>
+          </h2>
+          <p className="text-ink-muted">
+            Page 12 closed on a promise: same shape, disguise dropped. OpenAI confirmed the
+            frame — o1 is trained with large-scale reinforcement learning to think in a long
+            private chain
+            <Cite n={REF.announce} /> — and its own researchers later named the category:
+            &ldquo;large reasoning models (LRMs): language models trained via reinforcement
+            learning to &lsquo;reason&rsquo; and &lsquo;think through&rsquo; extended chains of
+            thought&rdquo;.
+            <Cite n={REF.competitive} /> The algorithm itself was never published.
+          </p>
+
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              OpenAI&apos;s own framing was that o1 improves with more reinforcement learning at
-              train time and with more time spent thinking at test time
-              <Cite n={REF.announce} /> — and both of the announcement&apos;s charts are
-              log-linear: accuracy against the <em>logarithm</em> of compute.
+              So here is the claim at the only honest resolution: the ten lines you ran on page
+              12, and the smallest rewrite that turns them into that description.{" "}
+              <strong className="text-ink">Flip the switch and watch which lines survive.</strong>
+            </p>
+
+            <div className="border-t border-dashed border-grid pt-3">
+              <Toggle
+                label="Drop the disguise (the rumored rewrite)"
+                checked={rl}
+                offLabel="STaR"
+                onLabel="RL"
+                onChange={(v) => {
+                  setRl(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
+            </div>
+
+            <figure
+              className="m-0 flex flex-col gap-2"
+              aria-label={
+                rl
+                  ? "The rumored reasoner rewrite of STaR's pseudocode: the loop runs while the compute budget lasts, k chains are sampled per problem, the answer-key filter becomes an explicit reward, the hint branch is deleted, and the current model is reinforced in place instead of fine-tuning the base model."
+                  : "STaR pseudocode, as on page 12: generate a rationale per problem, keep it if the answer checks out, otherwise retry with the answer as a hint, then fine-tune the base model on everything kept, and repeat."
+              }
+            >
+              <div className="flex flex-col">
+                {STAR_LINES.map((l, i) => {
+                  const patch = RL_PATCH[i];
+                  if (!rl || patch.kind === "same") {
+                    return (
+                      <CodeLine
+                        key={i}
+                        n={i + 1}
+                        indent={l.indent}
+                        code={l.code}
+                        note={rl ? patch.note : undefined}
+                      />
+                    );
+                  }
+                  if (patch.kind === "dropped") {
+                    return (
+                      <CodeLine
+                        key={i}
+                        n={i + 1}
+                        indent={l.indent}
+                        code={l.code}
+                        note={patch.note}
+                        tone="border-wrong"
+                        struck
+                      />
+                    );
+                  }
+                  return (
+                    <CodeLine
+                      key={i}
+                      n={i + 1}
+                      indent={l.indent}
+                      code={patch.code}
+                      note={patch.note}
+                      tone={patch.tone}
+                    />
+                  );
+                })}
+              </div>
+              <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
+                {rl ? (
+                  <>
+                    Four lines rewritten (highlighted), three struck. This column is a
+                    reconstruction — the community&apos;s, matched to page 12&apos;s
+                    expert-iteration lineage — <strong className="text-ink">rumor, not
+                    record</strong>: OpenAI confirmed the frame and kept the algorithm.
+                  </>
+                ) : (
+                  <>
+                    Page 12&apos;s ten lines, verbatim — the two pages render one shared listing,
+                    so this left-hand side is exactly the loop you already ran.
+                  </>
+                )}
+              </figcaption>
+            </figure>
+
+            <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
+              Now read what is <strong>not</strong> there: a human. The industry&apos;s default
+              post-training loop, RLHF, pays people to judge outputs; here nobody writes an
+              example and nobody grades one — the model authors the reasoning, the answer key
+              scores it, and both scale with compute rather than headcount. And the training set
+              never touches page 3&apos;s finite stock of human text: the model writes its own
+              curriculum, fresh every round.
+            </p>
+          </div>
+        </section>
+
+        <Note kicker="References">
+          <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
+            OpenAI 2024, <em>Learning to Reason with LLMs</em>.
+          </RefItem>
+          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807" preprint>
+            El-Kishky et al. 2025, <em>Competitive Programming with Large Reasoning Models</em>.
+          </RefItem>
+        </Note>
+
+        {/* Step 2 — the two-axis lab */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
+          <h2 className="text-xl font-semibold text-ink">
+            2. One law, two knobs
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              authored redrawing · anchors verbatim
+            </span>
+          </h2>
+          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-sm text-ink-muted">
+              Page 11&apos;s law: <em>model size picks your curve; test-time compute slides you
+              along it.</em> o1&apos;s announcement charts are the same picture with the
+              curve-picker swapped — <strong className="text-ink">RL training picks your curve
+              now</strong>
+              <Cite n={REF.announce} /> — and both are log-linear: accuracy against the{" "}
+              <em>logarithm</em> of compute, whichever axis it arrives on.
             </p>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -259,8 +475,8 @@ export function Page13() {
                   }}
                 />
                 <p className="text-sm text-ink-muted">
-                  Log-compute is log-compute, whichever axis it arrives on — which is why the
-                  training slider translates the whole line rather than moving a point along it.{" "}
+                  The training slider translates the whole line rather than moving a point along
+                  it — that is the swap, drawn.{" "}
                   <strong className="text-ink">Drag it down and watch the delta at your
                   marker:</strong>{" "}
                   that gap is what the missing RL would have bought.
@@ -304,6 +520,13 @@ export function Page13() {
                 xTicks={[1, 10, 100]}
               />
             </div>
+            <p className="text-sm text-ink-muted">
+              <strong className="text-ink">Thinking slides you along the curve; only training
+              lifts it.</strong>{" "}
+              The knobs compound, they do not substitute — and the lift is paid for in a currency
+              page 3&apos;s wall does not price: chains the model writes itself, not the finite
+              stock of human text.
+            </p>
             <p className="text-xs text-ink-muted">
               The line is an authored redrawing of the announcement figure&apos;s shape: OpenAI
               published both charts with the compute axis unlabeled — a log scale in undisclosed,
@@ -315,25 +538,30 @@ export function Page13() {
           </div>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
-            OpenAI 2024, <em>Learning to Reason with LLMs</em>.
-          </RefItem>
+        <Note kicker="Try it">
+          <p>
+            Drag the training slider to ×1 and push thinking to ×100: you land at {P.intercept}% —
+            exactly where the full run <em>starts</em> at ×1 thinking.
+          </p>
+          <p>
+            That equality is the law: a decade of thinking equals a decade of training, and
+            neither knob can spend the other&apos;s decades.
+          </p>
         </Note>
 
-        {/* Step 2 — where the curve landed */}
-        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">2. Where the curve landed</h2>
+        {/* Step 3 — the second storey, and the generality ablation */}
+        <section className="flex min-w-0 flex-col gap-4 lg:col-start-1">
+          <h2 className="text-xl font-semibold text-ink">3. The toolbox becomes a second storey</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              The toolbox did not become obsolete — it became a second storey. Act 2&apos;s tricks
-              stack <em>on top of</em> the learned chain, and each increment below is what one of
-              them still buys:
+              Act 2 did not become obsolete — it became the second storey. Each increment below is
+              one of its mechanisms, stacked on top of the learned chain, on competition maths
+              (AIME 2024):
             </p>
             <div
               className="flex flex-col gap-2"
               role="img"
-              aria-label={`AIME 2024 accuracy waterfall: GPT-4o with no chain starts at ${P.gpt4oAime} percent; the learned chain adds ${chainGain} points to reach ${P.o1Pass1}; majority voting over 64 chains adds ${voteGain} to reach ${P.o1Cons64}; re-ranking 1000 chains with a learned judge adds ${rerankGain} to reach ${P.o1Rerank1000}.`}
+              aria-label={`AIME 2024 accuracy waterfall: a strong LLM with no learned chain starts at ${P.gpt4oAime} percent; the learned chain adds ${chainGain} points to reach ${P.o1Pass1}; page 7's majority voting across 64 chains adds ${voteGain} to reach ${P.o1Cons64}; page 8's learned re-ranker over 1000 chains adds ${rerankGain} to reach ${P.o1Rerank1000}.`}
             >
               {waterfall.map((b) => (
                 <div key={b.label} className="flex items-center gap-2 text-sm">
@@ -361,48 +589,33 @@ export function Page13() {
               ))}
             </div>
           </figure>
-        </section>
 
-        {/* Step 3 — the scoreboard */}
-        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">3. Three months apart</h2>
-          <div className="overflow-x-auto rounded-lg border border-grid bg-surface p-4">
-            <table className="w-full min-w-[34rem] text-sm">
-              <caption className="mb-2 caption-top text-left text-sm text-ink-muted">
-                Three months apart on the same two axes: more RL, more thinking, every benchmark
-                jumps.
-              </caption>
-              <thead>
-                <tr className="border-b border-grid text-left text-xs uppercase tracking-wide text-ink-muted">
-                  <th scope="col" className="py-1.5 pr-3 font-semibold">Benchmark</th>
-                  <th scope="col" className="py-1.5 pr-3 font-semibold">GPT-4o</th>
-                  <th scope="col" className="py-1.5 pr-3 font-semibold">o1 · Sept 2024</th>
-                  <th scope="col" className="py-1.5 font-semibold">o3 · Dec 2024 preview</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scoreboard.map((r) => (
-                  <tr key={r.bench} className="border-b border-dashed border-grid last:border-0">
-                    <th scope="row" className="py-2 pr-3 text-left font-normal text-ink">
-                      {r.bench}
-                    </th>
-                    <td className="py-2 pr-3 font-mono tabular-nums text-ink-muted">{r.gpt4o}</td>
-                    <td className="py-2 pr-3 font-mono tabular-nums text-ink">{r.o1}</td>
-                    <td className="py-2 font-mono tabular-nums font-semibold text-correct">{r.o3}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="mt-2 text-xs text-ink-muted">
-              o1&apos;s {P.o1Gpqa.toFixed(1)}% on GPQA Diamond beat the {P.expertGpqa}% of human
-              PhD experts on their own fields&apos; questions — &ldquo;the first model to do
-              so&rdquo;, by the announcement&apos;s own claim.
-              <Cite n={REF.announce} /> The o3 column is OpenAI&apos;s own scoring of an
-              announcement preview, not an independent measurement.
-              <Cite n={REF.o3preview} /> Its Codeforces rating was later measured at 2724 (99.8th
-              percentile of human competitors) on simulated contests mirroring real ones.
-              <Cite n={REF.competitive} /> AIME and GPQA entries for o1 are pass@1 and cons@64
-              respectively, as the source reports them.
+          <h3 className="text-lg font-semibold text-ink">
+            One recipe, no domain tricks
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              El-Kishky et al. 2025 · IOI 2024
+            </span>
+          </h3>
+          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-sm text-ink-muted">
+              Is the recipe doing the work, or benchmark-specific tuning? OpenAI ran the ablation
+              itself. For the 2024 International Olympiad in Informatics it built{" "}
+              <strong className="text-ink">o1-ioi</strong> — o1 plus hand-engineered,
+              contest-specific inference strategies. Live, with the hand-crafted pipeline, it
+              placed in the 49th percentile; gold required relaxed constraints. An early{" "}
+              <strong className="text-ink">o3</strong> — the same general recipe with both knobs
+              turned further, no contest tricks at all — took gold outright.
+              <Cite n={REF.competitive} />
+            </p>
+            <p className="text-sm text-ink-muted">
+              That later checkpoint is the only o3 this page needs: both knobs turned further,
+              and <strong className="text-ink">the law held</strong> — on the announcement&apos;s
+              own preview scoring, competition maths moved {P.o1Pass1}% → {Q.o3Aime}%.
+              <Cite n={REF.o3preview} /> The paper&apos;s conclusion, verbatim: scaling
+              &ldquo;general-purpose reinforcement learning, rather than relying on
+              domain-specific techniques, offers a robust path toward state-of-the-art AI&rdquo;
+              in reasoning domains.
+              <Cite n={REF.competitive} />
             </p>
           </div>
         </section>
@@ -410,9 +623,6 @@ export function Page13() {
         <Note kicker="References">
           <RefItem n={REF.o3preview} href="https://arcprize.org/blog/oai-o3-pub-breakthrough" preprint>
             OpenAI 2024, <em>OpenAI o3 preview</em> (via ARC Prize).
-          </RefItem>
-          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807" preprint>
-            El-Kishky et al. 2025, <em>Competitive Programming with Large Reasoning Models</em>.
           </RefItem>
         </Note>
 
@@ -425,56 +635,39 @@ export function Page13() {
             one.
           </p>
 
-          {/* The boundary: a summary crosses one way, billing crosses the other. */}
-          <div className="relative rounded-lg border border-grid bg-surface p-4">
-            <div
-              aria-hidden
-              className="absolute inset-y-3 left-1/2 -translate-x-1/2 border-l-2 border-dashed border-grid"
-            />
-            <div className="grid grid-cols-2 gap-x-12 gap-y-3 text-sm">
-              <p className="m-0 text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                Inside the lab
-              </p>
-              <p className="m-0 text-right text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                The user
-              </p>
-
-              <div className="relative rounded border-l-4 border-compute bg-surface-raised p-3">
-                <strong className="text-ink">The raw chain of thought</strong>
-                <span className="block text-xs text-ink-muted">unrestricted, left untrained</span>
-                {/* the one thing that crosses left to right: a summary */}
-                <div
-                  aria-hidden
-                  className="absolute -right-12 top-1/2 flex w-12 -translate-y-1/2 items-center"
-                >
-                  <span className="h-px flex-1 bg-ink" />
-                  <span className="text-[10px] leading-none text-ink">▶</span>
-                </div>
-              </div>
-              <div className="rounded border-l-4 border-grid bg-surface-raised p-3">
-                <strong className="text-ink">A model-written summary</strong>
-                <span className="block text-xs text-ink-muted">all the user ever sees</span>
-              </div>
-
-              <div className="rounded border-l-4 border-compute bg-surface-raised p-3">
-                <strong className="text-ink">The deception monitor</strong>
-                <span className="block text-xs text-ink-muted">
-                  reads the raw chain internally; flagged 0.17% of responses as deceptive, over
-                  ~100k synthetic prompts
-                  <Cite n={REF.systemCard} />
-                </span>
-              </div>
-
-              {/* the one thing that crosses right to left: money */}
-              <div className="col-span-2 flex items-center gap-2 text-xs text-wrong">
-                <span aria-hidden className="leading-none">◀</span>
-                <span aria-hidden className="h-px w-10 bg-wrong" />
-                <span className="relative bg-surface px-1">
-                  billing — billed for tokens on the other side, sight unseen
-                </span>
-                <span aria-hidden className="h-px flex-1 bg-wrong" />
-              </div>
-            </div>
+          <div className="overflow-x-auto rounded-lg border border-grid bg-surface p-4">
+            <table className="w-full min-w-[30rem] text-sm">
+              <caption className="mb-2 caption-top text-left text-sm text-ink-muted">
+                The boundary, as a ledger — read the asymmetry down each column.
+              </caption>
+              <thead>
+                <tr className="border-b border-grid text-left text-xs uppercase tracking-wide text-ink-muted">
+                  <th scope="col" className="py-1.5 pr-3 font-semibold">What exists</th>
+                  <th scope="col" className="py-1.5 pr-3 font-semibold">Who can read it</th>
+                  <th scope="col" className="py-1.5 font-semibold">Who pays for it</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ledger.map((r) => (
+                  <tr key={r.what} className="border-b border-dashed border-grid align-top last:border-0">
+                    <th scope="row" className="py-2 pr-3 text-left font-normal">
+                      <strong className="text-ink">{r.what}</strong>
+                      <span className="block text-xs text-ink-muted">{r.detail}</span>
+                    </th>
+                    <td className="py-2 pr-3 text-ink-muted">{r.reads}</td>
+                    <td className={`py-2 ${r.paysWrong ? "text-wrong" : "text-ink-muted"}`}>
+                      {r.pays}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-2 text-xs text-ink-muted">
+              The monitor is not idle: on ~100k synthetic prompts it flagged 0.17% of responses as
+              deceptive — a number only the lab could ever have produced, because only the lab can
+              read the column it audits.
+              <Cite n={REF.systemCard} />
+            </p>
           </div>
 
           <p className="text-sm text-ink-muted">
@@ -503,12 +696,14 @@ export function Page13() {
         </Note>
       </div>
 
-      
+
       <p className="text-xs text-ink-muted">
-        <strong className="text-ink">Simulated</strong> — the section 1 curve is a redrawing of an
+        <strong className="text-ink">Simulated</strong> — the section 2 curve is a redrawing of an
         unlabeled-axis figure, preserving its log-linear shape and two-decade span; the absolute
         compute units (and the +{P.slopePerDecade}-per-decade slope) are the redrawing&apos;s, not
-        published values. · <strong className="text-ink">Cited</strong> — every named number on
+        published values. Section 1&apos;s rewritten column is a reconstruction, not a
+        publication: OpenAI confirmed the frame and never released the algorithm — rumor,
+        labelled as such. · <strong className="text-ink">Cited</strong> — every named number on
         this page is verbatim from the sources and pinned as such in the test suite.
       </p>
 
