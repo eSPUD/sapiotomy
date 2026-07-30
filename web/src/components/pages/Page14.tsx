@@ -34,11 +34,13 @@
  * Step 3 is the give-away, reframed as its actual thesis: reasoning
  * transfers as data. ~800K traces, plain SFT, no RL and no reward — page
  * 12's recipe with a stronger teacher — and six dense models inherit the
- * behaviour (curves.deepseekDistill, Table 5), drawn as a scatter of AIME
- * pass@1 against parameters (log x): the ~48× Qwen-14B → teacher span,
- * Qwen-32B beating Llama-70B, o1-mini as a dashed reference line (parameter
- * count undisclosed). Where a dot crosses that line, page 11's law has been
- * compressed into weights anyone can download. R1's own scoreboard is
+ * behaviour (curves.deepseekDistill, Table 5), drawn as a horizontal dot
+ * plot: score on the x axis, one row per model ordered by size (teacher at
+ * the bottom), closed models as vertical dashed rules because they publish
+ * scores but not sizes. Reading down the rows the dots march right through
+ * the closed rules, and Llama-70B left of Qwen-32B is a visible kink. Where
+ * a dot lands right of a rule, page 11's law has been compressed into
+ * weights anyone can download. R1's own scoreboard is
  * deliberately NOT tabled here — one number places the teacher, the rest is
  * deferred to page 15, which is the page's closing handoff: two pages of
  * frontier claims all arrived as benchmark scores, read at face value so
@@ -50,7 +52,7 @@
  */
 
 import { useState } from "react";
-import { scaleLinear, scaleLog } from "d3";
+import { scaleLinear } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
@@ -112,16 +114,6 @@ const DISTILLS: Distill[] = [
   { size: 32, label: "Qwen-32B", family: "qwen", note: "within seven points of the 671B teacher" },
   { size: 70, label: "Llama-70B", family: "llama", note: "bigger is not automatically better: the 32B Qwen edges it" },
 ];
-
-/** Per-point label offsets on the scatter, tuned against the log-x layout. */
-const SCATTER_LABEL: Record<number, { dx: number; dy: number; anchor: "start" | "end" | "middle" }> = {
-  1.5: { dx: 8, dy: 4, anchor: "start" },
-  7: { dx: -8, dy: 4, anchor: "end" },
-  8: { dx: 8, dy: 12, anchor: "start" },
-  14: { dx: -8, dy: 4, anchor: "end" },
-  32: { dx: 0, dy: -10, anchor: "middle" },
-  70: { dx: 0, dy: -8, anchor: "middle" },
-};
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -459,91 +451,104 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
 }
 
 /**
- * The section-3 chart: the accuracy/size trade actually drawn. x = total
- * parameters (log), y = AIME 2024 pass@1; Qwen circles, Llama diamonds (shape
- * as well as colour), the 671B MoE teacher top-right, o1-mini as a dashed
- * reference line (its parameter count is undisclosed, so it has no x), and the
- * ~48× Qwen-14B → teacher gap as a horizontal span annotation.
+ * The section-3 chart, reframed for the section's thesis. Score is the axis;
+ * size is just row order. One row per distilled model (smallest at the top),
+ * the 671B teacher as the bottom row, and the closed models as vertical
+ * dashed rules — they have scores but no disclosed sizes, so rules, not
+ * rows. Reading down the rows, the dots march right through the closed
+ * models' rules as size grows; Llama-70B sitting left of Qwen-32B is a
+ * visible kink. Clicking a row (or a chip below) picks it.
  */
-function DistillScatter({ picked, onPick }: { picked: number; onPick: (size: number) => void }) {
+function DistillDotPlot({ picked, onPick }: { picked: number; onPick: (size: number) => void }) {
   const distill = curves.deepseekDistill;
   const P = distill.fit!.params;
   const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
 
-  const width = 560;
-  const height = 300;
-  const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
-  const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
-  const x = scaleLog().domain([1, 1000]).range([0, innerW]);
-  const y = scaleLinear().domain([20, 90]).range([innerH, 0]);
+  const width = 720;
+  const height = 280;
+  const margin = { top: 26, right: 16, bottom: 40, left: 118 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const x = scaleLinear().domain([0, 90]).range([0, innerW]);
+  const rows = DISTILLS.length + 1;
+  const rowH = innerH / rows;
+  const rowY = (i: number) => (i + 0.5) * rowH;
 
-  const spanRatio = Math.round(P.teacherParamsB / 14);
-  const spanY = y(87);
-
-  const title = `AIME 2024 pass at 1 against total parameters, log x axis. Distilled models: ${DISTILLS.map(
+  const title = `AIME 2024 pass at 1 as a horizontal dot plot, one row per model, smallest at the top. Rows: ${DISTILLS.map(
     (d) => `${d.label} ${aimeOf(d.size)} percent`,
-  ).join(", ")}. The R1 teacher, a ${P.teacherParamsB}B mixture-of-experts, sits at ${P.r1Aime} percent; a dashed reference line marks OpenAI o1-mini at ${P.o1miniAime} percent (parameter count undisclosed). A span annotation marks the roughly ${spanRatio} times parameter gap between Qwen-14B and the teacher. ${DISTILLS.find((d) => d.size === picked)?.label} is selected.`;
+  ).join(", ")}, and the R1 teacher, a ${P.teacherParamsB}B mixture-of-experts, at ${P.r1Aime} percent. Dashed vertical rules mark closed models with undisclosed sizes: GPT-4o at ${P.gpt4oAime} percent and OpenAI o1-mini at ${P.o1miniAime} percent; a dotted rule marks the teacher's score. Reading down the rows, the dots move right past the closed-model rules; Llama-70B sits left of Qwen-32B. ${DISTILLS.find((d) => d.size === picked)?.label} is selected.`;
 
   return (
-    <ChartFrame title={title} width={width} height={height} xLabel="total parameters (B, log scale)" yLabel="AIME 2024 pass@1 (%)">
-      {[20, 40, 60, 80].map((t) => (
-        <g key={`y${t}`}>
-          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-6} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+    <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="AIME 2024 pass@1 (%)">
+      {/* vertical gridlines + x ticks */}
+      {[0, 20, 40, 60, 80].map((t) => (
+        <g key={`x${t}`}>
+          <line x1={x(t)} x2={x(t)} y1={0} y2={innerH} className="stroke-grid" strokeWidth={0.5} />
+          <text x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
             {t}
           </text>
         </g>
       ))}
-      {[1, 10, 100, 1000].map((t) => (
-        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-          {t}
-        </text>
+
+      {/* closed models: rules, not rows — their sizes are undisclosed */}
+      {[
+        { label: "GPT-4o", v: P.gpt4oAime, anchor: "start" as const, dx: 4 },
+        { label: "o1-mini", v: P.o1miniAime, anchor: "end" as const, dx: -4 },
+      ].map((r) => (
+        <g key={r.label}>
+          <line
+            x1={x(r.v)}
+            x2={x(r.v)}
+            y1={0}
+            y2={innerH}
+            className="stroke-ink-muted"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+          />
+          <text
+            x={x(r.v) + r.dx}
+            y={-8}
+            textAnchor={r.anchor}
+            className="fill-ink-muted text-[10px]"
+          >
+            {r.label} · {r.v}%
+          </text>
+        </g>
       ))}
 
-      {/* o1-mini: a reference line, page-13 style — its size is undisclosed */}
+      {/* the teacher's score, ruled so "within seven points" is visible */}
       <line
-        x1={0}
-        x2={innerW}
-        y1={y(P.o1miniAime)}
-        y2={y(P.o1miniAime)}
-        className="stroke-ink-muted"
+        x1={x(P.r1Aime)}
+        x2={x(P.r1Aime)}
+        y1={0}
+        y2={innerH}
+        className="stroke-correct"
         strokeWidth={1}
-        strokeDasharray="4 3"
+        strokeDasharray="2 3"
       />
-      <text x={innerW - 4} y={y(P.o1miniAime) - 5} textAnchor="end" className="fill-ink-muted text-[10px]">
-        OpenAI o1-mini · {P.o1miniAime}% (size undisclosed)
+      <text x={x(P.r1Aime) - 4} y={-8} textAnchor="end" className="fill-correct text-[10px]">
+        R1 teacher · {P.r1Aime}%
       </text>
 
-      {/* the ~48× gap, drawn as a horizontal span (page 11's annotation grammar) */}
-      <line x1={x(14)} x2={x(P.teacherParamsB)} y1={spanY} y2={spanY} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="4 3" />
-      <line x1={x(14)} x2={x(14)} y1={spanY} y2={y(aimeOf(14)) - 7} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="2 2" />
-      <line x1={x(P.teacherParamsB)} x2={x(P.teacherParamsB)} y1={spanY} y2={y(P.r1Aime) - 9} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="2 2" />
-      <text
-        x={(x(14) + x(P.teacherParamsB)) / 2}
-        y={spanY - 5}
-        textAnchor="middle"
-        className="fill-ink text-[10px] font-semibold"
-      >
-        ~{spanRatio}× the parameters
-      </text>
-
-      {/* the teacher */}
-      <g aria-hidden="true">
-        <circle cx={x(P.teacherParamsB)} cy={y(P.r1Aime)} r={6} className="fill-correct stroke-canvas" strokeWidth={1.5} />
-        <text x={x(P.teacherParamsB) - 10} y={y(P.r1Aime) + 4} textAnchor="end" className="fill-ink text-[9px] font-semibold">
-          R1 teacher · {P.teacherParamsB}B MoE
-        </text>
-      </g>
-
-      {/* the six distills; the picked one is ringed */}
-      {DISTILLS.map((d) => {
-        const px = x(d.size);
-        const py = y(aimeOf(d.size));
-        const lab = SCATTER_LABEL[d.size];
+      {/* the six distills, one row each */}
+      {DISTILLS.map((d, i) => {
+        const py = rowY(i);
+        const px = x(aimeOf(d.size));
         const active = d.size === picked;
         return (
           <g key={d.size} onClick={() => onPick(d.size)} className="cursor-pointer" aria-hidden="true">
-            {active ? <circle cx={px} cy={py} r={8.5} fill="none" className="stroke-ink" strokeWidth={1.5} /> : null}
+            <rect x={-margin.left} y={py - rowH / 2} width={margin.left + innerW} height={rowH} fill="transparent" />
+            <line x1={0} x2={innerW} y1={py} y2={py} className="stroke-grid" strokeWidth={0.5} />
+            <text
+              x={-8}
+              y={py}
+              dy="0.32em"
+              textAnchor="end"
+              className={`text-[10px] ${active ? "fill-ink font-semibold" : "fill-ink-muted"}`}
+            >
+              {d.label}
+            </text>
+            {active ? <circle cx={px} cy={py} r={9} fill="none" className="stroke-ink" strokeWidth={1.5} /> : null}
             {d.family === "llama" ? (
               <rect
                 x={px - 4}
@@ -557,17 +562,23 @@ function DistillScatter({ picked, onPick }: { picked: number; onPick: (size: num
             ) : (
               <circle cx={px} cy={py} r={4.5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
             )}
-            <text
-              x={px + lab.dx}
-              y={py + lab.dy}
-              textAnchor={lab.anchor}
-              className={`text-[9px] ${active ? "fill-ink font-semibold" : "fill-ink-muted"}`}
-            >
-              {d.label}
-            </text>
+            {active ? (
+              <text x={px + 13} y={py} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
+                {aimeOf(d.size).toFixed(1)}%
+              </text>
+            ) : null}
           </g>
         );
       })}
+
+      {/* the teacher's row, at the bottom: the biggest model, the rightmost dot */}
+      <g aria-hidden="true">
+        <line x1={0} x2={innerW} y1={rowY(rows - 1)} y2={rowY(rows - 1)} className="stroke-grid" strokeWidth={0.5} />
+        <text x={-8} y={rowY(rows - 1)} dy="0.32em" textAnchor="end" className="fill-ink text-[10px] font-semibold">
+          R1 teacher · {P.teacherParamsB}B
+        </text>
+        <circle cx={x(P.r1Aime)} cy={rowY(rows - 1)} r={6} className="fill-correct stroke-canvas" strokeWidth={1.5} />
+      </g>
     </ChartFrame>
   );
 }
@@ -859,18 +870,18 @@ export function Page14() {
             </p>
 
             <figure className="m-0 flex flex-col gap-2">
-              <DistillScatter picked={pickedSize} onPick={pick} />
+              <DistillDotPlot picked={pickedSize} onPick={pick} />
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                 <Key shape="circle" className="bg-compute" label="Qwen base" />
                 <Key shape="diamond" className="bg-wrong" label="Llama base" />
                 <Key shape="circle" className="bg-correct" label="R1 teacher (671B MoE)" />
-                <Key shape="dash" className="border-ink-muted" label="o1-mini reference" />
+                <Key shape="dash" className="border-ink-muted" label="closed model (size undisclosed)" />
               </div>
               <figcaption className="text-xs text-ink-muted">
-                the parameter axis counts total parameters; the {P.teacherParamsB}B teacher is a
-                mixture-of-experts that activates ~{P.teacherActiveB}B per token, so the drawn gap
-                overstates its per-token compute · o1-mini&apos;s parameter count is undisclosed,
-                so it is a reference line, not a point
+                rows are ordered by size, smallest at the top; the teacher&apos;s{" "}
+                {P.teacherParamsB}B is a mixture-of-experts total that activates ~
+                {P.teacherActiveB}B per token · GPT-4o and o1-mini publish scores but not sizes,
+                so they are rules, not rows
               </figcaption>
             </figure>
 
@@ -902,7 +913,7 @@ export function Page14() {
             </p>
 
             <p className="text-sm text-ink-muted">
-              Where a dot crosses the dashed line, a model you can download beats a closed
+              Where a dot lands right of a dashed rule, a model you can download beats a closed
               frontier product — by thinking longer at answer time: page 11&apos;s law, compressed
               into weights.
             </p>

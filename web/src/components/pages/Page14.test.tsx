@@ -120,16 +120,17 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getByText(/within seven points of the 671B teacher/)).toBeInTheDocument();
   });
 
-  it("draws the distillation trade as a scatter: families, teacher, o1-mini line, ~48× span", () => {
+  it("draws the distillation trade as a dot plot: rows by size, closed models as rules", () => {
     render(<Page14 />);
-    const scatter = screen.getByRole("img", { name: /against total parameters/i });
-    const label = scatter.getAttribute("aria-label")!;
+    const plot = screen.getByRole("img", { name: /horizontal dot plot/i });
+    const label = plot.getAttribute("aria-label")!;
     expect(label).toMatch(/Qwen-14B 69\.7 percent/);
     expect(label).toMatch(/Qwen-32B 72\.6 percent/);
     expect(label).toMatch(/Llama-70B 70 percent/);
-    expect(label).toMatch(/671B mixture-of-experts, sits at 79\.8 percent/);
-    expect(label).toMatch(/o1-mini at 63\.6 percent \(parameter count undisclosed\)/);
-    expect(label).toMatch(/48 times parameter gap/);
+    expect(label).toMatch(/671B mixture-of-experts, at 79\.8 percent/);
+    expect(label).toMatch(/GPT-4o at 9\.3 percent and OpenAI o1-mini at 63\.6 percent/);
+    expect(label).toMatch(/undisclosed sizes/);
+    expect(label).toMatch(/Llama-70B sits left of Qwen-32B/);
   });
 
   it("defers the scoreboard and hands off to page 15", () => {
