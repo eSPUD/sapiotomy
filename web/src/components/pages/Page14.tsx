@@ -9,13 +9,18 @@
  *
  * Step 1 is the recipe, GRPO, abstracted honestly: five lines of annotated
  * pseudocode (sample a group, score with a rule, advantage = distance from
- * the group's own mean) instead of the clipped-surrogate objective. The one
- * interaction is a single dial: sample 1 always answers page 1's 17 × 24
- * correctly, and the dial sets how many of the other three also get it
- * right. The reader watches the SAME right answer earn a shrinking push as
- * the group gets luckier, down to 0.00 when the group is uniform — the two
- * properties that matter, one control. No critic network anywhere: that is
- * what made RL at this scale affordable, and the copy says so against PPO.
+ * the group's own mean) instead of the clipped-surrogate objective. Below
+ * it, line 2 of that pseudocode is DRAWN: four answers to page 1's 17 × 24
+ * (the model samples stochastically — that is where the group comes from;
+ * each wrong answer is a named arithmetic slip, not an invented number), as
+ * dots at reward 1/0 with the group mean as a dashed rule and each push as
+ * an arrow from the rule to the dot. One dial sets how many of the other
+ * three match sample 1's fixed 408; as luck rises the rule chases the
+ * crowd, the same right answer's arrow shrinks to nothing, the lone
+ * dissenter's stretches (rarity cuts both ways), and a uniform group leaves
+ * an arrowless picture — nothing to teach. No critic network anywhere: that
+ * is what made RL at this scale affordable, and the copy says so against
+ * PPO.
  *
  * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining),
  * both variables on a dual y-axis: AIME pass@1 (left, 15.6 → 71.0) and
@@ -34,11 +39,13 @@
  * Step 3 is the give-away, reframed as its actual thesis: reasoning
  * transfers as data. ~800K traces, plain SFT, no RL and no reward — page
  * 12's recipe with a stronger teacher — and six dense models inherit the
- * behaviour (curves.deepseekDistill, Table 5), drawn as a scatter of AIME
- * pass@1 against parameters (log x): the ~48× Qwen-14B → teacher span,
- * Qwen-32B beating Llama-70B, o1-mini as a dashed reference line (parameter
- * count undisclosed). Where a dot crosses that line, page 11's law has been
- * compressed into weights anyone can download. R1's own scoreboard is
+ * behaviour (curves.deepseekDistill, Table 5), drawn as a horizontal dot
+ * plot: score on the x axis, one row per model ordered by size (teacher at
+ * the bottom), closed models as vertical dashed rules because they publish
+ * scores but not sizes. Reading down the rows the dots march right through
+ * the closed rules, and Llama-70B left of Qwen-32B is a visible kink. Where
+ * a dot lands right of a rule, page 11's law has been compressed into
+ * weights anyone can download. R1's own scoreboard is
  * deliberately NOT tabled here — one number places the teacher, the rest is
  * deferred to page 15, which is the page's closing handoff: two pages of
  * frontier claims all arrived as benchmark scores, read at face value so
@@ -50,7 +57,7 @@
  */
 
 import { useState } from "react";
-import { scaleLinear, scaleLog } from "d3";
+import { scaleLinear } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
@@ -70,9 +77,14 @@ const AHA_STEP = 5000;
 const REF = { r1: 1, grpo: 2 } as const;
 
 /** Page 1's multiplication. Sample 1 always gets it right; the other three
-    slots have fixed wrong answers so the dial is deterministic. */
+    slots have fixed wrong answers so the dial is deterministic — and each
+    wrong answer is a real arithmetic slip, not an invented number. */
 const RIGHT_ANSWER = "408";
-const OTHER_WRONGS = ["398", "428", "308"];
+const OTHER_WRONGS = [
+  { v: "425", slip: "did 17 × 25" },
+  { v: "384", slip: "did 16 × 24" },
+  { v: "348", slip: "dropped the carry" },
+];
 
 /** The GRPO recipe as five annotated lines — the honest abstraction of the
     objective (advantage from the group's own statistics), minus the clipped
@@ -102,27 +114,16 @@ interface Distill {
   size: number;
   label: string;
   family: "qwen" | "llama";
-  mathKey: string;
   note: string;
 }
 const DISTILLS: Distill[] = [
-  { size: 1.5, label: "Qwen-1.5B", family: "qwen", mathKey: "math1p5", note: "On AIME it beats GPT-4o-0513 (9.3%) — from a model that fits on a phone." },
-  { size: 7, label: "Qwen-7B", family: "qwen", mathKey: "math7", note: "Most of the way to o1-mini (63.6%), at laptop scale." },
-  { size: 8, label: "Llama-8B", family: "llama", mathKey: "math8", note: "A Llama base instead of Qwen: the same 800K traces teach a different family." },
-  { size: 14, label: "Qwen-14B", family: "qwen", mathKey: "math14", note: "Beats QwQ-32B-Preview (50.0%) — the leading open reasoning model when R1 shipped — at less than half the size." },
-  { size: 32, label: "Qwen-32B", family: "qwen", mathKey: "math32", note: "Within ~7 points of the 671B teacher." },
-  { size: 70, label: "Llama-70B", family: "llama", mathKey: "math70", note: "Bigger is not automatically better: the 32B Qwen edges it on AIME." },
+  { size: 1.5, label: "Qwen-1.5B", family: "qwen", note: "beats GPT-4o on AIME, from a model that fits on a phone" },
+  { size: 7, label: "Qwen-7B", family: "qwen", note: "most of the way to o1-mini, at laptop scale" },
+  { size: 8, label: "Llama-8B", family: "llama", note: "a Llama base instead of Qwen: the same traces teach a different family" },
+  { size: 14, label: "Qwen-14B", family: "qwen", note: "beats QwQ-32B-Preview, the leading open reasoning model when R1 shipped, at less than half its size" },
+  { size: 32, label: "Qwen-32B", family: "qwen", note: "within seven points of the 671B teacher" },
+  { size: 70, label: "Llama-70B", family: "llama", note: "bigger is not automatically better: the 32B Qwen edges it" },
 ];
-
-/** Per-point label offsets on the scatter, tuned against the log-x layout. */
-const SCATTER_LABEL: Record<number, { dx: number; dy: number; anchor: "start" | "end" | "middle" }> = {
-  1.5: { dx: 8, dy: 4, anchor: "start" },
-  7: { dx: -8, dy: 4, anchor: "end" },
-  8: { dx: 8, dy: 12, anchor: "start" },
-  14: { dx: -8, dy: 4, anchor: "end" },
-  32: { dx: 0, dy: -10, anchor: "middle" },
-  70: { dx: 0, dy: -8, anchor: "middle" },
-};
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -131,6 +132,120 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
+  );
+}
+
+const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}`;
+
+/**
+ * Line 2 of the recipe, drawn. Four sampled answers as dots at reward 1 or
+ * 0, the group mean as a dashed rule (the deck's reference-rule idiom), and
+ * each sample's push as an arrow FROM the rule TO its dot — the push
+ * literally is the sample's distance from the group's own average. As the
+ * dial raises the group's luck the rule chases the right answers: up-arrows
+ * shrink, the lone dissenter's arrow stretches, and at a uniform group the
+ * rule reaches the dots and every arrow vanishes.
+ */
+function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number }) {
+  const width = 720;
+  const height = 240;
+  const margin = { top: 18, right: 100, bottom: 48, left: 64 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const yOf = (r: number) => 12 + (1 - r) * (innerH - 24);
+  const colX = (i: number) => (innerW * (i + 0.5)) / 4;
+  const dotR = 6;
+
+  const k = rewards.slice(1).filter((r) => r === 1).length;
+  const title = `Line 2 of the recipe, drawn: four answers to 17 times 24 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 408, correct. The wrong answers are real slips: 425 from computing 17 times 25, 384 from computing 16 times 24, 348 from dropping a carry. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
+    k === 3 ? " The rule sits on the dots and every arrow has vanished: a uniform group teaches nothing." : ""
+  }`;
+
+  return (
+    <ChartFrame title={title} width={width} height={height} margin={margin}>
+      {/* reward axis: two ticks are the whole scale */}
+      {[1, 0].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={innerW} y1={yOf(t)} y2={yOf(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+            reward {t}
+          </text>
+        </g>
+      ))}
+
+      {/* the group mean: the baseline, as the deck's dashed reference rule */}
+      <line
+        x1={0}
+        x2={innerW}
+        y1={yOf(mean)}
+        y2={yOf(mean)}
+        className="stroke-ink"
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
+        group mean · {mean.toFixed(2)}
+      </text>
+
+      {/* one column per sample: dot, push arrow, labels */}
+      {rewards.map((r, i) => {
+        const px = colX(i);
+        const py = yOf(r);
+        const adv = r - mean;
+        const right = r === 1;
+        const wrong = OTHER_WRONGS[i - 1];
+        const up = adv > 0;
+        const yFrom = yOf(mean) + (up ? -2 : 2);
+        const yTo = py + (up ? dotR + 3 : -(dotR + 3));
+        return (
+          <g key={i}>
+            {adv !== 0 ? (
+              <g className={up ? "stroke-correct fill-correct" : "stroke-wrong fill-wrong"}>
+                <line x1={px} x2={px} y1={yFrom} y2={yTo + (up ? 4 : -4)} strokeWidth={2} />
+                <polygon
+                  points={`${px},${yTo} ${px - 3.5},${yTo + (up ? 6 : -6)} ${px + 3.5},${yTo + (up ? 6 : -6)}`}
+                  stroke="none"
+                />
+                <text
+                  x={px + 9}
+                  y={(yFrom + yTo) / 2}
+                  dy="0.32em"
+                  textAnchor="start"
+                  stroke="none"
+                  className={`font-mono text-[10px] font-semibold ${up ? "fill-correct" : "fill-wrong"}`}
+                >
+                  {fmtPush(adv)}
+                </text>
+              </g>
+            ) : null}
+            {i === 0 ? (
+              <circle cx={px} cy={py} r={dotR + 4} fill="none" className="stroke-compute" strokeWidth={1.5} />
+            ) : null}
+            <circle
+              cx={px}
+              cy={py}
+              r={dotR}
+              className={`${right ? "fill-correct" : "fill-wrong"} stroke-canvas`}
+              strokeWidth={1.5}
+            />
+            <text x={px} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[9px] uppercase tracking-wide">
+              sample {i + 1}
+            </text>
+            <text x={px} y={innerH + 27} textAnchor="middle" className="fill-ink font-mono text-[11px] font-semibold">
+              {right ? RIGHT_ANSWER : wrong.v}
+            </text>
+            <text
+              x={px}
+              y={innerH + 39}
+              textAnchor="middle"
+              className={i === 0 ? "fill-compute text-[9px] font-semibold" : "fill-ink-muted text-[9px]"}
+            >
+              {i === 0 ? "watch this one" : right ? "" : wrong.slip}
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
   );
 }
 
@@ -168,8 +283,8 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
   const training = curves.deepseekTraining;
   const { lengthStart, lengthEnd } = training.fit!.params;
 
-  const width = 480;
-  const height = 300;
+  const width = 720;
+  const height = 320;
   const margin = { ...CHART_MARGIN, right: 44 };
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
@@ -241,7 +356,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
         strokeWidth={1}
         strokeDasharray="4 3"
       />
-      <text x={x(AHA_STEP) + 4} y={12} textAnchor="start" className="fill-ink-muted text-[9px]">
+      <text x={x(AHA_STEP) + 4} y={12} textAnchor="start" className="fill-ink-muted text-[10px]">
         the aha appears
       </text>
 
@@ -253,7 +368,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
         x={innerW * 0.4}
         y={innerH - 12}
         textAnchor="middle"
-        className="fill-compute text-[9px]"
+        className="fill-compute text-[10px]"
       >
         no term in the reward mentions length
       </text>
@@ -432,91 +547,104 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
 }
 
 /**
- * The section-3 chart: the accuracy/size trade actually drawn. x = total
- * parameters (log), y = AIME 2024 pass@1; Qwen circles, Llama diamonds (shape
- * as well as colour), the 671B MoE teacher top-right, o1-mini as a dashed
- * reference line (its parameter count is undisclosed, so it has no x), and the
- * ~48× Qwen-14B → teacher gap as a horizontal span annotation.
+ * The section-3 chart, reframed for the section's thesis. Score is the axis;
+ * size is just row order. One row per distilled model (smallest at the top),
+ * the 671B teacher as the bottom row, and the closed models as vertical
+ * dashed rules — they have scores but no disclosed sizes, so rules, not
+ * rows. Reading down the rows, the dots march right through the closed
+ * models' rules as size grows; Llama-70B sitting left of Qwen-32B is a
+ * visible kink. Clicking a row (or a chip below) picks it.
  */
-function DistillScatter({ picked, onPick }: { picked: number; onPick: (size: number) => void }) {
+function DistillDotPlot({ picked, onPick }: { picked: number; onPick: (size: number) => void }) {
   const distill = curves.deepseekDistill;
   const P = distill.fit!.params;
   const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
 
-  const width = 560;
-  const height = 300;
-  const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
-  const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
-  const x = scaleLog().domain([1, 1000]).range([0, innerW]);
-  const y = scaleLinear().domain([20, 90]).range([innerH, 0]);
+  const width = 720;
+  const height = 280;
+  const margin = { top: 26, right: 16, bottom: 40, left: 118 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const x = scaleLinear().domain([0, 90]).range([0, innerW]);
+  const rows = DISTILLS.length + 1;
+  const rowH = innerH / rows;
+  const rowY = (i: number) => (i + 0.5) * rowH;
 
-  const spanRatio = Math.round(P.teacherParamsB / 14);
-  const spanY = y(87);
-
-  const title = `AIME 2024 pass at 1 against total parameters, log x axis. Distilled models: ${DISTILLS.map(
+  const title = `AIME 2024 pass at 1 as a horizontal dot plot, one row per model, smallest at the top. Rows: ${DISTILLS.map(
     (d) => `${d.label} ${aimeOf(d.size)} percent`,
-  ).join(", ")}. The R1 teacher, a ${P.teacherParamsB}B mixture-of-experts, sits at ${P.r1Aime} percent; a dashed reference line marks OpenAI o1-mini at ${P.o1miniAime} percent (parameter count undisclosed). A span annotation marks the roughly ${spanRatio} times parameter gap between Qwen-14B and the teacher. ${DISTILLS.find((d) => d.size === picked)?.label} is selected.`;
+  ).join(", ")}, and the R1 teacher, a ${P.teacherParamsB}B mixture-of-experts, at ${P.r1Aime} percent. Dashed vertical rules mark closed models with undisclosed sizes: GPT-4o at ${P.gpt4oAime} percent and OpenAI o1-mini at ${P.o1miniAime} percent; a dotted rule marks the teacher's score. Reading down the rows, the dots move right past the closed-model rules; Llama-70B sits left of Qwen-32B. ${DISTILLS.find((d) => d.size === picked)?.label} is selected.`;
 
   return (
-    <ChartFrame title={title} width={width} height={height} xLabel="total parameters (B, log scale)" yLabel="AIME 2024 pass@1 (%)">
-      {[20, 40, 60, 80].map((t) => (
-        <g key={`y${t}`}>
-          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-6} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+    <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="AIME 2024 pass@1 (%)">
+      {/* vertical gridlines + x ticks */}
+      {[0, 20, 40, 60, 80].map((t) => (
+        <g key={`x${t}`}>
+          <line x1={x(t)} x2={x(t)} y1={0} y2={innerH} className="stroke-grid" strokeWidth={0.5} />
+          <text x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
             {t}
           </text>
         </g>
       ))}
-      {[1, 10, 100, 1000].map((t) => (
-        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-          {t}
-        </text>
+
+      {/* closed models: rules, not rows — their sizes are undisclosed */}
+      {[
+        { label: "GPT-4o", v: P.gpt4oAime, anchor: "start" as const, dx: 4 },
+        { label: "o1-mini", v: P.o1miniAime, anchor: "end" as const, dx: -4 },
+      ].map((r) => (
+        <g key={r.label}>
+          <line
+            x1={x(r.v)}
+            x2={x(r.v)}
+            y1={0}
+            y2={innerH}
+            className="stroke-ink-muted"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+          />
+          <text
+            x={x(r.v) + r.dx}
+            y={-8}
+            textAnchor={r.anchor}
+            className="fill-ink-muted text-[10px]"
+          >
+            {r.label} · {r.v}%
+          </text>
+        </g>
       ))}
 
-      {/* o1-mini: a reference line, page-13 style — its size is undisclosed */}
+      {/* the teacher's score, ruled so "within seven points" is visible */}
       <line
-        x1={0}
-        x2={innerW}
-        y1={y(P.o1miniAime)}
-        y2={y(P.o1miniAime)}
-        className="stroke-ink-muted"
+        x1={x(P.r1Aime)}
+        x2={x(P.r1Aime)}
+        y1={0}
+        y2={innerH}
+        className="stroke-correct"
         strokeWidth={1}
-        strokeDasharray="4 3"
+        strokeDasharray="2 3"
       />
-      <text x={innerW - 4} y={y(P.o1miniAime) - 5} textAnchor="end" className="fill-ink-muted text-[10px]">
-        OpenAI o1-mini · {P.o1miniAime}% (size undisclosed)
+      <text x={x(P.r1Aime) - 4} y={-8} textAnchor="end" className="fill-correct text-[10px]">
+        R1 teacher · {P.r1Aime}%
       </text>
 
-      {/* the ~48× gap, drawn as a horizontal span (page 11's annotation grammar) */}
-      <line x1={x(14)} x2={x(P.teacherParamsB)} y1={spanY} y2={spanY} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="4 3" />
-      <line x1={x(14)} x2={x(14)} y1={spanY} y2={y(aimeOf(14)) - 7} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="2 2" />
-      <line x1={x(P.teacherParamsB)} x2={x(P.teacherParamsB)} y1={spanY} y2={y(P.r1Aime) - 9} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="2 2" />
-      <text
-        x={(x(14) + x(P.teacherParamsB)) / 2}
-        y={spanY - 5}
-        textAnchor="middle"
-        className="fill-ink text-[10px] font-semibold"
-      >
-        ~{spanRatio}× the parameters
-      </text>
-
-      {/* the teacher */}
-      <g aria-hidden="true">
-        <circle cx={x(P.teacherParamsB)} cy={y(P.r1Aime)} r={6} className="fill-correct stroke-canvas" strokeWidth={1.5} />
-        <text x={x(P.teacherParamsB) - 10} y={y(P.r1Aime) + 4} textAnchor="end" className="fill-ink text-[9px] font-semibold">
-          R1 teacher · {P.teacherParamsB}B MoE
-        </text>
-      </g>
-
-      {/* the six distills; the picked one is ringed */}
-      {DISTILLS.map((d) => {
-        const px = x(d.size);
-        const py = y(aimeOf(d.size));
-        const lab = SCATTER_LABEL[d.size];
+      {/* the six distills, one row each */}
+      {DISTILLS.map((d, i) => {
+        const py = rowY(i);
+        const px = x(aimeOf(d.size));
         const active = d.size === picked;
         return (
           <g key={d.size} onClick={() => onPick(d.size)} className="cursor-pointer" aria-hidden="true">
-            {active ? <circle cx={px} cy={py} r={8.5} fill="none" className="stroke-ink" strokeWidth={1.5} /> : null}
+            <rect x={-margin.left} y={py - rowH / 2} width={margin.left + innerW} height={rowH} fill="transparent" />
+            <line x1={0} x2={innerW} y1={py} y2={py} className="stroke-grid" strokeWidth={0.5} />
+            <text
+              x={-8}
+              y={py}
+              dy="0.32em"
+              textAnchor="end"
+              className={`text-[10px] ${active ? "fill-ink font-semibold" : "fill-ink-muted"}`}
+            >
+              {d.label}
+            </text>
+            {active ? <circle cx={px} cy={py} r={9} fill="none" className="stroke-ink" strokeWidth={1.5} /> : null}
             {d.family === "llama" ? (
               <rect
                 x={px - 4}
@@ -530,17 +658,23 @@ function DistillScatter({ picked, onPick }: { picked: number; onPick: (size: num
             ) : (
               <circle cx={px} cy={py} r={4.5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
             )}
-            <text
-              x={px + lab.dx}
-              y={py + lab.dy}
-              textAnchor={lab.anchor}
-              className={`text-[9px] ${active ? "fill-ink font-semibold" : "fill-ink-muted"}`}
-            >
-              {d.label}
-            </text>
+            {active ? (
+              <text x={px + 13} y={py} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
+                {aimeOf(d.size).toFixed(1)}%
+              </text>
+            ) : null}
           </g>
         );
       })}
+
+      {/* the teacher's row, at the bottom: the biggest model, the rightmost dot */}
+      <g aria-hidden="true">
+        <line x1={0} x2={innerW} y1={rowY(rows - 1)} y2={rowY(rows - 1)} className="stroke-grid" strokeWidth={0.5} />
+        <text x={-8} y={rowY(rows - 1)} dy="0.32em" textAnchor="end" className="fill-ink text-[10px] font-semibold">
+          R1 teacher · {P.teacherParamsB}B
+        </text>
+        <circle cx={x(P.r1Aime)} cy={rowY(rows - 1)} r={6} className="fill-correct stroke-canvas" strokeWidth={1.5} />
+      </g>
     </ChartFrame>
   );
 }
@@ -562,7 +696,6 @@ export function Page14() {
   const mean = rewards.reduce((a, b) => a + b, 0) / rewards.length;
   const uniform = luck === 3;
   const push1 = 1 - mean;
-  const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}`;
   const setLuckAnd = (v: number) => {
     setLuck(v);
     recordInteraction(PAGE_N);
@@ -570,7 +703,7 @@ export function Page14() {
   const LUCK_READ: Record<number, string> = {
     0: `Sample 1 is the only right answer in the group: the biggest push on offer (+${push1.toFixed(2)}).`,
     1: `Same right answer, luckier group: sample 1's push drops to +${push1.toFixed(2)}.`,
-    2: `Luckier still: +${push1.toFixed(2)}. The answer did not change; the group did.`,
+    2: `Luckier still: +${push1.toFixed(2)}. Now watch sample 4: a wrong answer in a mostly-right group is punished hardest (−${mean.toFixed(2)}). Rarity amplifies the signal in both directions.`,
     3: "",
   };
 
@@ -581,7 +714,6 @@ export function Page14() {
 
   /* — step 3: the distills — */
   const picked = DISTILLS.find((d) => d.size === pickedSize)!;
-  const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
   const paramRatio = Math.round(P.teacherParamsB / picked.size);
   const pick = (size: number) => {
     setPickedSize(size);
@@ -651,6 +783,10 @@ export function Page14() {
                   the rule checks one thing: does the answer equal 408?
                 </span>
               </p>
+              <p className="text-sm text-ink-muted">
+                Ask the model the same problem four times and it answers stochastically — that is
+                the group. Each wrong answer is a real slip: 17 × 25, 16 × 24, a dropped carry.
+              </p>
               <p className="text-sm font-semibold text-ink">
                 Sample 1 always answers 408. Drag the dial: the group&apos;s luck changes, sample
                 1&apos;s answer never does.
@@ -664,48 +800,16 @@ export function Page14() {
                 value={luck}
                 onChange={setLuckAnd}
               />
-              <div className="grid gap-2 sm:grid-cols-4" role="group" aria-label="Four sampled answers">
-                {rewards.map((r, i) => {
-                  const right = r === 1;
-                  const adv = r - mean;
-                  return (
-                    <div
-                      key={i}
-                      className={`flex flex-col items-center gap-1 rounded-lg border-l-4 p-2 text-sm ${
-                        right ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
-                      } ${i === 0 ? "ring-2 ring-compute" : ""}`}
-                    >
-                      <span className="text-xs text-ink-muted">
-                        sample {i + 1}
-                        {i === 0 ? <span className="ml-1 font-semibold text-compute">watch this one</span> : null}
-                      </span>
-                      <span className="font-mono font-semibold text-ink">
-                        {right ? RIGHT_ANSWER : OTHER_WRONGS[i - 1]}
-                      </span>
-                      <span className={right ? "text-xs text-correct" : "text-xs text-wrong"}>
-                        {right ? "✓ reward 1" : "✗ reward 0"}
-                      </span>
-                      <span
-                        className={`font-mono text-xs font-semibold ${
-                          adv > 0 ? "text-correct" : adv < 0 ? "text-wrong" : "text-ink-muted"
-                        }`}
-                      >
-                        {fmtPush(adv)}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              <GroupBaselineChart rewards={rewards} mean={mean} />
               <p className="text-sm text-ink-muted">
-                group average: <span className="font-mono text-ink">{mean.toFixed(2)}</span> · each
-                sample&apos;s push is its reward minus that average (GRPO then divides by the
-                group&apos;s spread)
+                each sample&apos;s push is its distance from the dashed rule — its reward minus the
+                group mean (GRPO then divides by the group&apos;s spread)
               </p>
               {uniform ? (
                 <p className="rounded border-l-4 border-compute bg-surface p-2 text-sm text-ink">
-                  Everyone got it right, so every push is <span className="font-mono">0.00</span>:
-                  a problem the model already aces — or is hopeless on — teaches it nothing.
-                  Learning lives where the group disagrees.
+                  The limit of that trend: everyone scored the same, so every push is{" "}
+                  <span className="font-mono">0.00</span> — a problem the model already aces, or
+                  is hopeless on, teaches it nothing. Learning lives where the group disagrees.
                 </p>
               ) : (
                 <p className="text-sm text-ink">{LUCK_READ[luck]}</p>
@@ -743,34 +847,32 @@ export function Page14() {
               extra tokens are made of.
             </p>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="flex flex-col gap-4">
-                <Slider
-                  label="RL training step"
-                  min={0}
-                  max={MAX_STEP}
-                  step={500}
-                  value={step}
-                  onChange={(v) => {
-                    setStep(v);
-                    recordInteraction(PAGE_N);
-                  }}
-                />
-                <div className="flex items-end gap-6">
-                  <div>
-                    <p className="font-mono text-5xl font-bold tabular-nums text-correct">
-                      {pass.toFixed(1)}%
-                    </p>
-                    <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
-                  </div>
-                  <div>
-                    <p className="font-mono text-2xl font-bold tabular-nums text-compute">
-                      ≈{length.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-ink-muted">avg response tokens</p>
-                  </div>
+            <div className="flex flex-col gap-4">
+              <Slider
+                label="RL training step"
+                min={0}
+                max={MAX_STEP}
+                step={500}
+                value={step}
+                onChange={(v) => {
+                  setStep(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
+              <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+                <div>
+                  <p className="font-mono text-5xl font-bold tabular-nums text-correct">
+                    {pass.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
                 </div>
-                <p className="text-sm text-ink-muted">
+                <div>
+                  <p className="font-mono text-2xl font-bold tabular-nums text-compute">
+                    ≈{length.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-ink-muted">avg response tokens</p>
+                </div>
+                <p className="min-w-[16rem] flex-1 text-sm text-ink-muted">
                   From 15.6% to 71.0% pass@1 with no supervised examples. Add page 7&apos;s
                   majority vote across 64 samples and it reaches{" "}
                   <strong className="text-ink">{cons64}%</strong> — level with OpenAI-o1-0912.
@@ -832,18 +934,18 @@ export function Page14() {
             </p>
 
             <figure className="m-0 flex flex-col gap-2">
-              <DistillScatter picked={pickedSize} onPick={pick} />
+              <DistillDotPlot picked={pickedSize} onPick={pick} />
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
                 <Key shape="circle" className="bg-compute" label="Qwen base" />
                 <Key shape="diamond" className="bg-wrong" label="Llama base" />
                 <Key shape="circle" className="bg-correct" label="R1 teacher (671B MoE)" />
-                <Key shape="dash" className="border-ink-muted" label="o1-mini reference" />
+                <Key shape="dash" className="border-ink-muted" label="closed model (size undisclosed)" />
               </div>
               <figcaption className="text-xs text-ink-muted">
-                the parameter axis counts total parameters; the {P.teacherParamsB}B teacher is a
-                mixture-of-experts that activates ~{P.teacherActiveB}B per token, so the drawn gap
-                overstates its per-token compute · o1-mini&apos;s parameter count is undisclosed,
-                so it is a reference line, not a point
+                rows are ordered by size, smallest at the top; the teacher&apos;s{" "}
+                {P.teacherParamsB}B is a mixture-of-experts total that activates ~
+                {P.teacherActiveB}B per token · GPT-4o and o1-mini publish scores but not sizes,
+                so they are rules, not rows
               </figcaption>
             </figure>
 
@@ -868,20 +970,16 @@ export function Page14() {
               })}
             </div>
 
-            <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              <p>
-                <strong>R1-Distill-{picked.label}</strong>: AIME{" "}
-                <span className="font-mono">{aimeOf(picked.size).toFixed(1)}%</span> · MATH-500{" "}
-                <span className="font-mono">{P[picked.mathKey].toFixed(1)}%</span> · ~
-                <span className="font-mono">{paramRatio}×</span> fewer parameters than the teacher.
-              </p>
-              <p className="mt-1 text-ink-muted">{picked.note}</p>
-            </div>
+            <p className="text-sm text-ink">
+              <strong>R1-Distill-{picked.label}</strong>{" "}
+              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher —</span>{" "}
+              {picked.note}.
+            </p>
 
             <p className="text-sm text-ink-muted">
-              Where a dot crosses the dashed line, a model you can download and run beats a closed
-              frontier product at answer time — page 11&apos;s law, compressed into weights. The
-              small model spends its advantage the same way the big one does: by thinking longer.
+              Where a dot lands right of a dashed rule, a model you can download beats a closed
+              frontier product — by thinking longer at answer time: page 11&apos;s law, compressed
+              into weights.
             </p>
 
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">

@@ -83,22 +83,32 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getByText(/it is what made RL at this scale affordable/)).toBeInTheDocument();
   });
 
-  it("GRPO dial: the same right answer earns a shrinking push as the group gets luckier", () => {
+  it("GRPO dial: the baseline chases the group and the same right answer's push shrinks", () => {
     render(<Page14 />);
     // Default: one other sample also right → group [✓ ✓ ✗ ✗], mean 0.50, pushes ±0.50.
-    expect(screen.getByText("0.50")).toBeInTheDocument();
+    expect(screen.getByText(/group mean · 0\.50/)).toBeInTheDocument();
     expect(screen.getAllByText("+0.50")).toHaveLength(2);
     expect(screen.getByText(/push drops to \+0\.50/)).toBeInTheDocument();
+    // The wrong answers are named slips, not invented numbers.
+    expect(screen.getByText("dropped the carry")).toBeInTheDocument();
+    expect(screen.getByText("did 16 × 24")).toBeInTheDocument();
 
-    // Lone right answer: the biggest push on offer.
+    // Lone right answer: the biggest push on offer — and all three slips visible.
     setLuck(0);
     expect(screen.getByText("+0.75")).toBeInTheDocument();
     expect(screen.getByText(/the biggest push on offer/)).toBeInTheDocument();
+    expect(screen.getByText("did 17 × 25")).toBeInTheDocument();
 
-    // Uniform group: every push 0.00, nothing to learn.
+    // Rarity cuts both ways: the lone wrong answer is punished hardest.
+    setLuck(2);
+    expect(screen.getByText("−0.75")).toBeInTheDocument();
+    expect(screen.getByText(/Rarity amplifies the signal in both directions/)).toBeInTheDocument();
+
+    // Uniform group: the rule reaches the dots, every arrow vanishes.
     setLuck(3);
     expect(screen.getByText(/teaches it nothing/)).toBeInTheDocument();
-    expect(screen.getAllByText("0.00").length).toBeGreaterThanOrEqual(4);
+    expect(screen.getByText(/group mean · 1\.00/)).toBeInTheDocument();
+    expect(screen.queryByText(/[+−]0\.\d\d/)).not.toBeInTheDocument();
   });
 
   it("defaults the distill picker to Qwen-14B and updates on selection", () => {
@@ -108,24 +118,24 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
       "true",
     );
     expect(screen.getByText(/R1-Distill-Qwen-14B/)).toBeInTheDocument();
-    expect(screen.getByText("93.9%")).toBeInTheDocument();
+    expect(screen.getByText(/leading open reasoning model when R1 shipped/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Qwen-32B/ }));
     expect(screen.getByText(/R1-Distill-Qwen-32B/)).toBeInTheDocument();
-    expect(screen.getByText("94.3%")).toBeInTheDocument();
-    expect(screen.getByText(/Within ~7 points of the 671B teacher/)).toBeInTheDocument();
+    expect(screen.getByText(/within seven points of the 671B teacher/)).toBeInTheDocument();
   });
 
-  it("draws the distillation trade as a scatter: families, teacher, o1-mini line, ~48× span", () => {
+  it("draws the distillation trade as a dot plot: rows by size, closed models as rules", () => {
     render(<Page14 />);
-    const scatter = screen.getByRole("img", { name: /against total parameters/i });
-    const label = scatter.getAttribute("aria-label")!;
+    const plot = screen.getByRole("img", { name: /horizontal dot plot/i });
+    const label = plot.getAttribute("aria-label")!;
     expect(label).toMatch(/Qwen-14B 69\.7 percent/);
     expect(label).toMatch(/Qwen-32B 72\.6 percent/);
     expect(label).toMatch(/Llama-70B 70 percent/);
-    expect(label).toMatch(/671B mixture-of-experts, sits at 79\.8 percent/);
-    expect(label).toMatch(/o1-mini at 63\.6 percent \(parameter count undisclosed\)/);
-    expect(label).toMatch(/48 times parameter gap/);
+    expect(label).toMatch(/671B mixture-of-experts, at 79\.8 percent/);
+    expect(label).toMatch(/GPT-4o at 9\.3 percent and OpenAI o1-mini at 63\.6 percent/);
+    expect(label).toMatch(/undisclosed sizes/);
+    expect(label).toMatch(/Llama-70B sits left of Qwen-32B/);
   });
 
   it("defers the scoreboard and hands off to page 15", () => {
