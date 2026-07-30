@@ -378,9 +378,9 @@ export function Page3() {
               points={comboSame}
               secondary={{
                 points: comboFrontier,
-                label: "the frontier model of the day, daily",
+                label: "the newest frontier model, daily · its price climbs",
               }}
-              primaryLabel={`the same model, daily (flat GPT-4-class $${RUN_M}M rate)`}
+              primaryLabel={`the same GPT-4-class model, daily · flat $${RUN_M}M a run`}
               primaryTone="compute-bright"
               secondaryTone="wrong-bright"
               markerX={months}
@@ -388,6 +388,7 @@ export function Page3() {
               markerLabel="Drag through the first year of keeping the plan up"
               markerStep={1}
               markerValueText={(m) => `${m} ${m === 1 ? "month" : "months"}`}
+              markerFormat={(bn) => fmtM(bn * 1000)}
               xLabel="months of keeping it up"
               yLabel="cumulative bill ($ billions)"
               yDomain={[0, 52]}

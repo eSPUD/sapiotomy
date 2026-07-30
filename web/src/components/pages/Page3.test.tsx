@@ -106,15 +106,17 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // The slider opens mid-year, so drag it out to read the full twelve months:
     // the compounding plan lands above the flat plan's whole-year total.
     dragMonths(12);
-    expect(screen.getByText("$45.5B")).toBeInTheDocument();
-    expect(screen.getByText("$28.5B")).toBeInTheDocument();
+    // Each total appears twice now: printed at the marker on the plot, and in
+    // the labelled tile beneath it.
+    expect(screen.getAllByText("$45.5B")).toHaveLength(2);
+    expect(screen.getAllByText("$28.5B")).toHaveLength(2);
     expectClean();
   });
 
   it("dragging the year out overtakes the flat rate and announces the crossing", () => {
     render(<Page3 />);
     dragMonths(12);
-    expect(screen.getByText("$45.5B")).toBeInTheDocument();
+    expect(screen.getAllByText("$45.5B").length).toBeGreaterThan(0);
     expect(screen.getByText(/outspent a full year at the flat rate/)).toBeInTheDocument();
     expectClean();
   });
@@ -125,12 +127,12 @@ describe("Page 3 (Training-Time Scaling)", () => {
     const projBefore = projMarker.getAttribute("aria-valuenow")!;
     // Step 1's marker moves step 1's totals and leaves the projection alone.
     dragMonths(12);
-    expect(screen.getByText("$45.5B")).toBeInTheDocument();
+    expect(screen.getAllByText("$45.5B").length).toBeGreaterThan(0);
     expect(projMarker).toHaveAttribute("aria-valuenow", projBefore);
     // ...and step 2's marker moves the projection without touching step 1.
     fireEvent.keyDown(projMarker, { key: "ArrowLeft" });
     expect(projMarker).not.toHaveAttribute("aria-valuenow", projBefore);
-    expect(screen.getByText("$45.5B")).toBeInTheDocument();
+    expect(screen.getAllByText("$45.5B").length).toBeGreaterThan(0);
     expectClean();
   });
 

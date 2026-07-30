@@ -54,6 +54,11 @@ export interface LineChartProps {
   markerStep?: number;
   /** Spoken value at the marker, e.g. "6 months". */
   markerValueText?: (x: number) => string;
+  /**
+   * Print each series' value at the marker, right on the plot. Without it the
+   * reader has to carry a y position down to a readout below the chart.
+   */
+  markerFormat?: (y: number) => string;
   /** Draw a dashed horizontal reference line (e.g. the reader's prediction). */
   referenceY?: number;
   referenceLabel?: string;
@@ -141,6 +146,7 @@ export function LineChart({
   markerLabel,
   markerStep = 1,
   markerValueText,
+  markerFormat,
   referenceY,
   referenceLabel,
   secondary,
@@ -536,7 +542,41 @@ export function LineChart({
               />
             </>
           ) : null}
-          <circle cx={x(markerPoint.x)} cy={y(markerPoint.y)} r={5} className="fill-compute" />
+          <circle cx={x(markerPoint.x)} cy={y(markerPoint.y)} r={5} className={FILL[primaryTone]} />
+          {secondaryMarkerPoint ? (
+            <circle
+              cx={x(secondaryMarkerPoint.x)}
+              cy={y(secondaryMarkerPoint.y)}
+              r={5}
+              className={FILL[secondaryTone]}
+            />
+          ) : null}
+
+          {/* the numbers themselves, so the plot answers without a lookup */}
+          {markerFormat
+            ? (
+                [
+                  { pt: markerPoint, tone: primaryTone },
+                  ...(secondaryMarkerPoint
+                    ? [{ pt: secondaryMarkerPoint, tone: secondaryTone }]
+                    : []),
+                ] as const
+              ).map(({ pt, tone }, i) => {
+                const cx = x(pt.x);
+                const flip = cx > innerW - 56; // keep the label inside the plot
+                return (
+                  <text
+                    key={i}
+                    x={cx + (flip ? -10 : 10)}
+                    y={y(pt.y) - 9}
+                    textAnchor={flip ? "end" : "start"}
+                    className={`${FILL[tone]} text-[11px] font-semibold`}
+                  >
+                    {markerFormat(pt.y)}
+                  </text>
+                );
+              })
+            : null}
         </g>
       ) : null}
 
