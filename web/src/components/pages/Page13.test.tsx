@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Page13 } from "./Page13";
 
 const follows = (a: Element, b: Element) =>
@@ -14,18 +14,24 @@ describe("Page 13 (frontier reasoners I)", () => {
     ).toBeInTheDocument();
   });
 
-  it("starts section 1 from page 12's shared listing, labelled confirmed frame · rumored recipe", () => {
+  it("shows only the o1 recipe, mapped back to page 12 line by line, labelled rumor", () => {
     render(<Page13 />);
     expect(screen.getByText("confirmed frame · rumored recipe")).toBeInTheDocument();
-    // The STaR side renders the shared lines verbatim (M₀ is markup, so match
-    // the assembled code text as Page12.test does).
+    // The six-line rumored recipe.
+    expect(screen.getByText("loop: while the compute budget lasts")).toBeInTheDocument();
+    expect(screen.getByText("r₁…rₖ, ŷ₁…ŷₖ ← M(x)")).toBeInTheDocument();
+    expect(screen.getByText("rewardᵢ ← check(ŷᵢ, y)")).toBeInTheDocument();
+    expect(screen.getByText("M ← reinforce(M, rewards)")).toBeInTheDocument();
+    // The annotations carry the diff against page 12; STaR is not re-printed.
+    expect(screen.getByText(/promoted to an explicit reward/)).toBeInTheDocument();
+    expect(screen.getByText(/hint branch is gone/)).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.queryByText(
         (_, el) => el?.tagName === "CODE" && el.textContent === "M ← finetune(M0, kept)",
       ),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/hint = y/)).toBeInTheDocument();
-    expect(screen.getByText(/exactly the loop you already ran/)).toBeInTheDocument();
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/hint = y/)).not.toBeInTheDocument();
+    expect(screen.getByText(/rumor, not record/)).toBeInTheDocument();
   });
 
   it("cites the confirmed frame: the announcement and the LRM definition", () => {
@@ -34,28 +40,9 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.getByText(/The algorithm itself was never published\./)).toBeInTheDocument();
   });
 
-  it("dropping the disguise rewrites four lines, strikes the hint branch, and says rumor", () => {
-    render(<Page13 />);
-    fireEvent.click(screen.getByRole("switch", { name: /Drop the disguise/ }));
-    // The four rewrites.
-    expect(screen.getByText("loop: while the compute budget lasts")).toBeInTheDocument();
-    expect(screen.getByText("r₁…r_k, ŷ₁…ŷ_k ← M(x)")).toBeInTheDocument();
-    expect(screen.getByText("rewardᵢ ← check(ŷᵢ, y)")).toBeInTheDocument();
-    expect(screen.getByText("M ← reinforce(M, rewards)")).toBeInTheDocument();
-    // The replaced originals are gone; the struck hint branch is still shown.
-    expect(
-      screen.queryByText(
-        (_, el) => el?.tagName === "CODE" && el.textContent === "M ← finetune(M0, kept)",
-      ),
-    ).not.toBeInTheDocument();
-    expect(screen.getByText(/hint = y/)).toBeInTheDocument();
-    expect(screen.getByText(/promoted to an explicit reward/)).toBeInTheDocument();
-    expect(screen.getByText(/rumor, not/)).toBeInTheDocument();
-  });
-
   it("carries the build-ons: no human in the loop, and page 3's data wall unpriced", () => {
     render(<Page13 />);
-    expect(screen.getByText(/RLHF, pays people to judge outputs/)).toBeInTheDocument();
+    expect(screen.getByText(/RLHF pays people to judge outputs/)).toBeInTheDocument();
     expect(screen.getByText(/writes its own curriculum/)).toBeInTheDocument();
     // Section 2 restates the currency point against page 3's finite stock.
     expect(screen.getByText(/page 3's wall does not price/)).toBeInTheDocument();
@@ -75,6 +62,22 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.getByText("RL training (train-time compute)")).toBeInTheDocument();
     expect(screen.getByText("the missing RL's share")).toBeInTheDocument();
     expect(screen.getByText(/The slope is the claim; the absolute compute is a secret\./)).toBeInTheDocument();
+  });
+
+  it("draws the whole run family at once, staircase stated, opening gap priced", () => {
+    render(<Page13 />);
+    const chart = screen.getByRole("img", {
+      name: /Three RL training runs are drawn in full as parallel lines/,
+    });
+    expect(chart).toBeInTheDocument();
+    // The law is stated statically: up one curve = along one decade = +29.5.
+    expect(chart.getAttribute("aria-label")).toMatch(
+      /times 10 more RL and times 10 more thinking buy the same 29\.5 points/,
+    );
+    // Default state opens mid-family with exactly one forgone decade priced.
+    expect(chart.getAttribute("aria-label")).toMatch(
+      /times 10 run at times 10 thinking, scoring 21\.0 percent, with 29\.5 points forgone/,
+    );
   });
 
   it("keeps the waterfall as mechanisms, model names demoted to parentheses", () => {
@@ -117,6 +120,9 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.getByText("The raw chain of thought")).toBeInTheDocument();
     expect(screen.getByText(/every thinking token billed, sight unseen/)).toBeInTheDocument();
     expect(screen.getByText(/it is all you ever see/)).toBeInTheDocument();
+    // Every cell carries words — an em-dash cell reads as a rendering bug.
+    expect(screen.getByText(/no one extra — it arrives with the answer/)).toBeInTheDocument();
+    expect(screen.getByText(/its own audit, run inside/)).toBeInTheDocument();
     expect(screen.getByText(/flagged 0\.17% of responses as deceptive/)).toBeInTheDocument();
   });
 
@@ -142,9 +148,9 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(follows(price, closer)).toBe(true);
   });
 
-  it("orders the page: loop-diff, lab, waterfall, ablation, ledger, handoff", () => {
+  it("orders the page: recipe, lab, waterfall, ablation, ledger, handoff", () => {
     render(<Page13 />);
-    const diff = screen.getByText(/Flip the switch and watch which lines survive\./);
+    const diff = screen.getByText("rewardᵢ ← check(ŷᵢ, y)");
     const lab = screen.getByText("Thinking time (test-time compute)");
     const waterfall = screen.getByText("no learned chain");
     const ablation = screen.getByText("One recipe, no domain tricks");
@@ -172,10 +178,13 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.getAllByText("preprint").length).toBe(4);
   });
 
-  it("labels the footer provenance as Simulated and Cited, with the rumor disclaimer", () => {
+  it("carries no Simulated/Cited footer — provenance is inline, as on pages 1-3", () => {
     render(<Page13 />);
-    expect(screen.getByText("Simulated")).toBeInTheDocument();
-    expect(screen.getByText("Cited")).toBeInTheDocument();
-    expect(screen.getByText(/rumor,\s*labelled as such/)).toBeInTheDocument();
+    expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cited")).not.toBeInTheDocument();
+    // The inline declarations that replace it.
+    expect(screen.getByText("confirmed frame · rumored recipe")).toBeInTheDocument();
+    expect(screen.getByText("authored redrawing · anchors verbatim")).toBeInTheDocument();
+    expect(screen.getByText(/The slope is the claim; the absolute compute is a secret\./)).toBeInTheDocument();
   });
 });
