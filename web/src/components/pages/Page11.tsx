@@ -11,26 +11,46 @@
  * Wu-figure style, with the controls in a strip beneath it. The knobs never
  * move a line — model size selects which curve is highlighted and test-time
  * compute slides the marker along it (the page-3 idiom), so the reader SEES
- * the crossings the game is about. Sizes are labeled as multiples (1x..14x)
- * because Snell et al. never publish absolute parameter counts (disclosed in
- * the Simulated footer, not the setup prose). The curves are AUTHORED shapes
- * following Snell et al. 2024's claims, pinned in act2allocator.test.ts.
+ * the crossings the game is about. To keep four overlapping curves from
+ * reading as noise, only the selected curve is drawn at full strength; the
+ * rest are thin ghosts, though every end label stays large and legible so the
+ * family is always identifiable. The two dials sit side by side in one row
+ * (equal height by construction), difficulty above them. Sizes are labeled as
+ * multiples (1x..14x) because Snell et al. never publish absolute parameter
+ * counts (disclosed in the Simulated footer, not the setup prose). The curves
+ * are AUTHORED shapes following Snell et al. 2024's claims, pinned in
+ * act2allocator.test.ts; the Snell cite sits beside the chart's caption, not
+ * only in the setup prose.
  *
  * Step 2 states the law with a unit on every number: 4x fewer samples than
  * best-of-N (64 vs 256), 14x the parameters matched on FLOPs, and the ratio R
  * given as its two limits (R -> 0 thinking wins, R -> inf parameters win).
- * The hard-mode boundary closes the step as a deliberate callout, page-12's
- * closing-statement treatment.
+ * Each panel's drawing carries exactly its caption's claim: 4x is two dot
+ * clusters (16 vs 4 sample dots, the same 4:1 ratio) under two checkpoints
+ * pinned to one same-accuracy line; 14x is two equal-height FLOPs bills, one
+ * paid as 14 thin thinking slices, one as a single parameter block; R is one
+ * axis with both regime labels on one baseline. The hard-mode boundary closes
+ * the step as a deliberate callout, page-12's closing-statement treatment.
  *
  * Steps 3 and 4 are field data from Wu et al. 2024, where parameter counts
  * ARE published — split into two sections because they carry two different
  * claims. Step 3 (data/pythia-inference-scaling.json, by-eye digitization,
- * replotted as accuracy): how MUCH compute — each Pythia scale owns a band of
- * the GSM8K budget axis, the measured version of step 1's crossings. Step 4
- * (data/rebase-pareto.json, exact table values): how it is SPENT — REBASE
- * tree search shifts the whole MATH500 frontier, each model's sampling and
- * search points tied by a hairline connector, led by their
- * ~2x-less-total-FLOPs finding.
+ * replotted as accuracy): how MUCH compute. The section title's claim is
+ * drawn, not asserted: the budget axis is shaded into tinted ownership bands,
+ * one per Pythia scale, and each curve is bold only inside the band where it
+ * is the compute-optimal pick (clip-path segments over thin full ghosts), so
+ * the baton pass from 410M to 2.8B to 12B is visible before the caption says
+ * it. Band boundaries are computed from the digitized points (log-x linear
+ * interpolation), not hand-placed. Step 4 (data/rebase-pareto.json, exact
+ * table values): how it is SPENT — REBASE tree search shifts the whole
+ * MATH500 frontier. Color is the strategy differentiator (muted sampling
+ * circles, bright-green search diamonds) and each model's pair is tied by an
+ * arrow pointing at the shift, led by their ~2x-less-total-FLOPs finding.
+ *
+ * The page closes with a hand-off block under step 4 (page-12's border-l
+ * closing idiom): every tool in the act spends at answer time and discards
+ * the reasoning it bought; page 12 (STaR) trains on it. Better search moves
+ * the frontier; the hand-off, not step 4's title, carries the bridge.
  *
  * Provenance: each chart's fidelity caveat sits directly under that chart;
  * the page footer uses page-12's two-label Simulated / Cited pattern.
@@ -65,7 +85,7 @@ const REF = { snell: 1, wu: 2 } as const;
 
 const DIFFICULTY_BLURB: Record<Difficulty, string> = {
   easy: "the 1× model already lands most answers on its first try",
-  medium: "the 1× model succeeds now and then — enough traction for thinking to build on",
+  medium: "the 1× model succeeds now and then, enough traction for thinking to build on",
   hard: "the 1× model essentially never lands one on its own",
 };
 
@@ -100,86 +120,107 @@ function Key({ shape, className, label }: { shape: "circle" | "diamond" | "line"
  * caption that carries the claim.
  * ------------------------------------------------------------------------- */
 
-/** 4x: two runs land on the same accuracy line; one pays a quarter the samples. */
+/** 4x: two checkpoints on one accuracy line; one cluster holds 4x fewer sample dots. */
 function ArtFourX() {
+  const cluster = (cx: number, cols: number, rows: number) => {
+    const dots: { x: number; y: number }[] = [];
+    for (let r = 0; r < rows; r++)
+      for (let c = 0; c < cols; c++)
+        dots.push({ x: cx + (c - (cols - 1) / 2) * 6, y: 24 + r * 6 });
+    return dots;
+  };
   return (
     <svg viewBox="0 0 96 56" className="h-full w-full" aria-hidden="true">
       <text x="48" y="9" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
         same accuracy
       </text>
       <line
-        x1="10"
+        x1="12"
         y1="14"
-        x2="86"
+        x2="84"
         y2="14"
         className="stroke-current text-ink-muted"
         strokeWidth="1"
         strokeDasharray="3 2"
       />
-      <circle cx="28" cy="14" r="3" className="fill-current text-correct" />
-      <circle cx="68" cy="14" r="3" className="fill-current text-correct" />
-      {/* each run's sample bill, hanging from the same line */}
-      <rect x="20" y="18" width="16" height="28" className="fill-current text-compute/25" />
-      <rect x="20" y="18" width="16" height="28" className="stroke-current text-compute" fill="none" strokeWidth="1" />
-      <rect x="60" y="39" width="16" height="7" className="fill-current text-compute/25" />
-      <rect x="60" y="39" width="16" height="7" className="stroke-current text-compute" fill="none" strokeWidth="1" />
-      <line x1="10" y1="46" x2="86" y2="46" className="stroke-current text-ink-muted" strokeWidth="1" />
-      <text x="28" y="54" textAnchor="middle" fontSize="7" className="fill-current text-ink">
-        256
+      <circle cx="26" cy="14" r="3" className="fill-current text-correct" />
+      <circle cx="70" cy="14" r="3" className="fill-current text-correct" />
+      {/* the samples each run drew to get there: 16 dots vs 4, the same 4:1 */}
+      {cluster(26, 4, 4).map((d) => (
+        <circle key={`a${d.x}-${d.y}`} cx={d.x} cy={d.y} r="2" className="fill-current text-compute" />
+      ))}
+      {cluster(70, 2, 2).map((d) => (
+        <circle key={`b${d.x}-${d.y}`} cx={d.x} cy={d.y} r="2" className="fill-current text-compute" />
+      ))}
+      <text x="26" y="54" textAnchor="middle" fontSize="7" className="fill-current text-ink">
+        256 samples
       </text>
-      <text x="68" y="54" textAnchor="middle" fontSize="7" className="fill-current text-ink">
+      <text x="70" y="54" textAnchor="middle" fontSize="7" className="fill-current text-ink">
         64
       </text>
     </svg>
   );
 }
 
-/** 14x: a small model plus its sampled thoughts outscores the big one. */
+/** 14x: the same FLOPs bill paid two ways — 14 thinking slices, or one parameter block. */
 function ArtFourteenX() {
+  const barY = 15;
+  const barH = 28;
   return (
     <svg viewBox="0 0 96 56" className="h-full w-full" aria-hidden="true">
-      <rect x="14" y="26" width="13" height="13" className="fill-current text-correct/20" />
-      <rect x="14" y="26" width="13" height="13" className="stroke-current text-correct" fill="none" strokeWidth="1.2" />
-      {/* its sampled answers, fanned out above */}
-      <circle cx="12" cy="18" r="2" className="fill-current text-compute" />
-      <circle cx="20" cy="13" r="2" className="fill-current text-compute" />
-      <circle cx="28" cy="16" r="2" className="fill-current text-compute" />
-      <circle cx="33" cy="23" r="2" className="fill-current text-compute" />
-      <text x="20" y="51" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
+      <text x="48" y="9" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
+        the same FLOPs bill
+      </text>
+      {/* left: paid in samples — 14 thin slices of thinking from the 1× model */}
+      <rect x="17" y={barY} width="18" height={barH} className="fill-current text-compute/25" />
+      {Array.from({ length: 13 }, (_, i) => (
+        <line
+          key={i}
+          x1="17"
+          x2="35"
+          y1={barY + (barH / 14) * (i + 1)}
+          y2={barY + (barH / 14) * (i + 1)}
+          className="stroke-current text-canvas"
+          strokeWidth="0.8"
+        />
+      ))}
+      <rect x="17" y={barY} width="18" height={barH} className="stroke-current text-compute" fill="none" strokeWidth="1.2" />
+      <text x="26" y="53" textAnchor="middle" fontSize="6.5" className="fill-current text-ink">
         1× + thinking
       </text>
-      <text x="48" y="37" textAnchor="middle" fontSize="14" className="fill-current text-ink">
+      <text x="48" y="34" textAnchor="middle" fontSize="12" className="fill-current text-ink">
         ≥
       </text>
-      <rect x="61" y="10" width="26" height="26" className="fill-current text-ink-muted/15" />
-      <rect x="61" y="10" width="26" height="26" className="stroke-current text-ink-muted" fill="none" strokeWidth="1.2" />
-      <text x="74" y="51" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
+      {/* right: paid once, in parameters */}
+      <rect x="61" y={barY} width="18" height={barH} className="fill-current text-ink-muted/15" />
+      <rect x="61" y={barY} width="18" height={barH} className="stroke-current text-ink-muted" fill="none" strokeWidth="1.2" />
+      <text x="70" y="53" textAnchor="middle" fontSize="6.5" className="fill-current text-ink-muted">
         14×, greedy
       </text>
     </svg>
   );
 }
 
-/** R: one axis, two limits — thinking wins at one end, parameters at the other. */
+/** R: one axis, two limits — both regime labels on one baseline, one per end. */
 function ArtRatioR() {
   return (
-    <svg viewBox="0 0 96 56" className="h-full w-full" aria-hidden="true">
-      <text x="48" y="14" textAnchor="middle" fontSize="10" className="fill-current text-wrong">
+    <svg viewBox="0 0 128 56" className="h-full w-full" aria-hidden="true">
+      <text x="64" y="14" textAnchor="middle" fontSize="10" className="fill-current text-wrong">
         R
       </text>
-      <line x1="14" y1="26" x2="82" y2="26" className="stroke-current text-ink-muted" strokeWidth="1" />
+      <line x1="14" y1="26" x2="114" y2="26" className="stroke-current text-ink-muted" strokeWidth="1" />
       <path d="M18 23 L13 26 L18 29" className="stroke-current text-ink-muted" fill="none" strokeWidth="1" />
-      <path d="M78 23 L83 26 L78 29" className="stroke-current text-ink-muted" fill="none" strokeWidth="1" />
+      <path d="M110 23 L115 26 L110 29" className="stroke-current text-ink-muted" fill="none" strokeWidth="1" />
       <text x="14" y="20" fontSize="7" className="fill-current text-ink-muted">
         → 0
       </text>
-      <text x="82" y="20" textAnchor="end" fontSize="7" className="fill-current text-ink-muted">
+      <text x="114" y="20" textAnchor="end" fontSize="7" className="fill-current text-ink-muted">
         → ∞
       </text>
-      <text x="14" y="38" fontSize="7" className="fill-current text-correct">
+      <text x="4" y="38" fontSize="7" className="fill-current text-correct">
         thinking wins
       </text>
-      <text x="82" y="50" textAnchor="end" fontSize="7" className="fill-current text-ink">
+      <text x="124" y="38" textAnchor="end" fontSize="7" className="fill-current text-ink">
         parameters win
       </text>
     </svg>
@@ -302,28 +343,31 @@ function FamilyChart({
         strokeWidth={1}
         strokeDasharray="4 3"
       />
-      <text x={innerW - 4} y={y(tgt) - 5} textAnchor="end" className="fill-ink-muted text-[10px]">
+      <text x={innerW - 4} y={y(tgt) - 5} textAnchor="end" className="fill-ink-muted text-[11px]">
         the target
       </text>
 
-      {/* every curve, drawn in full; only the selected one is emphasized */}
+      {/* every curve, drawn in full; the selected one carries the weight, the
+          rest are thin ghosts — but every end label stays large and legible */}
       {family.map((f) => {
         const selected = f.s === size;
         const end = f.pts[f.pts.length - 1];
         const hue = SIZE_HUES[f.s];
         return (
-          <g key={f.s} opacity={selected ? 1 : 0.45}>
+          <g key={f.s}>
             <path
               d={path(f.pts)}
               fill="none"
               className={hue.stroke}
-              strokeWidth={selected ? 2.75 : 1.25}
+              strokeWidth={selected ? 3 : 1}
+              opacity={selected ? 1 : 0.25}
             />
             <text
               x={x(end.x) + (f.s === BIG_MODEL ? -2 : 5)}
-              y={y(end.y) + (f.s === BIG_MODEL ? -8 : 3)}
+              y={y(end.y) + (f.s === BIG_MODEL ? -10 : 4)}
               textAnchor={f.s === BIG_MODEL ? "end" : "start"}
-              className={`text-[10px] ${hue.fill} ${selected ? "font-semibold" : ""}`}
+              className={`text-[13px] font-semibold ${hue.fill}`}
+              opacity={selected ? 1 : 0.7}
             >
               {f.s}×
             </text>
@@ -333,7 +377,7 @@ function FamilyChart({
 
       {/* the 14x model's greedy point — the dot to beat */}
       <circle cx={x(BIG_MODEL)} cy={y(tgt)} r={5} className="fill-ink stroke-canvas" strokeWidth={1.5} />
-      <text x={x(BIG_MODEL)} y={y(tgt) + 16} textAnchor="middle" className="fill-ink text-[10px]">
+      <text x={x(BIG_MODEL)} y={y(tgt) + 16} textAnchor="middle" className="fill-ink text-[11px]">
         14× · 1 answer
       </text>
 
@@ -358,17 +402,92 @@ function FamilyChart({
   );
 }
 
+/** Accuracy of a digitized series at x, interpolating linearly in log-x. */
+function seriesAt(pts: { x: number; y: number }[], xv: number): number | null {
+  if (xv < pts[0].x || xv > pts[pts.length - 1].x) return null;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    if (xv >= a.x && xv <= b.x) {
+      const t = (Math.log(xv) - Math.log(a.x)) / (Math.log(b.x) - Math.log(a.x));
+      return a.y + t * (b.y - a.y);
+    }
+  }
+  return null;
+}
+
+/**
+ * Which budgets each series wins: contiguous [x0, x1] bands where that series
+ * is the most accurate of those defined there, scanned on a log-spaced grid
+ * over the data's span and clamped outward to the chart's domain edges.
+ */
+function ownershipBands(
+  allPts: { x: number; y: number }[][],
+  domain: [number, number],
+): { idx: number; x0: number; x1: number }[] {
+  const lo = Math.min(...allPts.map((p) => p[0].x));
+  const hi = Math.max(...allPts.map((p) => p[p.length - 1].x));
+  const STEPS = 240;
+  const leaderAt = (xv: number) => {
+    let best = -1;
+    let bestY = -Infinity;
+    allPts.forEach((pts, i) => {
+      const yv = seriesAt(pts, xv);
+      if (yv !== null && yv > bestY) {
+        bestY = yv;
+        best = i;
+      }
+    });
+    return best;
+  };
+  const bands: { idx: number; x0: number; x1: number }[] = [];
+  for (let s = 0; s <= STEPS; s++) {
+    const xv = Math.exp(Math.log(lo) + (Math.log(hi) - Math.log(lo)) * (s / STEPS));
+    const idx = leaderAt(xv);
+    const last = bands[bands.length - 1];
+    if (last && last.idx === idx) last.x1 = xv;
+    else bands.push({ idx, x0: xv, x1: xv });
+  }
+  bands[0].x0 = domain[0];
+  bands[bands.length - 1].x1 = domain[1];
+  return bands;
+}
+
 /**
  * Wu et al.'s Pythia curves on GSM8K (digitized by eye, replotted as
  * accuracy): the allocator's picture with real, published parameter counts.
+ * The section's claim is drawn into the figure: the budget axis is shaded
+ * into one tinted band per scale, and each curve is bold only inside the band
+ * it owns — the stretch of budgets where it is the compute-optimal pick.
  */
 function PythiaChart() {
   const data = curves.pythiaInferenceScaling;
   const { n410m, n2p8b } = data.fit!.params;
   const series = [
-    { label: "410M", pts: data.points.slice(0, n410m), stroke: "stroke-compute", fill: "fill-compute" },
-    { label: "2.8B", pts: data.points.slice(n410m, n410m + n2p8b), stroke: "stroke-correct", fill: "fill-correct" },
-    { label: "12B", pts: data.points.slice(n410m + n2p8b), stroke: "stroke-ink", fill: "fill-ink" },
+    {
+      label: "410M",
+      pts: data.points.slice(0, n410m),
+      stroke: "stroke-compute-bright",
+      fill: "fill-compute-bright",
+      band: "fill-compute-bright",
+      text: "fill-compute",
+    },
+    {
+      label: "2.8B",
+      pts: data.points.slice(n410m, n410m + n2p8b),
+      stroke: "stroke-correct-bright",
+      fill: "fill-correct-bright",
+      band: "fill-correct-bright",
+      text: "fill-correct",
+    },
+    {
+      label: "12B",
+      pts: data.points.slice(n410m + n2p8b),
+      stroke: "stroke-wrong-bright",
+      fill: "fill-wrong-bright",
+      band: "fill-wrong-bright",
+      text: "fill-wrong",
+    },
   ];
 
   const width = 560;
@@ -382,12 +501,17 @@ function PythiaChart() {
   const path = (pts: { x: number; y: number }[]) =>
     pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.x)},${y(p.y)}`).join("");
 
+  const bands = ownershipBands(
+    series.map((s) => s.pts),
+    [1, 4096],
+  );
+
   const title = `GSM8K accuracy against inference FLOPs per question, log x axis, three Pythia models under weighted majority voting. ${series
     .map(
       (s) =>
         `Pythia ${s.label}: from ${s.pts[0].y} percent at ${s.pts[0].x} to ${s.pts[s.pts.length - 1].y} percent at ${s.pts[s.pts.length - 1].x} (times ten to the eleven FLOPs)`,
     )
-    .join("; ")}. The smallest model leads at small budgets, flattens near 60 percent, and the larger models pull ahead at large budgets.`;
+    .join("; ")}. The budget axis is shaded into three bands, one per model, marking where that model is the most accurate: the 410M leads at small budgets, flattens near 60 percent, then the 2.8B takes over, and the 12B pulls ahead at the largest budgets.`;
 
   return (
     <ChartFrame
@@ -397,6 +521,42 @@ function PythiaChart() {
       xLabel="inference FLOPs per question (×10¹¹, log scale)"
       yLabel="GSM8K accuracy (%)"
     >
+      {/* the ownership bands: who is the best buy at each budget */}
+      {bands.map((b) => (
+        <g key={`band${b.idx}`}>
+          <rect
+            data-testid="ownership-band"
+            x={x(b.x0)}
+            y={0}
+            width={px(x(b.x1) - x(b.x0))}
+            height={innerH}
+            className={series[b.idx].band}
+            opacity={0.08}
+          />
+          <text
+            x={px((x(b.x0) + x(b.x1)) / 2)}
+            y={innerH - 8}
+            textAnchor="middle"
+            className={`${series[b.idx].text} text-[11px] font-semibold`}
+          >
+            {series[b.idx].label} leads
+          </text>
+        </g>
+      ))}
+      {bands.slice(1).map((b) => (
+        <line
+          key={`edge${b.idx}`}
+          x1={x(b.x0)}
+          x2={x(b.x0)}
+          y1={0}
+          y2={innerH}
+          className="stroke-ink-muted"
+          strokeWidth={0.75}
+          strokeDasharray="3 3"
+          opacity={0.5}
+        />
+      ))}
+
       {[20, 40, 60, 80].map((t) => (
         <g key={`y${t}`}>
           <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
@@ -411,12 +571,35 @@ function PythiaChart() {
         </text>
       ))}
 
+      <defs>
+        {bands.map((b) => (
+          <clipPath key={`clip${b.idx}`} id={`pythia-band-${b.idx}`}>
+            <rect x={x(b.x0)} y={0} width={px(x(b.x1) - x(b.x0))} height={innerH} />
+          </clipPath>
+        ))}
+      </defs>
+
+      {/* full curves as thin ghosts, then each one bold inside its own band:
+          the baton pass is the picture */}
+      {series.map((s) => (
+        <path key={`ghost${s.label}`} d={path(s.pts)} fill="none" className={s.stroke} strokeWidth={1.25} opacity={0.35} />
+      ))}
+      {bands.map((b) => (
+        <path
+          key={`lead${b.idx}`}
+          d={path(series[b.idx].pts)}
+          fill="none"
+          className={series[b.idx].stroke}
+          strokeWidth={3}
+          clipPath={`url(#pythia-band-${b.idx})`}
+        />
+      ))}
+
       {series.map((s) => {
         const end = s.pts[s.pts.length - 1];
         const atEdge = x(end.x) > innerW - 40;
         return (
           <g key={s.label}>
-            <path d={path(s.pts)} fill="none" className={s.stroke} strokeWidth={2} />
             {s.pts.map((p) => (
               <circle
                 key={`${p.x}-${p.y}`}
@@ -431,7 +614,7 @@ function PythiaChart() {
               x={x(end.x) + (atEdge ? 0 : 6)}
               y={y(end.y) + (atEdge ? -8 : 3)}
               textAnchor={atEdge ? "end" : "start"}
-              className="fill-ink text-[10px] font-semibold"
+              className={`${s.text} text-[11px] font-semibold`}
             >
               {s.label}
             </text>
@@ -447,12 +630,12 @@ function ParetoScatter() {
   const data = curves.rebasePareto;
   const p = data.fit!.params;
   const rows = [
-    { model: "Mistral-7B", rebase: false, flops: p.mistral7bSamplingFlops, acc: p.mistral7bSamplingAcc, dx: -8, dy: 4, anchor: "end" as const },
-    { model: "Mistral-7B", rebase: true, flops: p.mistral7bRebaseFlops, acc: p.mistral7bRebaseAcc, dx: 8, dy: 4, anchor: "start" as const },
-    { model: "Llemma-7B", rebase: false, flops: p.llemma7bSamplingFlops, acc: p.llemma7bSamplingAcc, dx: -8, dy: 4, anchor: "end" as const },
-    { model: "Llemma-7B", rebase: true, flops: p.llemma7bRebaseFlops, acc: p.llemma7bRebaseAcc, dx: 8, dy: -8, anchor: "start" as const },
-    { model: "Llemma-34B", rebase: false, flops: p.llemma34bSamplingFlops, acc: p.llemma34bSamplingAcc, dx: 8, dy: 4, anchor: "start" as const },
-    { model: "Llemma-34B", rebase: true, flops: p.llemma34bRebaseFlops, acc: p.llemma34bRebaseAcc, dx: 8, dy: 4, anchor: "start" as const },
+    { model: "Mistral-7B", rebase: false, flops: p.mistral7bSamplingFlops, acc: p.mistral7bSamplingAcc, dx: -10, dy: 4, anchor: "end" as const },
+    { model: "Mistral-7B", rebase: true, flops: p.mistral7bRebaseFlops, acc: p.mistral7bRebaseAcc, dx: 10, dy: -9, anchor: "start" as const },
+    { model: "Llemma-7B", rebase: false, flops: p.llemma7bSamplingFlops, acc: p.llemma7bSamplingAcc, dx: -10, dy: 4, anchor: "end" as const },
+    { model: "Llemma-7B", rebase: true, flops: p.llemma7bRebaseFlops, acc: p.llemma7bRebaseAcc, dx: 10, dy: -9, anchor: "start" as const },
+    { model: "Llemma-34B", rebase: false, flops: p.llemma34bSamplingFlops, acc: p.llemma34bSamplingAcc, dx: 10, dy: 4, anchor: "start" as const },
+    { model: "Llemma-34B", rebase: true, flops: p.llemma34bRebaseFlops, acc: p.llemma34bRebaseAcc, dx: 10, dy: 4, anchor: "start" as const },
   ];
 
   const width = 560;
@@ -468,6 +651,15 @@ function ParetoScatter() {
   const a = rows[3];
   const b = rows[4];
   const savings = Math.round(b.flops / a.flops);
+
+  // Trim a connector short of its end point so the arrowhead lands at the
+  // mark's edge instead of underneath it.
+  const trim = (x1: number, y1: number, x2: number, y2: number, d: number) => {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    return { x: px(x2 - (dx / len) * d), y: px(y2 - (dy / len) * d) };
+  };
 
   const title = `Accuracy on MATH500 against inference FLOPs, log x axis. ${rows
     .map(
@@ -498,21 +690,41 @@ function ParetoScatter() {
         </text>
       ))}
 
-      {/* each model's sampling → REBASE pair, tied by a hairline: same model,
-          better strategy, up and to the left */}
-      {[0, 2, 4].map((i) => (
-        <line
-          key={rows[i].model}
-          data-testid="pair-connector"
-          x1={x(rows[i].flops)}
-          y1={y(rows[i].acc)}
-          x2={x(rows[i + 1].flops)}
-          y2={y(rows[i + 1].acc)}
-          className="stroke-ink-muted"
-          strokeWidth={0.75}
-          opacity={0.45}
-        />
-      ))}
+      <defs>
+        <marker
+          id="frontier-arrow"
+          viewBox="0 0 8 8"
+          refX="7"
+          refY="4"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto-start-reverse"
+        >
+          <path d="M0,0 L8,4 L0,8 z" className="fill-ink-muted" />
+        </marker>
+      </defs>
+
+      {/* each model's sampling → REBASE pair as an arrow: same model, better
+          strategy, up and to the left */}
+      {[0, 2, 4].map((i) => {
+        const from = rows[i];
+        const to = rows[i + 1];
+        const end = trim(x(from.flops), y(from.acc), x(to.flops), y(to.acc), 11);
+        return (
+          <line
+            key={from.model}
+            data-testid="pair-connector"
+            x1={x(from.flops)}
+            y1={y(from.acc)}
+            x2={end.x}
+            y2={end.y}
+            className="stroke-ink-muted"
+            strokeWidth={1.25}
+            opacity={0.7}
+            markerEnd="url(#frontier-arrow)"
+          />
+        );
+      })}
 
       {/* the headline pair, tied together: same accuracy, ~8x fewer FLOPs */}
       <line
@@ -528,31 +740,32 @@ function ParetoScatter() {
         x={(x(a.flops) + x(b.flops)) / 2}
         y={Math.min(y(a.acc), y(b.acc)) - 8}
         textAnchor="middle"
-        className="fill-ink text-[10px] font-semibold"
+        className="fill-ink text-[11px] font-semibold"
       >
         same accuracy · {savings}× fewer FLOPs
       </text>
 
+      {/* color is the strategy: muted sampling circles, bright search diamonds */}
       {rows.map((r) => (
         <g key={`${r.model}-${r.rebase}`}>
           {r.rebase ? (
             <rect
-              x={x(r.flops) - 4}
-              y={y(r.acc) - 4}
-              width={8}
-              height={8}
+              x={x(r.flops) - 5.5}
+              y={y(r.acc) - 5.5}
+              width={11}
+              height={11}
               transform={`rotate(45 ${x(r.flops)} ${y(r.acc)})`}
-              className="fill-correct stroke-canvas"
+              className="fill-correct-bright stroke-canvas"
               strokeWidth={1.5}
             />
           ) : (
-            <circle cx={x(r.flops)} cy={y(r.acc)} r={4.5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
+            <circle cx={x(r.flops)} cy={y(r.acc)} r={6} className="fill-ink-muted stroke-canvas" strokeWidth={1.5} />
           )}
           <text
             x={x(r.flops) + r.dx}
             y={y(r.acc) + r.dy}
             textAnchor={r.anchor}
-            className="fill-ink-muted text-[9px]"
+            className="fill-ink-muted text-[10px]"
           >
             {r.model}
           </text>
@@ -582,26 +795,26 @@ export function Page11() {
     ? cost < BIG_MODEL
       ? {
           tone: "border-correct bg-correct/15",
-          head: `✓ matched the 14× model's ${tgt.toFixed(0)}% — for ${(BIG_MODEL / cost).toFixed(1)}× less compute`,
+          head: `✓ matched the 14× model's ${tgt.toFixed(0)}%, for ${(BIG_MODEL / cost).toFixed(1)}× less compute`,
           headTone: "text-correct",
           body: "Test-time compute just did the work of parameters. That is the FLOPs-matched headline result.",
         }
       : {
           tone: "border-compute bg-compute/10",
-          head: `matched it — but you spent ${cost} units, and the 14× model needs only ${BIG_MODEL}`,
+          head: `matched it, but you spent ${cost} units and the 14× model needs only ${BIG_MODEL}`,
           headTone: "text-ink",
           body: "The win only counts while your bill stays under the big model's. Back off the knobs and find the cheap crossing.",
         }
     : cap < tgt
       ? {
           tone: "border-wrong bg-wrong/15",
-          head: `✗ this model saturates near ${cap.toFixed(0)}% — the target is out of reach`,
+          head: `✗ this model saturates near ${cap.toFixed(0)}%; the target is out of reach`,
           headTone: "text-wrong",
           body: "No sample budget closes the gap: the curve flattens below the dashed line. On problems this far past the base model, pretraining the larger model is the better buy.",
         }
       : {
           tone: "border-grid bg-surface-raised",
-          head: `${acc.toFixed(1)}% so far — the 14× model gets ${tgt.toFixed(0)}%`,
+          head: `${acc.toFixed(1)}% so far; the 14× model gets ${tgt.toFixed(0)}%`,
           headTone: "text-ink",
           body: "Keep turning the test-time knob and watch what it costs.",
         };
@@ -619,7 +832,7 @@ export function Page11() {
         A bigger model and a longer think are{" "}
         <strong className="text-ink">two ways to spend the same FLOPs</strong>: pretraining burns
         them once into parameters, test-time compute burns them at answer time, on the question
-        that needs them. Matched budget for budget —{" "}
+        that needs them. Matched budget for budget,{" "}
         <strong className="text-ink">which buys more accuracy?</strong>
       </p>
 
@@ -636,20 +849,21 @@ export function Page11() {
             <p className="text-ink">
               One unit is one answer from the 1× model. An M× model costs M units per answer, so
               the 14× model&rsquo;s single greedy answer costs <strong>14 units</strong> and scores{" "}
-              <strong className="text-ink">{tgt.toFixed(0)}%</strong> — the black dot.
-              <Cite n={REF.snell} /> <strong>Model size picks your curve; test-time compute slides
+              <strong className="text-ink">{tgt.toFixed(0)}%</strong>: the black dot.{" "}
+              <strong>Model size picks your curve; test-time compute slides
               you along it.</strong> Win by crossing the dashed line <em>left</em> of the dot.
             </p>
 
             {/* the centerpiece at full card width, controls in a strip beneath */}
             <FamilyChart difficulty={difficulty} size={size} cost={cost} acc={acc} />
             <p className="text-xs text-ink-muted">
-              all four model curves are drawn in full and the knobs never move them — only the
-              highlight and your marker
+              all four model curves are drawn in full and the knobs never move them; only the
+              highlight and your marker respond. Curve shapes follow Snell et al.
+              <Cite n={REF.snell} />
             </p>
 
-            <div className="grid gap-4 border-t border-dashed border-grid pt-3 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-4 border-t border-dashed border-grid pt-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <p className="text-sm text-ink-muted">Problem difficulty</p>
                 <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
                   {DIFFICULTIES.map((d) => (
@@ -671,31 +885,33 @@ export function Page11() {
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-ink-muted">{DIFFICULTY_BLURB[difficulty]}</p>
+                <p className="basis-full text-xs text-ink-muted">{DIFFICULTY_BLURB[difficulty]}</p>
               </div>
-              <Slider
-                label="Model size (× base parameters)"
-                min={0}
-                max={MODEL_SIZES.length - 1}
-                value={sizeIdx}
-                format={(v) => `${MODEL_SIZES[v]}×`}
-                onChange={(v) => {
-                  setSizeIdx(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-              <Slider
-                label="Test-time compute"
-                min={0}
-                max={MAX_EXP}
-                value={exp}
-                format={(v) => String(2 ** v)}
-                suffix=" samples"
-                onChange={(v) => {
-                  setExp(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
+              {/* the two dials share one row, so they always sit at the same height */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Slider
+                  label="Model size (× base parameters)"
+                  min={0}
+                  max={MODEL_SIZES.length - 1}
+                  value={sizeIdx}
+                  format={(v) => `${MODEL_SIZES[v]}×`}
+                  onChange={(v) => {
+                    setSizeIdx(v);
+                    recordInteraction(PAGE_N);
+                  }}
+                />
+                <Slider
+                  label="Test-time compute"
+                  min={0}
+                  max={MAX_EXP}
+                  value={exp}
+                  format={(v) => `${2 ** v} sample${v === 0 ? "" : "s"}`}
+                  onChange={(v) => {
+                    setExp(v);
+                    recordInteraction(PAGE_N);
+                  }}
+                />
+              </div>
             </div>
 
             {/* the scoreboard: three numbers + the verdict, one strip */}
@@ -748,25 +964,26 @@ export function Page11() {
           <h2 className="text-xl font-semibold text-ink">2. The law, and its fine print</h2>
           <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-sm text-ink">
-              Snell et al. tried two ways of converting test-time FLOPs into accuracy — search over
-              sampled steps under a process verifier (page 9&rsquo;s graders), or let the model
-              redraft its own answer — and found that the right choice, and the right budget,
+              Snell et al. tried two ways of converting test-time FLOPs into accuracy: search over
+              sampled steps under a process verifier (page 9&rsquo;s graders), or letting the
+              model redraft its own answer. Either way, the right choice and the right budget
               depend on how hard the prompt is. Estimating difficulty first, then allocating, is
               what they call compute-optimal.
               <Cite n={REF.snell} /> Three numbers carry the result:
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <LawPanel head="4×" headTone="text-correct" title="fewer samples than best-of-N" art={<ArtFourX />}>
-                difficulty-adaptive allocation matches its accuracy for as little as a quarter of
-                the compute: 64 samples doing the work of 256
+                difficulty-adaptive allocation matches best-of-N&rsquo;s accuracy for as little as
+                a quarter of the compute: 64 samples doing the work of 256
               </LawPanel>
               <LawPanel head="14×" headTone="text-correct" title="the parameters, matched on FLOPs" art={<ArtFourteenX />}>
-                a small model plus adaptive test-time compute outscores a pretrained model ~14× its
-                size answering greedily — on prompts it can already sometimes solve
+                on the same FLOPs bill, a small model plus adaptive test-time compute outscores a
+                pretrained model ~14× its size answering greedily, on prompts the small model can
+                already sometimes solve
               </LawPanel>
               <LawPanel head="R" headTone="text-wrong" title="decides the regime" art={<ArtRatioR />}>
                 R = inference tokens served ÷ pretraining tokens. As R → 0, thinking wins. As R →
-                ∞, parameters win: pretraining amortizes away, a per-question surcharge never does.
+                ∞, parameters win: pretraining amortizes away; a per-question surcharge never does.
               </LawPanel>
             </div>
             <p className="rounded border-l-4 border-wrong bg-wrong/10 p-3 text-sm text-ink">
@@ -788,15 +1005,17 @@ export function Page11() {
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
               The game&rsquo;s picture, with real published sizes. Wu et al. gave three Pythia
-              models — <strong className="text-ink">410M, 2.8B, and 12B parameters</strong> — a
-              growing sample budget on GSM8K, under weighted majority voting.
+              models (<strong className="text-ink">410M, 2.8B, and 12B parameters</strong>) a
+              growing sample budget on GSM8K, under weighted majority voting. Each curve is drawn
+              bold only where that model is the best buy; the shaded bands mark whose stretch of
+              the budget axis you are in.
               <Cite n={REF.wu} />
             </p>
             <PythiaChart />
             <figcaption className="text-sm text-ink-muted">
               On a small budget the <strong className="text-ink">410M model is the
-              compute-optimal pick</strong> — sampling it many times beats sampling a big model a
-              few times. Then every curve flattens: once the 410M saturates near 60%, the 2.8B and
+              compute-optimal pick</strong>: sampling it many times beats sampling a big model a
+              few times. Then every curve flattens. Once the 410M saturates near 60%, the 2.8B and
               finally the 12B pull ahead. Each scale owns a band of the budget axis, exactly the
               crossings you just steered through.
             </figcaption>
@@ -820,18 +1039,19 @@ export function Page11() {
             <p className="text-sm text-ink-muted">
               Section 3 varied how <em>much</em> compute; this one varies how it is{" "}
               <em>spent</em>. The same paper&rsquo;s results table on MATH500: three models, each
-              under plain sampling and under their REBASE tree search, a hairline tying each
-              model&rsquo;s pair. Up and to the left is better.
+              under plain sampling and under their REBASE tree search, an arrow carrying each
+              model&rsquo;s pair from the gray point to the green one. Up and to the left is
+              better.
             </p>
             <ParetoScatter />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-              <Key shape="circle" className="bg-compute" label="sampling + weighted voting (64–256 samples)" />
-              <Key shape="diamond" className="bg-correct" label="REBASE tree search + weighted voting (32 samples)" />
+              <Key shape="circle" className="bg-ink-muted" label="sampling + weighted voting (64–256 samples)" />
+              <Key shape="diamond" className="bg-correct-bright" label="REBASE tree search + weighted voting (32 samples)" />
             </div>
             <figcaption className="text-sm text-ink-muted">
               Across every inference strategy and both benchmarks they tested, Wu et al. find the
               7B model needs <strong className="text-ink">about half the total FLOPs</strong> of
-              the 34B to reach comparable accuracy — and this table&rsquo;s sharpest instance is
+              the 34B to reach comparable accuracy, and this table&rsquo;s sharpest instance is
               sharper still: 7B with tree search{" "}
               <strong className="text-ink">edges the 34B model&rsquo;s best sampling run with
               roughly 8× fewer inference FLOPs</strong>.
@@ -840,11 +1060,24 @@ export function Page11() {
               sets, so without a perfect external verifier, sampling alone never reaches 100%.
             </figcaption>
             <p className="text-xs text-ink-muted">
-              exact values from the paper&rsquo;s MATH500 results table (Table 1) — no
-              digitization involved
+              exact values from the paper&rsquo;s MATH500 results table (Table 1); no digitization
+              involved
             </p>
           </figure>
         </section>
+
+        {/* The hand-off to page 12 — deliberately its own block, not section
+            4's job: better search still spends everything at answer time. */}
+        <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
+          <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
+            <strong className="text-ink">One thing every tool on this page shares:</strong>{" "}
+            voting, verifiers, search, and the allocator&rsquo;s knobs all spend their compute at
+            answer time, and the reasoning that compute buys is thrown away the moment the answer
+            is scored. But a chain that survived the check is a worked solution the model wrote
+            for itself. <em>Page 12 feeds those solutions back in: teaching the model to
+            reason.</em>
+          </p>
+        </div>
       </div>
 
       
