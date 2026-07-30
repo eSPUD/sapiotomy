@@ -95,6 +95,11 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getByText("+0.75")).toBeInTheDocument();
     expect(screen.getByText(/the biggest push on offer/)).toBeInTheDocument();
 
+    // Rarity cuts both ways: the lone wrong answer is punished hardest.
+    setLuck(2);
+    expect(screen.getByText("−0.75")).toBeInTheDocument();
+    expect(screen.getByText(/Rarity amplifies the signal in both directions/)).toBeInTheDocument();
+
     // Uniform group: every push 0.00, nothing to learn.
     setLuck(3);
     expect(screen.getByText(/teaches it nothing/)).toBeInTheDocument();
@@ -108,12 +113,11 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
       "true",
     );
     expect(screen.getByText(/R1-Distill-Qwen-14B/)).toBeInTheDocument();
-    expect(screen.getByText("93.9%")).toBeInTheDocument();
+    expect(screen.getByText(/leading open reasoning model when R1 shipped/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Qwen-32B/ }));
     expect(screen.getByText(/R1-Distill-Qwen-32B/)).toBeInTheDocument();
-    expect(screen.getByText("94.3%")).toBeInTheDocument();
-    expect(screen.getByText(/Within ~7 points of the 671B teacher/)).toBeInTheDocument();
+    expect(screen.getByText(/within seven points of the 671B teacher/)).toBeInTheDocument();
   });
 
   it("draws the distillation trade as a scatter: families, teacher, o1-mini line, ~48× span", () => {

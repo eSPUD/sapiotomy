@@ -102,16 +102,15 @@ interface Distill {
   size: number;
   label: string;
   family: "qwen" | "llama";
-  mathKey: string;
   note: string;
 }
 const DISTILLS: Distill[] = [
-  { size: 1.5, label: "Qwen-1.5B", family: "qwen", mathKey: "math1p5", note: "On AIME it beats GPT-4o-0513 (9.3%) — from a model that fits on a phone." },
-  { size: 7, label: "Qwen-7B", family: "qwen", mathKey: "math7", note: "Most of the way to o1-mini (63.6%), at laptop scale." },
-  { size: 8, label: "Llama-8B", family: "llama", mathKey: "math8", note: "A Llama base instead of Qwen: the same 800K traces teach a different family." },
-  { size: 14, label: "Qwen-14B", family: "qwen", mathKey: "math14", note: "Beats QwQ-32B-Preview (50.0%) — the leading open reasoning model when R1 shipped — at less than half the size." },
-  { size: 32, label: "Qwen-32B", family: "qwen", mathKey: "math32", note: "Within ~7 points of the 671B teacher." },
-  { size: 70, label: "Llama-70B", family: "llama", mathKey: "math70", note: "Bigger is not automatically better: the 32B Qwen edges it on AIME." },
+  { size: 1.5, label: "Qwen-1.5B", family: "qwen", note: "beats GPT-4o on AIME, from a model that fits on a phone" },
+  { size: 7, label: "Qwen-7B", family: "qwen", note: "most of the way to o1-mini, at laptop scale" },
+  { size: 8, label: "Llama-8B", family: "llama", note: "a Llama base instead of Qwen: the same traces teach a different family" },
+  { size: 14, label: "Qwen-14B", family: "qwen", note: "beats QwQ-32B-Preview, the leading open reasoning model when R1 shipped, at less than half its size" },
+  { size: 32, label: "Qwen-32B", family: "qwen", note: "within seven points of the 671B teacher" },
+  { size: 70, label: "Llama-70B", family: "llama", note: "bigger is not automatically better: the 32B Qwen edges it" },
 ];
 
 /** Per-point label offsets on the scatter, tuned against the log-x layout. */
@@ -131,6 +130,34 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
+  );
+}
+
+/**
+ * The push, drawn: an arrow whose length scales with the advantage's
+ * magnitude, up in the correct hue or down in the wrong hue, from a shared
+ * baseline. Zero renders as a flat dash — no push at all. The number next to
+ * it stays the accessible value; this is aria-hidden.
+ */
+function PushArrow({ adv }: { adv: number }) {
+  const len = Math.abs(adv) * 19;
+  const mid = 20;
+  const tipY = adv > 0 ? mid - len : mid + len;
+  const dir = adv > 0 ? -1 : 1;
+  return (
+    <svg aria-hidden="true" width={14} height={40} viewBox="0 0 14 40" className="shrink-0">
+      {adv === 0 ? (
+        <line x1={3} x2={11} y1={mid} y2={mid} className="stroke-ink-muted" strokeWidth={1.5} />
+      ) : (
+        <g className={adv > 0 ? "stroke-correct fill-correct" : "stroke-wrong fill-wrong"}>
+          <line x1={7} x2={7} y1={mid} y2={tipY - dir * 3} strokeWidth={2} />
+          <polygon
+            points={`7,${tipY} ${7 - 3.5},${tipY - dir * 5} ${7 + 3.5},${tipY - dir * 5}`}
+            stroke="none"
+          />
+        </g>
+      )}
+    </svg>
   );
 }
 
@@ -168,8 +195,8 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
   const training = curves.deepseekTraining;
   const { lengthStart, lengthEnd } = training.fit!.params;
 
-  const width = 480;
-  const height = 300;
+  const width = 720;
+  const height = 320;
   const margin = { ...CHART_MARGIN, right: 44 };
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
@@ -241,7 +268,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
         strokeWidth={1}
         strokeDasharray="4 3"
       />
-      <text x={x(AHA_STEP) + 4} y={12} textAnchor="start" className="fill-ink-muted text-[9px]">
+      <text x={x(AHA_STEP) + 4} y={12} textAnchor="start" className="fill-ink-muted text-[10px]">
         the aha appears
       </text>
 
@@ -253,7 +280,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
         x={innerW * 0.4}
         y={innerH - 12}
         textAnchor="middle"
-        className="fill-compute text-[9px]"
+        className="fill-compute text-[10px]"
       >
         no term in the reward mentions length
       </text>
@@ -570,7 +597,7 @@ export function Page14() {
   const LUCK_READ: Record<number, string> = {
     0: `Sample 1 is the only right answer in the group: the biggest push on offer (+${push1.toFixed(2)}).`,
     1: `Same right answer, luckier group: sample 1's push drops to +${push1.toFixed(2)}.`,
-    2: `Luckier still: +${push1.toFixed(2)}. The answer did not change; the group did.`,
+    2: `Luckier still: +${push1.toFixed(2)}. Now watch sample 4: a wrong answer in a mostly-right group is punished hardest (−${mean.toFixed(2)}). Rarity amplifies the signal in both directions.`,
     3: "",
   };
 
@@ -581,7 +608,6 @@ export function Page14() {
 
   /* — step 3: the distills — */
   const picked = DISTILLS.find((d) => d.size === pickedSize)!;
-  const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
   const paramRatio = Math.round(P.teacherParamsB / picked.size);
   const pick = (size: number) => {
     setPickedSize(size);
@@ -685,12 +711,15 @@ export function Page14() {
                       <span className={right ? "text-xs text-correct" : "text-xs text-wrong"}>
                         {right ? "✓ reward 1" : "✗ reward 0"}
                       </span>
-                      <span
-                        className={`font-mono text-xs font-semibold ${
-                          adv > 0 ? "text-correct" : adv < 0 ? "text-wrong" : "text-ink-muted"
-                        }`}
-                      >
-                        {fmtPush(adv)}
+                      <span className="flex items-center gap-1">
+                        <PushArrow adv={adv} />
+                        <span
+                          className={`font-mono text-xs font-semibold ${
+                            adv > 0 ? "text-correct" : adv < 0 ? "text-wrong" : "text-ink-muted"
+                          }`}
+                        >
+                          {fmtPush(adv)}
+                        </span>
                       </span>
                     </div>
                   );
@@ -703,9 +732,9 @@ export function Page14() {
               </p>
               {uniform ? (
                 <p className="rounded border-l-4 border-compute bg-surface p-2 text-sm text-ink">
-                  Everyone got it right, so every push is <span className="font-mono">0.00</span>:
-                  a problem the model already aces — or is hopeless on — teaches it nothing.
-                  Learning lives where the group disagrees.
+                  The limit of that trend: everyone scored the same, so every push is{" "}
+                  <span className="font-mono">0.00</span> — a problem the model already aces, or
+                  is hopeless on, teaches it nothing. Learning lives where the group disagrees.
                 </p>
               ) : (
                 <p className="text-sm text-ink">{LUCK_READ[luck]}</p>
@@ -743,34 +772,32 @@ export function Page14() {
               extra tokens are made of.
             </p>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="flex flex-col gap-4">
-                <Slider
-                  label="RL training step"
-                  min={0}
-                  max={MAX_STEP}
-                  step={500}
-                  value={step}
-                  onChange={(v) => {
-                    setStep(v);
-                    recordInteraction(PAGE_N);
-                  }}
-                />
-                <div className="flex items-end gap-6">
-                  <div>
-                    <p className="font-mono text-5xl font-bold tabular-nums text-correct">
-                      {pass.toFixed(1)}%
-                    </p>
-                    <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
-                  </div>
-                  <div>
-                    <p className="font-mono text-2xl font-bold tabular-nums text-compute">
-                      ≈{length.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-ink-muted">avg response tokens</p>
-                  </div>
+            <div className="flex flex-col gap-4">
+              <Slider
+                label="RL training step"
+                min={0}
+                max={MAX_STEP}
+                step={500}
+                value={step}
+                onChange={(v) => {
+                  setStep(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
+              <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+                <div>
+                  <p className="font-mono text-5xl font-bold tabular-nums text-correct">
+                    {pass.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
                 </div>
-                <p className="text-sm text-ink-muted">
+                <div>
+                  <p className="font-mono text-2xl font-bold tabular-nums text-compute">
+                    ≈{length.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-ink-muted">avg response tokens</p>
+                </div>
+                <p className="min-w-[16rem] flex-1 text-sm text-ink-muted">
                   From 15.6% to 71.0% pass@1 with no supervised examples. Add page 7&apos;s
                   majority vote across 64 samples and it reaches{" "}
                   <strong className="text-ink">{cons64}%</strong> — level with OpenAI-o1-0912.
@@ -868,20 +895,16 @@ export function Page14() {
               })}
             </div>
 
-            <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              <p>
-                <strong>R1-Distill-{picked.label}</strong>: AIME{" "}
-                <span className="font-mono">{aimeOf(picked.size).toFixed(1)}%</span> · MATH-500{" "}
-                <span className="font-mono">{P[picked.mathKey].toFixed(1)}%</span> · ~
-                <span className="font-mono">{paramRatio}×</span> fewer parameters than the teacher.
-              </p>
-              <p className="mt-1 text-ink-muted">{picked.note}</p>
-            </div>
+            <p className="text-sm text-ink">
+              <strong>R1-Distill-{picked.label}</strong>{" "}
+              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher —</span>{" "}
+              {picked.note}.
+            </p>
 
             <p className="text-sm text-ink-muted">
-              Where a dot crosses the dashed line, a model you can download and run beats a closed
-              frontier product at answer time — page 11&apos;s law, compressed into weights. The
-              small model spends its advantage the same way the big one does: by thinking longer.
+              Where a dot crosses the dashed line, a model you can download beats a closed
+              frontier product — by thinking longer at answer time: page 11&apos;s law, compressed
+              into weights.
             </p>
 
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
