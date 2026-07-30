@@ -36,9 +36,11 @@
  * What is cited vs derived is said inline in each step's h2 annotation
  * ("derived from the two Epoch trends", "cited stock, derived demand"), the
  * DataWindowMeter's caption line carries the "cited window, not a burn rate"
- * caveat that used to live in a margin note, and the bottom footnote carries the
- * CC BY redraw attribution plus the "no claims about what any lab actually
- * spends" disclaimer. All three are load-bearing: do not trim them.
+ * caveat, and a margin Note at the foot of the sidenote column carries the CC BY
+ * redraw attribution plus the "no claims about what any lab actually spends"
+ * disclaimer. All three are load-bearing: do not trim them. The CC BY line is a
+ * licence obligation, Epoch publishing under Creative Commons Attribution; the
+ * spending line stops a hypothetical being read as an industry figure.
  *
  * Each figure owns its own control. The cost chart's month marker moves that
  * chart and nothing else; the projection's year marker moves the projection and
@@ -562,22 +564,22 @@ export function Page3() {
             Askell et al. 2021, <em>A General Language Assistant as a Laboratory for Alignment</em>.
           </RefItem>
         </Note>
-        <div aria-hidden="true" />
+        {/* Both sections in two sentences, in the content column so it does not
+            run under the sidenotes. */}
+        <PullQuote>
+          Training-time scaling buys more facts, later, at compounding cost, and it cannot touch a
+          bias that was never about missing facts. Every wall here limits what a model can be given{" "}
+          <strong>before</strong> the question arrives, which leaves only what it does{" "}
+          <strong>after</strong> it.
+        </PullQuote>
+        <Note kicker="Note">
+          <p>
+            the frontier compute trend (about 5x per year for language models since mid-2020) is an
+            Epoch figure, redrawn under CC BY, not Epoch&apos;s image · no claims about what any lab
+            actually spends
+          </p>
+        </Note>
       </div>
-
-      {/* Both sections in two sentences, and the hand-off they add up to. */}
-      <PullQuote>
-        Training-time scaling buys more facts, later, at compounding cost, and it cannot touch a bias
-        that was never about missing facts. Every wall here limits what a model can be given{" "}
-        <strong>before</strong> the question arrives, which leaves only what it does{" "}
-        <strong>after</strong> it.
-      </PullQuote>
-
-      <p className="text-xs text-ink-muted">
-        the frontier compute trend (about 5x per year for language models since mid-2020) is an
-        Epoch figure, redrawn under CC BY, not Epoch&apos;s image · no claims about what any lab
-        actually spends
-      </p>
 
       <div aria-live="polite" className="sr-only">
         {announcement}

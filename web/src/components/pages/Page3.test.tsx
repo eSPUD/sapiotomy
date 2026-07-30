@@ -165,8 +165,10 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("each step's References margin note carries only the sources that step uses", () => {
     render(<Page3 />);
     const notes = Array.from(document.querySelectorAll("aside")).map((a) => a.textContent ?? "");
-    expect(notes).toHaveLength(2);
-    const [gaps, bias] = notes;
+    // two References notes, plus the CC BY / no-claims note closing the column
+    expect(notes).toHaveLength(3);
+    const [gaps, bias, provenance] = notes;
+    expect(provenance).toMatch(/redrawn under CC BY/i);
 
     // The gap section owns every cost and data source, and none of the bias ones.
     for (const ref of [/Sevilla/, /Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
