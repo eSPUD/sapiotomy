@@ -27,24 +27,39 @@
  * the answer key off and the loop trains on its own mistakes until accuracy
  * sinks toward chance.
  *
- * Section 2 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
+ * Section 2 is the loop written down: the paper's Algorithm 1 compressed to
+ * ten annotated pseudocode lines, directly under the interactive so the
+ * reader parses the mechanism they just ran. A plain-language walkthrough
+ * sits above the listing for readers who don't parse pseudocode; the
+ * annotation column carries the RL mapping.
+ *
+ * Section 3 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
  * GPT-J plus its own filtered rationales lands at 72.5% on CommonsenseQA —
  * past a 23x larger LaMDA doing few-shot CoT, beside a 30x larger GPT-3
  * fine-tuned on the full human-labelled training set.
  *
- * Section 3 is the loop written down: the paper's Algorithm 1 compressed to
- * ten annotated pseudocode lines. A plain-language walkthrough sits above the
- * listing for readers who don't parse pseudocode; the annotation column
- * carries the RL mapping. Below the listing, exactly two blocks:
+ * The page closes with exactly two blocks, deliberately kept at the bottom so
+ * they read over both the listing and the results:
  * the page's one counterweight (trained on reasoning, graded on answers; the
  * paper's own stated limitation, and the only place the page admits the loop
  * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
  * to page 13 ("this shape", not "this loop": R1's reward is documented, o1's
- * never was — page 13 owns o1's specifics). A correction that must hold: STaR decodes greedily, one attempt
- * per problem — the paper reports higher temperatures reach more right answers
- * through wrong reasoning — so improvement is generalization, not distilled
- * luck: each round's fine-tuned model is a different model whose greedy output
- * reaches harder problems. That is the ratchet, stated in section 1's caption.
+ * never was — page 13 owns o1's specifics).
+ *
+ * Outside citations (in the listing's annotation column and the counterweight)
+ * so the page's structural claims no longer rest on STaR describing itself:
+ * ExIt (Anthony et al. 2017) grounds the "this is RL" mapping on line 2, whose
+ * exit condition ("until accuracy plateaus") points back at section 1's
+ * plateau; RFT (Yuan et al. 2023) names the sample-k alternative on line 5,
+ * whose annotation states the correction that must hold — STaR decodes
+ * greedily, one attempt per problem (the paper reports higher temperatures
+ * reach more right answers through wrong reasoning), so improvement is
+ * generalization, not distilled luck: each round's fine-tuned model is a
+ * different model whose greedy output reaches harder problems, the ratchet
+ * stated in section 1's caption; and GVM (Yao et al. 2025) gives the
+ * counterweight outside evidence that models write wrong reasoning yet land
+ * right answers. STaR and RFT are a closely related family, never
+ * "synonymous" — GVM separates them on exactly the greedy-vs-sampling axis.
  * The V-STaR/ReST^EM lineage is deliberately omitted — intuition over history.
  *
  * Sidenote convention as on page 2: a state-matrix note beside the interactive,
@@ -75,7 +90,7 @@ const POOL = starInit();
 const CHANCE = 100 / STAR_CHOICES;
 
 /** Page 12's references, numbered in order of first appearance. */
-const REF = { star: 1 } as const;
+const REF = { star: 1, exit: 2, rft: 3, gvm: 4 } as const;
 
 /**
  * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. Each line
@@ -99,14 +114,33 @@ const CODE_LINES: {
     ),
     note: "one model is both student and teacher",
   },
-  { indent: 0, code: "loop:" },
+  {
+    indent: 0,
+    code: "loop: until accuracy plateaus",
+    note: (
+      <>
+        expert iteration (Anthony et al. 2017) — the same loop, before LLMs
+        <Cite n={REF.exit} />
+      </>
+    ),
+  },
   { indent: 1, code: "kept ← ∅" },
   {
     indent: 1,
     code: "for (x, y) in problems:",
     note: "the only supervision that exists: answers, never reasoning",
   },
-  { indent: 2, code: "r, ŷ ← M(x)", note: "in RL terms: sample from the current policy" },
+  {
+    indent: 2,
+    code: "r, ŷ ← M(x)",
+    note: (
+      <>
+        one greedy rollout — low variance, biased exploration; RFT (Yuan et al. 2023) samples k
+        instead
+        <Cite n={REF.rft} />
+      </>
+    ),
+  },
   {
     indent: 2,
     code: "if ŷ = y: keep (x, r, y)",
@@ -514,10 +548,67 @@ export function Page12() {
           </div>
         </Note>
 
-        {/* Section 2 — the paper's result */}
+        {/* Section 2 — the algorithm, written down and read twice */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">2. The loop, written down</h2>
+
+          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">The algorithm, explained.</strong> Start with a
+            pretrained model and a stack of problems whose correct answers you know. There are no
+            worked solutions, only the answers. For each problem, the model writes out its
+            reasoning and ends with an answer. If that answer matches the key, the reasoning is
+            kept. If it misses, the model gets one more try with the correct answer shown as a
+            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
+            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
+            everything kept, and the loop starts over with a slightly better model writing the
+            next round of reasoning.
+          </p>
+
+          <p className="text-sm text-ink">
+            The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
+            again — the annotations on lines 2 and 6 name what it secretly is.
+          </p>
+
+          <figure
+            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+            aria-label="STaR pseudocode: generate a rationale per problem, keep it if the answer checks out, otherwise retry with the answer as a hint and keep the survivor with the hint stripped, then fine-tune the base model on everything kept, and repeat."
+          >
+            <div className="flex flex-col">
+              {CODE_LINES.map((l, i) => (
+                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} tone={l.tone} />
+              ))}
+            </div>
+            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
+              STaR&apos;s Algorithm 1, compressed.
+              <Cite n={REF.star} /> The coloured lines are section 1&apos;s legend: the answer-key
+              filter, and the rationalization branch it enables.
+            </figcaption>
+          </figure>
+        </section>
+
+        <Note kicker="References">
+          <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
+            Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
+            2022.
+          </RefItem>
+          <RefItem n={REF.exit} href="https://arxiv.org/abs/1705.08439">
+            Anthony, Tian &amp; Barber 2017, <em>Thinking Fast and Slow with Deep Learning and
+            Tree Search</em>, NeurIPS 2017.
+          </RefItem>
+          <RefItem n={REF.rft} href="https://arxiv.org/abs/2308.01825" preprint>
+            Yuan et al. 2023, <em>Scaling Relationship on Learning Mathematical Reasoning with
+            Large Language Models</em>.
+          </RefItem>
+          <RefItem n={REF.gvm} href="https://arxiv.org/abs/2505.02391" preprint>
+            Yao et al. 2025, <em>Optimizing Chain-of-Thought Reasoners via Gradient Variance
+            Minimization in Rejection Sampling and RL</em>.
+          </RefItem>
+        </Note>
+
+        {/* Section 3 — the paper's result */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            2. What the loop bought
+            3. What the loop bought
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               Zelikman et al. 2022 · CommonsenseQA
             </span>
@@ -558,56 +649,17 @@ export function Page12() {
           </figure>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
-            Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
-            2022.
-          </RefItem>
-        </Note>
-
-        {/* Section 3 — the algorithm, written down and read twice */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. The loop, written down</h2>
-
-          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">The algorithm, explained.</strong> Start with a
-            pretrained model and a stack of problems whose correct answers you know. There are no
-            worked solutions, only the answers. For each problem, the model writes out its
-            reasoning and ends with an answer. If that answer matches the key, the reasoning is
-            kept. If it misses, the model gets one more try with the correct answer shown as a
-            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
-            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
-            everything kept, and the loop starts over with a slightly better model writing the
-            next round of reasoning.
-          </p>
-
-          <p className="text-sm text-ink">
-            The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
-            again — the annotations on lines 5 and 6 name what it secretly is.
-          </p>
-
-          <figure
-            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
-            aria-label="STaR pseudocode: generate a rationale per problem, keep it if the answer checks out, otherwise retry with the answer as a hint and keep the survivor with the hint stripped, then fine-tune the base model on everything kept, and repeat."
-          >
-            <div className="flex flex-col">
-              {CODE_LINES.map((l, i) => (
-                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} tone={l.tone} />
-              ))}
-            </div>
-            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-              STaR&apos;s Algorithm 1, compressed.
-              <Cite n={REF.star} /> The coloured lines are section 1&apos;s legend: the answer-key
-              filter, and the rationalization branch it enables.
-            </figcaption>
-          </figure>
-
+        {/* The two closing blocks — kept at the page bottom on purpose, reading
+            over both the listing and the results above them. */}
+        <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <p className="rounded border-l-4 border-wrong bg-surface p-4 text-base text-ink">
             <strong className="text-ink">Trained on reasoning, graded on answers.</strong> The
             rationale is what enters the weights; the answer key is all that decides whether it
             gets there. A flawed argument that lands correctly isn&apos;t merely kept — it&apos;s
             imitated.
-            <Cite n={REF.star} /> Page 9&apos;s outcome-versus-process trade, now deciding what
+            <Cite n={REF.star} /> Not a hypothetical: models often write a wrong reasoning path
+            and still land on the right answer — hint or no hint.
+            <Cite n={REF.gvm} /> Page 9&apos;s outcome-versus-process trade, now deciding what
             the model becomes.
           </p>
 
@@ -617,7 +669,7 @@ export function Page12() {
             tasks, and the model&apos;s own sampling becomes the training set.{" "}
             <em>Page 13 picks it up from there.</em>
           </p>
-        </section>
+        </div>
       </div>
 
       

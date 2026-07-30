@@ -64,6 +64,23 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeInTheDocument();
   });
 
+  it("orders the page: listing after the interactive, before the results, closers last", () => {
+    render(<Page12 />);
+    const interactive = screen.getByText(/Run iteration 1/);
+    const listing = screen.getByText(/hint = y/);
+    const results = screen.getByText("LaMDA 137B, few-shot CoT");
+    const counterweight = screen.getByText(/Trained on reasoning, graded on answers/);
+    const handoff = screen.getByText(/Page 13 picks it up from there/);
+    const follows = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(interactive, listing)).toBe(true);
+    expect(follows(listing, results)).toBe(true);
+    // The counterweight and the hand-off stay at the page bottom: they read
+    // over both the listing and the results, and the hand-off closes the page.
+    expect(follows(results, counterweight)).toBe(true);
+    expect(follows(counterweight, handoff)).toBe(true);
+  });
+
   it("explains the algorithm in plain language above the listing", () => {
     render(<Page12 />);
     const explained = screen.getByText(/The algorithm, explained/);
@@ -78,11 +95,46 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByText(/Trained on reasoning, graded on answers/)).toBeInTheDocument();
     expect(screen.getByText(/it's imitated/)).toBeInTheDocument();
     // The RL reading lives in the annotation column, not a separate block.
-    expect(screen.getAllByText(/in RL terms:/).length).toBe(2);
+    // Line 6 keeps the literal mapping; line 2 carries it via the ExIt cite.
+    expect(screen.getAllByText(/in RL terms:/).length).toBe(1);
     expect(screen.queryByText(/V-STaR/)).not.toBeInTheDocument();
     expect(screen.queryByText(/ReST/)).not.toBeInTheDocument();
     // STaR decodes greedily — the "distills luck into skill" story is wrong and must stay out.
     expect(screen.queryByText(/luck into skill/)).not.toBeInTheDocument();
+  });
+
+  it("grounds the loop outside STaR: ExIt on line 2, RFT on line 5, GVM in the counterweight", () => {
+    render(<Page12 />);
+    // Line 2: the RL lineage, with an exit condition tied to section 1's plateau.
+    expect(
+      screen.getByText(
+        (_, el) => el?.tagName === "CODE" && el.textContent === "loop: until accuracy plateaus",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/expert iteration \(Anthony et al\. 2017\)/)).toBeInTheDocument();
+    // Line 5: greedy decoding stated correctly, RFT named as the sample-k variant.
+    expect(screen.getByText(/one greedy rollout/)).toBeInTheDocument();
+    expect(screen.getByText(/RFT \(Yuan et al\. 2023\) samples k/)).toBeInTheDocument();
+    expect(screen.queryByText(/sample from the current policy/)).not.toBeInTheDocument();
+    // The counterweight's claim has outside experimental support.
+    expect(screen.getByText(/wrong reasoning path/)).toBeInTheDocument();
+    // Never "synonymous": the page may not conflate STaR and RFT.
+    expect(screen.queryByText(/synonymous/)).not.toBeInTheDocument();
+  });
+
+  it("links all four references from the sidenote", () => {
+    render(<Page12 />);
+    const hrefs = [
+      "https://arxiv.org/abs/2203.14465",
+      "https://arxiv.org/abs/1705.08439",
+      "https://arxiv.org/abs/2308.01825",
+      "https://arxiv.org/abs/2505.02391",
+    ];
+    for (const href of hrefs) {
+      expect(document.querySelector(`a[href="${href}"]`)).toBeInTheDocument();
+    }
+    // RFT and GVM are preprints and must carry the flag; ExIt and STaR are not.
+    expect(screen.getAllByText("preprint").length).toBe(2);
   });
 
   it("closes on the hand-off to page 13's frontier reasoners", () => {
