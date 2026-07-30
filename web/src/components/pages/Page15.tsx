@@ -19,12 +19,19 @@
  *      Page 13 already teaches WHERE o1's three numbers come from (its
  *      waterfall: chain, vote, re-ranker); this page teaches what their
  *      coexistence does to the word "score". No overlap in lesson.
- *   2. The treadmill. Each benchmark's shelf life from introduction to the
- *      day its bar fell. Framing is verification-corrected: the treadmill
- *      predates reasoning models (GSM8K's bar fell to a non-reasoning model
- *      months before o1 shipped; Dynabench named the pattern in 2021); what
- *      late 2024 collapsed is the holdout tier (GPQA in eleven months, AIME
- *      2024 inside its own calendar year).
+ *   2. Why tests die. An AUTHORED, illustrative simulation (lib/
+ *      benchmarkWindow.ts): a benchmark is an instrument with a window. One
+ *      slider moves an abstract frontier past four stylized tests; each
+ *      reads floor (everyone fails, no signal) → window (scores spread,
+ *      signal) → ceiling (everyone passes, no signal). The treadmill EMERGES
+ *      from the mechanics instead of being reported as a status board. This
+ *      replaced the earlier lifespan-bars figure, which carried a "still
+ *      standing" state that rotted the moment the leaderboard moved (it
+ *      claimed FrontierMath stood, which stopped being true); the simulation
+ *      makes no claim about where any real benchmark sits today, so it
+ *      cannot expire. Real history lives in the caption as immutable facts
+ *      (each past ceiling arrived faster than the last; FrontierMath opened
+ *      under 2% by design).
  *   3. The knob was never new. In 2022 the compute setting traveled inside
  *      the metric's name (Minerva's MATH headline was maj1@64 = 50.3, with
  *      pass@1 = 33.6 in the same table); reasoning models moved it inside
@@ -37,8 +44,9 @@
  * compilation but was a transcription, not an abstraction: its only
  * interaction was reading receipts, which the literature itself already
  * offers. Rationale and the verification behind the reframe:
- * docs/page_15_coordinates_revision.md. The treadmill survives from that
- * revision unchanged; benchmark-scoreboard.json still feeds it.
+ * docs/page_15_coordinates_revision.md. benchmark-scoreboard.json no longer
+ * feeds this page (it fed the dashboard and the retired lifespan bars); it
+ * stays in data/ with its tests for provenance and possible reuse.
  *
  * Data: o1 trio and GPT-4o baseline from data/o1-scaling.json fit params,
  * the same source page 13 prints, so the two pages cannot drift; the other
@@ -50,12 +58,19 @@
  * tells it with a dollar axis.
  */
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { Slider } from "@/components/Slider";
+import {
+  CEILING_PCT,
+  FLOOR_PCT,
+  populationScores,
+  windowState,
+  WINDOW_TESTS,
+} from "@/lib/benchmarkWindow";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import { SCOREBOARD } from "@/lib/scoreboard";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 15;
@@ -64,19 +79,12 @@ const P = curves.o1Scaling.fit!.params;
 /** Page 15's references, numbered in order of first appearance. */
 const REF = { openai: 1, deepseek: 2, frontiermath: 3, epoch: 4, gsm8k: 5, math: 6, gpqa: 7, minerva: 8 } as const;
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** 2024.7 → "Sep 2024" (fraction of a year ≈ month/12). */
-function fmtWhen(x: number): string {
-  const year = Math.floor(x);
-  const m = Math.min(11, Math.floor((x - year) * 12));
-  return `${MONTHS[m]} ${year}`;
-}
-
-/** "2.4 years" / "11 months" between two decimal years. */
-function fmtSpan(years: number): string {
-  return years < 1 ? `${Math.round(years * 12)} months` : `${years.toFixed(1)} years`;
-}
+/** What each window state means for the reader, spelled out. */
+const STATE_CHIP = {
+  floor: "no signal: everyone fails",
+  window: "signal: it separates the models",
+  ceiling: "no signal: everyone passes",
+} as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -232,7 +240,6 @@ const CASES: HeadlineCase[] = [
 export function Page15() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-  const { xDomain, benchmarks } = SCOREBOARD;
 
   const [caseKey, setCaseKey] = useState(CASES[0].key);
   /* One guess per case, so revisiting a case keeps its reveal. */
@@ -257,11 +264,14 @@ export function Page15() {
     recordInteraction(PAGE_N);
   };
 
-  const lifespans = useMemo(
-    () => benchmarks.filter((b) => b.lifespan !== null && b.key !== "swebench"),
-    [benchmarks],
-  );
-  const trackPct = (yr: number) => ((yr - xDomain[0]) / (xDomain[1] - xDomain[0])) * 100;
+  /* Section 2: the frontier's position in illustrative units, default mid-ladder. */
+  const [capability, setCapability] = useState(4.5);
+  const rows = WINDOW_TESTS.map((t) => {
+    const scores = populationScores(capability, t.difficulty);
+    return { ...t, scores, state: windowState(scores) };
+  });
+  const readable = rows.filter((r) => r.state === "window").length;
+  const allBlind = rows.every((r) => r.state === "ceiling");
 
   return (
     <article className="flex flex-col gap-6">
@@ -429,67 +439,126 @@ export function Page15() {
           </p>
         </Note>
 
-        {/* Step 2 — the treadmill */}
+        {/* Step 2 — why tests die (authored simulation) */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            2. The treadmill
+            2. Why tests die
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              every test has a shelf life
+              authored simulation · no real benchmark&apos;s numbers
             </span>
           </h2>
-          <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <div className="flex flex-col gap-2.5">
-              {lifespans.map((b) => {
-                const ls = b.lifespan!;
-                const end = ls.fell ?? xDomain[1];
-                const left = trackPct(ls.introduced);
-                const width = Math.max(1.5, trackPct(end) - left);
+          <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-sm text-ink">
+              A benchmark is a measuring instrument, and an instrument has a{" "}
+              <strong>window</strong>. Slide the frontier past four stylized tests and read each
+              one&apos;s verdict: below its window every model fails (no signal), inside it the
+              same five models spread out (signal), past it everyone passes (no signal again).
+            </p>
+
+            <Slider
+              label="frontier capability (illustrative units)"
+              min={0}
+              max={12}
+              step={0.25}
+              value={capability}
+              format={(v) => v.toFixed(2).replace(/\.?0+$/, "")}
+              onChange={(v) => {
+                setCapability(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
+
+            <div className="flex flex-col gap-3">
+              {rows.map((r) => {
+                const inWindow = r.state === "window";
+                const lo = Math.round(Math.min(...r.scores));
+                const hi = Math.round(Math.max(...r.scores));
                 return (
-                  <div key={b.key} className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="w-36 shrink-0 text-ink-muted">{b.name}</span>
-                      <div
-                        role="img"
-                        aria-label={`${b.name}: introduced ${fmtWhen(ls.introduced)}, ${
-                          ls.fell === null
-                            ? "still standing"
-                            : `bar fell ${fmtWhen(ls.fell)} — stood ${fmtSpan(ls.fell - ls.introduced)}`
-                        } (${ls.bar}).`}
-                        className="relative h-3 flex-1 rounded-sm border border-grid bg-canvas"
+                  <div key={r.key} className="flex flex-col gap-1">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span className={inWindow ? "font-medium text-ink" : "text-ink-muted"}>
+                        {r.label}
+                      </span>
+                      <span
+                        className={`rounded border px-1.5 py-0.5 text-xs ${
+                          inWindow
+                            ? "border-compute bg-compute/15 font-semibold text-ink"
+                            : "border-grid text-ink-muted"
+                        }`}
                       >
-                        <div
-                          className={`absolute inset-y-0 rounded-sm ${
-                            ls.fell === null ? "border border-dashed border-compute bg-compute/15" : "bg-compute/60"
-                          }`}
-                          style={{ left: `${left}%`, width: `${width}%` }}
-                        />
-                      </div>
-                      <span className="w-24 shrink-0 text-right text-xs tabular-nums text-ink">
-                        {ls.fell === null ? "standing" : fmtSpan(ls.fell - ls.introduced)}
+                        {STATE_CHIP[r.state]}
                       </span>
                     </div>
-                    <p className="text-right text-xs text-ink-muted">{ls.bar}</p>
+                    <div
+                      role="img"
+                      aria-label={`${r.label}: ${STATE_CHIP[r.state]}; the five models score between ${lo}% and ${hi}%.`}
+                      className="relative h-5 rounded-sm border border-grid bg-canvas"
+                    >
+                      {/* the two no-signal edges */}
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-y-0 border-r border-dashed border-grid"
+                        style={{ left: `${FLOOR_PCT}%` }}
+                      />
+                      <div
+                        aria-hidden="true"
+                        className="absolute inset-y-0 border-l border-dashed border-grid"
+                        style={{ left: `${CEILING_PCT}%` }}
+                      />
+                      {r.scores.map((s, i) => (
+                        <div
+                          key={i}
+                          aria-hidden="true"
+                          className={`absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+                            inWindow ? "bg-compute" : "bg-grid"
+                          }`}
+                          style={{ left: `${s}%` }}
+                        />
+                      ))}
+                    </div>
                   </div>
                 );
               })}
             </div>
+
+            <p aria-live="polite" className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
+              {allBlind ? (
+                <>
+                  <strong>Every test here has gone blind.</strong> The scoreboard now reads
+                  100 across the board and says nothing. The only fix is a harder test:{" "}
+                  <strong>moving the goalposts is the system working.</strong>
+                </>
+              ) : (
+                <>
+                  Tests that can currently see the frontier: <strong>{readable} of {rows.length}</strong>.
+                  A score only means something while its test is in the window.
+                </>
+              )}
+            </p>
+
             <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
-              Bar = from a benchmark&apos;s introduction to the day its own bar fell. The treadmill
-              is older than the reasoners: GSM8K&apos;s bar fell months before the first commercial
-              reasoning model shipped.
-              <Cite n={REF.gsm8k} /> What late 2024 collapsed is the holdout tier: MATH&apos;s
-              gold-medalist line stood almost four years and fell only to o1;
-              <Cite n={REF.math} /> GPQA&apos;s PhD bar stood ten months;
-              <Cite n={REF.gpqa} /> AIME 2024 fell inside its own calendar year.{" "}
-              <strong className="text-ink">The moving goalposts are the system working</strong>: a
-              saturated test measures nothing, so retiring it is the honest move.
+              The tests above are stylized; difficulties and spreads are authored for teaching. The
+              structure is the history, though: GSM8K, MATH&apos;s gold-medalist line, GPQA&apos;s
+              PhD bar and AIME 2024 each rode this arc from floor to ceiling, each ceiling arriving
+              faster than the last, GSM8K&apos;s before the first commercial reasoning model
+              shipped.
+              <Cite n={REF.gsm8k} />
+              <Cite n={REF.math} />
+              <Cite n={REF.gpqa} /> And new tests are born at the floor on purpose: FrontierMath
+              opened with every frontier model under 2%.
+              <Cite n={REF.frontiermath} /> A test at either edge of its window measures nothing,
+              so <strong className="text-ink">the moving goalposts are the system working</strong>:
+              retiring a blind test is the honest move.
             </figcaption>
           </figure>
         </section>
 
         <Note kicker="How to read">
-          <p>Read the bars as shelf lives, not scandals.</p>
-          <p>A test that everything passes separates nothing; the harder replacement dies faster.</p>
+          <p>Slide the frontier; watch which tests can still see it.</p>
+          <p>
+            A benchmark measures only while the frontier is inside its window. Death by ceiling is
+            success, and it says nothing about where any real test sits the day you read this.
+          </p>
         </Note>
 
         {/* Step 3 — the knob was never new */}
@@ -568,10 +637,11 @@ export function Page15() {
       </div>
 
       <p className="text-xs text-ink-muted">
-        every number on this page is transcribed verbatim from the cited report — announcement
+        every real number on this page is transcribed verbatim from the cited report — announcement
         figures (o3, FrontierMath) are vendor-reported and not peer-reviewed; the coordinate rows
-        paraphrase the same reports&apos; own disclosed settings, and the case numbers and treadmill
-        spans are pinned in the test suite · ARC-AGI is missing on purpose: its story is the price
+        paraphrase the same reports&apos; own disclosed settings, and the case numbers are pinned in
+        the test suite · section 2 is an authored simulation (no real benchmark&apos;s numbers),
+        its shape pinned in the test suite · ARC-AGI is missing on purpose: its story is the price
         tag, and page 16 tells it with a dollar axis
       </p>
 

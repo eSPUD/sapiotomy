@@ -76,18 +76,33 @@ describe("Page 15 (the scoreboard) component", () => {
     expect(screen.getByText("the thinking budget, and nothing else")).toBeInTheDocument();
   });
 
-  it("the treadmill frames shelf lives with the corrected causality", () => {
+  it("the window simulation opens mid-ladder: one ceiling, two windows, one floor", () => {
     render(<Page15 />);
+    expect(screen.getAllByText("no signal: everyone passes")).toHaveLength(1);
+    expect(screen.getAllByText("signal: it separates the models")).toHaveLength(2);
+    expect(screen.getAllByText("no signal: everyone fails")).toHaveLength(1);
+    expect(screen.getByText(/Tests that can currently see the frontier/)).toBeInTheDocument();
+    expect(screen.getByText("2 of 4")).toBeInTheDocument();
+  });
+
+  it("maxing the frontier blinds every test and calls for new goalposts", () => {
+    render(<Page15 />);
+    fireEvent.change(screen.getByRole("slider", { name: /frontier capability/ }), {
+      target: { value: "12" },
+    });
+    expect(screen.getAllByText("no signal: everyone passes")).toHaveLength(4);
+    expect(screen.getByText(/Every test here has gone blind/)).toBeInTheDocument();
+    expect(screen.getByText(/moving the goalposts is the system working/)).toBeInTheDocument();
+  });
+
+  it("the figure makes no live status claims and discloses its authored shape", () => {
+    render(<Page15 />);
+    expect(screen.queryByText(/still standing/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^standing/)).not.toBeInTheDocument();
+    expect(screen.getByText(/difficulties and spreads are authored for teaching/)).toBeInTheDocument();
+    // History appears only as immutable facts, FrontierMath only as its launch state.
+    expect(screen.getByText(/FrontierMath\s+opened with every frontier model under 2%/)).toBeInTheDocument();
     expect(screen.getByText(/moving goalposts are the system working/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/bar fell months before the first commercial reasoning model shipped/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("img", { name: /MATH.*introduced Mar 2021.*stood 3\.\d years/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("img", { name: /FrontierMath: introduced Nov 2024, still standing/ }),
-    ).toBeInTheDocument();
   });
 
   it("pins Minerva's named-knob exhibit: maj1@64 vs pass@1", () => {
