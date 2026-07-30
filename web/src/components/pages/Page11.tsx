@@ -20,11 +20,17 @@
  * counts (disclosed in the Simulated footer, not the setup prose). The curves
  * are AUTHORED shapes following Snell et al. 2024's claims, pinned in
  * act2allocator.test.ts; the Snell cite sits beside the chart's caption, not
- * only in the setup prose.
+ * only in the setup prose. The card closes with the mechanism behind the
+ * verdicts (sampling re-draws from the model's own distribution: thinking
+ * amplifies a foothold, only parameters create one), so hard mode has a
+ * reason, not just a result.
  *
- * Step 2 states the law with a unit on every number: 4x fewer samples than
- * best-of-N (64 vs 256), 14x the parameters matched on FLOPs, and the ratio R
- * given as its two limits (R -> 0 thinking wins, R -> inf parameters win).
+ * Step 2 states the law with a unit on every number, each panel body one
+ * concrete comparison in plain words: 4x is flat best-of-N (256 for every
+ * question) against guess-difficulty-then-spend (64); 14x is one FLOPs bill
+ * paid two ways (14 answers of thinking vs one greedy answer); R is the
+ * serve/train token ratio read as amortization (pretraining bought once,
+ * thinking a per-query surcharge).
  * Each panel's drawing carries exactly its caption's claim: 4x is two dot
  * clusters (16 vs 4 sample dots, the same 4:1 ratio) under two checkpoints
  * pinned to one same-accuracy line; 14x is two equal-height FLOPs bills, one
@@ -951,6 +957,16 @@ export function Page11() {
                 <p className="mt-1 text-ink">{verdict.body}</p>
               </div>
             </div>
+
+            {/* the mechanism behind the verdicts, so hard mode has a reason */}
+            <p className="border-t border-dashed border-grid pt-3 text-sm text-ink">
+              <strong>Why difficulty decides the game:</strong> extra samples only re-draw from
+              what the model can already produce. On easy problems the first draw is usually
+              right. On medium ones a correct chain turns up now and then, and voting or a
+              verifier can fish it out: thinking amplifies a foothold. On hard ones every chain
+              breaks somewhere, so no number of re-draws holds a right answer to find.{" "}
+              <strong>Thinking amplifies competence; only parameters create it.</strong>
+            </p>
           </div>
         </section>
         <Note kicker="Try it">
@@ -968,24 +984,24 @@ export function Page11() {
             <p className="text-sm text-ink">
               Snell et al. tried two ways of converting test-time FLOPs into accuracy: search over
               sampled steps under a process verifier (page 9&rsquo;s graders), or letting the
-              model redraft its own answer. Either way, the right choice and the right budget
-              depend on how hard the prompt is. Estimating difficulty first, then allocating, is
-              what they call compute-optimal.
+              model redraft its own answer. Guessing how hard the prompt is first, then choosing
+              the strategy and budget to match, is what they call compute-optimal.
               <Cite n={REF.snell} /> Three numbers carry the result:
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <LawPanel head="4×" headTone="text-correct" title="fewer samples than best-of-N" art={<ArtFourX />}>
-                difficulty-adaptive allocation matches best-of-N&rsquo;s accuracy for as little as
-                a quarter of the compute: 64 samples doing the work of 256
+                best-of-N spends 256 samples on every question, easy or hard. Guess the difficulty
+                first and spend accordingly, and 64 samples buy the same accuracy
               </LawPanel>
               <LawPanel head="14×" headTone="text-correct" title="the parameters, matched on FLOPs" art={<ArtFourteenX />}>
-                on the same FLOPs bill, a small model plus adaptive test-time compute outscores a
-                pretrained model ~14× its size answering greedily, on prompts the small model can
-                already sometimes solve
+                give both sides the same FLOPs bill: the 1× model buys 14 answers&rsquo; worth of
+                thinking, the 14× model buys one greedy answer. The thinker scores higher, on
+                problems it can already sometimes solve
               </LawPanel>
               <LawPanel head="R" headTone="text-wrong" title="decides the regime" art={<ArtRatioR />}>
-                R = inference tokens served ÷ pretraining tokens. As R → 0, thinking wins. As R →
-                ∞, parameters win: pretraining amortizes away; a per-question surcharge never does.
+                R = tokens you will serve ÷ tokens you trained on. Pretraining is bought once and
+                amortized over every query; thinking is a surcharge on every one. Serve little
+                (R → 0) and thinking wins; serve billions (R → ∞) and parameters win
               </LawPanel>
             </div>
             <p className="rounded border-l-4 border-wrong bg-wrong/10 p-3 text-sm text-ink">
