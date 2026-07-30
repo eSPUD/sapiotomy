@@ -64,6 +64,23 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeInTheDocument();
   });
 
+  it("orders the page: listing after the interactive, before the results, closers last", () => {
+    render(<Page12 />);
+    const interactive = screen.getByText(/Run iteration 1/);
+    const listing = screen.getByText(/hint = y/);
+    const results = screen.getByText("LaMDA 137B, few-shot CoT");
+    const counterweight = screen.getByText(/Trained on reasoning, graded on answers/);
+    const handoff = screen.getByText(/Page 13 picks it up from there/);
+    const follows = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(interactive, listing)).toBe(true);
+    expect(follows(listing, results)).toBe(true);
+    // The counterweight and the hand-off stay at the page bottom: they read
+    // over both the listing and the results, and the hand-off closes the page.
+    expect(follows(results, counterweight)).toBe(true);
+    expect(follows(counterweight, handoff)).toBe(true);
+  });
+
   it("explains the algorithm in plain language above the listing", () => {
     render(<Page12 />);
     const explained = screen.getByText(/The algorithm, explained/);

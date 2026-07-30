@@ -27,15 +27,19 @@
  * the answer key off and the loop trains on its own mistakes until accuracy
  * sinks toward chance.
  *
- * Section 2 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
+ * Section 2 is the loop written down: the paper's Algorithm 1 compressed to
+ * ten annotated pseudocode lines, directly under the interactive so the
+ * reader parses the mechanism they just ran. A plain-language walkthrough
+ * sits above the listing for readers who don't parse pseudocode; the
+ * annotation column carries the RL mapping.
+ *
+ * Section 3 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
  * GPT-J plus its own filtered rationales lands at 72.5% on CommonsenseQA —
  * past a 23x larger LaMDA doing few-shot CoT, beside a 30x larger GPT-3
  * fine-tuned on the full human-labelled training set.
  *
- * Section 3 is the loop written down: the paper's Algorithm 1 compressed to
- * ten annotated pseudocode lines. A plain-language walkthrough sits above the
- * listing for readers who don't parse pseudocode; the annotation column
- * carries the RL mapping. Below the listing, exactly two blocks:
+ * The page closes with exactly two blocks, deliberately kept at the bottom so
+ * they read over both the listing and the results:
  * the page's one counterweight (trained on reasoning, graded on answers; the
  * paper's own stated limitation, and the only place the page admits the loop
  * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
@@ -514,10 +518,55 @@ export function Page12() {
           </div>
         </Note>
 
-        {/* Section 2 — the paper's result */}
+        {/* Section 2 — the algorithm, written down and read twice */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">2. The loop, written down</h2>
+
+          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">The algorithm, explained.</strong> Start with a
+            pretrained model and a stack of problems whose correct answers you know. There are no
+            worked solutions, only the answers. For each problem, the model writes out its
+            reasoning and ends with an answer. If that answer matches the key, the reasoning is
+            kept. If it misses, the model gets one more try with the correct answer shown as a
+            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
+            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
+            everything kept, and the loop starts over with a slightly better model writing the
+            next round of reasoning.
+          </p>
+
+          <p className="text-sm text-ink">
+            The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
+            again — the annotations on lines 5 and 6 name what it secretly is.
+          </p>
+
+          <figure
+            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+            aria-label="STaR pseudocode: generate a rationale per problem, keep it if the answer checks out, otherwise retry with the answer as a hint and keep the survivor with the hint stripped, then fine-tune the base model on everything kept, and repeat."
+          >
+            <div className="flex flex-col">
+              {CODE_LINES.map((l, i) => (
+                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} tone={l.tone} />
+              ))}
+            </div>
+            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
+              STaR&apos;s Algorithm 1, compressed.
+              <Cite n={REF.star} /> The coloured lines are section 1&apos;s legend: the answer-key
+              filter, and the rationalization branch it enables.
+            </figcaption>
+          </figure>
+        </section>
+
+        <Note kicker="References">
+          <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
+            Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
+            2022.
+          </RefItem>
+        </Note>
+
+        {/* Section 3 — the paper's result */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            2. What the loop bought
+            3. What the loop bought
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               Zelikman et al. 2022 · CommonsenseQA
             </span>
@@ -558,50 +607,9 @@ export function Page12() {
           </figure>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
-            Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
-            2022.
-          </RefItem>
-        </Note>
-
-        {/* Section 3 — the algorithm, written down and read twice */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. The loop, written down</h2>
-
-          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">The algorithm, explained.</strong> Start with a
-            pretrained model and a stack of problems whose correct answers you know. There are no
-            worked solutions, only the answers. For each problem, the model writes out its
-            reasoning and ends with an answer. If that answer matches the key, the reasoning is
-            kept. If it misses, the model gets one more try with the correct answer shown as a
-            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
-            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
-            everything kept, and the loop starts over with a slightly better model writing the
-            next round of reasoning.
-          </p>
-
-          <p className="text-sm text-ink">
-            The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
-            again — the annotations on lines 5 and 6 name what it secretly is.
-          </p>
-
-          <figure
-            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
-            aria-label="STaR pseudocode: generate a rationale per problem, keep it if the answer checks out, otherwise retry with the answer as a hint and keep the survivor with the hint stripped, then fine-tune the base model on everything kept, and repeat."
-          >
-            <div className="flex flex-col">
-              {CODE_LINES.map((l, i) => (
-                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} tone={l.tone} />
-              ))}
-            </div>
-            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-              STaR&apos;s Algorithm 1, compressed.
-              <Cite n={REF.star} /> The coloured lines are section 1&apos;s legend: the answer-key
-              filter, and the rationalization branch it enables.
-            </figcaption>
-          </figure>
-
+        {/* The two closing blocks — kept at the page bottom on purpose, reading
+            over both the listing and the results above them. */}
+        <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <p className="rounded border-l-4 border-wrong bg-surface p-4 text-base text-ink">
             <strong className="text-ink">Trained on reasoning, graded on answers.</strong> The
             rationale is what enters the weights; the answer key is all that decides whether it
@@ -617,7 +625,7 @@ export function Page12() {
             tasks, and the model&apos;s own sampling becomes the training set.{" "}
             <em>Page 13 picks it up from there.</em>
           </p>
-        </section>
+        </div>
       </div>
 
       
