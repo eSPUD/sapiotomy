@@ -103,9 +103,11 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
 
   it("states why parameters win on hard problems: sampling mines a fixed distribution", () => {
     render(<Page11 />);
+    // Two paragraphs now use the phrase, so match the sentence this test means
+    // rather than the phrase alone.
     expect(
-      screen.getByText(/can\s+already produce/i).closest("p")!.textContent,
-    ).toMatch(/only surface answers the model can\s+already produce/i);
+      screen.getByText(/only surface answers the model can\s+already produce/i),
+    ).toBeInTheDocument();
     expect(screen.getByText(/the distribution itself never moves/i)).toBeInTheDocument();
     expect(
       screen.getByText(/changes what is in the\s+distribution at all/i),
