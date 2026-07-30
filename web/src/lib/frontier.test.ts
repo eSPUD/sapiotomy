@@ -49,7 +49,12 @@ describe("twoAxisAccuracy (page 13 law)", () => {
   });
 });
 
-describe("o1 / o3 published anchors (pages print these verbatim)", () => {
+/*
+ * The page prints a subset of these (AIME waterfall anchors, o3's AIME); the
+ * rest pin the data files' provenance so the verbatim record survives even
+ * where the page has been abstracted away from raw scores.
+ */
+describe("o1 / o3 published anchors (data files; the page prints a subset)", () => {
   it("pins the o1 announcement numbers", () => {
     expect(P.gpt4oAime).toBe(12);
     expect(P.o1Pass1).toBe(74.4);
