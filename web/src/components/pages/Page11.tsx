@@ -840,9 +840,9 @@ export function Page11() {
         {/* Step 1 — the two-knob allocator */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. Beat the 14× model
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              authored illustrative curves · no live model
+            1. Problem complexity and the compromise
+            <span className="block text-xs font-normal text-ink-muted">
+              the game: beat the 14× model · authored curves, no live model
             </span>
           </h2>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
