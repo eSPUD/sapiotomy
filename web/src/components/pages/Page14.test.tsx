@@ -83,27 +83,32 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getByText(/it is what made RL at this scale affordable/)).toBeInTheDocument();
   });
 
-  it("GRPO dial: the same right answer earns a shrinking push as the group gets luckier", () => {
+  it("GRPO dial: the baseline chases the group and the same right answer's push shrinks", () => {
     render(<Page14 />);
     // Default: one other sample also right → group [✓ ✓ ✗ ✗], mean 0.50, pushes ±0.50.
-    expect(screen.getByText("0.50")).toBeInTheDocument();
+    expect(screen.getByText(/group mean · 0\.50/)).toBeInTheDocument();
     expect(screen.getAllByText("+0.50")).toHaveLength(2);
     expect(screen.getByText(/push drops to \+0\.50/)).toBeInTheDocument();
+    // The wrong answers are named slips, not invented numbers.
+    expect(screen.getByText("dropped the carry")).toBeInTheDocument();
+    expect(screen.getByText("did 16 × 24")).toBeInTheDocument();
 
-    // Lone right answer: the biggest push on offer.
+    // Lone right answer: the biggest push on offer — and all three slips visible.
     setLuck(0);
     expect(screen.getByText("+0.75")).toBeInTheDocument();
     expect(screen.getByText(/the biggest push on offer/)).toBeInTheDocument();
+    expect(screen.getByText("did 17 × 25")).toBeInTheDocument();
 
     // Rarity cuts both ways: the lone wrong answer is punished hardest.
     setLuck(2);
     expect(screen.getByText("−0.75")).toBeInTheDocument();
     expect(screen.getByText(/Rarity amplifies the signal in both directions/)).toBeInTheDocument();
 
-    // Uniform group: every push 0.00, nothing to learn.
+    // Uniform group: the rule reaches the dots, every arrow vanishes.
     setLuck(3);
     expect(screen.getByText(/teaches it nothing/)).toBeInTheDocument();
-    expect(screen.getAllByText("0.00").length).toBeGreaterThanOrEqual(4);
+    expect(screen.getByText(/group mean · 1\.00/)).toBeInTheDocument();
+    expect(screen.queryByText(/[+−]0\.\d\d/)).not.toBeInTheDocument();
   });
 
   it("defaults the distill picker to Qwen-14B and updates on selection", () => {

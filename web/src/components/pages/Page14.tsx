@@ -9,13 +9,18 @@
  *
  * Step 1 is the recipe, GRPO, abstracted honestly: five lines of annotated
  * pseudocode (sample a group, score with a rule, advantage = distance from
- * the group's own mean) instead of the clipped-surrogate objective. The one
- * interaction is a single dial: sample 1 always answers page 1's 17 × 24
- * correctly, and the dial sets how many of the other three also get it
- * right. The reader watches the SAME right answer earn a shrinking push as
- * the group gets luckier, down to 0.00 when the group is uniform — the two
- * properties that matter, one control. No critic network anywhere: that is
- * what made RL at this scale affordable, and the copy says so against PPO.
+ * the group's own mean) instead of the clipped-surrogate objective. Below
+ * it, line 2 of that pseudocode is DRAWN: four answers to page 1's 17 × 24
+ * (the model samples stochastically — that is where the group comes from;
+ * each wrong answer is a named arithmetic slip, not an invented number), as
+ * dots at reward 1/0 with the group mean as a dashed rule and each push as
+ * an arrow from the rule to the dot. One dial sets how many of the other
+ * three match sample 1's fixed 408; as luck rises the rule chases the
+ * crowd, the same right answer's arrow shrinks to nothing, the lone
+ * dissenter's stretches (rarity cuts both ways), and a uniform group leaves
+ * an arrowless picture — nothing to teach. No critic network anywhere: that
+ * is what made RL at this scale affordable, and the copy says so against
+ * PPO.
  *
  * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining),
  * both variables on a dual y-axis: AIME pass@1 (left, 15.6 → 71.0) and
@@ -72,9 +77,14 @@ const AHA_STEP = 5000;
 const REF = { r1: 1, grpo: 2 } as const;
 
 /** Page 1's multiplication. Sample 1 always gets it right; the other three
-    slots have fixed wrong answers so the dial is deterministic. */
+    slots have fixed wrong answers so the dial is deterministic — and each
+    wrong answer is a real arithmetic slip, not an invented number. */
 const RIGHT_ANSWER = "408";
-const OTHER_WRONGS = ["398", "428", "308"];
+const OTHER_WRONGS = [
+  { v: "425", slip: "did 17 × 25" },
+  { v: "384", slip: "did 16 × 24" },
+  { v: "348", slip: "dropped the carry" },
+];
 
 /** The GRPO recipe as five annotated lines — the honest abstraction of the
     objective (advantage from the group's own statistics), minus the clipped
@@ -125,31 +135,117 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
+const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}`;
+
 /**
- * The push, drawn: an arrow whose length scales with the advantage's
- * magnitude, up in the correct hue or down in the wrong hue, from a shared
- * baseline. Zero renders as a flat dash — no push at all. The number next to
- * it stays the accessible value; this is aria-hidden.
+ * Line 2 of the recipe, drawn. Four sampled answers as dots at reward 1 or
+ * 0, the group mean as a dashed rule (the deck's reference-rule idiom), and
+ * each sample's push as an arrow FROM the rule TO its dot — the push
+ * literally is the sample's distance from the group's own average. As the
+ * dial raises the group's luck the rule chases the right answers: up-arrows
+ * shrink, the lone dissenter's arrow stretches, and at a uniform group the
+ * rule reaches the dots and every arrow vanishes.
  */
-function PushArrow({ adv }: { adv: number }) {
-  const len = Math.abs(adv) * 19;
-  const mid = 20;
-  const tipY = adv > 0 ? mid - len : mid + len;
-  const dir = adv > 0 ? -1 : 1;
+function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number }) {
+  const width = 720;
+  const height = 240;
+  const margin = { top: 18, right: 100, bottom: 48, left: 64 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const yOf = (r: number) => 12 + (1 - r) * (innerH - 24);
+  const colX = (i: number) => (innerW * (i + 0.5)) / 4;
+  const dotR = 6;
+
+  const k = rewards.slice(1).filter((r) => r === 1).length;
+  const title = `Line 2 of the recipe, drawn: four answers to 17 times 24 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 408, correct. The wrong answers are real slips: 425 from computing 17 times 25, 384 from computing 16 times 24, 348 from dropping a carry. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
+    k === 3 ? " The rule sits on the dots and every arrow has vanished: a uniform group teaches nothing." : ""
+  }`;
+
   return (
-    <svg aria-hidden="true" width={14} height={40} viewBox="0 0 14 40" className="shrink-0">
-      {adv === 0 ? (
-        <line x1={3} x2={11} y1={mid} y2={mid} className="stroke-ink-muted" strokeWidth={1.5} />
-      ) : (
-        <g className={adv > 0 ? "stroke-correct fill-correct" : "stroke-wrong fill-wrong"}>
-          <line x1={7} x2={7} y1={mid} y2={tipY - dir * 3} strokeWidth={2} />
-          <polygon
-            points={`7,${tipY} ${7 - 3.5},${tipY - dir * 5} ${7 + 3.5},${tipY - dir * 5}`}
-            stroke="none"
-          />
+    <ChartFrame title={title} width={width} height={height} margin={margin}>
+      {/* reward axis: two ticks are the whole scale */}
+      {[1, 0].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={innerW} y1={yOf(t)} y2={yOf(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+            reward {t}
+          </text>
         </g>
-      )}
-    </svg>
+      ))}
+
+      {/* the group mean: the baseline, as the deck's dashed reference rule */}
+      <line
+        x1={0}
+        x2={innerW}
+        y1={yOf(mean)}
+        y2={yOf(mean)}
+        className="stroke-ink"
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
+        group mean · {mean.toFixed(2)}
+      </text>
+
+      {/* one column per sample: dot, push arrow, labels */}
+      {rewards.map((r, i) => {
+        const px = colX(i);
+        const py = yOf(r);
+        const adv = r - mean;
+        const right = r === 1;
+        const wrong = OTHER_WRONGS[i - 1];
+        const up = adv > 0;
+        const yFrom = yOf(mean) + (up ? -2 : 2);
+        const yTo = py + (up ? dotR + 3 : -(dotR + 3));
+        return (
+          <g key={i}>
+            {adv !== 0 ? (
+              <g className={up ? "stroke-correct fill-correct" : "stroke-wrong fill-wrong"}>
+                <line x1={px} x2={px} y1={yFrom} y2={yTo + (up ? 4 : -4)} strokeWidth={2} />
+                <polygon
+                  points={`${px},${yTo} ${px - 3.5},${yTo + (up ? 6 : -6)} ${px + 3.5},${yTo + (up ? 6 : -6)}`}
+                  stroke="none"
+                />
+                <text
+                  x={px + 9}
+                  y={(yFrom + yTo) / 2}
+                  dy="0.32em"
+                  textAnchor="start"
+                  stroke="none"
+                  className={`font-mono text-[10px] font-semibold ${up ? "fill-correct" : "fill-wrong"}`}
+                >
+                  {fmtPush(adv)}
+                </text>
+              </g>
+            ) : null}
+            {i === 0 ? (
+              <circle cx={px} cy={py} r={dotR + 4} fill="none" className="stroke-compute" strokeWidth={1.5} />
+            ) : null}
+            <circle
+              cx={px}
+              cy={py}
+              r={dotR}
+              className={`${right ? "fill-correct" : "fill-wrong"} stroke-canvas`}
+              strokeWidth={1.5}
+            />
+            <text x={px} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[9px] uppercase tracking-wide">
+              sample {i + 1}
+            </text>
+            <text x={px} y={innerH + 27} textAnchor="middle" className="fill-ink font-mono text-[11px] font-semibold">
+              {right ? RIGHT_ANSWER : wrong.v}
+            </text>
+            <text
+              x={px}
+              y={innerH + 39}
+              textAnchor="middle"
+              className={i === 0 ? "fill-compute text-[9px] font-semibold" : "fill-ink-muted text-[9px]"}
+            >
+              {i === 0 ? "watch this one" : right ? "" : wrong.slip}
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
   );
 }
 
@@ -600,7 +696,6 @@ export function Page14() {
   const mean = rewards.reduce((a, b) => a + b, 0) / rewards.length;
   const uniform = luck === 3;
   const push1 = 1 - mean;
-  const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}`;
   const setLuckAnd = (v: number) => {
     setLuck(v);
     recordInteraction(PAGE_N);
@@ -688,6 +783,10 @@ export function Page14() {
                   the rule checks one thing: does the answer equal 408?
                 </span>
               </p>
+              <p className="text-sm text-ink-muted">
+                Ask the model the same problem four times and it answers stochastically — that is
+                the group. Each wrong answer is a real slip: 17 × 25, 16 × 24, a dropped carry.
+              </p>
               <p className="text-sm font-semibold text-ink">
                 Sample 1 always answers 408. Drag the dial: the group&apos;s luck changes, sample
                 1&apos;s answer never does.
@@ -701,45 +800,10 @@ export function Page14() {
                 value={luck}
                 onChange={setLuckAnd}
               />
-              <div className="grid gap-2 sm:grid-cols-4" role="group" aria-label="Four sampled answers">
-                {rewards.map((r, i) => {
-                  const right = r === 1;
-                  const adv = r - mean;
-                  return (
-                    <div
-                      key={i}
-                      className={`flex flex-col items-center gap-1 rounded-lg border-l-4 p-2 text-sm ${
-                        right ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
-                      } ${i === 0 ? "ring-2 ring-compute" : ""}`}
-                    >
-                      <span className="text-xs text-ink-muted">
-                        sample {i + 1}
-                        {i === 0 ? <span className="ml-1 font-semibold text-compute">watch this one</span> : null}
-                      </span>
-                      <span className="font-mono font-semibold text-ink">
-                        {right ? RIGHT_ANSWER : OTHER_WRONGS[i - 1]}
-                      </span>
-                      <span className={right ? "text-xs text-correct" : "text-xs text-wrong"}>
-                        {right ? "✓ reward 1" : "✗ reward 0"}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <PushArrow adv={adv} />
-                        <span
-                          className={`font-mono text-xs font-semibold ${
-                            adv > 0 ? "text-correct" : adv < 0 ? "text-wrong" : "text-ink-muted"
-                          }`}
-                        >
-                          {fmtPush(adv)}
-                        </span>
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              <GroupBaselineChart rewards={rewards} mean={mean} />
               <p className="text-sm text-ink-muted">
-                group average: <span className="font-mono text-ink">{mean.toFixed(2)}</span> · each
-                sample&apos;s push is its reward minus that average (GRPO then divides by the
-                group&apos;s spread)
+                each sample&apos;s push is its distance from the dashed rule — its reward minus the
+                group mean (GRPO then divides by the group&apos;s spread)
               </p>
               {uniform ? (
                 <p className="rounded border-l-4 border-compute bg-surface p-2 text-sm text-ink">
