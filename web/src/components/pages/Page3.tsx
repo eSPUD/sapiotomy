@@ -360,7 +360,7 @@ export function Page3() {
           </h2>
 
           <h3 className="text-lg font-semibold text-ink">
-            The bill compounds
+            a. The bill compounds
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               derived from the two Epoch trends
             </span>
@@ -451,20 +451,20 @@ export function Page3() {
             </figcaption>
           </figure>
 
-          <h3 className="text-lg font-semibold text-ink">It always lags</h3>
+          <h3 className="text-lg font-semibold text-ink">b. It always lags</h3>
           <p className="text-ink">
             A training run takes weeks, so the cutoff moves forward but never reaches <em>now</em>.
             Retraining resets the clock. It does not stop it.
           </p>
 
-          <h3 className="text-lg font-semibold text-ink">It cannot be aimed</h3>
+          <h3 className="text-lg font-semibold text-ink">c. It cannot be aimed</h3>
           <p className="text-ink">
             There is no retraining for one missing fact. You buy the whole distribution to obtain a
             single result.
           </p>
 
           <h3 className="text-lg font-semibold text-ink">
-            The data runs out
+            d. The data runs out
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               cited stock, derived demand
             </span>
@@ -603,26 +603,26 @@ export function Page3() {
             2. Challenges in addressing knowledge bias
           </h2>
 
-          <h3 className="text-lg font-semibold text-ink">The fact was already there</h3>
+          <h3 className="text-lg font-semibold text-ink">a. The fact was already there</h3>
           <p className="text-ink">
             Page 2&apos;s model held the 2023 title the whole time and dropped it anyway. That miss
             was never about what it had read, so more reading cannot answer it.
           </p>
 
-          <h3 className="text-lg font-semibold text-ink">More text sharpens the default</h3>
+          <h3 className="text-lg font-semibold text-ink">b. More text sharpens the default</h3>
           <p className="text-ink">
             The reading a model picks is whatever its corpus says most. More text from the same
             world strengthens that majority rather than loosening it.
           </p>
 
-          <h3 className="text-lg font-semibold text-ink">Generated text loses the tails</h3>
+          <h3 className="text-lg font-semibold text-ink">c. Generated text loses the tails</h3>
           <p className="text-ink">
             The obvious escape from the data wall makes it worse: train on generated text and the
             rare cases thin out a round at a time until they are gone.
             <Cite n={REF.collapse} />
           </p>
 
-          <h3 className="text-lg font-semibold text-ink">Alignment is trained separately</h3>
+          <h3 className="text-lg font-semibold text-ink">d. Alignment is trained separately</h3>
           <p className="text-ink">
             Helpful, harmless and honest is a procedure of its own, applied after pretraining.
             <Cite n={REF.hhh} /> Size does not confer it.
