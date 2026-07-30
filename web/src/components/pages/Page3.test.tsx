@@ -165,10 +165,8 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("each step's References margin note carries only the sources that step uses", () => {
     render(<Page3 />);
     const notes = Array.from(document.querySelectorAll("aside")).map((a) => a.textContent ?? "");
-    // two References notes, plus the CC BY / no-claims note closing the column
-    expect(notes).toHaveLength(3);
-    const [gaps, bias, provenance] = notes;
-    expect(provenance).toMatch(/redrawn under CC BY/i);
+    expect(notes).toHaveLength(2);
+    const [gaps, bias] = notes;
 
     // The gap section owns every cost and data source, and none of the bias ones.
     for (const ref of [/Sevilla/, /Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
@@ -203,12 +201,10 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(badges.map((a) => a.textContent ?? "").join(" | ")).toMatch(
       /Sevilla.*Cottier.*AI Index.*Hoffmann.*Villalobos/,
     );
-    // Provenance survives inline: the h2 annotations and the CC BY footnote.
+    // Provenance survives inline, in the h2 annotations.
     expect(screen.getByText(/derived from the two Epoch trends/i)).toBeInTheDocument();
     expect(screen.getByText(/cited stock, derived demand/i)).toBeInTheDocument();
     expect(screen.getByText(/not a burn rate/i)).toBeInTheDocument();
-    expect(screen.getByText(/redrawn under CC BY/i)).toBeInTheDocument();
-    expect(screen.getByText(/no claims about what any lab actually spends/i)).toBeInTheDocument();
     expectClean();
   });
 });

@@ -34,13 +34,11 @@
  * cell stays an empty <div aria-hidden="true" />. There is still no "how to
  * read this page" rail (a slider, a dial and a text box need no instructions).
  * What is cited vs derived is said inline in each step's h2 annotation
- * ("derived from the two Epoch trends", "cited stock, derived demand"), the
+ * ("derived from the two Epoch trends", "cited stock, derived demand"), and the
  * DataWindowMeter's caption line carries the "cited window, not a burn rate"
- * caveat, and a margin Note at the foot of the sidenote column carries the CC BY
- * redraw attribution plus the "no claims about what any lab actually spends"
- * disclaimer. All three are load-bearing: do not trim them. The CC BY line is a
- * licence obligation, Epoch publishing under Creative Commons Attribution; the
- * spending line stops a hypothetical being read as an industry figure.
+ * caveat. Attribution to Epoch, who publish under Creative Commons Attribution,
+ * rides on the linked References entries (Sevilla & Roldan, Cottier, AI Index),
+ * which name and link each source; the standalone CC BY footnote was removed.
  *
  * Each figure owns its own control. The cost chart's month marker moves that
  * chart and nothing else; the projection's year marker moves the projection and
@@ -572,13 +570,7 @@ export function Page3() {
           <strong>before</strong> the question arrives, which leaves only what it does{" "}
           <strong>after</strong> it.
         </PullQuote>
-        <Note kicker="Note">
-          <p>
-            the frontier compute trend (about 5x per year for language models since mid-2020) is an
-            Epoch figure, redrawn under CC BY, not Epoch&apos;s image · no claims about what any lab
-            actually spends
-          </p>
-        </Note>
+        <div aria-hidden="true" />
       </div>
 
       <div aria-live="polite" className="sr-only">
