@@ -34,18 +34,25 @@
  * prices the missing RL. The staircase arrows state the law statically — up
  * one curve and along one decade buy the same +29.5 — so "one law, two
  * knobs" is legible before anything is dragged; the default (×10, ×10) opens
- * with the bracket showing exactly one decade forgone. The equality
- * law(2,0) = law(0,2) is the Try-it note's punchline (thinking cannot spend
- * training's decades). The unlabeled-axis fidelity note is unchanged: the
- * slope is authored, the anchors verbatim.
+ * with the bracket showing exactly one decade forgone. The Try-it note is a
+ * single imperative sentence, page 2's margin grammar — the interpretation
+ * (thinking walks your curve and never climbs to the next one; the equality
+ * law(2,0) = law(0,2)) lives in the card's closing line, where the deck puts
+ * meaning. The fidelity note is compressed to two sentences; "the slope is
+ * the claim; the absolute compute is a secret" survives on purpose — it is
+ * itself an abstraction (labs publish shapes, not units).
  *
- * Section 3 is deliberately not a scoreboard — the old GPT-4o/o1/o3 table
- * read as product chronology and regurgitated announcement numbers, and was
- * reviewed out. The waterfall stays (Act 2's tricks as a second storey on the
- * learned chain; rows are mechanisms, model names demoted to parentheses),
- * and o3 appears exactly once, as the law applied again, inside the paper's
- * own generality ablation: o1-ioi's hand-engineered contest pipeline vs an
- * early o3's unaided gold (El-Kishky et al. 2025).
+ * Section 3 is one question asked twice — "Stack the toolbox, or turn the
+ * knobs?" The waterfall is the stacking answer (Act 2's tricks as a second
+ * storey on the learned chain; rows are mechanisms, model names demoted to
+ * parentheses). The knob answer is El-Kishky's own ablation, compressed to
+ * one paragraph in the deck's vocabulary — o1-ioi is the toolbox bolted on
+ * by hand at the frontier, an early o3 is the knobs turned further, and the
+ * knobs won — with the paper's conclusion as the one verbatim anchor. No
+ * benchmark numbers anywhere: the medals, percentiles, and the AIME pair
+ * were reviewed out as retelling; scores live on page 15 (The Scoreboard).
+ * o3-preview.json is no longer read here (its reference dropped off the
+ * page).
  *
  * Section 4 replaces the old boundary diagram (three visual systems, no
  * shared grammar) with a ledger — what exists / who can read it / who pays —
@@ -58,9 +65,8 @@
  * provenance is declared inline, in the h2 badges, section 1's caption, and
  * section 2's fidelity note.
  *
- * Anchored to data/o1-scaling.json and data/o3-preview.json; the law and the
- * printed anchors are pinned in frontier.test.ts, the page's structure in
- * Page13.test.tsx.
+ * Anchored to data/o1-scaling.json; the law and the printed anchors are
+ * pinned in frontier.test.ts, the page's structure in Page13.test.tsx.
  */
 
 import { useState } from "react";
@@ -78,12 +84,10 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 13;
 
 /** Page 13's references, numbered in order of first appearance. */
-const REF = { announce: 1, competitive: 2, o3preview: 3, systemCard: 4 } as const;
+const REF = { announce: 1, competitive: 2, systemCard: 3 } as const;
 
 const SCALING = curves.o1Scaling;
-const O3 = curves.o3Preview;
 const P = SCALING.fit!.params;
-const Q = O3.fit!.params;
 
 /* The chart samples the law every tenth of a decade across the figure's span. */
 const EXPS = Array.from({ length: 21 }, (_, i) => i / 10);
@@ -648,40 +652,36 @@ export function Page13() {
             <p className="text-sm text-ink-muted">
               <strong className="text-ink">Thinking slides you along the curve; only training
               lifts it.</strong>{" "}
-              The knobs compound, they do not substitute — and the lift is paid for in a currency
-              page 3&apos;s wall does not price: chains the model writes itself, not the finite
-              stock of human text.
+              The two dials pay the same +{P.slopePerDecade} per decade, but they do not
+              substitute — thinking walks your curve and never climbs to the next one, and the
+              climb is paid for in a currency page 3&apos;s wall does not price: chains the model
+              writes itself, not the finite stock of human text.
             </p>
             <p className="text-xs text-ink-muted">
-              The line is an authored redrawing of the announcement figure&apos;s shape: OpenAI
-              published both charts with the compute axis unlabeled — a log scale in undisclosed,
-              relative units — so ×1 to ×100 here spans the figure&apos;s two decades, and the +
-              {P.slopePerDecade}-per-decade slope is the redrawing&apos;s, not a published number.
-              The slope is the claim; the absolute compute is a secret. The dashed GPT-4o line and
-              the o1 dot are the source&apos;s verbatim numbers.
+              OpenAI published both charts with the compute axis unlabeled — a log scale in
+              undisclosed, relative units — so the ×1–×100 span and the{" "}
+              +{P.slopePerDecade}-per-decade slope are this redrawing&apos;s; the dashed GPT-4o
+              line and the o1 dot are verbatim. The slope is the claim; the absolute compute is a
+              secret.
             </p>
           </div>
         </section>
 
         <Note kicker="Try it">
           <p>
-            Drag the training slider to ×1 and push thinking to ×100: you land at {P.intercept}% —
-            exactly where the full run <em>starts</em> at ×1 thinking.
-          </p>
-          <p>
-            That equality is the law: a decade of thinking equals a decade of training, and
-            neither knob can spend the other&apos;s decades.
+            Drag training to ×1 and push thinking to ×100: all that thinking lands exactly where
+            the full run <em>starts</em>.
           </p>
         </Note>
 
         {/* Step 3 — the second storey, and the generality ablation */}
         <section className="flex min-w-0 flex-col gap-4 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">3. The toolbox becomes a second storey</h2>
+          <h2 className="text-xl font-semibold text-ink">3. Stack the toolbox, or turn the knobs?</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Act 2 did not become obsolete — it became the second storey. Each increment below is
-              one of its mechanisms, stacked on top of the learned chain, on competition maths
-              (AIME 2024):
+              First answer: stack. Act 2 did not become obsolete — it became the second storey.
+              Each increment below is one of its mechanisms, stacked on top of the learned chain,
+              on competition maths (AIME 2024):
             </p>
             <div
               className="flex flex-col gap-2"
@@ -723,36 +723,23 @@ export function Page13() {
           </h3>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Is the recipe doing the work, or benchmark-specific tuning? OpenAI ran the ablation
-              itself.
-            </p>
-            <p className="text-sm text-ink-muted">
-              For the 2024 International Olympiad in Informatics it built{" "}
-              <strong className="text-ink">o1-ioi</strong> — o1 plus hand-engineered,
-              contest-specific inference strategies. Live, it placed in the 49th percentile;
-              gold required relaxed constraints. An early <strong className="text-ink">o3</strong>{" "}
-              — the same general recipe with both knobs turned further, no contest tricks at
-              all — took gold outright.
-              <Cite n={REF.competitive} />
-            </p>
-            <p className="text-sm text-ink-muted">
-              That later checkpoint is the only o3 this page needs: both knobs turned further,
-              and <strong className="text-ink">the law held</strong> — on the announcement&apos;s
-              own preview scoring, competition maths moved {P.o1Pass1}% → {Q.o3Aime}%.
-              <Cite n={REF.o3preview} /> The paper&apos;s conclusion, verbatim: scaling
+              Second answer: turn the knobs — and OpenAI ran the ablation itself. Take o1 and
+              bolt on hand-engineered, contest-specific strategies (
+              <strong className="text-ink">o1-ioi</strong>) — Act 2&apos;s move, done by hand at
+              the frontier — or just turn the two knobs further. The knob-turning branch, an
+              early <strong className="text-ink">o3</strong>, beat the hand-built specialist on
+              its own contest, no tricks attached.
+              <Cite n={REF.competitive} /> Their conclusion, verbatim: scaling
               &ldquo;general-purpose reinforcement learning, rather than relying on
-              domain-specific techniques, offers a robust path toward state-of-the-art AI&rdquo;
-              in reasoning domains.
-              <Cite n={REF.competitive} />
+              domain-specific techniques, offers a robust path toward state-of-the-art
+              AI&rdquo;.
+              <Cite n={REF.competitive} />{" "}
+              <strong className="text-ink">Stacking pays once; the knobs compound.</strong>
             </p>
           </div>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.o3preview} href="https://arcprize.org/blog/oai-o3-pub-breakthrough" preprint>
-            OpenAI 2024, <em>OpenAI o3 preview</em> (via ARC Prize).
-          </RefItem>
-        </Note>
+        <div aria-hidden="true" />
 
         {/* Step 4 — the hidden chain */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
