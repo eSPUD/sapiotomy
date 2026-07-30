@@ -74,6 +74,35 @@ the pages cannot drift), different lesson. ARC-AGI stays off this page; its
 story is the price tag and page 16 tells it with a dollar axis. Page 20's
 verdict flip is the exam this page trains for.
 
+## Addendum (same day): the treadmill replaced by the window simulation
+
+The lifespan-bars treadmill had the exact defect the page warns about: a shelf
+life. Its "still standing" state was a live status claim — it showed
+FrontierMath standing on the strength of April-2025 data, which had already
+stopped being true by mid-2026 (frontier models at max reasoning settings score
+far above the disputed 25.2). Patching the number would only reset the clock;
+any status-board design rots on the next model release.
+
+Section 2 is now **"Why tests die"**: an authored, illustrative simulation
+(`lib/benchmarkWindow.ts`) of a benchmark as a measuring instrument with a
+window. One slider moves an abstract frontier past four stylized tests
+(deliberately not named after real benchmarks); each test's readout passes
+floor (everyone fails, no signal) → window (five models spread out, signal) →
+ceiling (everyone passes, no signal). At the top of the slider every test is
+blind and the figure asks for harder goalposts. The treadmill now *emerges*
+from mechanics instead of being reported, and the figure makes no claim about
+where any real benchmark sits on the day it is read, so it cannot expire.
+
+Real history moved to the caption as immutable facts only: the four completed
+falls (each ceiling faster than the last, GSM8K's pre-reasoning), and
+FrontierMath's *launch* state (under 2% by design) as the example of a test
+born at the floor. No durations, no dates in the figure, no "standing" states
+anywhere. The simulation's shape (mid-ladder = ceiling/window/window/floor;
+floor→window→ceiling sweep per test; all-blind at max) is pinned in
+`benchmarkWindow.test.ts`, and its authored nature is disclosed in the step
+body and the provenance footer, page-18 style. `benchmark-scoreboard.json` and
+its tests remain in the repo but no page renders them now.
+
 ## Data and pins
 
 No data files changed. `benchmark-scoreboard.json` still feeds the treadmill
