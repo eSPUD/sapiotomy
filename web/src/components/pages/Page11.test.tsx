@@ -135,19 +135,34 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText("14× · 1 answer")).toBeInTheDocument();
   });
 
-  it("attaches a unit to the 4x claim: samples, 64 doing the work of 256", () => {
+  it("grounds the 4x claim in its baseline: flat 256 vs difficulty-first 64", () => {
     render(<Page11 />);
     expect(screen.getByText(/fewer samples than best-of-N/i)).toBeInTheDocument();
-    expect(screen.getByText(/64 samples doing the work of 256/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/best-of-N spends 256 samples on every question/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/64 samples buy the same accuracy/i)).toBeInTheDocument();
   });
 
-  it("states the R rule as its two limits", () => {
+  it("states the R rule as amortization: bought once vs a per-query surcharge", () => {
     render(<Page11 />);
     expect(
-      screen.getByText(/R = inference tokens served ÷ pretraining tokens/i),
+      screen.getByText(/R = tokens you will serve ÷ tokens you trained on/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/As R → 0, thinking wins/i)).toBeInTheDocument();
-    expect(screen.getByText(/As R → ∞, parameters win/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pretraining is bought once/i)).toBeInTheDocument();
+    expect(screen.getByText(/thinking is a surcharge on every one/i)).toBeInTheDocument();
+    expect(screen.getByText(/Serve little\s+\(R → 0\) and thinking wins/i)).toBeInTheDocument();
+    expect(screen.getByText(/serve billions \(R → ∞\) and parameters win/i)).toBeInTheDocument();
+  });
+
+  it("explains why difficulty decides: thinking amplifies, parameters create", () => {
+    render(<Page11 />);
+    expect(
+      screen.getByText(/extra samples only re-draw from\s+what the model can already produce/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Thinking amplifies competence; only parameters create it\./i),
+    ).toBeInTheDocument();
   });
 
   it("grounds real parameter counts in the Pythia chart, not the game", () => {
