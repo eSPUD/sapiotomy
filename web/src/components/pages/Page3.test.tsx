@@ -42,10 +42,19 @@ describe("Page 3 (Training-Time Scaling)", () => {
     render(<Page3 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training-Time Scaling");
     // The two walls are sub-heads under section 1 now.
-    expect(screen.getByRole("heading", { level: 3, name: /The bill compounds/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 3, name: /Bigger models, finite data/i }),
-    ).toBeInTheDocument();
+    // Every challenge is its own sub-head, four per section.
+    for (const h of [
+      /The bill compounds/i,
+      /It always lags/i,
+      /It cannot be aimed/i,
+      /The data runs out/i,
+      /The fact was already there/i,
+      /More text sharpens the default/i,
+      /Generated text loses the tails/i,
+      /Alignment is trained separately/i,
+    ]) {
+      expect(screen.getByRole("heading", { level: 3, name: h })).toBeInTheDocument();
+    }
     // Step 1: the combined cost curve. The old one-year meter stays gone.
     expect(
       screen.getByRole("heading", { level: 2, name: /1\. Challenges in addressing knowledge gaps/i }),

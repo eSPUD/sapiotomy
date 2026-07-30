@@ -451,20 +451,20 @@ export function Page3() {
             </figcaption>
           </figure>
 
+          <h3 className="text-lg font-semibold text-ink">It always lags</h3>
           <p className="text-ink">
-            <strong>The lag is structural.</strong> A training run takes weeks. Give the plan
-            unlimited money and unlimited text and the model still ships stale: the cutoff moves
-            forward, but it never reaches <em>now</em>. Retraining resets the clock. It does not
-            stop it.
+            A training run takes weeks, so the cutoff moves forward but never reaches <em>now</em>.
+            Retraining resets the clock. It does not stop it.
           </p>
+
+          <h3 className="text-lg font-semibold text-ink">It cannot be aimed</h3>
           <p className="text-ink">
-            <strong>And it cannot be aimed.</strong> There is no retraining for one missing fact.
-            You buy the whole distribution to obtain a single result, which is a wild mismatch
-            between what you pay for and what you needed.
+            There is no retraining for one missing fact. You buy the whole distribution to obtain a
+            single result.
           </p>
 
           <h3 className="text-lg font-semibold text-ink">
-            Bigger models, finite data
+            The data runs out
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               cited stock, derived demand
             </span>
@@ -603,22 +603,29 @@ export function Page3() {
             2. Challenges in addressing knowledge bias
           </h2>
 
-                    <p className="text-ink">
-            Everything above answers one of Page 2&apos;s two failures. The model held the 2023 title
-            the whole time and dropped it anyway, so that miss was never about what it had read.
-          </p>
+          <h3 className="text-lg font-semibold text-ink">The fact was already there</h3>
           <p className="text-ink">
-            More reading cannot change which reading gets picked. It points the wrong way, in fact:
-            the default is whatever the corpus says most, and more text from the same world sharpens
-            that majority. The obvious escape from the data wall is worse still, since a model
-            trained on generated text loses the rare cases a round at a time until the tails are
-            gone.
+            Page 2&apos;s model held the 2023 title the whole time and dropped it anyway. That miss
+            was never about what it had read, so more reading cannot answer it.
+          </p>
+
+          <h3 className="text-lg font-semibold text-ink">More text sharpens the default</h3>
+          <p className="text-ink">
+            The reading a model picks is whatever its corpus says most. More text from the same
+            world strengthens that majority rather than loosening it.
+          </p>
+
+          <h3 className="text-lg font-semibold text-ink">Generated text loses the tails</h3>
+          <p className="text-ink">
+            The obvious escape from the data wall makes it worse: train on generated text and the
+            rare cases thin out a round at a time until they are gone.
             <Cite n={REF.collapse} />
           </p>
+
+          <h3 className="text-lg font-semibold text-ink">Alignment is trained separately</h3>
           <p className="text-ink">
-            Nor does size confer the rest of what makes an assistant usable. Helpful, harmless and
-            honest is a training procedure of its own, applied after the fact.
-            <Cite n={REF.hhh} /> A bigger pretraining run does not hand it to you.
+            Helpful, harmless and honest is a procedure of its own, applied after pretraining.
+            <Cite n={REF.hhh} /> Size does not confer it.
           </p>
 
           <h3 className="text-lg font-semibold text-ink">
