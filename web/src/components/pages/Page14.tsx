@@ -2,50 +2,54 @@
 
 /**
  * Page 14, "Frontier Reasoners II: DeepSeek-R1, GRPO, and the 'Aha Moment'" —
- * the open-weight answer to the closed frontier. o1 proved RL-trained reasoning
- * works and hid how; in January 2025 DeepSeek published the recipe, the
- * training curve, and the weights (MIT license). The page's one idea: reward
- * ONLY verifiable right answers and the pausing / second-guessing /
- * self-correcting emerges on its own — nobody writes it in.
+ * the open-weight answer to the closed frontier. Page 13 closed on a promise
+ * (weights, training curve, visible chain); this page cashes all three in.
+ * The page's one idea: reward ONLY verifiable right answers and the pausing /
+ * second-guessing / self-correcting emerges on its own — nobody writes it in.
  *
- * Step 1 is the recipe, GRPO, shown as the thing it actually is: the group of
- * sampled answers IS the baseline. Four sampled answers to page 1's 17 × 24, a
- * rule-based checker (= 408?), and each answer pushed by (its reward − the
- * group mean). Clicking a slot resamples it — the cue sits ABOVE the widget so
- * the page's only step-1 interaction is actually found — and the reader can
- * feel the two properties that matter: the same right answer earns a smaller
- * push in a luckier group, and a uniform group teaches nothing. No critic
- * network anywhere — that is what made RL at this scale affordable.
+ * Step 1 is the recipe, GRPO, abstracted honestly: five lines of annotated
+ * pseudocode (sample a group, score with a rule, advantage = distance from
+ * the group's own mean) instead of the clipped-surrogate objective. The one
+ * interaction is a single dial: sample 1 always answers page 1's 17 × 24
+ * correctly, and the dial sets how many of the other three also get it
+ * right. The reader watches the SAME right answer earn a shrinking push as
+ * the group gets luckier, down to 0.00 when the group is uniform — the two
+ * properties that matter, one control. No critic network anywhere: that is
+ * what made RL at this scale affordable, and the copy says so against PPO.
  *
- * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining). The
- * chart plots BOTH of the section's variables against training step on a dual
- * y-axis: AIME pass@1 (left, 15.6 → 71.0) and average response length (right,
- * ~1k → ~9k tokens). The divergence IS the argument — accuracy saturates while
- * length keeps climbing; the model spends more to buy less and chooses to
- * anyway. A dashed rule at the aha step ties the chart to the scratchpad
- * below, which stages the paper's Table-3 trace: early = square once and stop;
- * mid = longer but strictly forward; past the aha step the verbatim "Wait,
- * wait. Wait." interruption appears and a gutter arrow draws the loop — the
- * trace visibly returns to its own first line. The paper places that trace
- * only at "an intermediate version", so its position here is an illustrative
- * placement — said under the trace and again in the footer.
+ * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining),
+ * both variables on a dual y-axis: AIME pass@1 (left, 15.6 → 71.0) and
+ * average response length (right, ~1k → ~9k tokens). Neither curve is a
+ * schedule — no term in the reward mentions length (the chart says so in an
+ * annotation); the model buys itself thinking time because re-checking pays.
+ * Below the chart, the trace is shown as a SHAPE, not text: a skeleton of
+ * forward steps early and mid, and past the aha step an interrupt node with
+ * a loop back to the trace's own first line and a second, re-deriving pass.
+ * The skeleton is the abstraction of the paper's Table-3 trace — structure
+ * only, nothing quoted — and it is what the right axis's extra tokens are
+ * made of. The paper places the behaviour at "an intermediate version", so
+ * where the aha lands on the slider is an illustrative placement — said
+ * under the skeleton and again in the footer.
  *
- * Step 3 is the give-away: full R1's headline numbers (cold start + more RL),
- * then the six distilled dense models (curves.deepseekDistill, Table 5) as a
- * scatter of AIME pass@1 against parameters (log x). The scatter draws what
- * the section promises: the ~48× gap between Qwen-14B and the 671B teacher as
- * a horizontal span (page 11's annotation grammar), Qwen-32B beating Llama-70B
- * as a visible non-monotonicity, and the distillation frontier as a shape.
- * o1-mini's parameter count is undisclosed, so it is a dashed reference line
- * (page 13's GPT-4o idiom), not a point. Chips below the chart pick a size;
- * the picked point is ringed on the plot.
+ * Step 3 is the give-away, reframed as its actual thesis: reasoning
+ * transfers as data. ~800K traces, plain SFT, no RL and no reward — page
+ * 12's recipe with a stronger teacher — and six dense models inherit the
+ * behaviour (curves.deepseekDistill, Table 5), drawn as a scatter of AIME
+ * pass@1 against parameters (log x): the ~48× Qwen-14B → teacher span,
+ * Qwen-32B beating Llama-70B, o1-mini as a dashed reference line (parameter
+ * count undisclosed). Where a dot crosses that line, page 11's law has been
+ * compressed into weights anyone can download. R1's own scoreboard is
+ * deliberately NOT tabled here — one number places the teacher, the rest is
+ * deferred to page 15, which is the page's closing handoff: two pages of
+ * frontier claims all arrived as benchmark scores, read at face value so
+ * far; whether they should be is The Scoreboard's job.
  *
- * Footer follows the deck-wide two-label provenance pattern: Simulated (the
- * interpolated curve, the illustrative aha placement) and Cited (every number
- * pinned to DeepSeek-AI 2025, the verbatim Table-3 passage).
+ * Footer keeps the deck-wide two-label provenance pattern: Simulated (the
+ * interpolated curve, the schematic skeleton, the illustrative aha
+ * placement) and Cited (every number pinned to DeepSeek-AI 2025).
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { scaleLinear, scaleLog } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -53,52 +57,35 @@ import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves, interpolate } from "@/lib/curves";
-import type { Citation } from "@/lib/data";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 14;
 const MAX_STEP = 8000;
-/** Trace staging thresholds on the scrubber (illustrative placement — see the
-    provenance line under the trace). */
+/** Skeleton staging thresholds on the scrubber (illustrative placement — see
+    the provenance line under the skeleton). */
 const MID_STEP = 2500;
 const AHA_STEP = 5000;
 
 /** Page 14's references, numbered in order of first appearance. */
 const REF = { r1: 1, grpo: 2 } as const;
 
-const GRPO_CITATION: Citation = {
-  ref: "Shao et al. 2024",
-  url: "https://arxiv.org/abs/2402.03300",
-  venue: "arXiv (preprint)",
-  preprint: true,
-};
-
-/** Page 1's multiplication, sampled four times. Each slot's wrong answer is
-    fixed so a resample is deterministic: right ↔ that slot's wrong. */
+/** Page 1's multiplication. Sample 1 always gets it right; the other three
+    slots have fixed wrong answers so the dial is deterministic. */
 const RIGHT_ANSWER = "408";
-const SLOT_WRONGS = ["398", "428", "308", "388"];
+const OTHER_WRONGS = ["398", "428", "308"];
+
+/** The GRPO recipe as five annotated lines — the honest abstraction of the
+    objective (advantage from the group's own statistics), minus the clipped
+    surrogate machinery. */
+const PSEUDO: { code: string; note?: string }[] = [
+  { code: "for each problem q:" },
+  { code: "  sample G answers from the current policy" },
+  { code: "  rᵢ ← 1 if answerᵢ is right, else 0", note: "the reward is a program, not a second model" },
+  { code: "  Aᵢ ← (rᵢ − mean(r)) / std(r)", note: "the group is its own baseline: no critic network" },
+  { code: "  push toward answers with Aᵢ > 0, away from Aᵢ < 0", note: "plus a leash (KL) back to the reference model" },
+];
 
 type Stage = "early" | "mid" | "aha";
-
-/* The Table-3 trace, staged. OPEN and MID are the verbatim trace abridged;
-   AHA is the famous passage verbatim, ellipses as printed. */
-const TRACE_PROBLEM =
-  "If a > 1, then the sum of the real solutions of √(a − √(a+x)) = x is equal to …";
-const TRACE_OPEN = [
-  "To solve the equation √(a − √(a+x)) = x, let's start by squaring both sides …",
-  "(√(a − √(a+x)))² = x² ⟹ a − √(a+x) = x²",
-];
-const TRACE_MID = [
-  "Rearrange to isolate the inner square root: √(a+x) = a − x², then square again: a + x = (a − x²)²",
-  "Expanding and collecting terms: x⁴ − 2ax² − x + (a² − a) = 0 …",
-];
-const TRACE_AHA = [
-  "Wait, wait. Wait. That's an aha moment I can flag here.",
-  "Let's reevaluate this step-by-step to identify if the correct sum can be …",
-  "We started with the equation: √(a − √(a+x)) = x",
-  "First, let's square both sides: a − √(a+x) = x² ⟹ √(a+x) = a − x²",
-  "Next, I could square both sides again, treating the equation: …",
-];
 
 const STAGE_CHIP: Record<Stage, string> = {
   early: "early in training",
@@ -106,9 +93,9 @@ const STAGE_CHIP: Record<Stage, string> = {
   aha: "after the aha",
 };
 const STAGE_NOTE: Record<Stage, string> = {
-  early: "One pass: square once, write an answer, stop. Nothing looks back.",
-  mid: "Longer now — more algebra per attempt — but still strictly forward: whatever was written first, stands.",
-  aha: "The trace interrupts itself mid-solution and starts over. Nobody trained that in; correct answers simply pay better, and re-checking finds more of them.",
+  early: "A few steps forward, an answer, stop. Nothing looks back.",
+  mid: "Longer now, more algebra per attempt, but still strictly forward: whatever was written first, stands.",
+  aha: "The trace interrupts itself, loops back to its own first line, and re-derives. Nobody wrote that in: re-checking finds more right answers, and right answers are all the reward pays. The extra tokens on the right axis are these loops.",
 };
 
 interface Distill {
@@ -172,8 +159,10 @@ function Key({ shape, className, label }: { shape: "circle" | "diamond" | "line"
  * The section-2 chart: BOTH of the section's variables against training step.
  * Accuracy (left axis, correct hue) saturates while average response length
  * (right axis, compute hue) keeps climbing — that divergence is the argument,
- * so both series live on one plot. A dashed rule marks the (illustrative) aha
- * step so the chart and the scratchpad are visibly the same moment.
+ * so both series live on one plot, and an annotation under the length curve
+ * states the fact the divergence rests on: no term in the reward mentions
+ * length. A dashed rule marks the (illustrative) aha step so the chart and
+ * the skeleton below are visibly the same moment.
  */
 function TrainingChart({ step, pass, length }: { step: number; pass: number; length: number }) {
   const training = curves.deepseekTraining;
@@ -194,7 +183,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
     .map((p, i) => `${i ? "L" : "M"}${x(p.x)},${yLen(lengthAt(p.x))}`)
     .join("");
 
-  const title = `R1-Zero across RL training, two y axes. Left axis, AIME 2024 pass at 1: from 15.6 percent at step 0 to 71.0 percent at step ${MAX_STEP}, flattening late. Right axis, average response length: from about ${lengthStart.toLocaleString()} to about ${lengthEnd.toLocaleString()} tokens, still climbing after accuracy flattens. A dashed rule at step ${AHA_STEP.toLocaleString()} marks where the aha trace appears (illustrative placement). Marker at step ${step.toLocaleString()}: ${pass.toFixed(1)} percent, about ${length.toLocaleString()} tokens.`;
+  const title = `R1-Zero across RL training, two y axes. Left axis, AIME 2024 pass at 1: from 15.6 percent at step 0 to 71.0 percent at step ${MAX_STEP}, flattening late. Right axis, average response length: from about ${lengthStart.toLocaleString()} to about ${lengthEnd.toLocaleString()} tokens, still climbing after accuracy flattens; an annotation notes that no term in the reward mentions length. A dashed rule at step ${AHA_STEP.toLocaleString()} marks where the aha trace appears (illustrative placement). Marker at step ${step.toLocaleString()}: ${pass.toFixed(1)} percent, about ${length.toLocaleString()} tokens.`;
 
   return (
     <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="RL training step">
@@ -242,7 +231,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
         avg response (tokens)
       </text>
 
-      {/* the aha step: the chart's moment is the scratchpad's moment */}
+      {/* the aha step: the chart's moment is the skeleton's moment */}
       <line
         x1={x(AHA_STEP)}
         x2={x(AHA_STEP)}
@@ -258,6 +247,16 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
 
       <path d={lenPath} fill="none" className="stroke-compute" strokeWidth={2.5} />
       <path d={accPath} fill="none" className="stroke-correct" strokeWidth={2.5} />
+
+      {/* the fact the divergence rests on, said in the length line's hue */}
+      <text
+        x={innerW * 0.4}
+        y={innerH - 12}
+        textAnchor="middle"
+        className="fill-compute text-[9px]"
+      >
+        no term in the reward mentions length
+      </text>
 
       {/* legend, top-left (the curves start bottom-left) */}
       <rect x={8} y={8} width={10} height={3} className="fill-correct" />
@@ -278,6 +277,157 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
       <circle cx={x(step)} cy={yLen(length)} r={5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
       <circle cx={x(step)} cy={yAcc(pass)} r={5} className="fill-correct stroke-canvas" strokeWidth={1.5} />
     </ChartFrame>
+  );
+}
+
+/** Geometry shared by the skeleton's rows. */
+const SK_BLOCK_W = 46;
+const SK_BLOCK_H = 16;
+const SK_GAP = 16;
+const skX = (i: number) => 8 + i * (SK_BLOCK_W + SK_GAP);
+
+/** One row of forward steps: neutral blocks joined by arrows, optionally
+    dashed (the aha's second pass) and optionally ending in an answer pill. */
+function SkeletonRow({
+  y,
+  count,
+  dashed = false,
+  answer = false,
+  answerCorrect = false,
+}: {
+  y: number;
+  count: number;
+  dashed?: boolean;
+  answer?: boolean;
+  answerCorrect?: boolean;
+}) {
+  const mid = y + SK_BLOCK_H / 2;
+  return (
+    <g>
+      {Array.from({ length: count }, (_, i) => (
+        <g key={i}>
+          <rect
+            x={skX(i)}
+            y={y}
+            width={SK_BLOCK_W}
+            height={SK_BLOCK_H}
+            rx={3}
+            className={dashed ? "stroke-correct" : "fill-grid"}
+            fill={dashed ? "none" : undefined}
+            strokeDasharray={dashed ? "3 2" : undefined}
+          />
+          {i < count - 1 || answer ? (
+            <line
+              x1={skX(i) + SK_BLOCK_W + 2}
+              x2={skX(i + 1) - 5}
+              y1={mid}
+              y2={mid}
+              className="stroke-ink-muted"
+              strokeWidth={1}
+              markerEnd="url(#skel-fwd)"
+            />
+          ) : null}
+        </g>
+      ))}
+      {answer ? (
+        <g>
+          <rect
+            x={skX(count)}
+            y={y}
+            width={58}
+            height={SK_BLOCK_H}
+            rx={SK_BLOCK_H / 2}
+            fill="none"
+            className={answerCorrect ? "stroke-correct" : "stroke-ink-muted"}
+          />
+          <text
+            x={skX(count) + 29}
+            y={mid}
+            dy="0.32em"
+            textAnchor="middle"
+            className={`text-[9px] ${answerCorrect ? "fill-correct" : "fill-ink-muted"}`}
+          >
+            answer
+          </text>
+        </g>
+      ) : null}
+    </g>
+  );
+}
+
+/**
+ * The trace as a shape, no text. Early and mid are strictly forward chains
+ * of different lengths; the aha stage adds the only structure that matters:
+ * an interrupt node and a loop back to the trace's own first line, then a
+ * second, re-deriving pass. This is the abstraction of the paper's Table-3
+ * trace — the structure it exhibits, not the words it uses.
+ */
+function TraceSkeleton({ stage }: { stage: Stage }) {
+  const label =
+    stage === "early"
+      ? "Trace skeleton, early in training: three steps forward, then an answer. Nothing looks back. Schematic, structure only, no text."
+      : stage === "mid"
+        ? "Trace skeleton, mid training: six steps forward, then an answer. Longer, still strictly forward. Schematic, structure only, no text."
+        : "Trace skeleton after the aha: four steps forward, then the trace interrupts itself and loops back to its own first line; a second pass of five dashed steps re-derives the solution and ends in an answer. Schematic, structure only, no text.";
+
+  const height = stage === "aha" ? 140 : 52;
+
+  return (
+    <svg role="img" aria-label={label} viewBox={`0 0 560 ${height}`} className="w-full">
+      <defs>
+        <marker id="skel-fwd" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+          <path d="M0,0 L5,3 L0,6" fill="none" className="stroke-ink-muted" strokeWidth={1} />
+        </marker>
+        <marker id="skel-loop" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+          <path d="M0,0 L6,3.5 L0,7" fill="none" className="stroke-correct" strokeWidth={1.2} />
+        </marker>
+      </defs>
+
+      <text x={8} y={14} className="fill-ink-muted text-[9px] uppercase tracking-wide">
+        {stage === "aha" ? "first pass" : "one pass"}
+      </text>
+
+      {stage === "early" ? <SkeletonRow y={22} count={3} answer /> : null}
+      {stage === "mid" ? <SkeletonRow y={22} count={6} answer /> : null}
+
+      {stage === "aha" ? (
+        <g>
+          {/* first pass: four steps, then the interrupt */}
+          <SkeletonRow y={22} count={4} />
+          <line
+            x1={skX(3) + SK_BLOCK_W + 2}
+            x2={skX(4) - 5}
+            y1={30}
+            y2={30}
+            className="stroke-ink-muted"
+            strokeWidth={1}
+            markerEnd="url(#skel-fwd)"
+          />
+          <rect x={skX(4)} y={22} width={64} height={SK_BLOCK_H} rx={3} fill="none" className="stroke-correct" strokeWidth={1.5} />
+          <text x={skX(4) + 32} y={30} dy="0.32em" textAnchor="middle" className="fill-correct text-[9px] font-semibold">
+            interrupt
+          </text>
+
+          {/* the loop: back to the trace's own first line */}
+          <path
+            d={`M ${skX(4) + 32} 42 C ${skX(4) + 32} 76, 30 54, 30 90`}
+            fill="none"
+            className="stroke-correct"
+            strokeWidth={1.5}
+            markerEnd="url(#skel-loop)"
+          />
+          <text x={160} y={82} textAnchor="middle" className="fill-correct text-[9px]">
+            back to line 1
+          </text>
+
+          {/* second pass: re-derivation, ending in the answer */}
+          <SkeletonRow y={96} count={5} dashed answer answerCorrect />
+          <text x={8} y={130} className="fill-ink-muted text-[9px] uppercase tracking-wide">
+            second pass
+          </text>
+        </g>
+      ) : null}
+    </svg>
   );
 }
 
@@ -405,43 +555,29 @@ export function Page14() {
 
   const [step, setStep] = useState(0);
   const [pickedSize, setPickedSize] = useState(14);
-  const [rightSlots, setRightSlots] = useState([true, false, false, true]);
+  /* — step 1: how many of the OTHER three samples also get 408 — */
+  const [luck, setLuck] = useState(1);
 
-  /* — step 1: the group is the baseline — */
-  const rewards: number[] = rightSlots.map((c) => (c ? 1 : 0));
+  const rewards: number[] = [1, ...OTHER_WRONGS.map((_, i) => (i < luck ? 1 : 0))];
   const mean = rewards.reduce((a, b) => a + b, 0) / rewards.length;
-  const uniform = rewards.every((r) => r === rewards[0]);
-  const resample = (i: number) => {
-    setRightSlots((prev) => prev.map((c, k) => (k === i ? !c : c)));
+  const uniform = luck === 3;
+  const push1 = 1 - mean;
+  const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}`;
+  const setLuckAnd = (v: number) => {
+    setLuck(v);
     recordInteraction(PAGE_N);
+  };
+  const LUCK_READ: Record<number, string> = {
+    0: `Sample 1 is the only right answer in the group: the biggest push on offer (+${push1.toFixed(2)}).`,
+    1: `Same right answer, luckier group: sample 1's push drops to +${push1.toFixed(2)}.`,
+    2: `Luckier still: +${push1.toFixed(2)}. The answer did not change; the group did.`,
+    3: "",
   };
 
   /* — step 2: the scrubber — */
   const pass = interpolate(training, step);
   const length = Math.round(lengthStart + (lengthEnd - lengthStart) * (step / MAX_STEP));
   const stage: Stage = step >= AHA_STEP ? "aha" : step >= MID_STEP ? "mid" : "early";
-
-  /* The gutter arrow beside the trace: measured from the rendered lines so the
-     loop connects the aha interruption back to the trace's own first line. */
-  const firstLineRef = useRef<HTMLLIElement>(null);
-  const ahaLineRef = useRef<HTMLLIElement>(null);
-  const [loop, setLoop] = useState<{ from: number; to: number } | null>(null);
-  useEffect(() => {
-    const measure = () => {
-      const first = firstLineRef.current;
-      const aha = ahaLineRef.current;
-      if (stage !== "aha" || !first || !aha) {
-        setLoop(null);
-        return;
-      }
-      const from = aha.offsetTop + aha.offsetHeight / 2;
-      const to = first.offsetTop + first.offsetHeight / 2;
-      setLoop(from - to > 24 ? { from, to } : null);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [stage]);
 
   /* — step 3: the distills — */
   const picked = DISTILLS.find((d) => d.size === pickedSize)!;
@@ -462,9 +598,12 @@ export function Page14() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        o1 proved RL-trained reasoning works and kept the recipe. DeepSeek published one in January
-        2025 — weights, curve, and <strong className="text-ink">no worked examples at all</strong>:
-        so <strong className="text-ink">where does the backtracking come from?</strong>
+        o1 proved RL-trained reasoning works, and kept both the recipe and the chain hidden. In
+        January 2025 DeepSeek published everything o1 withheld: the weights, the training curve,
+        and the chain itself, visible token by token, trained with{" "}
+        <strong className="text-ink">no worked examples at all</strong>. For the first time anyone
+        could watch reasoning emerge rather than take a lab&apos;s word for it. So:{" "}
+        <strong className="text-ink">where does the backtracking come from?</strong>
         <Cite n={REF.r1} />
       </p>
 
@@ -481,15 +620,27 @@ export function Page14() {
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-ink">
               <strong>R1-Zero</strong> deletes the usual supervised warm-up entirely and starts RL
-              from a plain base model. The reward is{" "}
-              <strong>a program, not a network</strong>: did the final answer match, and is the
-              thinking wrapped in the right tags? Sample a <strong>group</strong> of answers to one
-              problem, score each with the rule, and push each one up or down by how far it beats{" "}
-              <em>the group&apos;s own average</em>. That is{" "}
-              <strong>Group Relative Policy Optimization</strong> — the group is the baseline, so
-              there is no second &ldquo;critic&rdquo; model to train, which is what makes RL at
-              this scale affordable.
+              from a plain base model. The whole recipe,{" "}
+              <strong>Group Relative Policy Optimization</strong>, fits in five lines:
               <Cite n={REF.grpo} />
+            </p>
+
+            <div className="flex flex-col gap-1 rounded-lg border border-dashed border-grid bg-surface-raised p-3 font-mono text-sm">
+              {PSEUDO.map((line, i) => (
+                <div key={i} className="flex flex-wrap items-baseline gap-x-3">
+                  <code className="whitespace-pre text-ink">{line.code}</code>
+                  {line.note ? (
+                    <span className="text-xs text-compute">{`# ${line.note}`}</span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+
+            <p className="text-ink">
+              PPO, the standard alternative, learns its baseline from a second &ldquo;critic&rdquo;
+              network about as large as the policy itself. GRPO reads the baseline off the
+              group&apos;s own statistics instead. At 671B parameters, deleting the critic is not
+              an implementation detail: <strong>it is what made RL at this scale affordable</strong>.
             </p>
 
             <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
@@ -501,27 +652,35 @@ export function Page14() {
                 </span>
               </p>
               <p className="text-sm font-semibold text-ink">
-                <span aria-hidden="true" className="text-compute">↻ </span>
-                Click any answer to resample it — watch every push move.
+                Sample 1 always answers 408. Drag the dial: the group&apos;s luck changes, sample
+                1&apos;s answer never does.
               </p>
+              <Slider
+                label="of the other three samples, how many are also right"
+                min={0}
+                max={3}
+                step={1}
+                ticks={[0, 1, 2, 3]}
+                value={luck}
+                onChange={setLuckAnd}
+              />
               <div className="grid gap-2 sm:grid-cols-4" role="group" aria-label="Four sampled answers">
-                {rightSlots.map((right, i) => {
-                  const adv = rewards[i] - mean;
+                {rewards.map((r, i) => {
+                  const right = r === 1;
+                  const adv = r - mean;
                   return (
-                    <button
+                    <div
                       key={i}
-                      type="button"
-                      aria-label={`Resample answer ${i + 1}`}
-                      onClick={() => resample(i)}
                       className={`flex flex-col items-center gap-1 rounded-lg border-l-4 p-2 text-sm ${
                         right ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
-                      }`}
+                      } ${i === 0 ? "ring-2 ring-compute" : ""}`}
                     >
                       <span className="text-xs text-ink-muted">
-                        sample {i + 1} <span aria-hidden="true">· ↻</span>
+                        sample {i + 1}
+                        {i === 0 ? <span className="ml-1 font-semibold text-compute">watch this one</span> : null}
                       </span>
                       <span className="font-mono font-semibold text-ink">
-                        {right ? RIGHT_ANSWER : SLOT_WRONGS[i]}
+                        {right ? RIGHT_ANSWER : OTHER_WRONGS[i - 1]}
                       </span>
                       <span className={right ? "text-xs text-correct" : "text-xs text-wrong"}>
                         {right ? "✓ reward 1" : "✗ reward 0"}
@@ -531,10 +690,9 @@ export function Page14() {
                           adv > 0 ? "text-correct" : adv < 0 ? "text-wrong" : "text-ink-muted"
                         }`}
                       >
-                        {adv > 0 ? "+" : ""}
-                        {adv.toFixed(2)}
+                        {fmtPush(adv)}
                       </span>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -545,11 +703,13 @@ export function Page14() {
               </p>
               {uniform ? (
                 <p className="rounded border-l-4 border-compute bg-surface p-2 text-sm text-ink">
-                  Every answer scored the same, so every push is{" "}
-                  <span className="font-mono">0.00</span>: a problem the model already aces — or is
-                  hopeless on — teaches it nothing. Learning lives where the group disagrees.
+                  Everyone got it right, so every push is <span className="font-mono">0.00</span>:
+                  a problem the model already aces — or is hopeless on — teaches it nothing.
+                  Learning lives where the group disagrees.
                 </p>
-              ) : null}
+              ) : (
+                <p className="text-sm text-ink">{LUCK_READ[luck]}</p>
+              )}
             </div>
           </div>
         </section>
@@ -575,10 +735,12 @@ export function Page14() {
 
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-ink">
-              Nothing in the setup mentions reflection. Watch what the reward alone buys — and
-              notice the two curves diverging: accuracy flattens while <em>thinking length</em>{" "}
-              keeps climbing. The model is spending more to buy less, and chooses to anyway — it is
-              learning to <strong>allocate itself more thinking time</strong>.
+              Nothing in the recipe mentions reflection, and nothing in the reward mentions length.
+              Watch both curves anyway: accuracy climbs and flattens while average response length
+              grows to nine times its starting point. Length is not a schedule anyone set — longer,
+              re-checking traces win more reward, so the model{" "}
+              <strong>buys itself more thinking time</strong>. The skeleton below shows what the
+              extra tokens are made of.
             </p>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -618,81 +780,27 @@ export function Page14() {
               <TrainingChart step={step} pass={pass} length={length} />
             </div>
 
-            {/* the scratchpad */}
+            {/* the trace, as a shape */}
             <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
-              <p className="text-xs uppercase tracking-wide text-ink-muted">
-                the model&apos;s scratchpad · {STAGE_CHIP[stage]}
-              </p>
-              <p className="text-sm text-ink-muted">{TRACE_PROBLEM}</p>
-              {/* The gutter carries the structure: empty while the trace runs
-                  strictly forward, a return arrow once the aha appears. */}
-              <ol className="relative flex flex-col gap-1.5 pl-8">
-                {loop ? (
-                  <svg aria-hidden="true" className="absolute inset-y-0 left-0 w-8">
-                    <defs>
-                      <marker
-                        id="trace-loop-arrowhead"
-                        markerWidth="7"
-                        markerHeight="7"
-                        refX="5"
-                        refY="3.5"
-                        orient="auto"
-                      >
-                        <path d="M0,0 L6,3.5 L0,7" fill="none" className="stroke-correct" strokeWidth={1.2} />
-                      </marker>
-                    </defs>
-                    <path
-                      d={`M 26 ${loop.from} C 2 ${loop.from - 10}, 2 ${loop.to + 10}, 22 ${loop.to}`}
-                      fill="none"
-                      className="stroke-correct"
-                      strokeWidth={1.5}
-                      markerEnd="url(#trace-loop-arrowhead)"
-                    />
-                  </svg>
-                ) : null}
-                {TRACE_OPEN.map((line, i) => (
-                  <li key={`o${i}`} ref={i === 0 ? firstLineRef : undefined} className="text-sm text-ink">
-                    {line}
-                  </li>
-                ))}
-                {stage !== "early"
-                  ? TRACE_MID.map((line, i) => (
-                      <li key={`m${i}`} className="text-sm text-ink">
-                        {line}
-                      </li>
-                    ))
-                  : null}
-                {stage === "aha"
-                  ? TRACE_AHA.map((line, i) => (
-                      <li
-                        key={`a${i}`}
-                        ref={i === 0 ? ahaLineRef : undefined}
-                        className={
-                          i === 0
-                            ? "rounded border-l-4 border-correct bg-correct/10 p-2 text-sm font-semibold text-ink"
-                            : "text-sm text-ink"
-                        }
-                      >
-                        {line}
-                        {i === 0 ? (
-                          <span className="ml-2 rounded bg-correct/25 px-1.5 py-0.5 text-xs font-semibold text-correct">
-                            the aha moment
-                          </span>
-                        ) : null}
-                      </li>
-                    ))
-                  : null}
-              </ol>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-xs uppercase tracking-wide text-ink-muted">
+                  the trace, as a shape · {STAGE_CHIP[stage]}
+                </p>
+                <p className="font-mono text-xs tabular-nums text-compute">
+                  ≈{length.toLocaleString()} tokens
+                </p>
+              </div>
+              <TraceSkeleton stage={stage} />
               <p className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
                 {STAGE_NOTE[stage]}
               </p>
             </div>
             <p className="text-xs text-ink-muted">
-              the &ldquo;Wait, wait. Wait.&rdquo; passage is verbatim from Table 3 of DeepSeek-AI
-              2025, where R1-Zero produced it unprompted at &ldquo;an intermediate version&rdquo;
-              of training; the earlier stages are that same trace abridged, and where the aha lands
-              on the slider and the chart is an illustrative placement — the paper gives the
-              behaviour, not a step number
+              the skeleton abstracts the trace in Table 3 of DeepSeek-AI 2025, where R1-Zero
+              interrupts a solution mid-stream, flags the moment, and restarts from its own first
+              line at &ldquo;an intermediate version&rdquo; of training — the structure is
+              theirs, no text is quoted, and where the aha lands on the slider and the chart is an
+              illustrative placement: the paper gives the behaviour, not a step number
             </p>
           </div>
         </section>
@@ -713,29 +821,14 @@ export function Page14() {
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-grid bg-surface p-4">
             <p className="text-ink">
               The released <strong>R1</strong> adds a small &ldquo;cold start&rdquo; of curated
-              long traces before the RL — same recipe, better manners:
-            </p>
-            <div className="grid gap-2 sm:grid-cols-4">
-              {[
-                { v: `${P.r1Aime}%`, l: "AIME 2024" },
-                { v: `${P.r1Math}%`, l: "MATH-500" },
-                { v: `${P.r1Gpqa}%`, l: "GPQA Diamond" },
-                { v: `${P.r1CfElo}`, l: `Codeforces Elo · ${P.r1CfPct}rd pct` },
-              ].map((s) => (
-                <div key={s.l} className="rounded-lg border border-grid bg-surface-raised p-3">
-                  <p className="font-mono text-2xl font-bold tabular-nums text-ink">{s.v}</p>
-                  <p className="text-xs text-ink-muted">{s.l}</p>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-ink">
-              Then the give-away, twice over: the weights, and the reasoning itself. R1 wrote{" "}
-              <strong>~{P.samplesK}K reasoning traces</strong>, and six small dense models (Qwen
-              and Llama bases, 1.5B–70B) were fine-tuned on them.
-              <Cite n={REF.r1} /> No RL, no reward — the small
-              models simply <em>imitate the big one&apos;s thinking</em>. Pick a size and read the
-              accuracy/cost trade:
+              long traces before the RL — same recipe, better manners, {P.r1Aime}% on AIME 2024.
+              The rest of its scoreboard can wait one page. The give-away is the part no closed lab
+              had done: the weights, and <strong>the reasoning itself</strong>. R1 wrote{" "}
+              <strong>~{P.samplesK}K traces</strong>, and six small dense models (Qwen and Llama
+              bases, 1.5B–70B) were fine-tuned on them.
+              <Cite n={REF.r1} /> No RL, no reward, no critic — page 12&apos;s recipe with a
+              stronger teacher. So the claim to check on the chart is not &ldquo;R1 is
+              good&rdquo;; it is that <strong>reasoning transfers as data</strong>. Pick a size:
             </p>
 
             <figure className="m-0 flex flex-col gap-2">
@@ -784,6 +877,19 @@ export function Page14() {
               </p>
               <p className="mt-1 text-ink-muted">{picked.note}</p>
             </div>
+
+            <p className="text-sm text-ink-muted">
+              Where a dot crosses the dashed line, a model you can download and run beats a closed
+              frontier product at answer time — page 11&apos;s law, compressed into weights. The
+              small model spends its advantage the same way the big one does: by thinking longer.
+            </p>
+
+            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+              Two pages of frontier claims, and every one of them arrived as a benchmark score:
+              71.0% on AIME, level with o1-0912, a 14B crossing o1-mini&apos;s line. So far those
+              numbers have been read at face value.{" "}
+              <em className="text-ink-muted">Whether you should is the next page.</em>
+            </div>
           </div>
         </section>
 
@@ -794,18 +900,18 @@ export function Page14() {
         </Note>
       </div>
 
-      
+
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
           <strong className="text-ink">Simulated</strong> — the training curve&apos;s intermediate
-          points are interpolated along the reported 15.6% → 71.0% climb, and where the aha lands
-          on the slider is an illustrative placement; the paper gives the behaviour, not a step
+          points are interpolated along the reported 15.6% → 71.0% climb; the trace skeleton is a
+          schematic of the Table 3 trace&apos;s structure, not its text; and where the aha lands
+          on the slider is an illustrative placement — the paper gives the behaviour, not a step
           number.
         </p>
         <p>
           <strong className="text-ink">Cited</strong> — every benchmark number is transcribed from
-          DeepSeek-AI 2025 (Tables 3–5, Fig. 2–3) and pinned in the test suite. The &ldquo;Wait,
-          wait. Wait.&rdquo; passage is verbatim from Table 3.
+          DeepSeek-AI 2025 (Tables 3–5, Fig. 2–3) and pinned in the test suite.
         </p>
       </div>
 
