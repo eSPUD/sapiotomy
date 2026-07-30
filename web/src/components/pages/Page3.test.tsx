@@ -71,9 +71,6 @@ describe("Page 3 (Training-Time Scaling)", () => {
       screen.getByRole("heading", { level: 2, name: /2\. Challenges in addressing knowledge bias/i }),
     ).toBeInTheDocument();
     // Step 3: the guess, under the same numbered spine as pages 1 and 4.
-    expect(
-      screen.getByRole("heading", { level: 3, name: /So what is left\?/i }),
-    ).toBeInTheDocument();
     // The scaling-law spine: bigger models only pay off if they read more, in step.
     expect(screen.getByText(/which is the scaling law/i)).toBeInTheDocument();
     // The featured number, plainly glossed; the Chinchilla comparison moved to the footer.
@@ -94,7 +91,6 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(screen.getByText(/paying for smarts/i)).toBeInTheDocument();
     expect(screen.getByText("17 × 24")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /your guess/i })).toBeInTheDocument();
-    expect(screen.getByText("optional · skip freely")).toBeInTheDocument();
     // The flat per-run rate still anchors the legend, caption, and footer.
     expect(screen.getAllByText(new RegExp(`\\$${RUN_M}M`)).length).toBeGreaterThan(0);
     expect(screen.getByRole("navigation", { name: /page navigation/i })).toBeInTheDocument();

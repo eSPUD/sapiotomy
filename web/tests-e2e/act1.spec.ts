@@ -76,7 +76,7 @@ test.describe("Act 1 (pages 1–4)", () => {
       page.getByRole("heading", { level: 2, name: /2\. The data runs out/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { level: 2, name: /3\. So what is left\?/i }),
+      page.getByRole("heading", { level: 2, name: /2\. Challenges in addressing knowledge bias/i }),
     ).toBeVisible();
     await expect(page.getByText("≈300T tokens")).toBeVisible();
     await expect(page.getByText("2026–2032", { exact: true })).toBeVisible();

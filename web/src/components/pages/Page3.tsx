@@ -557,12 +557,6 @@ export function Page3() {
             <Cite n={REF.hhh} /> Size does not confer it.
           </p>
 
-          <h3 className="text-lg font-semibold text-ink">
-            So what is left?
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              optional · skip freely
-            </span>
-          </h3>
           <section
             aria-label="The guess"
             className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
