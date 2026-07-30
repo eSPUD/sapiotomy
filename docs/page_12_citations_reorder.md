@@ -203,3 +203,23 @@ npm run build` (from `web/`).
 - [ ] Nowhere does the page call STaR and RFT synonymous.
 - [ ] Page height: +3 reference lines, nothing else.
 - [ ] All gates green.
+
+---
+
+## Revision (2026-07-29, screenshot review)
+
+Three fixes after seeing the shipped page, aligning it with the page 2/3
+reference grammar:
+
+1. **Cite superscripts out of the annotation column.** The annotations still
+   name ExIt and RFT (intuition-column content), but the numbered markers move
+   into the listing's figcaption prose — pages 2/3 never put sups inside a
+   figure's annotation column.
+2. **Walkthrough below the listing.** "The algorithm, explained" moves under
+   the pseudocode: the listing keeps its punch, the plain-language pass
+   becomes the safety net instead of a spoiler.
+3. **Section 3's source made visible.** All bars were always Zelikman et al.
+   2022 Table 1 (CommonsenseQA dev) via `data/star-cqa.json`, but the only
+   cite sat mid-figcaption; the heading subtitle now carries the sup. The
+   References notes split per section — 1–3 beside the listing, GVM beside
+   the closing blocks it supports.

@@ -30,8 +30,8 @@
  * Section 2 is the loop written down: the paper's Algorithm 1 compressed to
  * ten annotated pseudocode lines, directly under the interactive so the
  * reader parses the mechanism they just ran. A plain-language walkthrough
- * sits above the listing for readers who don't parse pseudocode; the
- * annotation column carries the RL mapping.
+ * sits below the listing as the safety net for readers who bounced off the
+ * pseudocode; the annotation column carries the RL mapping.
  *
  * Section 3 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
  * GPT-J plus its own filtered rationales lands at 72.5% on CommonsenseQA —
@@ -46,8 +46,12 @@
  * to page 13 ("this shape", not "this loop": R1's reward is documented, o1's
  * never was — page 13 owns o1's specifics).
  *
- * Outside citations (in the listing's annotation column and the counterweight)
- * so the page's structural claims no longer rest on STaR describing itself:
+ * Outside citations, so the page's structural claims no longer rest on STaR
+ * describing itself. Per the page 2/3 convention, Cite superscripts live in
+ * prose only — the listing's annotations name ExIt and RFT but carry no
+ * markers; the numbered cites sit in the figcaption below the listing — and
+ * each References note sits beside the section that uses it (1–3 beside the
+ * listing, GVM beside the closing blocks):
  * ExIt (Anthony et al. 2017) grounds the "this is RL" mapping on line 2, whose
  * exit condition ("until accuracy plateaus") points back at section 1's
  * plateau; RFT (Yuan et al. 2023) names the sample-k alternative on line 5,
@@ -117,12 +121,7 @@ const CODE_LINES: {
   {
     indent: 0,
     code: "loop: until accuracy plateaus",
-    note: (
-      <>
-        expert iteration (Anthony et al. 2017) — the same loop, before LLMs
-        <Cite n={REF.exit} />
-      </>
-    ),
+    note: "expert iteration (Anthony et al. 2017) — the same loop, before LLMs",
   },
   { indent: 1, code: "kept ← ∅" },
   {
@@ -133,13 +132,7 @@ const CODE_LINES: {
   {
     indent: 2,
     code: "r, ŷ ← M(x)",
-    note: (
-      <>
-        one greedy rollout — low variance, biased exploration; RFT (Yuan et al. 2023) samples k
-        instead
-        <Cite n={REF.rft} />
-      </>
-    ),
+    note: "one greedy rollout — low variance, biased exploration; RFT (Yuan et al. 2023) samples k instead",
   },
   {
     indent: 2,
@@ -552,18 +545,6 @@ export function Page12() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">2. The loop, written down</h2>
 
-          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">The algorithm, explained.</strong> Start with a
-            pretrained model and a stack of problems whose correct answers you know. There are no
-            worked solutions, only the answers. For each problem, the model writes out its
-            reasoning and ends with an answer. If that answer matches the key, the reasoning is
-            kept. If it misses, the model gets one more try with the correct answer shown as a
-            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
-            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
-            everything kept, and the loop starts over with a slightly better model writing the
-            next round of reasoning.
-          </p>
-
           <p className="text-sm text-ink">
             The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
             again — the annotations on lines 2 and 6 name what it secretly is.
@@ -580,10 +561,25 @@ export function Page12() {
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
               STaR&apos;s Algorithm 1, compressed.
-              <Cite n={REF.star} /> The coloured lines are section 1&apos;s legend: the answer-key
+              <Cite n={REF.star} /> Line 2&apos;s lineage is real, not an analogy: the same loop
+              ran as expert iteration in RL, five years before LLM reasoning.
+              <Cite n={REF.exit} /> Line 5&apos;s sample-k alternative is RFT.
+              <Cite n={REF.rft} /> The coloured lines are section 1&apos;s legend: the answer-key
               filter, and the rationalization branch it enables.
             </figcaption>
           </figure>
+
+          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
+            <strong className="text-ink">The algorithm, explained.</strong> Start with a
+            pretrained model and a stack of problems whose correct answers you know. There are no
+            worked solutions, only the answers. For each problem, the model writes out its
+            reasoning and ends with an answer. If that answer matches the key, the reasoning is
+            kept. If it misses, the model gets one more try with the correct answer shown as a
+            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
+            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
+            everything kept, and the loop starts over with a slightly better model writing the
+            next round of reasoning.
+          </p>
         </section>
 
         <Note kicker="References">
@@ -599,10 +595,6 @@ export function Page12() {
             Yuan et al. 2023, <em>Scaling Relationship on Learning Mathematical Reasoning with
             Large Language Models</em>.
           </RefItem>
-          <RefItem n={REF.gvm} href="https://arxiv.org/abs/2505.02391" preprint>
-            Yao et al. 2025, <em>Optimizing Chain-of-Thought Reasoners via Gradient Variance
-            Minimization in Rejection Sampling and RL</em>.
-          </RefItem>
         </Note>
 
         {/* Section 3 — the paper's result */}
@@ -611,6 +603,7 @@ export function Page12() {
             3. What the loop bought
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               Zelikman et al. 2022 · CommonsenseQA
+              <Cite n={REF.star} />
             </span>
           </h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
@@ -670,6 +663,13 @@ export function Page12() {
             <em>Page 13 picks it up from there.</em>
           </p>
         </div>
+
+        <Note kicker="References">
+          <RefItem n={REF.gvm} href="https://arxiv.org/abs/2505.02391" preprint>
+            Yao et al. 2025, <em>Optimizing Chain-of-Thought Reasoners via Gradient Variance
+            Minimization in Rejection Sampling and RL</em>.
+          </RefItem>
+        </Note>
       </div>
 
       
@@ -681,7 +681,7 @@ export function Page12() {
           rationalization lifting it, degeneration without the filter.
         </p>
         <p>
-          <strong className="text-ink">Cited</strong> — every figure in section 2 is from Zelikman
+          <strong className="text-ink">Cited</strong> — every figure in section 3 is from Zelikman
           et al. 2022, Table 1, CommonsenseQA dev.
         </p>
       </div>

@@ -81,12 +81,12 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(follows(counterweight, handoff)).toBe(true);
   });
 
-  it("explains the algorithm in plain language above the listing", () => {
+  it("explains the algorithm in plain language below the listing", () => {
     render(<Page12 />);
     const explained = screen.getByText(/The algorithm, explained/);
     const listing = screen.getByText(/hint = y/);
     expect(
-      explained.compareDocumentPosition(listing) & Node.DOCUMENT_POSITION_FOLLOWING,
+      listing.compareDocumentPosition(explained) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -115,6 +115,14 @@ describe("Page 12 (STaR and self-improvement)", () => {
     // Line 5: greedy decoding stated correctly, RFT named as the sample-k variant.
     expect(screen.getByText(/one greedy rollout/)).toBeInTheDocument();
     expect(screen.getByText(/RFT \(Yuan et al\. 2023\) samples k/)).toBeInTheDocument();
+    // Cite markers live in prose (page 2/3 convention), never in the annotation
+    // column: the annotations name the papers, the figcaption carries the sups.
+    expect(
+      screen.getByText(/expert iteration \(Anthony et al\. 2017\)/).querySelector("sup"),
+    ).toBeNull();
+    expect(screen.getByText(/one greedy rollout/).querySelector("sup")).toBeNull();
+    // The results heading carries its source right where the reader looks.
+    expect(document.querySelector("h2 sup")).toBeInTheDocument();
     expect(screen.queryByText(/sample from the current policy/)).not.toBeInTheDocument();
     // The counterweight's claim has outside experimental support.
     expect(screen.getByText(/wrong reasoning path/)).toBeInTheDocument();
