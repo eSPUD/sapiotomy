@@ -34,6 +34,18 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.getByText(/rumor, not record/)).toBeInTheDocument();
   });
 
+  it("draws the loop strip in page 12's stage grammar above the listing", () => {
+    render(<Page13 />);
+    // Same three stations, two renamed: the shape claim made visible.
+    const generate = screen.getByText("generate ×k");
+    expect(screen.getByText("reward")).toBeInTheDocument();
+    expect(screen.getByText("reinforce")).toBeInTheDocument();
+    expect(screen.getByText(/the filter, made explicit/)).toBeInTheDocument();
+    // The strip precedes the listing: shape first, then the diff.
+    const listing = screen.getByText("rewardᵢ ← check(ŷᵢ, y)");
+    expect(follows(generate, listing)).toBe(true);
+  });
+
   it("cites the confirmed frame: the announcement and the LRM definition", () => {
     render(<Page13 />);
     expect(screen.getByText(/large reasoning models \(LRMs\)/)).toBeInTheDocument();

@@ -8,7 +8,11 @@
  * literature never states in one place: the loop-diff (section 1), the
  * unified two-knob law (section 2), and the visibility boundary (section 4).
  *
- * Section 1 is the rumored o1 recipe as a six-line listing — page 12's loop
+ * Section 1 opens with the loop strip in page 12's stage grammar — the same
+ * three stations, two renamed (filter → reward, fine-tune → reinforce) — so
+ * the "same shape, disguise dropped" claim lands visually before any code is
+ * read; the strip states the shape, the listing states the diff. Below it,
+ * the rumored o1 recipe as a six-line listing — page 12's loop
  * rewritten, with the annotation column carrying the mapping back to page
  * 12's lines (filter → explicit reward, one greedy rollout → k sampled
  * chains, plateau exit → compute budget, finetune-from-base →
@@ -16,6 +20,9 @@
  * full STaR listing is deliberately NOT re-printed (review: the reader just
  * ran it twice on page 12; showing only the rewrite reads cleaner), and
  * there is no toggle — the listing is static, page 1-3 digestibility.
+ * The listing shares page 12's code conventions — font-code (true
+ * monospace), tab-arrow indentation guides, no tone borders — so the two
+ * listings read as one grammar; the annotations alone carry the diff.
  * Honesty is load-bearing: OpenAI confirmed the FRAME — large-scale RL on a
  * long private chain, and its researchers' own LRM definition — but never
  * published the algorithm, so the rewrite is labelled rumor in the h2 badge
@@ -318,7 +325,6 @@ const O1_LINES: {
   indent: number;
   code: React.ReactNode;
   note?: React.ReactNode;
-  tone?: string;
 }[] = [
   {
     indent: 0,
@@ -333,7 +339,6 @@ const O1_LINES: {
     indent: 0,
     code: "loop: while the compute budget lasts",
     note: "page 12 looped until accuracy plateaued — the exit is a budget now, section 2's training axis",
-    tone: "border-compute",
   },
   {
     indent: 1,
@@ -344,21 +349,28 @@ const O1_LINES: {
     indent: 2,
     code: "r₁…rₖ, ŷ₁…ŷₖ ← M(x)",
     note: "k sampled chains per problem, not one greedy try — sampling explores, so page 12's hint branch is gone",
-    tone: "border-compute",
   },
   {
     indent: 2,
     code: "rewardᵢ ← check(ŷᵢ, y)",
     note: "page 12's filter, promoted to an explicit reward — still the answer key, still graded for free",
-    tone: "border-correct",
   },
   {
     indent: 1,
     code: "M ← reinforce(M, rewards)",
     note: "update the current model, not the base — this round's gains compound into the next",
-    tone: "border-compute",
   },
 ];
+
+/** One stage of the loop strip, page 12's grammar. */
+function Stage({ tone, title, sub }: { tone: string; title: string; sub: string }) {
+  return (
+    <div className={`min-w-0 flex-1 rounded-lg border-l-4 bg-surface-raised p-2.5 ${tone}`}>
+      <p className="text-sm font-semibold text-ink">{title}</p>
+      <p className="text-xs text-ink-muted">{sub}</p>
+    </div>
+  );
+}
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -379,32 +391,29 @@ function CodeLine({
   indent,
   code,
   note,
-  tone,
 }: {
   n: number;
   indent: number;
   code: React.ReactNode;
   note?: React.ReactNode;
-  tone?: string;
 }) {
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:gap-x-4">
-      <span className="w-5 select-none text-right font-mono text-xs tabular-nums text-ink-muted" aria-hidden="true">
+      <span className="w-5 select-none text-right font-code text-xs tabular-nums text-ink-muted" aria-hidden="true">
         {n}
       </span>
-      <span className="flex items-baseline font-mono text-sm text-ink">
+      <span className="flex items-baseline font-code text-sm text-ink">
+        {/* Tab-width indentation, each level marked by an editor-style arrow guide. */}
         {indent > 0 ? (
-          <span className="whitespace-pre" aria-hidden="true">
-            {"  ".repeat(indent)}
+          <span className="flex select-none" aria-hidden="true">
+            {Array.from({ length: indent }, (_, j) => (
+              <span key={j} className="w-[3ch] text-grid">
+                →
+              </span>
+            ))}
           </span>
         ) : null}
-        <code
-          className={`whitespace-pre rounded border-l-4 px-1 ${
-            tone ? `bg-surface-raised ${tone}` : "border-transparent"
-          }`}
-        >
-          {code}
-        </code>
+        <code className="whitespace-pre">{code}</code>
       </span>
       {note ? (
         <span className="col-start-2 text-xs text-ink-muted sm:col-start-3">{note}</span>
@@ -530,9 +539,20 @@ export function Page13() {
           </p>
 
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            {/* page 12's loop strip, redrawn: same three stations, two renamed */}
+            <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
+              <Stage tone="border-ink" title="generate ×k" sub="k sampled chains per problem" />
+              <span className="shrink-0 self-center text-ink-muted">→</span>
+              <Stage tone="border-correct" title="reward" sub="the filter, made explicit" />
+              <span className="shrink-0 self-center text-ink-muted">→</span>
+              <Stage tone="border-compute" title="reinforce" sub="in place — gains compound" />
+              <span className="shrink-0 self-center text-ink-muted">↺</span>
+            </div>
+
             <p className="text-sm text-ink-muted">
-              So here it is at the only honest resolution: page 12&apos;s loop, rewritten as the
-              recipe the labs describe.{" "}
+              Page 12&apos;s strip, redrawn: the same three stations, two renamed. So here it is
+              at the only honest resolution: page 12&apos;s loop, rewritten as the recipe the labs
+              describe.{" "}
               <strong className="text-ink">The annotations name what each line was before.</strong>
             </p>
 
@@ -542,7 +562,7 @@ export function Page13() {
             >
               <div className="flex flex-col">
                 {O1_LINES.map((l, i) => (
-                  <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} tone={l.tone} />
+                  <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} />
                 ))}
               </div>
               <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
