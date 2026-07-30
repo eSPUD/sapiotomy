@@ -44,7 +44,10 @@
  * paper's own stated limitation, and the only place the page admits the loop
  * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
  * to page 13 ("this shape", not "this loop": R1's reward is documented, o1's
- * never was — page 13 owns o1's specifics).
+ * never was — page 13 owns o1's specifics). The hand-off opens in page 11's
+ * lift-vs-slide idiom (STaR = the first knob that lifts the curve without
+ * buying parameters), so page 13's "training lifts, thinking slides" law
+ * reads as the third beat of one pattern, not a callback that skipped a page.
  *
  * Outside citations, so the page's structural claims no longer rest on STaR
  * describing itself. Per the page 2/3 convention, Cite superscripts live in
@@ -635,9 +638,11 @@ export function Page12() {
           </p>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            o1 and R1 keep exactly this shape — sample reasoning, score it, reinforce what
-            scored — and drop the disguise: the filter becomes an explicit RL reward on checkable
-            tasks, and the model&apos;s own sampling becomes the training set.{" "}
+            In page 11&apos;s terms, this loop is a new kind of knob: model size picked your
+            curve, and STaR is the first knob that lifts the curve without buying a single
+            parameter. o1 and R1 keep exactly this shape — sample reasoning, score it, reinforce
+            what scored — and drop the disguise: the filter becomes an explicit RL reward on
+            checkable tasks, and the model&apos;s own sampling becomes the training set.{" "}
             <em>Page 13 picks it up from there.</em>
           </p>
         </div>

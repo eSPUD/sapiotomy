@@ -90,10 +90,23 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText(/Curve shapes follow Snell et al\./i)).toBeInTheDocument();
   });
 
-  it("hands off to page 12 below section 4: train on the reasoning search found", () => {
+  it("hands off to page 12 on both loose ends: the hard boundary and the discarded reasoning", () => {
     render(<Page11 />);
-    expect(screen.getByText(/teaching the model to\s+reason/i)).toBeInTheDocument();
+    expect(screen.getByText(/This page leaves two loose ends/i)).toBeInTheDocument();
+    expect(screen.getByText(/teaching\s+the model to\s+reason/i)).toBeInTheDocument();
     expect(screen.getByText(/thrown away the moment the answer\s+is scored/i)).toBeInTheDocument();
+    expect(screen.getByText(/frontier that stalled at inference time/i)).toBeInTheDocument();
+  });
+
+  it("states why parameters win on hard problems: sampling mines a fixed distribution", () => {
+    render(<Page11 />);
+    expect(
+      screen.getByText(/can\s+already produce/i).closest("p")!.textContent,
+    ).toMatch(/only surface answers the model can\s+already produce/i);
+    expect(screen.getByText(/the distribution itself never moves/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/changes what is in the\s+distribution at all/i),
+    ).toBeInTheDocument();
   });
 
   it("carries the saturation caveat: no oracle verifier, no 100%", () => {
@@ -148,12 +161,17 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText(/about half the total FLOPs/i)).toBeInTheDocument();
   });
 
-  it("keeps both reference notes to bare cites, as pages 3-10 do", () => {
+  it("keeps all reference notes to bare cites, each beside its first use", () => {
     render(<Page11 />);
     const notes = screen.getAllByText("References").map((el) => el.closest("aside")!);
-    expect(notes).toHaveLength(2);
+    expect(notes).toHaveLength(3);
+    // Section 2's note: Snell, plus the two grounding the hard-mode intuition.
     expect(notes[0].textContent).toMatch(/Snell et al\. 2024, Scaling LLM Test-Time Compute/);
+    expect(notes[0].textContent).toMatch(/Brown et al\. 2024, Large Language Monkeys/);
+    expect(notes[0].textContent).toMatch(/Shojaee et al\. 2025, The Illusion of Thinking/);
+    // Section 3's note: Wu. Section 4's note: the resampling-ceiling source.
     expect(notes[1].textContent).toMatch(/Wu et al\. 2024, Inference Scaling Laws/);
+    expect(notes[2].textContent).toMatch(/Stroebl et al\. 2024, Inference Scaling fLaws/);
     for (const note of notes) {
       expect(note.textContent).not.toMatch(/ICLR|NeurIPS|arXiv|Table 1/);
     }
@@ -164,7 +182,10 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     // References live in the margin notes only, so each work is linked once.
     for (const [name, href] of [
       [/Snell et al\. 2024/, "https://arxiv.org/abs/2408.03314"],
+      [/Brown et al\. 2024/, "https://arxiv.org/abs/2407.21787"],
+      [/Shojaee et al\. 2025/, "https://arxiv.org/abs/2506.06941"],
       [/Wu et al\. 2024/, "https://arxiv.org/abs/2408.00724"],
+      [/Stroebl et al\. 2024/, "https://arxiv.org/abs/2411.17501"],
     ] as const) {
       const links = screen.getAllByRole("link", { name });
       expect(links.length).toBeGreaterThanOrEqual(1);
