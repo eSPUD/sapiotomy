@@ -44,11 +44,22 @@
  * paper's own stated limitation, and the only place the page admits the loop
  * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
  * to page 13 ("this shape", not "this loop": R1's reward is documented, o1's
- * never was — page 13 owns o1's specifics). A correction that must hold: STaR decodes greedily, one attempt
- * per problem — the paper reports higher temperatures reach more right answers
- * through wrong reasoning — so improvement is generalization, not distilled
- * luck: each round's fine-tuned model is a different model whose greedy output
- * reaches harder problems. That is the ratchet, stated in section 1's caption.
+ * never was — page 13 owns o1's specifics).
+ *
+ * Outside citations (in the listing's annotation column and the counterweight)
+ * so the page's structural claims no longer rest on STaR describing itself:
+ * ExIt (Anthony et al. 2017) grounds the "this is RL" mapping on line 2, whose
+ * exit condition ("until accuracy plateaus") points back at section 1's
+ * plateau; RFT (Yuan et al. 2023) names the sample-k alternative on line 5,
+ * whose annotation states the correction that must hold — STaR decodes
+ * greedily, one attempt per problem (the paper reports higher temperatures
+ * reach more right answers through wrong reasoning), so improvement is
+ * generalization, not distilled luck: each round's fine-tuned model is a
+ * different model whose greedy output reaches harder problems, the ratchet
+ * stated in section 1's caption; and GVM (Yao et al. 2025) gives the
+ * counterweight outside evidence that models write wrong reasoning yet land
+ * right answers. STaR and RFT are a closely related family, never
+ * "synonymous" — GVM separates them on exactly the greedy-vs-sampling axis.
  * The V-STaR/ReST^EM lineage is deliberately omitted — intuition over history.
  *
  * Sidenote convention as on page 2: a state-matrix note beside the interactive,
@@ -79,7 +90,7 @@ const POOL = starInit();
 const CHANCE = 100 / STAR_CHOICES;
 
 /** Page 12's references, numbered in order of first appearance. */
-const REF = { star: 1 } as const;
+const REF = { star: 1, exit: 2, rft: 3, gvm: 4 } as const;
 
 /**
  * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. Each line
@@ -103,14 +114,33 @@ const CODE_LINES: {
     ),
     note: "one model is both student and teacher",
   },
-  { indent: 0, code: "loop:" },
+  {
+    indent: 0,
+    code: "loop: until accuracy plateaus",
+    note: (
+      <>
+        expert iteration (Anthony et al. 2017) — the same loop, before LLMs
+        <Cite n={REF.exit} />
+      </>
+    ),
+  },
   { indent: 1, code: "kept ← ∅" },
   {
     indent: 1,
     code: "for (x, y) in problems:",
     note: "the only supervision that exists: answers, never reasoning",
   },
-  { indent: 2, code: "r, ŷ ← M(x)", note: "in RL terms: sample from the current policy" },
+  {
+    indent: 2,
+    code: "r, ŷ ← M(x)",
+    note: (
+      <>
+        one greedy rollout — low variance, biased exploration; RFT (Yuan et al. 2023) samples k
+        instead
+        <Cite n={REF.rft} />
+      </>
+    ),
+  },
   {
     indent: 2,
     code: "if ŷ = y: keep (x, r, y)",
@@ -536,7 +566,7 @@ export function Page12() {
 
           <p className="text-sm text-ink">
             The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
-            again — the annotations on lines 5 and 6 name what it secretly is.
+            again — the annotations on lines 2 and 6 name what it secretly is.
           </p>
 
           <figure
@@ -560,6 +590,18 @@ export function Page12() {
           <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
             Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
             2022.
+          </RefItem>
+          <RefItem n={REF.exit} href="https://arxiv.org/abs/1705.08439">
+            Anthony, Tian &amp; Barber 2017, <em>Thinking Fast and Slow with Deep Learning and
+            Tree Search</em>, NeurIPS 2017.
+          </RefItem>
+          <RefItem n={REF.rft} href="https://arxiv.org/abs/2308.01825" preprint>
+            Yuan et al. 2023, <em>Scaling Relationship on Learning Mathematical Reasoning with
+            Large Language Models</em>.
+          </RefItem>
+          <RefItem n={REF.gvm} href="https://arxiv.org/abs/2505.02391" preprint>
+            Yao et al. 2025, <em>Optimizing Chain-of-Thought Reasoners via Gradient Variance
+            Minimization in Rejection Sampling and RL</em>.
           </RefItem>
         </Note>
 
@@ -615,7 +657,9 @@ export function Page12() {
             rationale is what enters the weights; the answer key is all that decides whether it
             gets there. A flawed argument that lands correctly isn&apos;t merely kept — it&apos;s
             imitated.
-            <Cite n={REF.star} /> Page 9&apos;s outcome-versus-process trade, now deciding what
+            <Cite n={REF.star} /> Not a hypothetical: models often write a wrong reasoning path
+            and still land on the right answer — hint or no hint.
+            <Cite n={REF.gvm} /> Page 9&apos;s outcome-versus-process trade, now deciding what
             the model becomes.
           </p>
 
