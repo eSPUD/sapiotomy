@@ -85,9 +85,12 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     }
   });
 
-  it("cites Snell et al. directly beside the allocator chart", () => {
+  it("scopes the Snell cite beside the chart: claims cited, coordinates illustrative", () => {
     render(<Page11 />);
-    expect(screen.getByText(/Curve shapes follow Snell et al\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/crossings and ceilings are Snell et\s+al\.[’']s claims/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/exact coordinates are illustrative/i)).toBeInTheDocument();
   });
 
   it("hands off to page 12 on both loose ends: the hard boundary and the discarded reasoning", () => {

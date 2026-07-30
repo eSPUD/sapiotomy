@@ -855,7 +855,7 @@ export function Page11() {
           <h2 className="text-xl font-semibold text-ink">
             1. Problem complexity and the compromise
             <span className="block text-xs font-normal text-ink-muted">
-              the game: beat the 14× model · authored curves, no live model
+              the game: beat the 14× model · illustrative curves, no live LLM
             </span>
           </h2>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
@@ -871,7 +871,9 @@ export function Page11() {
             <FamilyChart difficulty={difficulty} size={size} cost={cost} acc={acc} />
             <p className="text-xs text-ink-muted">
               all four model curves are drawn in full and the knobs never move them; only the
-              highlight and your marker respond. Curve shapes follow Snell et al.
+              highlight and your marker respond. The crossings and ceilings are Snell et
+              al.&rsquo;s claims; the exact coordinates are illustrative, since the paper reports
+              scale only as multiples.
               <Cite n={REF.snell} />
             </p>
 
@@ -1126,12 +1128,14 @@ export function Page11() {
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
           <strong className="text-ink">Simulated</strong> — the allocator curves in section 1 are
-          authored illustrations pinned to the cited findings, not digitized data: Snell et al.
+          authored illustrations pinned to the cited findings, not digitized data, because there
+          is no per-difficulty accuracy figure in the paper to digitize: Snell et al.
           report model scale only as a multiple (absolute parameter counts undisclosed), so 14×
           means 14× the base model&rsquo;s parameter count, and FLOPs per answer are counted in
-          proportion to parameters throughout. The curves reproduce the reported shapes —
-          crossings ordered by scale, saturation at every scale, no budget rescuing the small
-          model on hard prompts — and every on-screen behaviour is pinned in the test suite.
+          proportion to parameters throughout. The curves are the simplest shapes that obey the
+          reported findings (crossings ordered by scale, saturation at every scale, no budget
+          rescuing the small model on hard prompts), and every on-screen behaviour is pinned in
+          the test suite.
         </p>
         <p>
           <strong className="text-ink">Cited</strong> — section 3 is read off Wu et
