@@ -87,10 +87,9 @@ describe("Page 3 (Training-Time Scaling)", () => {
       screen.getByRole("slider", { name: /drag through the projected years/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/No budget buys tokens that do not exist/i)).toBeInTheDocument();
-    // The guess, hinting back at page 1's multiplication round.
+    // The pivot survives the quiz's removal, as prose.
     expect(screen.getByText(/paying for smarts/i)).toBeInTheDocument();
     expect(screen.getByText("17 × 24")).toBeInTheDocument();
-    expect(screen.getByRole("textbox", { name: /your guess/i })).toBeInTheDocument();
     // The flat per-run rate still anchors the legend, caption, and footer.
     expect(screen.getAllByText(new RegExp(`\\$${RUN_M}M`)).length).toBeGreaterThan(0);
     expect(screen.getByRole("navigation", { name: /page navigation/i })).toBeInTheDocument();
@@ -160,30 +159,6 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(body).toMatch(/cannot touch a bias\s*that was never about missing facts/i);
     // the hand-off, and the page's standing rule that it never names the sequel
     expect(body).toMatch(/leaves only what it does\s*after it/i);
-    expectClean();
-  });
-
-  it("locks a guess: echo, hold-that-thought, teaser; the form is consumed", () => {
-    render(<Page3 />);
-    const box = screen.getByRole("textbox", { name: /your guess/i });
-    const lock = screen.getByRole("button", { name: /lock it in/i });
-    expect(lock).toBeDisabled();
-    fireEvent.change(box, { target: { value: "  let it search the web  " } });
-    expect(lock).toBeEnabled();
-    fireEvent.click(lock);
-    expect(screen.getByText(/Noted:/)).toBeInTheDocument();
-    expect(screen.getByText(/let it search the web/)).toBeInTheDocument();
-    expect(screen.getByText(/The answer is one page away\./)).toBeInTheDocument();
-    expect(screen.queryByRole("textbox", { name: /your guess/i })).toBeNull();
-    expectClean();
-  });
-
-  it("skip works without typing a guess", () => {
-    render(<Page3 />);
-    fireEvent.click(screen.getByRole("button", { name: /skip/i }));
-    expect(screen.getByText(/Hold that thought anyway\./)).toBeInTheDocument();
-    expect(screen.queryByText(/Noted:/)).toBeNull();
-    expect(screen.getByText(/The answer is one page away\./)).toBeInTheDocument();
     expectClean();
   });
 

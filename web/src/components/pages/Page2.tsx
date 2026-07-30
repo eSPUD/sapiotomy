@@ -29,6 +29,7 @@
 import { useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { PullQuote } from "@/components/PullQuote";
 import { System2Comic } from "@/components/pages/System2Comic";
 import {
   SPAIN_ALL_TITLES,
@@ -152,16 +153,6 @@ function IdealAnswer() {
       </div>
       <p className="text-lg text-ink">&ldquo;{SPAIN_IDEAL_ANSWER}&rdquo;</p>
     </section>
-  );
-}
-
-/** A line set apart from the running prose: the questions sections 1 and 2 end
- *  on, and the closing statement section 3 lands. */
-function PullQuote({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="rounded-lg border-l-2 border-compute bg-quote px-4 py-3 text-lg italic text-compute">
-      {children}
-    </p>
   );
 }
 

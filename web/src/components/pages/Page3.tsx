@@ -52,6 +52,7 @@ import { useMemo, useRef, useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
+import { PullQuote } from "@/components/PullQuote";
 import { Slider } from "@/components/Slider";
 import { GAME_ROUNDS } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
@@ -114,8 +115,6 @@ const fmtM = (m: number) =>
 
 /** Trillions of tokens: "1.4T" small, "300T" large. */
 const fmtT = (t: number) => `${t >= 10 ? Math.round(t) : t.toFixed(1)}T`;
-
-type GuessState = "open" | "guessed" | "skipped";
 
 /** The meter's calendar span, one year either side of the cited window. */
 const TRACK_START = 2025;
@@ -199,8 +198,6 @@ export function Page3() {
   const cp = chinchilla.fit!.params;
 
   const [months, setMonths] = useState(6); // mid-range: room to drag either way
-  const [guessText, setGuessText] = useState("");
-  const [guessState, setGuessState] = useState<GuessState>("open");
   const [announcement, setAnnouncement] = useState("");
   const monthsTouchedRef = useRef(false);
   const crossedFlatYearRef = useRef(false);
@@ -253,20 +250,6 @@ export function Page3() {
     }
   };
 
-
-  const lockGuess = () => {
-    if (guessState !== "open" || guessText.trim().length === 0) return;
-    recordInteraction(PAGE_N);
-    setGuessState("guessed");
-    setAnnouncement("Guess noted. Hold that thought; the answer is one page away.");
-  };
-
-  const skipGuess = () => {
-    if (guessState !== "open") return;
-    recordInteraction(PAGE_N);
-    setGuessState("skipped");
-    setAnnouncement("Skipped. The reveal waits on the next page.");
-  };
 
   return (
     <article className="flex flex-col gap-6">
@@ -557,70 +540,17 @@ export function Page3() {
             <Cite n={REF.hhh} /> Size does not confer it.
           </p>
 
-          <section
-            aria-label="The guess"
-            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
-          >
-            <p className="text-lg text-ink">
-              Every wall above comes from the same habit: paying for smarts <strong>up front</strong>,
-              all at once, before a single question is asked. And the bias never needed more paid
-              for at all, only a second look at the question. Page 2 left that other option on the
-              table without naming its price. That is what the bill buys, and what the
-              data runs out on. So turn it around, and instead of front-loading everything to make
-              the model <strong>know</strong> the answer, what if we spent that effort{" "}
-              <strong>when the question arrives</strong>, and let it{" "}
-              <strong>work the answer out</strong>? What do you think that would look like?
-            </p>
-            <p className="text-sm text-ink-muted">
-              Hint: how did you solve{" "}
-              <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> on page 1? You
-              didn&apos;t know it in advance. You built it on the spot.
-            </p>
-            {guessState === "open" ? (
-              <form
-                className="flex flex-wrap items-center gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  lockGuess();
-                }}
-              >
-                <input
-                  type="text"
-                  autoComplete="off"
-                  aria-label="Your guess"
-                  placeholder="a word or a sentence"
-                  value={guessText}
-                  onChange={(e) => setGuessText(e.target.value)}
-                  className="min-w-[220px] flex-1 rounded border border-grid bg-canvas px-3 py-2 text-sm text-ink placeholder:text-ink-muted"
-                />
-                <button
-                  type="submit"
-                  disabled={guessText.trim().length === 0}
-                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-                >
-                  Lock it in
-                </button>
-                <button
-                  type="button"
-                  onClick={skipGuess}
-                  className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
-                >
-                  Skip
-                </button>
-              </form>
-            ) : (
-              <p className="text-ink">
-                {guessState === "guessed" ? (
-                  <>
-                    Noted: <em>&ldquo;{guessText.trim()}&rdquo;</em>. Hold that thought.
-                  </>
-                ) : (
-                  <>Hold that thought anyway.</>
-                )}{" "}
-                <em className="text-ink-muted">The answer is one page away.</em>
-              </p>
-            )}
-          </section>
+          <p className="text-lg text-ink">
+            Every wall above comes from the same habit: paying for smarts{" "}
+            <strong>up front</strong>, all at once, before a single question is asked. And the bias
+            never needed more paid for at all, only a second look at the question. So turn it
+            around: instead of front-loading everything to make the model{" "}
+            <strong>know</strong> the answer, spend that effort{" "}
+            <strong>when the question arrives</strong> and let it{" "}
+            <strong>work the answer out</strong>. That is how you solved{" "}
+            <strong className="font-mono">{GAME_ROUNDS[1].prompt}</strong> on page 1: not by knowing
+            it in advance, but by building it on the spot.
+          </p>
         </section>
 
         <Note kicker="References">
@@ -636,12 +566,12 @@ export function Page3() {
       </div>
 
       {/* Both sections in two sentences, and the hand-off they add up to. */}
-      <p className="border-t border-grid pt-4 text-lg text-ink">
+      <PullQuote>
         Training-time scaling buys more facts, later, at compounding cost, and it cannot touch a bias
         that was never about missing facts. Every wall here limits what a model can be given{" "}
         <strong>before</strong> the question arrives, which leaves only what it does{" "}
         <strong>after</strong> it.
-      </p>
+      </PullQuote>
 
       <p className="text-xs text-ink-muted">
         the frontier compute trend (about 5x per year for language models since mid-2020) is an

@@ -86,12 +86,9 @@ test.describe("Act 1 (pages 1–4)", () => {
     const months = page.getByRole("slider", { name: /drag through the first year/i });
     await months.focus();
     await months.press("End");
-    await expect(page.getByText("$45.5B", { exact: true })).toBeVisible();
-    // The optional guess box hands off to the next page.
-    await page.getByRole("textbox", { name: /your guess/i }).fill("let it look things up");
-    await page.getByRole("button", { name: /lock it in/i }).click();
-    await expect(page.getByText(/Hold that thought\./)).toBeVisible();
-    await expect(page.getByText(/The answer is one page away\./)).toBeVisible();
+    await expect(page.getByText("$45.5B", { exact: true }).first()).toBeVisible();
+    // The page closes on its two-sentence verdict, which hands off to page 4.
+    await expect(page.getByText(/leaves only what it does\s*after it/i)).toBeVisible();
   });
 
   test("Page 3 post-drag state has no serious/critical accessibility violations", async ({
@@ -101,7 +98,6 @@ test.describe("Act 1 (pages 1–4)", () => {
     const months = page.getByRole("slider", { name: /drag through the first year/i });
     await months.focus();
     await months.press("End");
-    await page.getByRole("button", { name: "Skip" }).click();
     await expectAxeClean(page);
   });
 
