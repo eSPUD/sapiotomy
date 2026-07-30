@@ -2,14 +2,15 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Act 3 (pages 15–20)", () => {
-  test("Page 15: the scoreboard surfaces the FrontierMath dispute dot by dot", async ({ page }) => {
+  test("Page 15: the FrontierMath case reveals its coordinates on a guess", async ({ page }) => {
     await page.goto("/p/15");
-    // Opens on GSM8K with the latest score's receipt.
-    await expect(page.getByText(/reported in: Anthropic 2024/)).toBeVisible();
-    await page.getByRole("button", { name: "FrontierMath", exact: true }).click();
-    await page.getByRole("button", { name: /o3 — OpenAI, internal, Dec 2024: 25\.2%/ }).click();
+    // Opens on the o1 case with both quote-true headlines.
+    await expect(page.getByText(/o1 scores 74\.4% on AIME 2024/)).toBeVisible();
+    await page.getByRole("button", { name: "o3 on FrontierMath" }).click();
+    await expect(page.getByText(/o3 scores 25\.2% on FrontierMath/)).toBeVisible();
+    await page.getByRole("button", { name: "whose harness scored it" }).click();
+    await expect(page.getByText("all four coordinates at once")).toBeVisible();
     await expect(page.getByText(/180-problem 2024-11 version/)).toBeVisible();
-    await page.getByRole("button", { name: /Epoch AI eval, Apr 2025: 10%/ }).click();
     await expect(page.getByText(/290-problem 2025-02 set/)).toBeVisible();
   });
 
