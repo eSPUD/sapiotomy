@@ -40,13 +40,12 @@
  * CC BY redraw attribution plus the "no claims about what any lab actually
  * spends" disclaimer. All three are load-bearing: do not trim them.
  *
- * Each figure owns its own control, too. Step 1's five-year slider moves step
- * 1's cost curve, and nothing else; step 2's parameter dial moves step 2's
- * reading bar, and nothing else. The old build had step 1's slider secretly
- * driving a marker in step 2 — a dial in one figure yanking a needle in
- * another, with no causal story connecting them. The data wall's timeline is
- * now static, which is honest: Villalobos gives a window, not a rate, so there
- * was never anything for the reader to drag there.
+ * Each figure owns its own control. The cost chart's month marker moves that
+ * chart and nothing else; the projection's year marker moves the projection and
+ * nothing else. An earlier build had one figure's slider secretly driving a
+ * marker in another, with no causal story connecting them. The data-window
+ * timeline stays static on purpose: Villalobos gives a window, not a rate, so
+ * there is nothing there for a reader to drag.
  */
 
 import { useMemo, useRef, useState } from "react";
@@ -116,14 +115,6 @@ const fmtM = (m: number) =>
 /** Trillions of tokens: "1.4T" small, "300T" large. */
 const fmtT = (t: number) => `${t >= 10 ? Math.round(t) : t.toFixed(1)}T`;
 
-/** Parameter counts, dialled in billions but spoken in trillions past 1000B. */
-const fmtParams = (b: number) => (b >= 1000 ? `${(b / 1000).toFixed(1)}T` : `${b}B`);
-
-/** Step 2's dial: model size in billions of parameters. */
-const PARAMS_MIN = 100;
-const PARAMS_MAX = 20000;
-const PARAMS_STEP = 100;
-
 type GuessState = "open" | "guessed" | "skipped";
 
 /** The meter's calendar span, one year either side of the cited window. */
@@ -191,47 +182,6 @@ function DataWindowMeter({
   );
 }
 
-/**
- * Step 2's own figure: how much of the finite stock one model has to read.
- * Compute-optimal training wants about {tokensPerParam} tokens per parameter
- * (Hoffmann et al. 2022), so the reader's parameter dial converts straight into
- * a demand for text, drawn against Villalobos et al.'s ~300T stock. Derived
- * from those two cited anchors and labelled as such; past 100% the bar turns
- * red and says so rather than pretending the tokens exist.
- */
-function ReadingBar({ tokensT, stockT }: { tokensT: number; stockT: number }) {
-  const share = tokensT / stockT;
-  const over = share > 1;
-  return (
-    <div>
-      <div
-        role="img"
-        aria-label={`Reading demand against the stock: this model must read about ${tokensT.toFixed(1)} trillion tokens, ${(share * 100).toFixed(0)} percent of the ${stockT} trillion token stock.`}
-        className="relative h-3 overflow-hidden rounded-sm border border-grid bg-canvas"
-      >
-        <div
-          className={`absolute inset-y-0 left-0 transition-[width] duration-150 ${over ? "bg-wrong" : "bg-compute"}`}
-          style={{ width: `${Math.min(share, 1) * 100}%` }}
-        />
-      </div>
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-ink-muted">
-        <span>
-          must read <span className="font-mono text-ink">≈{fmtT(tokensT)}</span>
-        </span>
-        <span>
-          {over ? (
-            <span className="font-semibold text-wrong">
-              {(share * 100).toFixed(0)}% — more text than exists
-            </span>
-          ) : (
-            `${(share * 100).toFixed(share < 0.1 ? 2 : 1)}% of everything ever written`
-          )}
-        </span>
-      </div>
-    </div>
-  );
-}
-
 export function Page3() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
@@ -249,20 +199,16 @@ export function Page3() {
   const cp = chinchilla.fit!.params;
 
   const [months, setMonths] = useState(6); // mid-range: room to drag either way
-  const [paramsB, setParamsB] = useState(1000);
   const [guessText, setGuessText] = useState("");
   const [guessState, setGuessState] = useState<GuessState>("open");
   const [announcement, setAnnouncement] = useState("");
   const monthsTouchedRef = useRef(false);
-  const paramsTouchedRef = useRef(false);
   const crossedFlatYearRef = useRef(false);
   const crossedStockRef = useRef(false);
 
   const STOCK_T = ds.stockTrillionTokens;
   /** Compute-optimal reading for a model this size, in trillions of tokens. */
-  const tokensT = (paramsB * cp.tokensPerParam) / 1000;
   /** The size whose compute-optimal appetite is exactly the whole stock. */
-  const paramsAtFullStock = (STOCK_T * 1000) / cp.tokensPerParam;
 
   // The observed-frontier figure's own year handle, independent of step 1's.
   const [projYear, setProjYear] = useState(PP.medianCrossesStockYear);
@@ -307,19 +253,6 @@ export function Page3() {
     }
   };
 
-  const onParams = (v: number) => {
-    if (!paramsTouchedRef.current) {
-      paramsTouchedRef.current = true;
-      recordInteraction(PAGE_N);
-    }
-    setParamsB(v);
-    if (!crossedStockRef.current && (v * cp.tokensPerParam) / 1000 > STOCK_T) {
-      crossedStockRef.current = true;
-      setAnnouncement(
-        `At ${fmtParams(v)} parameters the compute-optimal recipe asks for more text than humans have written.`,
-      );
-    }
-  };
 
   const lockGuess = () => {
     if (guessState !== "open" || guessText.trim().length === 0) return;
@@ -477,9 +410,10 @@ export function Page3() {
             <p className="text-sm text-ink">
               Suppose money were no object. It still fails. A <strong>bigger</strong> model only pays
               off if it also <strong>reads more</strong>, in step: about {cp.tokensPerParam} tokens
-              per parameter. Size and reading climb together, and that is the scaling law.
+              per parameter, which is the scaling law.
               <Cite n={REF.chinchilla} /> So the ceiling was never money. It is how much there is
-              worth reading.
+              worth reading, and{" "}
+              <strong className="text-ink">no budget buys tokens that do not exist</strong>.
             </p>
             <div className="rounded-lg border border-grid bg-surface-raised p-4">
               <p className="text-xs uppercase tracking-wide text-ink-muted">
@@ -493,12 +427,6 @@ export function Page3() {
                 tokens: the pieces of text a model reads, roughly a word each
               </p>
             </div>
-            <p className="text-sm text-ink-muted">
-              A model wants about {cp.tokensPerParam} tokens per parameter, so{" "}
-              <strong className="text-ink">{fmtParams(paramsAtFullStock)}</strong> of parameters
-              would ask for every quality token humans have written.{" "}
-              <strong className="text-ink">No budget buys tokens that do not exist.</strong>
-            </p>
             {/* Where the trend lands. Epoch's own historical projection, run
                 forward from their dataset-size regression to 2030. */}
             <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
@@ -550,7 +478,7 @@ export function Page3() {
                 <strong className="text-ink">
                   {MONTH_NAMES[PP.medianCrossesStockMonth - 1]} {PP.medianCrossesStockYear}
                 </strong>
-                , inside the {ds.windowStartYear}&ndash;{ds.windowEndYear} window below.
+                , inside the window below.
               </p>
               <p className="text-xs text-ink-muted">
                 the trend projection only · Epoch also run a compute-based projection, which is not

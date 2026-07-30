@@ -552,7 +552,8 @@ export function LineChart({
             />
           ) : null}
 
-          {/* the numbers themselves, so the plot answers without a lookup */}
+          {/* the numbers themselves, in a balloon so they read against the
+              gridlines and the other line rather than sitting loose on them */}
           {markerFormat
             ? (
                 [
@@ -562,18 +563,37 @@ export function LineChart({
                     : []),
                 ] as const
               ).map(({ pt, tone }, i) => {
+                const label = markerFormat(pt.y);
+                const w = label.length * 6.4 + 12;
+                const h = 17;
                 const cx = x(pt.x);
-                const flip = cx > innerW - 56; // keep the label inside the plot
+                const cy = y(pt.y);
+                // point away from the marker, and stay inside the plot
+                const flip = cx > innerW - (w + 16);
+                const bx = flip ? cx - 9 - w : cx + 9;
+                const by = Math.min(Math.max(cy - h / 2, 0), innerH - h);
+                const tipY = Math.min(Math.max(cy, by + 4), by + h - 4);
                 return (
-                  <text
-                    key={i}
-                    x={cx + (flip ? -10 : 10)}
-                    y={y(pt.y) - 9}
-                    textAnchor={flip ? "end" : "start"}
-                    className={`${FILL[tone]} text-[11px] font-semibold`}
-                  >
-                    {markerFormat(pt.y)}
-                  </text>
+                  <g key={i}>
+                    {/* the tail, drawn first so the body covers its base */}
+                    <path
+                      d={
+                        flip
+                          ? `M${bx + w} ${tipY - 4} L${cx - 2} ${cy} L${bx + w} ${tipY + 4} Z`
+                          : `M${bx} ${tipY - 4} L${cx + 2} ${cy} L${bx} ${tipY + 4} Z`
+                      }
+                      className={FILL[tone]}
+                    />
+                    <rect x={bx} y={by} width={w} height={h} rx={4} className={FILL[tone]} />
+                    <text
+                      x={bx + w / 2}
+                      y={by + h / 2 + 4}
+                      textAnchor="middle"
+                      className="fill-canvas text-[11px] font-semibold"
+                    >
+                      {label}
+                    </text>
+                  </g>
                 );
               })
             : null}
