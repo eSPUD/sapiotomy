@@ -2,61 +2,67 @@
 
 /**
  * Page 15, "The Scoreboard: Benchmarks That Track Reasoning" — where Act 3
- * turns from the frontier pair (13–14) to the caveats. Every claim this act
- * has made or weighs ("o1 reasons", "R1 matches it", "the collapse is
- * an artifact") arrives as a benchmark score, so before weighing any of them
- * the reader needs to know how the scoreboard works — and how it fails.
+ * turns from the frontier pair (13-14) to the caveats. Every claim this act
+ * makes or weighs ("o1 reasons", "R1 matches it", "the collapse is an
+ * artifact") arrives as a benchmark score, so before weighing any of them the
+ * reader needs the one intuition headlines strip away: a score is not a
+ * property of a model. It is a point with four coordinates (model variant,
+ * version of the test, harness, thinking budget), and the headline keeps the
+ * number while dropping the coordinates.
  *
  * Three moves, one per section:
- *   1. The dashboard. Pick a benchmark, read its arc: dots are published
- *      scores (each one selectable, with its source and its asterisk), the
- *      thin staircase is the best-so-far frontier, the dashed lines are the
- *      bars humans set (PhD experts at 69.7 on GPQA, the IMO gold medalist
- *      at 90 on MATH, saturation at 95 on GSM8K). The reasoning-model cliff
- *      of late 2024 is visible on every one of them.
- *   2. The treadmill. Same data, one derived figure: each benchmark's shelf
- *      life from introduction to the day its bar fell. MATH stood almost four
- *      years; GPQA eleven months; AIME 2024 fell inside its own calendar
- *      year. Harder tests are dying faster, which is why the goalposts
- *      moving is the system working, not a scandal.
- *   3. The asterisks. Three ways a headline number is softer than it looks,
- *      each anchored to a dot the reader can go back and click: compute
- *      settings (o1's 74/83/93 on AIME is ONE model under three inference
- *      budgets), the ruler changing under the name (MATH → MATH-500, OpenAI's
- *      12% vs DeepSeek's 9.3% for the same GPT-4o), and the FrontierMath
- *      dispute (25.2% internal/high-compute/180 problems vs Epoch AI's ~10%
- *      on the released model and the 290-problem set, with the funding
- *      disclosed late).
+ *   1. The courtroom of headlines. Three real cases, each a pair of
+ *      quote-true headlines about the same model on the same test that
+ *      disagree wildly (o1's 74.4 vs 93 on AIME, GPT-4o's 12 vs 9.3 on AIME,
+ *      o3's 25.2 vs 10 on FrontierMath). The reader guesses which coordinate
+ *      moved, then reveals the two receipts with the moved rows flagged.
+ *      Page 13 already teaches WHERE o1's three numbers come from (its
+ *      waterfall: chain, vote, re-ranker); this page teaches what their
+ *      coexistence does to the word "score". No overlap in lesson.
+ *   2. The treadmill. Each benchmark's shelf life from introduction to the
+ *      day its bar fell. Framing is verification-corrected: the treadmill
+ *      predates reasoning models (GSM8K's bar fell to a non-reasoning model
+ *      months before o1 shipped; Dynabench named the pattern in 2021); what
+ *      late 2024 collapsed is the holdout tier (GPQA in eleven months, AIME
+ *      2024 inside its own calendar year).
+ *   3. The knob was never new. In 2022 the compute setting traveled inside
+ *      the metric's name (Minerva's MATH headline was maj1@64 = 50.3, with
+ *      pass@1 = 33.6 in the same table); reasoning models moved it inside
+ *      the product and the metric's name stopped carrying it. Close: put the
+ *      coordinates back, and note the one coordinate with a meter (the
+ *      handoff to page 16's bill).
  *
- * ARC-AGI is deliberately absent from the picker: its story is the price
- *  tag, and page 17 tells it with a dollar axis.
+ * This replaces the earlier score-dashboard revision of this page (a
+ * compiled timeline of published dots). That figure was original as a
+ * compilation but was a transcription, not an abstraction: its only
+ * interaction was reading receipts, which the literature itself already
+ * offers. Rationale and the verification behind the reframe:
+ * docs/page_15_coordinates_revision.md. The treadmill survives from that
+ * revision unchanged; benchmark-scoreboard.json still feeds it.
  *
- * Data: data/benchmark-scoreboard.json through lib/scoreboard.ts, the same
- * citation+provenance discipline as the curve registry; every dot's number,
- * source and caveat are pinned in scoreboard.test.ts. No simulation here —
- * the page is a reading lesson, and the only honest interaction with field
- * data is selecting which of it to read.
+ * Data: o1 trio and GPT-4o baseline from data/o1-scaling.json fit params,
+ * the same source page 13 prints, so the two pages cannot drift; the other
+ * case numbers mirror data/benchmark-scoreboard.json. All numbers verbatim
+ * from the cited reports and pinned in the test suite; the coordinate rows
+ * paraphrase the same reports' own disclosed settings.
  *
- * Replaces the "Wait button" stub that used to hold this slot: budget
- * forcing is taught in full on page 6 (the s1 "Wait" dial), so the slot was
- * a duplicate.
+ * ARC-AGI is deliberately absent: its story is the price tag, and page 16
+ * tells it with a dollar axis.
  */
 
 import { useMemo, useState } from "react";
-import { scaleLinear } from "d3";
-import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
-import { frontierOf, SCOREBOARD, type Benchmark, type ScoreEntry } from "@/lib/scoreboard";
+import { curves } from "@/lib/curves";
+import { SCOREBOARD } from "@/lib/scoreboard";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 15;
-const W = 560;
-const H = 300;
+const P = curves.o1Scaling.fit!.params;
 
 /** Page 15's references, numbered in order of first appearance. */
-const REF = { gsm8k: 1, math: 2, gpqa: 3, openai: 4, deepseek: 5, swebench: 6, frontiermath: 7, epoch: 8 } as const;
+const REF = { openai: 1, deepseek: 2, frontiermath: 3, epoch: 4, gsm8k: 5, math: 6, gpqa: 7, minerva: 8 } as const;
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -72,9 +78,6 @@ function fmtSpan(years: number): string {
   return years < 1 ? `${Math.round(years * 12)} months` : `${years.toFixed(1)} years`;
 }
 
-const fmtScore = (e: ScoreEntry, b: Benchmark) =>
-  `${e.y.toLocaleString("en-US")}${b.unitShort}`;
-
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
@@ -85,121 +88,174 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
-/** One benchmark's timeline: score dots, the frontier staircase, the bars. */
-function ScoreChart({
-  bench,
-  xDomain,
-  selected,
-  onSelect,
-}: {
-  bench: Benchmark;
-  xDomain: [number, number];
-  selected: ScoreEntry;
-  onSelect: (e: ScoreEntry) => void;
-}) {
-  const innerW = W - CHART_MARGIN.left - CHART_MARGIN.right;
-  const innerH = H - CHART_MARGIN.top - CHART_MARGIN.bottom;
-  const x = scaleLinear().domain(xDomain).range([0, innerW]);
-  const y = scaleLinear().domain(bench.yDomain).range([innerH, 0]);
-  const frontier = frontierOf(bench.entries);
-  const yTicks = y.ticks(5);
-  const xTicks = [2021, 2022, 2023, 2024, 2025];
+/* ----------------------------- the cases ------------------------------- */
 
-  return (
-    <ChartFrame
-      title={`${bench.name}: published scores over time, in ${bench.unit}. ${bench.status}.`}
-      width={W}
-      height={H}
-      xLabel="when the score was reported"
-      yLabel={bench.unit}
-      role="group"
-    >
-      {yTicks.map((t) => (
-        <g key={`y${t}`}>
-          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-6} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
-            {t.toLocaleString("en-US")}
-          </text>
-        </g>
-      ))}
-      {xTicks.map((t) => (
-        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-          {t}
-        </text>
-      ))}
+type CoordKey = "model" | "test" | "harness" | "budget";
 
-      {bench.refLines.map((r) => (
-        <g key={r.label}>
-          <line
-            x1={0}
-            x2={innerW}
-            y1={y(r.y)}
-            y2={y(r.y)}
-            className="stroke-ink-muted"
-            strokeWidth={1}
-            strokeDasharray="4 3"
-          />
-          <text x={innerW - 4} y={y(r.y) - 4} textAnchor="end" className="fill-ink-muted text-[10px]">
-            {r.label}
-          </text>
-        </g>
-      ))}
+const COORDS: { key: CoordKey; label: string }[] = [
+  { key: "model", label: "the model variant" },
+  { key: "test", label: "the version of the test" },
+  { key: "harness", label: "whose harness scored it" },
+  { key: "budget", label: "the thinking budget" },
+];
 
-      {/* the best-so-far staircase the headlines trace */}
-      <path
-        d={frontier.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.x)},${y(p.y)}`).join("")}
-        fill="none"
-        className="stroke-compute"
-        strokeWidth={1.5}
-        strokeDasharray="2 3"
-      />
+const coordLabel = (k: CoordKey) => COORDS.find((c) => c.key === k)!.label;
 
-      {/* every published score, selectable */}
-      {bench.entries.map((e) => {
-        const isSel = e === selected;
-        return (
-          <g
-            key={`${e.x}-${e.model}`}
-            role="button"
-            tabIndex={0}
-            aria-pressed={isSel}
-            aria-label={`${e.model}, ${fmtWhen(e.x)}: ${fmtScore(e, bench)}. Select to read the source and the caveat.`}
-            className="cursor-pointer focus:outline-none"
-            onClick={() => onSelect(e)}
-            onFocus={() => onSelect(e)}
-            onKeyDown={(ev) => {
-              if (ev.key === "Enter" || ev.key === " ") {
-                ev.preventDefault();
-                onSelect(e);
-              }
-            }}
-          >
-            {/* invisible halo: a hit target bigger than the painted dot */}
-            <circle cx={x(e.x)} cy={y(e.y)} r={12} fill="transparent" />
-            <circle
-              cx={x(e.x)}
-              cy={y(e.y)}
-              r={isSel ? 6.5 : 4.5}
-              strokeWidth={2}
-              className={isSel ? "fill-compute stroke-ink" : "fill-compute stroke-canvas"}
-            />
-          </g>
-        );
-      })}
-    </ChartFrame>
-  );
+interface HeadlineSide {
+  /** Short column tag for the receipt table. */
+  tag: string;
+  /** The quote-true headline, rendered in quotation marks. */
+  quote: string;
+  when: string;
+  coords: Record<CoordKey, string>;
 }
+
+interface HeadlineCase {
+  key: string;
+  picker: string;
+  moved: CoordKey[];
+  a: HeadlineSide;
+  b: HeadlineSide;
+  lesson: React.ReactNode;
+}
+
+const CASES: HeadlineCase[] = [
+  {
+    key: "o1",
+    picker: "o1 on AIME 2024",
+    moved: ["budget"],
+    a: {
+      tag: `${P.o1Pass1}%`,
+      quote: `o1 scores ${P.o1Pass1}% on AIME 2024`,
+      when: "Sep 2024",
+      coords: {
+        model: "o1",
+        test: "AIME 2024, all 15 problems",
+        harness: "OpenAI's own evaluation",
+        budget: "one chain per problem (pass@1)",
+      },
+    },
+    b: {
+      tag: `${P.o1Rerank1000}%`,
+      quote: `o1 scores ${P.o1Rerank1000}% on AIME 2024`,
+      when: "Sep 2024",
+      coords: {
+        model: "o1",
+        test: "AIME 2024, all 15 problems",
+        harness: "OpenAI's own evaluation",
+        budget: "1,000 chains per problem, a learned judge picks one (page 8's re-ranker)",
+      },
+    },
+    lesson: (
+      <>
+        Both numbers sit in a single sentence of the o1 announcement, with {P.o1Cons64}% (page
+        7&apos;s vote across 64 chains) between them.
+        <Cite n={REF.openai} /> Page 13 built this stack lever by lever; the headline erases which
+        lever was on. {(P.o1Rerank1000 - P.o1Pass1).toFixed(1)} points of AIME live in the sampling
+        dial alone.
+      </>
+    ),
+  },
+  {
+    key: "gpt4o",
+    picker: "GPT-4o on AIME 2024",
+    moved: ["harness"],
+    a: {
+      tag: `${P.gpt4oAime}%`,
+      quote: `GPT-4o scores ${P.gpt4oAime}% on AIME 2024`,
+      when: "Sep 2024",
+      coords: {
+        model: "GPT-4o",
+        test: "AIME 2024, all 15 problems",
+        harness: "OpenAI's harness, in the o1 announcement",
+        budget: "one answer per problem (pass@1)",
+      },
+    },
+    b: {
+      tag: "9.3%",
+      quote: "GPT-4o scores 9.3% on AIME 2024",
+      when: "Jan 2025",
+      coords: {
+        model: "GPT-4o",
+        test: "AIME 2024, all 15 problems",
+        harness: "DeepSeek's harness, in the R1 paper",
+        budget: "one answer per problem (pass@1)",
+      },
+    },
+    lesson: (
+      <>
+        Nobody misreported, and the model never changed: prompt format, answer extraction and
+        sampling defaults moved the score by nearly a quarter of itself.
+        <Cite n={REF.openai} />
+        <Cite n={REF.deepseek} /> Compare scores only inside one report.
+      </>
+    ),
+  },
+  {
+    key: "o3",
+    picker: "o3 on FrontierMath",
+    moved: ["model", "test", "harness", "budget"],
+    a: {
+      tag: "25.2%",
+      quote: "o3 scores 25.2% on FrontierMath",
+      when: "Dec 2024",
+      coords: {
+        model: "o3, internal pre-release build",
+        test: "the 180-problem 2024-11 version",
+        harness: "OpenAI, run internally; OpenAI had funded the benchmark, disclosed late",
+        budget: "“aggressive test-time compute” (OpenAI's phrase)",
+      },
+    },
+    b: {
+      tag: "10%",
+      quote: "o3 scores 10% on FrontierMath",
+      when: "Apr 2025",
+      coords: {
+        model: "o3 as released in the product",
+        test: "the 290-problem 2025-02 set",
+        harness: "Epoch AI, independent",
+        budget: "product compute settings",
+      },
+    },
+    lesson: (
+      <>
+        The dispute that ran through the AI press for a spring, resolved by coordinates: every one
+        of them moved at once, and the test&apos;s funder was the scorer.
+        <Cite n={REF.frontiermath} />
+        <Cite n={REF.epoch} /> Neither number is a lie. Without its coordinates, neither is a
+        measurement.
+      </>
+    ),
+  },
+];
 
 export function Page15() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
   const { xDomain, benchmarks } = SCOREBOARD;
 
-  const [benchKey, setBenchKey] = useState(benchmarks[0].key);
-  const bench = benchmarks.find((b) => b.key === benchKey)!;
-  /* Default to the latest dot, so the readout is never empty. */
-  const [picked, setPicked] = useState<Record<string, ScoreEntry>>({});
-  const selected = picked[benchKey] ?? bench.entries[bench.entries.length - 1];
+  const [caseKey, setCaseKey] = useState(CASES[0].key);
+  /* One guess per case, so revisiting a case keeps its reveal. */
+  const [picks, setPicks] = useState<Record<string, CoordKey | "shown">>({});
+  const current = CASES.find((c) => c.key === caseKey)!;
+  const pick = picks[caseKey];
+  const revealed = pick !== undefined;
+
+  const movedText =
+    current.moved.length === COORDS.length
+      ? "all four coordinates at once"
+      : `${coordLabel(current.moved[0])}, and nothing else`;
+  const verdictPrefix =
+    pick === undefined || pick === "shown"
+      ? ""
+      : current.moved.includes(pick)
+        ? "Good guess. "
+        : `Not quite: ${coordLabel(pick)} is the same in both headlines. `;
+
+  const guess = (k: CoordKey | "shown") => {
+    setPicks((p) => ({ ...p, [caseKey]: k }));
+    recordInteraction(PAGE_N);
+  };
 
   const lifespans = useMemo(
     () => benchmarks.filter((b) => b.lifespan !== null && b.key !== "swebench"),
@@ -217,87 +273,159 @@ export function Page15() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Every claim in this act — <em>&ldquo;it reasons&rdquo;</em>,{" "}
-        <em>&ldquo;it matches PhDs&rdquo;</em>, <em>&ldquo;it collapsed&rdquo;</em> — arrives as a
-        score on a benchmark. A score is evidence about <strong className="text-ink">one test</strong>,
-        read under <strong className="text-ink">one set of settings</strong>, and every test has a{" "}
-        <strong className="text-ink">shelf life</strong>: models saturate it, and a harder one takes
-        its place. This page is the reading lesson for the rest of the act.
+        Pages 13 and 14 argued in benchmark scores, and pages 16 to 20 will ask you to judge fights
+        that are fought in them. So learn what a score is first.{" "}
+        <strong className="text-ink">A score is not a property of a model.</strong> It is a point
+        with <strong className="text-ink">four coordinates</strong>: which model variant, which
+        version of the test, whose harness scored it, and how much thinking was bought. A headline
+        keeps the number and drops the coordinates. This page is where you learn to put them back.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the dashboard */}
+        {/* Step 1 — the courtroom of headlines */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. Pick a test, read its arc
+            1. Two true headlines, one model
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              published scores · no simulation
+              published numbers · no simulation
             </span>
           </h2>
 
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Benchmark">
-              {benchmarks.map((b) => (
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Pick a case">
+              {CASES.map((c) => (
                 <button
-                  key={b.key}
+                  key={c.key}
                   type="button"
-                  aria-pressed={benchKey === b.key}
+                  aria-pressed={caseKey === c.key}
                   onClick={() => {
-                    setBenchKey(b.key);
+                    setCaseKey(c.key);
                     recordInteraction(PAGE_N);
                   }}
                   className={`rounded px-3 py-1.5 text-sm ${
-                    benchKey === b.key
+                    caseKey === c.key
                       ? "bg-compute text-canvas"
                       : "border border-grid bg-surface-raised text-ink-muted"
                   }`}
                 >
-                  {b.name}
+                  {c.picker}
                 </button>
               ))}
             </div>
 
-            <p className="text-sm text-ink">
-              <strong>{bench.name}</strong> asks: {bench.ask}.{" "}
-              <span className="text-ink-muted">Where it stands: {bench.status}.</span>
-            </p>
-
-            <ScoreChart
-              bench={bench}
-              xDomain={xDomain}
-              selected={selected}
-              onSelect={(e) => {
-                setPicked((p) => ({ ...p, [benchKey]: e }));
-                recordInteraction(PAGE_N);
-              }}
-            />
-
-            {/* the selected dot's receipt */}
-            <div className="flex flex-col gap-1 rounded-lg border-l-4 border-compute bg-surface-raised p-3">
-              <p className="text-sm text-ink">
-                <strong>{selected.model}</strong>
-                <span className="text-ink-muted"> · {fmtWhen(selected.x)} · </span>
-                <span className="font-mono font-bold tabular-nums text-compute">
-                  {fmtScore(selected, bench)}
-                </span>
-              </p>
-              <p className="text-xs text-ink-muted">reported in: {selected.source}</p>
-              {selected.note ? <p className="text-sm text-ink">✱ {selected.note}</p> : null}
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[current.a, current.b].map((side) => (
+                <figure
+                  key={side.tag}
+                  className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4"
+                >
+                  <blockquote className="m-0 text-lg font-semibold leading-snug text-ink">
+                    &ldquo;{side.quote}&rdquo;
+                  </blockquote>
+                  <figcaption className="flex items-center gap-2 text-xs text-ink-muted">
+                    <span className="rounded border border-grid px-1.5 py-0.5 font-semibold">
+                      quote-true
+                    </span>
+                    {side.when}
+                  </figcaption>
+                </figure>
+              ))}
             </div>
 
-            <p className="text-xs text-ink-muted">
-              dots are headline numbers transcribed from the cited reports; the dashed staircase is
-              the best score to date · one family is missing on purpose: ARC-AGI&apos;s story is the
-              price tag, and page 17 tells it with a dollar axis
-            </p>
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-ink">
+                Both headlines are lifted from the cited reports, and both are true.{" "}
+                <strong>Which coordinate moved?</strong>
+              </p>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Which coordinate moved?">
+                {COORDS.map((c) => (
+                  <button
+                    key={c.key}
+                    type="button"
+                    disabled={revealed}
+                    onClick={() => guess(c.key)}
+                    className={`rounded border px-3 py-1.5 text-sm disabled:opacity-60 ${
+                      revealed && current.moved.includes(c.key)
+                        ? "border-compute bg-compute/15 font-semibold text-ink"
+                        : "border-grid bg-surface-raised text-ink-muted"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+                {!revealed ? (
+                  <button
+                    type="button"
+                    onClick={() => guess("shown")}
+                    className="rounded px-3 py-1.5 text-sm text-ink-muted underline decoration-dotted"
+                  >
+                    just show me
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            <div aria-live="polite" className="flex flex-col gap-3">
+              {revealed ? (
+                <>
+                  <p className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
+                    {verdictPrefix}
+                    What moved: <strong>{movedText}</strong>.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
+                          <th scope="col" className="py-1.5 pr-3 font-semibold">
+                            coordinate
+                          </th>
+                          <th scope="col" className="py-1.5 pr-3 font-semibold">
+                            the {current.a.tag} headline
+                          </th>
+                          <th scope="col" className="py-1.5 font-semibold">
+                            the {current.b.tag} headline
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {COORDS.map((c) => {
+                          const moved = current.moved.includes(c.key);
+                          return (
+                            <tr
+                              key={c.key}
+                              className={`border-t border-grid align-top ${moved ? "bg-compute/10" : ""}`}
+                            >
+                              <th
+                                scope="row"
+                                className={`py-2 pr-3 text-left font-medium ${moved ? "text-ink" : "text-ink-muted"}`}
+                              >
+                                {moved ? "≠ " : ""}
+                                {c.label}
+                              </th>
+                              <td className={`py-2 pr-3 ${moved ? "text-ink" : "text-ink-muted"}`}>
+                                {current.a.coords[c.key]}
+                              </td>
+                              <td className={`py-2 ${moved ? "text-ink" : "text-ink-muted"}`}>
+                                {current.b.coords[c.key]}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-sm text-ink">{current.lesson}</p>
+                </>
+              ) : null}
+            </div>
           </div>
         </section>
 
-        <Note kicker="How to read">
-          <p>Every dot is a published score. Click one for its source — and its asterisk.</p>
-          <p>Dashed horizontal lines are bars humans set: experts, a gold medalist, saturation.</p>
+        <Note kicker="The rule">
+          <p>Guess before you reveal.</p>
           <p>
-            Watch late 2024 on every tab: that cliff is the reasoning models arriving.
+            All six headlines on this page are quote-true. That is the problem: a number with its
+            coordinates filed off can say almost anything.
           </p>
         </Note>
 
@@ -306,7 +434,7 @@ export function Page15() {
           <h2 className="text-xl font-semibold text-ink">
             2. The treadmill
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              same data, read as shelf lives
+              every test has a shelf life
             </span>
           </h2>
           <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
@@ -346,62 +474,84 @@ export function Page15() {
               })}
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
-              Bar = from a benchmark&apos;s introduction to the day its own bar fell (the dashed
-              lines in step 1). MATH stood almost four years;
-              <Cite n={REF.math} /> GPQA eleven months;
-              <Cite n={REF.gpqa} /> AIME 2024 fell inside its own calendar year. Each replacement is deliberately harder, and dies
-              faster anyway — <strong className="text-ink">the moving goalposts are the system
-              working</strong>: a saturated test measures nothing, so retiring it is the honest
-              move.
+              Bar = from a benchmark&apos;s introduction to the day its own bar fell. The treadmill
+              is older than the reasoners: GSM8K&apos;s bar fell months before the first commercial
+              reasoning model shipped.
+              <Cite n={REF.gsm8k} /> What late 2024 collapsed is the holdout tier: MATH&apos;s
+              gold-medalist line stood almost four years and fell only to o1;
+              <Cite n={REF.math} /> GPQA&apos;s PhD bar stood ten months;
+              <Cite n={REF.gpqa} /> AIME 2024 fell inside its own calendar year.{" "}
+              <strong className="text-ink">The moving goalposts are the system working</strong>: a
+              saturated test measures nothing, so retiring it is the honest move.
             </figcaption>
           </figure>
         </section>
-        <div aria-hidden="true" />
 
-        {/* Step 3 — the fine print */}
+        <Note kicker="How to read">
+          <p>Read the bars as shelf lives, not scandals.</p>
+          <p>A test that everything passes separates nothing; the harder replacement dies faster.</p>
+        </Note>
+
+        {/* Step 3 — the knob was never new */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Read the asterisks</h2>
+          <h2 className="text-xl font-semibold text-ink">3. Put the coordinates back</h2>
           <p className="text-ink-muted">
-            Three ways a headline number is softer than it looks. All three are sitting in the dots
-            you just clicked.
+            The thinking-budget coordinate is not new; what changed is where it hides.
           </p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
-              <strong>The knob behind the number.</strong> On AIME, o1 scores 74, 83 or 93 —{" "}
-              <em>one model</em>, under one sample, 64-vote consensus, or 1,000 re-ranked samples.
-              <Cite n={REF.openai} />
-              Those are Act 2&apos;s levers running at someone else&apos;s expense; a headline that
-              omits the setting is quoting the dial, not the machine.
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                2022: the knob in the metric&apos;s name
+              </p>
+              <p className="mt-2">
+                Minerva&apos;s celebrated MATH score was written{" "}
+                <code className="rounded bg-surface-raised px-1 font-mono text-[13px]">
+                  maj1@64 = 50.3%
+                </code>
+                : majority vote over 64 samples, says the name. The single-try{" "}
+                <code className="rounded bg-surface-raised px-1 font-mono text-[13px]">
+                  pass@1 = 33.6%
+                </code>{" "}
+                sat in the same table.
+                <Cite n={REF.minerva} /> The number and its budget traveled together.
+              </p>
             </div>
-            <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
-              <strong>The ruler changes under the name.</strong> &ldquo;MATH&rdquo; quietly became
-              MATH-500, a 500-problem slice. The same GPT-4o scores 12% on AIME in OpenAI&apos;s
-              harness and 9.3% in DeepSeek&apos;s.
-              <Cite n={REF.openai} />
-              <Cite n={REF.deepseek} /> On SWE-bench, the agent scaffold around the model moves
-              scores by double digits.
-              <Cite n={REF.swebench} /> Compare numbers only inside one report.
-            </div>
-            <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
-              <strong>The dispute, live.</strong> o3&apos;s famous 25.2% on FrontierMath was
-              measured by OpenAI internally, at aggressive compute, on the 180-problem version —
-              and OpenAI had funded the benchmark, disclosed late.
-              <Cite n={REF.frontiermath} /> Epoch AI&apos;s independent run of the{" "}
-              <em>released</em> o3 on the newer 290-problem set: about 10%.
-              <Cite n={REF.epoch} /> Both dots are on the FrontierMath tab; neither is a lie; the
-              gap is the fine print.
+            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-sm text-ink">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                2024 on: the knob in the product
+              </p>
+              <p className="mt-2">
+                Reasoning models moved the budget inside: an effort setting, a token allowance, a
+                hidden chain.
+                <Cite n={REF.openai} /> The metric&apos;s name stopped carrying it, so the setting
+                lives in the fine print. Fine print rarely survives retelling; the number alone
+                always does.
+              </p>
             </div>
           </div>
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            So the scoreboard is real — the late-2024 cliff shows up on every test, under
-            everybody&apos;s harness — but a score is a reading, not a property.{" "}
+            So a score is a reading, not a property. When the next one lands, put the coordinates
+            back: which model variant, which version of the test, whose harness, how much thinking.{" "}
             <em className="text-ink-muted">
-              Next: how models are trained to climb these boards at all. Turn the page.
+              Only one of the four has a meter running: thinking is billed by the token. Next: the
+              bill. Turn the page.
             </em>
           </div>
         </section>
 
         <Note kicker="References">
+          <RefItem n={REF.openai} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
+            OpenAI 2024, the o1 and o3 announcements.
+          </RefItem>
+          <RefItem n={REF.deepseek} href="https://arxiv.org/abs/2501.12948">
+            DeepSeek-AI 2025.
+          </RefItem>
+          <RefItem n={REF.frontiermath} href="https://arxiv.org/abs/2411.04872" preprint>
+            Glazer et al. 2024, <em>FrontierMath</em>.
+          </RefItem>
+          <RefItem n={REF.epoch}>
+            Epoch AI and TechCrunch 2025, on the FrontierMath dispute.
+          </RefItem>
           <RefItem n={REF.gsm8k} href="https://arxiv.org/abs/2110.14168">
             Cobbe et al. 2021, <em>GSM8K</em>.
           </RefItem>
@@ -411,32 +561,18 @@ export function Page15() {
           <RefItem n={REF.gpqa} href="https://arxiv.org/abs/2311.12022">
             Rein et al. 2023, <em>GPQA</em>.
           </RefItem>
-          <RefItem n={REF.openai} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
-            OpenAI 2024, the o1 and o3 announcements.
+          <RefItem n={REF.minerva} href="https://arxiv.org/abs/2206.14858">
+            Lewkowycz et al. 2022, <em>Minerva</em>.
           </RefItem>
-          <RefItem n={REF.deepseek} href="https://arxiv.org/abs/2501.12948">
-            DeepSeek-AI 2025.
-          </RefItem>
-          <RefItem n={REF.swebench} href="https://arxiv.org/abs/2310.06770">
-            Jimenez et al. 2024, <em>SWE-bench</em>.
-          </RefItem>
-          <RefItem n={REF.frontiermath} href="https://arxiv.org/abs/2411.04872">
-            Glazer et al. 2024, <em>FrontierMath</em>.
-          </RefItem>
-          <RefItem n={REF.epoch}>
-            Epoch AI and TechCrunch 2025, on the FrontierMath dispute.
-          </RefItem>
-          <p>
-            Dot-level sources not listed above (OpenAI 2023; Anthropic 2024; Wei et al. 2022) travel
-            with their dots: select one in step 1 for its receipt.
-          </p>
         </Note>
       </div>
 
       <p className="text-xs text-ink-muted">
-        every dot is transcribed verbatim from the cited report — announcement figures (o3,
-        FrontierMath) are vendor-reported and not peer-reviewed, and each one&apos;s caveat travels
-        with it in the data file · pinned in the test suite
+        every number on this page is transcribed verbatim from the cited report — announcement
+        figures (o3, FrontierMath) are vendor-reported and not peer-reviewed; the coordinate rows
+        paraphrase the same reports&apos; own disclosed settings, and the case numbers and treadmill
+        spans are pinned in the test suite · ARC-AGI is missing on purpose: its story is the price
+        tag, and page 16 tells it with a dollar axis
       </p>
 
       <PageNav n={PAGE_N} />
