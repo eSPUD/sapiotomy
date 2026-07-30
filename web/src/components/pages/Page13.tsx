@@ -8,22 +8,33 @@
  * literature never states in one place: the loop-diff (section 1), the
  * unified two-knob law (section 2), and the visibility boundary (section 4).
  *
- * Section 1 renders page 12's ten-line listing (shared via lib/starListing —
- * never forked, so the two pages cannot drift) behind a "drop the disguise"
- * toggle: four lines rewritten (plateau exit → compute budget, one greedy
- * rollout → k sampled chains, filter → explicit reward, finetune-from-base →
- * reinforce-in-place) and three struck (the hint branch — sampling explores
- * instead). Honesty is load-bearing: OpenAI confirmed the FRAME — large-scale
- * RL on a long private chain, and its researchers' own LRM definition — but
- * never published the algorithm, so the rewrite is labelled rumor in the h2
- * badge, the caption, and the footer. The callout under the listing carries
- * the page's two build-ons: no human anywhere in the loop (vs RLHF), and no
- * draw on page 3's finite stock of human text.
+ * Section 1 is the rumored o1 recipe as a six-line listing — page 12's loop
+ * rewritten, with the annotation column carrying the mapping back to page
+ * 12's lines (filter → explicit reward, one greedy rollout → k sampled
+ * chains, plateau exit → compute budget, finetune-from-base →
+ * reinforce-in-place, hint branch deleted because sampling explores). The
+ * full STaR listing is deliberately NOT re-printed (review: the reader just
+ * ran it twice on page 12; showing only the rewrite reads cleaner), and
+ * there is no toggle — the listing is static, page 1-3 digestibility.
+ * Honesty is load-bearing: OpenAI confirmed the FRAME — large-scale RL on a
+ * long private chain, and its researchers' own LRM definition — but never
+ * published the algorithm, so the rewrite is labelled rumor in the h2 badge
+ * and the caption. The callout under the listing carries the page's two
+ * build-ons: no human anywhere in the loop (vs RLHF), and no draw on page
+ * 3's finite stock of human text.
  *
- * Section 2 keeps the two-knob lab and re-aims its copy at page 11's idiom
- * ("model size picks your curve; test-time compute slides you along it") with
- * the curve-picker swapped for RL. The training slider translating the whole
- * line IS the claim; the missing-RL delta is the protagonist; the equality
+ * Section 2 keeps the two-knob lab, redrawn in page 11's chart grammar after
+ * review: the old half-width two-curve LineChart hid the law — the training
+ * knob's effect existed only between frames, and the default state (full RL)
+ * showed a single line and a +0.0 delta. Now the whole family of RL runs
+ * (×1, ×10, ×100 — the same authored line, slid one decade right per decade
+ * of RL forgone, clamped at the floor) is drawn at once at full card width,
+ * page 11's FamilyChart idiom: the training dial picks your curve, the
+ * thinking dial slides your marker along it, and a bracket at the marker
+ * prices the missing RL. The staircase arrows state the law statically — up
+ * one curve and along one decade buy the same +29.5 — so "one law, two
+ * knobs" is legible before anything is dragged; the default (×10, ×10) opens
+ * with the bracket showing exactly one decade forgone. The equality
  * law(2,0) = law(0,2) is the Try-it note's punchline (thinking cannot spend
  * training's decades). The unlabeled-axis fidelity note is unchanged: the
  * slope is authored, the anchors verbatim.
@@ -38,26 +49,30 @@
  *
  * Section 4 replaces the old boundary diagram (three visual systems, no
  * shared grammar) with a ledger — what exists / who can read it / who pays —
- * so the asymmetry is a column the eye can scan. The three closing blocks
- * (the case for hiding, the price, the R1 handoff) are kept verbatim and in
- * place by review request.
+ * so the asymmetry is a column the eye can scan. Every ledger cell carries
+ * words (review: an em-dash cell reads as a rendering bug). The three
+ * closing blocks (the case for hiding, the price, the R1 handoff) are kept
+ * verbatim and in place by review request.
+ *
+ * No Simulated/Cited footer (review): pages 1-3 carry none either —
+ * provenance is declared inline, in the h2 badges, section 1's caption, and
+ * section 2's fidelity note.
  *
  * Anchored to data/o1-scaling.json and data/o3-preview.json; the law and the
  * printed anchors are pinned in frontier.test.ts, the page's structure in
  * Page13.test.tsx.
  */
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { scaleLinear, scaleLog } from "d3";
 import { BigNumber } from "@/components/BigNumber";
+import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
-import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { twoAxisAccuracy } from "@/lib/frontier";
-import { STAR_LINES } from "@/lib/starListing";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 13;
@@ -76,77 +91,265 @@ const EXPS = Array.from({ length: 21 }, (_, i) => i / 10);
 const law = (testExp: number, trainExp: number) =>
   twoAxisAccuracy(testExp, trainExp, P.intercept, P.slopePerDecade, P.maxExp, P.floor);
 
-const FULL_CURVE = EXPS.map((e) => ({ x: 10 ** e, y: law(e, P.maxExp) }));
-
 /* Where o1's reported pass@1 sits on the fully-trained line. */
 const O1_DOT = { x: 10 ** ((P.o1Pass1 - P.intercept) / P.slopePerDecade), y: P.o1Pass1 };
 
-/* The thesis, drawn on the chart: from one point on the full-RL line, ×10
-   thinking (right) and ×10 RL (up) buy the same +29.5 — equal magnitude,
-   different direction. */
-const SLOPE_ARROWS = [
-  {
-    x1: 10 ** 0.5,
-    y1: law(0.5, P.maxExp),
-    x2: 10 ** 1.5,
-    y2: law(0.5, P.maxExp),
-    label: `×10 thinking → +${P.slopePerDecade}`,
-    labelDy: 14,
-  },
-  {
-    x1: 10 ** 0.5,
-    y1: law(0.5, P.maxExp),
-    x2: 10 ** 0.5,
-    y2: law(1.5, P.maxExp),
-    label: `×10 RL → +${P.slopePerDecade}`,
-    labelAnchor: "start" as const,
-    labelDx: 6,
-    labelDy: -4,
-  },
-];
+/*
+ * The family of RL runs, one per decade of train-time compute: the same
+ * authored line, slid one decade right for each decade of RL forgone, clamped
+ * at the floor. One hue per run, page 11's family style; every curve carries
+ * its own end label, so identity is never colour alone.
+ */
+const TRAIN_STOPS = [0, 1, 2] as const;
+const RUN_HUES: Record<number, { stroke: string; fill: string; label: string }> = {
+  0: { stroke: "stroke-wrong", fill: "fill-wrong", label: "×1" },
+  1: { stroke: "stroke-compute", fill: "fill-compute", label: "×10" },
+  2: { stroke: "stroke-correct", fill: "fill-correct", label: "×100 RL" },
+};
+
+/*
+ * Round an SVG coordinate to 2 decimals: log-scale outputs differ in the last
+ * float bits between server and client render, which React reports as a
+ * hydration mismatch; rounding makes both sides emit the same string.
+ */
+const px = (v: number) => Math.round(v * 100) / 100;
+
+/* The staircase: from one point on the ×10 run, up one curve and along one
+   decade buy the same +29.5 — equal rise, different knob. */
+const STAIR_EXP = 0.5;
+const STAIR_LO = law(STAIR_EXP, 1);
+const STAIR_HI = law(STAIR_EXP, 2);
+
+/** An arrow drawn as a line with a small triangular head at (x2, y2). */
+function Arrow({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) {
+  const angle = px((Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI);
+  return (
+    <g aria-hidden="true">
+      <line x1={x1} y1={y1} x2={x2} y2={y2} className="stroke-ink" strokeWidth={1.2} />
+      <polygon
+        points="0,0 -7,3 -7,-3"
+        transform={`translate(${x2},${y2}) rotate(${angle})`}
+        className="fill-ink"
+      />
+    </g>
+  );
+}
 
 /**
- * Section 1's diff against the shared STaR listing, indexed line for line.
- * "same" lines survive the rewrite untouched, "changed" lines carry the
- * rumored replacement, "dropped" lines are struck — the hint branch, made
- * redundant by sampled exploration. The rewrite is a reconstruction, not a
- * publication; the copy around it says so.
+ * The two-knob chart, page 11's family idiom: every RL run drawn in full at
+ * card width, the training dial highlighting one, the thinking dial sliding
+ * the marker along it. The bracket from the marker up to the ×100 run prices
+ * the missing RL; the staircase arrows state the law without any dragging.
  */
-type RlPatch =
-  | { kind: "same"; note?: React.ReactNode }
-  | { kind: "changed"; code: React.ReactNode; note: React.ReactNode; tone: string }
-  | { kind: "dropped"; note?: React.ReactNode };
+function RunFamilyChart({
+  trainExp,
+  testExp,
+  acc,
+  gap,
+}: {
+  trainExp: number;
+  testExp: number;
+  acc: number;
+  gap: number;
+}) {
+  const width = 640;
+  const height = 300;
+  const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
+  const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
+  const xScale = scaleLog().domain([1, 100]).range([0, innerW]);
+  const yScale = scaleLinear().domain([0, 100]).range([innerH, 0]);
+  const x = (v: number) => px(xScale(v));
+  const y = (v: number) => px(yScale(v));
 
-const RL_PATCH: RlPatch[] = [
-  { kind: "same", note: "unchanged — one pretrained model, still its own teacher" },
+  const family = TRAIN_STOPS.map((t) => ({
+    t,
+    pts: EXPS.map((e) => ({ x: 10 ** e, y: law(e, t) })),
+  }));
+  const path = (pts: { x: number; y: number }[]) =>
+    pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.x)},${y(p.y)}`).join("");
+
+  const mx = x(10 ** testExp);
+  const full = law(testExp, P.maxExp);
+  /* Flip the bracket label to the left when the marker nears the right edge. */
+  const bracketLeft = testExp > 1.5;
+
+  /* The staircase's two arrows: a riser between the runs, then a tread along
+     the top run, drawn just above it so neither overdraws a curve. The tread
+     label is rotated to the arrow's own slope, keeping it out of the marker's
+     lane. */
+  const sx = x(10 ** STAIR_EXP);
+  const riserY1 = y(STAIR_LO) - 4;
+  const riserY2 = y(STAIR_HI) + 4;
+  const treadY1 = y(STAIR_HI) - 14;
+  const treadX2 = x(10 ** (STAIR_EXP + 1));
+  const treadY2 = y(law(STAIR_EXP + 1, 2)) - 14;
+  const treadAngle = px((Math.atan2(treadY2 - treadY1, treadX2 - sx) * 180) / Math.PI);
+  const treadMidX = px((sx + treadX2) / 2);
+  const treadMidY = px((treadY1 + treadY2) / 2) - 8;
+
+  const title = `AIME 2024 accuracy against test-time compute, log x axis, redrawn in relative units. Three RL training runs are drawn in full as parallel lines: the times 100 run climbs from ${law(0, 2).toFixed(0)} to ${law(2, 2).toFixed(0)} percent across two decades; the times 10 run is the same line one decade right, ending at ${law(2, 1).toFixed(1)} percent; the times 1 run barely leaves the floor, ending at ${law(2, 0).toFixed(0)} percent. Staircase arrows on the times 10 run show that times 10 more RL and times 10 more thinking buy the same ${P.slopePerDecade} points. A dashed reference marks GPT-4o at ${P.gpt4oAime} percent; o1's published pass at 1 of ${P.o1Pass1} percent sits as a dot on the times 100 run. Your marker: the times ${Math.round(10 ** trainExp)} run at times ${Math.round(10 ** testExp)} thinking, scoring ${acc.toFixed(1)} percent${gap > 0 ? `, with ${gap.toFixed(1)} points forgone to the missing RL` : ""}.`;
+
+  return (
+    <ChartFrame
+      title={title}
+      width={width}
+      height={height}
+      xLabel="test-time compute (relative units, log scale)"
+      yLabel="accuracy (%)"
+    >
+      {[0, 20, 40, 60, 80, 100].map((t) => (
+        <g key={`y${t}`}>
+          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-6} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t}
+          </text>
+        </g>
+      ))}
+      {[1, 10, 100].map((t) => (
+        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+          ×{t}
+        </text>
+      ))}
+
+      {/* GPT-4o, the no-chain reference */}
+      <line
+        x1={0}
+        x2={innerW}
+        y1={y(P.gpt4oAime)}
+        y2={y(P.gpt4oAime)}
+        className="stroke-ink-muted"
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+      <text x={innerW - 4} y={y(P.gpt4oAime) + 12} textAnchor="end" className="fill-ink-muted text-[10px]">
+        GPT-4o {P.gpt4oAime}%
+      </text>
+
+      {/* every run, drawn in full; only the selected one is emphasized */}
+      {family.map((f) => {
+        const selected = f.t === trainExp;
+        const end = f.pts[f.pts.length - 1];
+        const hue = RUN_HUES[f.t];
+        return (
+          <g key={f.t} opacity={selected ? 1 : 0.45}>
+            <path d={path(f.pts)} fill="none" className={hue.stroke} strokeWidth={selected ? 2.75 : 1.25} />
+            <text
+              x={innerW - 4}
+              y={y(end.y) - 6}
+              textAnchor="end"
+              className={`text-[10px] ${hue.fill} ${selected ? "font-semibold" : ""}`}
+            >
+              {hue.label}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* o1's published anchor, on the full run */}
+      <circle cx={x(O1_DOT.x)} cy={y(O1_DOT.y)} r={4.5} className="fill-ink stroke-canvas" strokeWidth={1.5} />
+      <text x={x(O1_DOT.x) - 8} y={y(O1_DOT.y) - 8} textAnchor="end" className="fill-ink text-[10px]">
+        o1 pass@1 {P.o1Pass1}%
+      </text>
+
+      {/* your marker, and the bracket pricing the missing RL */}
+      <line x1={mx} x2={mx} y1={0} y2={innerH} className="stroke-ink-muted" strokeWidth={1} strokeDasharray="3 3" />
+      {gap > 0 ? (
+        <g>
+          <line x1={mx} x2={mx} y1={y(acc)} y2={y(full)} className="stroke-compute" strokeWidth={2} />
+          <circle cx={mx} cy={y(full)} r={3.5} className="fill-canvas stroke-compute" strokeWidth={1.5} />
+          <text
+            x={bracketLeft ? mx - 8 : mx + 8}
+            y={(y(acc) + y(full)) / 2}
+            dy="0.32em"
+            textAnchor={bracketLeft ? "end" : "start"}
+            className="fill-compute text-[10px] font-semibold"
+          >
+            the missing RL: +{gap.toFixed(1)}
+          </text>
+        </g>
+      ) : null}
+      <circle
+        cx={mx}
+        cy={y(acc)}
+        r={5.5}
+        className={`${RUN_HUES[trainExp].fill} stroke-canvas`}
+        strokeWidth={1.5}
+      />
+
+      {/* the staircase, drawn last so the marker's lane never cuts its labels:
+          up one curve = along one decade = +29.5 */}
+      <Arrow x1={sx} y1={riserY1} x2={sx} y2={riserY2} />
+      <text
+        x={sx - 6}
+        y={(riserY1 + riserY2) / 2}
+        dy="0.32em"
+        textAnchor="end"
+        className="fill-ink text-[10px]"
+      >
+        ×10 RL → +{P.slopePerDecade}
+      </text>
+      <Arrow x1={sx + 6} y1={treadY1} x2={treadX2} y2={treadY2} />
+      <text
+        x={treadMidX}
+        y={treadMidY}
+        textAnchor="middle"
+        transform={`rotate(${treadAngle}, ${treadMidX}, ${treadMidY})`}
+        paintOrder="stroke"
+        strokeWidth={3}
+        className="fill-ink stroke-surface text-[10px]"
+      >
+        ×10 thinking → +{P.slopePerDecade}
+      </text>
+    </ChartFrame>
+  );
+}
+
+/**
+ * Section 1's listing: the rumored o1 recipe, six lines. The annotation
+ * column carries the mapping back to page 12's loop — which is deliberately
+ * not re-printed; the reader just ran it twice. The rewrite is a
+ * reconstruction, not a publication; the caption says so.
+ */
+const O1_LINES: {
+  indent: number;
+  code: React.ReactNode;
+  note?: React.ReactNode;
+  tone?: string;
+}[] = [
   {
-    kind: "changed",
+    indent: 0,
+    code: (
+      <>
+        M ← M<sub>0</sub>
+      </>
+    ),
+    note: "the same start as page 12: one pretrained model, its own teacher",
+  },
+  {
+    indent: 0,
     code: "loop: while the compute budget lasts",
-    note: "the exit is a budget now, not a plateau — section 2's training axis is this line",
-    tone: "border-compute",
-  },
-  { kind: "dropped", note: "no survivor pile — every chain carries its reward straight into the update" },
-  { kind: "same", note: "unchanged — questions with checkable answers are still the only supervision" },
-  {
-    kind: "changed",
-    code: "r₁…r_k, ŷ₁…ŷ_k ← M(x)",
-    note: "k sampled chains per problem — exploration by sampling, not one greedy try",
+    note: "page 12 looped until accuracy plateaued — the exit is a budget now, section 2's training axis",
     tone: "border-compute",
   },
   {
-    kind: "changed",
+    indent: 1,
+    code: "for (x, y) in problems:",
+    note: "unchanged: questions with checkable answers are still the only supervision",
+  },
+  {
+    indent: 2,
+    code: "r₁…rₖ, ŷ₁…ŷₖ ← M(x)",
+    note: "k sampled chains per problem, not one greedy try — sampling explores, so page 12's hint branch is gone",
+    tone: "border-compute",
+  },
+  {
+    indent: 2,
     code: "rewardᵢ ← check(ŷᵢ, y)",
     note: "page 12's filter, promoted to an explicit reward — still the answer key, still graded for free",
     tone: "border-correct",
   },
-  { kind: "dropped" },
   {
-    kind: "dropped",
-    note: "the hint branch goes — with k chains exploring, hindsight is not needed",
-  },
-  { kind: "dropped" },
-  {
-    kind: "changed",
+    indent: 1,
     code: "M ← reinforce(M, rewards)",
     note: "update the current model, not the base — this round's gains compound into the next",
     tone: "border-compute",
@@ -165,7 +368,7 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
 
 /**
  * One line of section 1's listing: numbered code on the left, intuition on
- * the right, page 12's rendering with a struck state added for the diff.
+ * the right — page 12's rendering, so the two listings read as one grammar.
  */
 function CodeLine({
   n,
@@ -173,21 +376,19 @@ function CodeLine({
   code,
   note,
   tone,
-  struck,
 }: {
   n: number;
   indent: number;
   code: React.ReactNode;
   note?: React.ReactNode;
   tone?: string;
-  struck?: boolean;
 }) {
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:gap-x-4">
       <span className="w-5 select-none text-right font-mono text-xs tabular-nums text-ink-muted" aria-hidden="true">
         {n}
       </span>
-      <span className={`flex items-baseline font-mono text-sm ${struck ? "text-ink-muted" : "text-ink"}`}>
+      <span className="flex items-baseline font-mono text-sm text-ink">
         {indent > 0 ? (
           <span className="whitespace-pre" aria-hidden="true">
             {"  ".repeat(indent)}
@@ -196,7 +397,7 @@ function CodeLine({
         <code
           className={`whitespace-pre rounded border-l-4 px-1 ${
             tone ? `bg-surface-raised ${tone}` : "border-transparent"
-          } ${struck ? "line-through" : ""}`}
+          }`}
         >
           {code}
         </code>
@@ -212,13 +413,11 @@ export function Page13() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const [rl, setRl] = useState(false);
+  /* Open mid-family: ×10 thinking on the ×10 run — the marker on the middle
+     curve with the bracket showing exactly one forgone decade (+29.5). */
+  const [testExp, setTestExp] = useState(1);
+  const [trainExp, setTrainExp] = useState(1);
 
-  const [testExp, setTestExp] = useState(0);
-  const [trainExp, setTrainExp] = useState(2);
-  const fullyTrained = trainExp >= P.maxExp;
-
-  const curve = useMemo(() => EXPS.map((e) => ({ x: 10 ** e, y: law(e, trainExp) })), [trainExp]);
   const acc = law(testExp, trainExp);
   /* The finding, not the parking spot: what the forgone RL would have added here. */
   const gap = law(testExp, P.maxExp) - acc;
@@ -278,14 +477,14 @@ export function Page13() {
       what: "A model-written summary",
       detail: "a paraphrase written after the fact",
       reads: "you — it is all you ever see",
-      pays: "—",
+      pays: "no one extra — it arrives with the answer",
       paysWrong: false,
     },
     {
       what: "The monitor's verdict",
       detail: "a deception check that reads the raw chain",
       reads: "the lab only",
-      pays: "—",
+      pays: "the lab — its own audit, run inside",
       paysWrong: false,
     },
   ];
@@ -328,95 +527,33 @@ export function Page13() {
 
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              So here is the claim at the only honest resolution: the ten lines you ran on page
-              12, and the smallest rewrite that turns them into that description.{" "}
-              <strong className="text-ink">Flip the switch and watch which lines survive.</strong>
+              So here it is at the only honest resolution: page 12&apos;s loop, rewritten as the
+              recipe the labs describe.{" "}
+              <strong className="text-ink">The annotations name what each line was before.</strong>
             </p>
-
-            <div className="border-t border-dashed border-grid pt-3">
-              <Toggle
-                label="Drop the disguise (the rumored rewrite)"
-                checked={rl}
-                offLabel="STaR"
-                onLabel="RL"
-                onChange={(v) => {
-                  setRl(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-            </div>
 
             <figure
               className="m-0 flex flex-col gap-2"
-              aria-label={
-                rl
-                  ? "The rumored reasoner rewrite of STaR's pseudocode: the loop runs while the compute budget lasts, k chains are sampled per problem, the answer-key filter becomes an explicit reward, the hint branch is deleted, and the current model is reinforced in place instead of fine-tuning the base model."
-                  : "STaR pseudocode, as on page 12: generate a rationale per problem, keep it if the answer checks out, otherwise retry with the answer as a hint, then fine-tune the base model on everything kept, and repeat."
-              }
+              aria-label="The rumored o1 recipe as pseudocode: the loop runs while the compute budget lasts, k chains are sampled per problem, the answer-key filter becomes an explicit reward, and the current model is reinforced in place instead of fine-tuning the base model. Page 12's hint branch is gone."
             >
               <div className="flex flex-col">
-                {STAR_LINES.map((l, i) => {
-                  const patch = RL_PATCH[i];
-                  if (!rl || patch.kind === "same") {
-                    return (
-                      <CodeLine
-                        key={i}
-                        n={i + 1}
-                        indent={l.indent}
-                        code={l.code}
-                        note={rl ? patch.note : undefined}
-                      />
-                    );
-                  }
-                  if (patch.kind === "dropped") {
-                    return (
-                      <CodeLine
-                        key={i}
-                        n={i + 1}
-                        indent={l.indent}
-                        code={l.code}
-                        note={patch.note}
-                        tone="border-wrong"
-                        struck
-                      />
-                    );
-                  }
-                  return (
-                    <CodeLine
-                      key={i}
-                      n={i + 1}
-                      indent={l.indent}
-                      code={patch.code}
-                      note={patch.note}
-                      tone={patch.tone}
-                    />
-                  );
-                })}
+                {O1_LINES.map((l, i) => (
+                  <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} tone={l.tone} />
+                ))}
               </div>
               <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-                {rl ? (
-                  <>
-                    Four lines rewritten (highlighted), three struck. This column is a
-                    reconstruction — the community&apos;s, matched to page 12&apos;s
-                    expert-iteration lineage — <strong className="text-ink">rumor, not
-                    record</strong>: OpenAI confirmed the frame and kept the algorithm.
-                  </>
-                ) : (
-                  <>
-                    Page 12&apos;s ten lines, verbatim — the two pages render one shared listing,
-                    so this left-hand side is exactly the loop you already ran.
-                  </>
-                )}
+                Six lines against page 12&apos;s ten: four rewritten, the hint branch deleted.
+                A reconstruction matched to page 12&apos;s expert-iteration lineage —{" "}
+                <strong className="text-ink">rumor, not record</strong>: OpenAI confirmed the
+                frame and kept the algorithm.
               </figcaption>
             </figure>
 
             <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              Now read what is <strong>not</strong> there: a human. The industry&apos;s default
-              post-training loop, RLHF, pays people to judge outputs; here nobody writes an
-              example and nobody grades one — the model authors the reasoning, the answer key
-              scores it, and both scale with compute rather than headcount. And the training set
-              never touches page 3&apos;s finite stock of human text: the model writes its own
-              curriculum, fresh every round.
+              Now read what is <strong>not</strong> there: a human. RLHF pays people to judge
+              outputs; here nobody writes an example and nobody grades one — the model authors
+              the reasoning, the answer key scores it. And the training set never touches page
+              3&apos;s finite stock of human text: the model writes its own curriculum.
             </p>
           </div>
         </section>
@@ -447,9 +584,37 @@ export function Page13() {
               <Cite n={REF.announce} /> — and both are log-linear: accuracy against the{" "}
               <em>logarithm</em> of compute, whichever axis it arrives on.
             </p>
+            <p className="text-sm text-ink-muted">
+              All three runs are drawn below: the same line, slid one decade right for every
+              decade of RL forgone.{" "}
+              <strong className="text-ink">The training dial picks your curve; the thinking dial
+              slides your marker along it</strong> — and the bracket at your marker prices what
+              the missing RL would have bought.
+            </p>
 
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="flex flex-col gap-4">
+            {/* the centerpiece at full card width, dials in a strip beneath */}
+            <RunFamilyChart trainExp={trainExp} testExp={testExp} acc={acc} gap={gap} />
+            <p className="text-xs text-ink-muted">
+              all three RL runs are drawn in full and the dials never move them; only the
+              highlight and your marker respond. The staircase says it without dragging: up one
+              curve and along one decade buy the same +{P.slopePerDecade}.
+            </p>
+
+            <div className="flex flex-col gap-4 border-t border-dashed border-grid pt-3">
+              {/* the two dials share one row, so they always sit at the same height */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Slider
+                  label="RL training (train-time compute)"
+                  min={0}
+                  max={2}
+                  step={1}
+                  value={trainExp}
+                  format={(v) => `×${Math.round(10 ** v)}`}
+                  onChange={(v) => {
+                    setTrainExp(v);
+                    recordInteraction(PAGE_N);
+                  }}
+                />
                 <Slider
                   label="Thinking time (test-time compute)"
                   min={0}
@@ -462,63 +627,23 @@ export function Page13() {
                     recordInteraction(PAGE_N);
                   }}
                 />
-                <Slider
-                  label="RL training (train-time compute)"
-                  min={0}
-                  max={2}
-                  step={0.05}
-                  value={trainExp}
-                  format={(v) => `×${Math.round(10 ** v)}`}
-                  onChange={(v) => {
-                    setTrainExp(v);
-                    recordInteraction(PAGE_N);
-                  }}
-                />
-                <p className="text-sm text-ink-muted">
-                  The training slider translates the whole line rather than moving a point along
-                  it — that is the swap, drawn.{" "}
-                  <strong className="text-ink">Drag it down and watch the delta at your
-                  marker:</strong>{" "}
-                  that gap is what the missing RL would have bought.
-                </p>
-                <div className="flex items-start justify-center gap-8">
-                  <BigNumber
-                    size="md"
-                    value={acc}
-                    suffix="%"
-                    tone={acc > P.gpt4oAime ? "correct" : "wrong"}
-                    label="AIME accuracy here"
-                  />
-                  <BigNumber
-                    size="md"
-                    prefix="+"
-                    value={gap}
-                    tone={gap > 0 ? "compute" : "ink"}
-                    label="the missing RL's share"
-                  />
-                </div>
               </div>
-              <LineChart
-                title="AIME 2024 accuracy against test-time compute (redrawn; relative log units)"
-                points={curve}
-                secondary={fullyTrained ? undefined : { points: FULL_CURVE, label: "o1's full RL run" }}
-                primaryLabel={fullyTrained ? undefined : "a smaller RL run"}
-                inlineLabels
-                fillBetween={!fullyTrained}
-                fillOpacity={0.25}
-                arrows={SLOPE_ARROWS}
-                markerX={10 ** testExp}
-                markerDelta={!fullyTrained}
-                referenceY={P.gpt4oAime}
-                referenceLabel={`GPT-4o ${P.gpt4oAime}%`}
-                dots={[{ x: O1_DOT.x, y: O1_DOT.y, label: `o1 pass@1 ${P.o1Pass1}%` }]}
-                xLabel="test-time compute (relative units, log scale)"
-                yLabel="accuracy (%)"
-                xDomain={[1, 100]}
-                yDomain={[0, 100]}
-                logX
-                xTicks={[1, 10, 100]}
-              />
+              <div className="flex items-start justify-center gap-8">
+                <BigNumber
+                  size="md"
+                  value={acc}
+                  suffix="%"
+                  tone={acc > P.gpt4oAime ? "correct" : "wrong"}
+                  label="AIME accuracy here"
+                />
+                <BigNumber
+                  size="md"
+                  prefix="+"
+                  value={gap}
+                  tone={gap > 0 ? "compute" : "ink"}
+                  label="the missing RL's share"
+                />
+              </div>
             </div>
             <p className="text-sm text-ink-muted">
               <strong className="text-ink">Thinking slides you along the curve; only training
@@ -599,12 +724,15 @@ export function Page13() {
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
               Is the recipe doing the work, or benchmark-specific tuning? OpenAI ran the ablation
-              itself. For the 2024 International Olympiad in Informatics it built{" "}
+              itself.
+            </p>
+            <p className="text-sm text-ink-muted">
+              For the 2024 International Olympiad in Informatics it built{" "}
               <strong className="text-ink">o1-ioi</strong> — o1 plus hand-engineered,
-              contest-specific inference strategies. Live, with the hand-crafted pipeline, it
-              placed in the 49th percentile; gold required relaxed constraints. An early{" "}
-              <strong className="text-ink">o3</strong> — the same general recipe with both knobs
-              turned further, no contest tricks at all — took gold outright.
+              contest-specific inference strategies. Live, it placed in the 49th percentile;
+              gold required relaxed constraints. An early <strong className="text-ink">o3</strong>{" "}
+              — the same general recipe with both knobs turned further, no contest tricks at
+              all — took gold outright.
               <Cite n={REF.competitive} />
             </p>
             <p className="text-sm text-ink-muted">
@@ -695,17 +823,6 @@ export function Page13() {
           </RefItem>
         </Note>
       </div>
-
-
-      <p className="text-xs text-ink-muted">
-        <strong className="text-ink">Simulated</strong> — the section 2 curve is a redrawing of an
-        unlabeled-axis figure, preserving its log-linear shape and two-decade span; the absolute
-        compute units (and the +{P.slopePerDecade}-per-decade slope) are the redrawing&apos;s, not
-        published values. Section 1&apos;s rewritten column is a reconstruction, not a
-        publication: OpenAI confirmed the frame and never released the algorithm — rumor,
-        labelled as such. · <strong className="text-ink">Cited</strong> — every named number on
-        this page is verbatim from the sources and pinned as such in the test suite.
-      </p>
 
       <PageNav n={PAGE_N} />
     </article>
