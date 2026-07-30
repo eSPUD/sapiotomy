@@ -101,15 +101,13 @@ const CHANCE = 100 / STAR_CHOICES;
 const REF = { star: 1, exit: 2, rft: 3, gvm: 4 } as const;
 
 /**
- * Section 3's listing — STaR's Algorithm 1 compressed to ten lines. The code
+ * Section 2's listing — STaR's Algorithm 1 compressed to ten lines. The code
  * column is shared with page 13 (lib/starListing), which diffs the frontier
  * rewrite against these exact lines; only the annotations are this page's.
- * Each line carries an indent level rendered outside the highlighted span, so
- * a tone border sits at the code's own column; tones tie the filter line and
- * the rationalization branch to section 1's legend colours. Structural lines
- * carry no annotation.
+ * The listing carries no tone borders — the annotations alone do the tying to
+ * section 1 — and structural lines carry no annotation.
  */
-const CODE_NOTES: Record<number, { note?: React.ReactNode; tone?: string }> = {
+const CODE_NOTES: Record<number, { note?: React.ReactNode }> = {
   0: { note: "one model is both student and teacher" },
   1: { note: "expert iteration (Anthony et al. 2017) — the same loop, before LLMs" },
   3: { note: "the only supervision that exists: answers, never reasoning" },
@@ -118,15 +116,12 @@ const CODE_NOTES: Record<number, { note?: React.ReactNode; tone?: string }> = {
   },
   5: {
     note: "in RL terms: a binary reward, checked for free by section 1's answer key",
-    tone: "border-correct",
   },
   7: {
     note: "hindsight: knowing the destination makes the route easier to find",
-    tone: "border-compute",
   },
   8: {
     note: "the hint is stripped, so the model trains as if it had found the route unaided",
-    tone: "border-compute",
   },
   9: {
     note: "restart from the base model every round, so early quirks never compound into the weights",
@@ -137,7 +132,6 @@ const CODE_LINES: {
   indent: number;
   code: React.ReactNode;
   note?: React.ReactNode;
-  tone?: string;
 }[] = STAR_LINES.map((line, i) => ({ ...line, ...CODE_NOTES[i] }));
 
 /** A margin note that sits beside its step and scrolls with the page. */
@@ -231,32 +225,29 @@ function CodeLine({
   indent,
   code,
   note,
-  tone,
 }: {
   n: number;
   indent: number;
   code: React.ReactNode;
   note?: React.ReactNode;
-  tone?: string;
 }) {
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:gap-x-4">
-      <span className="w-5 select-none text-right font-mono text-xs tabular-nums text-ink-muted" aria-hidden="true">
+      <span className="w-5 select-none text-right font-code text-xs tabular-nums text-ink-muted" aria-hidden="true">
         {n}
       </span>
-      <span className="flex items-baseline font-mono text-sm text-ink">
+      <span className="flex items-baseline font-code text-sm text-ink">
+        {/* Tab-width indentation, each level marked by an editor-style arrow guide. */}
         {indent > 0 ? (
-          <span className="whitespace-pre" aria-hidden="true">
-            {"  ".repeat(indent)}
+          <span className="flex select-none" aria-hidden="true">
+            {Array.from({ length: indent }, (_, j) => (
+              <span key={j} className="w-[3ch] text-grid">
+                →
+              </span>
+            ))}
           </span>
         ) : null}
-        <code
-          className={`whitespace-pre rounded border-l-4 px-1 ${
-            tone ? `bg-surface-raised ${tone}` : "border-transparent"
-          }`}
-        >
-          {code}
-        </code>
+        <code className="whitespace-pre">{code}</code>
       </span>
       {note ? (
         <span className="col-start-2 text-xs text-ink-muted sm:col-start-3">{note}</span>
@@ -541,7 +532,7 @@ export function Page12() {
           >
             <div className="flex flex-col">
               {CODE_LINES.map((l, i) => (
-                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} tone={l.tone} />
+                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} />
               ))}
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
@@ -549,8 +540,7 @@ export function Page12() {
               <Cite n={REF.star} /> Line 2&apos;s lineage is real, not an analogy: the same loop
               ran as expert iteration in RL, five years before LLM reasoning.
               <Cite n={REF.exit} /> Line 5&apos;s sample-k alternative is RFT.
-              <Cite n={REF.rft} /> The coloured lines are section 1&apos;s legend: the answer-key
-              filter, and the rationalization branch it enables.
+              <Cite n={REF.rft} />
             </figcaption>
           </figure>
 

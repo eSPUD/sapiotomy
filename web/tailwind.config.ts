@@ -27,6 +27,10 @@ const config: Config = {
         sans: ["var(--font-serif)", "Source Serif 4", "Georgia", "serif"],
         serif: ["var(--font-serif)", "Source Serif 4", "Georgia", "serif"],
         mono: ["var(--font-serif)", "Source Serif 4", "Georgia", "serif"],
+        // The one licensed exception to the broadsheet rule: actual code
+        // listings (a newspaper sets code samples in mono too). Use font-code
+        // for pseudocode/diff listings only, never for numerals or labels.
+        code: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", "monospace"],
       },
       borderRadius: {
         // Broadsheet print-crisp radii (--radius-sm/md/lg = 1/2/4px)
