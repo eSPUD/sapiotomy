@@ -19,21 +19,21 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     render(<Page11 />);
     expect(screen.getByRole("button", { name: /^medium$/i })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByRole("button", { name: /^hard$/i })).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByRole("status")).toHaveTextContent(/30\.0% so far — the 14× model gets 62%/);
+    expect(screen.getByRole("status")).toHaveTextContent(/30\.0% so far; the 14× model gets 62%/);
   });
 
   it("beats the 14x model on medium with 8 samples, for 1.8x less compute", () => {
     render(<Page11 />);
     setSlider(/test-time compute/i, 3); // 2^3 = 8 samples, 8 FLOPs units
     expect(screen.getByRole("status")).toHaveTextContent(
-      /✓ matched the 14× model's 62% — for 1\.8× less compute/,
+      /✓ matched the 14× model's 62%, for 1\.8× less compute/,
     );
   });
 
   it("stops one notch earlier, at 4 samples, still short of the target", () => {
     render(<Page11 />);
     setSlider(/test-time compute/i, 2);
-    expect(screen.getByRole("status")).toHaveTextContent(/so far — the 14× model gets 62%/);
+    expect(screen.getByRole("status")).toHaveTextContent(/so far; the 14× model gets 62%/);
   });
 
   it("on hard, reports saturation below the target and points back to pretraining", () => {
@@ -41,7 +41,7 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     clickDifficulty(/^hard$/i);
     setSlider(/test-time compute/i, 8); // even 256 samples cannot reach it
     const status = screen.getByRole("status");
-    expect(status).toHaveTextContent(/✗ this model saturates near 14% — the target is out of reach/);
+    expect(status).toHaveTextContent(/✗ this model saturates near 14%; the target is out of reach/);
     expect(status).toHaveTextContent(/pretraining the larger model is the better buy/i);
   });
 
@@ -49,7 +49,7 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     render(<Page11 />);
     setSlider(/model size/i, 3); // 14x model, 1 sample = 14 units
     expect(screen.getByRole("status")).toHaveTextContent(
-      /matched it — but you spent 14 units, and the 14× model needs only 14/,
+      /matched it, but you spent 14 units and the 14× model needs only 14/,
     );
   });
 
@@ -75,6 +75,25 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
   it("ties each model's sampling point to its REBASE point with a connector", () => {
     render(<Page11 />);
     expect(screen.getAllByTestId("pair-connector")).toHaveLength(3);
+  });
+
+  it("shades the Pythia budget axis into one ownership band per scale", () => {
+    render(<Page11 />);
+    expect(screen.getAllByTestId("ownership-band")).toHaveLength(3);
+    for (const label of ["410M leads", "2.8B leads", "12B leads"]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+  });
+
+  it("cites Snell et al. directly beside the allocator chart", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/Curve shapes follow Snell et al\./i)).toBeInTheDocument();
+  });
+
+  it("hands off to page 12 below section 4: train on the reasoning search found", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/teaching the model to\s+reason/i)).toBeInTheDocument();
+    expect(screen.getByText(/thrown away the moment the answer\s+is scored/i)).toBeInTheDocument();
   });
 
   it("carries the saturation caveat: no oracle verifier, no 100%", () => {
