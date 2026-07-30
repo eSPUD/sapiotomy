@@ -38,7 +38,7 @@ test.describe("Act 1 (pages 1–4)", () => {
     page,
   }) => {
     await page.goto("/p/2");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Answering Questions in the Real World");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Thinking in Reality");
     // The machine panel and its example-reply label are on screen from the start.
     await expect(page.getByText("example reply, authored · live model to follow")).toBeVisible();
     // Run is grayed until the reader takes their turn.
@@ -65,7 +65,7 @@ test.describe("Act 1 (pages 1–4)", () => {
     page,
   }) => {
     await page.goto("/p/3");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Scaling Training");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Training-Time Scaling");
     // The spec's hard rule: no inference talk anywhere on this page.
     expect(await page.locator("article").innerText()).not.toMatch(/inference/i);
     // No drag-to-reveal: both problems are on from paint, on one numbered spine.

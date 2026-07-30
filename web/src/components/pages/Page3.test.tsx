@@ -37,13 +37,27 @@ const dragMonths = (v: number) => {
   for (let i = 0; i < v; i++) fireEvent.keyDown(yearSlider(), { key: "ArrowRight" });
 };
 
-describe("Page 3 (Scaling Training)", () => {
+describe("Page 3 (Training-Time Scaling)", () => {
   it("shows both problems, the slider, and the guess box up front", () => {
     render(<Page3 />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Scaling Training");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training-Time Scaling");
+    // The two walls are sub-heads under section 1 now.
+    // Every challenge is its own sub-head, four per section.
+    for (const h of [
+      /The bill compounds/i,
+      /It always lags/i,
+      /It cannot be aimed/i,
+      /The data runs out/i,
+      /The fact was already there/i,
+      /More text sharpens the default/i,
+      /Generated text loses the tails/i,
+      /Alignment is trained separately/i,
+    ]) {
+      expect(screen.getByRole("heading", { level: 3, name: h })).toBeInTheDocument();
+    }
     // Step 1: the combined cost curve. The old one-year meter stays gone.
     expect(
-      screen.getByRole("heading", { level: 2, name: /1\. The bill compounds/i }),
+      screen.getByRole("heading", { level: 2, name: /1\. Challenges in addressing knowledge gaps/i }),
     ).toBeInTheDocument();
     // The cost chart carries the draggable marker, so its svg is a group: role
     // img forbids interactive descendants (axe: nested-interactive).
@@ -54,11 +68,11 @@ describe("Page 3 (Scaling Training)", () => {
     expect(yearSlider()).toBeInTheDocument();
     // Step 2: the data wall, with the two cited anchors.
     expect(
-      screen.getByRole("heading", { level: 2, name: /2\. Bigger models, finite data/i }),
+      screen.getByRole("heading", { level: 2, name: /2\. Challenges in addressing knowledge bias/i }),
     ).toBeInTheDocument();
     // Step 3: the guess, under the same numbered spine as pages 1 and 4.
     expect(
-      screen.getByRole("heading", { level: 2, name: /4\. So what is left\?/i }),
+      screen.getByRole("heading", { level: 3, name: /So what is left\?/i }),
     ).toBeInTheDocument();
     // The scaling-law spine: bigger models only pay off if they read more, in step.
     expect(screen.getByText(/that is the scaling law/i)).toBeInTheDocument();
@@ -168,20 +182,17 @@ describe("Page 3 (Scaling Training)", () => {
   it("each step's References margin note carries only the sources that step uses", () => {
     render(<Page3 />);
     const notes = Array.from(document.querySelectorAll("aside")).map((a) => a.textContent ?? "");
-    expect(notes).toHaveLength(3);
-    const [bill, data, bias] = notes;
+    expect(notes).toHaveLength(2);
+    const [gaps, bias] = notes;
 
-    // The bill cites Epoch's cost anchors; Villalobos and Hoffmann stay out of it.
-    expect(bill).toMatch(/AI Index/);
-    expect(bill).toMatch(/Cottier/);
-    expect(bill).toMatch(/Sevilla/);
-    expect(bill).not.toMatch(/Villalobos|Hoffmann|Shumailov/);
-    // The data wall cites the scaling law and the stock, and no cost trends.
-    expect(data).toMatch(/Hoffmann/);
-    expect(data).toMatch(/Villalobos/);
-    expect(data).not.toMatch(/Cottier|AI Index|Sevilla|Shumailov/);
-    // The bias step cites only model collapse.
+    // The gap section owns every cost and data source, and none of the bias ones.
+    for (const ref of [/Sevilla/, /Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
+      expect(gaps).toMatch(ref);
+    }
+    expect(gaps).not.toMatch(/Shumailov|Askell/);
+    // The bias section owns only its own two.
     expect(bias).toMatch(/Shumailov/);
+    expect(bias).toMatch(/Askell/);
     expect(bias).not.toMatch(/Cottier|AI Index|Sevilla|Hoffmann|Villalobos/);
     expectClean();
   });
@@ -193,7 +204,7 @@ describe("Page 3 (Scaling Training)", () => {
     // The old provenance prose stays gone; the margin holds References notes only.
     expect(screen.queryByText(/where the bill comes from/i)).toBeNull();
     expect(screen.queryByText(/where the wall comes from/i)).toBeNull();
-    expect(screen.getAllByText("References")).toHaveLength(3);
+    expect(screen.getAllByText("References")).toHaveLength(2);
     // The figures carry inline numbered markers; the link chips left the steps
     // for a single row at the foot of the page.
     const bill = screen.getByRole("figure", { name: /problem one/i });
