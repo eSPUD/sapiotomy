@@ -153,6 +153,16 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expectClean();
   });
 
+  it("closes on two sentences that state both failures and hand off", () => {
+    render(<Page3 />);
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/buys more facts, later, at compounding cost/i);
+    expect(body).toMatch(/cannot touch a bias\s*that was never about missing facts/i);
+    // the hand-off, and the page's standing rule that it never names the sequel
+    expect(body).toMatch(/leaves only what it does\s*after it/i);
+    expectClean();
+  });
+
   it("locks a guess: echo, hold-that-thought, teaser; the form is consumed", () => {
     render(<Page3 />);
     const box = screen.getByRole("textbox", { name: /your guess/i });

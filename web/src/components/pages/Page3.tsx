@@ -635,7 +635,13 @@ export function Page3() {
         <div aria-hidden="true" />
       </div>
 
-      
+      {/* Both sections in two sentences, and the hand-off they add up to. */}
+      <p className="border-t border-grid pt-4 text-lg text-ink">
+        Training-time scaling buys more facts, later, at compounding cost, and it cannot touch a bias
+        that was never about missing facts. Every wall here limits what a model can be given{" "}
+        <strong>before</strong> the question arrives, which leaves only what it does{" "}
+        <strong>after</strong> it.
+      </p>
 
       <p className="text-xs text-ink-muted">
         the frontier compute trend (about 5x per year for language models since mid-2020) is an
