@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { Page12 } from "./Page12";
 
 describe("Page 12 (STaR and self-improvement)", () => {
@@ -19,27 +19,46 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getAllByText("73.0%").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("keeps the training and test regimes apart with labelled panels", () => {
+  it("draws the run's history as curves in the deck's chart grammar", () => {
     render(<Page12 />);
-    expect(screen.getByText(/Training · what this round produced/)).toBeInTheDocument();
+    // The centerpiece: accuracy and training-set share, one point per press.
+    expect(
+      screen.getByRole("img", { name: /Held-out accuracy and training-set share across 0 iterations/ }),
+    ).toBeInTheDocument();
+    // The big number stays as per-press feedback, in a labelled Test panel.
     expect(screen.getByText(/Test · how good did it get\?/)).toBeInTheDocument();
-    // The Test panel carries the figure's only chart: an accuracy sparkline.
-    expect(screen.getByRole("img", { name: /Held-out accuracy across 0 iterations/ })).toBeInTheDocument();
-    // The legend renders only non-empty categories; nothing is verified yet.
-    expect(screen.queryByText(/verified rationale/)).not.toBeInTheDocument();
-    expect(screen.getByText(/not in the set \(60\)/)).toBeInTheDocument();
+    // The old pool strip is gone: no frontier marker, no square legend.
+    expect(screen.queryByText(/solve frontier/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/not in the set/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/new this pass/)).not.toBeInTheDocument();
   });
 
-  it("draws the strip as an abstraction: frontier, state matrix, no notation", () => {
+  it("appends a point per press, and splits the curves when the filter goes off", () => {
     render(<Page12 />);
-    expect(screen.getByText(/solve frontier \(50\/50 odds\)/)).toBeInTheDocument();
+    const run = () => fireEvent.click(screen.getByRole("button", { name: /Run iteration/ }));
+    run();
+    run();
+    expect(
+      screen.getByRole("img", { name: /across 2 iterations/ }),
+    ).toBeInTheDocument();
+    // No filter: the set fills with mistakes and the chart grows a third curve.
+    fireEvent.click(screen.getByRole("switch", { name: /Correctness filter/ }));
+    run();
+    expect(screen.getByText("wrong, but kept")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: /wrong rationales kept because the filter is off/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the state matrix in the margin, the mechanism in the caption, no notation", () => {
+    render(<Page12 />);
     // The sidenote matrix maps each toggle state to what the reader watches.
     expect(screen.getByText("filter on · rationalization off")).toBeInTheDocument();
     expect(screen.getByText(/Full STaR/)).toBeInTheDocument();
     expect(screen.getByText(/No reward, no loop/)).toBeInTheDocument();
-    // No notation anywhere: the strip and sparkline carry the mechanism.
-    expect(screen.queryByText(/Dₙ/)).not.toBeInTheDocument();
+    // The ratchet's mechanism lives in the caption now, not a frontier marker.
     expect(screen.getByText(/a training set it could not/)).toBeInTheDocument();
+    expect(screen.queryByText(/Dₙ/)).not.toBeInTheDocument();
   });
 
   it("carries the GSM8K caveat on the rationalization claim", () => {
