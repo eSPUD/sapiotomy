@@ -64,6 +64,20 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.getByText(/The slope is the claim; the absolute compute is a secret\./)).toBeInTheDocument();
   });
 
+  it("puts the instruction in the margin and the meaning in the card", () => {
+    render(<Page13 />);
+    // Pages 2/3 grammar: the Try-it note is a single imperative sentence.
+    expect(
+      screen.getByText(/all that thinking lands exactly where the full run/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/spend the other's decades/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/That equality is the law/)).not.toBeInTheDocument();
+    // The interpretation lives in the card's closing line.
+    expect(
+      screen.getByText(/thinking walks your curve and never climbs to the next one/),
+    ).toBeInTheDocument();
+  });
+
   it("draws the whole run family at once, staircase stated, opening gap priced", () => {
     render(<Page13 />);
     const chart = screen.getByRole("img", {
@@ -82,6 +96,7 @@ describe("Page 13 (frontier reasoners I)", () => {
 
   it("keeps the waterfall as mechanisms, model names demoted to parentheses", () => {
     render(<Page13 />);
+    expect(screen.getByText("3. Stack the toolbox, or turn the knobs?")).toBeInTheDocument();
     expect(screen.getByText("no learned chain")).toBeInTheDocument();
     expect(screen.getByText(/one instant answer from a strong LLM \(GPT-4o\)/)).toBeInTheDocument();
     expect(screen.getByText("+ page 7's voting")).toBeInTheDocument();
@@ -97,19 +112,22 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.queryByText(/Three months apart/)).not.toBeInTheDocument();
   });
 
-  it("replaces it with the generality ablation, o3 appearing once as the law applied again", () => {
+  it("answers the knob half with the ablation in the deck's vocabulary, no scores", () => {
     render(<Page13 />);
     expect(screen.getByText("One recipe, no domain tricks")).toBeInTheDocument();
     expect(screen.getByText(/o1-ioi/)).toBeInTheDocument();
-    expect(screen.getByText(/took gold outright/)).toBeInTheDocument();
-    expect(screen.getByText(/the law held/)).toBeInTheDocument();
+    expect(screen.getByText(/beat the hand-built specialist on its own contest/)).toBeInTheDocument();
     expect(
       screen.getByText(
         /general-purpose reinforcement learning, rather than relying on domain-specific techniques/,
       ),
     ).toBeInTheDocument();
-    // o3's AIME anchor appears exactly once, in that sentence, not in a table.
-    expect(screen.getAllByText(/96\.7/).length).toBe(1);
+    expect(screen.getByText(/Stacking pays once; the knobs compound\./)).toBeInTheDocument();
+    // No benchmark retelling — medals, percentiles, and score pairs live on page 15.
+    expect(screen.queryByText(/96\.7/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/49th percentile/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/gold/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/the law held/)).not.toBeInTheDocument();
   });
 
   it("draws the boundary as a ledger: what exists, who reads it, who pays", () => {
@@ -163,19 +181,20 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(follows(ledger, handoff)).toBe(true);
   });
 
-  it("links all four references from the sidenotes, all flagged preprint", () => {
+  it("links all three references from the sidenotes, all flagged preprint", () => {
     render(<Page13 />);
     const hrefs = [
       "https://openai.com/index/learning-to-reason-with-llms/",
       "https://arxiv.org/abs/2502.06807",
-      "https://arcprize.org/blog/oai-o3-pub-breakthrough",
       "https://openai.com/index/openai-o1-system-card/",
     ];
     for (const href of hrefs) {
       expect(document.querySelector(`a[href="${href}"]`)).toBeInTheDocument();
     }
-    // None of the four sources is peer-reviewed.
-    expect(screen.getAllByText("preprint").length).toBe(4);
+    // The ARC Prize o3-preview link left with the benchmark numbers.
+    expect(document.querySelector('a[href*="arcprize.org"]')).not.toBeInTheDocument();
+    // None of the three sources is peer-reviewed.
+    expect(screen.getAllByText("preprint").length).toBe(3);
   });
 
   it("carries no Simulated/Cited footer — provenance is inline, as on pages 1-3", () => {
