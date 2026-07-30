@@ -30,7 +30,14 @@
  * pinned to one same-accuracy line; 14x is two equal-height FLOPs bills, one
  * paid as 14 thin thinking slices, one as a single parameter block; R is one
  * axis with both regime labels on one baseline. The hard-mode boundary closes
- * the step as a deliberate callout, page-12's closing-statement treatment.
+ * the step as a deliberate callout, page-12's closing-statement treatment —
+ * and now carries the WHY, the page's distribution intuition: test-time
+ * compute (sampling, voting, search) can only surface answers the model can
+ * already produce — it mines a fixed distribution (coverage grows log-linearly
+ * with samples, Brown et al. 2024), while parameters change what is in the
+ * distribution at all (complexity-cliff evidence: Shojaee et al. 2025). This
+ * intuition is stated once here and reused by pages 12 (the plateau) and 13
+ * (RL lifting the curve).
  *
  * Steps 3 and 4 are field data from Wu et al. 2024, where parameter counts
  * ARE published — split into two sections because they carry two different
@@ -48,12 +55,18 @@
  * arrow pointing at the shift, led by their ~2x-less-total-FLOPs finding.
  *
  * The page closes with a hand-off block under step 4 (page-12's border-l
- * closing idiom): every tool in the act spends at answer time and discards
- * the reasoning it bought; page 12 (STaR) trains on it. Better search moves
- * the frontier; the hand-off, not step 4's title, carries the bridge.
+ * closing idiom) that names BOTH loose ends the next page answers: the hard
+ * boundary (thinking mines what the weights hold; only weights move the wall)
+ * and the waste (every tool spends at answer time and discards the reasoning
+ * it bought). Page 12 (STaR) answers both with one move — train on the
+ * reasoning — so 11→12→13 reads as a ladder of walls, each page ending on the
+ * wall the next one moves (12 ends on its plateau, which 13's budget-exit
+ * rewrite answers). The hand-off, not step 4's title, carries the bridge.
  *
  * Provenance: each chart's fidelity caveat sits directly under that chart;
- * the page footer uses page-12's two-label Simulated / Cited pattern.
+ * the page footer uses page-12's two-label Simulated / Cited pattern. Refs:
+ * Snell (§1–2), Brown/Monkeys + Shojaee/Illusion (§2 hard-mode callout), Wu
+ * (§3–4), Stroebl/fLaws (§4 ceiling fine print), each beside first use.
  */
 
 import { useState } from "react";
@@ -81,7 +94,7 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 11;
 
 /** Page 11's references, numbered in order of first appearance. */
-const REF = { snell: 1, wu: 2 } as const;
+const REF = { snell: 1, monkeys: 2, illusion: 3, wu: 4, resample: 5 } as const;
 
 const DIFFICULTY_BLURB: Record<Difficulty, string> = {
   easy: "the 1× model already lands most answers on its first try",
@@ -988,7 +1001,17 @@ export function Page11() {
             </div>
             <p className="rounded border-l-4 border-wrong bg-wrong/10 p-3 text-sm text-ink">
               <strong>Hard mode is the other boundary:</strong> where the small model has no
-              foothold, no budget rescues it.
+              foothold, no budget rescues it. The reason is what the test-time knob actually
+              does: sampling, voting, and search can only surface answers the model can
+              already produce. The odds of finding a correct path climb steadily with every
+              extra sample
+              <Cite n={REF.monkeys} /> because more samples mine the distribution more
+              thoroughly, but the distribution itself never moves. If the right answer has
+              essentially zero probability, a thousand samples are a thousand copies of the
+              same blindness, and past a complexity threshold even models trained to think
+              collapse no matter the budget.
+              <Cite n={REF.illusion} /> Parameters are the knob that changes what is in the
+              distribution at all.
             </p>
           </div>
         </section>
@@ -996,6 +1019,14 @@ export function Page11() {
           <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally can be More Effective
             than Scaling Model Parameters</em>.
+          </RefItem>
+          <RefItem n={REF.monkeys} href="https://arxiv.org/abs/2407.21787" preprint>
+            Brown et al. 2024, <em>Large Language Monkeys: Scaling Inference Compute with
+            Repeated Sampling</em>.
+          </RefItem>
+          <RefItem n={REF.illusion} href="https://arxiv.org/abs/2506.06941" preprint>
+            Shojaee et al. 2025, <em>The Illusion of Thinking: Understanding the Strengths and
+            Limitations of Reasoning Models via the Lens of Problem Complexity</em>.
           </RefItem>
         </Note>
 
@@ -1058,6 +1089,7 @@ export function Page11() {
               <Cite n={REF.wu} /> The fine print holds here too: gains from
               more samples flatten toward a ceiling that the model&rsquo;s own answer distribution
               sets, so without a perfect external verifier, sampling alone never reaches 100%.
+              <Cite n={REF.resample} />
             </figcaption>
             <p className="text-xs text-ink-muted">
               exact values from the paper&rsquo;s MATH500 results table (Table 1); no digitization
@@ -1065,17 +1097,27 @@ export function Page11() {
             </p>
           </figure>
         </section>
+        <Note kicker="References">
+          <RefItem n={REF.resample} href="https://arxiv.org/abs/2411.17501" preprint>
+            Stroebl et al. 2024, <em>Inference Scaling fLaws: The Limits of LLM Resampling with
+            Imperfect Verifiers</em>.
+          </RefItem>
+        </Note>
 
         {/* The hand-off to page 12 — deliberately its own block, not section
             4's job: better search still spends everything at answer time. */}
         <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            <strong className="text-ink">One thing every tool on this page shares:</strong>{" "}
-            voting, verifiers, search, and the allocator&rsquo;s knobs all spend their compute at
-            answer time, and the reasoning that compute buys is thrown away the moment the answer
-            is scored. But a chain that survived the check is a worked solution the model wrote
-            for itself. <em>Page 12 feeds those solutions back in: teaching the model to
-            reason.</em>
+            <strong className="text-ink">This page leaves two loose ends.</strong> The hard
+            boundary: no budget rescues a model without a foothold, because thinking only mines
+            what the weights already hold, and so far the only way to change the weights is
+            buying parameters. And the waste: voting, verifiers, search, and the
+            allocator&rsquo;s knobs all spend their compute at answer time, and the reasoning
+            that compute buys is thrown away the moment the answer is scored, even though a
+            chain that survived the check is a worked solution the model wrote for itself.{" "}
+            <em>Page 12 spends one move on both: keep the reasoning and train on it, teaching
+            the model to reason, so the frontier that stalled at inference time starts to
+            move.</em>
           </p>
         </div>
       </div>

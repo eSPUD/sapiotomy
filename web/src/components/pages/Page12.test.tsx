@@ -157,9 +157,12 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeTruthy();
   });
 
-  it("closes on the hand-off to page 13's frontier reasoners", () => {
+  it("closes on the hand-off to page 13's frontier reasoners, in page 11's idiom", () => {
     render(<Page12 />);
-    expect(screen.getByText(/Page 13 picks it up from there/)).toBeInTheDocument();
+    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("p")!;
+    // The lift-vs-slide bridge: page 11 said model size picks your curve; STaR
+    // is the first knob that lifts it, which page 13's two-knob law completes.
+    expect(handoff.textContent).toMatch(/lifts the curve without buying a single\s+parameter/i);
   });
 
   it("labels the footer provenance as Simulated and Cited", () => {
