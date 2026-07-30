@@ -8,6 +8,11 @@ const setStep = (value: number) =>
     target: { value: String(value) },
   });
 
+const setLuck = (value: number) =>
+  fireEvent.change(screen.getByRole("slider", { name: /how many are also right/i }), {
+    target: { value: String(value) },
+  });
+
 describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
   it("pins the distilled-model table to DeepSeek-AI 2025 Table 5", () => {
     // AIME 2024 pass@1 per dense model size, verbatim.
@@ -28,24 +33,37 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(p.math14).toBe(93.9);
   });
 
-  it("opens at step 0: 15.6% pass@1 and a scratchpad with no second thoughts", () => {
+  it("opens at step 0: 15.6% pass@1 and a strictly forward trace skeleton", () => {
     render(<Page14 />);
     expect(screen.getByText("15.6%")).toBeInTheDocument();
     // The length readout sits beside the accuracy readout, at its starting value.
     expect(screen.getByText("≈1,000")).toBeInTheDocument();
-    expect(screen.queryByText(/aha moment I can flag here/)).not.toBeInTheDocument();
+    const skeleton = screen.getByRole("img", { name: /trace skeleton, early in training/i });
+    expect(skeleton.getAttribute("aria-label")).toMatch(/three steps forward/i);
+    expect(skeleton.getAttribute("aria-label")).not.toMatch(/loops back/i);
+    expect(screen.queryByText(/loops back to its own first line/)).not.toBeInTheDocument();
   });
 
-  it("scrubbing to the end reaches 71.0% / ≈9,000 tokens and surfaces the verbatim aha passage", () => {
+  it("scrubbing to the end reaches 71.0% / ≈9,000 tokens and the skeleton grows its loop", () => {
     render(<Page14 />);
     setStep(8000);
     expect(screen.getByText("71.0%")).toBeInTheDocument();
     expect(screen.getByText("≈9,000")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Wait, wait\. Wait\. That's an aha moment I can flag here\./),
-    ).toBeInTheDocument();
+    const skeleton = screen.getByRole("img", { name: /trace skeleton after the aha/i });
+    expect(skeleton.getAttribute("aria-label")).toMatch(/loops back to its own first line/i);
+    expect(skeleton.getAttribute("aria-label")).toMatch(/second pass/i);
+    // The stage note ties the loop to the right axis's extra tokens.
+    expect(screen.getByText(/The extra tokens on the right axis are these loops/)).toBeInTheDocument();
     // cons@64 matching o1-0912 is stated alongside.
     expect(screen.getByText(/86\.7/)).toBeInTheDocument();
+  });
+
+  it("keeps the mid stage strictly forward: longer skeleton, still no loop", () => {
+    render(<Page14 />);
+    setStep(3000);
+    const skeleton = screen.getByRole("img", { name: /trace skeleton, mid training/i });
+    expect(skeleton.getAttribute("aria-label")).toMatch(/six steps forward/i);
+    expect(skeleton.getAttribute("aria-label")).not.toMatch(/loops back/i);
   });
 
   it("plots both training variables on one dual-axis chart, with the aha step marked", () => {
@@ -53,34 +71,34 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     const chart = screen.getByRole("img", { name: /two y axes/i });
     expect(chart.getAttribute("aria-label")).toMatch(/15\.6 percent .* 71\.0 percent/);
     expect(chart.getAttribute("aria-label")).toMatch(/1,000 to about 9,000 tokens/);
+    expect(chart.getAttribute("aria-label")).toMatch(/no term in the reward mentions length/);
     expect(chart.getAttribute("aria-label")).toMatch(/aha trace appears \(illustrative placement\)/);
   });
 
-  it("draws the distillation trade as a scatter: families, teacher, o1-mini line, ~48× span", () => {
+  it("teaches GRPO as pseudocode: rule reward, group baseline, no critic", () => {
     render(<Page14 />);
-    const scatter = screen.getByRole("img", { name: /against total parameters/i });
-    const label = scatter.getAttribute("aria-label")!;
-    expect(label).toMatch(/Qwen-14B 69\.7 percent/);
-    expect(label).toMatch(/Qwen-32B 72\.6 percent/);
-    expect(label).toMatch(/Llama-70B 70 percent/);
-    expect(label).toMatch(/671B mixture-of-experts, sits at 79\.8 percent/);
-    expect(label).toMatch(/o1-mini at 63\.6 percent \(parameter count undisclosed\)/);
-    expect(label).toMatch(/48 times parameter gap/);
+    expect(screen.getByText(/sample G answers from the current policy/)).toBeInTheDocument();
+    expect(screen.getByText(/mean\(r\)\) \/ std\(r\)/)).toBeInTheDocument();
+    expect(screen.getByText(/the group is its own baseline: no critic network/)).toBeInTheDocument();
+    expect(screen.getByText(/it is what made RL at this scale affordable/)).toBeInTheDocument();
   });
 
-  it("tags the page Act 3 and closes with the two-label provenance footer", () => {
+  it("GRPO dial: the same right answer earns a shrinking push as the group gets luckier", () => {
     render(<Page14 />);
-    expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
-    expect(screen.getByText("Simulated")).toBeInTheDocument();
-    expect(screen.getByText("Cited")).toBeInTheDocument();
-    expect(screen.getByText(/verbatim from Table 3\./)).toBeInTheDocument();
-  });
+    // Default: one other sample also right → group [✓ ✓ ✗ ✗], mean 0.50, pushes ±0.50.
+    expect(screen.getByText("0.50")).toBeInTheDocument();
+    expect(screen.getAllByText("+0.50")).toHaveLength(2);
+    expect(screen.getByText(/push drops to \+0\.50/)).toBeInTheDocument();
 
-  it("keeps the mid stage strictly forward: longer trace, still no aha", () => {
-    render(<Page14 />);
-    setStep(3000);
-    expect(screen.getByText(/square again/)).toBeInTheDocument();
-    expect(screen.queryByText(/aha moment I can flag here/)).not.toBeInTheDocument();
+    // Lone right answer: the biggest push on offer.
+    setLuck(0);
+    expect(screen.getByText("+0.75")).toBeInTheDocument();
+    expect(screen.getByText(/the biggest push on offer/)).toBeInTheDocument();
+
+    // Uniform group: every push 0.00, nothing to learn.
+    setLuck(3);
+    expect(screen.getByText(/teaches it nothing/)).toBeInTheDocument();
+    expect(screen.getAllByText("0.00").length).toBeGreaterThanOrEqual(4);
   });
 
   it("defaults the distill picker to Qwen-14B and updates on selection", () => {
@@ -98,17 +116,33 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getByText(/Within ~7 points of the 671B teacher/)).toBeInTheDocument();
   });
 
-  it("GRPO demo: pushes are group-relative, and a uniform group teaches nothing", () => {
+  it("draws the distillation trade as a scatter: families, teacher, o1-mini line, ~48× span", () => {
     render(<Page14 />);
-    // Default group [✓ ✗ ✗ ✓]: mean 0.50, pushes ±0.50.
-    expect(screen.getByText("0.50")).toBeInTheDocument();
-    expect(screen.getAllByText("+0.50")).toHaveLength(2);
-    expect(screen.queryByText(/teaches it nothing/)).not.toBeInTheDocument();
+    const scatter = screen.getByRole("img", { name: /against total parameters/i });
+    const label = scatter.getAttribute("aria-label")!;
+    expect(label).toMatch(/Qwen-14B 69\.7 percent/);
+    expect(label).toMatch(/Qwen-32B 72\.6 percent/);
+    expect(label).toMatch(/Llama-70B 70 percent/);
+    expect(label).toMatch(/671B mixture-of-experts, sits at 79\.8 percent/);
+    expect(label).toMatch(/o1-mini at 63\.6 percent \(parameter count undisclosed\)/);
+    expect(label).toMatch(/48 times parameter gap/);
+  });
 
-    // Flip both right answers wrong: all rewards 0 → every push 0.00.
-    fireEvent.click(screen.getByRole("button", { name: /Resample answer 1/i }));
-    fireEvent.click(screen.getByRole("button", { name: /Resample answer 4/i }));
-    expect(screen.getByText(/teaches it nothing/)).toBeInTheDocument();
-    expect(screen.getAllByText("0.00").length).toBeGreaterThanOrEqual(4);
+  it("defers the scoreboard and hands off to page 15", () => {
+    render(<Page14 />);
+    // The four headline stat tiles are gone: one number places the teacher,
+    // the rest waits for The Scoreboard.
+    expect(screen.getByText(/The rest of its scoreboard can wait one page/)).toBeInTheDocument();
+    expect(screen.queryByText("GPQA Diamond")).not.toBeInTheDocument();
+    expect(screen.getByText(/reasoning transfers as data/)).toBeInTheDocument();
+    expect(screen.getByText(/Whether you should is the next page/)).toBeInTheDocument();
+  });
+
+  it("tags the page Act 3 and closes with the two-label provenance footer", () => {
+    render(<Page14 />);
+    expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
+    expect(screen.getByText("Simulated")).toBeInTheDocument();
+    expect(screen.getByText("Cited")).toBeInTheDocument();
+    expect(screen.getByText(/schematic of the Table 3 trace/)).toBeInTheDocument();
   });
 });
