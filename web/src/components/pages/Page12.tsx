@@ -50,8 +50,8 @@
  * describing itself. Per the page 2/3 convention, Cite superscripts live in
  * prose only — the listing's annotations name ExIt and RFT but carry no
  * markers; the numbered cites sit in the figcaption below the listing — and
- * each References note sits beside the section that uses it (1–3 beside the
- * listing, GVM beside the closing blocks):
+ * each References note sits beside its ref's first use (STaR beside the
+ * interactive, ExIt + RFT beside the listing, GVM beside the closing blocks):
  * ExIt (Anthony et al. 2017) grounds the "this is RL" mapping on line 2, whose
  * exit condition ("until accuracy plateaus") points back at section 1's
  * plateau; RFT (Yuan et al. 2023) names the sample-k alternative on line 5,
@@ -523,23 +523,32 @@ export function Page12() {
           </div>
         </section>
 
-        <Note kicker="What you're watching">
-          <div className="flex flex-col gap-0.5">
-            <p className="text-xs font-semibold text-ink">filter on · rationalization off</p>
-            <p>
-              The bare loop: sample, keep what checks out, imitate. The frontier advances, then
-              stalls.
-            </p>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <p className="text-xs font-semibold text-ink">filter on · rationalization on</p>
-            <p>Full STaR — reach past the frontier with the answer in hand. The plateau lifts.</p>
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <p className="text-xs font-semibold text-ink">filter off</p>
-            <p>No reward, no loop. The frontier rots and accuracy walks off the cliff.</p>
-          </div>
-        </Note>
+        {/* Section 1's margin: the state matrix, then ref 1 beside its first use. */}
+        <div className="flex flex-col gap-6 lg:gap-0">
+          <Note kicker="What you're watching">
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-semibold text-ink">filter on · rationalization off</p>
+              <p>
+                The bare loop: sample, keep what checks out, imitate. The frontier advances, then
+                stalls.
+              </p>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-semibold text-ink">filter on · rationalization on</p>
+              <p>Full STaR — reach past the frontier with the answer in hand. The plateau lifts.</p>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-semibold text-ink">filter off</p>
+              <p>No reward, no loop. The frontier rots and accuracy walks off the cliff.</p>
+            </div>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
+              Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
+              2022.
+            </RefItem>
+          </Note>
+        </div>
 
         {/* Section 2 — the algorithm, written down and read twice */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -583,10 +592,6 @@ export function Page12() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
-            Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
-            2022.
-          </RefItem>
           <RefItem n={REF.exit} href="https://arxiv.org/abs/1705.08439">
             Anthony, Tian &amp; Barber 2017, <em>Thinking Fast and Slow with Deep Learning and
             Tree Search</em>, NeurIPS 2017.

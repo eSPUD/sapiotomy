@@ -143,6 +143,18 @@ describe("Page 12 (STaR and self-improvement)", () => {
     }
     // RFT and GVM are preprints and must carry the flag; ExIt and STaR are not.
     expect(screen.getAllByText("preprint").length).toBe(2);
+    // Each References note sits beside its ref's first use: the STaR entry
+    // precedes the listing (it serves section 1), ExIt's precedes the results.
+    const starRef = document.querySelector('a[href="https://arxiv.org/abs/2203.14465"]')!;
+    const listing = screen.getByText(/hint = y/);
+    const results = screen.getByText("LaMDA 137B, few-shot CoT");
+    expect(
+      starRef.compareDocumentPosition(listing) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    const exitRef = document.querySelector('a[href="https://arxiv.org/abs/1705.08439"]')!;
+    expect(
+      exitRef.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("closes on the hand-off to page 13's frontier reasoners", () => {
