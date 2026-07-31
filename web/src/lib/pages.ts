@@ -3,12 +3,22 @@
  *
  * Three Acts (Nicky Case's "this happens, THEREFORE that, BUT that…"):
  *   Act 1 — Building Intuition (pages 1–4)
- *   Act 2 — The Toolbox       (pages 5–12)
- *   Act 3 — Frontier & Caveats(pages 13–21)
+ *   Act 2 — The Toolbox       (pages 5–11)
+ *   Act 3 — Frontier & Caveats(pages 12–21)
  *
- * The frontier-reasoner pair (13–14) sits in Act 3, not Act 2: page 12's
- * closing card hands off with "where Act 3 picks up the story", and o1/R1 are
- * that story — frontier systems built FROM the toolbox, not toolbox techniques.
+ * The seam is 11|12, set by review 2026-07-30 against the act definitions the
+ * author states: Act 2 is "thinking longer, the searching algorithms, more
+ * adaptive thinking"; Act 3 is "teaching models to use these algorithms
+ * natively, what the frontier did, how to measure inference-time scaling, and
+ * the drawbacks of thinking". So page 11 (The Keystone) CLOSES Act 2 — its
+ * difficulty-aware budget bands are the adaptive-thinking payoff and it prices
+ * the search quality page 10 built, with no trained model anywhere on it — and
+ * page 12 (STaR) OPENS Act 3, the first page where the model teaches itself.
+ * Two earlier boundaries were wrong and are recorded so they are not restored:
+ * 5–12/13–21 (shipped, put STaR in the toolbox) and 5–10/11–21 (planning/
+ * act3_plan.md, which weights page 11's two-axis setup for page 13 over its
+ * own adaptive-allocation content and opens Act 3 on a page with no frontier
+ * model on it).
  *
  * Titles/concepts are drawn from InferenceTimeScaling_Explainable.md §C.
  * Routes are stubs in M0; each page is built in a later milestone.
@@ -27,8 +37,8 @@ export interface PageMeta {
 
 export const ACTS: Record<Act, { title: string; range: string }> = {
   1: { title: "Building Intuition", range: "Pages 1–4" },
-  2: { title: "The Toolbox", range: "Pages 5–12" },
-  3: { title: "Frontier & Caveats", range: "Pages 13–21" },
+  2: { title: "The Toolbox", range: "Pages 5–11" },
+  3: { title: "Frontier & Caveats", range: "Pages 12–21" },
 };
 
 export const PAGES: PageMeta[] = [
@@ -43,7 +53,7 @@ export const PAGES: PageMeta[] = [
   { n: 9, slug: "process-supervision", title: "Outcome vs Process Supervision", act: 2, concept: "Grade the final answer, or grade every step: only the second catches 'right answer, wrong reasoning', and only where there is a fact to be right about.", milestone: "M3" },
   { n: 10, slug: "searching-thoughts", title: "Searching Through Thoughts", act: 2, concept: "Reasoning as a maze: branch, evaluate, prune, backtrack. And pay for every node you look at.", milestone: "M4" },
   { n: 11, slug: "test-time-compute-scaling-law", title: "The Keystone: The Test-Time Compute Scaling Law", act: 2, concept: "Parameters and thinking time spend the same FLOPs: matched budget for budget, a small model that thinks can beat a 14x larger one — except on the hardest problems.", milestone: "M4" },
-  { n: 12, slug: "star-self-improvement", title: "Teaching Models to Reason: STaR and Self-Improvement", act: 2, concept: "Generate rationales, keep only the ones that reach the right answer, fine-tune on them, repeat: the model becomes its own teacher — for exactly as long as an external check filters what it studies.", milestone: "M4" },
+  { n: 12, slug: "star-self-improvement", title: "Teaching Models to Reason: STaR and Self-Improvement", act: 3, concept: "Generate rationales, keep only the ones that reach the right answer, fine-tune on them, repeat: the model becomes its own teacher — for exactly as long as an external check filters what it studies.", milestone: "M4" },
   { n: 13, slug: "frontier-reasoners-o1", title: "Frontier Reasoners I: o1, o3, and the Two-Axis Scaling Curve", act: 3, concept: "The first commercial model trained by RL to reason in a long private chain: accuracy climbs log-linearly with train-time RL compute and with test-time thinking, and the chain itself is hidden.", milestone: "M5" },
   { n: 14, slug: "frontier-reasoners-deepseek-r1", title: "Frontier Reasoners II: DeepSeek-R1, GRPO, and the “Aha Moment”", act: 3, concept: "Open weights answer the black box: reward only verifiable right answers (GRPO) and the pausing and self-correcting emerge on their own — then get distilled into models 1.5B–70B.", milestone: "M4" },
   { n: 15, slug: "the-scoreboard", title: "The Scoreboard: Benchmarks That Track Reasoning", act: 3, concept: "A score is not a property of a model: it is a point with four coordinates (model variant, test version, harness, thinking budget), and the headline drops the coordinates. And a benchmark is an instrument with a window: born at the floor, dead at the ceiling, which is why the goalposts must keep moving.", milestone: "M5" },
