@@ -1,10 +1,9 @@
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test.describe("M6 — full journey + sandbox + quiz", () => {
-  test("traverses all 21 pages 1 → 21 via the next links", async ({ page }) => {
+test.describe("full journey", () => {
+  test("traverses all 19 pages 1 → 19 via the next links", async ({ page }) => {
     await page.goto("/p/1");
-    for (let n = 2; n <= 21; n++) {
+    for (let n = 2; n <= 19; n++) {
       const link = page.getByRole("link", { name: `Page ${n} →` });
       await link.scrollIntoViewIfNeeded();
       await link.click();
@@ -12,35 +11,9 @@ test.describe("M6 — full journey + sandbox + quiz", () => {
     }
   });
 
-  test("Page 21: pre-quiz → sandbox → post-quiz reports a learning gain", async ({ page }) => {
-    await page.goto("/p/21");
-    // Pre-quiz: answer every question (correctly) and submit.
-    await answerAll(page);
-    await page.getByRole("button", { name: /submit predictions/i }).click();
-
-    // Sandbox now visible: exercise a lever.
-    await expect(page.getByRole("heading", { name: /the control panel/i })).toBeVisible();
-    await page.getByRole("switch", { name: /chain-of-thought/i }).click();
-
-    // Post-quiz: answer + submit → delta reported.
-    await answerAll(page);
-    await page.getByRole("button", { name: /submit answers/i }).click();
-    await expect(page.getByText(/learning gain/i)).toBeVisible();
-  });
-
-  test("Page 21 has no serious/critical accessibility violations", async ({ page }) => {
-    await page.goto("/p/21");
-    const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
-    const serious = results.violations.filter(
-      (v) => v.impact === "serious" || v.impact === "critical",
-    );
-    expect(serious).toEqual([]);
+  test("page 19 is the end of the deck: no next link", async ({ page }) => {
+    await page.goto("/p/19");
+    await expect(page.getByRole("link", { name: /^Page 20 →/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /^← Page 18/ })).toBeVisible();
   });
 });
-
-// Choose the correct radio for each of the three quiz questions.
-async function answerAll(page: import("@playwright/test").Page) {
-  await page.getByRole("radio", { name: /About \+17 points again/i }).last().check();
-  await page.getByRole("radio", { name: /can pick a correct answer even when it is a minority/i }).last().check();
-  await page.getByRole("radio", { name: /Increase accuracy, then decrease it past a peak/i }).last().check();
-}

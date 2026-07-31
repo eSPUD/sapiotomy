@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test.describe("Act 3 (pages 15–20)", () => {
+test.describe("Act 3 (pages 15–19)", () => {
   test("Page 15: the FrontierMath case reveals its coordinates on a guess", async ({ page }) => {
     await page.goto("/p/15");
     // Opens on the o1 case with both quote-true headlines.
@@ -14,24 +14,14 @@ test.describe("Act 3 (pages 15–20)", () => {
     await expect(page.getByText(/290-problem 2025-02 set/)).toBeVisible();
   });
 
-  test("Page 20: verdict flips between scoring modes at high N", async ({ page }) => {
-    await page.goto("/p/20");
-    const disks = page.getByRole("slider", { name: /disks/i });
-    await disks.focus();
-    await disks.press("End"); // N = 12 → collapse under enumeration
-    await expect(page.getByText("COLLAPSE", { exact: true })).toBeVisible();
-    await page.getByRole("switch", { name: /scoring rule/i }).click();
-    await expect(page.getByText("SOLVED", { exact: true })).toBeVisible();
-  });
-
   test("preprint sources are visibly flagged", async ({ page }) => {
-    for (const n of [15, 17, 18, 19, 20]) {
+    for (const n of [15, 17, 18, 19]) {
       await page.goto(`/p/${n}`);
       await expect(page.getByText("preprint", { exact: true }).first()).toBeVisible();
     }
   });
 
-  for (const n of [15, 16, 17, 18, 19, 20]) {
+  for (const n of [15, 16, 17, 18, 19]) {
     test(`Page ${n} has no serious/critical accessibility violations`, async ({ page }) => {
       await page.goto(`/p/${n}`);
       const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();

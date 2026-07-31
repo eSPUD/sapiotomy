@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, devices } from "@playwright/test";
 
-const ALL = ["/", ...Array.from({ length: 21 }, (_, i) => `/p/${i + 1}`)];
+const ALL = ["/", ...Array.from({ length: 19 }, (_, i) => `/p/${i + 1}`)];
 
 test.describe("M7 polish — accessibility across every page", () => {
   for (const path of ALL) {
@@ -17,7 +17,7 @@ test.describe("M7 polish — accessibility across every page", () => {
 });
 
 test.describe("M7 polish — no console errors", () => {
-  for (const path of ["/", "/p/5", "/p/7", "/p/13", "/p/17", "/p/20", "/p/21"]) {
+  for (const path of ["/", "/p/5", "/p/7", "/p/13", "/p/17", "/p/19"]) {
     test(`${path}: no console errors on load`, async ({ page }) => {
       const errors: string[] = [];
       page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
