@@ -633,14 +633,15 @@ export function Page12() {
           </p>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            <strong className="text-ink">Act 2 gave you two ways to buy reasoning.</strong> Pages
-            5 to 11 spend the compute after the question lands: show the road, cap the tokens,
-            sample and vote, score and re-rank, search the tree. This page spends it long before
-            the question exists: in page 11&apos;s terms, the first knob that lifts the curve
-            without buying a single parameter. o1 and R1 keep this loop&apos;s shape and drop the
-            disguise: the filter becomes an explicit RL reward on checkable tasks, and the
-            model&apos;s own sampling becomes the training set. Act 3 opens where one lab turns
-            both kinds of spending at once and bills you for each.{" "}
+            <strong className="text-ink">There are now two ways to buy reasoning.</strong> All of
+            Act 2 spends the compute after the question lands: show the road, cap the tokens,
+            sample and vote, score and re-rank, search the tree, and page 11 priced that whole
+            shelf against parameters. This page is the other way, and it spends long before the
+            question exists: in page 11&apos;s terms, the first knob that lifts the curve without
+            buying a single parameter. o1 and R1 keep this loop&apos;s shape and drop the disguise:
+            the filter becomes an explicit RL reward on checkable tasks, and the model&apos;s own
+            sampling becomes the training set. Next comes the frontier, where one lab turns both
+            kinds of spending at once and bills you for each.{" "}
             <em>Page 13 picks it up from there.</em>
           </p>
         </div>
