@@ -41,7 +41,9 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     const skeleton = screen.getByRole("img", { name: /trace skeleton, early in training/i });
     expect(skeleton.getAttribute("aria-label")).toMatch(/three steps forward/i);
     expect(skeleton.getAttribute("aria-label")).not.toMatch(/loops back/i);
-    expect(screen.queryByText(/loops back to its own first line/)).not.toBeInTheDocument();
+    // The aha note, with its doubt trigger, belongs to the aha stage only.
+    expect(screen.queryByText(/doubts what it has just written/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Nothing scored those steps/)).not.toBeInTheDocument();
   });
 
   it("scrubbing to the end reaches 71.0% / ≈9,000 tokens and the skeleton grows its loop", () => {
@@ -64,6 +66,40 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     const skeleton = screen.getByRole("img", { name: /trace skeleton, mid training/i });
     expect(skeleton.getAttribute("aria-label")).toMatch(/six steps forward/i);
     expect(skeleton.getAttribute("aria-label")).not.toMatch(/loops back/i);
+    expect(screen.queryByText(/doubts what it has just written/)).not.toBeInTheDocument();
+  });
+
+  it("gives the interrupt a reason, and never calls it a located mistake", () => {
+    render(<Page14 />);
+    setStep(8000);
+    // The trigger is stated: the trace doubts the step it just wrote.
+    expect(screen.getByText(/doubts what it has just written/)).toBeInTheDocument();
+    // And the reason it cannot be error-detection: section 1's reward is
+    // outcome-only, so nothing ever scored an individual step.
+    expect(screen.getByText(/Nothing scored those steps/)).toBeInTheDocument();
+    // Page 10's missing middle verb, restored: branch, score, backtrack.
+    expect(screen.getByText(/Page 10's branch, score, backtrack/)).toBeInTheDocument();
+    // The suspect step is marked in the figure, not just in the caption.
+    const skeleton = screen.getByRole("img", { name: /trace skeleton after the aha/i });
+    expect(skeleton.getAttribute("aria-label")).toMatch(/the step the trace doubts/i);
+    // Guard: a later tightening pass must not turn the doubt into a found
+    // error. That would contradict the outcome-only reward two sections up.
+    expect(
+      screen.queryByText(/found (a |an )?(mistake|error)|wrong step|catches (a|its) (mistake|error)/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("bridges each section to the toolbox it absorbs, without a chain of page cites", () => {
+    render(<Page14 />);
+    // Section 1: GRPO's line 2 is page 7's sampling, moved across the line.
+    expect(screen.getByText(/Page 7 sampled many chains and picked among them at answer time/)).toBeInTheDocument();
+    expect(screen.getByText(/sampling paid for once, at training time/)).toBeInTheDocument();
+    // Section 2: the right axis is page 11's, with nobody turning it.
+    expect(screen.getByText(/Read the right axis as page 11's x axis/)).toBeInTheDocument();
+    // Section 2 answers page 13's first open question outright.
+    expect(screen.getByText(/one chain allowed to run longer/)).toBeInTheDocument();
+    // The lede answers page 13's questions rather than restating the frame.
+    expect(screen.getByText(/four questions about what sits behind the thinking dial/)).toBeInTheDocument();
   });
 
   it("plots both training variables on one dual-axis chart, with the aha step marked", () => {
