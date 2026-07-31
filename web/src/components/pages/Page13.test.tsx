@@ -76,10 +76,23 @@ describe("Page 13 (frontier reasoners I)", () => {
       screen.getByText(/Thinking slides you along the curve; only training lifts it\./),
     ).toBeInTheDocument();
     // The lab itself survives: two sliders, the delta readout, the fidelity note.
-    expect(screen.getByText("Thinking time (test-time compute)")).toBeInTheDocument();
-    expect(screen.getByText("RL training (train-time compute)")).toBeInTheDocument();
+    expect(screen.getByText("Thinking time (compute in one answer)")).toBeInTheDocument();
+    expect(screen.getByText("RL training (compute in one training run)")).toBeInTheDocument();
     expect(screen.getByText("the missing RL's share")).toBeInTheDocument();
     expect(screen.getByText(/The slope is the claim; the absolute compute is a secret\./)).toBeInTheDocument();
+  });
+
+  it("says what the dials count and what the score is scored on", () => {
+    render(<Page13 />);
+    // Both dials are compute, never a count of runs or of sampled answers.
+    expect(
+      screen.getByText(/×100 RL training is one run given a hundred times the training compute/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/not a hundred sampled answers/)).toBeInTheDocument();
+    // The benchmark is named in the prose, on the axis, and on the readout.
+    expect(screen.getByText(/pass@1 on AIME 2024/)).toBeInTheDocument();
+    expect(screen.getByText("AIME 2024 pass@1 (%)")).toBeInTheDocument();
+    expect(screen.getByText("AIME 2024 pass@1 here")).toBeInTheDocument();
   });
 
   it("puts the instruction in the margin and the meaning in the card", () => {
@@ -99,7 +112,7 @@ describe("Page 13 (frontier reasoners I)", () => {
   it("draws the whole run family at once, staircase stated, opening gap priced", () => {
     render(<Page13 />);
     const chart = screen.getByRole("img", {
-      name: /Three RL training runs are drawn in full as parallel lines/,
+      name: /Three RL training runs, each one run at a different training-compute budget, are drawn in full as parallel lines/,
     });
     expect(chart).toBeInTheDocument();
     // The law is stated statically: up one curve = along one decade = +29.5.
@@ -148,71 +161,90 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.queryByText(/the law held/)).not.toBeInTheDocument();
   });
 
-  it("draws the boundary as a ledger: what exists, who reads it, who pays", () => {
+  it("asks the four questions a closed model cannot answer", () => {
     render(<Page13 />);
-    expect(screen.getByText("What exists")).toBeInTheDocument();
-    expect(screen.getByText("Who can read it")).toBeInTheDocument();
-    expect(screen.getByText("Who pays for it")).toBeInTheDocument();
-    expect(screen.getByText("The raw chain of thought")).toBeInTheDocument();
-    expect(screen.getByText(/every thinking token billed, sight unseen/)).toBeInTheDocument();
-    expect(screen.getByText(/it is all you ever see/)).toBeInTheDocument();
-    // Every cell carries words — an em-dash cell reads as a rendering bug.
-    expect(screen.getByText(/no one extra — it arrives with the answer/)).toBeInTheDocument();
-    expect(screen.getByText(/its own audit, run inside/)).toBeInTheDocument();
-    expect(screen.getByText(/flagged 0\.17% of responses as deceptive/)).toBeInTheDocument();
+    expect(screen.getByText("4. The questions o1 cannot answer")).toBeInTheDocument();
+    // Every question is about the thinking dial, not about opacity in general.
+    const questions = [
+      "What are you actually buying when you turn the thinking dial?",
+      "Are the thinking tokens doing the work, or describing it?",
+      "What does the model do with ten times the thinking that it would not do with one?",
+      "Does the law need a frontier-scale model at all?",
+    ];
+    for (const q of questions) {
+      expect(screen.getByText(q)).toBeInTheDocument();
+    }
+    // Asked in the order page 14 answers them.
+    const rendered = questions.map((q) => screen.getByText(q));
+    for (let i = 1; i < rendered.length; i++) {
+      expect(follows(rendered[i - 1], rendered[i])).toBe(true);
+    }
+    expect(screen.getByText(/that is exactly what a closed lab keeps/)).toBeInTheDocument();
   });
 
-  it("keeps the three closing blocks verbatim and in place", () => {
+  it("never narrates its own contribution: the subject is o1, not the deck", () => {
     render(<Page13 />);
-    expect(screen.getByText(/The case for hiding:/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/a chain you can trust as a monitor must be left untrained/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/The price:/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/nobody outside can audit the reasoning/),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/this page claimed/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/what this page/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/this page actually established/)).not.toBeInTheDocument();
+    // The retrospective ledger and parts list are both gone.
+    expect(screen.queryByText("What stays sealed")).not.toBeInTheDocument();
+    expect(screen.queryByText("What you would be missing")).not.toBeInTheDocument();
+  });
+
+  it("hands off by answering all four, in the order they were asked", () => {
+    render(<Page13 />);
+    const lastQuestion = screen.getByText("Does the law need a frontier-scale model at all?");
     const closer = screen.getByText(
-      /A closed lab proved the two-axis law and kept the recipe\. Within four months an open lab published one: weights, training curve, visible chain and all\./,
+      /Four months later an open lab answered every one of them: the algorithm in full, a chain you can read token by token, a training curve that shows where the extra thinking comes from, and the whole thing distilled small enough to run yourself\./,
     );
-    expect(closer).toBeInTheDocument();
     expect(screen.getByText(/Turn the page\./)).toBeInTheDocument();
-    // Ordered: hiding, then price, then the handoff last.
-    const hiding = screen.getByText(/The case for hiding:/);
-    const price = screen.getByText(/The price:/);
-    expect(follows(hiding, price)).toBe(true);
-    expect(follows(price, closer)).toBe(true);
+    expect(follows(lastQuestion, closer)).toBe(true);
   });
 
-  it("orders the page: recipe, lab, waterfall, ablation, ledger, handoff", () => {
+  it("cut the safety essay: that thread is page 18's, not page 13's", () => {
+    render(<Page13 />);
+    expect(screen.queryByText(/The case for hiding:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/must be left untrained/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/0\.17%/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/deceptive/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Who can read it")).not.toBeInTheDocument();
+    // No back-reference chain through Act 2's pages (review).
+    expect(screen.queryByText(/page 6/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/page 9/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/page 10/)).not.toBeInTheDocument();
+  });
+
+  it("orders the page: recipe, lab, waterfall, ablation, open questions, handoff", () => {
     render(<Page13 />);
     const diff = screen.getByText("rewardᵢ ← check(ŷᵢ, y)");
-    const lab = screen.getByText("Thinking time (test-time compute)");
+    const lab = screen.getByText("Thinking time (compute in one answer)");
     const waterfall = screen.getByText("no learned chain");
     const ablation = screen.getByText("One recipe, no domain tricks");
-    const ledger = screen.getByText("Who pays for it");
+    const open = screen.getByText("What are you actually buying when you turn the thinking dial?");
     const handoff = screen.getByText(/Turn the page\./);
     expect(follows(diff, lab)).toBe(true);
     expect(follows(lab, waterfall)).toBe(true);
     expect(follows(waterfall, ablation)).toBe(true);
-    expect(follows(ablation, ledger)).toBe(true);
-    expect(follows(ledger, handoff)).toBe(true);
+    expect(follows(ablation, open)).toBe(true);
+    expect(follows(open, handoff)).toBe(true);
   });
 
-  it("links all three references from the sidenotes, all flagged preprint", () => {
+  it("links both surviving references from the sidenote, all flagged preprint", () => {
     render(<Page13 />);
     const hrefs = [
       "https://openai.com/index/learning-to-reason-with-llms/",
       "https://arxiv.org/abs/2502.06807",
-      "https://openai.com/index/openai-o1-system-card/",
     ];
     for (const href of hrefs) {
       expect(document.querySelector(`a[href="${href}"]`)).toBeInTheDocument();
     }
-    // The ARC Prize o3-preview link left with the benchmark numbers.
+    // The ARC Prize o3-preview link left with the benchmark numbers; the system
+    // card left with the safety essay.
     expect(document.querySelector('a[href*="arcprize.org"]')).not.toBeInTheDocument();
-    // None of the three sources is peer-reviewed.
-    expect(screen.getAllByText("preprint").length).toBe(3);
+    expect(document.querySelector('a[href*="o1-system-card"]')).not.toBeInTheDocument();
+    // Neither surviving source is peer-reviewed.
+    expect(screen.getAllByText("preprint").length).toBe(2);
   });
 
   it("carries no Simulated/Cited footer — provenance is inline, as on pages 1-3", () => {
