@@ -102,6 +102,34 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getByText(/four questions about what sits behind the thinking dial/)).toBeInTheDocument();
   });
 
+  it("settles all four of page 13's open questions, in its order", () => {
+    render(<Page14 />);
+    // 1: what the thinking dial buys.
+    expect(screen.getByText(/one chain, allowed to run longer/)).toBeInTheDocument();
+    // 2: whether the tokens do the work or describe it.
+    expect(screen.getByText(/they work\. The chain is what training sampled and pushed on/)).toBeInTheDocument();
+    // 3: what ten times the thinking is spent on.
+    expect(screen.getByText(/it doubts itself and derives the answer again/)).toBeInTheDocument();
+    // 4: whether the law needs frontier scale.
+    expect(screen.getByText(/survives being poured into 1\.5B parameters you can download/)).toBeInTheDocument();
+    expect(screen.getByText(/The four questions o1 could not answer/)).toBeInTheDocument();
+  });
+
+  it("answers the narration question in section 2, where the chain is shown", () => {
+    render(<Page14 />);
+    // The load-bearing claim: the chain is the reinforced object, so it cannot
+    // be a commentary written beside the real work.
+    expect(screen.getByText(/it is what the model sampled and what training pushed on/)).toBeInTheDocument();
+    expect(screen.getByText(/They are second passes, and the score climbs with them/)).toBeInTheDocument();
+  });
+
+  it("carries each reference exactly once, beside its first use", () => {
+    render(<Page14 />);
+    // Ref 1 sits with the lede/section 1; section 3 must not repeat it.
+    expect(screen.getAllByText(/DeepSeek-R1: Incentivizing Reasoning Capability/)).toHaveLength(1);
+    expect(screen.queryByText(/Tables 4–5\. Distilled weights released/)).not.toBeInTheDocument();
+  });
+
   it("plots both training variables on one dual-axis chart, with the aha step marked", () => {
     render(<Page14 />);
     const chart = screen.getByRole("img", { name: /two y axes/i });
@@ -154,7 +182,7 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
       "true",
     );
     expect(screen.getByText(/R1-Distill-Qwen-14B/)).toBeInTheDocument();
-    expect(screen.getByText(/leading open reasoning model when R1 shipped/)).toBeInTheDocument();
+    expect(screen.getByText(/best open reasoning model that existed the week before/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Qwen-32B/ }));
     expect(screen.getByText(/R1-Distill-Qwen-32B/)).toBeInTheDocument();

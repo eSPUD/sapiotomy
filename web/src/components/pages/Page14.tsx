@@ -21,6 +21,23 @@
  * announcing. Q1/Q2/Q3 land in section 2, Q4 in section 3; section 1 is the
  * handoff's separate "algorithm in full".
  *
+ * SETTLED (end of section 3) is where the reader can see the loop shut: the
+ * four questions in page 13's order, answers only. Answering without
+ * announcing is right inside a section and not enough across a whole page —
+ * Q2 in particular was left entirely implicit until review. The block states
+ * answers the sections earned and never narrates the page's own
+ * contributions, which is the academic-paper reflex page 13 rejected when its
+ * "what this page claimed / what backs it" ledger was cut.
+ *
+ * Q2 ("are the thinking tokens doing the work, or describing it?") is
+ * answered in section 2, under the skeleton, because that is the only place
+ * the reader has the chain in front of them. The argument is structural, not
+ * a measurement: in R1-Zero the chain IS the sampled object that training
+ * pushed on, so there was never a separate step in which a description could
+ * be written beside the real work. Deliberately not reached for: page 18's
+ * faithfulness question (whether the chain is an HONEST account is a
+ * different claim from whether it is load-bearing, and page 18 owns it).
+ *
  * Act 2 callbacks are held to two, and both carry an argument: page 7 at
  * GRPO's line 2, page 10 at the aha loop. Page 13's header records the review
  * instruction "lets not cite everything like page 6, page 7…", so decorative
@@ -158,6 +175,32 @@ const PSEUDO: { code: string; note?: string }[] = [
   { code: "  push toward answers with Aᵢ > 0, away from Aᵢ < 0", note: "plus a leash (KL) back to the reference model" },
 ];
 
+/*
+ * Page 13's four open questions, in its order, each compressed to the clause
+ * that names it and the answer this page earned. Every answer is something a
+ * section demonstrated, not a claim added here: the visible single chain
+ * (section 2's length axis), the chain as the reinforced object (section 2's
+ * closing paragraph), the aha loops (the skeleton), the distills (section 3).
+ */
+const SETTLED: { q: string; a: string }[] = [
+  {
+    q: "What the thinking dial buys:",
+    a: "one chain, allowed to run longer. Not a hidden vote you were billed for.",
+  },
+  {
+    q: "Whether the thinking tokens work or narrate:",
+    a: "they work. The chain is what training sampled and pushed on, so there was nothing for a narration to be written beside.",
+  },
+  {
+    q: "What the model does with ten times the thinking:",
+    a: "it doubts itself and derives the answer again. The extra tokens are second passes.",
+  },
+  {
+    q: "Whether the law needs frontier scale:",
+    a: "no. It survives being poured into 1.5B parameters you can download.",
+  },
+];
+
 type Stage = "early" | "mid" | "aha";
 
 const STAGE_CHIP: Record<Stage, string> = {
@@ -181,7 +224,7 @@ const DISTILLS: Distill[] = [
   { size: 1.5, label: "Qwen-1.5B", family: "qwen", note: "beats GPT-4o on AIME, from a model that fits on a phone" },
   { size: 7, label: "Qwen-7B", family: "qwen", note: "most of the way to o1-mini, at laptop scale" },
   { size: 8, label: "Llama-8B", family: "llama", note: "a Llama base instead of Qwen: the same traces teach a different family" },
-  { size: 14, label: "Qwen-14B", family: "qwen", note: "beats QwQ-32B-Preview, the leading open reasoning model when R1 shipped, at less than half its size" },
+  { size: 14, label: "Qwen-14B", family: "qwen", note: "clears the best open reasoning model that existed the week before, at under half its size" },
   { size: 32, label: "Qwen-32B", family: "qwen", note: "within seven points of the 671B teacher" },
   { size: 70, label: "Llama-70B", family: "llama", note: "bigger is not automatically better: the 32B Qwen edges it" },
 ];
@@ -1007,6 +1050,17 @@ export function Page14() {
                 {STAGE_NOTE[stage]}
               </p>
             </div>
+            <p className="text-ink">
+              Which settles the harder version of the question. From outside, a private chain could
+              always have been a running commentary written beside the real work, and you could
+              never check.{" "}
+              <strong>
+                Here the chain is the work: it is what the model sampled and what training pushed
+                on
+              </strong>
+              , and no separate step ever wrote a description of anything. That is also why the
+              tokens are not padding. They are second passes, and the score climbs with them.
+            </p>
             <p className="text-xs text-ink-muted">
               the skeleton abstracts the trace in Table 3 of DeepSeek-AI 2025, where R1-Zero
               interrupts a solution mid-stream, flags the moment, and restarts from its own first
@@ -1092,6 +1146,36 @@ export function Page14() {
               into weights.
             </p>
 
+            {/*
+             * The arc page 13 opened, closed. Its section 4 asked four questions
+             * about what sits behind the thinking dial and promised this page
+             * answers them; the sections answer without announcing, so this
+             * block is where the reader can see the loop shut. Answers only, in
+             * page 13's order — it must stay reader-facing and never drift into
+             * a page narrating its own contributions, which is the reflex page
+             * 13 rejected when its own ledger was cut.
+             */}
+            <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                The four questions o1 could not answer
+              </p>
+              <ol className="flex flex-col gap-2.5">
+                {SETTLED.map((s, i) => (
+                  <li key={s.q} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+                    <span
+                      className="w-4 select-none text-right font-code text-sm tabular-nums text-ink-muted"
+                      aria-hidden="true"
+                    >
+                      {i + 1}
+                    </span>
+                    <p className="min-w-0 text-sm text-ink-muted">
+                      {s.q} <strong className="text-ink">{s.a}</strong>
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
               Two pages of frontier claims, and every one of them arrived as a benchmark score:
               71.0% on AIME, level with o1-0912, a 14B crossing o1-mini&apos;s line. So far those
@@ -1101,11 +1185,6 @@ export function Page14() {
           </div>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
-            DeepSeek-AI 2025, Tables 4–5. Distilled weights released under the MIT license.
-          </RefItem>
-        </Note>
       </div>
 
 
