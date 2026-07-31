@@ -6,12 +6,18 @@ const follows = (a: Element, b: Element) =>
   Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 describe("Page 13 (frontier reasoners I)", () => {
-  it("opens on the lede: trained it in, kept the recipe, the two-axis question", () => {
+  it("opens on the lede: Act 2's two ways to spend, both dials at once, the two-axis question", () => {
     render(<Page13 />);
-    expect(screen.getByText(/trained it in — and kept the recipe/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/how much of the score did the training buy, and how much did the thinking\?/),
-    ).toBeInTheDocument();
+    // The lede receives page 12's act-level hand-off: answer-time spending
+    // (pages 5-11) and train-time spending (page 12) are both named, so the
+    // two compute axes below are the two threads the reader already has.
+    const lede = screen
+      .getByText(/how much of the score did the training buy, and how much did the thinking\?/)
+      .closest("p")!;
+    expect(lede.textContent).toMatch(/spend once the question lands/);
+    expect(lede.textContent).toMatch(/spend long before it does/);
+    expect(lede.textContent).toMatch(/first commercial model to turn both dials at once/);
+    expect(lede.textContent).toMatch(/kept the recipe/);
   });
 
   it("shows only the o1 recipe, mapped back to page 12 line by line, labelled rumor", () => {

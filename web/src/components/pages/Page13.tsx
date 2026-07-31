@@ -8,6 +8,15 @@
  * literature never states in one place: the loop-diff (section 1), the
  * unified two-knob law (section 2), and the visibility boundary (section 4).
  *
+ * The lede is the Act 2 → Act 3 seam, and is written against page 12's closing
+ * block: that block sums the act as two ways to buy reasoning (spend after the
+ * question lands, pages 5-11; spend long before it exists, page 12), and this
+ * lede names the same pair before saying o1 turns both dials at once. It must
+ * not claim "everything so far bolted reasoning on from outside" — page 12
+ * already trained it in, and that phrasing made the seam read as a skipped
+ * page. The two compute axes in section 2 are these two threads, so the law
+ * lands as the reader's own question answered, not a new frame.
+ *
  * Section 1 opens with the loop strip in page 12's stage grammar — the same
  * three stations, two renamed (filter → reward, fine-tune → reinforce) — so
  * the "same shape, disguise dropped" claim lands visually before any code is
@@ -512,10 +521,12 @@ export function Page13() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Everything so far bolted reasoning on from outside — prompts, votes, judges, search.{" "}
-        <strong className="text-ink">o1</strong> trained it in — and kept the recipe. Its
-        signature is <strong className="text-ink">a curve with two compute axes</strong>: how much
-        of the score did the training buy, and how much did the thinking?
+        Act 2 left two ways to buy reasoning: spend once the question lands (pages 5 to 11: votes,
+        judges, search) or spend long before it does (page 12: train the reasoning in).{" "}
+        <strong className="text-ink">o1</strong> is the first commercial model to turn both dials
+        at once, and it kept the recipe. Its signature is{" "}
+        <strong className="text-ink">a curve with two compute axes</strong>: how much of the score
+        did the training buy, and how much did the thinking?
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">

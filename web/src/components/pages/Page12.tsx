@@ -46,10 +46,16 @@
  * paper's own stated limitation, and the only place the page admits the loop
  * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
  * to page 13 ("this shape", not "this loop": R1's reward is documented, o1's
- * never was — page 13 owns o1's specifics). The hand-off opens in page 11's
+ * never was — page 13 owns o1's specifics). The hand-off carries page 11's
  * lift-vs-slide idiom (STaR = the first knob that lifts the curve without
  * buying parameters), so page 13's "training lifts, thinking slides" law
  * reads as the third beat of one pattern, not a callback that skipped a page.
+ * It opens one altitude higher than the page, by review request: this is the
+ * last page of Act 2, so the block first sums the act's two ways to buy
+ * reasoning (spend after the question lands, pages 5-11; spend long before it
+ * exists, this page) and closes on Act 3 turning both at once and billing for
+ * each. Page 13's lede is written to receive exactly that pair — its two
+ * compute axes ARE these two threads — so the seam is stated on both sides.
  *
  * Outside citations, so the page's structural claims no longer rest on STaR
  * describing itself. Per the page 2/3 convention, Cite superscripts live in
@@ -627,11 +633,14 @@ export function Page12() {
           </p>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            In page 11&apos;s terms, this loop is a new kind of knob: model size picked your
-            curve, and STaR is the first knob that lifts the curve without buying a single
-            parameter. o1 and R1 keep exactly this shape — sample reasoning, score it, reinforce
-            what scored — and drop the disguise: the filter becomes an explicit RL reward on
-            checkable tasks, and the model&apos;s own sampling becomes the training set.{" "}
+            <strong className="text-ink">Act 2 gave you two ways to buy reasoning.</strong> Pages
+            5 to 11 spend the compute after the question lands: show the road, cap the tokens,
+            sample and vote, score and re-rank, search the tree. This page spends it long before
+            the question exists: in page 11&apos;s terms, the first knob that lifts the curve
+            without buying a single parameter. o1 and R1 keep this loop&apos;s shape and drop the
+            disguise: the filter becomes an explicit RL reward on checkable tasks, and the
+            model&apos;s own sampling becomes the training set. Act 3 opens where one lab turns
+            both kinds of spending at once and bills you for each.{" "}
             <em>Page 13 picks it up from there.</em>
           </p>
         </div>

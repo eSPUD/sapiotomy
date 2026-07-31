@@ -184,6 +184,19 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(handoff.textContent).toMatch(/lifts the curve without buying a single\s+parameter/i);
   });
 
+  it("closes at act altitude: both ways to spend, then Act 3 turning both", () => {
+    render(<Page12 />);
+    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("p")!;
+    // The hand-off has to sum Act 2, not just this page: the answer-time
+    // toolbox (5-11) and this page's train-time loop are the two threads
+    // page 13's two compute axes then pick up.
+    expect(handoff.textContent).toMatch(/Act 2 gave you two ways to buy reasoning/);
+    expect(handoff.textContent).toMatch(/spend the compute after the question lands/);
+    expect(handoff.textContent).toMatch(/spends it long before the question exists/);
+    // And it names the price, which is what makes Act 3's frontier a trade.
+    expect(handoff.textContent).toMatch(/Act 3 opens where one lab turns\s+both kinds of spending at once and bills you for each/);
+  });
+
   it("labels the footer provenance as Simulated and Cited", () => {
     render(<Page12 />);
     expect(screen.getByText("Simulated")).toBeInTheDocument();
