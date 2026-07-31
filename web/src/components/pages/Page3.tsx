@@ -14,24 +14,22 @@
  *   Problem 2 — the data: even with an unlimited budget, the effective stock
  *     of quality human text is ~300T tokens, fully utilized between 2026 and
  *     2032 if trends continue (Villalobos et al. 2024, Epoch AI).
- * The guess box then pivots the story: both walls come from paying compute up
- * front to bake smarts in, so turn it around and spend that effort when the
- * question arrives instead — the hint points back at page 1's 17 × 24, which
- * the reader worked out on the spot, not by knowing it in advance. Training
- * only on this page; the answer-time alternative is the next page's business.
- * No inference talk here.
+ * The closing pull quote states both failures and hands off. Training only on
+ * this page; the answer-time alternative is the next page's business. No
+ * inference talk here.
  *
  * Layout rule: no reveals, no drag-to-unlock. TWO numbered sections down the
  * left, one per failure page 2 raises: the knowledge gap (cost, lag, aim, data)
- * and the bias. The figures are h3 sub-heads inside them, so the page reads as
- * two arguments rather than a list of walls. Each section is followed by its
- * margin cell. Citations
+ * and the bias (was-already-there, more-text-sharpens-the-default — the top two;
+ * the model-collapse and alignment challenges were trimmed away). The figures
+ * are h3 sub-heads inside them, so the page reads as two arguments rather than a
+ * list of walls. Each section is followed by its margin cell. Citations
  * follow the page-2 house style: numbered inline markers (Cite) at the claim
  * they support, a References margin note (RefItem) beside the step that uses
  * each source. References live only in those margin notes; non-peer-reviewed
- * sources carry a preprint flag there. Steps 1 and 2 each get their own References note so a source
- * never drifts from the step it backs; step 3 cites nothing, so its margin
- * cell stays an empty <div aria-hidden="true" />. There is still no "how to
+ * sources carry a preprint flag there. Only section 1 cites now, so its
+ * References note sits beside it; section 2 cites nothing, so its margin cell is
+ * an empty <div aria-hidden="true" />. There is still no "how to
  * read this page" rail (a slider, a dial and a text box need no instructions).
  * What is cited vs derived is said inline in each step's h2 annotation
  * ("derived from the two Epoch trends", "cited stock, derived demand"), and the
@@ -54,7 +52,6 @@ import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { PullQuote } from "@/components/PullQuote";
 import { Slider } from "@/components/Slider";
-import { GAME_ROUNDS } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { frontierCumulativeUSDM, sameModelCumulativeUSDM } from "@/lib/dailyTraining";
@@ -91,8 +88,6 @@ const REF = {
   chinchilla: 4,
   dataStock: 5,
   datasetSizes: 6,
-  collapse: 7,
-  hhh: 8,
 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
@@ -294,9 +289,9 @@ export function Page3() {
               points={comboSame}
               secondary={{
                 points: comboFrontier,
-                label: "the newest frontier model, daily · its price climbs",
+                label: `the newest frontier model, daily · e.g. Gemini Ultra at $${GEMINI_M}M · its price climbs`,
               }}
-              primaryLabel={`the same GPT-4-class model, daily · flat $${RUN_M}M a run`}
+              primaryLabel={`the same GPT-4 model, daily · flat $${RUN_M}M a run`}
               primaryTone="compute-bright"
               secondaryTone="wrong-bright"
               markerX={months}
@@ -526,42 +521,9 @@ export function Page3() {
             The reading a model picks is whatever its corpus says most. More text from the same
             world strengthens that majority rather than loosening it.
           </p>
-
-          <h3 className="text-lg font-semibold text-ink">c. Generated text loses the tails</h3>
-          <p className="text-ink">
-            The obvious escape from the data wall makes it worse: train on generated text and the
-            rare cases thin out a round at a time until they are gone.
-            <Cite n={REF.collapse} />
-          </p>
-
-          <h3 className="text-lg font-semibold text-ink">d. Alignment is trained separately</h3>
-          <p className="text-ink">
-            Helpful, harmless and honest is a procedure of its own, applied after pretraining.
-            <Cite n={REF.hhh} /> Size does not confer it.
-          </p>
-
-          <p className="text-lg text-ink">
-            Every wall above comes from the same habit: paying for smarts{" "}
-            <strong>up front</strong>, all at once, before a single question is asked. And the bias
-            never needed more paid for at all, only a second look at the question. So turn it
-            around: instead of front-loading everything to make the model{" "}
-            <strong>know</strong> the answer, spend that effort{" "}
-            <strong>when the question arrives</strong> and let it{" "}
-            <strong>work the answer out</strong>. That is how you solved{" "}
-            <strong className="font-mono">{GAME_ROUNDS[1].prompt}</strong> on page 1: not by knowing
-            it in advance, but by building it on the spot.
-          </p>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.collapse} href="https://www.nature.com/articles/s41586-024-07566-y">
-            Shumailov et al. 2024, <em>AI models collapse when trained on recursively generated
-            data</em> (Nature).
-          </RefItem>
-          <RefItem n={REF.hhh} href="https://arxiv.org/abs/2112.00861" preprint>
-            Askell et al. 2021, <em>A General Language Assistant as a Laboratory for Alignment</em>.
-          </RefItem>
-        </Note>
+        <div aria-hidden="true" />
         {/* Both sections in two sentences, in the content column so it does not
             run under the sidenotes. */}
         <PullQuote>

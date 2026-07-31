@@ -42,7 +42,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     render(<Page3 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training-Time Scaling");
     // The two walls are sub-heads under section 1 now.
-    // Every challenge is its own sub-head, four per section.
+    // Every challenge is its own sub-head: four under section 1, the top two under section 2.
     for (const h of [
       /The bill compounds/i,
       /It always lags/i,
@@ -50,8 +50,6 @@ describe("Page 3 (Training-Time Scaling)", () => {
       /The data runs out/i,
       /The fact was already there/i,
       /More text sharpens the default/i,
-      /Generated text loses the tails/i,
-      /Alignment is trained separately/i,
     ]) {
       expect(screen.getByRole("heading", { level: 3, name: h })).toBeInTheDocument();
     }
@@ -87,9 +85,6 @@ describe("Page 3 (Training-Time Scaling)", () => {
       screen.getByRole("slider", { name: /drag through the projected years/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/No budget buys tokens that do not exist/i)).toBeInTheDocument();
-    // The pivot survives the quiz's removal, as prose.
-    expect(screen.getByText(/paying for smarts/i)).toBeInTheDocument();
-    expect(screen.getByText("17 × 24")).toBeInTheDocument();
     // The flat per-run rate still anchors the legend, caption, and footer.
     expect(screen.getAllByText(new RegExp(`\\$${RUN_M}M`)).length).toBeGreaterThan(0);
     expect(screen.getByRole("navigation", { name: /page navigation/i })).toBeInTheDocument();
@@ -162,21 +157,21 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expectClean();
   });
 
-  it("each step's References margin note carries only the sources that step uses", () => {
+  it("the References margin note carries only the sources the page uses", () => {
     render(<Page3 />);
     const notes = Array.from(document.querySelectorAll("aside")).map((a) => a.textContent ?? "");
-    expect(notes).toHaveLength(2);
-    const [gaps, bias] = notes;
+    // Only section 1 cites now; the bias section's two sources left with its
+    // trimmed-away challenges.
+    expect(notes).toHaveLength(1);
+    const [gaps] = notes;
 
-    // The gap section owns every cost and data source, and none of the bias ones.
+    // The gap section owns every cost and data source.
     for (const ref of [/Sevilla/, /Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
       expect(gaps).toMatch(ref);
     }
+    // The dropped bias sources are gone from the page entirely.
     expect(gaps).not.toMatch(/Shumailov|Askell/);
-    // The bias section owns only its own two.
-    expect(bias).toMatch(/Shumailov/);
-    expect(bias).toMatch(/Askell/);
-    expect(bias).not.toMatch(/Cottier|AI Index|Sevilla|Hoffmann|Villalobos/);
+    expect(document.body.textContent ?? "").not.toMatch(/Shumailov|Askell/);
     expectClean();
   });
 
@@ -187,7 +182,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // The old provenance prose stays gone; the margin holds References notes only.
     expect(screen.queryByText(/where the bill comes from/i)).toBeNull();
     expect(screen.queryByText(/where the wall comes from/i)).toBeNull();
-    expect(screen.getAllByText("References")).toHaveLength(2);
+    expect(screen.getAllByText("References")).toHaveLength(1);
     // The figures carry inline numbered markers; the link chips left the steps
     // for a single row at the foot of the page.
     const bill = screen.getByRole("figure", { name: /problem one/i });
