@@ -26,11 +26,11 @@ experience, never a definition.
 | Design decision | Principle | Source |
 |---|---|---|
 | Every page has ≥1 live control; the reader changes a value and sees the consequence | Active reading over passive reading | Victor, *Explorable Explanations* |
-| Page 1 is pure play; Page 20 is a combined sandbox; difficulty climbs in between | "Start concrete, then climb; end in a sandbox" | Case |
+| Page 1 is pure play; difficulty climbs from there to the open frontier on Page 19 | "Start concrete, then climb" | Case |
 | One idea per page; one number spotlighted; extraneous elements removed | Segmenting, signaling, coherence | Mayer, CTML |
 | Most pages ask the reader to **predict before revealing** data | Predict-Observe-Explain | POE (constructivist) |
 | Three-Act structure (intuition → toolbox → frontier); "THEREFORE / BUT" arc | Narrative over fact-listing | Case |
-| One shared colour grammar + one chart grammar across all 20 pages | Consistency reduces extraneous load | Cognitive Load Theory (Sweller) |
+| One shared colour grammar + one chart grammar across all 19 pages | Consistency reduces extraneous load | Cognitive Load Theory (Sweller) |
 | Motion only in response to the reader's action; reduced-motion honoured | Purposeful motion only | 3Blue1Brown; Mayer |
 | Overthinking (P17), cost (P16), faithfulness (P18), the "collapse" debate (P19) | Confront wrong intuitions head-on | POE; honest uncertainty |
 
@@ -48,8 +48,7 @@ experience, never a definition.
 
 ## Limitations & ethics
 
-- Simulations are **illustrative, not predictive** (stated in-app on every page footer and
-  on Page 20).
+- Simulations are **illustrative, not predictive** (stated in-app on every page footer).
 - Free-to-serve and **offline-capable**: no runtime network calls, no API keys, no per-user
   cost. Optional live in-browser inference (Pages 3/6/14) is feature-flagged OFF by default
   and always falls back to the pre-computed trace.

@@ -34,7 +34,7 @@ npm run test:e2e   # playwright (needs: npx playwright install chromium)
 
 ```
 src/
-  app/            App Router routes: home + p/1..p/20 (per-route code splitting)
+  app/            App Router routes: home + p/1..p/19 (per-route code splitting)
   components/     Shared primitives (Slider, Toggle, Stepper, BigNumber,
                   ChartFrame, PredictBar, CitationBadge) + ProgressRail
   lib/            tokens, rng (seeded), sim (pure Monte Carlo), data (schema),
