@@ -14,10 +14,16 @@ describe("Page 13 (frontier reasoners I)", () => {
     const lede = screen
       .getByText(/how much of the score did the training buy, and how much did the thinking\?/)
       .closest("p")!;
-    expect(lede.textContent).toMatch(/spend once the question lands/);
-    expect(lede.textContent).toMatch(/spend long before it does/);
-    expect(lede.textContent).toMatch(/first commercial model to turn both dials at once/);
+    expect(lede.textContent).toMatch(/spent at answer time/);
+    expect(lede.textContent).toMatch(/already sunk into the weights/);
+    expect(lede.textContent).toMatch(/first commercial model to turn both dials/);
     expect(lede.textContent).toMatch(/kept the recipe/);
+    // The seam must rhyme with page 12's closing block, not restate it: page 12
+    // owns "two ways to buy reasoning / after the question lands / long before
+    // the question exists", and the lede reaches the same pair in its own words.
+    expect(lede.textContent).not.toMatch(/two ways to buy reasoning/);
+    expect(lede.textContent).not.toMatch(/the question lands/);
+    expect(lede.textContent).not.toMatch(/long before/);
   });
 
   it("shows only the o1 recipe, mapped back to page 12 line by line, labelled rumor", () => {
