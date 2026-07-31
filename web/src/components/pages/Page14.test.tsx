@@ -93,11 +93,13 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     render(<Page14 />);
     // Section 1: GRPO's line 2 is page 7's sampling, moved across the line.
     expect(screen.getByText(/Page 7 sampled many chains and picked among them at answer time/)).toBeInTheDocument();
-    expect(screen.getByText(/sampling paid for once, at training time/)).toBeInTheDocument();
-    // Section 2: the right axis is page 11's, with nobody turning it.
-    expect(screen.getByText(/Read the right axis as page 11's x axis/)).toBeInTheDocument();
-    // Section 2 answers page 13's first open question outright.
-    expect(screen.getByText(/one chain allowed to run longer/)).toBeInTheDocument();
+    expect(screen.getByText(/sampling paid for once, instead of on every question/)).toBeInTheDocument();
+    // Section 2: the page 11 link is axis furniture now, not a sentence.
+    const training = screen.getByRole("img", { name: /two y axes/i });
+    expect(training.getAttribute("aria-label")).toMatch(/page 11's test-time compute/);
+    // Section 2 answers page 13's first open question, beside the skeleton
+    // that shows a single unbroken trace rather than above the chart.
+    expect(screen.getByText(/allowed to run longer\. Not many chains sampled and voted/)).toBeInTheDocument();
     // The lede answers page 13's questions rather than restating the frame.
     expect(screen.getByText(/four questions about what sits behind the thinking dial/)).toBeInTheDocument();
   });
@@ -112,6 +114,39 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     // so the page must never grow a recap block that hands the answers over.
     expect(screen.queryByText(/The four questions o1 could not answer/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^\s*(What|Whether) the (thinking|model|law)/)).not.toBeInTheDocument();
+  });
+
+  it("keeps setup above each figure and meaning below it", () => {
+    render(<Page14 />);
+    // Section 2 poses the puzzle above the chart and never narrates the curves
+    // before the reader sees them.
+    expect(screen.getByText(/Nothing in the reward mentions length/)).toBeInTheDocument();
+    expect(screen.queryByText(/accuracy climbs and flattens while average response length/)).not.toBeInTheDocument();
+    // The reading lands after the chart.
+    const chart = screen.getByRole("img", { name: /two y axes/i });
+    const meaning = screen.getByText(/Length is not a schedule anyone set/).closest("p")!;
+    expect(chart.compareDocumentPosition(meaning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("hands section 1's figure its own setup, and its instruction to the margin", () => {
+    render(<Page14 />);
+    // The problem is the chart's title now, not a text block above it.
+    const group = screen.getByRole("img", { name: /Line 2 of the recipe, drawn/ });
+    expect(group.getAttribute("aria-label")).toMatch(/350 times 638/);
+    expect(screen.queryByText(/Ask four times and the answers differ/)).not.toBeInTheDocument();
+    // Page 2's grammar: a single imperative sentence in the margin.
+    expect(screen.getByText(/Drag the dial: the group's luck changes/)).toBeInTheDocument();
+  });
+
+  it("frames distillation as inference-time scaling, not as an R1 result", () => {
+    render(<Page14 />);
+    // The asymmetry page 13's law carried, and the thing that collapses it.
+    expect(screen.getByText(/lifting the curve took frontier-scale RL/)).toBeInTheDocument();
+    expect(screen.getByText(/The curve-lifting knob got cheap/)).toBeInTheDocument();
+    // Honest about what distillation does not do: the RL was still paid for.
+    expect(screen.getByText(/someone still paid for\s+the RL once/)).toBeInTheDocument();
+    // Page 3's wall, completed in one line.
+    expect(screen.getByText(/One good reasoner now writes the\s+curriculum for everyone else/)).toBeInTheDocument();
   });
 
   it("carries each reference exactly once, beside its first use", () => {
@@ -135,7 +170,8 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getByText(/sample G answers from the current policy/)).toBeInTheDocument();
     expect(screen.getByText(/mean\(r\)\) \/ std\(r\)/)).toBeInTheDocument();
     expect(screen.getByText(/the group is its own baseline: no critic network/)).toBeInTheDocument();
-    expect(screen.getByText(/it is what made RL at this scale affordable/)).toBeInTheDocument();
+    // The PPO contrast is one caption line on the listing, not a body paragraph.
+    expect(screen.getByText(/no critic network anywhere, which at 671B parameters/)).toBeInTheDocument();
   });
 
   it("GRPO dial: the baseline chases the group and the same right answer's push shrinks", () => {
@@ -196,10 +232,10 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
   it("defers the scoreboard and hands off to page 15", () => {
     render(<Page14 />);
     // The four headline stat tiles are gone: one number places the teacher,
-    // the rest waits for The Scoreboard.
-    expect(screen.getByText(/The rest of its scoreboard can wait one page/)).toBeInTheDocument();
+    // the rest waits for The Scoreboard, and the cold start is a caption clause.
     expect(screen.queryByText("GPQA Diamond")).not.toBeInTheDocument();
-    expect(screen.getByText(/reasoning transfers as data/)).toBeInTheDocument();
+    expect(screen.getByText(/adds a small cold start of curated traces/)).toBeInTheDocument();
+    expect(screen.getByText(/a lifted curve fits in weights you can download/)).toBeInTheDocument();
     expect(screen.getByText(/Whether you should is the next page/)).toBeInTheDocument();
   });
 
