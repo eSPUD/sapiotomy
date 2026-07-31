@@ -11,11 +11,24 @@
  * The lede is the Act 2 → Act 3 seam, and is written against page 12's closing
  * block: that block sums the act as two ways to buy reasoning (spend after the
  * question lands, pages 5-11; spend long before it exists, page 12), and this
- * lede names the same pair before saying o1 turns both dials at once. It must
+ * lede names the same pair before saying o1 turns both dials. It must
  * not claim "everything so far bolted reasoning on from outside" — page 12
  * already trained it in, and that phrasing made the seam read as a skipped
  * page. The two compute axes in section 2 are these two threads, so the law
  * lands as the reader's own question answered, not a new frame.
+ *
+ * The seam must RHYME, not repeat (review). An earlier lede reached the pair
+ * in page 12's own words — "two ways to buy reasoning", "spend once the
+ * question lands", "spend long before it does" — which put ~20 words of
+ * near-verbatim overlap on either side of a page turn, so the reader re-read a
+ * sentence instead of recognising a shape. The structure is what carries the
+ * seam (two modes, each with its page pointer, then o1 doing both, then the
+ * two axes); the wording is deliberately this page's own. Page 12 owns the
+ * when ("after the question lands" / "long before it exists"); this lede owns
+ * the where ("spent at answer time" / "already sunk into the weights"), which
+ * also sets up section 2's axes more directly, since one axis belongs to each
+ * place. Page13.test.tsx pins the divergence with negative assertions, so a
+ * later tightening pass cannot drift back into page 12's phrasing.
  *
  * Section 1 opens with the loop strip in page 12's stage grammar — the same
  * three stations, two renamed (filter → reward, fine-tune → reinforce) — so
@@ -553,10 +566,10 @@ export function Page13() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Act 2 left two ways to buy reasoning: spend once the question lands (pages 5 to 11: votes,
-        judges, search) or spend long before it does (page 12: train the reasoning in).{" "}
-        <strong className="text-ink">o1</strong> is the first commercial model to turn both dials
-        at once, and it kept the recipe. Its signature is{" "}
+        Act 2 ended with the compute split in two: the kind spent at answer time (pages 5 to 11:
+        votes, judges, search) and the kind already sunk into the weights (page 12: the reasoning
+        trained in). <strong className="text-ink">o1</strong> is the first commercial model to
+        turn both dials, and it kept the recipe. Its signature is{" "}
         <strong className="text-ink">a curve with two compute axes</strong>: how much of the score
         did the training buy, and how much did the thinking?
       </p>

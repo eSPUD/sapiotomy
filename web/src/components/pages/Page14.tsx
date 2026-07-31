@@ -2,10 +2,30 @@
 
 /**
  * Page 14, "Frontier Reasoners II: DeepSeek-R1, GRPO, and the 'Aha Moment'" —
- * the open-weight answer to the closed frontier. Page 13 closed on a promise
- * (weights, training curve, visible chain); this page cashes all three in.
+ * the open-weight answer to the closed frontier. Page 13 closed with four
+ * questions it could not answer ("The questions o1 cannot answer") and a
+ * handoff promising four deliverables: the algorithm, a readable chain, a
+ * training curve showing where the extra thinking comes from, and the
+ * distills. This page cashes all four in.
  * The page's one idea: reward ONLY verifiable right answers and the pausing /
  * second-guessing / self-correcting emerges on its own — nobody writes it in.
+ *
+ * The lede answers rather than restates. Page 13 now builds the demand
+ * itself, so the intro must not re-erect the frame (an earlier draft opened
+ * "page 13 priced the exchange, then hid the machinery", which duplicated
+ * page 13's own section 4). It names the four questions, then anchors the
+ * hook: "backtracking" is the model allocating its own test-time compute, so
+ * the question reads as a scaling one and not merely an emergence one. The
+ * four do not map one-to-one onto this page's three sections, so the page
+ * never promises "answered in order" — the sections answer without
+ * announcing. Q1/Q2/Q3 land in section 2, Q4 in section 3; section 1 is the
+ * handoff's separate "algorithm in full".
+ *
+ * Act 2 callbacks are held to two, and both carry an argument: page 7 at
+ * GRPO's line 2, page 10 at the aha loop. Page 13's header records the review
+ * instruction "lets not cite everything like page 6, page 7…", so decorative
+ * back-references are not to be added here, and there is deliberately NO test
+ * asserting a count of page numbers.
  *
  * Step 1 is the recipe, GRPO, abstracted honestly: five lines of annotated
  * pseudocode (sample a group, score with a rule, advantage = distance from
@@ -21,12 +41,26 @@
  * an arrowless picture — nothing to teach. No critic network anywhere: that
  * is what made RL at this scale affordable, and the copy says so against
  * PPO.
+ * Between the listing and the PPO paragraph sits the section's deck bridge
+ * (lineage before cost): line 2 is page 7's parallel sampling moved across
+ * the train/test line. Page 7 paid for many chains at answer time and threw
+ * them away after the vote; GRPO runs the same sampling in training and keeps
+ * what the winners did in the weights. The claim stops there on purpose —
+ * NOT "tomorrow's single sample looks like today's best-of-four", because
+ * GRPO is a policy gradient with a group baseline, not best-of-N
+ * distillation, and page 13 badges its own recipe as rumor.
  *
  * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining),
  * both variables on a dual y-axis: AIME pass@1 (left, 15.6 → 71.0) and
  * average response length (right, ~1k → ~9k tokens). Neither curve is a
  * schedule — no term in the reward mentions length (the chart says so in an
  * annotation); the model buys itself thinking time because re-checking pays.
+ * The prose names the right axis as page 11's x axis (test-time compute)
+ * with nobody's hand on the dial: the model finds the scaling law itself and
+ * walks up it. It also answers page 13's first open question outright, which
+ * is the answer no closed model could supply: this is ONE chain allowed to
+ * run longer, not many chains sampled and voted behind an API — the
+ * distinction page 13's section 2 had to assert and could not prove.
  * Below the chart, the trace is shown as a SHAPE, not text: a skeleton of
  * forward steps early and mid, and past the aha step an interrupt node with
  * a loop back to the trace's own first line and a second, re-deriving pass.
@@ -35,6 +69,20 @@
  * made of. The paper places the behaviour at "an intermediate version", so
  * where the aha lands on the slider is an illustrative placement — said
  * under the skeleton and again in the footer.
+ *
+ * The interrupt has a stated REASON (review: it read as the trace hiccupping).
+ * Page 10's machinery is branch, SCORE, backtrack; the skeleton drew the
+ * branch and the backtrack and no score, so the fourth block of the first
+ * pass is now outlined as the step the trace doubts, and STAGE_NOTE.aha names
+ * the trigger. Two constraints hold this in place:
+ *   - It is DOUBT, never a found mistake. R1's traces re-evaluate rather than
+ *     locate an error, and "found a mistake" would contradict section 1's
+ *     reward (`rᵢ ← 1 if answerᵢ is right, else 0`, outcome only): nothing
+ *     ever scored a step, so nothing could have told the model which was bad.
+ *     That is the better story anyway, and it pays off page 9 — pure outcome
+ *     reward grew a step-level habit nobody supervised.
+ *   - The marked block takes the COMPUTE hue, dashed, never the wrong hue.
+ *     Wrong-hue asserts a located error and would undo the above.
  *
  * Step 3 is the give-away, reframed as its actual thesis: reasoning
  * transfers as data. ~800K traces, plain SFT, no RL and no reward — page
@@ -107,7 +155,7 @@ const STAGE_CHIP: Record<Stage, string> = {
 const STAGE_NOTE: Record<Stage, string> = {
   early: "A few steps forward, an answer, stop. Nothing looks back.",
   mid: "Longer now, more algebra per attempt, but still strictly forward: whatever was written first, stands.",
-  aha: "The trace interrupts itself, loops back to its own first line, and re-derives. Nobody wrote that in: re-checking finds more right answers, and right answers are all the reward pays. The extra tokens on the right axis are these loops.",
+  aha: "Four steps in, the trace stops, doubts what it has just written, and goes back to its own first line to derive it again. Nothing scored those steps: the reward only sees the final answer, so nobody told the model that its last step was shaky. It learned to suspect itself anyway, because re-checking lands more right answers and right answers are all the reward pays. Page 10's branch, score, backtrack, with the harness deleted and the scoring moved inside the chain. The extra tokens on the right axis are these loops.",
 };
 
 interface Distill {
@@ -483,7 +531,7 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
       ? "Trace skeleton, early in training: three steps forward, then an answer. Nothing looks back. Schematic, structure only, no text."
       : stage === "mid"
         ? "Trace skeleton, mid training: six steps forward, then an answer. Longer, still strictly forward. Schematic, structure only, no text."
-        : "Trace skeleton after the aha: four steps forward, then the trace interrupts itself and loops back to its own first line; a second pass of five dashed steps re-derives the solution and ends in an answer. Schematic, structure only, no text.";
+        : "Trace skeleton after the aha: four steps forward, the last of them outlined as the step the trace doubts, then the trace interrupts itself and loops back to its own first line; a second pass of five dashed steps re-derives the solution and ends in an answer. Schematic, structure only, no text.";
 
   const height = stage === "aha" ? 140 : 52;
 
@@ -509,6 +557,24 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
         <g>
           {/* first pass: four steps, then the interrupt */}
           <SkeletonRow y={22} count={4} />
+          {/*
+           * The step the trace is about to doubt, marked so the interrupt has a
+           * visible reason. Compute hue, dashed: attention, not error. It must
+           * never take the wrong hue — nothing ever scored this step (the reward
+           * sees only the final answer), so asserting a located mistake here
+           * would contradict the outcome-only reward in section 1.
+           */}
+          <rect
+            x={skX(3)}
+            y={22}
+            width={SK_BLOCK_W}
+            height={SK_BLOCK_H}
+            rx={3}
+            fill="none"
+            className="stroke-compute"
+            strokeWidth={1.5}
+            strokeDasharray="3 2"
+          />
           <line
             x1={skX(3) + SK_BLOCK_W + 2}
             x2={skX(4) - 5}
@@ -730,12 +796,13 @@ export function Page14() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        o1 proved RL-trained reasoning works, and kept both the recipe and the chain hidden. In
-        January 2025 DeepSeek published everything o1 withheld: the weights, the training curve,
-        and the chain itself, visible token by token, trained with{" "}
-        <strong className="text-ink">no worked examples at all</strong>. For the first time anyone
-        could watch reasoning emerge rather than take a lab&apos;s word for it. So:{" "}
-        <strong className="text-ink">where does the backtracking come from?</strong>
+        Page 13 closed with four questions about what sits behind the thinking dial, and no way to
+        answer any of them from outside. In January 2025 DeepSeek published all of it: the
+        algorithm, the weights, the training curve, and the chain itself, visible token by token,
+        trained with <strong className="text-ink">no worked examples at all</strong>. So the
+        questions become answerable, and the first thing the answers show is a model that taught
+        itself to spend test-time compute nobody told it to spend.{" "}
+        <strong className="text-ink">Where does the backtracking come from?</strong>
         <Cite n={REF.r1} />
       </p>
 
@@ -767,6 +834,14 @@ export function Page14() {
                 </div>
               ))}
             </div>
+
+            <p className="text-ink">
+              Line 2 should look familiar. <strong>Page 7 sampled many chains and picked among
+              them at answer time</strong>, then threw every sample away once the vote was
+              counted. GRPO runs the same sampling during training and keeps what the winners did
+              in the weights. That is page 13&apos;s exchange seen from the inside: sampling paid
+              for once, at training time, instead of on every question.
+            </p>
 
             <p className="text-ink">
               PPO, the standard alternative, learns its baseline from a second &ldquo;critic&rdquo;
@@ -841,10 +916,14 @@ export function Page14() {
             <p className="text-ink">
               Nothing in the recipe mentions reflection, and nothing in the reward mentions length.
               Watch both curves anyway: accuracy climbs and flattens while average response length
-              grows to nine times its starting point. Length is not a schedule anyone set — longer,
+              grows to nine times its starting point. Length is not a schedule anyone set: longer,
               re-checking traces win more reward, so the model{" "}
-              <strong>buys itself more thinking time</strong>. The skeleton below shows what the
-              extra tokens are made of.
+              <strong>buys itself more thinking time</strong>. Read the right axis as page
+              11&apos;s x axis, test-time compute, with nobody&apos;s hand on the dial: the model
+              finds the scaling law by itself and walks up it. And it is{" "}
+              <strong>one chain allowed to run longer</strong>, not many chains sampled and voted
+              on behind an API, which is the distinction page 13 could only assert. The skeleton
+              below shows what the extra tokens are made of.
             </p>
 
             <div className="flex flex-col gap-4">
