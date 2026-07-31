@@ -1,10 +1,10 @@
 /**
- * The 21-page route map for *The Story of Inference-Time Scaling*.
+ * The 19-page route map for *The Story of Inference-Time Scaling*.
  *
  * Three Acts (Nicky Case's "this happens, THEREFORE that, BUT that…"):
  *   Act 1 — Building Intuition (pages 1–4)
  *   Act 2 — The Toolbox       (pages 5–11)
- *   Act 3 — Frontier & Caveats(pages 12–21)
+ *   Act 3 — Frontier & Caveats(pages 12–19)
  *
  * The seam is 11|12, set by review 2026-07-30 against the act definitions the
  * author states: Act 2 is "thinking longer, the searching algorithms, more
@@ -15,10 +15,15 @@
  * the search quality page 10 built, with no trained model anywhere on it — and
  * page 12 (STaR) OPENS Act 3, the first page where the model teaches itself.
  * Two earlier boundaries were wrong and are recorded so they are not restored:
- * 5–12/13–21 (shipped, put STaR in the toolbox) and 5–10/11–21 (planning/
+ * 5–12/13–19 (shipped, put STaR in the toolbox) and 5–10/11–19 (planning/
  * act3_plan.md, which weights page 11's two-axis setup for page 13 over its
  * own adaptive-allocation content and opens Act 3 on a page with no frontier
  * model on it).
+ *
+ * The deck ends at 19. Two pages were cut on 2026-07-30: 20 ("You Be the
+ * Judge", the Illusion-of-Thinking debate) and 21 ("The Grand Sandbox + Your
+ * Toolkit"). Do not renumber the survivors to fill the gap; the 1-19 numbering
+ * is what every cross-page reference in the deck is written against.
  *
  * Titles/concepts are drawn from InferenceTimeScaling_Explainable.md §C.
  * Routes are stubs in M0; each page is built in a later milestone.
@@ -38,7 +43,7 @@ export interface PageMeta {
 export const ACTS: Record<Act, { title: string; range: string }> = {
   1: { title: "Building Intuition", range: "Pages 1–4" },
   2: { title: "The Toolbox", range: "Pages 5–11" },
-  3: { title: "Frontier & Caveats", range: "Pages 12–21" },
+  3: { title: "Frontier & Caveats", range: "Pages 12–19" },
 };
 
 export const PAGES: PageMeta[] = [
@@ -61,8 +66,6 @@ export const PAGES: PageMeta[] = [
   { n: 17, slug: "when-reasoning-breaks", title: "When Reasoning Breaks: Self-Correction, Verifier Reliability, Overthinking", act: 3, concept: "More thinking can make things worse: unaided self-correction degrades answers, longer reasoning can subtract, and the verifiers doing the rescuing are fallible themselves.", milestone: "M5" },
   { n: 18, slug: "trust-the-thoughts", title: "Can We Trust the Thoughts? Faithfulness, Monitorability, and Safety", act: 3, concept: "The visible chain of thought may not be the real reason for the answer, and optimizing the trace teaches models to hide misbehavior instead of dropping it.", milestone: "M5" },
   { n: 19, slug: "the-frontier", title: "The Frontier: Latent Reasoning, Adaptive Compute, and Agents", act: 3, concept: "Beyond token-by-token thought: silent latent reasoning, budgets that flex with difficulty, and reasoning that acts — plus what each costs in readability.", milestone: "M5" },
-  { n: 20, slug: "you-be-the-judge", title: "You Be the Judge (The Illusion of Thinking Debate)", act: 3, concept: "Accuracy 'collapse' vs. the token-limit/evaluation rebuttal.", milestone: "M5" },
-  { n: 21, slug: "grand-sandbox", title: "The Grand Sandbox + Your Toolkit", act: 3, concept: "All levers together, plus a pre/post quiz.", milestone: "M6" },
 ];
 
 export function getPage(n: number): PageMeta | undefined {
