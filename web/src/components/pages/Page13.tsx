@@ -8,14 +8,15 @@
  * literature never states in one place: the loop-diff (section 1), the
  * unified two-knob law (section 2), and the visibility boundary (section 4).
  *
- * The lede is the Act 2 → Act 3 seam, and is written against page 12's closing
- * block: that block sums the act as two ways to buy reasoning (spend after the
- * question lands, pages 5-11; spend long before it exists, page 12), and this
- * lede names the same pair before saying o1 turns both dials. It must
- * not claim "everything so far bolted reasoning on from outside" — page 12
- * already trained it in, and that phrasing made the seam read as a skipped
- * page. The two compute axes in section 2 are these two threads, so the law
- * lands as the reader's own question answered, not a new frame.
+ * The lede picks up page 12's closing block, which names the two ways to buy
+ * reasoning (Act 2's toolbox spends once the question lands; page 12's loop
+ * spends long before it does) and hands over. The lede reaches the same pair
+ * before saying o1 turns both dials, so section 2's two compute axes land as
+ * the reader's own question answered rather than a new frame. Two claims are
+ * banned here: "everything so far bolted reasoning on from outside" (page 12
+ * already trained it in, so it reads as a skipped page) and anything implying
+ * this page opens Act 3 — the seam is 11|12, so Act 3 started on page 12 and
+ * this is its second page. See pages.ts for why.
  *
  * The seam must RHYME, not repeat (review). An earlier lede reached the pair
  * in page 12's own words — "two ways to buy reasoning", "spend once the
@@ -24,33 +25,33 @@
  * sentence instead of recognising a shape. The structure is what carries the
  * seam (two modes, each with its page pointer, then o1 doing both, then the
  * two axes); the wording is deliberately this page's own. Page 12 owns the
- * when ("after the question lands" / "long before it exists"); this lede owns
- * the where ("spent at answer time" / "already sunk into the weights"), which
- * also sets up section 2's axes more directly, since one axis belongs to each
- * place. Page13.test.tsx pins the divergence with negative assertions, so a
- * later tightening pass cannot drift back into page 12's phrasing.
+ * when ("after the question lands" / "long before the question exists"); this
+ * lede owns the where ("spent at answer time" / "already sunk into the
+ * weights"), which also sets up section 2's axes more directly, since one axis
+ * belongs to each place. Page13.test.tsx pins the divergence with negative
+ * assertions, so a later tightening pass cannot drift back into page 12's
+ * phrasing.
  *
- * Section 1 opens with the loop strip in page 12's stage grammar — the same
- * three stations, two renamed (filter → reward, fine-tune → reinforce) — so
- * the "same shape, disguise dropped" claim lands visually before any code is
- * read; the strip states the shape, the listing states the diff. Below it,
- * the rumored o1 recipe as a six-line listing — page 12's loop
- * rewritten, with the annotation column carrying the mapping back to page
- * 12's lines (filter → explicit reward, one greedy rollout → k sampled
- * chains, plateau exit → compute budget, finetune-from-base →
- * reinforce-in-place, hint branch deleted because sampling explores). The
- * full STaR listing is deliberately NOT re-printed (review: the reader just
- * ran it twice on page 12; showing only the rewrite reads cleaner), and
- * there is no toggle — the listing is static, page 1-3 digestibility.
- * The listing shares page 12's code conventions — font-code (true
- * monospace), tab-arrow indentation guides, no tone borders — so the two
- * listings read as one grammar; the annotations alone carry the diff.
- * Honesty is load-bearing: OpenAI confirmed the FRAME — large-scale RL on a
- * long private chain, and its researchers' own LRM definition — but never
- * published the algorithm, so the rewrite is labelled rumor in the h2 badge
- * and the caption. The callout under the listing carries the page's two
- * build-ons: no human anywhere in the loop (vs RLHF), and no draw on page
- * 3's finite stock of human text.
+ * Section 1 is the loop STRIP and nothing else. It used to also print a
+ * six-line reconstruction of the o1 recipe, badged "rumored recipe"; that was
+ * cut on review 2026-07-30 and must not come back. Three reasons, in order of
+ * force: (1) section 4 is titled "The questions o1 cannot answer" and its
+ * handoff promises page 14 will deliver "the algorithm in full", so a printed
+ * o1 algorithm was a counterexample to this page's own thesis and spent page
+ * 14's payoff early; (2) page 14 section 1 prints GRPO, which is real and
+ * checkable, and putting a hypothesized listing in the same grammar one page
+ * earlier taught the reader that the two have equal standing; (3) a deck whose
+ * bar is "better than reading the literature" cannot lead with the one artifact
+ * nobody can verify. What survives is the part OpenAI actually confirmed: the
+ * three stations, two renamed (filter → reward, fine-tune → reinforce), each
+ * sub-label carrying its own diff against page 12's line (one greedy try → k
+ * sampled chains, filter → explicit reward, finetune-from-base →
+ * reinforce-in-place). The figcaption states the boundary in the deck's voice
+ * ("the shape is the whole of what was confirmed") and points at page 14 for
+ * an algorithm from a lab that published one. The h2 badge is therefore
+ * "confirmed frame only": with the listing gone the page publishes no rumor.
+ * The callout below carries the page's two build-ons: no human anywhere in the
+ * loop (vs RLHF), and no draw on page 3's finite stock of human text.
  *
  * Section 2 keeps the two-knob lab, redrawn in page 11's chart grammar after
  * review: the old half-width two-curve LineChart hid the law — the training
@@ -367,52 +368,6 @@ function RunFamilyChart({
   );
 }
 
-/**
- * Section 1's listing: the rumored o1 recipe, six lines. The annotation
- * column carries the mapping back to page 12's loop — which is deliberately
- * not re-printed; the reader just ran it twice. The rewrite is a
- * reconstruction, not a publication; the caption says so.
- */
-const O1_LINES: {
-  indent: number;
-  code: React.ReactNode;
-  note?: React.ReactNode;
-}[] = [
-  {
-    indent: 0,
-    code: (
-      <>
-        M ← M<sub>0</sub>
-      </>
-    ),
-    note: "the same start as page 12: one pretrained model, its own teacher",
-  },
-  {
-    indent: 0,
-    code: "loop: while the compute budget lasts",
-    note: "page 12 looped until accuracy plateaued; the exit is a budget now, section 2's training axis",
-  },
-  {
-    indent: 1,
-    code: "for (x, y) in problems:",
-    note: "unchanged: questions with checkable answers are still the only supervision",
-  },
-  {
-    indent: 2,
-    code: "r₁…rₖ, ŷ₁…ŷₖ ← M(x)",
-    note: "k sampled chains per problem, not one greedy try: sampling explores, so page 12's hint branch is gone",
-  },
-  {
-    indent: 2,
-    code: "rewardᵢ ← check(ŷᵢ, y)",
-    note: "page 12's filter, promoted to an explicit reward: still the answer key, still graded for free",
-  },
-  {
-    indent: 1,
-    code: "M ← reinforce(M, rewards)",
-    note: "update the current model, not the base, so this round's gains compound into the next",
-  },
-];
 
 /*
  * Section 4's four questions: the things a closed model cannot be asked, each
@@ -460,45 +415,6 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
-/**
- * One line of section 1's listing: numbered code on the left, intuition on
- * the right — page 12's rendering, so the two listings read as one grammar.
- */
-function CodeLine({
-  n,
-  indent,
-  code,
-  note,
-}: {
-  n: number;
-  indent: number;
-  code: React.ReactNode;
-  note?: React.ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:gap-x-4">
-      <span className="w-5 select-none text-right font-code text-xs tabular-nums text-ink-muted" aria-hidden="true">
-        {n}
-      </span>
-      <span className="flex items-baseline font-code text-sm text-ink">
-        {/* Tab-width indentation, each level marked by an editor-style arrow guide. */}
-        {indent > 0 ? (
-          <span className="flex select-none" aria-hidden="true">
-            {Array.from({ length: indent }, (_, j) => (
-              <span key={j} className="w-[3ch] text-grid">
-                →
-              </span>
-            ))}
-          </span>
-        ) : null}
-        <code className="whitespace-pre">{code}</code>
-      </span>
-      {note ? (
-        <span className="col-start-2 text-xs text-ink-muted sm:col-start-3">{note}</span>
-      ) : null}
-    </div>
-  );
-}
 
 export function Page13() {
   const page = getPage(PAGE_N)!;
@@ -566,7 +482,7 @@ export function Page13() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Act 2 ended with the compute split in two: the kind spent at answer time (pages 5 to 11:
+        By page 12 the compute had split in two: the kind spent at answer time (pages 5 to 11:
         votes, judges, search) and the kind already sunk into the weights (page 12: the reasoning
         trained in). <strong className="text-ink">o1</strong> is the first commercial model to
         turn both dials, and it kept the recipe. Its signature is{" "}
@@ -580,62 +496,62 @@ export function Page13() {
           <h2 className="text-xl font-semibold text-ink">
             1. The human leaves the loop
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              confirmed frame · rumored recipe
+              confirmed frame only
             </span>
           </h2>
           <p className="text-ink-muted">
             Page 12 closed on a promise: same shape, disguise dropped. OpenAI confirmed the
-            frame: o1 is trained with large-scale reinforcement learning to think in a long
-            private chain.
-            <Cite n={REF.announce} /> Its own researchers later named the category:
+            frame, that o1 is trained with large-scale reinforcement learning to think in a long
+            private chain
+            <Cite n={REF.announce} />, and its own researchers later named the category:
             &ldquo;large reasoning models (LRMs): language models trained via reinforcement
             learning to &lsquo;reason&rsquo; and &lsquo;think through&rsquo; extended chains of
             thought&rdquo;.
             <Cite n={REF.competitive} /> The algorithm itself was never published.
           </p>
 
-          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            {/* page 12's loop strip, redrawn: same three stations, two renamed */}
-            <div className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center" aria-hidden="true">
-              <Stage tone="border-ink" title="generate ×k" sub="k sampled chains per problem" />
-              <span className="shrink-0 self-center text-ink-muted">→</span>
-              <Stage tone="border-correct" title="reward" sub="the filter, made explicit" />
-              <span className="shrink-0 self-center text-ink-muted">→</span>
-              <Stage tone="border-compute" title="reinforce" sub="in place, so gains compound" />
-              <span className="shrink-0 self-center text-ink-muted">↺</span>
-            </div>
-
-            <p className="text-sm text-ink-muted">
-              Page 12&apos;s strip, redrawn: the same three stations, two renamed. So here it is
-              at the only honest resolution: page 12&apos;s loop, rewritten as the recipe the labs
-              describe.{" "}
-              <strong className="text-ink">The annotations name what each line was before.</strong>
-            </p>
-
-            <figure
-              className="m-0 flex flex-col gap-2"
-              aria-label="The rumored o1 recipe as pseudocode: the loop runs while the compute budget lasts, k chains are sampled per problem, the answer-key filter becomes an explicit reward, and the current model is reinforced in place instead of fine-tuning the base model. Page 12's hint branch is gone."
+          <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            {/* page 12's loop strip, redrawn: the same three stations, two
+                renamed, each carrying its own diff against page 12's line */}
+            <div
+              className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center"
+              role="img"
+              aria-label="Page 12's three-station loop redrawn for o1: generate becomes k sampled chains per problem instead of one greedy try, filter becomes an explicit reward that is still the answer key, and fine-tune becomes reinforce in place on the current model rather than the base model. The loop repeats."
             >
-              <div className="flex flex-col">
-                {O1_LINES.map((l, i) => (
-                  <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} />
-                ))}
-              </div>
-              <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-                Six lines against page 12&apos;s ten: four rewritten, the hint branch deleted.
-                A reconstruction matched to page 12&apos;s expert-iteration lineage:{" "}
-                <strong className="text-ink">rumor, not record</strong>. OpenAI confirmed the
-                frame and kept the algorithm.
-              </figcaption>
-            </figure>
+              <Stage
+                tone="border-ink"
+                title="generate ×k"
+                sub="page 12 took one greedy try; k sampled chains explore instead"
+              />
+              <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">→</span>
+              <Stage
+                tone="border-correct"
+                title="reward"
+                sub="page 12's filter, made explicit: still the answer key, still free"
+              />
+              <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">→</span>
+              <Stage
+                tone="border-compute"
+                title="reinforce"
+                sub="page 12 fine-tuned the base; this updates the current model, so gains compound"
+              />
+              <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">↺</span>
+            </div>
+            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
+              Page 12&apos;s strip, redrawn: the same three stations, two renamed, and the
+              sub-labels name what each was before.{" "}
+              <strong className="text-ink">The shape is the whole of what was confirmed.</strong>{" "}
+              This deck will not print a line of o1&apos;s pseudocode, because nobody outside
+              OpenAI can check one; page 14 prints an algorithm from the lab that published it.
+            </figcaption>
+          </figure>
 
-            <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              Now read what is <strong>not</strong> there: a human. RLHF pays people to judge
-              outputs; here nobody writes an example and nobody grades one: the model authors
-              the reasoning, the answer key scores it. And the training set never touches page
-              3&apos;s finite stock of human text: the model writes its own curriculum.
-            </p>
-          </div>
+          <p className="rounded border-l-4 border-compute bg-surface p-4 text-sm text-ink">
+            Even at this resolution one thing is legible by its absence: a human. RLHF pays people
+            to judge outputs; here nobody writes an example and nobody grades one, because the
+            model authors the reasoning and the answer key scores it. And the training set never
+            touches page 3&apos;s finite stock of human text: the model writes its own curriculum.
+          </p>
         </section>
 
         <Note kicker="References">

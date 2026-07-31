@@ -69,7 +69,11 @@
  * what the winners did in the weights. The claim stops there on purpose —
  * NOT "tomorrow's single sample looks like today's best-of-four", because
  * GRPO is a policy gradient with a group baseline, not best-of-N
- * distillation, and page 13 badges its own recipe as rumor.
+ * distillation. Note this listing is now the deck's ONLY training algorithm:
+ * page 13's rumored o1 recipe was cut on review 2026-07-30 precisely so that
+ * a checkable algorithm never shares a grammar with a hypothesized one, and
+ * page 13's section 1 points here for it. Keep this listing honest and keep
+ * it printed.
  *
  * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining),
  * both variables on a dual y-axis: AIME pass@1 (left, 15.6 → 71.0) and
