@@ -9,21 +9,23 @@
  * fine-tune, repeat.
  *
  * Section 1 is the loop itself (lib/star.ts), run iteration by iteration. Each
- * press runs one training round, then a held-out test, and the readouts are
- * split into labelled Training/Test panels so the reader always knows which
- * regime a number belongs to — the Test panel carries a sparkline of held-out
- * accuracy, the figure's only chart. The pool renders as a single easy→hard
- * strip with a marker at the solve frontier (the difficulty where solving is
- * a coin flip — per-problem threshold noise scatters squares around it).
- * Squares gained this pass are outlined, so the plateau arrives visibly as
- * the highlights dry up, before the sparkline says so.
+ * press runs one training round, then a held-out test, and appends one point
+ * to the section's centerpiece: a chart of the run's whole history in the
+ * deck's shared grammar (ChartFrame, as on pages 11 and 13) — held-out
+ * accuracy (ink; the test) against the share of the pool whose rationale
+ * entered the training set (compute; the ratchet), guessing as the dashed
+ * floor. The old easy→hard pool strip (status squares, legend, solve-frontier
+ * marker) was reviewed out: the page's three lessons are trends, and the
+ * strip could only show one instant — the ratchet is now the climb, the
+ * plateau the flattening, and with the filter off the curves split: a third
+ * curve (wrong) counts the mistakes kept while accuracy dives to the floor.
+ * The difficulty-frontier mechanism lives in the caption ("a slightly better
+ * model writes correct rationales for slightly harder problems"), not in a
+ * marker. The Test panel keeps the big number as per-press feedback.
  * The mechanism is illustrative and seeded, not a digitized curve: 60 problems with
  * fixed per-problem solvability thresholds, so the solved set grows exactly
  * when skill grows and every run is reproducible. Three behaviours to feel:
- * the ratchet (each round's better model writes correct rationales for harder
- * problems), the plateau (problems the model can never solve unaided never
- * enter the set — the strip's dwindling new-this-pass highlights make the
- * stall visible, not asserted), and rationalization lifting the plateau. The filter toggle is the page's flag for Act 3: switch
+ * the ratchet, the plateau, and rationalization lifting the plateau. The filter toggle is the page's flag for Act 3: switch
  * the answer key off and the loop trains on its own mistakes until accuracy
  * sinks toward chance.
  *
@@ -76,6 +78,7 @@
 
 import { useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
+import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Toggle } from "@/components/Toggle";
@@ -144,60 +147,118 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
-/** A small legend swatch + label. */
-function Key({ className, label }: { className: string; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span className={`inline-block h-3 w-3 rounded-sm ${className}`} aria-hidden="true" />
-      {label}
-    </span>
-  );
-}
+/*
+ * Round an SVG coordinate to 2 decimals: float outputs can differ in the last
+ * bits between server and client render, which React reports as a hydration
+ * mismatch; rounding makes both sides emit the same string.
+ */
+const px = (v: number) => Math.round(v * 100) / 100;
 
 /**
- * A sparkline of held-out accuracy, one point per iteration, drawn inside the
- * Test panel — the figure's only chart. The dashed baseline is chance.
+ * Section 1's centerpiece, replacing the old pool strip: the run's whole
+ * history as curves, one point appended per press. Held-out accuracy (ink) is
+ * the test; the share of the pool whose rationale entered the training set
+ * (compute) is the ratchet; with the filter off a third curve (wrong) counts
+ * the mistakes kept, and the lesson is the split — the set fills while
+ * accuracy dives to the dashed guessing floor. Every curve carries its own
+ * end label, so identity is never colour alone.
  */
-function Spark({ history }: { history: StarIteration[] }) {
-  const W = 176;
-  const H = 44;
-  const x = (i: number) => 2 + (i / STAR_MAX_ITERS) * (W - 4);
-  const y = (acc: number) => H - 2 - (acc / 100) * (H - 4);
-  const last = history[history.length - 1];
-  const d = history
-    .map((s, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)} ${y(s.accuracy).toFixed(1)}`)
-    .join(" ");
+function StarChart({ history }: { history: StarIteration[] }) {
+  const width = 640;
+  const height = 260;
+  const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
+  const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
+  const x = (i: number) => px((i / STAR_MAX_ITERS) * innerW);
+  const y = (v: number) => px(innerH - (v / 100) * innerH);
+  const share = (n: number) => (n / STAR_POOL) * 100;
+  const last = history.length - 1;
+  const now = history[last];
+  const setShare = share(now.verified + now.rationalized + now.wrong);
+  const series = [
+    {
+      key: "acc",
+      label: "held-out accuracy",
+      stroke: "stroke-ink",
+      fill: "fill-ink",
+      vals: history.map((s) => s.accuracy),
+    },
+    {
+      key: "set",
+      label: "in the training set",
+      stroke: "stroke-compute",
+      fill: "fill-compute",
+      vals: history.map((s) => share(s.verified + s.rationalized + s.wrong)),
+    },
+  ];
+  const wrongVals = history.map((s) => share(s.wrong));
+  if (wrongVals.some((w) => w > 0)) {
+    series.push({
+      key: "wrong",
+      label: "wrong, but kept",
+      stroke: "stroke-wrong",
+      fill: "fill-wrong",
+      vals: wrongVals,
+    });
+  }
+  const path = (vals: number[]) =>
+    vals.map((v, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(v)}`).join("");
+  /* Flip the end labels to the left of the marker once the run nears the
+     right edge, so they never overflow the frame. */
+  const labelLeft = last > STAR_MAX_ITERS / 2;
+  const title = `Held-out accuracy and training-set share across ${last} iteration${
+    last === 1 ? "" : "s"
+  }, one point per iteration. Accuracy: ${now.accuracy.toFixed(1)}% on held-out problems. Training set: ${setShare.toFixed(0)}% of the ${STAR_POOL}-problem pool${
+    now.wrong > 0
+      ? `, of which ${share(now.wrong).toFixed(0)} points are wrong rationales kept because the filter is off`
+      : ""
+  }. The dashed baseline marks guessing at ${CHANCE}%.`;
   return (
-    <div className="flex flex-col gap-0.5">
-      <svg
-        width={W}
-        height={H}
-        viewBox={`0 0 ${W} ${H}`}
-        role="img"
-        aria-label={`Held-out accuracy across ${history.length - 1} iterations, from ${history[0].accuracy.toFixed(1)}% to ${last.accuracy.toFixed(1)}%. Guessing is ${CHANCE}%.`}
-      >
-        <line
-          x1={2}
-          x2={W - 2}
-          y1={y(CHANCE)}
-          y2={y(CHANCE)}
-          stroke="currentColor"
-          strokeDasharray="3 3"
-          className="text-grid"
-        />
-        <path d={d} fill="none" stroke="currentColor" strokeWidth={1.5} className="text-ink" />
-        <circle
-          cx={x(history.length - 1)}
-          cy={y(last.accuracy)}
-          r={2.5}
-          fill="currentColor"
-          className="text-ink"
-        />
-      </svg>
-      <p className="text-[10px] uppercase tracking-wide text-ink-muted">
-        per iteration · dashed = guessing ({CHANCE}%)
-      </p>
-    </div>
+    <ChartFrame title={title} width={width} height={height} xLabel="iteration" yLabel="percent">
+      {[0, 20, 40, 60, 80, 100].map((t) => (
+        <g key={`y${t}`}>
+          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-6} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t}
+          </text>
+        </g>
+      ))}
+      {[0, 2, 4, 6, 8, 10, 12].map((t) => (
+        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+          {t}
+        </text>
+      ))}
+
+      {/* the guessing floor */}
+      <line
+        x1={0}
+        x2={innerW}
+        y1={y(CHANCE)}
+        y2={y(CHANCE)}
+        className="stroke-ink-muted"
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+      <text x={innerW - 4} y={y(CHANCE) + 12} textAnchor="end" className="fill-ink-muted text-[10px]">
+        guessing {CHANCE}%
+      </text>
+
+      {series.map((c) => (
+        <g key={c.key}>
+          <path d={path(c.vals)} fill="none" className={c.stroke} strokeWidth={2} />
+          {c.vals.map((v, i) => (
+            <circle key={i} cx={x(i)} cy={y(v)} r={i === last ? 3.5 : 2} className={c.fill} />
+          ))}
+          <text
+            x={labelLeft ? x(last) - 8 : x(last) + 8}
+            y={y(c.vals[last]) - 8}
+            textAnchor={labelLeft ? "end" : "start"}
+            className={`${c.fill} text-[10px] font-semibold`}
+          >
+            {c.label}
+          </text>
+        </g>
+      ))}
+    </ChartFrame>
   );
 }
 
@@ -256,13 +317,6 @@ function CodeLine({
   );
 }
 
-const STATUS_TONE = {
-  verified: "bg-correct",
-  rationalized: "bg-compute",
-  wrong: "bg-wrong",
-  unsolved: "bg-grid",
-} as const;
-
 export function Page12() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
@@ -277,13 +331,6 @@ export function Page12() {
   const now = history[iter];
   const done = iter >= STAR_MAX_ITERS;
   const trainSize = now.verified + now.rationalized + now.wrong;
-  const prevStatus = iter > 0 ? history[iter - 1].status : null;
-  const isNew = now.status.map(
-    (s, i) => prevStatus !== null && s !== "unsolved" && prevStatus[i] === "unsolved",
-  );
-  const newCount = isNew.filter(Boolean).length;
-  // The difficulty at which solving is a coin flip, as a position on the strip.
-  const frontierPct = Math.min(1, Math.max(0, now.skill)) * 100;
 
   const runIteration = () => {
     recordInteraction(PAGE_N);
@@ -399,63 +446,10 @@ export function Page12() {
               </p>
             ) : null}
 
-            {/* readouts — the two regimes, kept apart and labelled */}
+            {/* readouts — the run's whole history as curves, the big number as per-press feedback */}
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-stretch">
-              <div className="flex min-w-0 flex-col gap-2 rounded border border-dashed border-grid p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  Training · what this round produced
-                </p>
-                <div className="flex justify-between font-mono text-[10px] uppercase tracking-wide text-ink-muted" aria-hidden="true">
-                  <span>easy</span>
-                  <span>hard</span>
-                </div>
-                <div className="relative">
-                  <div
-                    className="flex h-5 w-full gap-px"
-                    role="img"
-                    aria-label={`The training pool after iteration ${iter}, one strip of ${STAR_POOL} problems from easy to hard: ${now.verified} contributed a verified rationale, ${now.rationalized} a rationale written backwards from the given answer, ${now.wrong} a wrong rationale kept because the filter is off, and ${STAR_POOL - trainSize} contributed nothing. ${newCount} are new this pass. The solve frontier, where solving is a coin flip, sits ${Math.round(frontierPct)}% of the way along.`}
-                  >
-                    {now.status.map((s, i) => (
-                      <span
-                        key={i}
-                        className={`min-w-0 flex-1 rounded-[1px] ${STATUS_TONE[s]} ${
-                          isNew[i] ? "ring-1 ring-ink" : ""
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <div
-                    className="pointer-events-none absolute -bottom-1 -top-1 w-[2px] -translate-x-1/2 rounded bg-ink"
-                    style={{ left: `${frontierPct}%` }}
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                  {now.verified > 0 ? (
-                    <Key className="bg-correct" label={`verified rationale (${now.verified})`} />
-                  ) : null}
-                  {now.rationalized > 0 ? (
-                    <Key className="bg-compute" label={`rationalized from a hint (${now.rationalized})`} />
-                  ) : null}
-                  {now.wrong > 0 ? (
-                    <Key className="bg-wrong" label={`wrong, but kept (${now.wrong})`} />
-                  ) : null}
-                  {STAR_POOL - trainSize > 0 ? (
-                    <Key className="bg-grid" label={`not in the set (${STAR_POOL - trainSize})`} />
-                  ) : null}
-                  {newCount > 0 ? (
-                    <Key className="bg-correct ring-1 ring-ink" label={`new this pass (${newCount})`} />
-                  ) : null}
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block h-3 w-0.5 rounded bg-ink" aria-hidden="true" />
-                    solve frontier (50/50 odds)
-                  </span>
-                </div>
-                <p className="text-xs text-ink-muted">
-                  fine-tuned on {trainSize} rationales — a slightly better model writes correct
-                  rationales for slightly <em>harder</em> problems: a training set it could not
-                  have written last time.
-                </p>
+              <div className="min-w-0">
+                <StarChart history={history} />
               </div>
               <div className="flex flex-col justify-center gap-2 rounded border border-dashed border-grid p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
@@ -467,9 +461,14 @@ export function Page12() {
                   tone={now.wrong > 0 ? "wrong" : "correct"}
                   label={`on held-out problems, after iteration ${iter}`}
                 />
-                <Spark history={history} />
               </div>
             </div>
+            <p className="text-xs text-ink-muted">
+              fine-tuned on {trainSize} rationales — a slightly better model writes correct
+              rationales for slightly <em>harder</em> problems: a training set it could not
+              have written last time. The ink curve is graded on held-out problems; the compute
+              curve counts the pool.
+            </p>
 
             <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
               The correct answer is the external signal deciding what the model may study.
@@ -495,18 +494,18 @@ export function Page12() {
           <Note kicker="What you're watching">
             <div className="flex flex-col gap-0.5">
               <p className="text-xs font-semibold text-ink">filter on · rationalization off</p>
-              <p>
-                The bare loop: sample, keep what checks out, imitate. The frontier advances, then
-                stalls.
-              </p>
+              <p>The bare loop: write, keep what checks out, imitate. Both curves climb, then flatten.</p>
             </div>
             <div className="flex flex-col gap-0.5">
               <p className="text-xs font-semibold text-ink">filter on · rationalization on</p>
-              <p>Full STaR — reach past the frontier with the answer in hand. The plateau lifts.</p>
+              <p>Full STaR — reach past the stall with the answer in hand. The plateau lifts.</p>
             </div>
             <div className="flex flex-col gap-0.5">
               <p className="text-xs font-semibold text-ink">filter off</p>
-              <p>No reward, no loop. The frontier rots and accuracy walks off the cliff.</p>
+              <p>
+                No reward, no loop. The curves split: the set keeps filling while accuracy walks
+                off the cliff.
+              </p>
             </div>
           </Note>
           <Note kicker="References">
