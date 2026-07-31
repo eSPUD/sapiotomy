@@ -85,6 +85,27 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     }
   });
 
+  it("rank-matches the Pythia hues to section 1's family, smallest first", () => {
+    render(<Page11 />);
+    // Same colour, same rank in both charts: 1x/410M green, 2x/2.8B blue,
+    // 4x/12B red. A different order makes the two figures contradict.
+    const bands = screen.getAllByTestId("ownership-band");
+    expect(bands[0]).toHaveClass("fill-correct-bright");
+    expect(bands[1]).toHaveClass("fill-compute-bright");
+    expect(bands[2]).toHaveClass("fill-wrong-bright");
+  });
+
+  it("bridges section 3 back to the game and forward from section 2's rule", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/Section 1[’']s chart, measured/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/the same colour order smallest to\s+largest/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Section 2 allocated by prompt; this allocates by budget/i),
+    ).toBeInTheDocument();
+  });
+
   it("scopes the Snell cite beside the chart: claims cited, coordinates illustrative", () => {
     render(<Page11 />);
     expect(

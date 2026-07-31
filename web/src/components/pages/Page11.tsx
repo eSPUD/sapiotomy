@@ -48,12 +48,19 @@
  * Steps 3 and 4 are field data from Wu et al. 2024, where parameter counts
  * ARE published — split into two sections because they carry two different
  * claims. Step 3 (data/pythia-inference-scaling.json, by-eye digitization,
- * replotted as accuracy): how MUCH compute. The section title's claim is
- * drawn, not asserted: the budget axis is shaded into tinted ownership bands,
- * one per Pythia scale, and each curve is bold only inside the band where it
- * is the compute-optimal pick (clip-path segments over thin full ghosts), so
- * the baton pass from 410M to 2.8B to 12B is visible before the caption says
- * it. Band boundaries are computed from the digitized points (log-x linear
+ * replotted as accuracy): how MUCH compute. It carries two jobs, and its
+ * setup line has to state both: it is the RECEIPTS for step 1's illustrative
+ * curves (same axes, real published parameter counts, the crossings show up
+ * in measured data), and it RE-INDEXES step 2's rule from prompt difficulty
+ * to budget (at every bill there is one compute-optimal size). Its hues
+ * therefore rank-match step 1's family, smallest green then blue then red, so
+ * a colour means the same rank in both charts; getting that order wrong makes
+ * the two figures contradict each other. The section title's claim is drawn,
+ * not asserted: the budget axis is shaded into tinted ownership bands, one per
+ * Pythia scale, and each curve is bold only inside the band where it is the
+ * compute-optimal pick (clip-path segments over thin full ghosts), so the
+ * baton pass from 410M to 2.8B to 12B is visible before the caption says it.
+ * Band boundaries are computed from the digitized points (log-x linear
  * interpolation), not hand-placed. Step 4 (data/rebase-pareto.json, exact
  * table values): how it is SPENT — REBASE tree search shifts the whole
  * MATH500 frontier. Color is the strategy differentiator (muted sampling
@@ -482,22 +489,25 @@ function ownershipBands(
 function PythiaChart() {
   const data = curves.pythiaInferenceScaling;
   const { n410m, n2p8b } = data.fit!.params;
+  // Hues rank-match section 1's family (smallest green, then blue, then red),
+  // so a colour means the same rank in both charts. The -bright siblings carry
+  // across this plot's width; the rank order is what has to agree.
   const series = [
     {
       label: "410M",
       pts: data.points.slice(0, n410m),
-      stroke: "stroke-compute-bright",
-      fill: "fill-compute-bright",
-      band: "fill-compute-bright",
-      text: "fill-compute",
-    },
-    {
-      label: "2.8B",
-      pts: data.points.slice(n410m, n410m + n2p8b),
       stroke: "stroke-correct-bright",
       fill: "fill-correct-bright",
       band: "fill-correct-bright",
       text: "fill-correct",
+    },
+    {
+      label: "2.8B",
+      pts: data.points.slice(n410m, n410m + n2p8b),
+      stroke: "stroke-compute-bright",
+      fill: "fill-compute-bright",
+      band: "fill-compute-bright",
+      text: "fill-compute",
     },
     {
       label: "12B",
@@ -1053,12 +1063,14 @@ export function Page11() {
           <h2 className="text-xl font-semibold text-ink">3. Each scale owns a band of the budget</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              The game&rsquo;s picture, with real published sizes. Wu et al. gave three Pythia
-              models (<strong className="text-ink">410M, 2.8B, and 12B parameters</strong>) a
-              growing sample budget on GSM8K, under weighted majority voting. Each curve is drawn
-              bold only where that model is the best buy; the shaded bands mark whose stretch of
-              the budget axis you are in.
-              <Cite n={REF.wu} />
+              Section 1&rsquo;s chart, measured. Same axes, and the same colour order smallest to
+              largest: three real models (
+              <strong className="text-ink">Pythia 410M, 2.8B, and 12B</strong>) stand in for the
+              game&rsquo;s 1×, 2× and 4×, on a growing GSM8K sample budget under weighted majority
+              voting.
+              <Cite n={REF.wu} /> Section 2 allocated by prompt; this allocates by budget. Each
+              curve is drawn bold only where that model is the compute-optimal buy, and the shaded
+              bands hand the budget axis off in order.
             </p>
             <PythiaChart />
             <figcaption className="text-sm text-ink-muted">
