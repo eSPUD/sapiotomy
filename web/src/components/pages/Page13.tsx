@@ -40,7 +40,13 @@
  * thinking dial slides your marker along it, and a bracket at the marker
  * prices the missing RL. The staircase arrows state the law statically — up
  * one curve and along one decade buy the same +29.5 — so "one law, two
- * knobs" is legible before anything is dragged; the default (×10, ×10) opens
+ * knobs" is legible before anything is dragged. Both dials are named in units
+ * before the figure (review: "×10" reads as "ten runs" next to section 3's
+ * 64-chain vote and 1000-chain re-rank) — the training dial is compute inside
+ * one run, the thinking dial is compute inside one answer, and sampling many
+ * answers is section 3's separate purchase. The score is named too: pass@1 on
+ * AIME 2024, in the prose, on the y axis, and on the readout; the default
+ * (×10, ×10) opens
  * with the bracket showing exactly one decade forgone. The Try-it note is a
  * single imperative sentence, page 2's margin grammar — the interpretation
  * (thinking walks your curve and never climbs to the next one; the equality
@@ -61,12 +67,36 @@
  * o3-preview.json is no longer read here (its reference dropped off the
  * page).
  *
- * Section 4 replaces the old boundary diagram (three visual systems, no
- * shared grammar) with a ledger — what exists / who can read it / who pays —
- * so the asymmetry is a column the eye can scan. Every ledger cell carries
- * words (review: an em-dash cell reads as a rendering bug). The three
- * closing blocks (the case for hiding, the price, the R1 handoff) are kept
- * verbatim and in place by review request.
+ * Section 4 is the page's epistemic close, restructured after review: it used
+ * to be a safety essay (the case for hiding, the monitor's deception rate, the
+ * price of an unauditable chain) that related to inference-time scaling
+ * through exactly one ledger cell, and duplicated page 18's charter besides —
+ * page 18 section 3 ("Why not train the thoughts to be good?") makes the
+ * don't-train-the-chain argument at length. What page 13 owes the reader here
+ * is instead what a CLOSED model cannot be asked, so the ledger is gone and
+ * the section is four questions. Every one is aimed at the thinking dial
+ * rather than at o1's opacity in general (review: an earlier set asked about
+ * the algorithm and about emergence, which any closed system would provoke and
+ * which left the deck's own subject behind). What survives is what a buyer of
+ * test-time compute cannot learn: whether ×10 thinking is one long chain or a
+ * hidden vote (the distinction section 2 has to assert and cannot prove),
+ * whether the billed tokens are load-bearing, what the extra tokens actually
+ * do, and whether the law needs frontier scale at all. Two earlier drafts were
+ * rejected on the way here — a ledger whose columns read "what this page
+ * claimed / what backs it" (a page narrating its own contributions is an
+ * academic-paper reflex that puts the reader outside the story) and a parts
+ * list of what OpenAI shipped versus kept (better subject, still a
+ * retrospective). The questions are not rhetorical: page 14 answers all four
+ * in this order (the visible chain settles what ×N thinking buys and whether
+ * it is load-bearing, the R1-Zero curve's response-length axis and its aha
+ * loops say what the extra tokens do, the 1.5B-to-70B distills answer scale),
+ * and the handoff promises exactly those.
+ * Plain numbered prose, no card — house rule for a section of short ideas. Deliberately absent: any back-reference chain through
+ * Act 2's pages (review: "lets not cite everything like page 6, page 7…"), the
+ * 0.17% deception stat (a system-card number, page 18's to spend), and the
+ * safety argument itself. Every cell still carries words (review: an em-dash
+ * cell reads as a rendering bug); the sealed column carries tone so the
+ * nothing-to-everything gradient is scannable.
  *
  * No Simulated/Cited footer (review): pages 1-3 carry none either —
  * provenance is declared inline, in the h2 badges, section 1's caption, and
@@ -91,7 +121,7 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 13;
 
 /** Page 13's references, numbered in order of first appearance. */
-const REF = { announce: 1, competitive: 2, systemCard: 3 } as const;
+const REF = { announce: 1, competitive: 2 } as const;
 
 const SCALING = curves.o1Scaling;
 const P = SCALING.fit!.params;
@@ -198,15 +228,15 @@ function RunFamilyChart({
   const treadMidX = px((sx + treadX2) / 2);
   const treadMidY = px((treadY1 + treadY2) / 2) - 8;
 
-  const title = `AIME 2024 accuracy against test-time compute, log x axis, redrawn in relative units. Three RL training runs are drawn in full as parallel lines: the times 100 run climbs from ${law(0, 2).toFixed(0)} to ${law(2, 2).toFixed(0)} percent across two decades; the times 10 run is the same line one decade right, ending at ${law(2, 1).toFixed(1)} percent; the times 1 run barely leaves the floor, ending at ${law(2, 0).toFixed(0)} percent. Staircase arrows on the times 10 run show that times 10 more RL and times 10 more thinking buy the same ${P.slopePerDecade} points. A dashed reference marks GPT-4o at ${P.gpt4oAime} percent; o1's published pass at 1 of ${P.o1Pass1} percent sits as a dot on the times 100 run. Your marker: the times ${Math.round(10 ** trainExp)} run at times ${Math.round(10 ** testExp)} thinking, scoring ${acc.toFixed(1)} percent${gap > 0 ? `, with ${gap.toFixed(1)} points forgone to the missing RL` : ""}.`;
+  const title = `AIME 2024 pass at 1 accuracy against thinking compute per problem, log x axis, redrawn in relative units. Three RL training runs, each one run at a different training-compute budget, are drawn in full as parallel lines: the times 100 run climbs from ${law(0, 2).toFixed(0)} to ${law(2, 2).toFixed(0)} percent across two decades; the times 10 run is the same line one decade right, ending at ${law(2, 1).toFixed(1)} percent; the times 1 run barely leaves the floor, ending at ${law(2, 0).toFixed(0)} percent. Staircase arrows on the times 10 run show that times 10 more RL and times 10 more thinking buy the same ${P.slopePerDecade} points. A dashed reference marks GPT-4o at ${P.gpt4oAime} percent; o1's published pass at 1 of ${P.o1Pass1} percent sits as a dot on the times 100 run. Your marker: the times ${Math.round(10 ** trainExp)} run at times ${Math.round(10 ** testExp)} thinking, scoring ${acc.toFixed(1)} percent${gap > 0 ? `, with ${gap.toFixed(1)} points forgone to the missing RL` : ""}.`;
 
   return (
     <ChartFrame
       title={title}
       width={width}
       height={height}
-      xLabel="test-time compute (relative units, log scale)"
-      yLabel="accuracy (%)"
+      xLabel="thinking per problem (relative compute, log scale)"
+      yLabel="AIME 2024 pass@1 (%)"
     >
       {[0, 20, 40, 60, 80, 100].map((t) => (
         <g key={`y${t}`}>
@@ -362,6 +392,32 @@ const O1_LINES: {
   },
 ];
 
+/*
+ * Section 4's four questions: the things a closed model cannot be asked, each
+ * one a door page 14 opens (GRPO in full, the R1-Zero training curve with its
+ * emergence annotation, the readable trace, the 1.5B-to-70B distills). Every
+ * question is about mechanism, which is the section's one line; the closing
+ * handoff answers them in the same order they are asked.
+ */
+const OPEN_QUESTIONS: { q: string; why: string }[] = [
+  {
+    q: "What are you actually buying when you turn the thinking dial?",
+    why: "One chain allowed to run longer, or many chains sampled and voted on behind the API? The bill counts tokens either way, and nothing visible from outside tells the two apart.",
+  },
+  {
+    q: "Are the thinking tokens doing the work, or describing it?",
+    why: "They are priced by the thousand and never shown, so there is no way to check whether the private chain is the reasoning itself or a narration running alongside it.",
+  },
+  {
+    q: "What does the model do with ten times the thinking that it would not do with one?",
+    why: "From outside you watch the score climb and the bill climb with nothing in between. The mechanism the whole test-time axis rests on is the one part never shown.",
+  },
+  {
+    q: "Does the law need a frontier-scale model at all?",
+    why: "o1 sells in one size, at one price. If trained-in reasoning survives in something small enough to run yourself, thinking gets cheap and the economics of the entire curve change.",
+  },
+];
+
 /** One stage of the loop strip, page 12's grammar. */
 function Stage({ tone, title, sub }: { tone: string; title: string; sub: string }) {
   return (
@@ -478,30 +534,6 @@ export function Page13() {
     },
   ];
 
-  const ledger = [
-    {
-      what: "The raw chain of thought",
-      detail: "the tokens that do the work — unrestricted, left untrained",
-      reads: "the lab only",
-      pays: "you — every thinking token billed, sight unseen",
-      paysWrong: true,
-    },
-    {
-      what: "A model-written summary",
-      detail: "a paraphrase written after the fact",
-      reads: "you — it is all you ever see",
-      pays: "no one extra — it arrives with the answer",
-      paysWrong: false,
-    },
-    {
-      what: "The monitor's verdict",
-      detail: "a deception check that reads the raw chain",
-      reads: "the lab only",
-      pays: "the lab — its own audit, run inside",
-      paysWrong: false,
-    },
-  ];
-
   return (
     <article className="flex flex-col gap-6">
       <p className="text-xs uppercase tracking-wide text-ink-muted">
@@ -609,6 +641,16 @@ export function Page13() {
               <em>logarithm</em> of compute, whichever axis it arrives on.
             </p>
             <p className="text-sm text-ink-muted">
+              Both dials count compute, not attempts.{" "}
+              <strong className="text-ink">×100 RL training is one run given a hundred times
+              the training compute</strong>, not a hundred runs; ×100 thinking is one answer
+              whose private chain is allowed to run a hundred times as long, not a hundred
+              sampled answers; sampling many chains and voting is a separate purchase, and
+              section 3 stacks it on top. The score being climbed is{" "}
+              <strong className="text-ink">pass@1 on AIME 2024</strong>, the same competition
+              maths as section 3: fifteen problems, one chain each, graded against the answer key.
+            </p>
+            <p className="text-sm text-ink-muted">
               All three runs are drawn below: the same line, slid one decade right for every
               decade of RL forgone.{" "}
               <strong className="text-ink">The training dial picks your curve; the thinking dial
@@ -628,7 +670,7 @@ export function Page13() {
               {/* the two dials share one row, so they always sit at the same height */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <Slider
-                  label="RL training (train-time compute)"
+                  label="RL training (compute in one training run)"
                   min={0}
                   max={2}
                   step={1}
@@ -640,7 +682,7 @@ export function Page13() {
                   }}
                 />
                 <Slider
-                  label="Thinking time (test-time compute)"
+                  label="Thinking time (compute in one answer)"
                   min={0}
                   max={2}
                   step={0.05}
@@ -658,7 +700,7 @@ export function Page13() {
                   value={acc}
                   suffix="%"
                   tone={acc > P.gpt4oAime ? "correct" : "wrong"}
-                  label="AIME accuracy here"
+                  label="AIME 2024 pass@1 here"
                 />
                 <BigNumber
                   size="md"
@@ -679,7 +721,7 @@ export function Page13() {
             </p>
             <p className="text-xs text-ink-muted">
               OpenAI published both charts with the compute axis unlabeled — a log scale in
-              undisclosed, relative units — so the ×1–×100 span and the{" "}
+              undisclosed, relative units — so the ×1 to ×100 span and the{" "}
               +{P.slopePerDecade}-per-decade slope are this redrawing&apos;s; the dashed GPT-4o
               line and the o1 dot are verbatim. The slope is the claim; the absolute compute is a
               secret.
@@ -761,74 +803,46 @@ export function Page13() {
 
         <div aria-hidden="true" />
 
-        {/* Step 4 — the hidden chain */}
+        {/* Step 4 — the evidence audit, and why an open model comes next */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">4. The thoughts you cannot read</h2>
+          <h2 className="text-xl font-semibold text-ink">4. The questions o1 cannot answer</h2>
           <p className="text-ink-muted">
-            The chain that does all of this is <strong className="text-ink">hidden</strong> — a
-            design choice the announcement defends with a safety argument, not just a commercial
-            one.
+            The two knobs are priced precisely: a decade of either buys the same +{P.slopePerDecade}
+            . What no amount of measuring from outside can tell you is{" "}
+            <strong className="text-ink">what you get for the money</strong>. Four questions the
+            curve does not answer:
           </p>
 
-          <div className="overflow-x-auto rounded-lg border border-grid bg-surface p-4">
-            <table className="w-full min-w-[30rem] text-sm">
-              <caption className="mb-2 caption-top text-left text-sm text-ink-muted">
-                The boundary, as a ledger — read the asymmetry down each column.
-              </caption>
-              <thead>
-                <tr className="border-b border-grid text-left text-xs uppercase tracking-wide text-ink-muted">
-                  <th scope="col" className="py-1.5 pr-3 font-semibold">What exists</th>
-                  <th scope="col" className="py-1.5 pr-3 font-semibold">Who can read it</th>
-                  <th scope="col" className="py-1.5 font-semibold">Who pays for it</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ledger.map((r) => (
-                  <tr key={r.what} className="border-b border-dashed border-grid align-top last:border-0">
-                    <th scope="row" className="py-2 pr-3 text-left font-normal">
-                      <strong className="text-ink">{r.what}</strong>
-                      <span className="block text-xs text-ink-muted">{r.detail}</span>
-                    </th>
-                    <td className="py-2 pr-3 text-ink-muted">{r.reads}</td>
-                    <td className={`py-2 ${r.paysWrong ? "text-wrong" : "text-ink-muted"}`}>
-                      {r.pays}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="mt-2 text-xs text-ink-muted">
-              The monitor is not idle: on ~100k synthetic prompts it flagged 0.17% of responses as
-              deceptive — a number only the lab could ever have produced, because only the lab can
-              read the column it audits.
-              <Cite n={REF.systemCard} />
-            </p>
-          </div>
+          <ol className="flex flex-col gap-4">
+            {OPEN_QUESTIONS.map((item, i) => (
+              <li key={item.q} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
+                <span
+                  className="w-5 select-none text-right font-code text-sm tabular-nums text-ink-muted"
+                  aria-hidden="true"
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-semibold text-ink">{item.q}</p>
+                  <p className="text-sm text-ink-muted">{item.why}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
 
           <p className="text-sm text-ink-muted">
-            <strong className="text-ink">The case for hiding:</strong> a chain you can trust as a
-            monitor must be left untrained — start rewarding polite, policy-compliant thoughts and
-            the model learns to think one thing and show another.
-            <Cite n={REF.announce} />
-          </p>
-          <p className="text-sm text-ink-muted">
-            <strong className="text-ink">The price:</strong> nobody outside can audit the reasoning
-            behind an answer, and a monitor is only as good as the chain is honest — a question
-            this deck returns to before the end.
+            Every one of them asks what is behind the thinking dial, and{" "}
+            <strong className="text-ink">that is exactly what a closed lab keeps</strong>. It will
+            sell you the curve; it will not show you the machine that makes it.
           </p>
 
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            A closed lab proved the two-axis law and kept the recipe. Within four months an open lab
-            published one: weights, training curve, visible chain and all.{" "}
+            Four months later an open lab answered every one of them: the algorithm in full, a chain
+            you can read token by token, a training curve that shows where the extra thinking comes
+            from, and the whole thing distilled small enough to run yourself.{" "}
             <em className="text-ink-muted">Turn the page.</em>
           </div>
         </section>
-
-        <Note kicker="References">
-          <RefItem n={REF.systemCard} href="https://openai.com/index/openai-o1-system-card/" preprint>
-            OpenAI 2024, <em>OpenAI o1 System Card</em>.
-          </RefItem>
-        </Note>
       </div>
 
       <PageNav n={PAGE_N} />
