@@ -240,9 +240,11 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
    * 9px slip captions rendered near 7px and the figure read as unreadable.
    */
   const width = 620;
-  const height = 264;
+  /* top margin carries the problem, which used to be a text block above the
+     figure; the height grew with it so the plot itself did not shrink */
+  const height = 288;
   /* right margin holds "group mean · 0.50" at 11px, which needs ~100px clear */
-  const margin = { top: 18, right: 106, bottom: 56, left: 62 };
+  const margin = { top: 42, right: 106, bottom: 56, left: 62 };
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
   const yOf = (r: number) => 12 + (1 - r) * (innerH - 24);
@@ -256,6 +258,14 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
 
   return (
     <ChartFrame title={title} width={width} height={height} margin={margin}>
+      {/* the problem, inside the frame: it was a text block above the figure */}
+      <text x={0} y={-24} textAnchor="start" className="fill-ink font-mono text-[13px] font-semibold">
+        350 × 638 = ?
+      </text>
+      <text x={0} y={-10} textAnchor="start" className="fill-ink-muted text-[10px]">
+        the rule checks one thing: does the answer equal 223,300?
+      </text>
+
       {/* reward axis: two ticks are the whole scale */}
       {[1, 0].map((t) => (
         <g key={t}>
@@ -391,7 +401,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
     .map((p, i) => `${i ? "L" : "M"}${x(p.x)},${yLen(lengthAt(p.x))}`)
     .join("");
 
-  const title = `R1-Zero across RL training, two y axes. Left axis, AIME 2024 pass at 1: from 15.6 percent at step 0 to 71.0 percent at step ${MAX_STEP}, flattening late. Right axis, average response length: from about ${lengthStart.toLocaleString()} to about ${lengthEnd.toLocaleString()} tokens, still climbing after accuracy flattens; an annotation notes that no term in the reward mentions length. A dashed rule at step ${AHA_STEP.toLocaleString()} marks where the aha trace appears (illustrative placement). Marker at step ${step.toLocaleString()}: ${pass.toFixed(1)} percent, about ${length.toLocaleString()} tokens.`;
+  const title = `R1-Zero across RL training, two y axes. Left axis, AIME 2024 pass at 1: from 15.6 percent at step 0 to 71.0 percent at step ${MAX_STEP}, flattening late. Right axis, average response length: from about ${lengthStart.toLocaleString()} to about ${lengthEnd.toLocaleString()} tokens, still climbing after accuracy flattens; annotations note that no term in the reward mentions length and that nobody is turning this dial; the axis is labelled as page 11's test-time compute. A dashed rule at step ${AHA_STEP.toLocaleString()} marks where the aha trace appears (illustrative placement). Marker at step ${step.toLocaleString()}: ${pass.toFixed(1)} percent, about ${length.toLocaleString()} tokens.`;
 
   return (
     <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="RL training step">
@@ -431,12 +441,14 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
       >
         pass@1 (%)
       </text>
+      {/* the right axis names itself in the deck's terms: this IS page 11's x
+          axis. It used to cost a whole sentence of prose above the figure. */}
       <text
         transform={`translate(${innerW + 36},${innerH / 2}) rotate(90)`}
         textAnchor="middle"
         className="fill-compute text-xs"
       >
-        avg response (tokens)
+        avg response (tokens) · page 11&apos;s test-time compute
       </text>
 
       {/* the aha step: the chart's moment is the skeleton's moment */}
@@ -458,12 +470,20 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
 
       {/* the fact the divergence rests on, said in the length line's hue */}
       <text
-        x={innerW * 0.4}
-        y={innerH - 12}
+        x={innerW * 0.42}
+        y={innerH - 24}
         textAnchor="middle"
         className="fill-compute text-[10px]"
       >
         no term in the reward mentions length
+      </text>
+      <text
+        x={innerW * 0.42}
+        y={innerH - 11}
+        textAnchor="middle"
+        className="fill-compute text-[10px] font-semibold"
+      >
+        nobody is turning this dial
       </text>
 
       {/* legend, top-left (the curves start bottom-left) */}
@@ -869,30 +889,31 @@ export function Page14() {
               <Cite n={REF.grpo} />
             </p>
 
-            <div className="flex flex-col gap-1 rounded-lg border border-dashed border-grid bg-surface-raised p-3 font-mono text-sm">
-              {PSEUDO.map((line, i) => (
-                <div key={i} className="flex flex-wrap items-baseline gap-x-3">
-                  <code className="whitespace-pre text-ink">{line.code}</code>
-                  {line.note ? (
-                    <span className="text-xs text-compute">{`# ${line.note}`}</span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
+            <figure className="m-0 flex flex-col gap-2">
+              <div className="flex flex-col gap-1 rounded-lg border border-dashed border-grid bg-surface-raised p-3 font-mono text-sm">
+                {PSEUDO.map((line, i) => (
+                  <div key={i} className="flex flex-wrap items-baseline gap-x-3">
+                    <code className="whitespace-pre text-ink">{line.code}</code>
+                    {line.note ? (
+                      <span className="text-xs text-compute">{`# ${line.note}`}</span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+              {/* the PPO contrast, as a note ON the code rather than a fourth
+                  body paragraph: one fact, one sentence (review) */}
+              <figcaption className="text-xs text-ink-muted">
+                no critic network anywhere, which at 671B parameters is what made RL at this scale
+                affordable: PPO, the standard alternative, learns its baseline from a second
+                network about as large as the policy itself
+              </figcaption>
+            </figure>
 
             <p className="text-ink">
               Line 2 should look familiar. <strong>Page 7 sampled many chains and picked among
               them at answer time</strong>, then threw every sample away once the vote was
               counted. GRPO runs the same sampling during training and keeps what the winners did
-              in the weights. That is page 13&apos;s exchange seen from the inside: sampling paid
-              for once, at training time, instead of on every question.
-            </p>
-
-            <p className="text-ink">
-              PPO, the standard alternative, learns its baseline from a second &ldquo;critic&rdquo;
-              network about as large as the policy itself. GRPO reads the baseline off the
-              group&apos;s own statistics instead. At 671B parameters, deleting the critic is not
-              an implementation detail: <strong>it is what made RL at this scale affordable</strong>.
+              in the weights: sampling paid for once, instead of on every question.
             </p>
 
             {/*
@@ -902,19 +923,15 @@ export function Page14() {
              * section card's and squeezed the chart into a column narrow
              * enough to shrink every label past reading (review).
              */}
+            {/*
+             * The chart's own setup used to be three blocks above it: the
+             * problem line, a paragraph saying the wrong answers are real
+             * slips, and the drag instruction. The problem is now the chart's
+             * title, the slip labels under each dot already make the second
+             * point, and the instruction moved to the margin Try-it note,
+             * which is page 2's grammar and which this section lacked.
+             */}
             <figure className="m-0 flex flex-col gap-2 border-t border-dashed border-grid pt-4">
-              <p className="text-sm text-ink">
-                <span className="font-mono text-ink-muted">problem → </span>
-                <span className="font-mono font-semibold text-ink">350 × 638 = ?</span>
-                <span className="ml-2 text-xs text-ink-muted">
-                  the rule checks one thing: does the answer equal 223,300?
-                </span>
-              </p>
-              <p className="text-sm text-ink-muted">
-                Page 4&apos;s multiplication, now with a model doing it. Ask four times and the
-                answers differ: that is the group. Each wrong one is a real slip, not an invented
-                number.
-              </p>
               <GroupBaselineChart rewards={rewards} mean={mean} />
               <figcaption className="text-xs text-ink-muted">
                 each sample&apos;s push is its distance from the dashed rule, its reward minus the
@@ -923,10 +940,6 @@ export function Page14() {
             </figure>
 
             <div className="flex flex-col gap-3">
-              <p className="text-sm font-semibold text-ink">
-                Sample 1 always answers 223,300. Drag the dial: the group&apos;s luck changes,
-                sample 1&apos;s answer never does.
-              </p>
               <Slider
                 label="of the other three samples, how many are also right"
                 min={0}
@@ -939,7 +952,7 @@ export function Page14() {
               {uniform ? (
                 <p className="rounded border-l-4 border-compute bg-surface-raised p-2 text-sm text-ink">
                   The limit of that trend: everyone scored the same, so every push is{" "}
-                  <span className="font-mono">0.00</span> — a problem the model already aces, or
+                  <span className="font-mono">0.00</span>. A problem the model already aces, or
                   is hopeless on, teaches it nothing. Learning lives where the group disagrees.
                 </p>
               ) : (
@@ -949,15 +962,22 @@ export function Page14() {
           </div>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
-            DeepSeek-AI 2025, <em>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via
-            Reinforcement Learning</em>.
-          </RefItem>
-          <RefItem n={REF.grpo} href="https://arxiv.org/abs/2402.03300">
-            Shao et al. 2024, <em>DeepSeekMath</em> (GRPO).
-          </RefItem>
-        </Note>
+        <div className="flex flex-col gap-8">
+          <Note kicker="Try it">
+            <p>
+              Drag the dial: the group&apos;s luck changes, sample 1&apos;s answer never does.
+            </p>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
+              DeepSeek-AI 2025, <em>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via
+              Reinforcement Learning</em>.
+            </RefItem>
+            <RefItem n={REF.grpo} href="https://arxiv.org/abs/2402.03300">
+              Shao et al. 2024, <em>DeepSeekMath</em> (GRPO).
+            </RefItem>
+          </Note>
+        </div>
 
         {/* Step 2 — the scrubber */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -969,17 +989,11 @@ export function Page14() {
           </h2>
 
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
+            {/* setup only: the meaning moved below the chart, where the reader
+                can check it against what they are looking at (review) */}
             <p className="text-ink">
-              Nothing in the recipe mentions reflection, and nothing in the reward mentions length.
-              Watch both curves anyway: accuracy climbs and flattens while average response length
-              grows to nine times its starting point. Length is not a schedule anyone set: longer,
-              re-checking traces win more reward, so the model{" "}
-              <strong>buys itself more thinking time</strong>. Read the right axis as page
-              11&apos;s x axis, test-time compute, with nobody&apos;s hand on the dial: the model
-              finds the scaling law by itself and walks up it. And it is{" "}
-              <strong>one chain allowed to run longer</strong>, not many chains sampled and voted
-              on behind an API, which is the distinction page 13 could only assert. The skeleton
-              below shows what the extra tokens are made of.
+              Nothing in the recipe mentions reflection. Nothing in the reward mentions length.{" "}
+              <strong>Watch both curves anyway.</strong>
             </p>
 
             <div className="flex flex-col gap-4">
@@ -1010,12 +1024,19 @@ export function Page14() {
                 <p className="min-w-[16rem] flex-1 text-sm text-ink-muted">
                   From 15.6% to 71.0% pass@1 with no supervised examples. Add page 7&apos;s
                   majority vote across 64 samples and it reaches{" "}
-                  <strong className="text-ink">{cons64}%</strong> — level with OpenAI-o1-0912.
+                  <strong className="text-ink">{cons64}%</strong>, level with OpenAI-o1-0912.
                   <Cite n={REF.r1} />
                 </p>
               </div>
               <TrainingChart step={step} pass={pass} length={length} />
             </div>
+
+            {/* the meaning, after the evidence */}
+            <p className="text-ink">
+              Length is not a schedule anyone set: longer, re-checking traces win more reward, so
+              the model <strong>buys itself more thinking time</strong>. The skeleton below shows
+              what the extra tokens are made of.
+            </p>
 
             {/* the trace, as a shape */}
             <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
@@ -1032,6 +1053,13 @@ export function Page14() {
                 {STAGE_NOTE[stage]}
               </p>
             </div>
+            {/* the one-chain point belongs here, beside a single unbroken trace,
+                not three blocks above the chart where it used to sit */}
+            <p className="text-ink">
+              Count the traces: there is <strong>one</strong>, allowed to run longer. Not many
+              chains sampled and voted on behind an API, which is the distinction page 13 could
+              only assert.
+            </p>
             <p className="text-ink">
               Notice what the loops rule out. A chain nobody can read might be a running commentary
               written beside the real work, and from outside there is no way to tell.{" "}
@@ -1045,7 +1073,7 @@ export function Page14() {
             <p className="text-xs text-ink-muted">
               the skeleton abstracts the trace in Table 3 of DeepSeek-AI 2025, where R1-Zero
               interrupts a solution mid-stream, flags the moment, and restarts from its own first
-              line at &ldquo;an intermediate version&rdquo; of training — the structure is
+              line at &ldquo;an intermediate version&rdquo; of training; the structure is
               theirs, no text is quoted, and where the aha lands on the slider and the chart is an
               illustrative placement: the paper gives the behaviour, not a step number
             </p>
@@ -1066,16 +1094,26 @@ export function Page14() {
           </h2>
 
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-grid bg-surface p-4">
+            {/*
+             * The section's thesis, stated up top with the dot plot as its
+             * evidence. It used to be a trailing aside ("page 11's law,
+             * compressed into weights") after the reader had stopped looking
+             * for one, under an intro paragraph doing five jobs at once.
+             */}
             <p className="text-ink">
-              The released <strong>R1</strong> adds a small &ldquo;cold start&rdquo; of curated
-              long traces before the RL — same recipe, better manners, {P.r1Aime}% on AIME 2024.
-              The rest of its scoreboard can wait one page. The give-away is the part no closed lab
-              had done: the weights, and <strong>the reasoning itself</strong>. R1 wrote{" "}
-              <strong>~{P.samplesK}K traces</strong>, and six small dense models (Qwen and Llama
-              bases, 1.5B–70B) were fine-tuned on them.
-              <Cite n={REF.r1} /> No RL, no reward, no critic — page 12&apos;s recipe with a
-              stronger teacher. So the claim to check on the chart is not &ldquo;R1 is
-              good&rdquo;; it is that <strong>reasoning transfers as data</strong>. Pick a size:
+              Page 13&apos;s two knobs were never equally available. Anyone can pay for thinking
+              at answer time; lifting the curve took frontier-scale RL, which meant being a
+              frontier lab. Then R1 wrote out <strong>~{P.samplesK}K of its own reasoning
+              traces</strong>, six small models were fine-tuned on them, and the behaviour came
+              with the text.
+              <Cite n={REF.r1} />
+            </p>
+            <p className="text-ink">
+              <strong>The curve-lifting knob got cheap.</strong> Not free: someone still paid for
+              the RL once. But they paid once, and the result copies, so the reasoning does not
+              have to be re-earned by anyone who wants it. The claim to check on the chart is not
+              &ldquo;R1 is good&rdquo;; it is that{" "}
+              <strong>a lifted curve fits in weights you can download</strong>. Pick a size:
             </p>
 
             <figure className="m-0 flex flex-col gap-2">
@@ -1087,10 +1125,12 @@ export function Page14() {
                 <Key shape="dash" className="border-ink-muted" label="closed model (size undisclosed)" />
               </div>
               <figcaption className="text-xs text-ink-muted">
-                rows are ordered by size, smallest at the top; the teacher&apos;s{" "}
-                {P.teacherParamsB}B is a mixture-of-experts total that activates ~
-                {P.teacherActiveB}B per token · GPT-4o and o1-mini publish scores but not sizes,
-                so they are rules, not rows
+                plain supervised fine-tuning on the traces, no RL and no reward, which is page
+                12&apos;s recipe with a far stronger teacher · the released R1 adds a small cold
+                start of curated traces before its own RL, and scores {P.r1Aime}% here · rows are
+                ordered by size, smallest at the top; the teacher&apos;s {P.teacherParamsB}B is a
+                mixture-of-experts total that activates ~{P.teacherActiveB}B per token · GPT-4o
+                and o1-mini publish scores but not sizes, so they are rules, not rows
               </figcaption>
             </figure>
 
@@ -1117,14 +1157,15 @@ export function Page14() {
 
             <p className="text-sm text-ink">
               <strong>R1-Distill-{picked.label}</strong>{" "}
-              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher —</span>{" "}
+              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher,</span>{" "}
               {picked.note}.
             </p>
 
             <p className="text-sm text-ink-muted">
               Where a dot lands right of a dashed rule, a model you can download beats a closed
-              frontier product — by thinking longer at answer time: page 11&apos;s law, compressed
-              into weights.
+              frontier product by thinking longer at answer time. And page 3 said the stock of
+              human text was finite: these traces were not in it. One good reasoner now writes the
+              curriculum for everyone else.
             </p>
 
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
@@ -1141,15 +1182,15 @@ export function Page14() {
 
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
-          <strong className="text-ink">Simulated</strong> — the training curve&apos;s intermediate
+          <strong className="text-ink">Simulated</strong>: the training curve&apos;s intermediate
           points are interpolated along the reported 15.6% → 71.0% climb; the trace skeleton is a
           schematic of the Table 3 trace&apos;s structure, not its text; and where the aha lands
-          on the slider is an illustrative placement — the paper gives the behaviour, not a step
+          on the slider is an illustrative placement; the paper gives the behaviour, not a step
           number.
         </p>
         <p>
-          <strong className="text-ink">Cited</strong> — every benchmark number is transcribed from
-          DeepSeek-AI 2025 (Tables 3–5, Fig. 2–3) and pinned in the test suite.
+          <strong className="text-ink">Cited</strong>: every benchmark number is transcribed from
+          DeepSeek-AI 2025 (Tables 3 to 5, Figures 2 and 3) and pinned in the test suite.
         </p>
       </div>
 
