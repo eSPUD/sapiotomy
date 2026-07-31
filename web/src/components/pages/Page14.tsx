@@ -935,7 +935,7 @@ export function Page14() {
               {uniform ? (
                 <p className="rounded border-l-4 border-compute bg-surface-raised p-2 text-sm text-ink">
                   The limit of that trend: everyone scored the same, so every push is{" "}
-                  <span className="font-mono">0.00</span> — a problem the model already aces, or
+                  <span className="font-mono">0.00</span>. A problem the model already aces, or
                   is hopeless on, teaches it nothing. Learning lives where the group disagrees.
                 </p>
               ) : (
@@ -1006,7 +1006,7 @@ export function Page14() {
                 <p className="min-w-[16rem] flex-1 text-sm text-ink-muted">
                   From 15.6% to 71.0% pass@1 with no supervised examples. Add page 7&apos;s
                   majority vote across 64 samples and it reaches{" "}
-                  <strong className="text-ink">{cons64}%</strong> — level with OpenAI-o1-0912.
+                  <strong className="text-ink">{cons64}%</strong>, level with OpenAI-o1-0912.
                   <Cite n={REF.r1} />
                 </p>
               </div>
@@ -1041,7 +1041,7 @@ export function Page14() {
             <p className="text-xs text-ink-muted">
               the skeleton abstracts the trace in Table 3 of DeepSeek-AI 2025, where R1-Zero
               interrupts a solution mid-stream, flags the moment, and restarts from its own first
-              line at &ldquo;an intermediate version&rdquo; of training — the structure is
+              line at &ldquo;an intermediate version&rdquo; of training; the structure is
               theirs, no text is quoted, and where the aha lands on the slider and the chart is an
               illustrative placement: the paper gives the behaviour, not a step number
             </p>
@@ -1064,12 +1064,12 @@ export function Page14() {
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-grid bg-surface p-4">
             <p className="text-ink">
               The released <strong>R1</strong> adds a small &ldquo;cold start&rdquo; of curated
-              long traces before the RL — same recipe, better manners, {P.r1Aime}% on AIME 2024.
+              long traces before the RL: same recipe, better manners, {P.r1Aime}% on AIME 2024.
               The rest of its scoreboard can wait one page. The give-away is the part no closed lab
               had done: the weights, and <strong>the reasoning itself</strong>. R1 wrote{" "}
               <strong>~{P.samplesK}K traces</strong>, and six small dense models (Qwen and Llama
-              bases, 1.5B–70B) were fine-tuned on them.
-              <Cite n={REF.r1} /> No RL, no reward, no critic — page 12&apos;s recipe with a
+              bases, 1.5B to 70B) were fine-tuned on them.
+              <Cite n={REF.r1} /> No RL, no reward, no critic: page 12&apos;s recipe with a
               stronger teacher. So the claim to check on the chart is not &ldquo;R1 is
               good&rdquo;; it is that <strong>reasoning transfers as data</strong>. Pick a size:
             </p>
@@ -1113,13 +1113,13 @@ export function Page14() {
 
             <p className="text-sm text-ink">
               <strong>R1-Distill-{picked.label}</strong>{" "}
-              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher —</span>{" "}
+              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher,</span>{" "}
               {picked.note}.
             </p>
 
             <p className="text-sm text-ink-muted">
               Where a dot lands right of a dashed rule, a model you can download beats a closed
-              frontier product — by thinking longer at answer time: page 11&apos;s law, compressed
+              frontier product, by thinking longer at answer time: page 11&apos;s law, compressed
               into weights.
             </p>
 
@@ -1137,15 +1137,15 @@ export function Page14() {
 
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
-          <strong className="text-ink">Simulated</strong> — the training curve&apos;s intermediate
+          <strong className="text-ink">Simulated</strong>: the training curve&apos;s intermediate
           points are interpolated along the reported 15.6% → 71.0% climb; the trace skeleton is a
           schematic of the Table 3 trace&apos;s structure, not its text; and where the aha lands
-          on the slider is an illustrative placement — the paper gives the behaviour, not a step
+          on the slider is an illustrative placement; the paper gives the behaviour, not a step
           number.
         </p>
         <p>
-          <strong className="text-ink">Cited</strong> — every benchmark number is transcribed from
-          DeepSeek-AI 2025 (Tables 3–5, Fig. 2–3) and pinned in the test suite.
+          <strong className="text-ink">Cited</strong>: every benchmark number is transcribed from
+          DeepSeek-AI 2025 (Tables 3 to 5, Figures 2 and 3) and pinned in the test suite.
         </p>
       </div>
 

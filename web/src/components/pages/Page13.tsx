@@ -390,7 +390,7 @@ const O1_LINES: {
   {
     indent: 0,
     code: "loop: while the compute budget lasts",
-    note: "page 12 looped until accuracy plateaued — the exit is a budget now, section 2's training axis",
+    note: "page 12 looped until accuracy plateaued; the exit is a budget now, section 2's training axis",
   },
   {
     indent: 1,
@@ -400,17 +400,17 @@ const O1_LINES: {
   {
     indent: 2,
     code: "r₁…rₖ, ŷ₁…ŷₖ ← M(x)",
-    note: "k sampled chains per problem, not one greedy try — sampling explores, so page 12's hint branch is gone",
+    note: "k sampled chains per problem, not one greedy try: sampling explores, so page 12's hint branch is gone",
   },
   {
     indent: 2,
     code: "rewardᵢ ← check(ŷᵢ, y)",
-    note: "page 12's filter, promoted to an explicit reward — still the answer key, still graded for free",
+    note: "page 12's filter, promoted to an explicit reward: still the answer key, still graded for free",
   },
   {
     indent: 1,
     code: "M ← reinforce(M, rewards)",
-    note: "update the current model, not the base — this round's gains compound into the next",
+    note: "update the current model, not the base, so this round's gains compound into the next",
   },
 ];
 
@@ -585,9 +585,9 @@ export function Page13() {
           </h2>
           <p className="text-ink-muted">
             Page 12 closed on a promise: same shape, disguise dropped. OpenAI confirmed the
-            frame — o1 is trained with large-scale reinforcement learning to think in a long
-            private chain
-            <Cite n={REF.announce} /> — and its own researchers later named the category:
+            frame: o1 is trained with large-scale reinforcement learning to think in a long
+            private chain.
+            <Cite n={REF.announce} /> Its own researchers later named the category:
             &ldquo;large reasoning models (LRMs): language models trained via reinforcement
             learning to &lsquo;reason&rsquo; and &lsquo;think through&rsquo; extended chains of
             thought&rdquo;.
@@ -601,7 +601,7 @@ export function Page13() {
               <span className="shrink-0 self-center text-ink-muted">→</span>
               <Stage tone="border-correct" title="reward" sub="the filter, made explicit" />
               <span className="shrink-0 self-center text-ink-muted">→</span>
-              <Stage tone="border-compute" title="reinforce" sub="in place — gains compound" />
+              <Stage tone="border-compute" title="reinforce" sub="in place, so gains compound" />
               <span className="shrink-0 self-center text-ink-muted">↺</span>
             </div>
 
@@ -623,15 +623,15 @@ export function Page13() {
               </div>
               <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
                 Six lines against page 12&apos;s ten: four rewritten, the hint branch deleted.
-                A reconstruction matched to page 12&apos;s expert-iteration lineage —{" "}
-                <strong className="text-ink">rumor, not record</strong>: OpenAI confirmed the
+                A reconstruction matched to page 12&apos;s expert-iteration lineage:{" "}
+                <strong className="text-ink">rumor, not record</strong>. OpenAI confirmed the
                 frame and kept the algorithm.
               </figcaption>
             </figure>
 
             <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
               Now read what is <strong>not</strong> there: a human. RLHF pays people to judge
-              outputs; here nobody writes an example and nobody grades one — the model authors
+              outputs; here nobody writes an example and nobody grades one: the model authors
               the reasoning, the answer key scores it. And the training set never touches page
               3&apos;s finite stock of human text: the model writes its own curriculum.
             </p>
@@ -659,9 +659,9 @@ export function Page13() {
             <p className="text-sm text-ink-muted">
               Page 11&apos;s law: <em>model size picks your curve; test-time compute slides you
               along it.</em> o1&apos;s announcement charts are the same picture with the
-              curve-picker swapped — <strong className="text-ink">RL training picks your curve
-              now</strong>
-              <Cite n={REF.announce} /> — and both are log-linear: accuracy against the{" "}
+              curve-picker swapped: <strong className="text-ink">RL training picks your curve
+              now</strong>.
+              <Cite n={REF.announce} /> Both are log-linear, accuracy against the{" "}
               <em>logarithm</em> of compute, whichever axis it arrives on.
             </p>
             <p className="text-sm text-ink-muted">
@@ -678,7 +678,7 @@ export function Page13() {
               All three runs are drawn below: the same line, slid one decade right for every
               decade of RL forgone.{" "}
               <strong className="text-ink">The training dial picks your curve; the thinking dial
-              slides your marker along it</strong> — and the bracket at your marker prices what
+              slides your marker along it</strong>, and the bracket at your marker prices what
               the missing RL would have bought.
             </p>
 
@@ -739,13 +739,13 @@ export function Page13() {
               <strong className="text-ink">Thinking slides you along the curve; only training
               lifts it.</strong>{" "}
               The two dials pay the same +{P.slopePerDecade} per decade, but they do not
-              substitute — thinking walks your curve and never climbs to the next one, and the
+              substitute, because thinking walks your curve and never climbs to the next one. That
               climb is paid for in a currency page 3&apos;s wall does not price: chains the model
               writes itself, not the finite stock of human text.
             </p>
             <p className="text-xs text-ink-muted">
-              OpenAI published both charts with the compute axis unlabeled — a log scale in
-              undisclosed, relative units — so the ×1 to ×100 span and the{" "}
+              OpenAI published both charts with the compute axis unlabeled: a log scale in
+              undisclosed, relative units. So the ×1 to ×100 span and the{" "}
               +{P.slopePerDecade}-per-decade slope are this redrawing&apos;s; the dashed GPT-4o
               line and the o1 dot are verbatim. The slope is the claim; the absolute compute is a
               secret.
@@ -765,7 +765,7 @@ export function Page13() {
           <h2 className="text-xl font-semibold text-ink">3. Stack the toolbox, or turn the knobs?</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              First answer: stack. Act 2 did not become obsolete — it became the second storey.
+              First answer: stack. Act 2 did not become obsolete; it became the second storey.
               Each increment below is one of its mechanisms, stacked on top of the learned chain,
               on competition maths (AIME 2024):
             </p>
@@ -809,10 +809,10 @@ export function Page13() {
           </h3>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Second answer: turn the knobs — and OpenAI ran the ablation itself. Take o1 and
+              Second answer: turn the knobs, and OpenAI ran the ablation itself. Take o1 and
               bolt on hand-engineered, contest-specific strategies (
-              <strong className="text-ink">o1-ioi</strong>) — Act 2&apos;s move, done by hand at
-              the frontier — or just turn the two knobs further. The knob-turning branch, an
+              <strong className="text-ink">o1-ioi</strong>), which is Act 2&apos;s move done by
+              hand at the frontier, or just turn the two knobs further. The knob-turning branch, an
               early <strong className="text-ink">o3</strong>, beat the hand-built specialist on
               its own contest, no tricks attached.
               <Cite n={REF.competitive} /> Their conclusion, verbatim: scaling

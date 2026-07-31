@@ -262,4 +262,18 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.getByText("authored redrawing · anchors verbatim")).toBeInTheDocument();
     expect(screen.getByText(/The slope is the claim; the absolute compute is a secret\./)).toBeInTheDocument();
   });
+
+  it("carries no em dash or en dash in rendered copy", () => {
+    // House rule, swept and enforced: visible copy uses commas, colons, or
+    // semicolons instead, and ranges are spelled out ("1.5B to 70B"). This
+    // covers aria-labels and chart titles too, which screen readers speak.
+    const { container } = render(<Page13 />);
+    const offenders = Array.from(container.querySelectorAll("*"))
+      .flatMap((el) => [
+        el.textContent ?? "",
+        el.getAttribute("aria-label") ?? "",
+      ])
+      .filter((t) => t.includes("\u2014") || t.includes("\u2013"));
+    expect(offenders).toEqual([]);
+  });
 });
