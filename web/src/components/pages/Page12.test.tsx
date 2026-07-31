@@ -184,17 +184,25 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(handoff.textContent).toMatch(/lifts the curve without buying a single\s+parameter/i);
   });
 
-  it("closes at act altitude: both ways to spend, then Act 3 turning both", () => {
+  it("closes on both ways to spend, then the frontier turning both", () => {
     render(<Page12 />);
     const handoff = screen.getByText(/Page 13 picks it up from there/).closest("p")!;
-    // The hand-off has to sum Act 2, not just this page: the answer-time
-    // toolbox (5-11) and this page's train-time loop are the two threads
-    // page 13's two compute axes then pick up.
-    expect(handoff.textContent).toMatch(/Act 2 gave you two ways to buy reasoning/);
-    expect(handoff.textContent).toMatch(/spend the compute after the question lands/);
-    expect(handoff.textContent).toMatch(/spends it long before the question exists/);
-    // And it names the price, which is what makes Act 3's frontier a trade.
-    expect(handoff.textContent).toMatch(/Act 3 opens where one lab turns\s+both kinds of spending at once and bills you for each/);
+    // The hand-off sums the pair page 13's two compute axes pick up: Act 2's
+    // answer-time toolbox (5-11, priced by page 11) and this page's
+    // train-time loop.
+    expect(handoff.textContent).toMatch(/two ways to buy reasoning/);
+    expect(handoff.textContent).toMatch(/Act 2 spends the compute after the question lands/);
+    expect(handoff.textContent).toMatch(/spends long before the\s+question exists/);
+    // It must NOT announce Act 3 as upcoming: the seam is 11|12, so this page
+    // is already Act 3's first page (see pages.ts).
+    expect(handoff.textContent).not.toMatch(/Act 3/);
+    // And it names the price, which is what makes the frontier a trade.
+    expect(handoff.textContent).toMatch(/turns both\s+kinds of spending at once and bills you for each/);
+  });
+
+  it("sits in Act 3: page 12 opens the act, it does not close Act 2", () => {
+    render(<Page12 />);
+    expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
   });
 
   it("labels the footer provenance as Simulated and Cited", () => {
