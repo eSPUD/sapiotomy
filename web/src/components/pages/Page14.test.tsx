@@ -126,14 +126,14 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getAllByText("+0.50")).toHaveLength(2);
     expect(screen.getByText(/push drops to \+0\.50/)).toBeInTheDocument();
     // The wrong answers are named slips, not invented numbers.
-    expect(screen.getByText("dropped the carry")).toBeInTheDocument();
-    expect(screen.getByText("did 16 × 24")).toBeInTheDocument();
+    expect(screen.getByText("mis-added the partials")).toBeInTheDocument();
+    expect(screen.getByText("dropped a zero")).toBeInTheDocument();
 
     // Lone right answer: the biggest push on offer — and all three slips visible.
     setLuck(0);
     expect(screen.getByText("+0.75")).toBeInTheDocument();
     expect(screen.getByText(/the biggest push on offer/)).toBeInTheDocument();
-    expect(screen.getByText("did 17 × 25")).toBeInTheDocument();
+    expect(screen.getByText("read 638 as 628")).toBeInTheDocument();
 
     // Rarity cuts both ways: the lone wrong answer is punished hardest.
     setLuck(2);

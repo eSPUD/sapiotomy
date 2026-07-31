@@ -30,12 +30,12 @@
  * Step 1 is the recipe, GRPO, abstracted honestly: five lines of annotated
  * pseudocode (sample a group, score with a rule, advantage = distance from
  * the group's own mean) instead of the clipped-surrogate objective. Below
- * it, line 2 of that pseudocode is DRAWN: four answers to page 1's 17 × 24
+ * it, line 2 of that pseudocode is DRAWN: four answers to page 4's 350 × 638
  * (the model samples stochastically — that is where the group comes from;
  * each wrong answer is a named arithmetic slip, not an invented number), as
  * dots at reward 1/0 with the group mean as a dashed rule and each push as
  * an arrow from the rule to the dot. One dial sets how many of the other
- * three match sample 1's fixed 408; as luck rises the rule chases the
+ * three match sample 1's fixed 223,300; as luck rises the rule chases the
  * crowd, the same right answer's arrow shrinks to nothing, the lone
  * dissenter's stretches (rarity cuts both ways), and a uniform group leaves
  * an arrowless picture — nothing to teach. No critic network anywhere: that
@@ -124,14 +124,27 @@ const AHA_STEP = 5000;
 /** Page 14's references, numbered in order of first appearance. */
 const REF = { r1: 1, grpo: 2 } as const;
 
-/** Page 1's multiplication. Sample 1 always gets it right; the other three
-    slots have fixed wrong answers so the dial is deterministic — and each
-    wrong answer is a real arithmetic slip, not an invented number. */
-const RIGHT_ANSWER = "408";
+/*
+ * Page 4's multiplication, not page 1's. The figure's own punchline (a uniform
+ * group teaches nothing) rules out an easy problem: 17 × 24 is exactly what a
+ * 671B model already aces, so using it as the example of a PRODUCTIVE learning
+ * group contradicted the caption three lines below. Page 4 sets the precedent
+ * for the fix — it recalls page 1's 17 × 24 and escalates to 350 × 638 — and
+ * the escalation earns a second callback besides: page 4 walked three human
+ * roads to 223,300, and this figure watches a model sample four.
+ *
+ * Sample 1 always gets it right; the other three slots have fixed wrong
+ * answers so the dial is deterministic, and each is a real arithmetic slip,
+ * not an invented number:
+ *   350 × 628 = 219,800 (one digit misread)
+ *    35 × 638 =  22,330 (a dropped zero)
+ *   210,000 + 13,300 written as 213,300 (the partials mis-added)
+ */
+const RIGHT_ANSWER = "223,300";
 const OTHER_WRONGS = [
-  { v: "425", slip: "did 17 × 25" },
-  { v: "384", slip: "did 16 × 24" },
-  { v: "348", slip: "dropped the carry" },
+  { v: "219,800", slip: "read 638 as 628" },
+  { v: "22,330", slip: "dropped a zero" },
+  { v: "213,300", slip: "mis-added the partials" },
 ];
 
 /** The GRPO recipe as five annotated lines — the honest abstraction of the
@@ -195,17 +208,24 @@ const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)
  * rule reaches the dots and every arrow vanishes.
  */
 function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number }) {
-  const width = 720;
-  const height = 240;
-  const margin = { top: 18, right: 100, bottom: 48, left: 64 };
+  /*
+   * The viewBox is sized close to the column it renders into (~615px at the
+   * deck's desktop width). ChartFrame scales to width="100%", so a viewBox
+   * much wider than its container shrinks every label with it — at 720 the
+   * 9px slip captions rendered near 7px and the figure read as unreadable.
+   */
+  const width = 620;
+  const height = 264;
+  /* right margin holds "group mean · 0.50" at 11px, which needs ~100px clear */
+  const margin = { top: 18, right: 106, bottom: 56, left: 62 };
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
   const yOf = (r: number) => 12 + (1 - r) * (innerH - 24);
   const colX = (i: number) => (innerW * (i + 0.5)) / 4;
-  const dotR = 6;
+  const dotR = 7;
 
   const k = rewards.slice(1).filter((r) => r === 1).length;
-  const title = `Line 2 of the recipe, drawn: four answers to 17 times 24 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 408, correct. The wrong answers are real slips: 425 from computing 17 times 25, 384 from computing 16 times 24, 348 from dropping a carry. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
+  const title = `Line 2 of the recipe, drawn: four answers to 350 times 638 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 223,300, correct. The wrong answers are real slips: 219,800 from reading 638 as 628, 22,330 from dropping a zero, 213,300 from mis-adding the partials. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
     k === 3 ? " The rule sits on the dots and every arrow has vanished: a uniform group teaches nothing." : ""
   }`;
 
@@ -215,7 +235,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
       {[1, 0].map((t) => (
         <g key={t}>
           <line x1={0} x2={innerW} y1={yOf(t)} y2={yOf(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[11px]">
             reward {t}
           </text>
         </g>
@@ -231,7 +251,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
         strokeWidth={1}
         strokeDasharray="4 3"
       />
-      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
+      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[11px] font-semibold">
         group mean · {mean.toFixed(2)}
       </text>
 
@@ -260,7 +280,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
                   dy="0.32em"
                   textAnchor="start"
                   stroke="none"
-                  className={`font-mono text-[10px] font-semibold ${up ? "fill-correct" : "fill-wrong"}`}
+                  className={`font-mono text-[11px] font-semibold ${up ? "fill-correct" : "fill-wrong"}`}
                 >
                   {fmtPush(adv)}
                 </text>
@@ -276,17 +296,17 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
               className={`${right ? "fill-correct" : "fill-wrong"} stroke-canvas`}
               strokeWidth={1.5}
             />
-            <text x={px} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[9px] uppercase tracking-wide">
+            <text x={px} y={innerH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] uppercase tracking-wide">
               sample {i + 1}
             </text>
-            <text x={px} y={innerH + 27} textAnchor="middle" className="fill-ink font-mono text-[11px] font-semibold">
+            <text x={px} y={innerH + 31} textAnchor="middle" className="fill-ink font-mono text-[13px] font-semibold">
               {right ? RIGHT_ANSWER : wrong.v}
             </text>
             <text
               x={px}
-              y={innerH + 39}
+              y={innerH + 45}
               textAnchor="middle"
-              className={i === 0 ? "fill-compute text-[9px] font-semibold" : "fill-ink-muted text-[9px]"}
+              className={i === 0 ? "fill-compute text-[10px] font-semibold" : "fill-ink-muted text-[10px]"}
             >
               {i === 0 ? "watch this one" : right ? "" : wrong.slip}
             </text>
@@ -755,7 +775,7 @@ export function Page14() {
 
   const [step, setStep] = useState(0);
   const [pickedSize, setPickedSize] = useState(14);
-  /* — step 1: how many of the OTHER three samples also get 408 — */
+  /* — step 1: how many of the OTHER three samples also get 223,300 — */
   const [luck, setLuck] = useState(1);
 
   const rewards: number[] = [1, ...OTHER_WRONGS.map((_, i) => (i < luck ? 1 : 0))];
@@ -850,21 +870,37 @@ export function Page14() {
               an implementation detail: <strong>it is what made RL at this scale affordable</strong>.
             </p>
 
-            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
+            {/*
+             * The section's central figure, at full card width in page 11's
+             * grammar: figure, fine-print line, dial beneath. It used to sit
+             * inside a nested dashed card, whose padding stacked on the
+             * section card's and squeezed the chart into a column narrow
+             * enough to shrink every label past reading (review).
+             */}
+            <figure className="m-0 flex flex-col gap-2 border-t border-dashed border-grid pt-4">
               <p className="text-sm text-ink">
                 <span className="font-mono text-ink-muted">problem → </span>
-                <span className="font-mono font-semibold text-ink">17 × 24 = ?</span>
+                <span className="font-mono font-semibold text-ink">350 × 638 = ?</span>
                 <span className="ml-2 text-xs text-ink-muted">
-                  the rule checks one thing: does the answer equal 408?
+                  the rule checks one thing: does the answer equal 223,300?
                 </span>
               </p>
               <p className="text-sm text-ink-muted">
-                Ask the model the same problem four times and it answers stochastically — that is
-                the group. Each wrong answer is a real slip: 17 × 25, 16 × 24, a dropped carry.
+                Page 4&apos;s multiplication, now with a model doing it. Ask four times and the
+                answers differ: that is the group. Each wrong one is a real slip, not an invented
+                number.
               </p>
+              <GroupBaselineChart rewards={rewards} mean={mean} />
+              <figcaption className="text-xs text-ink-muted">
+                each sample&apos;s push is its distance from the dashed rule, its reward minus the
+                group mean (GRPO then divides by the group&apos;s spread)
+              </figcaption>
+            </figure>
+
+            <div className="flex flex-col gap-3">
               <p className="text-sm font-semibold text-ink">
-                Sample 1 always answers 408. Drag the dial: the group&apos;s luck changes, sample
-                1&apos;s answer never does.
+                Sample 1 always answers 223,300. Drag the dial: the group&apos;s luck changes,
+                sample 1&apos;s answer never does.
               </p>
               <Slider
                 label="of the other three samples, how many are also right"
@@ -875,13 +911,8 @@ export function Page14() {
                 value={luck}
                 onChange={setLuckAnd}
               />
-              <GroupBaselineChart rewards={rewards} mean={mean} />
-              <p className="text-sm text-ink-muted">
-                each sample&apos;s push is its distance from the dashed rule — its reward minus the
-                group mean (GRPO then divides by the group&apos;s spread)
-              </p>
               {uniform ? (
-                <p className="rounded border-l-4 border-compute bg-surface p-2 text-sm text-ink">
+                <p className="rounded border-l-4 border-compute bg-surface-raised p-2 text-sm text-ink">
                   The limit of that trend: everyone scored the same, so every push is{" "}
                   <span className="font-mono">0.00</span> — a problem the model already aces, or
                   is hopeless on, teaches it nothing. Learning lives where the group disagrees.
