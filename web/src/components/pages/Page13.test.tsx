@@ -15,10 +15,19 @@ describe("Page 13 (frontier reasoners I)", () => {
     const lede = screen
       .getByText(/how much of the score did the training buy, and how much did the thinking\?/)
       .closest("p")!;
-    expect(lede.textContent).toMatch(/Act 2's toolbox, which spends once the question lands/);
-    expect(lede.textContent).toMatch(/page 12's loop, which spends long before it does/);
-    expect(lede.textContent).toMatch(/first commercial model to turn both dials at once/);
+    expect(lede.textContent).toMatch(/spent at answer time/);
+    expect(lede.textContent).toMatch(/already sunk into the weights/);
+    expect(lede.textContent).toMatch(/first commercial model to turn both dials/);
+    // Act 3 started on page 12, so the lede may not stage this page as its
+    // opening (the seam is 11|12, see pages.ts).
+    expect(lede.textContent).not.toMatch(/Act 2 ended/);
     expect(lede.textContent).toMatch(/kept the recipe/);
+    // The seam must rhyme with page 12's closing block, not restate it: page 12
+    // owns "two ways to buy reasoning / after the question lands / long before
+    // the question exists", and the lede reaches the same pair in its own words.
+    expect(lede.textContent).not.toMatch(/two ways to buy reasoning/);
+    expect(lede.textContent).not.toMatch(/the question lands/);
+    expect(lede.textContent).not.toMatch(/long before/);
   });
 
   it("prints NO o1 algorithm: the strip is the whole of what was confirmed", () => {

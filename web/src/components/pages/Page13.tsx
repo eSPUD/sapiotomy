@@ -10,13 +10,27 @@
  *
  * The lede picks up page 12's closing block, which names the two ways to buy
  * reasoning (Act 2's toolbox spends once the question lands; page 12's loop
- * spends long before it does) and hands over. The lede names the same pair
- * before saying o1 turns both dials at once, so section 2's two compute axes
- * land as the reader's own question answered rather than a new frame. Two
- * phrasings are banned here: "everything so far bolted reasoning on from
- * outside" (page 12 already trained it in, so it reads as a skipped page) and
- * any claim that this page opens Act 3 — the seam is 11|12, so Act 3 started
- * on page 12 and this is its second page. See pages.ts for why.
+ * spends long before it does) and hands over. The lede reaches the same pair
+ * before saying o1 turns both dials, so section 2's two compute axes land as
+ * the reader's own question answered rather than a new frame. Two claims are
+ * banned here: "everything so far bolted reasoning on from outside" (page 12
+ * already trained it in, so it reads as a skipped page) and anything implying
+ * this page opens Act 3 — the seam is 11|12, so Act 3 started on page 12 and
+ * this is its second page. See pages.ts for why.
+ *
+ * The seam must RHYME, not repeat (review). An earlier lede reached the pair
+ * in page 12's own words — "two ways to buy reasoning", "spend once the
+ * question lands", "spend long before it does" — which put ~20 words of
+ * near-verbatim overlap on either side of a page turn, so the reader re-read a
+ * sentence instead of recognising a shape. The structure is what carries the
+ * seam (two modes, each with its page pointer, then o1 doing both, then the
+ * two axes); the wording is deliberately this page's own. Page 12 owns the
+ * when ("after the question lands" / "long before the question exists"); this
+ * lede owns the where ("spent at answer time" / "already sunk into the
+ * weights"), which also sets up section 2's axes more directly, since one axis
+ * belongs to each place. Page13.test.tsx pins the divergence with negative
+ * assertions, so a later tightening pass cannot drift back into page 12's
+ * phrasing.
  *
  * Section 1 is the loop STRIP and nothing else. It used to also print a
  * six-line reconstruction of the o1 recipe, badged "rumored recipe"; that was
@@ -468,10 +482,10 @@ export function Page13() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        You now hold two ways to buy reasoning: Act 2&apos;s toolbox, which spends once the
-        question lands, and page 12&apos;s loop, which spends long before it does.{" "}
-        <strong className="text-ink">o1</strong> is the first commercial model to turn both dials
-        at once, and it kept the recipe. Its signature is{" "}
+        By page 12 the compute had split in two: the kind spent at answer time (pages 5 to 11:
+        votes, judges, search) and the kind already sunk into the weights (page 12: the reasoning
+        trained in). <strong className="text-ink">o1</strong> is the first commercial model to
+        turn both dials, and it kept the recipe. Its signature is{" "}
         <strong className="text-ink">a curve with two compute axes</strong>: how much of the score
         did the training buy, and how much did the thinking?
       </p>

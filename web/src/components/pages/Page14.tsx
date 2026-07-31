@@ -2,31 +2,90 @@
 
 /**
  * Page 14, "Frontier Reasoners II: DeepSeek-R1, GRPO, and the 'Aha Moment'" —
- * the open-weight answer to the closed frontier. Page 13 closed on a promise
- * (weights, training curve, visible chain); this page cashes all three in.
+ * the open-weight answer to the closed frontier. Page 13 closed with four
+ * questions it could not answer ("The questions o1 cannot answer") and a
+ * handoff promising four deliverables: the algorithm, a readable chain, a
+ * training curve showing where the extra thinking comes from, and the
+ * distills. This page cashes all four in.
  * The page's one idea: reward ONLY verifiable right answers and the pausing /
  * second-guessing / self-correcting emerges on its own — nobody writes it in.
+ *
+ * The lede answers rather than restates. Page 13 now builds the demand
+ * itself, so the intro must not re-erect the frame (an earlier draft opened
+ * "page 13 priced the exchange, then hid the machinery", which duplicated
+ * page 13's own section 4). It names the four questions, then anchors the
+ * hook: "backtracking" is the model allocating its own test-time compute, so
+ * the question reads as a scaling one and not merely an emergence one. The
+ * four do not map one-to-one onto this page's three sections, so the page
+ * never promises "answered in order" — the sections answer without
+ * announcing. Q1/Q2/Q3 land in section 2, Q4 in section 3; section 1 is the
+ * handoff's separate "algorithm in full".
+ *
+ * The page SHOWS what settles the four; it never recaps them as answers.
+ * A closing block that restated each question with its answer was built and
+ * cut on review — it read as a quiz key and did the reader's thinking, which
+ * is the same academic-paper reflex page 13 rejected when its own ledger went.
+ * Do not reintroduce it; Page14.test.tsx guards against it. What carries each
+ * question is the thing the reader drives: the scrubber grows a loop (what ten
+ * times the thinking is spent on), the skeleton stays ONE chain rather than
+ * four parallel ones (what the dial buys), the dot plot puts a 1.5B dot past a
+ * closed model's rule (whether the law needs frontier scale). The lede names
+ * the four so the reader knows what to watch for; exactly one clause later
+ * ("the distinction page 13 could only assert") ties a figure back. One
+ * thread is a thread, several are a quiz.
+ *
+ * The narration question is the one with nothing to drive, so it is argued in
+ * prose under the skeleton, where the chain is in front of the reader. The
+ * argument is structural, not a measurement: in R1-Zero the chain IS the
+ * sampled object that training pushed on, so there was never a separate step
+ * in which a description could be written beside the real work. Deliberately
+ * not reached for: page 18's faithfulness question (whether the chain is an
+ * HONEST account is a different claim from whether it is load-bearing).
+ *
+ * Act 2 callbacks are held to two, and both carry an argument: page 7 at
+ * GRPO's line 2, page 10 at the aha loop. Page 13's header records the review
+ * instruction "lets not cite everything like page 6, page 7…", so decorative
+ * back-references are not to be added here, and there is deliberately NO test
+ * asserting a count of page numbers.
  *
  * Step 1 is the recipe, GRPO, abstracted honestly: five lines of annotated
  * pseudocode (sample a group, score with a rule, advantage = distance from
  * the group's own mean) instead of the clipped-surrogate objective. Below
- * it, line 2 of that pseudocode is DRAWN: four answers to page 1's 17 × 24
+ * it, line 2 of that pseudocode is DRAWN: four answers to page 4's 350 × 638
  * (the model samples stochastically — that is where the group comes from;
  * each wrong answer is a named arithmetic slip, not an invented number), as
  * dots at reward 1/0 with the group mean as a dashed rule and each push as
  * an arrow from the rule to the dot. One dial sets how many of the other
- * three match sample 1's fixed 408; as luck rises the rule chases the
+ * three match sample 1's fixed 223,300; as luck rises the rule chases the
  * crowd, the same right answer's arrow shrinks to nothing, the lone
  * dissenter's stretches (rarity cuts both ways), and a uniform group leaves
  * an arrowless picture — nothing to teach. No critic network anywhere: that
  * is what made RL at this scale affordable, and the copy says so against
  * PPO.
+ * Between the listing and the PPO paragraph sits the section's deck bridge
+ * (lineage before cost): line 2 is page 7's parallel sampling moved across
+ * the train/test line. Page 7 paid for many chains at answer time and threw
+ * them away after the vote; GRPO runs the same sampling in training and keeps
+ * what the winners did in the weights. The claim stops there on purpose —
+ * NOT "tomorrow's single sample looks like today's best-of-four", because
+ * GRPO is a policy gradient with a group baseline, not best-of-N
+ * distillation. Note this listing is now the deck's ONLY training algorithm:
+ * page 13's rumored o1 recipe was cut on review 2026-07-30 precisely so that
+ * a checkable algorithm never shares a grammar with a hypothesized one, and
+ * page 13's section 1 points here for it. Keep this listing honest and keep
+ * it printed.
  *
  * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining),
  * both variables on a dual y-axis: AIME pass@1 (left, 15.6 → 71.0) and
  * average response length (right, ~1k → ~9k tokens). Neither curve is a
  * schedule — no term in the reward mentions length (the chart says so in an
  * annotation); the model buys itself thinking time because re-checking pays.
+ * The prose names the right axis as page 11's x axis (test-time compute)
+ * with nobody's hand on the dial: the model finds the scaling law itself and
+ * walks up it. It also answers page 13's first open question outright, which
+ * is the answer no closed model could supply: this is ONE chain allowed to
+ * run longer, not many chains sampled and voted behind an API — the
+ * distinction page 13's section 2 had to assert and could not prove.
  * Below the chart, the trace is shown as a SHAPE, not text: a skeleton of
  * forward steps early and mid, and past the aha step an interrupt node with
  * a loop back to the trace's own first line and a second, re-deriving pass.
@@ -35,6 +94,20 @@
  * made of. The paper places the behaviour at "an intermediate version", so
  * where the aha lands on the slider is an illustrative placement — said
  * under the skeleton and again in the footer.
+ *
+ * The interrupt has a stated REASON (review: it read as the trace hiccupping).
+ * Page 10's machinery is branch, SCORE, backtrack; the skeleton drew the
+ * branch and the backtrack and no score, so the fourth block of the first
+ * pass is now outlined as the step the trace doubts, and STAGE_NOTE.aha names
+ * the trigger. Two constraints hold this in place:
+ *   - It is DOUBT, never a found mistake. R1's traces re-evaluate rather than
+ *     locate an error, and "found a mistake" would contradict section 1's
+ *     reward (`rᵢ ← 1 if answerᵢ is right, else 0`, outcome only): nothing
+ *     ever scored a step, so nothing could have told the model which was bad.
+ *     That is the better story anyway, and it pays off page 9 — pure outcome
+ *     reward grew a step-level habit nobody supervised.
+ *   - The marked block takes the COMPUTE hue, dashed, never the wrong hue.
+ *     Wrong-hue asserts a located error and would undo the above.
  *
  * Step 3 is the give-away, reframed as its actual thesis: reasoning
  * transfers as data. ~800K traces, plain SFT, no RL and no reward — page
@@ -76,14 +149,27 @@ const AHA_STEP = 5000;
 /** Page 14's references, numbered in order of first appearance. */
 const REF = { r1: 1, grpo: 2 } as const;
 
-/** Page 1's multiplication. Sample 1 always gets it right; the other three
-    slots have fixed wrong answers so the dial is deterministic — and each
-    wrong answer is a real arithmetic slip, not an invented number. */
-const RIGHT_ANSWER = "408";
+/*
+ * Page 4's multiplication, not page 1's. The figure's own punchline (a uniform
+ * group teaches nothing) rules out an easy problem: 17 × 24 is exactly what a
+ * 671B model already aces, so using it as the example of a PRODUCTIVE learning
+ * group contradicted the caption three lines below. Page 4 sets the precedent
+ * for the fix — it recalls page 1's 17 × 24 and escalates to 350 × 638 — and
+ * the escalation earns a second callback besides: page 4 walked three human
+ * roads to 223,300, and this figure watches a model sample four.
+ *
+ * Sample 1 always gets it right; the other three slots have fixed wrong
+ * answers so the dial is deterministic, and each is a real arithmetic slip,
+ * not an invented number:
+ *   350 × 628 = 219,800 (one digit misread)
+ *    35 × 638 =  22,330 (a dropped zero)
+ *   210,000 + 13,300 written as 213,300 (the partials mis-added)
+ */
+const RIGHT_ANSWER = "223,300";
 const OTHER_WRONGS = [
-  { v: "425", slip: "did 17 × 25" },
-  { v: "384", slip: "did 16 × 24" },
-  { v: "348", slip: "dropped the carry" },
+  { v: "219,800", slip: "read 638 as 628" },
+  { v: "22,330", slip: "dropped a zero" },
+  { v: "213,300", slip: "mis-added the partials" },
 ];
 
 /** The GRPO recipe as five annotated lines — the honest abstraction of the
@@ -107,7 +193,7 @@ const STAGE_CHIP: Record<Stage, string> = {
 const STAGE_NOTE: Record<Stage, string> = {
   early: "A few steps forward, an answer, stop. Nothing looks back.",
   mid: "Longer now, more algebra per attempt, but still strictly forward: whatever was written first, stands.",
-  aha: "The trace interrupts itself, loops back to its own first line, and re-derives. Nobody wrote that in: re-checking finds more right answers, and right answers are all the reward pays. The extra tokens on the right axis are these loops.",
+  aha: "Four steps in, the trace stops, doubts what it has just written, and goes back to its own first line to derive it again. Nothing scored those steps: the reward only sees the final answer, so nobody told the model that its last step was shaky. It learned to suspect itself anyway, because re-checking lands more right answers and right answers are all the reward pays. Page 10's branch, score, backtrack, with the harness deleted and the scoring moved inside the chain. The extra tokens on the right axis are these loops.",
 };
 
 interface Distill {
@@ -120,7 +206,7 @@ const DISTILLS: Distill[] = [
   { size: 1.5, label: "Qwen-1.5B", family: "qwen", note: "beats GPT-4o on AIME, from a model that fits on a phone" },
   { size: 7, label: "Qwen-7B", family: "qwen", note: "most of the way to o1-mini, at laptop scale" },
   { size: 8, label: "Llama-8B", family: "llama", note: "a Llama base instead of Qwen: the same traces teach a different family" },
-  { size: 14, label: "Qwen-14B", family: "qwen", note: "beats QwQ-32B-Preview, the leading open reasoning model when R1 shipped, at less than half its size" },
+  { size: 14, label: "Qwen-14B", family: "qwen", note: "clears the best open reasoning model that existed the week before, at under half its size" },
   { size: 32, label: "Qwen-32B", family: "qwen", note: "within seven points of the 671B teacher" },
   { size: 70, label: "Llama-70B", family: "llama", note: "bigger is not automatically better: the 32B Qwen edges it" },
 ];
@@ -147,17 +233,24 @@ const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)
  * rule reaches the dots and every arrow vanishes.
  */
 function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number }) {
-  const width = 720;
-  const height = 240;
-  const margin = { top: 18, right: 100, bottom: 48, left: 64 };
+  /*
+   * The viewBox is sized close to the column it renders into (~615px at the
+   * deck's desktop width). ChartFrame scales to width="100%", so a viewBox
+   * much wider than its container shrinks every label with it — at 720 the
+   * 9px slip captions rendered near 7px and the figure read as unreadable.
+   */
+  const width = 620;
+  const height = 264;
+  /* right margin holds "group mean · 0.50" at 11px, which needs ~100px clear */
+  const margin = { top: 18, right: 106, bottom: 56, left: 62 };
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
   const yOf = (r: number) => 12 + (1 - r) * (innerH - 24);
   const colX = (i: number) => (innerW * (i + 0.5)) / 4;
-  const dotR = 6;
+  const dotR = 7;
 
   const k = rewards.slice(1).filter((r) => r === 1).length;
-  const title = `Line 2 of the recipe, drawn: four answers to 17 times 24 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 408, correct. The wrong answers are real slips: 425 from computing 17 times 25, 384 from computing 16 times 24, 348 from dropping a carry. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
+  const title = `Line 2 of the recipe, drawn: four answers to 350 times 638 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 223,300, correct. The wrong answers are real slips: 219,800 from reading 638 as 628, 22,330 from dropping a zero, 213,300 from mis-adding the partials. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
     k === 3 ? " The rule sits on the dots and every arrow has vanished: a uniform group teaches nothing." : ""
   }`;
 
@@ -167,7 +260,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
       {[1, 0].map((t) => (
         <g key={t}>
           <line x1={0} x2={innerW} y1={yOf(t)} y2={yOf(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[11px]">
             reward {t}
           </text>
         </g>
@@ -183,7 +276,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
         strokeWidth={1}
         strokeDasharray="4 3"
       />
-      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
+      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[11px] font-semibold">
         group mean · {mean.toFixed(2)}
       </text>
 
@@ -212,7 +305,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
                   dy="0.32em"
                   textAnchor="start"
                   stroke="none"
-                  className={`font-mono text-[10px] font-semibold ${up ? "fill-correct" : "fill-wrong"}`}
+                  className={`font-mono text-[11px] font-semibold ${up ? "fill-correct" : "fill-wrong"}`}
                 >
                   {fmtPush(adv)}
                 </text>
@@ -228,17 +321,17 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
               className={`${right ? "fill-correct" : "fill-wrong"} stroke-canvas`}
               strokeWidth={1.5}
             />
-            <text x={px} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[9px] uppercase tracking-wide">
+            <text x={px} y={innerH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] uppercase tracking-wide">
               sample {i + 1}
             </text>
-            <text x={px} y={innerH + 27} textAnchor="middle" className="fill-ink font-mono text-[11px] font-semibold">
+            <text x={px} y={innerH + 31} textAnchor="middle" className="fill-ink font-mono text-[13px] font-semibold">
               {right ? RIGHT_ANSWER : wrong.v}
             </text>
             <text
               x={px}
-              y={innerH + 39}
+              y={innerH + 45}
               textAnchor="middle"
-              className={i === 0 ? "fill-compute text-[9px] font-semibold" : "fill-ink-muted text-[9px]"}
+              className={i === 0 ? "fill-compute text-[10px] font-semibold" : "fill-ink-muted text-[10px]"}
             >
               {i === 0 ? "watch this one" : right ? "" : wrong.slip}
             </text>
@@ -483,7 +576,7 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
       ? "Trace skeleton, early in training: three steps forward, then an answer. Nothing looks back. Schematic, structure only, no text."
       : stage === "mid"
         ? "Trace skeleton, mid training: six steps forward, then an answer. Longer, still strictly forward. Schematic, structure only, no text."
-        : "Trace skeleton after the aha: four steps forward, then the trace interrupts itself and loops back to its own first line; a second pass of five dashed steps re-derives the solution and ends in an answer. Schematic, structure only, no text.";
+        : "Trace skeleton after the aha: four steps forward, the last of them outlined as the step the trace doubts, then the trace interrupts itself and loops back to its own first line; a second pass of five dashed steps re-derives the solution and ends in an answer. Schematic, structure only, no text.";
 
   const height = stage === "aha" ? 140 : 52;
 
@@ -509,6 +602,24 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
         <g>
           {/* first pass: four steps, then the interrupt */}
           <SkeletonRow y={22} count={4} />
+          {/*
+           * The step the trace is about to doubt, marked so the interrupt has a
+           * visible reason. Compute hue, dashed: attention, not error. It must
+           * never take the wrong hue — nothing ever scored this step (the reward
+           * sees only the final answer), so asserting a located mistake here
+           * would contradict the outcome-only reward in section 1.
+           */}
+          <rect
+            x={skX(3)}
+            y={22}
+            width={SK_BLOCK_W}
+            height={SK_BLOCK_H}
+            rx={3}
+            fill="none"
+            className="stroke-compute"
+            strokeWidth={1.5}
+            strokeDasharray="3 2"
+          />
           <line
             x1={skX(3) + SK_BLOCK_W + 2}
             x2={skX(4) - 5}
@@ -689,7 +800,7 @@ export function Page14() {
 
   const [step, setStep] = useState(0);
   const [pickedSize, setPickedSize] = useState(14);
-  /* — step 1: how many of the OTHER three samples also get 408 — */
+  /* — step 1: how many of the OTHER three samples also get 223,300 — */
   const [luck, setLuck] = useState(1);
 
   const rewards: number[] = [1, ...OTHER_WRONGS.map((_, i) => (i < luck ? 1 : 0))];
@@ -730,12 +841,13 @@ export function Page14() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        o1 proved RL-trained reasoning works, and kept both the recipe and the chain hidden. In
-        January 2025 DeepSeek published everything o1 withheld: the weights, the training curve,
-        and the chain itself, visible token by token, trained with{" "}
-        <strong className="text-ink">no worked examples at all</strong>. For the first time anyone
-        could watch reasoning emerge rather than take a lab&apos;s word for it. So:{" "}
-        <strong className="text-ink">where does the backtracking come from?</strong>
+        Page 13 closed with four questions about what sits behind the thinking dial, and no way to
+        answer any of them from outside. In January 2025 DeepSeek published all of it: the
+        algorithm, the weights, the training curve, and the chain itself, visible token by token,
+        trained with <strong className="text-ink">no worked examples at all</strong>. So the
+        questions become answerable, and the first thing the answers show is a model that taught
+        itself to spend test-time compute nobody told it to spend.{" "}
+        <strong className="text-ink">Where does the backtracking come from?</strong>
         <Cite n={REF.r1} />
       </p>
 
@@ -769,27 +881,51 @@ export function Page14() {
             </div>
 
             <p className="text-ink">
+              Line 2 should look familiar. <strong>Page 7 sampled many chains and picked among
+              them at answer time</strong>, then threw every sample away once the vote was
+              counted. GRPO runs the same sampling during training and keeps what the winners did
+              in the weights. That is page 13&apos;s exchange seen from the inside: sampling paid
+              for once, at training time, instead of on every question.
+            </p>
+
+            <p className="text-ink">
               PPO, the standard alternative, learns its baseline from a second &ldquo;critic&rdquo;
               network about as large as the policy itself. GRPO reads the baseline off the
               group&apos;s own statistics instead. At 671B parameters, deleting the critic is not
               an implementation detail: <strong>it is what made RL at this scale affordable</strong>.
             </p>
 
-            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
+            {/*
+             * The section's central figure, at full card width in page 11's
+             * grammar: figure, fine-print line, dial beneath. It used to sit
+             * inside a nested dashed card, whose padding stacked on the
+             * section card's and squeezed the chart into a column narrow
+             * enough to shrink every label past reading (review).
+             */}
+            <figure className="m-0 flex flex-col gap-2 border-t border-dashed border-grid pt-4">
               <p className="text-sm text-ink">
                 <span className="font-mono text-ink-muted">problem → </span>
-                <span className="font-mono font-semibold text-ink">17 × 24 = ?</span>
+                <span className="font-mono font-semibold text-ink">350 × 638 = ?</span>
                 <span className="ml-2 text-xs text-ink-muted">
-                  the rule checks one thing: does the answer equal 408?
+                  the rule checks one thing: does the answer equal 223,300?
                 </span>
               </p>
               <p className="text-sm text-ink-muted">
-                Ask the model the same problem four times and it answers stochastically — that is
-                the group. Each wrong answer is a real slip: 17 × 25, 16 × 24, a dropped carry.
+                Page 4&apos;s multiplication, now with a model doing it. Ask four times and the
+                answers differ: that is the group. Each wrong one is a real slip, not an invented
+                number.
               </p>
+              <GroupBaselineChart rewards={rewards} mean={mean} />
+              <figcaption className="text-xs text-ink-muted">
+                each sample&apos;s push is its distance from the dashed rule, its reward minus the
+                group mean (GRPO then divides by the group&apos;s spread)
+              </figcaption>
+            </figure>
+
+            <div className="flex flex-col gap-3">
               <p className="text-sm font-semibold text-ink">
-                Sample 1 always answers 408. Drag the dial: the group&apos;s luck changes, sample
-                1&apos;s answer never does.
+                Sample 1 always answers 223,300. Drag the dial: the group&apos;s luck changes,
+                sample 1&apos;s answer never does.
               </p>
               <Slider
                 label="of the other three samples, how many are also right"
@@ -800,13 +936,8 @@ export function Page14() {
                 value={luck}
                 onChange={setLuckAnd}
               />
-              <GroupBaselineChart rewards={rewards} mean={mean} />
-              <p className="text-sm text-ink-muted">
-                each sample&apos;s push is its distance from the dashed rule — its reward minus the
-                group mean (GRPO then divides by the group&apos;s spread)
-              </p>
               {uniform ? (
-                <p className="rounded border-l-4 border-compute bg-surface p-2 text-sm text-ink">
+                <p className="rounded border-l-4 border-compute bg-surface-raised p-2 text-sm text-ink">
                   The limit of that trend: everyone scored the same, so every push is{" "}
                   <span className="font-mono">0.00</span> — a problem the model already aces, or
                   is hopeless on, teaches it nothing. Learning lives where the group disagrees.
@@ -841,10 +972,14 @@ export function Page14() {
             <p className="text-ink">
               Nothing in the recipe mentions reflection, and nothing in the reward mentions length.
               Watch both curves anyway: accuracy climbs and flattens while average response length
-              grows to nine times its starting point. Length is not a schedule anyone set — longer,
+              grows to nine times its starting point. Length is not a schedule anyone set: longer,
               re-checking traces win more reward, so the model{" "}
-              <strong>buys itself more thinking time</strong>. The skeleton below shows what the
-              extra tokens are made of.
+              <strong>buys itself more thinking time</strong>. Read the right axis as page
+              11&apos;s x axis, test-time compute, with nobody&apos;s hand on the dial: the model
+              finds the scaling law by itself and walks up it. And it is{" "}
+              <strong>one chain allowed to run longer</strong>, not many chains sampled and voted
+              on behind an API, which is the distinction page 13 could only assert. The skeleton
+              below shows what the extra tokens are made of.
             </p>
 
             <div className="flex flex-col gap-4">
@@ -897,6 +1032,16 @@ export function Page14() {
                 {STAGE_NOTE[stage]}
               </p>
             </div>
+            <p className="text-ink">
+              Notice what the loops rule out. A chain nobody can read might be a running commentary
+              written beside the real work, and from outside there is no way to tell.{" "}
+              <strong>
+                These tokens cannot be that: the chain is what the model sampled and what training
+                pushed on
+              </strong>
+              , and no separate step ever wrote a description of anything. Re-derivation is not
+              narration, and the score climbs as the loops arrive.
+            </p>
             <p className="text-xs text-ink-muted">
               the skeleton abstracts the trace in Table 3 of DeepSeek-AI 2025, where R1-Zero
               interrupts a solution mid-stream, flags the moment, and restarts from its own first
@@ -991,11 +1136,6 @@ export function Page14() {
           </div>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
-            DeepSeek-AI 2025, Tables 4–5. Distilled weights released under the MIT license.
-          </RefItem>
-        </Note>
       </div>
 
 
