@@ -102,25 +102,16 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(screen.getByText(/four questions about what sits behind the thinking dial/)).toBeInTheDocument();
   });
 
-  it("settles all four of page 13's open questions, in its order", () => {
+  it("shows the reader what settles page 13's questions, never recaps them as answers", () => {
     render(<Page14 />);
-    // 1: what the thinking dial buys.
-    expect(screen.getByText(/one chain, allowed to run longer/)).toBeInTheDocument();
-    // 2: whether the tokens do the work or describe it.
-    expect(screen.getByText(/they work\. The chain is what training sampled and pushed on/)).toBeInTheDocument();
-    // 3: what ten times the thinking is spent on.
-    expect(screen.getByText(/it doubts itself and derives the answer again/)).toBeInTheDocument();
-    // 4: whether the law needs frontier scale.
-    expect(screen.getByText(/survives being poured into 1\.5B parameters you can download/)).toBeInTheDocument();
-    expect(screen.getByText(/The four questions o1 could not answer/)).toBeInTheDocument();
-  });
-
-  it("answers the narration question in section 2, where the chain is shown", () => {
-    render(<Page14 />);
-    // The load-bearing claim: the chain is the reinforced object, so it cannot
-    // be a commentary written beside the real work.
-    expect(screen.getByText(/it is what the model sampled and what training pushed on/)).toBeInTheDocument();
-    expect(screen.getByText(/They are second passes, and the score climbs with them/)).toBeInTheDocument();
+    // The chain is the reinforced object, so it cannot be a commentary written
+    // beside the real work. Argument in the flow of section 2, not a Q&A entry.
+    expect(screen.getByText(/the chain is what the model sampled and what training pushed on/)).toBeInTheDocument();
+    expect(screen.getByText(/Re-derivation is not narration/)).toBeInTheDocument();
+    // Guard: page 13's questions are answered by the figures the reader drives,
+    // so the page must never grow a recap block that hands the answers over.
+    expect(screen.queryByText(/The four questions o1 could not answer/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^\s*(What|Whether) the (thinking|model|law)/)).not.toBeInTheDocument();
   });
 
   it("carries each reference exactly once, beside its first use", () => {

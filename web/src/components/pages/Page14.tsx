@@ -21,22 +21,26 @@
  * announcing. Q1/Q2/Q3 land in section 2, Q4 in section 3; section 1 is the
  * handoff's separate "algorithm in full".
  *
- * SETTLED (end of section 3) is where the reader can see the loop shut: the
- * four questions in page 13's order, answers only. Answering without
- * announcing is right inside a section and not enough across a whole page —
- * Q2 in particular was left entirely implicit until review. The block states
- * answers the sections earned and never narrates the page's own
- * contributions, which is the academic-paper reflex page 13 rejected when its
- * "what this page claimed / what backs it" ledger was cut.
+ * The page SHOWS what settles the four; it never recaps them as answers.
+ * A closing block that restated each question with its answer was built and
+ * cut on review — it read as a quiz key and did the reader's thinking, which
+ * is the same academic-paper reflex page 13 rejected when its own ledger went.
+ * Do not reintroduce it; Page14.test.tsx guards against it. What carries each
+ * question is the thing the reader drives: the scrubber grows a loop (what ten
+ * times the thinking is spent on), the skeleton stays ONE chain rather than
+ * four parallel ones (what the dial buys), the dot plot puts a 1.5B dot past a
+ * closed model's rule (whether the law needs frontier scale). The lede names
+ * the four so the reader knows what to watch for; exactly one clause later
+ * ("the distinction page 13 could only assert") ties a figure back. One
+ * thread is a thread, several are a quiz.
  *
- * Q2 ("are the thinking tokens doing the work, or describing it?") is
- * answered in section 2, under the skeleton, because that is the only place
- * the reader has the chain in front of them. The argument is structural, not
- * a measurement: in R1-Zero the chain IS the sampled object that training
- * pushed on, so there was never a separate step in which a description could
- * be written beside the real work. Deliberately not reached for: page 18's
- * faithfulness question (whether the chain is an HONEST account is a
- * different claim from whether it is load-bearing, and page 18 owns it).
+ * The narration question is the one with nothing to drive, so it is argued in
+ * prose under the skeleton, where the chain is in front of the reader. The
+ * argument is structural, not a measurement: in R1-Zero the chain IS the
+ * sampled object that training pushed on, so there was never a separate step
+ * in which a description could be written beside the real work. Deliberately
+ * not reached for: page 18's faithfulness question (whether the chain is an
+ * HONEST account is a different claim from whether it is load-bearing).
  *
  * Act 2 callbacks are held to two, and both carry an argument: page 7 at
  * GRPO's line 2, page 10 at the aha loop. Page 13's header records the review
@@ -173,32 +177,6 @@ const PSEUDO: { code: string; note?: string }[] = [
   { code: "  rᵢ ← 1 if answerᵢ is right, else 0", note: "the reward is a program, not a second model" },
   { code: "  Aᵢ ← (rᵢ − mean(r)) / std(r)", note: "the group is its own baseline: no critic network" },
   { code: "  push toward answers with Aᵢ > 0, away from Aᵢ < 0", note: "plus a leash (KL) back to the reference model" },
-];
-
-/*
- * Page 13's four open questions, in its order, each compressed to the clause
- * that names it and the answer this page earned. Every answer is something a
- * section demonstrated, not a claim added here: the visible single chain
- * (section 2's length axis), the chain as the reinforced object (section 2's
- * closing paragraph), the aha loops (the skeleton), the distills (section 3).
- */
-const SETTLED: { q: string; a: string }[] = [
-  {
-    q: "What the thinking dial buys:",
-    a: "one chain, allowed to run longer. Not a hidden vote you were billed for.",
-  },
-  {
-    q: "Whether the thinking tokens work or narrate:",
-    a: "they work. The chain is what training sampled and pushed on, so there was nothing for a narration to be written beside.",
-  },
-  {
-    q: "What the model does with ten times the thinking:",
-    a: "it doubts itself and derives the answer again. The extra tokens are second passes.",
-  },
-  {
-    q: "Whether the law needs frontier scale:",
-    a: "no. It survives being poured into 1.5B parameters you can download.",
-  },
 ];
 
 type Stage = "early" | "mid" | "aha";
@@ -1051,15 +1029,14 @@ export function Page14() {
               </p>
             </div>
             <p className="text-ink">
-              Which settles the harder version of the question. From outside, a private chain could
-              always have been a running commentary written beside the real work, and you could
-              never check.{" "}
+              Notice what the loops rule out. A chain nobody can read might be a running commentary
+              written beside the real work, and from outside there is no way to tell.{" "}
               <strong>
-                Here the chain is the work: it is what the model sampled and what training pushed
-                on
+                These tokens cannot be that: the chain is what the model sampled and what training
+                pushed on
               </strong>
-              , and no separate step ever wrote a description of anything. That is also why the
-              tokens are not padding. They are second passes, and the score climbs with them.
+              , and no separate step ever wrote a description of anything. Re-derivation is not
+              narration, and the score climbs as the loops arrive.
             </p>
             <p className="text-xs text-ink-muted">
               the skeleton abstracts the trace in Table 3 of DeepSeek-AI 2025, where R1-Zero
@@ -1145,36 +1122,6 @@ export function Page14() {
               frontier product — by thinking longer at answer time: page 11&apos;s law, compressed
               into weights.
             </p>
-
-            {/*
-             * The arc page 13 opened, closed. Its section 4 asked four questions
-             * about what sits behind the thinking dial and promised this page
-             * answers them; the sections answer without announcing, so this
-             * block is where the reader can see the loop shut. Answers only, in
-             * page 13's order — it must stay reader-facing and never drift into
-             * a page narrating its own contributions, which is the reflex page
-             * 13 rejected when its own ledger was cut.
-             */}
-            <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                The four questions o1 could not answer
-              </p>
-              <ol className="flex flex-col gap-2.5">
-                {SETTLED.map((s, i) => (
-                  <li key={s.q} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
-                    <span
-                      className="w-4 select-none text-right font-code text-sm tabular-nums text-ink-muted"
-                      aria-hidden="true"
-                    >
-                      {i + 1}
-                    </span>
-                    <p className="min-w-0 text-sm text-ink-muted">
-                      {s.q} <strong className="text-ink">{s.a}</strong>
-                    </p>
-                  </li>
-                ))}
-              </ol>
-            </div>
 
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
               Two pages of frontier claims, and every one of them arrived as a benchmark score:
