@@ -360,8 +360,15 @@ These are the two properties most likely to be lost if not specified, so:
   than writing another one.
 - **Two run modes, chosen by one variable at the top.** `QUICK` runs a reduced grid (roughly 20
   items, 4 budgets, smallest model) and finishes on a laptop CPU in minutes. `FULL` runs the
-  grid in section 3. The notebook must produce a legible, correctly-shaped figure in `QUICK`
-  mode, because most readers will never run `FULL`.
+  grid in section 3.
+- **What `QUICK` guarantees, stated precisely.** It must produce every *aggregate* figure in a
+  legible and correctly-shaped form, because most readers will never run `FULL`. It does **not**
+  guarantee figures built from a *curated specimen*: finding a trace with a particular property
+  (page 5's default-misses-and-CoT-lands pair, page 9's broken-step-but-correct-answer) is
+  luck-dependent on a small grid with a small model. Specimen search must therefore degrade with
+  a flag rather than raise, and a flagged specimen must never be translated to a page. Failing
+  the whole run over a missing specimen would deny the reader the aggregates too, which are the
+  part `QUICK` exists to deliver.
 - Model size is a variable, not a constant, with a documented fallback ladder (4B, 1.7B, 0.6B)
   and a 4-bit option for small VRAM. State expected runtime per configuration.
 - No dependency on the book's package for anything model-specific. The ch03 grading functions

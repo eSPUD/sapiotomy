@@ -58,28 +58,43 @@ size claim.
 
 ## 2. Proposed Visual Layout / Diagrams
 
-### Figure 1 (step 1) — the lever
+### Figure 1 (step 1) — the lever, in three panels
 
-Two real completions, side by side, from one model at one setting.
+Three real completions on **one problem**, from one model at one setting. The page opens on the
+four-word diff and ends on the worked example, so it travels from *tell it* to *show it*, and
+figure 2 then explains why the second buys more.
 
 ```
-  Qwen3-4B · thinking off · greedy · same question both sides
+  Qwen3-4B · thinking off · greedy · one question, three prompts
 
-  ┌── prompt: the question ──────────┐  ┌── prompt: the question ──────────┐
-  │                                   │  │ + "Explain step by step."        │
-  │                                   │  │                                  │
-  │ [real blurt, 1 line]              │  │ [real chain, N lines]            │
-  │                                   │  │                                  │
-  │ ✗                                 │  │ ✓                                │
-  │ 9 tokens                          │  │ 180 tokens                       │
-  └───────────────────────────────────┘  └──────────────────────────────────┘
-            the only difference is the four words above
+  ┌── the default ──────────┐ ┌── + "Explain step ──────┐ ┌── worked example ───────┐
+  │                          │ │      by step."          │ │    prepended            │
+  │ [real blurt, 1 line]     │ │ [real chain, N steps]   │ │ [real chain, exemplar's │
+  │                          │ │                         │ │  shape]                 │
+  │ ✗   9 tokens             │ │ ✓   180 tokens          │ │ ✓   204 tokens          │
+  └──────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘
+        nothing added              four words added            an example added
 ```
+
+Every rung shares ch03's `render_prompt` stem; instruction rungs add text *after* it and
+exemplar rungs add *before* it. The notebook splits on that stem and emits `prompt_before` and
+`prompt_after` per panel, so the page has **one highlight rule for all three** rather than a
+per-rung special case.
 
 The interaction survives from the current page and is good: a switch, then ask, then walk the
-chain a line at a time. What changes is that both outputs are real and the switch now toggles
-**the prompt**, with the diff shown explicitly. Highlight the added words. The whole argument
-of the page is in that highlight.
+chain a step at a time. What changes is that all three outputs are real, and the switch now
+moves along **the prompt**, with the diff shown explicitly.
+
+**The third panel's caption is about shape, not correctness.** What a worked example
+demonstrably changes on one problem is the format the chain takes; that it also scores higher
+is figure 2's claim, made across the item set where it can actually be supported. Claiming more
+than shape here would outrun the run (section 6).
+
+**Step segmentation comes from the notebook, not from TypeScript.** Walking a chain a step at a
+time requires the trace divided into steps, which is a derivation; doing it during translation
+would put logic on the page that the cross-language agreement test cannot check. `derived.json`
+carries `steps` per panel, each with a contiguous token range covering every token, so the
+reveal animates real token boundaries and stops at step ends.
 
 **Second panel, optional, on the same figure: two models, same prompt.** Permitted and useful,
 with one strict rule. The comparison is about **whether a chain appears and what shape it
@@ -220,6 +235,9 @@ the notebook produces the numbers, and this section bounds the sentences they ca
 - The formulation that scores highest also writes the most tokens.
 - The worked examples in the few-shot prompts are the model's own verified-correct solutions
   to held-out problems.
+- On the specimen problem, prepending a worked example changes the **shape** of the chain. One
+  problem cannot support more than that, which is why the accuracy claim for exemplar rungs is
+  made by figure 2 across the item set and never by figure 1's third panel.
 
 **Not supported, and not to appear on the page:** anything about model size or emergence
 (section 1); any general claim about chain-of-thought beyond this model, dataset and
@@ -235,6 +253,14 @@ difficulty band; any number attributed to Wei et al. or Kojima et al. (section 4
   which means the exemplars are not a random sample of the model's correct work.
 - `forced_blurt` is one phrasing of "do not explain"; a different phrasing would move the
   floor.
+- Step segmentation is a rule (paragraphs, then lines, then sentences, with digit-free
+  fragments merged), not a model's judgement of where a reasoning step ends. It is visible in
+  the notebook and a reader can disagree with it.
+
+**Blocking gate on the specimen.** If `derived.json` reports `specimen_is_fallback: true`, the
+run found no problem where the default rung misses and zero-shot CoT lands, and figure 1's
+panels are illustrative only. That run must not be translated to the page. Figure 2's
+aggregates are unaffected by the fallback and remain valid.
 
 ---
 
@@ -244,6 +270,20 @@ difficulty band; any number attributed to Wei et al. or Kojima et al. (section 4
    notebook carries one checkpoint and no panel code, so figure 1 is single-model. The design
    in §2 stands if the panel is revived later — as its own cell, under the strict rule that
    the comparison is chain shape only, never correctness.
+
+**Resolved in review of the notebook draft:**
+
+- *Figure 1 leads with zero-shot CoT, but the page's registered concept is few-shot.* Resolved
+  by adding a **third panel**: the figure opens on the four-word diff and ends on the worked
+  example, so both mechanisms are present and the page arrives where its concept line says it
+  does. The third panel is a preference in the specimen sort, never a filter, so it costs the
+  search nothing.
+- *`derived.json` carried no step segmentation.* Resolved: segmentation is a notebook
+  derivation with a visible rule, emitted per panel with contiguous token ranges.
+- *`QUICK` could hard-fail on the specimen search.* Resolved: specimen search degrades with
+  `specimen_is_fallback` rather than raising, and `QUICK`'s eval grid went from 12 items to 24.
+  The pipeline standard in [page_6_refactor.md](page_6_refactor.md) §6 now states precisely what
+  `QUICK` does and does not guarantee.
 2. **Few-shot count.** Three exemplars is a guess. If the ladder shows one-shot and few-shot
    landing on top of each other, collapse them into a single rung and reclaim the space.
 3. **What if the bare rung already reasons?** Covered in section 3, but it changes the page's
