@@ -12,23 +12,7 @@ translated to JS, page renders committed logs with no inference at demonstration
 
 ---
 
-## 0. Two decisions that shape everything below
-
-### Citations move to prose only
-
-Currently the Wei cite sits in a margin note beside the step 1 demo, and a `CitationBadge`
-attaches to the chart. Both move into running prose. Attribution stays, in full, and the
-techniques are named where they came from; what goes is any cite adjacent to a figure.
-
-The reason this matters more than formatting: a cite next to a chart reads as *provenance for
-the chart*. When the chart is ours, that is misleading, and when the chart is theirs, the page
-is reporting rather than demonstrating. Prose can say "this technique comes from X" without
-implying the picture does.
-
-> **This reverses an existing deck convention** (cites beside charts) and it affects the pages
-> already specced. Pages 6, 7 and 8 each currently spec "one bare cite in the margin beside the
-> chart." **Open question 1** asks whether this is page 5 only or deck-wide; if deck-wide, those
-> three specs need a matching edit.
+## 0. The decision that shapes everything below
 
 ### The prompt is the lever, so the model must not be
 
@@ -180,16 +164,19 @@ a 2026 model and costs the page nothing. Decide from the pilot; do not paper ove
 
 ## 4. Text / Captioning Balance
 
-- **Lede:** two sentences, and the citation sentence lives here. Something in the shape of: the
-  technique of prompting for step-by-step work comes from Wei et al. and Kojima et al.; what
-  follows is that technique run on a model you can download. That single sentence discharges the
-  attribution obligation for the whole page.
+- **Lede:** two sentences. Something in the shape of: the technique of prompting for
+  step-by-step work is not ours; what follows is that technique run on a model you can download.
 - **Figure 1:** one caption naming the intervention and the constraint (only the prompt changed;
   the model never moved). The highlighted prompt diff does the rest.
 - **Figure 2:** one sentence on the ranking, and it should name the surprise if there is one.
   Do not describe the bars.
 - **Step 3:** one sentence, the handoff.
-- **Margin notes:** operating hints only. No cites anywhere in the margins on this page.
+- **Margin notes:** the deck's existing convention holds. Operating hints where a control needs
+  one, and bare cites beside the figure they back. Wei et al. sits beside figure 1 (few-shot
+  chain of thought) and Kojima et al. beside the zero-shot rung of figure 2, since those are the
+  figures whose *techniques* they originate. Cite the technique, not the measurement: the
+  numbers are ours, so no cite should carry a number or sit where it implies the data came from
+  a paper.
 - **Chips:** the "quoted from Wei et al. Fig. 1" chip is deleted along with the quotation. The
   "no live model" chip is replaced by a provenance chip naming model, mode, decoding, item set
   and date, with **thinking off** stated explicitly.
@@ -218,14 +205,10 @@ length; page 6 fixes the prompt and varies the length. Same model, same items, s
 
 ## Open questions for review
 
-1. **Is the prose-only citation rule page 5 only, or deck-wide?** If deck-wide, pages 6, 7 and 8
-   specs each need one edit, since all three currently place a bare cite in the margin beside a
-   figure. My recommendation: deck-wide, because the reasoning that motivates it here (a cite
-   beside our own chart implies the chart is theirs) applies identically to those pages.
-2. **Does the two-model panel survive?** It is permitted and it is interesting, but it is the
+1. **Does the two-model panel survive?** It is permitted and it is interesting, but it is the
    one element on the page that could be misread as a size claim. My recommendation: build it,
    caption it strictly about chain shape, and cut it if the caption cannot be written cleanly.
-3. **Few-shot count.** Three exemplars is a guess. If the ladder shows one-shot and few-shot
+2. **Few-shot count.** Three exemplars is a guess. If the ladder shows one-shot and few-shot
    landing on top of each other, collapse them into a single rung and reclaim the space.
-4. **What if the bare rung already reasons?** Covered in section 3, but it changes the page's
+3. **What if the bare rung already reasons?** Covered in section 3, but it changes the page's
    framing verb, so worth a decision rather than a default.
