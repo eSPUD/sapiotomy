@@ -1,0 +1,8 @@
+# Run outputs and fetched datasets. Promoting a run to a page means copying its
+# derived.json and manifest.json into web/data/ (pipeline step 4); traces.jsonl
+# is published as a download rather than committed. See README.md.
+out/
+data/
+
+.ipynb_checkpoints/
+.venv/

@@ -1,0 +1,18 @@
+# Notebook dependencies. See README.md.
+#
+# The generation loop is plain transformers so that checkpoints are swappable;
+# reasoning-from-scratch is here only for the ch03 grading harness and ch02's
+# get_device, both of which are model-agnostic.
+
+torch>=2.7,<2.11
+transformers>=4.51        # Qwen3 chat template with the enable_thinking flag
+accelerate>=0.30
+tokenizers>=0.21.2
+
+reasoning-from-scratch>=0.2.0   # ch02 get_device, ch03 grading harness
+sympy>=1.14.0                   # grade_answer's equivalence check
+requests>=2.31                  # load_math500_test fetches the dataset on first run
+
+matplotlib>=3.9
+jupyterlab>=4.4
+huggingface_hub>=0.24           # manifest records the model repo revision
