@@ -367,15 +367,23 @@ These are the two properties most likely to be lost if not specified, so:
 - No dependency on the book's package for anything model-specific. The ch03 grading functions
   are vendored or imported; the generation loop is plain transformers.
 
-**Beginner-readable**
+**Beginner-readable, which is not the same as verbose**
 
 - Narrative structure: markdown cell explains, code cell does, output shows. One idea per cell.
 - No helper module imports for the interesting parts. The truncate-and-force loop is the thing
   the reader came to see, and it should be visible in the notebook rather than behind a
   function call in another file.
-- Every parameter that matters gets a sentence on why it has that value.
-- The notebook's own narrative should track the page's three beats, so a reader moving from
-  page to notebook is not re-oriented.
+- **The notebook states decisions; the page's spec defends them.** A markdown cell gets one to
+  three sentences: what the next cell does where that is not obvious, plus any constraint a
+  re-deriver must not break, stated in one bold sentence and not argued. Rationale links to
+  the spec rather than restating it — a duplicated argument is a sync hazard, not an aid.
+- **Outputs carry the intuition.** Never narrate what the next cell's output will show; the
+  printed table, diff or figure makes the point, and prose that pre-empts it is cut.
+- A parameter whose value is a choice gets a short comment where it is defined, not an essay.
+- Page-editorial content — narrative beats, caption drafting, what the page may or may not
+  claim — lives in the page's spec, never in the notebook. Section names are plain (setup,
+  sweep, figures, artifacts): the notebook is the measurement, and the page's beats belong to
+  the page.
 
 ### The log format is the contract
 

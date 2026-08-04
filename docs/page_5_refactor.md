@@ -1,6 +1,7 @@
 # Page 5 — "How to Reason" refactor spec
 
-**Status:** spec only. Nothing here is implemented. Act 2's opening page.
+**Status:** notebook drafted (`notebooks/page_05_how_to_reason.ipynb`), pending approval; the
+page itself is unchanged. Act 2's opening page.
 
 **Implementation follows the notebook-first pipeline** in
 [page_6_refactor.md](page_6_refactor.md) section 6, which is canonical for every page resting on
@@ -39,7 +40,7 @@ is what it should stop being.
 
 **Revised narrative, three beats:**
 
-1. **One line of prompt, two behaviours.** Same model, same question, same decoding. Add six
+1. **One line of prompt, two behaviours.** Same model, same question, same decoding. Add four
    words and a chain appears. Real traces, both of them.
 2. **So what exactly do you say?** The prompt ladder, measured. Bare question, forced blurt,
    the magic phrase, one worked example, several. This is "how to reason" as an actual
@@ -72,7 +73,7 @@ Two real completions, side by side, from one model at one setting.
   │ ✗                                 │  │ ✓                                │
   │ 9 tokens                          │  │ 180 tokens                       │
   └───────────────────────────────────┘  └──────────────────────────────────┘
-            the only difference is the six words above
+            the only difference is the four words above
 ```
 
 The interaction survives from the current page and is good: a switch, then ask, then walk the
@@ -158,7 +159,9 @@ will be the binding constraint.
 asked a bare maths question, so the bare rung might not blurt cleanly and the gap between rungs
 1 and 3 could be small. If so, the forced-blurt rung carries figure 1 instead, and the page's
 framing shifts from *make it reason* to *let it reason*, which is a more accurate description of
-a 2026 model and costs the page nothing. Decide from the pilot; do not paper over it.
+a 2026 model and costs the page nothing. Decided from the run itself — the notebook measures the
+bare rung's share of items showing working and records the verdict in `derived.json`; do not
+paper over it.
 
 ---
 
@@ -203,11 +206,44 @@ length; page 6 fixes the prompt and varies the length. Same model, same items, s
 
 ---
 
+## 6. What the page is allowed to claim
+
+The claims contract for the translation step ([page_6_refactor.md](page_6_refactor.md) §6):
+the notebook produces the numbers, and this section bounds the sentences they can support.
+
+**Supported by the run:**
+
+- Adding "Explain step by step." changes what the model writes — one model, one setting, both
+  traces shown in full, re-derivable from the notebook.
+- The five formulations rank as `derived.json` reports, on MATH-500 levels 4 and 5, thinking
+  off throughout.
+- The formulation that scores highest also writes the most tokens.
+- The worked examples in the few-shot prompts are the model's own verified-correct solutions
+  to held-out problems.
+
+**Not supported, and not to appear on the page:** anything about model size or emergence
+(section 1); any general claim about chain-of-thought beyond this model, dataset and
+difficulty band; any number attributed to Wei et al. or Kojima et al. (section 4).
+
+**Limitations, stated rather than buried:**
+
+- *n* = 160 in `FULL`, so adjacent rungs within a couple of points are not resolvable, and
+  the caption must not rank rungs that overlap.
+- Greedy decoding diverges on a handful of items across hardware; re-deriving reproduces the
+  shape and the ranking, not every digit.
+- The exemplar harvest prefers the shortest correct held-out solutions — a legibility choice,
+  which means the exemplars are not a random sample of the model's correct work.
+- `forced_blurt` is one phrasing of "do not explain"; a different phrasing would move the
+  floor.
+
+---
+
 ## Open questions for review
 
-1. **Does the two-model panel survive?** It is permitted and it is interesting, but it is the
-   one element on the page that could be misread as a size claim. My recommendation: build it,
-   caption it strictly about chain shape, and cut it if the caption cannot be written cleanly.
+1. ~~Does the two-model panel survive?~~ **Resolved: not built in the notebook draft.** The
+   notebook carries one checkpoint and no panel code, so figure 1 is single-model. The design
+   in §2 stands if the panel is revived later — as its own cell, under the strict rule that
+   the comparison is chain shape only, never correctness.
 2. **Few-shot count.** Three exemplars is a guess. If the ladder shows one-shot and few-shot
    landing on top of each other, collapse them into a single rung and reclaim the space.
 3. **What if the bare rung already reasons?** Covered in section 3, but it changes the page's
