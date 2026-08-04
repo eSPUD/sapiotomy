@@ -2,6 +2,11 @@
 
 **Status:** spec only. Nothing here is implemented. Depends on page 6's sweep infrastructure.
 
+**Implementation follows the notebook-first pipeline** in
+[page_6_refactor.md](page_6_refactor.md) section 6. Note especially the artifact-size tier
+described there: this page's dump is the one that forces the split between bundled and
+downloadable logs.
+
 **What we take from `reasoning-from-scratch`:** the harness again (ch03 grading), plus ch04's
 `self_consistency_vote` as a reference for *what* to tally. Not its numbers, and not its
 model.

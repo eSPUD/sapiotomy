@@ -259,7 +259,8 @@ Storing the **full trace at every budget** rather than one long trace to slice m
 model cut at 128 tokens and forced to answer does not produce the first 128 tokens of its
 2,048-token trace, because the forced suffix changes what follows. Slicing one long trace
 would be a fabrication of exactly the kind this refactor exists to remove. The page ships the
-committed sweep and replays it; no live inference.
+committed sweep and replays it; no live inference. See section 6 for how the sweep is produced
+and how it reaches the page.
 
 **Cost estimate:** 7 budgets x ~160 items x 2 models, greedy, with mean output well under the
 cap at low budgets. Hours, not days, at bf16 on 16 GB. Re-runnable, which is the point.
@@ -319,6 +320,112 @@ why one voter is not enough.
 
 This bridge also sets up the page 7 refactor cleanly, because a self-consistency run at fixed
 total budget is exactly what ch04's `self_consistency_vote` measures.
+
+---
+
+## 6. Implementation plan
+
+**This section is canonical for the whole deck.** Every page whose figures rest on reasoning
+traces or empirical analysis follows this path: pages 5, 6, 7, 8 and 9 now, and pages 12, 13
+and 14 when they are specced. Page 6 is the reference implementation because it is first and
+simplest.
+
+### The pipeline
+
+| # | Step | Owner | Done when |
+|---|---|---|---|
+| 1 | Spec implemented as a Jupyter notebook | AI | the sweep runs end to end and writes logs |
+| 2 | Notebook refined: hardware-agnostic, beginner-readable | AI | it runs on a laptop CPU and on a 16 GB GPU without edits |
+| 3 | Notebook approved | human + AI | both sign off on correctness and readability |
+| 4 | Notebook translated to JS for the page | AI agent | the page renders from committed logs |
+| 5 | Post-translation edits: formatting, balance | AI | the page matches sections 2 and 4 above |
+| 6 | Implementation complete | | |
+
+**Why notebook-first rather than page-first.** The notebook is not scaffolding that gets thrown
+away; it is the artifact that makes the page's claims checkable. A reader who doubts figure 2
+can download one file and re-run it. That is the difference between a page that reports a result
+and a page that hands you the result and the means to reproduce it, and it is the concrete form
+of the re-derivability standard in section 1.
+
+Notebook lives at `notebooks/page_06_thinking_longer.ipynb`, with a download link on the page
+itself.
+
+### Step 2 in detail: hardware-agnostic and beginner-readable
+
+These are the two properties most likely to be lost if not specified, so:
+
+**Hardware-agnostic**
+
+- Device selection is automatic across CUDA, MPS and CPU. Reuse ch02's `get_device()` rather
+  than writing another one.
+- **Two run modes, chosen by one variable at the top.** `QUICK` runs a reduced grid (roughly 20
+  items, 4 budgets, smallest model) and finishes on a laptop CPU in minutes. `FULL` runs the
+  grid in section 3. The notebook must produce a legible, correctly-shaped figure in `QUICK`
+  mode, because most readers will never run `FULL`.
+- Model size is a variable, not a constant, with a documented fallback ladder (4B, 1.7B, 0.6B)
+  and a 4-bit option for small VRAM. State expected runtime per configuration.
+- No dependency on the book's package for anything model-specific. The ch03 grading functions
+  are vendored or imported; the generation loop is plain transformers.
+
+**Beginner-readable**
+
+- Narrative structure: markdown cell explains, code cell does, output shows. One idea per cell.
+- No helper module imports for the interesting parts. The truncate-and-force loop is the thing
+  the reader came to see, and it should be visible in the notebook rather than behind a
+  function call in another file.
+- Every parameter that matters gets a sentence on why it has that value.
+- The notebook's own narrative should track the page's three beats, so a reader moving from
+  page to notebook is not re-oriented.
+
+### The log format is the contract
+
+The notebook writes logs; the page reads them. Nothing else crosses the boundary, and **no
+inference runs at demonstration time.** The existing `NEXT_PUBLIC_LIVE_INFERENCE` and
+`LiveDemo` path is explicitly not used by this page.
+
+Two artifacts per run:
+
+1. **`traces.jsonl`** — one line per generation, schema as in section 3.
+2. **`derived.json`** — the aggregates the page actually plots: the accuracy-by-budget curve,
+   the per-problem flip points, token totals.
+
+**Log tokens, not just text.** For the animation to be honest, the trace must be stored as its
+token strings, not only as decoded text. Replaying a character-by-character typewriter effect
+would misrepresent generation on a page whose entire thesis is that *tokens* are the compute
+currency. Store `tokens: string[]` alongside `text`, and let figure 1's reveal step through
+real token boundaries.
+
+**Run manifest**, emitted with every run so "re-derivable" is checkable rather than asserted:
+model repo id and revision hash, tokenizer hash, dtype, device, torch version, seeds, item set
+hash, notebook git sha, timestamp, run mode.
+
+### Step 4 in detail: the translation, and how it is verified
+
+The AI agent reimplements the notebook's **derivation** logic in TypeScript, not its inference.
+Curve computation, flip-point extraction and bucketing all get TS equivalents so the page can be
+tested.
+
+**Cross-language agreement test.** The notebook's `derived.json` is committed. A TS test
+recomputes those same aggregates from `traces.jsonl` and asserts they match. This is the one
+place translation bugs hide, and it is cheap to close: if the JS curve and the Python curve
+disagree, the suite fails rather than the page quietly shipping a different result than the
+notebook produced.
+
+### Artifact size, which needs a decision before implementation
+
+Page 6's full logs are modest, roughly 2,000 traces at a few kilobytes each. **Page 7's are
+not:** the N sweep produces on the order of 20,000 traces per model, tens of megabytes, which
+does not belong in a web bundle.
+
+So, two tiers, applied uniformly from the start rather than retrofitted when page 7 hits the
+limit:
+
+- **Bundled with the page:** `derived.json`, plus the specific traces the page displays (figure
+  1's specimens, figure 3's clickable rows). Small.
+- **Published as a downloadable archive:** the complete `traces.jsonl`, linked from the page
+  next to the notebook link.
+
+The page therefore ships what it draws and links what it drew it from.
 
 ---
 
