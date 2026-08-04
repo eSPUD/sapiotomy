@@ -5,7 +5,10 @@
 # get_device, both of which are model-agnostic.
 
 torch>=2.7,<2.11
-transformers>=4.51        # Qwen3 chat template with the enable_thinking flag
+transformers>=4.56        # 4.51+ for the Qwen3 chat template's enable_thinking flag; 4.56+
+                          # because from_pretrained's dtype= argument was spelled torch_dtype=
+                          # before that, and older versions swallow the new name into config
+                          # kwargs and load the model in fp32 without saying so
 accelerate>=0.30
 tokenizers>=0.21.2
 
@@ -14,5 +17,8 @@ sympy>=1.14.0                   # grade_answer's equivalence check
 requests>=2.31                  # load_math500_test fetches the dataset on first run
 
 matplotlib>=3.9
+numpy>=1.26                     # page 6's flip-point strip is an image of a boolean matrix
 jupyterlab>=4.4
 huggingface_hub>=0.24           # manifest records the model repo revision
+
+# bitsandbytes>=0.43            # only for page 6's LOAD_IN_4BIT fallback on small VRAM

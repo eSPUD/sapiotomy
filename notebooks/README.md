@@ -35,6 +35,7 @@ The page ships what it draws and links what it drew it from.
 | Notebook | Page | Status |
 |---|---|---|
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | step 1 complete, awaiting a real run and step-3 approval |
+| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | step 1 complete, awaiting a real run and step-3 approval |
 
 ## Running one
 
@@ -58,6 +59,7 @@ Runs are resumable: delete `out/<page>/traces.jsonl` to start over.
 ```
 notebooks/
   page_05_how_to_reason.ipynb
+  page_06_thinking_longer.ipynb
   data/          # datasets fetched on first run (gitignored)
   out/
     page_05/
@@ -65,7 +67,15 @@ notebooks/
       derived.json     # the aggregates the page plots — bundled tier
       manifest.json    # model revision, hashes, versions, seed, date
       figure_*.png     # reference renders; the page redraws these in the browser
+    page_06/
+      …same four
 ```
+
+Pages 5 and 6 share one trace-bank schema, so a record from either is readable by the same code:
+page 5 varies the **prompt** at unlimited length and keys its records by `rung`, page 6 fixes the
+prompt and varies the **length**, keying by `budget`. Everything else — `problem_id`, `trace`,
+`tokens`, `truncated`, `extracted_answer`, `correct`, `tokens_generated` — is common, and pages 7
+through 9 extend the same shape.
 
 `out/` and `data/` are gitignored. Promoting a run to the page means copying its `derived.json`
 and `manifest.json` into `web/data/` as part of step 4, which is also where the cross-language
