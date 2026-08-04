@@ -2,6 +2,11 @@
 
 **Status:** spec only. Nothing here is implemented. Consumes page 7's candidate dump.
 
+**Implementation follows the notebook-first pipeline** in
+[page_6_refactor.md](page_6_refactor.md) section 6. This page's notebook runs no generation at
+all: it opens page 7's `traces.jsonl` and applies selectors, which makes it the shortest and
+most readable notebook in the set.
+
 **Supersedes** the transport and cost sections of
 [page_8_best_of_n_experiment.md](page_8_best_of_n_experiment.md), which specced a paid API
 study. Its item-design warnings and its trap / solvable / hopeless bucketing survive intact

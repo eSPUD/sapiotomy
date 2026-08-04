@@ -1,0 +1,231 @@
+# Page 5 — "How to Reason" refactor spec
+
+**Status:** spec only. Nothing here is implemented. Act 2's opening page.
+
+**Implementation follows the notebook-first pipeline** in
+[page_6_refactor.md](page_6_refactor.md) section 6, which is canonical for every page resting on
+traces or empirical analysis: spec to notebook, notebook refined and approved, notebook
+translated to JS, page renders committed logs with no inference at demonstration time.
+
+**What we take from `reasoning-from-scratch`:** ch04 section 4.3's mechanism, which is one line
+(`prompt + "\n\nExplain step by step."`), plus the ch03 harness. Not its numbers.
+
+---
+
+## 0. Two decisions that shape everything below
+
+### Citations move to prose only
+
+Currently the Wei cite sits in a margin note beside the step 1 demo, and a `CitationBadge`
+attaches to the chart. Both move into running prose. Attribution stays, in full, and the
+techniques are named where they came from; what goes is any cite adjacent to a figure.
+
+The reason this matters more than formatting: a cite next to a chart reads as *provenance for
+the chart*. When the chart is ours, that is misleading, and when the chart is theirs, the page
+is reporting rather than demonstrating. Prose can say "this technique comes from X" without
+implying the picture does.
+
+> **This reverses an existing deck convention** (cites beside charts) and it affects the pages
+> already specced. Pages 6, 7 and 8 each currently spec "one bare cite in the margin beside the
+> chart." **Open question 1** asks whether this is page 5 only or deck-wide; if deck-wide, those
+> three specs need a matching edit.
+
+### The prompt is the lever, so the model must not be
+
+Page 5's claim is that *changing the prompt* changes the behaviour. With a hybrid model it
+would be trivial to get a blurt and a chain by flipping the thinking toggle, and that would be
+a demonstration of a product feature rather than of a prompting technique.
+
+**So thinking stays OFF for the entire page.** Same weights, same mode, same decoding, and the
+only thing that varies is the words in the prompt. This is load-bearing and it must be stated
+on the page, because a skeptical reader will otherwise assume we flipped a switch.
+
+---
+
+## 1. Page Objective & Core Narrative
+
+**Objective unchanged and it is the right one.** Act 1 ended asking whether a machine can be
+walked down a road. The first tool is the simplest: show it one.
+
+**What the page currently is.** `COT_DEMO` ([authored.ts:361](../web/src/lib/authored.ts:361))
+quotes Wei Figure 1 verbatim: the cafeteria problem, the "The answer is 27" blurt, the
+three-line chain, and the tennis-ball exemplar. The comment says so explicitly. Figure 2 redraws
+the same paper's per-scale table. The page is a faithful, well-built retelling, and a retelling
+is what it should stop being.
+
+**Revised narrative, three beats:**
+
+1. **One line of prompt, two behaviours.** Same model, same question, same decoding. Add six
+   words and a chain appears. Real traces, both of them.
+2. **So what exactly do you say?** The prompt ladder, measured. Bare question, forced blurt,
+   the magic phrase, one worked example, several. This is "how to reason" as an actual
+   experiment, and its ranking is not obvious in advance.
+3. **The chain costs something.** The formulation that buys the most accuracy also writes the
+   most. Hand to page 6.
+
+**What leaves the page entirely.** The emergence claim and the model-size axis. Page 5 is about
+*how* to make a model reason; where it stops working is a different subject with a different
+evidentiary bar, and one we cannot meet with two checkpoints. No figure on this page has model
+size on any axis, which is the structural way to guarantee the page cannot be read as making a
+size claim.
+
+---
+
+## 2. Proposed Visual Layout / Diagrams
+
+### Figure 1 (step 1) — the lever
+
+Two real completions, side by side, from one model at one setting.
+
+```
+  Qwen3-4B · thinking off · greedy · same question both sides
+
+  ┌── prompt: the question ──────────┐  ┌── prompt: the question ──────────┐
+  │                                   │  │ + "Explain step by step."        │
+  │                                   │  │                                  │
+  │ [real blurt, 1 line]              │  │ [real chain, N lines]            │
+  │                                   │  │                                  │
+  │ ✗                                 │  │ ✓                                │
+  │ 9 tokens                          │  │ 180 tokens                       │
+  └───────────────────────────────────┘  └──────────────────────────────────┘
+            the only difference is the six words above
+```
+
+The interaction survives from the current page and is good: a switch, then ask, then walk the
+chain a line at a time. What changes is that both outputs are real and the switch now toggles
+**the prompt**, with the diff shown explicitly. Highlight the added words. The whole argument
+of the page is in that highlight.
+
+**Second panel, optional, on the same figure: two models, same prompt.** Permitted and useful,
+with one strict rule. The comparison is about **whether a chain appears and what shape it
+takes**, never about who got the answer right. Both models produce a chain, because the prompt
+works on both; the chains differ in quality, and that difference is what the rest of Act 2 is
+about. Any caption that could be read as "the smaller one cannot reason" is out of scope for
+this page and must be rewritten. If the two traces cannot be captioned without implying a size
+law, cut the panel.
+
+### Figure 2 (step 2) — the prompt ladder
+
+This replaces the emergence chart completely. Horizontal bars, one per prompt formulation, same
+model, same items, same decoding, thinking off throughout.
+
+```
+  bare question              ████████
+  "answer with the number"   ██████
+  "explain step by step"     ████████████████████
+  one worked example         ██████████████████████
+  several worked examples    ███████████████████████
+                             └─── share of problems solved ───┘
+
+  tokens written, same order:   12 · 8 · 214 · 260 · 291
+```
+
+Why this is the right figure for this page:
+
+- **It is literally the page's title as an axis.** How to reason means what to put in the
+  prompt, and this varies exactly that.
+- **The ranking is a real question.** Does a worked example beat the magic phrase, and by how
+  much? Readers wonder, and nothing on the current page answers it.
+- **It cannot be misread as a size claim,** because size appears nowhere on it.
+- **It carries its own cost row,** which is the handoff.
+
+The forced-blurt rung matters and should not be dropped for tidiness: it is the floor, and it
+shows that the model's default is already doing a little reasoning even when nobody asked.
+
+### Step 3 — the close
+
+One paired readout, not a third chart: the best rung's accuracy next to its token count. The
+sentence the page ends on is that the chain was not free, and page 6 begins by metering it.
+
+---
+
+## 3. Empirical Data / Reasoning Traces Needed
+
+**Same instrument as pages 6 to 8**, which is what makes Act 2 one continuous measurement:
+Qwen3-4B primary, Qwen3-1.7B for the optional two-model panel, bf16, MATH-500 levels 4 and 5,
+`extract_final_candidate` then `grade_answer`, greedy decoding.
+
+**The sweep is one pass per rung.**
+
+| Rung | Prompt | Note |
+|---|---|---|
+| bare | the question alone | the true default |
+| forced blurt | + answer-only instruction | the floor |
+| zero-shot CoT | + "Explain step by step." | ch04 section 4.3's exact mechanism, one line |
+| one-shot | one worked example prepended | see below on where the example comes from |
+| few-shot | three worked examples prepended | diminishing returns expected |
+
+Five rungs x ~160 items, greedy, thinking off. Smaller than page 6's sweep. Recorded per item:
+prompt rung, full trace, extracted answer, correctness, tokens generated.
+
+**The worked examples are real traces, not authored ones.** This is the detail that keeps the
+page honest. Take held-out problems the model already solved correctly under the zero-shot CoT
+rung, verify them, and prepend those as the exemplars. The few-shot prompt is then built out of
+the model's own verified-correct work on different problems, so nothing on the page is written
+by us and the exemplar is re-derivable like everything else. Held-out means the exemplar
+problems never appear in the evaluated set.
+
+**Figure 1's specimens are curated from the same run**, using page 9's method: search the dump
+for a problem where the bare prompt blurts wrong and the CoT prompt lands right, with a chain
+short enough to walk on screen. That pairing is common enough that legibility, not existence,
+will be the binding constraint.
+
+**One risk worth naming.** A modern instruction-tuned model may already write some working when
+asked a bare maths question, so the bare rung might not blurt cleanly and the gap between rungs
+1 and 3 could be small. If so, the forced-blurt rung carries figure 1 instead, and the page's
+framing shifts from *make it reason* to *let it reason*, which is a more accurate description of
+a 2026 model and costs the page nothing. Decide from the pilot; do not paper over it.
+
+---
+
+## 4. Text / Captioning Balance
+
+- **Lede:** two sentences, and the citation sentence lives here. Something in the shape of: the
+  technique of prompting for step-by-step work comes from Wei et al. and Kojima et al.; what
+  follows is that technique run on a model you can download. That single sentence discharges the
+  attribution obligation for the whole page.
+- **Figure 1:** one caption naming the intervention and the constraint (only the prompt changed;
+  the model never moved). The highlighted prompt diff does the rest.
+- **Figure 2:** one sentence on the ranking, and it should name the surprise if there is one.
+  Do not describe the bars.
+- **Step 3:** one sentence, the handoff.
+- **Margin notes:** operating hints only. No cites anywhere in the margins on this page.
+- **Chips:** the "quoted from Wei et al. Fig. 1" chip is deleted along with the quotation. The
+  "no live model" chip is replaced by a provenance chip naming model, mode, decoding, item set
+  and date, with **thinking off** stated explicitly.
+
+---
+
+## 5. Transition / Flow
+
+**From page 4.** Unchanged and already good. Act 1 closed on whether a machine can be walked
+down a road; page 5 shows it being walked.
+
+**To page 6, which is the reason this refactor is happening now.** The current close, that the
+road only helps a big-enough walker, hands page 6 a claim about model size that page 6 does not
+use and cannot support. The new close hands over the thing page 6 is actually about.
+
+The prompt bought a chain. The chain is long. Length is tokens, and tokens are compute, and the
+reader has just watched the token count go from single digits to hundreds for a few points of
+accuracy. So the question page 6 opens on is no longer abstract: **how much of that length do
+you actually need?** Page 6's first move, capping generation and forcing an answer, is then
+obviously the next thing to try rather than a new topic.
+
+The two pages also become one experiment read twice. Page 5 varies the prompt at unlimited
+length; page 6 fixes the prompt and varies the length. Same model, same items, same harness.
+
+---
+
+## Open questions for review
+
+1. **Is the prose-only citation rule page 5 only, or deck-wide?** If deck-wide, pages 6, 7 and 8
+   specs each need one edit, since all three currently place a bare cite in the margin beside a
+   figure. My recommendation: deck-wide, because the reasoning that motivates it here (a cite
+   beside our own chart implies the chart is theirs) applies identically to those pages.
+2. **Does the two-model panel survive?** It is permitted and it is interesting, but it is the
+   one element on the page that could be misread as a size claim. My recommendation: build it,
+   caption it strictly about chain shape, and cut it if the caption cannot be written cleanly.
+3. **Few-shot count.** Three exemplars is a guess. If the ladder shows one-shot and few-shot
+   landing on top of each other, collapse them into a single rung and reclaim the space.
+4. **What if the bare rung already reasons?** Covered in section 3, but it changes the page's
+   framing verb, so worth a decision rather than a default.

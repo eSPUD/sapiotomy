@@ -2,6 +2,11 @@
 
 **Status:** spec only. Nothing here is implemented. Consumes pages 6 to 8's dumps.
 
+**Implementation follows the notebook-first pipeline** in
+[page_6_refactor.md](page_6_refactor.md) section 6. This page's notebook is where the step
+checker lives, and being able to read that checker line by line is most of what makes its labels
+trustworthy, so the beginner-readable requirement matters here more than anywhere.
+
 ---
 
 ## Verdict: partial revamp, deliberately scoped
