@@ -1,0 +1,345 @@
+# Page 6 — "Thinking Longer" refactor spec
+
+**Status:** spec only. Nothing here is implemented.
+
+**What we take from `reasoning-from-scratch`:** the **harness only**. `load_math500_test`,
+`render_prompt`, `extract_final_candidate` and `grade_answer` (ch03) are plain text-in,
+text-out functions with no model dependency, and answer extraction plus equivalence checking
+is plumbing rather than concept. We do not take the checkpoints, and we do not take any
+reported number.
+
+Worth recording, since it was the question that shaped this spec: **no budget sweep exists in
+either chapter.** Chapter 4's reported axes are method (CoT prompting, temperature, top-p,
+self-consistency at n=3/5/10); chapter 5's are scorer type and refinement iteration count.
+Neither ever puts token budget on an axis, and the per-problem threshold analysis in figure 3
+appears nowhere. This page is an experiment the book's harness makes cheap but never runs.
+
+---
+
+## 1. Page Objective & Core Narrative
+
+**Objective unchanged:** the length of the chain is the compute, so a cap on the length is a
+cap on the thinking. Page 6 is the deck's first naming of inference-time compute.
+
+**What changes:** every number and every trace on the page becomes something we measured.
+
+The page today rests on two things the constraints rule out. `THINK_BUDGET`
+([authored.ts:426](../web/src/lib/authored.ts:426)) is a hand-written five-step chain with
+hand-assigned word costs, and step 3 is a redraw of a published AIME24 curve for a 32B model
+nobody reading can inspect. The first is invented, the second is a prior-reported number
+doing the work a demonstration should do.
+
+Both are replaceable by one experiment, because `max_new_tokens` **is** the budget dial. Cap
+the model, force it to answer at the cap, grade the answer. That is the page's thesis
+executed rather than asserted.
+
+**Revised narrative, three beats:**
+
+1. **One problem, one dial.** Drag the budget. A real trace truncates where you cut it, the
+   model is forced to commit, and the answer flips. The reader sees working stop mid-sentence.
+2. **The same dial, every problem.** Accuracy across the item set against budget: a climb
+   that bends over. Inference-time scaling, and its ceiling, in one curve we own.
+3. **Not every problem costs the same.** Each problem's *flip point*, the budget at which it
+   first becomes correct. Some flip at 64 tokens, some at 2,048, some never flip. This is the
+   beat the page does not currently have, and it is what hands off to page 7.
+
+**Decoding is greedy throughout (temperature 0).** This is load-bearing for flow, not a
+detail: budget must be the only variable on page 6 so that sampling can be the whole subject
+of page 7. It also removes run-to-run noise from the curve.
+
+### The design principle: shape, not level
+
+An accuracy percentage on a named benchmark is a fact about one model-dataset pair. It does
+not travel, and it does not build intuition. The page's claims must instead be **structural**,
+and all three survive changing the model:
+
+- accuracy climbs with budget and then bends over
+- a problem has a *threshold* budget, not gradual improvement; item-level accuracy is a step
+  function
+- the distribution of thresholds has a long tail, and the tail holds problems no budget reaches
+
+None of those are properties of a particular checkpoint. They are properties of what a chain
+of thought is.
+
+The test every figure on this page must pass: **could a reader run this procedure on their own
+model and see the same shape?** If yes, the model is an instrument and the figure teaches a
+concept. If no, the figure is a portrait of one checkpoint. This is the difference between
+*reproducible* (we pinned our seed) and *re-derivable* (you can do it too), and the page is
+aiming at the second.
+
+Two consequences that bind on the layout below: the y-axis is deemphasized in favour of the
+curve's shape, and figure 2 carries **two models** so the reader's eye extracts the invariant
+from the difference in levels rather than memorising one.
+
+---
+
+## 2. Proposed Visual Layout / Diagrams
+
+Keep page 1's per-step grid (step cell + margin cell). Three steps, down from three plus a
+prose interlude. The standalone System 1 / System 2 card pair is **cut** and folded into the
+step 1 caption; it restates Act 1 at a length the page cannot afford.
+
+### Figure 1 (step 1) — the truncation view
+
+The existing slider, rebuilt on real data. Full width of the step cell.
+
+```
+┌─ Question (real MATH-500 item) ────────────────────────────┐
+│                                                             │
+│  Budget  [────────●──────────────]  384 of 2048 tokens      │
+│                                                             │
+│  ┌───────────────────────────────────────────────────────┐ │
+│  │ Let me work through this. First I need to find the    │ │
+│  │ common denominator, which is 12. So 3/4 becomes 9/12  │ │
+│  │ and 2/3 becomes 8/12. Adding those gives 17/12. Now   │ │
+│  │ I need to subtract... wait, let me recheck the sec▌   │ │  ← cut mid-token
+│  │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │ │
+│  │ Final answer: \boxed{17/12}          ← forced, tinted │ │
+│  └───────────────────────────────────────────────────────┘ │
+│                                                             │
+│  ✗ graded wrong    ·    384 tokens spent                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Three visual facts carry the whole idea and need no prose:
+
+- The trace is **greyed past the cut**, not hidden. The reader sees what the model would have
+  written and was not allowed to. This is the single most important pixel on the page.
+- The **forced answer is tinted differently** from the model's own working, so it reads as an
+  intervention rather than a conclusion.
+- The verdict chip changes as the reader drags, and the flip is discontinuous. Accuracy at the
+  item level is a step function, which is why the population curve in figure 2 is smooth and
+  this one is not. That contrast is worth having on the page.
+
+**Inset, bottom right of figure 1 (small, one row):** "asked nicely vs cut off." Two bars, the
+token count when the prompt says *answer in one line* versus the hard cap at the same nominal
+budget. The soft request overshoots. This turns the current honesty caveat (you cannot hold a
+model to one word) from a muted apology into a measurement, and costs one bar chart.
+
+### Figure 2 (step 2) — the population curve
+
+Share of problems solved against token budget, log x-axis, our data. Marker tracks the same
+budget value as figure 1's slider so the two figures are one instrument. Secondary readout,
+not a second axis: **total tokens generated** at the current budget, as a plain number. Cost
+gets a number here and a chart on page 16; do not build the cost/accuracy frontier on this
+page.
+
+**Two curves, same family, different size.** This is a requirement rather than a nicety. One
+curve teaches a number; two curves that bend at different heights teach the invariant, because
+the shared shape is what survives the difference. The benchmark is named in the provenance
+line, not in the axis title: the page is not reporting a benchmark result and must not look
+like it is.
+
+Below the figure, one line stating the **procedure** (cap, force, grade, sweep). That line is
+what makes the figure re-derivable rather than merely reproducible, and it is worth more than
+any sentence describing the curve the reader can already see.
+
+### Figure 3 (step 3) — the flip-point strip
+
+The new visual, and the one that earns the page its handoff.
+
+```
+        budget →   32   64   128   256   512   1024  2048
+  easy   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+         ░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+         ░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+         ░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+         ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▓▓
+  hard   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  ← never flips
+```
+
+One row per problem, sorted by flip point, shaded from the budget where it first grades
+correct. A vertical rule marks the reader's current budget so figures 1, 2 and 3 all move
+together. Clicking a row loads that problem into figure 1.
+
+The band at the bottom that never turns is the payload. Those problems are not
+budget-limited, and no amount of the page's own lever reaches them. The reader should reach
+page 7 already suspecting that a longer chain is not the only axis.
+
+---
+
+## 3. Empirical Data / Reasoning Traces Needed
+
+**One sweep produces all three figures.**
+
+### Model selection
+
+Two requirements filter the field, and together they leave very little standing:
+
+1. **It must blurt when not asked to think.** Otherwise budget zero is unreachable and the
+   dial has no left end. This rules out every always-on reasoning model: R1 distills,
+   gpt-oss, and the Qwen3 `-Thinking-2507` variants all emit a chain unconditionally.
+2. **It must think on demand, with the thinking separable enough to cut.** This rules out
+   pure non-reasoning models unless we settle for prompt-induced "think step by step," which
+   is softer and messier to truncate.
+
+Only hybrid models satisfy both natively, which in open weights is essentially the original
+Qwen3 release (not the 2507 refresh, which split hybrid into separate Instruct and Thinking
+checkpoints and lost the toggle; confirm exact repo IDs at download time).
+
+| Model | bf16 VRAM | Blurts by default | Thinking control | Role |
+|---|---|---|---|---|
+| Qwen3-1.7B | 3.4 GB | yes, thinking off | `enable_thinking`, `<think>` tags | small curve |
+| Qwen3-4B | 8.0 GB | yes, thinking off | same | primary curve |
+| Gemma 3 4B | 8.6 GB | yes, always | prompt-induced only | cross-family check |
+
+**Why Qwen3 specifically.** The `<think>...</think>` tags make budget forcing clean rather
+than crude: cap generation inside the think block, inject `</think>\n\nFinal answer:
+\boxed{`, let it commit. The closing tag is a forcing signal the model already understands, so
+the intervention reads as *stop thinking and answer* rather than as a string splice. That is
+both more honest and more legible in figure 1, where the reader watches the cut land.
+
+**Why the same family for both curves.** Token counts are tokenizer-specific, so plotting two
+families on a shared token-budget x-axis is quietly apples to oranges. Same family means the
+x-axis means one thing, and size becomes the only variable.
+
+**Gemma 3 4B does a different job:** one run, plotted faintly or held in reserve, that rules
+out "this is a Qwen artifact." It is much weaker at math at the same size, so treat it as an
+existence check on the shape and never as a level comparison.
+
+**Ruled out and why, recorded so it is not relitigated:**
+
+- *Hosted models (Gemini and similar).* Budget forcing needs prefill: resume generation from
+  an assistant-role prefix. Locally this is free. Hosted chat APIs vary and Gemini's support
+  is not a documented guarantee, and the workaround (feed the partial trace back as a new user
+  turn) is a *different intervention* belonging to chapter 5, pages 8 and 10. Closed weights
+  also cannot be pinned by hash, so the sweep would stop being re-derivable. Gemini remains a
+  good fit as page 8's judge and page 10's critic.
+- *12B and above.* Does not fit 16 GB at full precision (roughly 24 GB of weights), and 4-bit
+  undercuts the reason to reach for it.
+- *The book's Qwen3-0.6B pair.* Its natural home is pages 12 and 13, where same architecture,
+  same size, one trained to reason and one not is a controlled contrast that is hard to buy
+  anywhere else, and where training is the subject. Using it here would import the book's
+  framing onto a page that is not teaching the book.
+
+### Sweep parameters
+
+| Parameter | Value | Why |
+|---|---|---|
+| Models | Qwen3-4B (primary) and Qwen3-1.7B (second curve), thinking enabled | two levels, one shape |
+| Precision | bf16, not quantized | keeps quantization out of our own data; readers re-deriving at 4-bit should see the same shape at a different level, and that gap is itself a small argument for the page |
+| Decoding | greedy, temperature 0, top-p 1 | budget is the only variable; sampling belongs to page 7 |
+| Budgets | 32, 64, 128, 256, 512, 1024, 2048 (and 4096 if the curve has not bent) | log-spaced, gives figure 2 its x-axis |
+| Items | 120-200 problems from **MATH-500 levels 4 and 5 only** | see headroom below |
+| Forcing | at the cap, close the think block and append the forced-answer suffix, allow ~16 further tokens | without this, low budgets grade as "no answer" and the curve is trivially zero |
+| Grading | `extract_final_candidate` then `grade_answer` | inherited harness, so grading is not ours to defend |
+
+**Headroom is the constraint that decides the item set.** The figures only exist if the model
+fails at low budget and succeeds at high budget: the y-axis *is* the demonstration. Qwen3 is
+heavily math-tuned and full MATH-500 may sit near its ceiling, which would flatten figure 2
+and empty figure 3's tail. Filtering to difficulty levels 4 and 5 restores dynamic range
+without leaving the harness, since the dataset already carries a `level` field and grading is
+unchanged. A model too strong for the item set kills this page more thoroughly than a model
+too small.
+
+**This is measured, not assumed.** Before the full sweep, a pilot runs both models at maximum
+budget over ~30 items from levels 4 and 5 and reports accuracy plus mean thinking length. We
+want both to land roughly in the 40 to 70 percent band. Above it, drop to level 5 only or step
+the pair down to 1.7B and 0.6B. Script to be written separately.
+
+**Only `generate_text_stream_concat_flex` is Qwen3-from-scratch specific.** Replacing it with a
+transformers generate loop that respects `max_new_tokens` and supports prefix continuation is
+roughly thirty lines. The rest of the harness is model-agnostic, which is what makes this
+model swap cheap and what de-risks the same swap on later pages.
+
+**Per-item record to capture** (this is also the trace bank's schema for later pages):
+
+```
+problem_id, level, question, ground_truth,
+budget,                  # the cap this run used
+trace,                   # full generated text at this budget
+truncated,               # bool: did it hit the cap
+forced,                  # bool: was the answer suffix appended
+extracted_answer, correct,
+tokens_generated,
+provenance: { model_id, weights_sha, precision, device, decoding, seed, date, prompt_template }
+```
+
+Storing the **full trace at every budget** rather than one long trace to slice matters: a
+model cut at 128 tokens and forced to answer does not produce the first 128 tokens of its
+2,048-token trace, because the forced suffix changes what follows. Slicing one long trace
+would be a fabrication of exactly the kind this refactor exists to remove. The page ships the
+committed sweep and replays it; no live inference.
+
+**Cost estimate:** 7 budgets x ~160 items x 2 models, greedy, with mean output well under the
+cap at low budgets. Hours, not days, at bf16 on 16 GB. Re-runnable, which is the point.
+
+**The one risk:** the curve may be non-monotone, with accuracy dipping at some middle budget
+where the model has enough room to talk itself out of a right answer but not enough to
+recover. If that appears, **keep it and show it**. It is a real result, it is more interesting
+than the clean curve, and page 17 (When Reasoning Breaks) is already waiting for it. It should
+not be smoothed away.
+
+---
+
+## 4. Text / Captioning Balance
+
+Target: roughly half the current prose. The three figures carry the argument; text does only
+what pixels cannot.
+
+- **Lede:** two sentences. The chain has a length, and length is compute you pay for.
+- **Figure 1:** one caption sentence naming the intervention (cut it off, make it commit),
+  plus the System 1 / System 2 callback compressed to a single clause. The two-card System
+  1 / System 2 block and the paragraph beneath it are cut; the reader met that idea in Act 1
+  and does not need it re-explained at 90 words.
+- **Figure 2:** one sentence on the bend. Not two, and no restatement of what the reader can
+  see.
+- **Figure 3:** two sentences, and they are the page's most important prose, because the
+  never-flips band needs naming to land. Something in the shape of: *the dial runs out before
+  these problems do.*
+- **Close:** one sentence, the handoff below.
+- **Margin notes:** one operating hint beside figure 1, one bare cite beside figure 2. Budget
+  forcing gets an author-year attribution with **no numbers attached**; we show our curve, not
+  theirs.
+- **Chips:** the "no live model" chip is replaced by a provenance chip naming the model,
+  decoding, item set and date; with two curves on figure 2 the model name belongs in the
+  legend and the chip carries the rest. The "counts words, not tokens" chip is **deleted**,
+  and this is a real
+  simplification win: the whole word-versus-token dance in the current file exists only
+  because the numbers were authored. Once we run a tokenizer, the axis is tokens and says so.
+
+---
+
+## 5. Transition / Flow
+
+**From page 5.** Page 5 put a road in front of the model: show it one worked example and it
+writes a chain instead of blurting. Page 6 opens on the obvious next question, which the
+current page already asks well. Keep the seam, sharpen one word: page 5 gave the chain, page 6
+gives it a **length**, and length is the meter.
+
+**To page 7.** The current close ("the next pages explore methods that push the same trade
+further") is a table of contents, not a bridge. Figure 3 supplies a real one.
+
+Page 6 spends its entire budget on one chain, and figure 2 bends over while figure 3 shows a
+band of problems the dial never reaches. The chain is not wrong, it is *one* chain, and a
+problem it cannot reach it cannot reach at any length. So: same total budget, spent
+differently. Instead of one chain of 2,048 tokens, sixty-four chains of 32. Page 7 turns the
+dial from serial to parallel, and the pizza-vote analogy lands on a reader who already knows
+why one voter is not enough.
+
+This bridge also sets up the page 7 refactor cleanly, because a self-consistency run at fixed
+total budget is exactly what ch04's `self_consistency_vote` measures.
+
+---
+
+## Resolved during review
+
+- **Which models.** Qwen3-4B and Qwen3-1.7B, hybrid thinking, bf16. Settled by two hard
+  requirements (must blurt, must think on demand and be cuttable) rather than by size.
+- **Two curves on figure 2.** Confirmed, and on stronger grounds than "preempt the reviewer
+  question about scale": two levels are what let the reader see the shape as an invariant.
+- **Not the book's checkpoint.** The 0.6B pair carries the book's framing; it moves to pages
+  12 and 13 where the training contrast is the actual subject.
+- **Not a hosted model.** Budget forcing needs prefill, which local weights give for free.
+
+## Open questions for review
+
+1. **Does the "asked nicely vs cut off" inset earn its space,** or should the soft-request
+   finding move to page 17 where instruction-following failures already live?
+2. **Item count.** 120 keeps figure 3's rows readable at page width; 200 makes figure 2's
+   estimates tighter. Figure 3 can subsample for display if we prefer 200.
+3. **Does Gemma 3 4B get plotted or held in reserve?** Plotting it is the strongest available
+   evidence that the shape is not architecture-specific; holding it back keeps figure 2 to two
+   clean lines. Decide after seeing whether its curve is legible alongside the Qwen3 pair.
+4. **Pending the pilot:** if Qwen3-4B ceilings above ~70% on levels 4 and 5, we drop to level
+   5 only, or step the pair down to 1.7B and 0.6B.
