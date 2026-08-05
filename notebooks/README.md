@@ -14,8 +14,27 @@ pipeline in [`docs/page_6_refactor.md` §6](../docs/page_6_refactor.md), which i
 | 5 | Post-translation edits: formatting, balance | the page matches the spec's sections 2 and 4 |
 
 **The notebook is not scaffolding.** It is the artifact that makes a page's claims checkable: a
-reader who doubts a figure downloads one file and re-runs it. Notebooks are linked from the pages
-they back.
+reader who doubts a figure downloads the notebook and [`harness.py`](harness.py) beside it and
+re-runs it. Notebooks are linked from the pages they back, and the download carries both files.
+
+## The harness, and what stays in the notebook
+
+[`harness.py`](harness.py) holds the plumbing every page repeats: model loading, token-string
+reconstruction, the resume log, provenance hashes, small numerics. The split is
+**claim-bearing versus plumbing**, and the test is *would a skeptical reader need to see this to
+believe the figure?*
+
+Staying in the notebook, always: prompt construction, item selection, the thinking constraint,
+step segmentation, thresholds and gates, and every line of figure code. `harness.generate` gives
+`enable_thinking` no default for exactly this reason — each notebook states that constraint at its
+own call site, where a reader looks for it.
+
+This is not a way to hide derivations; it is a way to stop them diverging. `incremental_token_strings`
+previously existed in two copies: one had a fix the other lacked, and the other had a bug the first
+did not, and the failure mode was silent corruption of the text that then gets graded. The harness
+tests its own invariants (`harness.selftest`, called from each notebook after the tokenizer loads),
+and every run records `harness.fingerprint()` in its manifest, so an artifact names the exact
+plumbing that produced it.
 
 ## The boundary
 
@@ -32,8 +51,9 @@ The page ships what it draws and links what it drew it from.
 
 ## Contents
 
-| Notebook | Page | Status |
+| File | Page | Status |
 |---|---|---|
+| `harness.py` | shared | plumbing for every notebook; ships in each download |
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | step 1 complete, awaiting a real run and step-3 approval |
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | step 1 complete, awaiting a real run and step-3 approval |
 
