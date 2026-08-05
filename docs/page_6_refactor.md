@@ -444,6 +444,52 @@ The page therefore ships what it draws and links what it drew it from.
 
 ---
 
+## 7. What the page is allowed to claim
+
+The claims contract for the translation step (section 6): the notebook produces the numbers, and
+this section bounds the sentences they can support. Field names below refer to `derived.json`.
+
+**Supported by this run:**
+
+- Capping generation inside the think block and forcing the model to commit changes what it answers,
+  on a specific model at a specific setting, with every trace shown in full and re-derivable from
+  this file.
+- Whatever `figure_2.curves[].points` actually shows, on MATH-500 levels 4 and 5, at *n* = the
+  item-set size, greedy, thinking on. The page's expected claim is *rises, then flattens*, and
+  `knee_budget` is where it flattened — but that is a result to read off the run, not a premise. If
+  `knee_budget` is null the curve has not bent inside the grid and the page may not say it did; if
+  `monotone` is false the page shows the dip rather than describing a climb.
+- An individual problem's accuracy is a **step**: it flips at a budget and (usually) stays flipped.
+  The per-item grid in `figure_3.items` is the evidence, and `figure_3.n_regressions` is the count of
+  exceptions rather than a claim that there are none.
+- A share of problems — `figure_3.never_flip_share` — is not solved at any budget in this grid.
+- Asking for brevity in the prompt does not hold the model to a length, while `max_new_tokens` does:
+  `figure_1.inset.overshoot_multiple`.
+
+**Not supported, and the page must not imply it:**
+
+- Any statement about *models in general*. Two checkpoints of one family is an existence proof that
+  the shape is not one checkpoint's accident, not a survey. The page's claims are structural for
+  exactly this reason.
+- Any comparison of *level* between the two curves as a fact about scale. They differ in size and in
+  training, and this page holds neither fixed. Two curves are on the page so the reader extracts the
+  shared **shape**; if a caption is drafted that compares the heights, cut it.
+- Any claim that the never-flipping band is *unsolvable*. What we measured is that no budget **in
+  this grid**, with **this decoding**, reaches them. Page 7 changes the decoding and revisits them,
+  which is the entire point of the handoff.
+- Any number from a published paper. Budget forcing gets an author-year attribution on the page with
+  **no figures attached** — we show our curve, not theirs.
+
+**Two things to check before the page ships**, because they can only be answered after a `FULL` run:
+
+1. Does the curve bend inside the grid? If `knee_budget` is None, extend the grid to 4,096 rather
+   than describing a bend the data does not show.
+2. Is the never-flips band big enough to see and small enough to be a band? If it is 2% the page's
+   third beat has no payload; if it is 60% the item set is too hard and the pilot's verdict was
+   ignored.
+
+---
+
 ## Resolved during review
 
 - **Which models.** Qwen3-4B and Qwen3-1.7B, hybrid thinking, bf16. Settled by two hard
