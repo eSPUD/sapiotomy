@@ -165,6 +165,16 @@ the model's own verified-correct work on different problems, so nothing on the p
 by us and the exemplar is re-derivable like everything else. Held-out means the exemplar
 problems never appear in the evaluated set.
 
+**The two bands come from opposite ends of the difficulty scale: score on levels 4 and 5,
+demonstrate with levels 1 and 2.** A worked example teaches the *shape* of a solution and does
+not have to be as hard as the question; in ordinary few-shot practice it is not. Three things
+follow, and the first is what forced the decision. A small model asked to solve twelve level-4
+and level-5 problems solves none of them, so there is nothing to harvest and the run dies at
+the exemplar step, which is exactly what the first `QUICK` run did. Easy exemplars are also
+short, which matters because the page renders one verbatim in its "see full prompt" disclosure.
+And drawing from disjoint difficulty bands makes the held-out property structural rather than
+merely asserted.
+
 **Figure 1's specimens are curated from the same run**, using page 9's method: search the dump
 for a problem where the bare prompt blurts wrong and the CoT prompt lands right, with a chain
 short enough to walk on screen. That pairing is common enough that legibility, not existence,
