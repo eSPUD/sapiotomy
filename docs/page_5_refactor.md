@@ -44,9 +44,18 @@ is what it should stop being.
    words and a chain appears. Real traces, both of them.
 2. **So what exactly do you say?** The prompt ladder, measured. Bare question, forced blurt,
    the magic phrase, one worked example, several. This is "how to reason" as an actual
-   experiment, and its ranking is not obvious in advance.
-3. **The chain costs something.** The formulation that buys the most accuracy also writes the
-   most. Hand to page 6.
+   experiment, and its ranking is not obvious in advance. **What is measured is what each
+   formulation makes the model write** — see §2 for why that, and not accuracy, is the
+   headline axis.
+3. **The chain costs something.** The formulation that most reliably produces a chain also
+   writes the most. Hand to page 6.
+
+**The page's subject is the mechanism, not the benefit.** "How to reason" asks what makes a
+model produce reasoning; whether that reasoning is also more often *correct* is a benefit
+question, it is a far smaller effect, and it is the axis pages 6 to 8 are built to meter. Page 5
+answers the mechanism question decisively and treats the benefit as a secondary, gated readout.
+This is the same discipline as the model-size exclusion below: keep the page to the claim its
+instrument can actually support.
 
 **What leaves the page entirely.** The emergence claim and the model-size axis. Page 5 is about
 *how* to make a model reason; where it stops working is a different subject with a different
@@ -106,44 +115,101 @@ law, cut the panel.
 
 ### Figure 2 (step 2) — the prompt ladder
 
-This replaces the emergence chart completely. Horizontal bars, one per prompt formulation, same
-model, same items, same decoding, thinking off throughout.
+This replaces the emergence chart completely. **Two stacked panels**, one row per prompt
+formulation, same model, same items, same decoding, thinking off throughout. Two measures means
+two axes — never one chart with two scales.
 
 ```
-  bare question              ████████
-  "answer with the number"   ██████
-  "explain step by step"     ████████████████████
-  one worked example         ██████████████████████
-  several worked examples    ███████████████████████
+  What the prompt produces  ·  a chain is ≥2 steps
+  bare question              █
+  "answer with the number"
+  "explain step by step"     ███████████████████████████████████
+  one worked example         ███████████████████████████████████
+  several worked examples    ██████████████████████████████████
+                             └─── responses containing a chain ───┘
+
+  Whether it arrives at the answer            [greyed if unresolved]
+  bare question              ██
+  "answer with the number"   ███
+  "explain step by step"     ████
+  one worked example         ██████
+  several worked examples    █████
                              └─── share of problems solved ───┘
 
-  tokens written, same order:   12 · 8 · 214 · 260 · 291
+  median steps, same order:      1 ·  1 ·  8 ·  6 ·  6
+  tokens written, same order:   43 ·  6 · 348 · 295 · 255
 ```
+
+**The primary axis is what each formulation makes the model write**, measured as the share of
+responses containing a chain — two or more steps under the *same* segmentation rule figure 1
+uses to animate a trace. One rule, used twice: a reader who disagrees with where a step ends
+disagrees with both the figure and the measurement, which is the honest arrangement.
+
+Why the primary axis is not accuracy. A `QUICK` run on Qwen3-0.6B put every rung between 0% and
+8% solved — a two-problem spread, indistinguishable from noise — while the chain axis over the
+very same traces ran 0% to 100% with a 58× spread in tokens written. The mechanism was never in
+doubt; only the benefit was. Accuracy on the headline axis made a decisive experiment look like
+a failed one, and it put the page's argument at the mercy of whether the checkpoint happens to
+be good at competition maths. The mechanism claim is the one page 5 exists to make, it is
+enormous, and it survives any model in the family.
+
+**The accuracy panel is secondary and gated.** Both panels carry 95% Wilson intervals. If the
+best and worst rungs' intervals overlap, the panel renders greyed with an explicit
+`NOT RESOLVABLE, do not rank` label — never colour alone — and `derived.json` sets
+`claims.may_rank_rungs_by_accuracy: false`, so the caption cannot rank what the run did not
+resolve. When it does resolve, it is drawn in the primary ink and the page may use it.
 
 Why this is the right figure for this page:
 
 - **It is literally the page's title as an axis.** How to reason means what to put in the
-  prompt, and this varies exactly that.
-- **The ranking is a real question.** Does a worked example beat the magic phrase, and by how
-  much? Readers wonder, and nothing on the current page answers it.
+  prompt, and this varies exactly that — and now measures exactly what changed.
+- **The ranking is a real question.** Does a worked example produce a chain as reliably as the
+  magic phrase? Readers wonder, and nothing on the current page answers it.
 - **It cannot be misread as a size claim,** because size appears nowhere on it.
 - **It carries its own cost row,** which is the handoff.
+- **It degrades honestly.** A run that cannot resolve the benefit still makes the mechanism
+  argument, instead of publishing five bars of noise.
 
-The forced-blurt rung matters and should not be dropped for tidiness: it is the floor, and it
-shows that the model's default is already doing a little reasoning even when nobody asked.
+The forced-blurt rung matters and should not be dropped for tidiness: it is the floor, and the
+gap between it and the bare rung is what tells you whether the model's default is already doing
+a little reasoning when nobody asked.
 
 ### Step 3 — the close
 
-One paired readout, not a third chart: the best rung's accuracy next to its token count. The
-sentence the page ends on is that the chain was not free, and page 6 begins by metering it.
+One paired readout, not a third chart: the rung that most reliably produces a chain, next to
+what that chain cost in tokens. The sentence the page ends on is that the chain was not free,
+and page 6 begins by metering it. Accuracy joins that sentence only if its gate passed; the
+notebook emits `None` for those fields otherwise, so the handoff cannot borrow an unearned
+number.
 
 ---
 
 ## 3. Empirical Data / Reasoning Traces Needed
 
 **Same instrument as pages 6 to 8**, which is what makes Act 2 one continuous measurement:
-Qwen3-4B primary, Qwen3-1.7B for the optional two-model panel, bf16, MATH-500 levels 4 and 5,
-`extract_final_candidate` then `grade_answer`, greedy decoding.
+Qwen3-4B primary, bf16, MATH-500 levels 4 and 5, `extract_final_candidate` then `grade_answer`,
+greedy decoding.
+
+**Two run modes, both real.** `FULL` is Qwen3-4B over 160 items and is what the page ships.
+`QUICK` is Qwen3-1.7B over 24 items and is a genuine run, not a smoke test: the chain axis is a
+large enough effect to resolve at that *n*, so `QUICK` makes the page's primary argument. It
+does not reliably resolve the accuracy panel, which is the gate's job to say. Qwen3-0.6B is
+below the floor for the accuracy panel and should not be used for a run intended for the page.
+
+**The generation cap is 1024 for both modes and must not bind.** At 512 it clipped 33% of the
+zero-shot-CoT rung against 0% of the forced-blurt rung, and since a truncated trace loses its
+`\boxed{}` and grades wrong, that was a scoring penalty aimed at precisely the rungs this page
+argues for. The notebook asserts the truncation rate **per rung**, not in aggregate — an
+aggregate hid this once already. Generation length is page 6's variable; on page 5 it must bind
+on nobody.
+
+**The eval band is a knob, and it is the lever for accuracy headroom.** Levels 4 and 5 remain
+the default, chosen to avoid the ceiling. If the accuracy gate fails on a `FULL` run, step the
+band down to levels 3 and 4 — measured on this family, levels 1-2 score around 25% against 2-6%
+on levels 4-5, so the headroom is real. Levels 3+4 stay disjoint from the exemplar band; going
+to 2+3 collides with it and requires moving exemplars to level 1 only. The notebook asserts band
+disjointness rather than assuming it. **The primary axis does not depend on the band at all** —
+only the secondary panel does, which is the point of putting the mechanism on the headline.
 
 **The sweep is one pass per rung.**
 
@@ -196,8 +262,10 @@ paper over it.
   step-by-step work is not ours; what follows is that technique run on a model you can download.
 - **Figure 1:** one caption naming the intervention and the constraint (only the prompt changed;
   the model never moved). The highlighted prompt diff does the rest.
-- **Figure 2:** one sentence on the ranking, and it should name the surprise if there is one.
-  Do not describe the bars.
+- **Figure 2:** one sentence on the ranking of the *top* panel — what each formulation makes the
+  model write — naming the surprise if there is one. Do not describe the bars. The bottom panel
+  gets a clause, not a sentence, and when its gate is false that clause says it did not resolve
+  rather than quietly omitting it: a greyed panel with no explanation reads as an error.
 - **Step 3:** one sentence, the handoff.
 - **Margin notes:** the deck's existing convention holds. Operating hints where a control needs
   one, and bare cites beside the figure they back. Wei et al. sits beside figure 1 (few-shot
@@ -236,15 +304,29 @@ length; page 6 fixes the prompt and varies the length. Same model, same items, s
 The claims contract for the translation step ([page_6_refactor.md](page_6_refactor.md) §6):
 the notebook produces the numbers, and this section bounds the sentences they can support.
 
+`derived.json` carries a machine-readable form of this section as a top-level `claims` object.
+The translation step reads it **before** it reads any number, and a claim whose flag is false
+does not go on the page regardless of how good the number looks.
+
 **Supported by the run:**
 
 - Adding "Explain step by step." changes what the model writes — one model, one setting, both
   traces shown in full, re-derivable from the notebook.
-- The five formulations rank as `derived.json` reports, on MATH-500 levels 4 and 5, thinking
-  off throughout.
-- The formulation that scores highest also writes the most tokens.
+- The five formulations rank **by share of responses containing a chain** as `derived.json`
+  reports, on MATH-500 levels 4 and 5, thinking off throughout. Gated on
+  `claims.chain_axis_resolvable`; if that is false the run is not translatable at all, because
+  this is the page's core claim.
+- The formulation that most reliably produces a chain also writes the most tokens.
 - The worked examples in the few-shot prompts are the model's own verified-correct solutions
   to held-out problems.
+
+**Supported only when the gate says so:**
+
+- Any ranking of the rungs by accuracy, and any statement that one formulation solves more
+  problems than another. Gated on `claims.may_rank_rungs_by_accuracy`. When false, the accuracy
+  panel is still drawn — greyed and labelled — but the caption describes it as unresolved and
+  the close omits accuracy entirely. The notebook emits `None` rather than a number for those
+  fields, so there is nothing to accidentally interpolate.
 - On the specimen problem, prepending a worked example changes the **shape** of the chain. One
   problem cannot support more than that, which is why the accuracy claim for exemplar rungs is
   made by figure 2 across the item set and never by figure 1's third panel.
@@ -256,7 +338,15 @@ difficulty band; any number attributed to Wei et al. or Kojima et al. (section 4
 **Limitations, stated rather than buried:**
 
 - *n* = 160 in `FULL`, so adjacent rungs within a couple of points are not resolvable, and
-  the caption must not rank rungs that overlap.
+  the caption must not rank rungs that overlap. The 95% Wilson intervals are drawn on both
+  panels so this is visible rather than merely disclosed.
+- "A chain" is ≥2 steps under the notebook's segmentation rule, not a model's judgement of what
+  reasoning is. It is the same rule figure 1 animates, it is visible in the notebook, and a
+  reader can disagree with it — in which case they disagree with the figure and the measurement
+  together, which is why one rule serves both.
+- The chain axis measures whether the model *wrote* reasoning, not whether the reasoning is
+  sound. A response can contain eight well-formed steps and a wrong answer; page 9 is where
+  step quality is examined.
 - Greedy decoding diverges on a handful of items across hardware; re-deriving reproduces the
   shape and the ranking, not every digit.
 - The exemplar harvest prefers the shortest correct held-out solutions — a legibility choice,
@@ -294,6 +384,25 @@ aggregates are unaffected by the fallback and remain valid.
   `specimen_is_fallback` rather than raising, and `QUICK`'s eval grid went from 12 items to 24.
   The pipeline standard in [page_6_refactor.md](page_6_refactor.md) §6 now states precisely what
   `QUICK` does and does not guarantee.
+
+**Resolved in review of the first complete run** (Qwen3-0.6B, L4-5, cap 512 — the run that
+produced five bars between 0% and 8%):
+
+- *Figure 2 measured the benefit, but the page argues the mechanism.* Resolved: the primary axis
+  became **share of responses containing a chain**, and accuracy became a secondary panel behind
+  a resolvability gate (§2). The same traces that gave an 8-point accuracy spread gave a
+  100-point chain spread — the experiment had worked, and the axis was hiding it. This also
+  decouples the page's core claim from how good the checkpoint happens to be at competition
+  maths.
+- *A binding generation cap was a silent confound.* Resolved: cap raised to 1024 and the
+  truncation check promoted from a printed warning to a **per-rung assertion** (§3). Aggregate
+  truncation looked tolerable at 13% while clipping a third of one rung and none of another.
+- *Raising the cap silently replayed the old traces.* Resolved: `RUN_ID` now includes the model,
+  the eval band and the cap, so any of them changing starts a fresh set rather than resuming an
+  incomparable one. The cap is also recorded on every trace record.
+- *The eval band was a constant with no escape hatch.* Resolved: `eval_levels` and
+  `exemplar_levels` are preset knobs with an asserted disjointness invariant, and §3 names L3+4
+  as the step to take if the accuracy gate fails.
 2. **Few-shot count.** Three exemplars is a guess. If the ladder shows one-shot and few-shot
    landing on top of each other, collapse them into a single rung and reclaim the space.
 3. **What if the bare rung already reasons?** Covered in section 3, but it changes the page's
