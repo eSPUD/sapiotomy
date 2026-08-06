@@ -21,5 +21,10 @@ numpy>=1.26                     # page 6's flip-point strip is an image of a boo
 jupyterlab>=4.4
 huggingface_hub>=0.24           # manifest records the model repo revision
 tqdm>=4.66                      # sweep bars, and the harness's downloaded/total fetch bar
+ipywidgets>=8.1                 # NOT optional in a notebook. Without it tqdm.auto falls back to
+                                # the text bar, whose carriage-return redraws a terminal collapses
+                                # in place but a notebook renderer retains -- a sweep with 15 bars
+                                # over 100 items becomes ~15,000 retained output events and several
+                                # GB in the editor process, while the kernel sits idle at 2 GB
 
 # bitsandbytes>=0.43            # only for page 6's LOAD_IN_4BIT fallback on small VRAM
