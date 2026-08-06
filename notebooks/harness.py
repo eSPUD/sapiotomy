@@ -8,11 +8,15 @@ numerics. They have invariants rather than interpretations, and this file tests
 its own (`selftest`).
 
 Not here: anything a skeptical reader must SEE to believe a figure. Prompt
-construction, item selection, the thinking constraint, step segmentation,
-thresholds and gates, and all figure code stay in the notebook that publishes
-them. `generate` gives `enable_thinking` no default for exactly this reason:
-every call site has to state the constraint, in the notebook, where a reader
-looks for it.
+construction, item selection, the thinking constraint, thresholds and gates, and
+all figure code stay in the notebook that publishes them.
+
+Where a rule is shared but its settings are a claim, the rule lives here and the
+setting has no default, so every call site states it in the notebook where a
+reader looks: `generate` takes `enable_thinking`, `complete` takes `stop`, and
+the step functions take `min_step_chars`. Segmentation moved here after five
+notebooks had grown three variants of it between them, which is the same failure
+`incremental_token_strings` was consolidated to stop.
 
 This file ships in the same download as the notebooks. Each run records
 `fingerprint()` in its manifest, so the artifact names the plumbing that made it.
@@ -22,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -39,7 +44,7 @@ from huggingface_hub.utils import (
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-__version__ = "1.1"
+__version__ = "1.2"
 
 _HERE = Path(__file__).resolve()
 
@@ -458,6 +463,168 @@ def generate(prompt_text, model, tok, *, enable_thinking, max_new_tokens, eos_id
             "truncated": truncated,
             "stopped_on_eos": stopped_on_eos,
             "thinking_leaked": "<think>" in text}
+
+
+# --------------------------------------------------------------------------
+# measurement
+# --------------------------------------------------------------------------
+
+def strip_empty_think(text):
+    """Drop a `<think></think>` pair a model emitted with nothing between it. Qwen3
+    under `/no_think` does this on every response, and counting it as content inflated
+    every step count by one before it was caught."""
+    return re.sub(r"^\s*<think>\s*</think>\s*", "", text.strip())
+
+
+def step_spans(text, *, min_step_chars):
+    """Character spans of the steps in a trace: blank-line paragraphs, then newlines,
+    then sentences — whichever first divides it. Fragments shorter than
+    `min_step_chars` that carry no digit and no `\boxed` merge backwards.
+
+    `min_step_chars` has no default. Where a step ends is a claim, so the notebook
+    states its threshold at the call site.
+
+    This counts formatting, not reasoning: a display equation becomes its own step. It
+    is a serviceable blurt detector and nothing more.
+    """
+    text = strip_empty_think(text)
+    for pattern in (r"\n\s*\n", r"\n", r"(?<=[.!?])\s+"):
+        spans, pos = [], 0
+        for m in re.finditer(pattern, text):
+            if m.start() > pos:
+                spans.append((pos, m.start()))
+            pos = m.end()
+        if pos < len(text):
+            spans.append((pos, len(text)))
+        spans = [(a, b) for a, b in spans if text[a:b].strip()]
+        if len(spans) > 1:
+            break
+    else:
+        return text, ([(0, len(text))] if text.strip() else [])
+
+    merged = []
+    for k, (a, b) in enumerate(spans):
+        piece = text[a:b].strip()
+        mergeable = (len(piece) < min_step_chars and not re.search(r"\d", piece)
+                     and k != len(spans) - 1 and "\\boxed" not in piece)
+        if merged and mergeable:
+            merged[-1] = (merged[-1][0], b)
+        else:
+            merged.append((a, b))
+    return text, merged
+
+
+def n_steps(text, *, min_step_chars):
+    return len(step_spans(text, min_step_chars=min_step_chars)[1])
+
+
+def segment_steps(text, tokens, *, min_step_chars):
+    """Steps with contiguous token ranges covering every token, for a page that reveals
+    a trace one token at a time. Relies on `"".join(tokens) == text`."""
+    assert "".join(tokens) == text, "token strings do not reconstruct the trace"
+    stripped, spans = step_spans(text, min_step_chars=min_step_chars)
+    offset = len(text) - len(stripped) if text.endswith(stripped) else 0
+
+    ends, run = [], 0
+    for tok in tokens:
+        run += len(tok)
+        ends.append(run)
+
+    def token_at(char_index):
+        lo, hi = 0, len(ends)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if ends[mid] <= char_index:
+                lo = mid + 1
+            else:
+                hi = mid
+        return lo
+
+    steps = [{"text": stripped[a:b].strip(), "token_start": token_at(a + offset)}
+             for a, b in spans]
+    for j, st in enumerate(steps):
+        st["token_end"] = steps[j + 1]["token_start"] if j + 1 < len(steps) else len(tokens)
+    return steps
+
+
+def tokens_to_answer(tokens, marker="\\boxed{"):
+    """Tokens emitted before the answer marker opens; None if it never does."""
+    run = ""
+    for i, tok in enumerate(tokens):
+        run += tok
+        if marker in run:
+            return i + 1
+    return None
+
+
+def mcnemar(a, b):
+    """Exact two-sided test over the items where two conditions disagree.
+
+    `a` and `b` map problem_id -> bool. Returns (a_only, b_only, p). Ties carry no
+    information about a difference, so they are excluded rather than counted.
+    """
+    from math import comb
+    both = set(a) & set(b)
+    x = sum(1 for k in both if a[k] and not b[k])
+    y = sum(1 for k in both if b[k] and not a[k])
+    n = x + y
+    if n == 0:
+        return x, y, 1.0
+    k = max(x, y)
+    return x, y, min(1.0, 2 * sum(comb(n, i) for i in range(k, n + 1)) / 2 ** n)
+
+
+def table(title, header, rows, note=None, collect=None):
+    """Print a table and, if `collect` is a list, append the same table to it as
+    markdown. Runs that emit a paste-ready tables.md and a readable notebook get both
+    from one call instead of formatting twice."""
+    md = [f"\n### {title}\n",
+          "| " + " | ".join(header) + " |",
+          "|" + "|".join("---" for _ in header) + "|"]
+    md += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
+    if note:
+        md.append(f"\n{note}")
+    if collect is not None:
+        collect.extend(md)
+
+    widths = [max(len(str(r[i])) for r in [header] + rows) for i in range(len(header))]
+    print(f"\n### {title}")
+    print("  " + "  ".join(str(h).ljust(widths[i]) for i, h in enumerate(header)))
+    for r in rows:
+        print("  " + "  ".join(str(c).ljust(widths[i]) for i, c in enumerate(r)))
+    if note:
+        print(f"  {note}")
+    return "\n".join(md)
+
+
+# --------------------------------------------------------------------------
+# datasets the book does not ship
+# --------------------------------------------------------------------------
+
+GSM8K_URL = ("https://raw.githubusercontent.com/openai/grade-school-math/"
+             "master/grade_school_math/data/test.jsonl")
+
+
+def load_gsm8k(path="data/gsm8k_test.jsonl"):
+    """GSM8K's test split in the same shape ch03 gives MATH-500, so one loop serves
+    both. The reference answer is the text after `####`; the `<<3*4=12>>` calculator
+    annotations are stripped because they are not part of the demonstrated solution."""
+    import requests
+    path = Path(path)
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(requests.get(GSM8K_URL, timeout=60).text, encoding="utf-8")
+    rows = []
+    for i, line in enumerate(path.read_text(encoding="utf-8").splitlines()):
+        if not line.strip():
+            continue
+        r = json.loads(line)
+        body, _, final = r["answer"].rpartition("####")
+        rows.append({"unique_id": f"gsm8k/{i}", "problem": r["question"],
+                     "answer": final.strip().replace(",", ""),
+                     "solution": re.sub(r"<<.*?>>", "", body).strip(),
+                     "level": 0, "subject": "grade school"})
+    return rows
 
 
 # --------------------------------------------------------------------------
