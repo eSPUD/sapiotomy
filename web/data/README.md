@@ -32,6 +32,25 @@ at load time, so a missing `citation`/`provenance` fails the build and the tests
 4. Add a **data-fidelity test** asserting the endpoints match the paper within
    ±1.0 pp (default tolerance).
 
+## The other tier: our own runs
+
+`page-0N-derived.json` is a different kind of file and does not follow the shape above. It has no
+`citation`, because there is nothing to cite: it is a byte-for-byte copy of a notebook's
+`out/page_0N/derived.json`, and every number in it is a measurement of ours. Its provenance is its
+own `manifest` block — model revisions, tokenizer hashes, decoding, item-set hash, seed, versions,
+integrity counts — and the run it came from ships as a download beside the page, so a reader who
+doubts a figure re-derives it rather than taking the file's word for it. See
+[`../../notebooks/README.md`](../../notebooks/README.md).
+
+| File | Page | Run |
+|---|---|---|
+| `page-05-derived.json` | 5 | 900 generations: 3 prompt conditions × 3 Qwen2.5 checkpoints × 100 MATH-500 L4-5 items, greedy |
+| `page-06-derived.json` | 6 | 1,500 records: 5 token budgets × 3 Qwen2.5 checkpoints × the same 100 items, greedy, forced at the cap |
+
+These are validated by `src/lib/page0N.ts` at import time rather than by `data.ts`: the loader runs
+the spec's claim gates before any number reaches a component, so a run that does not pass fails the
+build instead of drawing a plausible wrong figure.
+
 ## Files
 
 | File | Page | Anchor | Source |

@@ -57,7 +57,7 @@ The page ships what it draws and links what it drew it from.
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** Run complete and replayable; `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
-| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | built and verified; no real run yet |
+| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4).** `FULL` run complete and replayable; `derived.json` is committed to `web/data/page-06-derived.json`, and the notebook, `harness.py` and all 1,500 records ship as `web/public/notebooks/page-06-thinking-longer.zip`, linked from the page |
 
 **The ablations** that chose page 5's instrument. One-off studies, not page artifacts, and they
 do not carry run modes — they sweep a roster once and write paste-ready tables.
@@ -82,9 +82,15 @@ Each page notebook has a `RUN_MODE` variable at the top with **three tiers**. Re
 
 | Mode | What it does | Hardware | Time |
 |---|---|---|---|
-| **`REPLAY`** *(default)* | draws every figure from the published generations | **none** | ~1 min |
+| **`REPLAY`** | draws every figure from the published generations | **none** | ~1 min |
 | `QUICK` | one 3B checkpoint on a reduced grid, on your own hardware | ~6 GB GPU | tens of minutes |
 | `FULL` | the grid the page ships, three checkpoints | 16 GB+ GPU | hours |
+
+**`REPLAY` is the default in the download, and the copy here is left at the mode that generated
+the shipped run.** The manifest records the notebook's sha256, so "this file made these numbers"
+is checkable rather than asserted, and flipping `RUN_MODE` in place would break it. The packaged
+copy is that file with one string changed, which is what a reader who wants the figures and not
+the afternoon should open.
 
 - **`REPLAY`** loads no model and downloads no weights. It is not a shortcut past the evidence: it
   adopts the published run's `RUN_ID`, asserts the traces cover the item set the notebook draws,

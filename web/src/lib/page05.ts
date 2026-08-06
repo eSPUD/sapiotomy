@@ -20,8 +20,15 @@
  * `web/data/` fails the build rather than drawing a plausible wrong figure.
  */
 import rawDerived from "@data/page-05-derived.json";
+import { pct, tidyMath } from "./traceText";
 
 export class Page05DataError extends Error {}
+
+/**
+ * Re-exported for page 5's existing callers. The implementations moved to
+ * `traceText` when page 6 became the second consumer: one derivation, one copy.
+ */
+export { pct, tidyMath };
 
 /** One prompt condition's trace on figure 1's single curated problem. */
 export interface SpecimenTab {
@@ -350,10 +357,6 @@ export const SUPPRESSION_TABLE = pairedTable(
   PAGE5.figure2.suppression,
 );
 
-/** Percentage points, from a fraction. */
-export const pct = (fraction: number, decimals = 0): string =>
-  `${(fraction * 100).toFixed(decimals)}%`;
-
 /** A p-value the way the figures print it: exact McNemar, floored for display. */
 export function pLabel(p: number): string {
   if (p < 0.0001) return "p < 0.0001";
@@ -361,32 +364,3 @@ export function pLabel(p: number): string {
   return `p = ${p.toFixed(p < 0.01 ? 4 : 3)}`;
 }
 
-/**
- * Display-only tidying of the model's own LaTeX so a maths trace reads as
- * maths on a page with no formula renderer. This changes how the trace LOOKS
- * and never what it says: delimiters go, a handful of macros become the symbol
- * they stand for, and anything unrecognised is left exactly as the model wrote
- * it. The untouched trace ships in `traces.jsonl` beside the notebook.
- */
-export function tidyMath(text: string): string {
-  return text
-    .replace(/\\boxed\{([^{}]*)\}/g, "$1")
-    .replace(/\\d?frac\{([^{}]*)\}\{([^{}]*)\}/g, "$1/$2")
-    .replace(/\\sqrt\{([^{}]*)\}/g, "√$1")
-    .replace(/\\(left|right|,|!|;|quad|qquad)/g, " ")
-    .replace(/\\cdot/g, "·")
-    .replace(/\\times/g, "×")
-    .replace(/\\div/g, "÷")
-    .replace(/\\leq?\b/g, "≤")
-    .replace(/\\geq?\b/g, "≥")
-    .replace(/\\neq\b/g, "≠")
-    .replace(/\\pm\b/g, "±")
-    .replace(/\\[[\]()]/g, "")
-    .replace(/\$+/g, "")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    .split("\n")
-    .map((line) => line.trim())
-    .join("\n")
-    .trim();
-}
