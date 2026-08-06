@@ -20,5 +20,6 @@ matplotlib>=3.9
 numpy>=1.26                     # page 6's flip-point strip is an image of a boolean matrix
 jupyterlab>=4.4
 huggingface_hub>=0.24           # manifest records the model repo revision
+tqdm>=4.66                      # sweep bars, and the harness's downloaded/total fetch bar
 
 # bitsandbytes>=0.43            # only for page 6's LOAD_IN_4BIT fallback on small VRAM

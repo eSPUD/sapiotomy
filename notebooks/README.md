@@ -67,10 +67,12 @@ jupyter lab
 
 Each notebook has a `RUN_MODE` variable at the top:
 
-- **`QUICK`** — a reduced grid on the smallest model, finishing on a laptop CPU in minutes. It
-  produces a legible, correctly-shaped figure, because most readers will never run `FULL`. The
-  numbers are a shape check, not an estimate.
-- **`FULL`** — the grid the page ships, on a 16 GB GPU, in hours.
+- **`QUICK`** — a reduced grid on Qwen3-1.7B, which produces a legible, correctly-shaped figure
+  because most readers will never run `FULL`. The numbers are a shape check, not an estimate.
+  It wants a GPU and takes tens of minutes: a 2026 instruction-tuned model writes thousands of
+  tokens on a hard problem whatever you ask of it, so the caps that used to make this a
+  laptop-CPU job were measuring truncation rather than reasoning.
+- **`FULL`** — the grid the page ships, Qwen3-4B on a 16 GB GPU, in hours.
 
 Runs are resumable: delete `out/<page>/traces.jsonl` to start over.
 

@@ -219,9 +219,9 @@ existence check on the shape and never as a level comparison.
 | Models | Qwen3-4B (primary) and Qwen3-1.7B (second curve), thinking enabled | two levels, one shape |
 | Precision | bf16, not quantized | keeps quantization out of our own data; readers re-deriving at 4-bit should see the same shape at a different level, and that gap is itself a small argument for the page |
 | Decoding | greedy, temperature 0, top-p 1 | budget is the only variable; sampling belongs to page 7 |
-| Budgets | 32, 64, 128, 256, 512, 1024, 2048 (and 4096 if the curve has not bent) | log-spaced, gives figure 2 its x-axis |
+| Budgets | 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 (and 16384 if the curve has not bent) | log-spaced, gives figure 2 its x-axis; the top is set by measured thinking length, below |
 | Items | 120-200 problems from **MATH-500 levels 4 and 5 only** | see headroom below |
-| Forcing | at the cap, close the think block and append the forced-answer suffix, allow ~16 further tokens | without this, low budgets grade as "no answer" and the curve is trivially zero |
+| Forcing | at the cap, close the think block and append the forced-answer suffix, allow 32 further tokens | without this, low budgets grade as "no answer" and the curve is trivially zero |
 | Grading | `extract_final_candidate` then `grade_answer` | inherited harness, so grading is not ours to defend |
 
 **Headroom is the constraint that decides the item set.** The figures only exist if the model
@@ -231,6 +231,13 @@ and empty figure 3's tail. Filtering to difficulty levels 4 and 5 restores dynam
 without leaving the harness, since the dataset already carries a `level` field and grading is
 unchanged. A model too strong for the item set kills this page more thoroughly than a model
 too small.
+
+**The top of the grid is set by how long the model actually thinks.** On three levels 4-5 items,
+Qwen3-1.7B with thinking on spent 1,484, 3,367 and more than 8,192 tokens inside `<think>`, the
+last never closing the block. A grid topping out at 2,048 would therefore have been measuring a
+truncation at every rung and never reached the flat region the page's second beat needs. 8,192 is
+the top of the shipped grid, and the pilot's truncation readout is what says whether 16,384 is
+required.
 
 **This is measured, not assumed.** Before the full sweep, a pilot runs both models at maximum
 budget over ~30 items from levels 4 and 5 and reports accuracy plus mean thinking length. We

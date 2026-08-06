@@ -1,7 +1,8 @@
 # Page 5 — "How to Reason" refactor spec
 
-**Status:** notebook drafted (`notebooks/page_05_how_to_reason.ipynb`), pending approval; the
-page itself is unchanged. Act 2's opening page.
+**Status:** premise inverted after three ablations; notebook rebuild planned in
+[`page_5_notebook_v2.md`](page_5_notebook_v2.md). The page itself is unchanged. Act 2's opening
+page.
 
 **Implementation follows the notebook-first pipeline** in
 [page_6_refactor.md](page_6_refactor.md) section 6, which is canonical for every page resting on
@@ -11,399 +12,414 @@ translated to JS, page renders committed logs with no inference at demonstration
 **What we take from `reasoning-from-scratch`:** ch04 section 4.3's mechanism, which is one line
 (`prompt + "\n\nExplain step by step."`), plus the ch03 harness. Not its numbers.
 
+**All figures on this page are ours**, measured on Qwen2.5-Instruct over MATH-500 levels 4 and 5
+at *n* = 100 paired items. No published figure is redrawn anywhere on the page.
+
 ---
 
 ## 0. The decision that shapes everything below
 
-### The prompt is the lever, so the model must not be
+### The premise inverted, and the page is better for it
 
-Page 5's claim is that *changing the prompt* changes the behaviour. With a hybrid model it
-would be trivial to get a blurt and a chain by flipping the thinking toggle, and that would be
-a demonstration of a product feature rather than of a prompting technique.
+This spec was written to reproduce chain-of-thought prompting: a bare question produces a blurt,
+four words produce a chain, and the page measures the difference. **That premise failed on every
+instruction-tuned checkpoint tried.** A 2026 instruct model reasons on a maths question
+unprompted, and no phrasing of the prompt changes that.
 
-**So thinking stays OFF for the entire page.** Same weights, same mode, same decoding, and the
-only thing that varies is the words in the prompt. This is load-bearing and it must be stated
-on the page, because a skeptical reader will otherwise assume we flipped a switch.
+Three ablations (`page_05_selection`, `experiment_2`, `experiment_3`) settled it:
+
+- **No instruct model blurts unprompted.** 0 of 200 bare responses under 60 tokens; chain share
+  100% in nearly every cell, across Qwen2, Qwen2.5, Qwen2.5-Coder and Qwen3.
+- **"Explain step by step" does nothing** to a model that already chains. On Qwen2.5-3B at
+  *n* = 100 the paired difference is **+0.0 points, 12 problems fixed and 12 broken**, and the
+  95% interval on that difference is [−9.6, +9.6].
+- **Suppression is enormous.** Told to answer with no working, the same model falls from 43% to
+  7%: **40 problems broken, 4 fixed, p < 0.0001.**
+
+**So the page's claim is the reverse experiment.** You cannot make a modern model reason, because
+it already does. You can stop it, and stopping it costs 36 points. Chain of thought did not fail
+to arrive — it arrived so completely that it stopped being a prompt and became the default. That
+is a more interesting page than the one this spec originally described, and every number in it is
+ours.
+
+### One consequence for the instrument
+
+The original constraint here was that thinking stays **off** for the whole page, so that a hybrid
+model's toggle could not be mistaken for a prompting effect. That constraint is retired because
+its subject is gone: the page now runs plain Qwen2.5-Instruct checkpoints, which have no thinking
+mode to leave on. The manifest records that nothing was disabled rather than implying something
+was.
 
 ---
 
 ## 1. Page Objective & Core Narrative
 
-**Objective unchanged and it is the right one.** Act 1 ended asking whether a machine can be
-walked down a road. The first tool is the simplest: show it one.
+**Objective unchanged and it is still the right one.** Act 1 ended asking whether a machine can be
+walked down a road. Page 5 shows what that road is actually made of.
 
 **What the page currently is.** `COT_DEMO` ([authored.ts:361](../web/src/lib/authored.ts:361))
-quotes Wei Figure 1 verbatim: the cafeteria problem, the "The answer is 27" blurt, the
-three-line chain, and the tennis-ball exemplar. The comment says so explicitly. Figure 2 redraws
-the same paper's per-scale table. The page is a faithful, well-built retelling, and a retelling
-is what it should stop being.
+quotes Wei Figure 1 verbatim: the cafeteria problem, the "The answer is 27" blurt, the three-line
+chain, and the tennis-ball exemplar. Figure 2 redraws the same paper's per-scale table. The page is
+a faithful, well-built retelling, and a retelling is what it should stop being.
 
 **Revised narrative, three beats:**
 
-1. **One line of prompt, two behaviours.** Same model, same question, same decoding. Add four
-   words and a chain appears. Real traces, both of them.
-2. **So what exactly do you say?** The prompt ladder, measured. Bare question, forced blurt,
-   the magic phrase, one worked example, several. This is "how to reason" as an actual
-   experiment, and its ranking is not obvious in advance. **What is measured is what each
-   formulation makes the model write** — see §2 for why that, and not accuracy, is the
-   headline axis.
-3. **The chain costs something.** The formulation that most reliably produces a chain also
-   writes the most. Hand to page 6.
+1. **The chain is already there.** Same model, same question, one problem, three prompts. The
+   default output is eight steps of working. Adding "Explain step by step." changes the prompt and
+   not the behaviour. Real traces, all of them.
+2. **Take it away and it breaks.** Forbid the working and the same model on the same problems
+   falls 36 points. This is the page's headline, and it is the largest effect anywhere in Act 2.
+3. **The chain is long.** Six tokens against five hundred and seventy-three. Hand to page 6.
 
-**The page's subject is the mechanism, not the benefit.** "How to reason" asks what makes a
-model produce reasoning; whether that reasoning is also more often *correct* is a benefit
-question, it is a far smaller effect, and it is the axis pages 6 to 8 are built to meter. Page 5
-answers the mechanism question decisively and treats the benefit as a secondary, gated readout.
-This is the same discipline as the model-size exclusion below: keep the page to the claim its
-instrument can actually support.
+**The page's subject is what reasoning is worth, not how to summon it.** "How to reason" was a
+question with an answer in 2022. In 2026 the answer is "you don't have to", and the page that
+demonstrates *why that matters* is the one whose instrument can actually support a claim.
 
-**What leaves the page entirely.** The emergence claim and the model-size axis. Page 5 is about
-*how* to make a model reason; where it stops working is a different subject with a different
-evidentiary bar, and one we cannot meet with two checkpoints. No figure on this page has model
-size on any axis, which is the structural way to guarantee the page cannot be read as making a
-size claim.
+**What leaves the page entirely.** The emergence claim and the redrawn PaLM scaling chart. Page 5
+is not about where reasoning stops working, and that is a different subject with a different
+evidentiary bar.
+
+**Model size may appear, but never as an axis.** Section 2's figure 3 compares three named
+checkpoints, and its claim is about a **flat floor** rather than about scale: gagged, a 7B and a
+model a quarter its size are nearly indistinguishable. Three points are not a scaling law, and
+emergence in Wei et al. is a *sign flip* that our data does not contain — the trend is smooth and
+monotone with no threshold. Any caption that could be read as a scaling law or as emergence is out
+of scope and must be rewritten. Page 11 owns that subject.
 
 ---
 
 ## 2. Proposed Visual Layout / Diagrams
 
-### Figure 1 (step 1) — the lever, in three panels
+### Figure 1 (step 1) — three tabs on one problem
 
-Three real completions on **one problem**, from one model at one setting. The page opens on the
-four-word diff and ends on the worked example, so it travels from *tell it* to *show it*, and
-figure 2 then explains why the second buys more.
+One problem, one model, one decoding setting, three prompts. Each tab carries a **"see the full
+prompt"** disclosure above the model's output, so the reader can confirm that the prompts differ
+while the outputs do not.
 
 ```
-  Qwen3-4B · thinking off · greedy · one question, three prompts
+  Qwen2.5-3B-Instruct · greedy · one question, three prompts
 
-  ┌── the default ──────────┐ ┌── + "Explain step ──────┐ ┌── worked example ───────┐
-  │                          │ │      by step."          │ │    prepended            │
-  │ [real blurt, 1 line]     │ │ [real chain, N steps]   │ │ [real chain, exemplar's │
-  │                          │ │                         │ │  shape]                 │
-  │ ✗   9 tokens             │ │ ✓   180 tokens          │ │ ✓   204 tokens          │
-  └──────────────────────────┘ └─────────────────────────┘ └─────────────────────────┘
-        nothing added              four words added            an example added
+  ┌ forced blurt ┬ bare ┬ + "Explain step by step." ┐   <- the reader lands on `bare`
+  │ ▸ see the full prompt                            │
+  │ ------------------------------------------------ │
+  │ [the model's output, walked a step at a time]     │
+  │ ✗ 27   ·   6 tokens   ·   0 steps                 │
+  └──────────────────────────────────────────────────┘
 ```
 
-Every rung shares ch03's `render_prompt` stem; instruction rungs add text *after* it and
-exemplar rungs add *before* it. The notebook splits on that stem and emits `prompt_before` and
-`prompt_after` per panel, so the page has **one highlight rule for all three** rather than a
-per-rung special case.
+**Three tabs, not two, and this is load-bearing.** A two-tab figure comparing the blurt against
+the step-by-step prompt would imply the instruction caused the chain, which the run says it did
+not. The third tab is what makes the page 2026 rather than 2022: the reader clicks from `bare` to
+`+ "Explain step by step."`, watches the prompt change and the behaviour stay put, and the page's
+thesis lands without a sentence being spent on it. Tab order matches figure 2's bar order left to
+right, so the two figures are one argument read twice.
 
-The interaction survives from the current page and is good: a switch, then ask, then walk the
-chain a step at a time. What changes is that all three outputs are real, and the switch now
-moves along **the prompt**, with the diff shown explicitly.
+**The stepper survives from the current page and is good:** Back / Next / Play walking the chain a
+line at a time. What changes is that all three outputs are real, and that the chain being walked is
+the model's *default*, not something an exemplar induced.
 
-**The third panel's caption is about shape, not correctness.** What a worked example
-demonstrably changes on one problem is the format the chain takes; that it also scores higher
-is figure 2's claim, made across the item set where it can actually be supported. Claiming more
-than shape here would outrun the run (section 6).
+Every tab shares ch03's `render_prompt` stem; instruction tabs add text after it. The notebook
+splits on that stem and emits `prompt_before` and `prompt_after` per tab, so the page has one
+highlight rule for all three rather than a per-tab special case.
 
 **Step segmentation comes from the notebook, not from TypeScript.** Walking a chain a step at a
 time requires the trace divided into steps, which is a derivation; doing it during translation
 would put logic on the page that the cross-language agreement test cannot check. `derived.json`
-carries `steps` per panel, each with a contiguous token range covering every token, so the
-reveal animates real token boundaries and stops at step ends.
+carries `steps` per tab, each with a contiguous token range covering every token, so the reveal
+animates real token boundaries and stops at step ends.
 
-**Second panel, optional, on the same figure: two models, same prompt.** Permitted and useful,
-with one strict rule. The comparison is about **whether a chain appears and what shape it
-takes**, never about who got the answer right. Both models produce a chain, because the prompt
-works on both; the chains differ in quality, and that difference is what the rest of Act 2 is
-about. Any caption that could be read as "the smaller one cannot reason" is out of scope for
-this page and must be rewritten. If the two traces cannot be captioned without implying a size
-law, cut the panel.
+### Figure 2 (step 2) — the cost of not reasoning
 
-### Figure 2 (step 2) — the prompt ladder
-
-This replaces the emergence chart completely. **Two stacked panels**, one row per prompt
-formulation, same model, same items, same decoding, thinking off throughout. Two measures means
-two axes — never one chart with two scales.
+One model, three bars, 95% Wilson intervals, with both paired contrasts annotated beneath.
 
 ```
-  What the prompt produces  ·  a chain is ≥2 steps
-  bare question              █
-  "answer with the number"
-  "explain step by step"     ███████████████████████████████████
-  one worked example         ███████████████████████████████████
-  several worked examples    ██████████████████████████████████
-                             └─── responses containing a chain ───┘
+  forced blurt              ███                                7%
+  bare                      ████████████████████              43%
+  + "Explain step by step." ████████████████████              43%
+                            └──── share of problems solved ────┘
 
-  Whether it arrives at the answer            [greyed if unresolved]
-  bare question              ██
-  "answer with the number"   ███
-  "explain step by step"     ████
-  one worked example         ██████
-  several worked examples    █████
-                             └─── share of problems solved ───┘
-
-  median steps, same order:      1 ·  1 ·  8 ·  6 ·  6
-  tokens written, same order:   43 ·  6 · 348 · 295 · 255
+  suppression:   −36 points  ·  40 broken, 4 fixed   ·  p < 0.0001
+  the instruction: +0 points ·  12 broken, 12 fixed  ·  95% CI [−9.6, +9.6]
 ```
 
-**The primary axis is what each formulation makes the model write**, measured as the share of
-responses containing a chain — two or more steps under the *same* segmentation rule figure 1
-uses to animate a trace. One rule, used twice: a reader who disagrees with where a step ends
-disagrees with both the figure and the measurement, which is the honest arrangement.
+**Contrasts are paired, by exact McNemar over discordant items.** Every condition runs on the same
+problems, so an independent-interval test throws the pairing away — it would report a perfectly
+symmetric 12-versus-12 result as "unresolved" rather than as measured. Wilson intervals stay on
+the bars because a reader should see the precision of each level; the *comparison* is the paired
+test.
 
-Why the primary axis is not accuracy. A `QUICK` run on Qwen3-0.6B put every rung between 0% and
-8% solved — a two-problem spread, indistinguishable from noise — while the chain axis over the
-very same traces ran 0% to 100% with a 58× spread in tokens written. The mechanism was never in
-doubt; only the benefit was. Accuracy on the headline axis made a decisive experiment look like
-a failed one, and it put the page's argument at the mercy of whether the checkpoint happens to
-be good at competition maths. The mechanism claim is the one page 5 exists to make, it is
-enormous, and it survives any model in the family.
+**A claimed null needs an equivalence bound, not a p-value.** The page wants to say the
+instruction does nothing, and `p = 1.0` does not support that: absence of evidence is not evidence
+of absence. The notebook emits the 95% interval on the paired difference so the caption can say
+*any effect is smaller than ten points*, which the run supports, rather than *there is no effect*,
+which it does not.
 
-**The accuracy panel is secondary and gated.** Both panels carry 95% Wilson intervals. If the
-best and worst rungs' intervals overlap, the panel renders greyed with an explicit
-`NOT RESOLVABLE, do not rank` label — never colour alone — and `derived.json` sets
-`claims.may_rank_rungs_by_accuracy: false`, so the caption cannot rank what the run did not
-resolve. When it does resolve, it is drawn in the primary ink and the page may use it.
+**One honest detail the caption must carry.** On the smallest model the instruction *does* move
+something visible: chain share goes from 87% to 100%. It finishes the chaining behaviour on the
+weakest checkpoint and still does not convert that into accuracy. Without this clause the null
+reads as "the words are inert", which is stronger than what was measured.
 
-Why this is the right figure for this page:
+**Chain share is a blurt detector and nothing more.** It counts formatting — under the notebook's
+segmentation rule a display equation is its own step — so it is fine for verifying that the
+suppression manipulation actually suppressed (0% under the blurt, 100% otherwise) and useless as a
+measure of how much reasoning happened. It must not be reported as the latter anywhere on the page.
 
-- **It is literally the page's title as an axis.** How to reason means what to put in the
-  prompt, and this varies exactly that — and now measures exactly what changed.
-- **The ranking is a real question.** Does a worked example produce a chain as reliably as the
-  magic phrase? Readers wonder, and nothing on the current page answers it.
-- **It cannot be misread as a size claim,** because size appears nowhere on it.
-- **It carries its own cost row,** which is the handoff.
-- **It degrades honestly.** A run that cannot resolve the benefit still makes the mechanism
-  argument, instead of publishing five bars of noise.
+### Figure 3 (step 3, optional) — the floor is flat
 
-The forced-blurt rung matters and should not be dropped for tidiness: it is the floor, and the
-gap between it and the bare rung is what tells you whether the model's default is already doing
-a little reasoning when nobody asked.
+Three model rows, two bars each. Ships only if the page has room; figures 1 and 2 carry the
+argument alone.
 
-### Step 3 — the close
+```
+                    gagged        left alone
+  Qwen2.5-1.5B      ██  4%        ███████████ 22%
+  Qwen2.5-3B        ███ 7%        ██████████████████████ 43%
+  Qwen2.5-7B        ████ 11%      ██████████████████████████████ 60%
+                    └ the floor ┘
+```
 
-One paired readout, not a third chart: the rung that most reliably produces a chain, next to
-what that chain cost in tokens. The sentence the page ends on is that the chain was not free,
-and page 6 begins by metering it. Accuracy joins that sentence only if its gate passed; the
-notebook emits `None` for those fields otherwise, so the handoff cannot borrow an unearned
-number.
+The right-hand bars fan out; **the left-hand bars do not.** The claim is the flat floor, and the
+sentence it supports is:
+
+> A 7B forbidden to reason scores 11%. A 1.5B allowed to reason scores 22%. The chain is worth
+> more than four times the parameters.
+
+That cross-model comparison is tested explicitly rather than left to the eye. Its purpose is to
+show the effect is not one checkpoint's accident; it is not a scaling result and carries no size
+axis (section 1).
+
+**The 7B ran at 8-bit** because bf16 weights do not fit the card the sweep ran on. Quantisation
+costs a little accuracy, so it understates that row's suppression cost and makes the trend
+conservative rather than flattering — but it is a precision difference inside a cross-model
+comparison and the figure must label it.
+
+### Step 4 — the close
+
+One paired readout, not a fourth chart: what the chain cost. Six tokens against five hundred and
+seventy-three, roughly **95× the tokens for 36 points**. The sentence the page ends on is that the
+chain is not free and nobody has asked yet how much of it is load-bearing.
 
 ---
 
 ## 3. Empirical Data / Reasoning Traces Needed
 
 **Same instrument as pages 6 to 8**, which is what makes Act 2 one continuous measurement:
-Qwen3-4B primary, bf16, MATH-500 levels 4 and 5, `extract_final_candidate` then `grade_answer`,
-greedy decoding.
+Qwen2.5-Instruct, bf16, MATH-500 levels 4 and 5, `extract_final_candidate` then `grade_answer`,
+greedy decoding throughout.
 
-**Two run modes, both real.** `FULL` is Qwen3-4B over 160 items and is what the page ships.
-`QUICK` is Qwen3-1.7B over 24 items and is a genuine run, not a smoke test: the chain axis is a
-large enough effect to resolve at that *n*, so `QUICK` makes the page's primary argument. It
-does not reliably resolve the accuracy panel, which is the gate's job to say. Qwen3-0.6B is
-below the floor for the accuracy panel and should not be used for a run intended for the page.
-
-**The generation cap is 1024 for both modes and must not bind.** At 512 it clipped 33% of the
-zero-shot-CoT rung against 0% of the forced-blurt rung, and since a truncated trace loses its
-`\boxed{}` and grades wrong, that was a scoring penalty aimed at precisely the rungs this page
-argues for. The notebook asserts the truncation rate **per rung**, not in aggregate — an
-aggregate hid this once already. Generation length is page 6's variable; on page 5 it must bind
-on nobody.
-
-**The eval band is a knob, and it is the lever for accuracy headroom.** Levels 4 and 5 remain
-the default, chosen to avoid the ceiling. If the accuracy gate fails on a `FULL` run, step the
-band down to levels 3 and 4 — measured on this family, levels 1-2 score around 25% against 2-6%
-on levels 4-5, so the headroom is real. Levels 3+4 stay disjoint from the exemplar band; going
-to 2+3 collides with it and requires moving exemplars to level 1 only. The notebook asserts band
-disjointness rather than assuming it. **The primary axis does not depend on the band at all** —
-only the secondary panel does, which is the point of putting the mechanism on the headline.
-
-**The sweep is one pass per rung.**
-
-| Rung | Prompt | Note |
+| | `QUICK` | `FULL` |
 |---|---|---|
-| bare | the question alone | the true default |
-| forced blurt | + answer-only instruction | the floor |
-| zero-shot CoT | + "Explain step by step." | ch04 section 4.3's exact mechanism, one line |
-| one-shot | one worked example prepended | see below on where the example comes from |
-| few-shot | three worked examples prepended | diminishing returns expected |
+| models | Qwen2.5-1.5B | 1.5B + 3B + 7B |
+| items | 50 | 100 |
+| figure 3 | off | on |
+| generations | ~150 | 900 |
 
-Five rungs x ~160 items, greedy, thinking off. Smaller than page 6's sweep. Recorded per item:
-prompt rung, full trace, extracted answer, correctness, tokens generated.
+**`QUICK` stays on levels 4-5 rather than dropping to level 3.** The band rule established by the
+ablations — level 3 for 1.5B models, levels 4-5 for 3B and up — exists for *elicitation* headroom,
+and elicitation is no longer on this page. The suppression effect resolves comfortably on the 1.5B
+at levels 4-5 (+18 points, 22 fixed and 4 broken, p = 0.0005). Same band in both modes means
+`QUICK` is a genuine preview of `FULL` rather than a different experiment.
 
-**The worked examples are real traces, not authored ones.** This is the detail that keeps the
-page honest. Take held-out problems the model already solved correctly under the zero-shot CoT
-rung, verify them, and prepend those as the exemplars. The few-shot prompt is then built out of
-the model's own verified-correct work on different problems, so nothing on the page is written
-by us and the exemplar is re-derivable like everything else. Held-out means the exemplar
-problems never appear in the evaluated set.
+**The primary model is Qwen2.5-3B**, not the 7B. The 7B's −49 is more dramatic, but it runs at
+8-bit and the page's headline number should not carry a quantisation caveat. The 3B is bf16, sits
+at 43% bare so there is visible headroom in both directions, and −36 with 40 broken against 4
+fixed is not a marginal result.
 
-**The two bands come from opposite ends of the difficulty scale: score on levels 4 and 5,
-demonstrate with levels 1 and 2.** A worked example teaches the *shape* of a solution and does
-not have to be as hard as the question; in ordinary few-shot practice it is not. Three things
-follow, and the first is what forced the decision. A small model asked to solve twelve level-4
-and level-5 problems solves none of them, so there is nothing to harvest and the run dies at
-the exemplar step, which is exactly what the first `QUICK` run did. Easy exemplars are also
-short, which matters because the page renders one verbatim in its "see full prompt" disclosure.
-And drawing from disjoint difficulty bands makes the held-out property structural rather than
-merely asserted.
+**The sweep is one pass per condition.**
 
-**Figure 1's specimens are curated from the same run**, using page 9's method: search the dump
-for a problem where the bare prompt blurts wrong and the CoT prompt lands right, with a chain
-short enough to walk on screen. That pairing is common enough that legibility, not existence,
-will be the binding constraint.
+| Condition | Prompt | Note |
+|---|---|---|
+| `forced_blurt` | + "Give only the final answer. No explanation, no working, no other text." | the floor, and the page's intervention |
+| `bare` | the question alone | the true default, which already chains |
+| `zero_shot_cot` | + "Explain step by step." | Kojima et al. 2022 · ch04 §4.3's exact mechanism |
 
-**One risk worth naming.** A modern instruction-tuned model may already write some working when
-asked a bare maths question, so the bare rung might not blurt cleanly and the gap between rungs
-1 and 3 could be small. If so, the forced-blurt rung carries figure 1 instead, and the page's
-framing shifts from *make it reason* to *let it reason*, which is a more accurate description of
-a 2026 model and costs the page nothing. Decided from the run itself — the notebook measures the
-bare rung's share of items showing working and records the verdict in `derived.json`; do not
-paper over it.
+Three conditions × 100 items × 3 models. Recorded per item: condition, full prompt, full trace,
+token strings, extracted answer, correctness, tokens generated, step count, boxed flag.
+
+**The one-shot and few-shot rungs are cut, and this is not a tidying decision.** Across experiment
+3 the few-shot gain is +1 to +15 points and resolves in exactly one cell, while the *boxed rate*
+moves 22% → 93% on one model and 47% → 84% on another. The exemplar's job on a 2026 instruct model
+is teaching the `\boxed{}` answer format, not teaching reasoning, and a rung that mostly measures
+format compliance does not belong on an axis about reasoning. It belongs in a footnote.
+
+Two consequences follow, both simplifications: the **exemplar harvest disappears** — no held-out
+pool, no correctness filter, no band-disjointness assertion — and the notebook loses its most
+failure-prone cell, which is the one that killed the first `QUICK` run.
+
+**The generation cap is 2048 and must not bind.** A cap that clips only the conditions that write
+chains is a scoring penalty aimed at precisely the argument this page makes, since a truncated
+trace loses its `\boxed{}` and grades wrong. The notebook asserts the truncation rate **per
+condition** at a 5% budget, never in aggregate — an aggregate hid this once already, passing 13%
+overall while clipping a third of one rung and none of another.
+
+**Figure 1's specimen is curated from the same run.** Required: the blurt is wrong and the bare
+prompt is right. Preferred, as sort keys rather than filters: the step-by-step tab is also right
+so all three tabs are populated; the bare trace is under 260 tokens so the chain fits on screen;
+then shortest; then `problem_id` for determinism. If no problem qualifies the notebook flags
+`specimen_is_fallback` and the run is not translatable.
+
+**One risk worth naming.** The page's floor depends on the model obeying an instruction to stop
+reasoning. Every general instruct checkpoint measured so far complies fully — 100% at a median of
+6 tokens — but Qwen3-1.7B complied on only 5 of 24 items in an earlier run, and the math-tuned
+checkpoints refuse the instruction outright at 0% compliance. Compliance is therefore **measured
+on the run's own items and gated**, not assumed. A model that will not stop gives the page no
+floor.
 
 ---
 
 ## 4. Text / Captioning Balance
 
-- **Lede:** two sentences. Something in the shape of: the technique of prompting for
-  step-by-step work is not ours; what follows is that technique run on a model you can download.
-- **Figure 1:** one caption naming the intervention and the constraint (only the prompt changed;
-  the model never moved). The highlighted prompt diff does the rest.
-- **Figure 2:** one sentence on the ranking of the *top* panel — what each formulation makes the
-  model write — naming the surprise if there is one. Do not describe the bars. The bottom panel
-  gets a clause, not a sentence, and when its gate is false that clause says it did not resolve
-  rather than quietly omitting it: a greyed panel with no explanation reads as an error.
-- **Step 3:** one sentence, the handoff.
-- **Margin notes:** the deck's existing convention holds. Operating hints where a control needs
-  one, and bare cites beside the figure they back. Wei et al. sits beside figure 1 (few-shot
-  chain of thought) and Kojima et al. beside the zero-shot rung of figure 2, since those are the
-  figures whose *techniques* they originate. Cite the technique, not the measurement: the
-  numbers are ours, so no cite should carry a number or sit where it implies the data came from
-  a paper.
+- **Lede:** two sentences. The technique of prompting for step-by-step work is not ours; what
+  follows is what that technique is worth on a model you can download, in 2026.
+- **Figure 1:** one caption naming the constraint — only the prompt changed, the model never
+  moved — and pointing at the thing worth noticing, which is that two of the three tabs look the
+  same. The prompt disclosures do the rest.
+- **Figure 2:** one sentence on the suppression bar. The instruction contrast gets a clause
+  stating the bound, never the word "nothing" unqualified. Do not describe the bars.
+- **Figure 3, if it ships:** one sentence, the flat floor. It must not compare heights across the
+  right-hand bars as a fact about scale.
+- **Step 4:** one sentence, the handoff, carrying the token multiple.
+- **Margin notes:** the deck's existing convention holds. Wei et al. sits beside figure 1 and
+  Kojima et al. beside the step-by-step tab, since those are the figures whose *techniques* they
+  originate. Cite the technique, not the measurement: the numbers are ours, so no cite carries a
+  number or sits where it implies the data came from a paper.
 - **Chips:** the "quoted from Wei et al. Fig. 1" chip is deleted along with the quotation. The
-  "no live model" chip is replaced by a provenance chip naming model, mode, decoding, item set
-  and date, with **thinking off** stated explicitly.
+  "no live model" chip becomes a provenance chip naming model, precision, decoding, item set,
+  *n* and date.
 
 ---
 
 ## 5. Transition / Flow
 
-**From page 4.** Unchanged and already good. Act 1 closed on whether a machine can be walked
-down a road; page 5 shows it being walked.
+**From page 4.** Unchanged and already good. Act 1 closed on whether a machine can be walked down
+a road; page 5 shows what the road is worth.
 
-**To page 6, which is the reason this refactor is happening now.** The current close, that the
-road only helps a big-enough walker, hands page 6 a claim about model size that page 6 does not
-use and cannot support. The new close hands over the thing page 6 is actually about.
+**To page 6, which is the reason this refactor is happening.** The current close hands page 6 a
+claim about model size that page 6 does not use and cannot support. The new close hands over the
+thing page 6 is actually about.
 
-The prompt bought a chain. The chain is long. Length is tokens, and tokens are compute, and the
-reader has just watched the token count go from single digits to hundreds for a few points of
-accuracy. So the question page 6 opens on is no longer abstract: **how much of that length do
-you actually need?** Page 6's first move, capping generation and forcing an answer, is then
-obviously the next thing to try rather than a new topic.
+The reader has just watched the token count go from six to five hundred and seventy-three, and
+watched the score collapse when those tokens were taken away. So the question page 6 opens on is
+concrete rather than abstract: **how much of that length is load-bearing?**
 
-The two pages also become one experiment read twice. Page 5 varies the prompt at unlimited
-length; page 6 fixes the prompt and varies the length. Same model, same items, same harness.
+The bridge is the reader's own experience, and it belongs here rather than in figure 2's caption,
+where it would spend page 6's opening early:
+
+> You have done this. You told the model to skip the working and answer, and the answer got worse.
+> Page 6 asks how much of that working it actually needed, and what happens when you cut it off
+> mid-sentence.
+
+The two pages are one experiment read twice. Page 5 varies the prompt at unlimited length; page 6
+fixes the prompt and varies the length. Same family, same items, same harness.
 
 ---
 
 ## 6. What the page is allowed to claim
 
-The claims contract for the translation step ([page_6_refactor.md](page_6_refactor.md) §6):
-the notebook produces the numbers, and this section bounds the sentences they can support.
+The claims contract for the translation step ([page_6_refactor.md](page_6_refactor.md) §6): the
+notebook produces the numbers, and this section bounds the sentences they can support.
 
-`derived.json` carries a machine-readable form of this section as a top-level `claims` object.
-The translation step reads it **before** it reads any number, and a claim whose flag is false
-does not go on the page regardless of how good the number looks.
+`derived.json` carries a machine-readable form of this section as a top-level `claims` object. The
+translation step reads it **before** it reads any number, and a claim whose flag is false does not
+go on the page regardless of how good the number looks.
+
+### The gates
+
+| flag | condition | consequence if false |
+|---|---|---|
+| `suppression_resolves` | McNemar p < 0.05 on blurt vs bare, primary model | **not translatable** — this is the page |
+| `blurt_compliance` | primary model answers under 40 tokens on ≥80% of blurt items | **not translatable** — the page has no floor |
+| `specimen_usable` | figure 1's triple found, not fallback | **not translatable** — figure 1 is illustrative only |
+| `instruction_null_bounded` | 95% CI on bare vs cot within ±15 points | the caption says "did not resolve", never "does nothing" |
+| `floor_is_flat` | blurt accuracies within 10 points across models | figure 3 drops its headline sentence |
+| `may_compare_across_models` | figure 3 ran, and precision is recorded per model | figure 3 drops |
 
 **Supported by the run:**
 
-- Adding "Explain step by step." changes what the model writes — one model, one setting, both
-  traces shown in full, re-derivable from the notebook.
-- The five formulations rank **by share of responses containing a chain** as `derived.json`
-  reports, on MATH-500 levels 4 and 5, thinking off throughout. Gated on
-  `claims.chain_axis_resolvable`; if that is false the run is not translatable at all, because
-  this is the page's core claim.
-- The formulation that most reliably produces a chain also writes the most tokens.
-- The worked examples in the few-shot prompts are the model's own verified-correct solutions
-  to held-out problems.
+- The model produces a chain of reasoning on a bare maths question, with no instruction to do so —
+  one model, one setting, the trace shown in full and re-derivable from the notebook.
+- Forbidding that reasoning costs what `derived.json` reports, on MATH-500 levels 4 and 5, at the
+  *n* recorded, greedy. Gated on `suppression_resolves`.
+- Adding "Explain step by step." to a model that already chains produces an effect smaller than
+  the bound `derived.json` reports. Gated on `instruction_null_bounded`, and stated as a bound
+  rather than as a zero.
+- The formulation that reasons writes far more tokens than the one that does not, in the ratio
+  `close.token_multiple` reports.
 
 **Supported only when the gate says so:**
 
-- Any ranking of the rungs by accuracy, and any statement that one formulation solves more
-  problems than another. Gated on `claims.may_rank_rungs_by_accuracy`. When false, the accuracy
-  panel is still drawn — greyed and labelled — but the caption describes it as unresolved and
-  the close omits accuracy entirely. The notebook emits `None` rather than a number for those
-  fields, so there is nothing to accidentally interpolate.
-- On the specimen problem, prepending a worked example changes the **shape** of the chain. One
-  problem cannot support more than that, which is why the accuracy claim for exemplar rungs is
-  made by figure 2 across the item set and never by figure 1's third panel.
+- Anything figure 3 shows, gated on `may_compare_across_models`, and phrased as a comparison of
+  named checkpoints rather than as a fact about size.
+- The flat-floor sentence, gated on `floor_is_flat`.
 
-**Not supported, and not to appear on the page:** anything about model size or emergence
-(section 1); any general claim about chain-of-thought beyond this model, dataset and
-difficulty band; any number attributed to Wei et al. or Kojima et al. (section 4).
+**Not supported, and not to appear on the page:**
+
+- Anything about emergence, or any scaling law. The measured trend is smooth and monotone; Wei's
+  emergence claim is a sign flip, and a sign flip is not in this data (section 1).
+- Any general claim about chain-of-thought beyond this family, dataset and difficulty band. In
+  particular, nothing about whether these findings hold outside mathematics: the page measures one
+  benchmark in one language.
+- Any number attributed to Wei et al. or Kojima et al. (section 4).
+- Any claim that a worked example helps, or that it does not. The exemplar rungs left the ladder
+  because they mostly measure answer-format compliance (section 3); the page says nothing about
+  them beyond a footnote naming why.
 
 **Limitations, stated rather than buried:**
 
-- *n* = 160 in `FULL`, so adjacent rungs within a couple of points are not resolvable, and
-  the caption must not rank rungs that overlap. The 95% Wilson intervals are drawn on both
-  panels so this is visible rather than merely disclosed.
-- "A chain" is ≥2 steps under the notebook's segmentation rule, not a model's judgement of what
-  reasoning is. It is the same rule figure 1 animates, it is visible in the notebook, and a
-  reader can disagree with it — in which case they disagree with the figure and the measurement
-  together, which is why one rule serves both.
-- The chain axis measures whether the model *wrote* reasoning, not whether the reasoning is
-  sound. A response can contain eight well-formed steps and a wrong answer; page 9 is where
-  step quality is examined.
-- Greedy decoding diverges on a handful of items across hardware; re-deriving reproduces the
-  shape and the ranking, not every digit.
-- The exemplar harvest prefers the shortest correct held-out solutions — a legibility choice,
-  which means the exemplars are not a random sample of the model's correct work.
-- `forced_blurt` is one phrasing of "do not explain"; a different phrasing would move the
-  floor.
-- Step segmentation is a rule (paragraphs, then lines, then sentences, with digit-free
-  fragments merged), not a model's judgement of where a reasoning step ends. It is visible in
-  the notebook and a reader can disagree with it.
-
-**Blocking gate on the specimen.** If `derived.json` reports `specimen_is_fallback: true`, the
-run found no problem where the default rung misses and zero-shot CoT lands, and figure 1's
-panels are illustrative only. That run must not be translated to the page. Figure 2's
-aggregates are unaffected by the fallback and remain valid.
+- Comparisons across conditions are paired and use exact McNemar over discordant items; the
+  discordant counts are printed beside every contrast, so a reader sees that a "+0 point" result
+  is 12 fixed and 12 broken rather than nothing happening.
+- The null is a bound, not a zero. At *n* = 100 the instruction contrast resolves to about ±10
+  points, so an effect smaller than that is not excluded.
+- "A chain" is ≥2 steps under the notebook's segmentation rule, which counts formatting rather
+  than reasoning. It serves as a blurt detector and nothing more (section 2).
+- `forced_blurt` is one phrasing of "do not explain". A different phrasing would move the floor,
+  and the page shows the exact string it used.
+- The blurt condition produces almost no `\boxed{}`, by construction, so its answers are extracted
+  by the grader's fallback to the last number. This is reported per condition; it is the one place
+  a low boxed rate is expected rather than a defect.
+- The 7B row of figure 3 ran at 8-bit while the others ran bf16. It understates that row.
+- Greedy decoding diverges on a handful of items across hardware; re-deriving reproduces the shape
+  and the ranking, not every digit.
+- The page measures whether the model *wrote* reasoning and whether it landed the answer, never
+  whether the reasoning is sound. A response can contain eight well-formed steps and a wrong
+  answer; page 9 is where step quality is examined.
 
 ---
 
 ## Open questions for review
 
-1. ~~Does the two-model panel survive?~~ **Resolved: not built in the notebook draft.** The
-   notebook carries one checkpoint and no panel code, so figure 1 is single-model. The design
-   in §2 stands if the panel is revived later — as its own cell, under the strict rule that
-   the comparison is chain shape only, never correctness.
+1. **Does figure 3 ship?** It is net-neutral on page height, since it replaces the PaLM chart
+   currently occupying step 2, and it needs no new sweep. Against: it is the only place the page
+   puts three checkpoints side by side, and the 8-bit row needs a label. Decide before translation.
+2. **Is 8-bit acceptable on a page that otherwise carries none?** If not, figure 3 becomes two
+   models and loses its most dramatic row.
+3. **Does the specimen search need `FULL`?** `QUICK` at *n* = 50 gives 50 chances at a problem
+   where the blurt misses and bare lands. At the measured rates that is ample, but it has not been
+   run.
 
-**Resolved in review of the notebook draft:**
+**Resolved by the ablations** (`page_05_selection` n=1,080 · `experiment_2` n=1,440 ·
+`experiment_3` n≈2,700):
 
-- *Figure 1 leads with zero-shot CoT, but the page's registered concept is few-shot.* Resolved
-  by adding a **third panel**: the figure opens on the four-word diff and ends on the worked
-  example, so both mechanisms are present and the page arrives where its concept line says it
-  does. The third panel is a preference in the specimen sort, never a filter, so it costs the
-  search nothing.
-- *`derived.json` carried no step segmentation.* Resolved: segmentation is a notebook
-  derivation with a visible rule, emitted per panel with contiguous token ranges.
-- *`QUICK` could hard-fail on the specimen search.* Resolved: specimen search degrades with
-  `specimen_is_fallback` rather than raising, and `QUICK`'s eval grid went from 12 items to 24.
-  The pipeline standard in [page_6_refactor.md](page_6_refactor.md) §6 now states precisely what
-  `QUICK` does and does not guarantee.
+- *The page's premise.* **Reversed.** No instruct model blurts unprompted, so the page cannot be
+  about making one reason. It is about what reasoning is worth, measured by taking it away.
+  Section 0.
+- *Zero-shot CoT as a mechanism.* **Measured null**, with a bound. It is retained as a rung
+  precisely because showing it does nothing is the page's 2026 finding.
+- *The exemplar rungs.* **Cut.** They move the boxed rate far more than the score; see section 3.
+- *Which model and band.* Qwen2.5-Instruct on MATH-500 levels 4-5, primary 3B. Level 3 is the
+  right band for 1.5B models when elicitation is the subject, which here it is not.
+- *The instrument's precision.* Wilson intervals on independent rungs was the wrong test for a
+  paired design and would have reported a measured tie as unresolved. Exact McNemar throughout.
 
-**Resolved in review of the first complete run** (Qwen3-0.6B, L4-5, cap 512 — the run that
-produced five bars between 0% and 8%):
+**Reversed from the earlier review of the first complete run** (Qwen3-0.6B, L4-5, cap 512 — the
+run that produced five bars between 0% and 8%). That review demoted accuracy to a secondary,
+gated panel and promoted chain share to the headline, because at 0.6B every rung sat between 0%
+and 8% and the axis was hiding a working experiment. **Both halves of that decision are now
+undone**, and the reason is that its premise was a floored checkpoint rather than a property of
+the measurement: at *n* = 100 on a 3B at 43% bare, accuracy resolves at p < 0.0001 and is the
+page's strongest number. Chain share moves the other way, down to a blurt detector, because the
+segmentation rule counts formatting rather than reasoning and must not be reported as the latter.
 
-- *Figure 2 measured the benefit, but the page argues the mechanism.* Resolved: the primary axis
-  became **share of responses containing a chain**, and accuracy became a secondary panel behind
-  a resolvability gate (§2). The same traces that gave an 8-point accuracy spread gave a
-  100-point chain spread — the experiment had worked, and the axis was hiding it. This also
-  decouples the page's core claim from how good the checkpoint happens to be at competition
-  maths.
-- *A binding generation cap was a silent confound.* Resolved: cap raised to 1024 and the
-  truncation check promoted from a printed warning to a **per-rung assertion** (§3). Aggregate
-  truncation looked tolerable at 13% while clipping a third of one rung and none of another.
-- *Raising the cap silently replayed the old traces.* Resolved: `RUN_ID` now includes the model,
-  the eval band and the cap, so any of them changing starts a fresh set rather than resuming an
-  incomparable one. The cap is also recorded on every trace record.
-- *The eval band was a constant with no escape hatch.* Resolved: `eval_levels` and
-  `exemplar_levels` are preset knobs with an asserted disjointness invariant, and §3 names L3+4
-  as the step to take if the accuracy gate fails.
-2. **Few-shot count.** Three exemplars is a guess. If the ladder shows one-shot and few-shot
-   landing on top of each other, collapse them into a single rung and reclaim the space.
-3. **What if the bare rung already reasons?** Covered in section 3, but it changes the page's
-   framing verb, so worth a decision rather than a default.
+What survives that review unchanged: the per-rung truncation assertion, the cap in `RUN_ID`, and
+the principle that a run which cannot resolve its claim degrades honestly instead of publishing
+noise.
