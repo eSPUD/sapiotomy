@@ -51,11 +51,23 @@ The page ships what it draws and links what it drew it from.
 
 ## Contents
 
+**The page notebooks**, each with the three run modes below:
+
 | File | Page | Status |
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
-| `page_05_how_to_reason.ipynb` | 5 — How to Reason | step 1 complete, awaiting a real run and step-3 approval |
-| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | step 1 complete, awaiting a real run and step-3 approval |
+| `page_05_how_to_reason.ipynb` | 5 — How to Reason | run complete, replays from published traces |
+| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | built and verified; no real run yet |
+
+**The ablations** that chose page 5's instrument. One-off studies, not page artifacts, and they
+do not carry run modes — they sweep a roster once and write paste-ready tables.
+
+| File | What it settled |
+|---|---|
+| `experiment_1_which_checkpoints_blurt.ipynb` | 9 checkpoints, n=20: nothing blurts unprompted, all of them do when instructed |
+| `experiment_2_suppression_cost_and_specialisation.ipynb` | matched general/math pairs: math-tuned models refuse the blurt instruction outright |
+| `experiment_3_prompt_ladder_at_n100.ipynb` | 2,800 generations at a sample that resolves ~8 points; page 5's numbers come from here |
+| `experiment_4_reasoning_baked_into_weights.ipynb` | the reasoning-model arm |
 
 ## Running one
 
@@ -65,14 +77,29 @@ pip install -r requirements.txt
 jupyter lab
 ```
 
-Each notebook has a `RUN_MODE` variable at the top:
+Each page notebook has a `RUN_MODE` variable at the top with **three tiers**. Reproducing the
+*figures* and reproducing the *run* are separate choices, and the cheap one is the default.
 
-- **`QUICK`** — a reduced grid on Qwen3-1.7B, which produces a legible, correctly-shaped figure
-  because most readers will never run `FULL`. The numbers are a shape check, not an estimate.
-  It wants a GPU and takes tens of minutes: a 2026 instruction-tuned model writes thousands of
-  tokens on a hard problem whatever you ask of it, so the caps that used to make this a
-  laptop-CPU job were measuring truncation rather than reasoning.
-- **`FULL`** — the grid the page ships, Qwen3-4B on a 16 GB GPU, in hours.
+| Mode | What it does | Hardware | Time |
+|---|---|---|---|
+| **`REPLAY`** *(default)* | draws every figure from the published generations | **none** | ~1 min |
+| `QUICK` | one 3B checkpoint on a reduced grid, on your own hardware | ~6 GB GPU | tens of minutes |
+| `FULL` | the grid the page ships, three checkpoints | 16 GB+ GPU | hours |
+
+- **`REPLAY`** loads no model and downloads no weights. It is not a shortcut past the evidence: it
+  adopts the published run's `RUN_ID`, asserts the traces cover the item set the notebook draws,
+  and then runs every gate, assertion and figure the generating run did — including the
+  independent verification that recomputes the headline numbers from the trace file. What it
+  cannot tell you is whether *your* hardware reproduces ours.
+- **`QUICK`** is a genuine preview rather than a different experiment: the same checkpoint is
+  primary in `QUICK` and `FULL`, on half the items. It wants a GPU. A 2026 instruction-tuned model
+  writes hundreds of tokens on a hard problem whatever you ask of it, so the small caps that once
+  made this a laptop-CPU job were measuring truncation rather than reasoning.
+- **`FULL`** prints a warning before it starts and is the only mode that needs the whole roster.
+
+`REPLAY` needs the published `traces.jsonl`. Set `TRACES_URL` in the knobs cell, or put the file
+in `out/<page>/`. **`out/` is gitignored**, so a fresh clone has no traces until that URL is set —
+this is the download tier described above, not an oversight.
 
 Runs are resumable: delete `out/<page>/traces.jsonl` to start over.
 
@@ -80,22 +107,28 @@ Runs are resumable: delete `out/<page>/traces.jsonl` to start over.
 
 ```
 notebooks/
-  page_05_how_to_reason.ipynb
-  page_06_thinking_longer.ipynb
+  harness.py
+  page_05_how_to_reason.ipynb          # REPLAY / QUICK / FULL
+  page_06_thinking_longer.ipynb        # REPLAY / QUICK / FULL
+  experiment_*.ipynb                   # the ablations, no run modes
   data/          # datasets fetched on first run (gitignored)
   out/
     page_05/
-      traces.jsonl     # one line per generation — download tier
+      traces.jsonl     # one line per generation — download tier, and REPLAY's input
       derived.json     # the aggregates the page plots — bundled tier
       manifest.json    # model revision, hashes, versions, seed, date
       figure_*.png     # reference renders; the page redraws these in the browser
     page_06/
       …same four
+    experiment_3/
+      …plus tables.md, paste-ready
 ```
 
 Pages 5 and 6 share one trace-bank schema, so a record from either is readable by the same code:
-page 5 varies the **prompt** at unlimited length and keys its records by `rung`, page 6 fixes the
-prompt and varies the **length**, keying by `budget`. Everything else — `problem_id`, `trace`,
+page 5 varies the **prompt** at unlimited length and keys its records by `condition`, page 6 fixes
+the prompt and varies the **length**, keying by `budget`. They also share an instrument — the same
+Qwen2.5 checkpoints over the same items — so page 5's two endpoints are the ends of the segment
+page 6 sweeps, and page 6's handoff cell overlays them. Everything else — `problem_id`, `trace`,
 `tokens`, `truncated`, `extracted_answer`, `correct`, `tokens_generated` — is common, and pages 7
 through 9 extend the same shape.
 
