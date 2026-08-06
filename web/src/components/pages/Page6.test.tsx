@@ -16,97 +16,202 @@ const mm = (q: string) => ({
 vi.stubGlobal("matchMedia", mm);
 
 import { Page6 } from "./Page6";
-import { THINK_BUDGET } from "@/lib/authored";
+import { PAGE6, pct, rowById, tidyMath, traceZones } from "@/lib/page06";
 
-const T = THINK_BUDGET;
-const CAP = T.steps.reduce((n, s) => n + s.words, 0);
+const B = PAGE6.budgets;
+const TOP = B[B.length - 1];
+const F1 = PAGE6.figure1;
+const F2 = PAGE6.figure2;
+const F3 = PAGE6.figure3;
 
-const slider = () => screen.getByRole("slider", { name: /working budget/i });
-const drag = (v: number) => fireEvent.change(slider(), { target: { value: String(v) } });
+const SPECIMEN = rowById(F1.specimenId);
+const FLIP_INDEX = B.indexOf(F1.flipBudget!);
 
-describe("Page 6 (Thinking Longer)", () => {
-  it("starts at budget zero: the System-1 blurt, depth 0, steps unafforded", () => {
+const body = () => document.body.textContent ?? "";
+const dial = () => screen.getByRole("slider", { name: /token budget/i });
+const drag = (i: number) => fireEvent.change(dial(), { target: { value: String(i) } });
+
+describe("Page 6, figure 1: cut it off, make it answer", () => {
+  it("opens on the specimen at the smallest budget, cut and forced", () => {
     render(<Page6 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Thinking Longer");
-    expect(screen.getByText(T.question)).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(`✗\\s*${T.blurt}`))).toBeInTheDocument();
-    expect(screen.getByText(`0 of ${T.steps.length} steps written`)).toBeInTheDocument();
-    expect(screen.getByText(`0 of ${CAP} words spent`)).toBeInTheDocument();
-    // No step text is afforded yet.
-    expect(screen.queryByText(T.steps[0].text)).toBeNull();
-    expect(screen.getAllByText(/· · · \(not written\)/).length).toBe(T.steps.length);
+    expect(screen.getByText(tidyMath(SPECIMEN.question))).toBeInTheDocument();
+    expect(dial()).toHaveValue("0");
+    expect(body()).toContain(`${SPECIMEN.byBudget[0].ownTokens} of ${B[0]} tokens thought`);
+    expect(body()).toContain("✗ graded wrong");
   });
 
-  it("a partial budget affords whole steps in order and lands the mid-chain cut", () => {
+  it("shows the model's own words and what it was not allowed to write", () => {
     render(<Page6 />);
-    // Enough for the first two steps (9 + 13), not the third.
-    drag(T.steps[0].words + T.steps[1].words);
-    expect(screen.getByText(T.steps[0].text)).toBeInTheDocument();
-    expect(screen.getByText(T.steps[1].text)).toBeInTheDocument();
-    expect(screen.queryByText(T.steps[2].text)).toBeNull();
-    expect(screen.getByText(`2 of ${T.steps.length} steps written`)).toBeInTheDocument();
-    expect(screen.getByText(/out of budget mid-chain/i)).toBeInTheDocument();
-    expect(screen.getByText(/stopped after step 2/i)).toBeInTheDocument();
+    const z = traceZones(SPECIMEN, 0);
+    // Both halves are on the page. The greyed continuation is the single most
+    // important pixel here: hiding it would turn the figure into a progress bar.
+    expect(body()).toContain(tidyMath(z.own).slice(0, 60));
+    expect(body()).toContain(tidyMath(z.unwritten).slice(-60));
+    expect(body()).toContain("we close the block and make it commit");
   });
 
-  it("a step that does not wholly fit is not afforded", () => {
+  it("the verdict flips at the measured budget, and does not slide to get there", () => {
     render(<Page6 />);
-    drag(T.steps[0].words + T.steps[1].words - 1);
-    expect(screen.getByText(T.steps[0].text)).toBeInTheDocument();
-    expect(screen.queryByText(T.steps[1].text)).toBeNull();
-    expect(screen.getByText(`1 of ${T.steps.length} steps written`)).toBeInTheDocument();
-    expect(screen.getByText(`${T.steps[0].words} of ${CAP} words spent`)).toBeInTheDocument();
-  });
-
-  it("the full budget completes the chain and flips the answer to 1,772", () => {
-    render(<Page6 />);
-    drag(CAP);
-    for (const s of T.steps) {
-      expect(screen.getByText(s.text)).toBeInTheDocument();
+    // Every budget below the flip grades wrong; the flip budget grades correct.
+    for (let i = 0; i < FLIP_INDEX; i++) {
+      drag(i);
+      expect(body()).toContain("✗ graded wrong");
     }
-    expect(
-      screen.getByText(`${T.steps.length} of ${T.steps.length} steps written`),
-    ).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(`✓\\s*${T.display}`))).toBeInTheDocument();
-    expect(screen.queryByText(/out of budget/i)).toBeNull();
+    drag(FLIP_INDEX);
+    expect(body()).toContain("✓ graded correct");
+    expect(body()).toContain(`answered ${tidyMath(SPECIMEN.byBudget[FLIP_INDEX].extractedAnswer)}`);
   });
 
-  it("carries the System 1/2 band, the tokens-as-currency line, and the s1 inset", () => {
+  it("stops cutting once the chain finishes inside its budget", () => {
     render(<Page6 />);
-    expect(screen.getByText("System 1 · the blurt")).toBeInTheDocument();
-    expect(screen.getByText("System 2 · the chain")).toBeInTheDocument();
-    expect(screen.getByText(/are tokens/i)).toBeInTheDocument();
-    // The measured trade: s1 budget forcing, 50% -> 57%.
-    expect(screen.getByText("50%")).toBeInTheDocument();
-    expect(screen.getByText("57%")).toBeInTheDocument();
-    expect(screen.getByText(/inference-time scaling in its simplest form/i)).toBeInTheDocument();
+    const finishedIndex = SPECIMEN.byBudget.findIndex((r) => !r.forced);
+    drag(finishedIndex);
+    expect(body()).toContain("nothing was cut and nothing was forced");
+    expect(body()).not.toContain("we close the block and make it commit");
   });
 
-  it("puts each reference in the margin beside the step that uses it, with the link on a citation badge and no how-to rail", () => {
+  it("carries the inset as a reliability comparison, not an overshoot one", () => {
     render(<Page6 />);
-    // Grounding for step 1 sits in step 1's margin note.
-    expect(screen.getByText(/Kojima et al. 2022/)).toBeInTheDocument();
-    expect(screen.getByText(/Feng et al. 2023/)).toBeInTheDocument();
-    // The measured result is credited beside step 3, badge included.
-    expect(screen.getAllByText(/Muennighoff et al. 2025/).length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: /Muennighoff et al. 2025/ })).toHaveAttribute(
-      "href",
-      "https://arxiv.org/abs/2501.19393",
+    // The measured finding is that a request misses the line on a quarter of
+    // items while the cap misses on none. A caption claiming the soft arm
+    // overspends would be describing the expectation, not the run.
+    expect(body()).toContain(`${pct(F1.inset.soft.over_budget_rate)} over`);
+    expect(body()).toContain(`${pct(F1.inset.hard.over_budget_rate)} over`);
+    expect(F1.inset.hard.over_budget_rate).toBe(0);
+    expect(body()).toContain("A prompt is a preference, not a cap.");
+  });
+});
+
+describe("Page 6, figure 2: the same dial, every problem", () => {
+  it("reads out the primary curve at whatever budget the dial holds", () => {
+    render(<Page6 />);
+    for (const [i, b] of B.entries()) {
+      drag(i);
+      const p = F2.primary.points[i];
+      expect(body()).toContain(`at ${b} tokens`);
+      expect(body()).toContain(`${p.n_correct}`);
+      expect(body()).toContain(p.total_tokens.toLocaleString("en-US"));
+    }
+  });
+
+  it("prints the procedure, which is what makes the figure re-derivable", () => {
+    render(<Page6 />);
+    expect(body()).toContain(PAGE6.procedure);
+  });
+
+  it("names every checkpoint but claims shape rather than level", () => {
+    render(<Page6 />);
+    for (const c of F2.curves) {
+      expect(body()).toContain(c.label.replace("Qwen2.5-", "").replace("-Instruct", ""));
+    }
+    expect(body()).toContain("the shape is the part that is not about any of these checkpoints");
+    expect(body()).toContain("nothing here is a statement about scale");
+  });
+
+  it("attributes budget forcing with no number of theirs attached", () => {
+    render(<Page6 />);
+    expect(body()).toContain("Muennighoff et al. 2025");
+    expect(body()).toContain("Every number on this page is ours");
+    // The retired page redrew an AIME24 curve for a 32B checkpoint. Nothing on
+    // this page may carry a reported number again.
+    expect(body()).not.toContain("AIME");
+    expect(body()).not.toMatch(/s1-32B/);
+  });
+});
+
+describe("Page 6, figure 3: not every problem costs the same", () => {
+  it("names the never-flipping band as this grid's limit, never as unsolvable", () => {
+    render(<Page6 />);
+    expect(body()).toContain(`${F3.neverFlipCount} of ${F3.items.length}`);
+    expect(body()).toContain("no budget in this grid reaches");
+    expect(body()).toContain("The dial runs out before they do.");
+    // The word appears once, inside its own disclaimer, and nowhere else.
+    expect(body()).toContain("never a claim that those problems are unsolvable");
+    expect(body().match(/unsolvable/g)).toHaveLength(1);
+  });
+
+  it("loads a bundled problem into figure 1 when its row is picked", () => {
+    render(<Page6 />);
+    const never = F1.rows.find((r) => r.firstCorrectBudget === null)!;
+    // Four bundled rows never flip, so a button is named by its place in the
+    // strip and its subject as well as by its flip point.
+    const place = F3.items.findIndex((d) => d.problem_id === never.problemId) + 1;
+    fireEvent.click(
+      screen.getByRole("button", { name: new RegExp(`row ${place} .* flips at never`, "i") }),
     );
-    // Page-1 shell: no sticky instructions rail, no jargon footnote.
-    expect(screen.queryByText(/how to read this page/i)).toBeNull();
-    expect(screen.queryByText(/arXiv:2205.11916/)).toBeNull();
-    expect(screen.queryByText(/whitespace/i)).toBeNull();
+    expect(screen.getByText(tidyMath(never.question))).toBeInTheDocument();
+    // Take it to the top of the grid: the chain gets longer, the verdict does not move.
+    drag(B.length - 1);
+    expect(body()).toContain("✗ graded wrong");
+    expect(body()).toContain(`of ${TOP} tokens thought`);
   });
 
-  it("says out loud, inside step 2's body, that a model cannot be held to a one-word answer", () => {
+  it("reports the regressions rather than implying a flip is permanent", () => {
     render(<Page6 />);
-    // The caveat is load-bearing AND its location is: it must read as part of
-    // step 2, not as a margin note off to the side (which is where it used to
-    // live). Scoping the query to step 2's region is what pins the relocation.
-    const step2 = screen.getByLabelText(/System 1 versus System 2, in tokens/i);
-    expect(step2.querySelector("aside")).toBeNull();
-    expect(step2.textContent).toMatch(/cannot really hold a model to one word/i);
-    expect(step2.textContent).toMatch(/told to think longer/i);
+    expect(body()).toContain(`solved, then wrong again · ${F3.nRegressions} problems`);
+  });
+});
+
+describe("Page 6: provenance and the claims it is allowed to make", () => {
+  it("names the run rather than flagging an authored demo", () => {
+    render(<Page6 />);
+    expect(body()).toContain("MATH-500 levels 4 and 5");
+    expect(body()).toContain(PAGE6.manifest.run_id);
+    expect(body()).toContain("greedy, budget forced at the cap");
+    // Both retired chips: the demo is measured, and the axis is tokens because
+    // we ran a tokenizer.
+    expect(body()).not.toContain("written for this page, no live model");
+    expect(body()).not.toContain("counts words, not tokens");
+  });
+
+  it("offers the notebook, the harness and the traces as one download", () => {
+    render(<Page6 />);
+    const link = screen.getByRole("link", { name: /download the notebook/i });
+    expect(link).toHaveAttribute("href", "/notebooks/page-06-thinking-longer.zip");
+  });
+
+  it("states the dip as one problem instead of dressing it as a finding", () => {
+    render(<Page6 />);
+    const last = F2.primary.gains[F2.primary.gains.length - 1];
+    expect(last.gain_pts).toBeLessThan(0);
+    expect(body()).toContain("too small to read either way");
+  });
+
+  it("carries no em dash or en dash in rendered copy", () => {
+    // House rule, swept and enforced: visible copy uses commas, colons or
+    // semicolons instead, and ranges are spelled out. This covers aria-labels
+    // and chart titles too, which screen readers speak.
+    const { container } = render(<Page6 />);
+    const offenders = Array.from(container.querySelectorAll("*"))
+      .flatMap((el) => [el.textContent ?? "", el.getAttribute("aria-label") ?? ""])
+      .filter((t) => t.includes("—") || t.includes("–"));
+    expect(offenders).toEqual([]);
+  });
+
+  it("states provenance as a colophon rather than as a row of pill chips", () => {
+    const { container } = render(<Page6 />);
+    // The specific tell the author flagged on page 5: a filled bordered card
+    // holding rounded chips. The colophon is hairlines and text, and the
+    // download is the only lit element in it.
+    const colophon = container.querySelector(".border-y")!;
+    expect(colophon.querySelectorAll(".rounded-full").length).toBe(0);
+    expect(colophon.className).not.toMatch(/bg-surface/);
+    expect(colophon.querySelectorAll("a").length).toBe(1);
+    expect(screen.getByRole("link", { name: /download the notebook/i })).toBeInTheDocument();
+  });
+
+  it("hands off to page 7 by splitting the same budget", () => {
+    render(<Page6 />);
+    const h = PAGE6.handoff;
+    expect(body()).toContain(`${h.chains_at_min_budget} chains of ${h.min_budget}`);
+    expect(body()).toContain(`what ${h.chains_at_min_budget} voters at ${pct(h.accuracy_at_min)} each are worth`);
+  });
+
+  it("carries page 5's endpoints, so the two pages are one measurement", () => {
+    render(<Page6 />);
+    const e = PAGE6.handoff.page_5_endpoints!;
+    expect(body()).toContain(`${e.suppressed_tokens} tokens`);
+    expect(body()).toContain(pct(e.unconstrained));
   });
 });

@@ -57,7 +57,7 @@ The page ships what it draws and links what it drew it from.
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** Run complete and replayable; `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
-| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | built and verified; sweep in progress |
+| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4).** `FULL` run complete and replayable; `derived.json` is committed to `web/data/page-06-derived.json`, and the notebook, `harness.py` and all 1,500 records ship as `web/public/notebooks/page-06-thinking-longer.zip`, linked from the page |
 | `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **built, step 1.** No run yet. Two axes: one pile of N full-length chains, subsampled for the N axis, and one fixed budget split N ways. Consumes page 6's item set, spend and curve; produces page 8's candidate pile |
 | `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** No run yet. Generates nothing: it opens page 7's `traces.jsonl` and applies selectors |
 
@@ -65,6 +65,8 @@ Pages 7 and 8 are one chain of dependency: page 7 needs page 6's `out/page_06/` 
 grid derivation and its temperature-0 cross-check, and page 8 needs page 7's `traces.jsonl` for
 every number it reports. Each degrades to a printed skip rather than an exception when the run
 above it is missing, except page 8, which has nothing to do without page 7 and says so.
+
+Page 6's run is now the one on disk, so page 7's dependency on it is satisfied.
 
 **The ablations** that chose page 5's instrument. One-off studies, not page artifacts, and they
 do not carry run modes — they sweep a roster once and write paste-ready tables.
@@ -89,9 +91,15 @@ Each page notebook has a `RUN_MODE` variable at the top with **three tiers**. Re
 
 | Mode | What it does | Hardware | Time |
 |---|---|---|---|
-| **`REPLAY`** *(default)* | draws every figure from the published generations | **none** | ~1 min |
+| **`REPLAY`** | draws every figure from the published generations | **none** | ~1 min |
 | `QUICK` | one 3B checkpoint on a reduced grid, on your own hardware | ~6 GB GPU | tens of minutes |
 | `FULL` | the grid the page ships, three checkpoints | 16 GB+ GPU | hours |
+
+**`REPLAY` is the default in the download, and the copy here is left at the mode that generated
+the shipped run.** The manifest records the notebook's sha256, so "this file made these numbers"
+is checkable rather than asserted, and flipping `RUN_MODE` in place would break it. The packaged
+copy is that file with one string changed, which is what a reader who wants the figures and not
+the afternoon should open.
 
 - **`REPLAY`** loads no model and downloads no weights. It is not a shortcut past the evidence: it
   adopts the published run's `RUN_ID`, asserts the traces cover the item set the notebook draws,
