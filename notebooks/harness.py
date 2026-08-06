@@ -44,7 +44,7 @@ from huggingface_hub.utils import (
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-__version__ = "1.2"
+__version__ = "1.3"
 
 _HERE = Path(__file__).resolve()
 
@@ -463,6 +463,51 @@ def generate(prompt_text, model, tok, *, enable_thinking, max_new_tokens, eos_id
             "truncated": truncated,
             "stopped_on_eos": stopped_on_eos,
             "thinking_leaked": "<think>" in text}
+
+
+# --------------------------------------------------------------------------
+# progress a notebook can survive
+# --------------------------------------------------------------------------
+
+def _bar():
+    """(class, kwargs) for a progress bar that will not take the editor down.
+
+    tqdm's defaults redraw up to ten times a second and leave every finished bar on
+    screen. A terminal collapses those redraws in place; a notebook renderer retains
+    each one as its own output event. A sweep of fifteen bars over a hundred items
+    therefore becomes tens of thousands of retained strings and several gigabytes in
+    the editor process while the kernel sits idle at two -- which looks exactly like a
+    memory leak in the run and is not. It took VS Code down twice during page 6.
+
+    So: the widget bar when ipywidgets is importable inside a kernel, one DOM node that
+    updates in place. Otherwise a text bar that redraws at most every two seconds and
+    removes itself when finished, which keeps a headless log readable too.
+    """
+    try:
+        from IPython import get_ipython
+        ip = get_ipython()
+        in_kernel = ip is not None and "zmqshell" in type(ip).__module__.lower()
+    except Exception:
+        in_kernel = False
+
+    if in_kernel:
+        try:
+            import ipywidgets                      # noqa: F401  -- presence is the test
+            from tqdm.notebook import tqdm as widget_tqdm
+            return widget_tqdm, {}
+        except Exception:
+            # In a kernel with no widgets: the dangerous case, so throttle hardest.
+            return tqdm, {"mininterval": 2.0, "leave": False}
+
+    import sys
+    return tqdm, {"mininterval": 2.0, "leave": sys.stderr.isatty()}
+
+
+def progress(iterable=None, *, desc="", unit="item", total=None):
+    """Wrap an iterable in a bar chosen by `_bar`. Use this rather than tqdm directly:
+    the defaults are the whole point."""
+    cls, kw = _bar()
+    return cls(iterable, desc=desc, unit=unit, total=total, **kw)
 
 
 # --------------------------------------------------------------------------
