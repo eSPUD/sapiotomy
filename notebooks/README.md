@@ -56,7 +56,7 @@ The page ships what it draws and links what it drew it from.
 | File | Page | Status |
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
-| `page_05_how_to_reason.ipynb` | 5 — How to Reason | run complete, replays from published traces |
+| `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** Run complete and replayable; `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | built and verified; no real run yet |
 
 **The ablations** that chose page 5's instrument. One-off studies, not page artifacts, and they

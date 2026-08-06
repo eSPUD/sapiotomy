@@ -62,8 +62,13 @@ test.describe("M0 smoke", () => {
     // a keypress sent into the gap is silently dropped — the test then fails
     // with "expected /p/6, got /p/5" and looks like broken navigation. Wait for
     // hydration (any client handler being live implies it) before pressing.
+    // Page 5 has no slider, so the probe is its chain stepper: the step counter
+    // only moves once React has attached the click handler.
     await page.waitForLoadState("networkidle");
-    await expect(page.getByRole("slider").first()).toBeEnabled();
+    await expect(async () => {
+      await page.getByRole("button", { name: /Next ▸/ }).click();
+      await expect(page.getByText(/step [1-9]/)).toBeVisible({ timeout: 500 });
+    }).toPass({ timeout: 10_000 });
     await page.keyboard.press("ArrowRight");
     await expect(page).toHaveURL(/\/p\/6$/);
     await page.keyboard.press("ArrowLeft");
