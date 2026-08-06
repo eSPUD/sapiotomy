@@ -244,9 +244,16 @@ tokenizer (`41e00eccf531` against `e360e6f62668`), so it cannot sit on a shared 
 without comparing two different units. It belongs in an appendix panel on its own axis, if at all.
 
 **The grid is derived from measured lengths.** Across the three checkpoints, the share of
-unconstrained traces finishing inside each budget runs 0-14% at 128, 8-19% at 256, 40-46% at 512,
-84-91% at 1024 and 100% at 2048. Five budgets bracket the whole transition; anything below 128 is
-all-forced and anything above 2048 constrains nothing.
+unconstrained traces that finish inside each budget runs 0-14% at 128, 8-19% at 256, 40-46% at
+512, 84-91% at 1024 and **94-99% at 2048**. Five budgets bracket the transition; below 128
+everything is forced.
+
+The top is *marginally* binding rather than clear: 1-6% of traces are still running at 2048, worst
+on Qwen2.5-3B. That residue is small and it biases conservatively — a truncated trace loses its
+`\boxed{}` and grades wrong, so the right end of the curve is understated rather than flattered —
+but the pilot's truncation readout is what decides whether 4096 is needed, and it should be read
+rather than assumed. Measure it with the `truncated` flag, never with `tokens_generated <= budget`:
+a trace cut *at* the cap has a token count equal to it and will otherwise be counted as finished.
 
 **This is measured, not assumed.** Before the full sweep, a pilot runs both models at maximum
 budget over ~30 items from levels 4 and 5 and reports accuracy plus mean thinking length. We
