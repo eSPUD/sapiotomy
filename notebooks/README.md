@@ -54,7 +54,7 @@ The page ships what it draws and links what it drew it from.
 | File | Page | Status |
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
-| `page_05_how_to_reason.ipynb` | 5 — How to Reason | step 1 complete, awaiting a real run and step-3 approval |
+| `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** `FULL` run promoted: `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | step 1 complete, awaiting a real run and step-3 approval |
 
 ## Running one

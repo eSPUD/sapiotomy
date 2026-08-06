@@ -1,0 +1,629 @@
+{
+  "manifest": {
+    "run_id": "p5-full-L45-cap2048-n100-9ab2b579",
+    "notebook": "page_05_how_to_reason.ipynb",
+    "notebook_sha256": "c66d1a9c7540c0df81d7333583cae513124fb3b1765ea6522c706a19a49fc315",
+    "harness": {
+      "version": "1.2",
+      "sha256": "ab45365b63abaee0861f6904a0a79718a131e7cee5037778df4c1fe9d6da0012"
+    },
+    "page": 5,
+    "run_mode": "REPLAY",
+    "timestamp_utc": "2026-08-06T05:30:50+00:00",
+    "notebook_git_sha": "71be8fbaf11b5e7c477c55e8a1279c67b53a8930",
+    "primary_model": "Qwen/Qwen2.5-3B-Instruct",
+    "models": [
+      {
+        "id": "Qwen/Qwen2.5-3B-Instruct",
+        "label": "Qwen2.5-3B-Instruct",
+        "params": 3000000000,
+        "dtype": null,
+        "quant": "bf16",
+        "tokenizer_sha256": null,
+        "revision": null,
+        "replayed": true
+      },
+      {
+        "id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "label": "Qwen2.5-1.5B-Instruct",
+        "params": 1500000000,
+        "dtype": null,
+        "quant": "bf16",
+        "tokenizer_sha256": null,
+        "revision": null,
+        "replayed": true
+      },
+      {
+        "id": "Qwen/Qwen2.5-7B-Instruct",
+        "label": "Qwen2.5-7B-Instruct",
+        "params": 7000000000,
+        "dtype": null,
+        "quant": "bf16",
+        "tokenizer_sha256": null,
+        "revision": null,
+        "replayed": true
+      }
+    ],
+    "decoding": {
+      "strategy": "greedy",
+      "do_sample": false,
+      "max_new_tokens": 2048,
+      "stop": [
+        "\nQuestion:"
+      ]
+    },
+    "items": {
+      "source": "MATH-500 (ch03 copy)",
+      "eval_levels": [
+        4,
+        5
+      ],
+      "n": 100,
+      "item_set_sha256": "9ab2b579204221a0c701e6c54ec2c041a63500f9d633ba208aebef8606c43155",
+      "seed": 123
+    },
+    "conditions": {
+      "forced_blurt": "\n\nGive only the final answer. No explanation, no working, no other text.",
+      "bare": "",
+      "zero_shot_cot": "\n\nExplain step by step."
+    },
+    "grading": {
+      "extract": "reasoning_from_scratch.ch03.extract_final_candidate",
+      "grade": "reasoning_from_scratch.ch03.grade_answer"
+    },
+    "versions": {
+      "torch": "2.10.0+cu128",
+      "transformers": "5.14.1",
+      "device": "None",
+      "gpu": "NVIDIA GeForce RTX 5080"
+    },
+    "integrity": {
+      "blurt_compliance": 1.0,
+      "complies_under_tokens": 40,
+      "truncation_by_cell": {
+        "Qwen/Qwen2.5-3B-Instruct|forced_blurt": 0.0,
+        "Qwen/Qwen2.5-3B-Instruct|bare": 0.06,
+        "Qwen/Qwen2.5-3B-Instruct|zero_shot_cot": 0.0,
+        "Qwen/Qwen2.5-1.5B-Instruct|forced_blurt": 0.0,
+        "Qwen/Qwen2.5-1.5B-Instruct|bare": 0.01,
+        "Qwen/Qwen2.5-1.5B-Instruct|zero_shot_cot": 0.0,
+        "Qwen/Qwen2.5-7B-Instruct|forced_blurt": 0.0,
+        "Qwen/Qwen2.5-7B-Instruct|bare": 0.03,
+        "Qwen/Qwen2.5-7B-Instruct|zero_shot_cot": 0.03
+      },
+      "truncation_budget": {
+        "forced_blurt": 0.05,
+        "bare": 0.1,
+        "zero_shot_cot": 0.1
+      },
+      "n_records": 900
+    }
+  },
+  "truncation": {
+    "by_cell": {
+      "Qwen/Qwen2.5-3B-Instruct|forced_blurt": 0.0,
+      "Qwen/Qwen2.5-3B-Instruct|bare": 0.06,
+      "Qwen/Qwen2.5-3B-Instruct|zero_shot_cot": 0.0,
+      "Qwen/Qwen2.5-1.5B-Instruct|forced_blurt": 0.0,
+      "Qwen/Qwen2.5-1.5B-Instruct|bare": 0.01,
+      "Qwen/Qwen2.5-1.5B-Instruct|zero_shot_cot": 0.0,
+      "Qwen/Qwen2.5-7B-Instruct|forced_blurt": 0.0,
+      "Qwen/Qwen2.5-7B-Instruct|bare": 0.03,
+      "Qwen/Qwen2.5-7B-Instruct|zero_shot_cot": 0.03
+    },
+    "budget": {
+      "forced_blurt": 0.05,
+      "bare": 0.1,
+      "zero_shot_cot": 0.1
+    },
+    "worst": {
+      "model_id": "Qwen/Qwen2.5-3B-Instruct",
+      "condition": "bare",
+      "rate": 0.06
+    },
+    "biases_headline": "conservative"
+  },
+  "claims": {
+    "suppression_resolves": true,
+    "blurt_compliance": true,
+    "specimen_usable": true,
+    "instruction_null_bounded": true,
+    "floor_is_flat": true,
+    "may_compare_across_models": true
+  },
+  "figure_1": {
+    "problem_id": "test/prealgebra/1388.json",
+    "level": 4,
+    "question": "Half the value of $3x-9$ is $x+37$. What is the value of $x$?",
+    "ground_truth": "83",
+    "prompt_stem": "You are a helpful math assistant.\nAnswer the question and write the final result on a new line as:\n\\boxed{ANSWER}\n\nQuestion:\nHalf the value of $3x-9$ is $x+37$. What is the value of $x$?\n\nAnswer:",
+    "tabs": [
+      {
+        "condition": "forced_blurt",
+        "label": "forced blurt",
+        "prompt_before": "",
+        "prompt_after": "\n\nGive only the final answer. No explanation, no working, no other text.",
+        "trace": "\\boxed{41}",
+        "tokens": [
+          "\\",
+          "boxed",
+          "{",
+          "4",
+          "1",
+          "}"
+        ],
+        "steps": [
+          {
+            "text": "\\boxed{41}",
+            "token_start": 0,
+            "token_end": 6
+          }
+        ],
+        "tokens_generated": 6,
+        "extracted_answer": "41",
+        "correct": false
+      },
+      {
+        "condition": "bare",
+        "label": "bare",
+        "prompt_before": "",
+        "prompt_after": "",
+        "trace": "To solve this problem, we need to translate the given statement into an equation and then solve for \\( x \\).\n\nGiven that half the value of \\( 3x - 9 \\) is \\( x + 37 \\), we can write:\n\n\\[\n\\frac{1}{2}(3x - 9) = x + 37\n\\]\n\nFirst, eliminate the fraction by multiplying both sides of the equation by 2:\n\n\\[\n3x - 9 = 2(x + 37)\n\\]\n\nNext, distribute the 2 on the right side:\n\n\\[\n3x - 9 = 2x + 74\n\\]\n\nNow, isolate \\( x \\) by subtracting \\( 2x \\) from both sides:\n\n\\[\n3x - 2x - 9 = 74\n\\]\n\nSimplify:\n\n\\[\nx - 9 = 74\n\\]\n\nAdd 9 to both sides to solve for \\( x \\):\n\n\\[\nx = 83\n\\]\n\nThe value of \\( x \\) is \\(\\boxed{83}\\).",
+        "tokens": [
+          "To",
+          " solve",
+          " this",
+          " problem",
+          ",",
+          " we",
+          " need",
+          " to",
+          " translate",
+          " the",
+          " given",
+          " statement",
+          " into",
+          " an",
+          " equation",
+          " and",
+          " then",
+          " solve",
+          " for",
+          " \\(",
+          " x",
+          " \\",
+          ").\n\n",
+          "Given",
+          " that",
+          " half",
+          " the",
+          " value",
+          " of",
+          " \\(",
+          " ",
+          "3",
+          "x",
+          " -",
+          " ",
+          "9",
+          " \\",
+          ")",
+          " is",
+          " \\(",
+          " x",
+          " +",
+          " ",
+          "3",
+          "7",
+          " \\",
+          "),",
+          " we",
+          " can",
+          " write",
+          ":\n\n",
+          "\\",
+          "[\n",
+          "\\",
+          "frac",
+          "{",
+          "1",
+          "}{",
+          "2",
+          "}(",
+          "3",
+          "x",
+          " -",
+          " ",
+          "9",
+          ")",
+          " =",
+          " x",
+          " +",
+          " ",
+          "3",
+          "7",
+          "\n",
+          "\\",
+          "]\n\n",
+          "First",
+          ",",
+          " eliminate",
+          " the",
+          " fraction",
+          " by",
+          " multiplying",
+          " both",
+          " sides",
+          " of",
+          " the",
+          " equation",
+          " by",
+          " ",
+          "2",
+          ":\n\n",
+          "\\",
+          "[\n",
+          "3",
+          "x",
+          " -",
+          " ",
+          "9",
+          " =",
+          " ",
+          "2",
+          "(x",
+          " +",
+          " ",
+          "3",
+          "7",
+          ")\n",
+          "\\",
+          "]\n\n",
+          "Next",
+          ",",
+          " distribute",
+          " the",
+          " ",
+          "2",
+          " on",
+          " the",
+          " right",
+          " side",
+          ":\n\n",
+          "\\",
+          "[\n",
+          "3",
+          "x",
+          " -",
+          " ",
+          "9",
+          " =",
+          " ",
+          "2",
+          "x",
+          " +",
+          " ",
+          "7",
+          "4",
+          "\n",
+          "\\",
+          "]\n\n",
+          "Now",
+          ",",
+          " isolate",
+          " \\(",
+          " x",
+          " \\",
+          ")",
+          " by",
+          " subtract",
+          "ing",
+          " \\(",
+          " ",
+          "2",
+          "x",
+          " \\",
+          ")",
+          " from",
+          " both",
+          " sides",
+          ":\n\n",
+          "\\",
+          "[\n",
+          "3",
+          "x",
+          " -",
+          " ",
+          "2",
+          "x",
+          " -",
+          " ",
+          "9",
+          " =",
+          " ",
+          "7",
+          "4",
+          "\n",
+          "\\",
+          "]\n\n",
+          "S",
+          "implify",
+          ":\n\n",
+          "\\",
+          "[\n",
+          "x",
+          " -",
+          " ",
+          "9",
+          " =",
+          " ",
+          "7",
+          "4",
+          "\n",
+          "\\",
+          "]\n\n",
+          "Add",
+          " ",
+          "9",
+          " to",
+          " both",
+          " sides",
+          " to",
+          " solve",
+          " for",
+          " \\(",
+          " x",
+          " \\",
+          "):\n\n",
+          "\\",
+          "[\n",
+          "x",
+          " =",
+          " ",
+          "8",
+          "3",
+          "\n",
+          "\\",
+          "]\n\n",
+          "The",
+          " value",
+          " of",
+          " \\(",
+          " x",
+          " \\",
+          ")",
+          " is",
+          " \\",
+          "(\\",
+          "boxed",
+          "{",
+          "8",
+          "3",
+          "}\\",
+          ")."
+        ],
+        "steps": [
+          {
+            "text": "To solve this problem, we need to translate the given statement into an equation and then solve for \\( x \\).",
+            "token_start": 0,
+            "token_end": 23
+          },
+          {
+            "text": "Given that half the value of \\( 3x - 9 \\) is \\( x + 37 \\), we can write:",
+            "token_start": 23,
+            "token_end": 51
+          },
+          {
+            "text": "\\[\n\\frac{1}{2}(3x - 9) = x + 37\n\\]",
+            "token_start": 51,
+            "token_end": 75
+          },
+          {
+            "text": "First, eliminate the fraction by multiplying both sides of the equation by 2:",
+            "token_start": 75,
+            "token_end": 91
+          },
+          {
+            "text": "\\[\n3x - 9 = 2(x + 37)\n\\]",
+            "token_start": 91,
+            "token_end": 109
+          },
+          {
+            "text": "Next, distribute the 2 on the right side:",
+            "token_start": 109,
+            "token_end": 120
+          },
+          {
+            "text": "\\[\n3x - 9 = 2x + 74\n\\]",
+            "token_start": 120,
+            "token_end": 138
+          },
+          {
+            "text": "Now, isolate \\( x \\) by subtracting \\( 2x \\) from both sides:",
+            "token_start": 138,
+            "token_end": 158
+          },
+          {
+            "text": "\\[\n3x - 2x - 9 = 74\n\\]\n\nSimplify:",
+            "token_start": 158,
+            "token_end": 179
+          },
+          {
+            "text": "\\[\nx - 9 = 74\n\\]",
+            "token_start": 179,
+            "token_end": 192
+          },
+          {
+            "text": "Add 9 to both sides to solve for \\( x \\):",
+            "token_start": 192,
+            "token_end": 205
+          },
+          {
+            "text": "\\[\nx = 83\n\\]",
+            "token_start": 205,
+            "token_end": 215
+          },
+          {
+            "text": "The value of \\( x \\) is \\(\\boxed{83}\\).",
+            "token_start": 215,
+            "token_end": 231
+          }
+        ],
+        "tokens_generated": 231,
+        "extracted_answer": "83",
+        "correct": true
+      }
+    ],
+    "n_candidates": 40,
+    "specimen_is_fallback": false
+  },
+  "figure_2": {
+    "model_id": "Qwen/Qwen2.5-3B-Instruct",
+    "conditions": [
+      {
+        "condition": "forced_blurt",
+        "label": "forced blurt",
+        "n": 100,
+        "n_correct": 7,
+        "accuracy": 0.07,
+        "ci": [
+          0.034318824364064096,
+          0.13749671006529757
+        ],
+        "median_tokens": 6,
+        "mean_tokens": 7.11,
+        "p90_tokens": 10,
+        "chain_share": 0.0,
+        "boxed_rate": 1.0
+      },
+      {
+        "condition": "bare",
+        "label": "bare",
+        "n": 100,
+        "n_correct": 43,
+        "accuracy": 0.43,
+        "ci": [
+          0.3373313900052838,
+          0.5278478830413564
+        ],
+        "median_tokens": 573,
+        "mean_tokens": 693.02,
+        "p90_tokens": 1351,
+        "chain_share": 1.0,
+        "boxed_rate": 0.94
+      }
+    ],
+    "contrasts": [
+      {
+        "high": "bare",
+        "low": "forced_blurt",
+        "what": "cost of suppressing reasoning",
+        "delta_pts": 36.0,
+        "ci_pts": [
+          25.080143590687655,
+          46.919856409312345
+        ],
+        "fixed": 40,
+        "broken": 4,
+        "p": 1.7051434042514302e-08,
+        "significant": true
+      },
+      {
+        "high": "zero_shot_cot",
+        "low": "bare",
+        "what": "gain from asking for reasoning",
+        "delta_pts": 0.0,
+        "ci_pts": [
+          -9.601999791710057,
+          9.601999791710057
+        ],
+        "fixed": 12,
+        "broken": 12,
+        "p": 1.0,
+        "significant": false
+      }
+    ],
+    "instruction_bound_pts": 9.601999791710057,
+    "measured_only": [
+      {
+        "condition": "zero_shot_cot",
+        "label": "+ \"Explain step by step.\"",
+        "n": 100,
+        "n_correct": 43,
+        "accuracy": 0.43,
+        "ci": [
+          0.3373313900052838,
+          0.5278478830413564
+        ],
+        "median_tokens": 709,
+        "mean_tokens": 773.11,
+        "p90_tokens": 1269,
+        "chain_share": 1.0,
+        "boxed_rate": 1.0
+      }
+    ]
+  },
+  "figure_3": {
+    "models": [
+      {
+        "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "label": "Qwen2.5-1.5B-Instruct",
+        "params": 1500000000,
+        "quant": "bf16",
+        "blurt_accuracy": 0.04,
+        "bare_accuracy": 0.22,
+        "delta_pts": 18.0,
+        "fixed": 22,
+        "broken": 4,
+        "p": 0.0005335211753845215
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct",
+        "label": "Qwen2.5-3B-Instruct",
+        "params": 3000000000,
+        "quant": "bf16",
+        "blurt_accuracy": 0.07,
+        "bare_accuracy": 0.43,
+        "delta_pts": 36.0,
+        "fixed": 40,
+        "broken": 4,
+        "p": 1.7051434042514302e-08
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-7B-Instruct",
+        "label": "Qwen2.5-7B-Instruct",
+        "params": 7000000000,
+        "quant": "bf16",
+        "blurt_accuracy": 0.11,
+        "bare_accuracy": 0.6,
+        "delta_pts": 49.0,
+        "fixed": 50,
+        "broken": 1,
+        "p": 4.618527782440651e-14
+      }
+    ],
+    "cross": {
+      "gagged_large": "Qwen2.5-7B-Instruct",
+      "gagged_large_accuracy": 0.11,
+      "ungagged_small": "Qwen2.5-1.5B-Instruct",
+      "ungagged_small_accuracy": 0.22,
+      "delta_pts": 11.0,
+      "fixed": 18,
+      "broken": 7,
+      "p": 0.043285250663757324,
+      "significant": true,
+      "param_ratio": 4.666666666666667
+    },
+    "floor_is_flat": true
+  },
+  "close": {
+    "blurt_median_tokens": 6,
+    "bare_median_tokens": 573,
+    "token_multiple": 95.5,
+    "blurt_accuracy": 0.07,
+    "bare_accuracy": 0.43,
+    "suppression_pts": 36.0,
+    "instruction_pts": 0.0,
+    "instruction_bound_pts": 9.601999791710057
+  }
+}

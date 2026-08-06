@@ -1,8 +1,13 @@
 # Page 5 — "How to Reason" refactor spec
 
-**Status:** premise inverted after three ablations; notebook rebuild planned in
-[`page_5_notebook_v2.md`](page_5_notebook_v2.md). The page itself is unchanged. Act 2's opening
-page.
+**Status:** **translated.** The premise inverted after three ablations, the notebook was rebuilt to
+[`page_5_notebook_v2.md`](page_5_notebook_v2.md), the `FULL` run landed (900 generations, all six
+claim gates true), and `web/src/components/pages/Page5.tsx` now renders it. Act 2's opening page.
+
+Resolved at translation, against the open questions in the last section: **figure 3 ships**, and
+the 8-bit question is moot because the shipped run put all three checkpoints at bf16, so no row
+carries a precision asterisk. The specimen search ran on `FULL` and found 40 qualifying problems.
+Figure 1 ships **two** tabs, per section 2, not the three of `page_5_notebook_v2.md` section 2.
 
 **Implementation follows the notebook-first pipeline** in
 [page_6_refactor.md](page_6_refactor.md) section 6, which is canonical for every page resting on
