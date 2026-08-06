@@ -216,11 +216,11 @@ existence check on the shape and never as a level comparison.
 
 | Parameter | Value | Why |
 |---|---|---|
-| Models | Qwen3-4B (primary) and Qwen3-1.7B (second curve), thinking enabled | two levels, one shape |
+| Models | Qwen2.5-3B (primary), Qwen2.5-1.5B and Qwen2.5-7B (8-bit) | **three** curves, one tokenizer, page 5's checkpoints |
 | Precision | bf16, not quantized | keeps quantization out of our own data; readers re-deriving at 4-bit should see the same shape at a different level, and that gap is itself a small argument for the page |
 | Decoding | greedy, temperature 0, top-p 1 | budget is the only variable; sampling belongs to page 7 |
-| Budgets | 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192 (and 16384 if the curve has not bent) | log-spaced, gives figure 2 its x-axis; the top is set by measured thinking length, below |
-| Items | 120-200 problems from **MATH-500 levels 4 and 5 only** | see headroom below |
+| Budgets | 128, 256, 512, 1024, 2048 | log-spaced; bounded by measurement — 0% of unconstrained traces finish inside 128 tokens and 100% finish inside 2048 |
+| Items | 100 from MATH-500 levels 4-5, or GSM8K | paired with page 5's item set; 100 is the floor for resolving a 10-point paired difference |
 | Forcing | at the cap, close the think block and append the forced-answer suffix, allow 32 further tokens | without this, low budgets grade as "no answer" and the curve is trivially zero |
 | Grading | `extract_final_candidate` then `grade_answer` | inherited harness, so grading is not ours to defend |
 
@@ -232,12 +232,21 @@ without leaving the harness, since the dataset already carries a `level` field a
 unchanged. A model too strong for the item set kills this page more thoroughly than a model
 too small.
 
-**The top of the grid is set by how long the model actually thinks.** On three levels 4-5 items,
-Qwen3-1.7B with thinking on spent 1,484, 3,367 and more than 8,192 tokens inside `<think>`, the
-last never closing the block. A grid topping out at 2,048 would therefore have been measuring a
-truncation at every rung and never reached the flat region the page's second beat needs. 8,192 is
-the top of the shipped grid, and the pilot's truncation readout is what says whether 16,384 is
-required.
+**The instrument is page 5's, and that is the point.** Page 5 measured both ends of this page's
+curve on these same checkpoints, items and grader: forbidden to reason, Qwen2.5-3B scores 7% on
+MATH levels 4-5; unconstrained it scores 43%. Page 6 fills the middle of a segment whose endpoints
+are already published, which makes the two pages one measurement rather than two.
+
+Qwen3 was the original choice because the intervention closed its `<think>` block. Two things
+retired it. The requirement that a model "must blurt when not asked to think" is void — nothing
+blurts unprompted, which is the finding that rewrote page 5. And Qwen3 does not share the Qwen2.5
+tokenizer (`41e00eccf531` against `e360e6f62668`), so it cannot sit on a shared token-budget axis
+without comparing two different units. It belongs in an appendix panel on its own axis, if at all.
+
+**The grid is derived from measured lengths.** Across the three checkpoints, the share of
+unconstrained traces finishing inside each budget runs 0-14% at 128, 8-19% at 256, 40-46% at 512,
+84-91% at 1024 and 100% at 2048. Five budgets bracket the whole transition; anything below 128 is
+all-forced and anything above 2048 constrains nothing.
 
 **This is measured, not assumed.** Before the full sweep, a pilot runs both models at maximum
 budget over ~30 items from levels 4 and 5 and reports accuracy plus mean thinking length. We
