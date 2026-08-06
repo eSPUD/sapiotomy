@@ -30,9 +30,10 @@ Three ablations (`page_05_selection`, `experiment_2`, `experiment_3`) settled it
 
 - **No instruct model blurts unprompted.** 0 of 200 bare responses under 60 tokens; chain share
   100% in nearly every cell, across Qwen2, Qwen2.5, Qwen2.5-Coder and Qwen3.
-- **"Explain step by step" does nothing** to a model that already chains. On Qwen2.5-3B at
-  *n* = 100 the paired difference is **+0.0 points, 12 problems fixed and 12 broken**, and the
-  95% interval on that difference is [−9.6, +9.6].
+- **Asking for reasoning adds nothing measurable** to a model that already chains. On
+  Qwen2.5-3B at *n* = 100 the paired difference is **+0.0 points, 12 fixed and 12 broken**, 95%
+  interval [−9.6, +9.6]. **This page measures it and does not plot it** — see the handoff to
+  page 12 in section 5.
 - **Suppression is enormous.** Told to answer with no working, the same model falls from 43% to
   7%: **40 problems broken, 4 fixed, p < 0.0001.**
 
@@ -64,9 +65,9 @@ a faithful, well-built retelling, and a retelling is what it should stop being.
 
 **Revised narrative, three beats:**
 
-1. **The chain is already there.** Same model, same question, one problem, three prompts. The
-   default output is eight steps of working. Adding "Explain step by step." changes the prompt and
-   not the behaviour. Real traces, all of them.
+1. **The chain is already there.** Same model, same question, one problem, two prompts. Asked
+   plainly, the model writes eight steps of working that nothing in the prompt requested. Real
+   traces, both of them.
 2. **Take it away and it breaks.** Forbid the working and the same model on the same problems
    falls 36 points. This is the page's headline, and it is the largest effect anywhere in Act 2.
 3. **The chain is long.** Six tokens against five hundred and seventy-three. Hand to page 6.
@@ -107,12 +108,12 @@ while the outputs do not.
   └──────────────────────────────────────────────────┘
 ```
 
-**Three tabs, not two, and this is load-bearing.** A two-tab figure comparing the blurt against
-the step-by-step prompt would imply the instruction caused the chain, which the run says it did
-not. The third tab is what makes the page 2026 rather than 2022: the reader clicks from `bare` to
-`+ "Explain step by step."`, watches the prompt change and the behaviour stay put, and the page's
-thesis lands without a sentence being spent on it. Tab order matches figure 2's bar order left to
-right, so the two figures are one argument read twice.
+**Two tabs, and the instruction condition is not one of them.** An earlier draft made it a third
+tab so the reader could watch the prompt change and the behaviour stay put. That is a true and
+interesting fact, and it is a fact about **post-training**: this model chains because it was
+trained to. Training to reason is pages 11 to 14, and a reader meeting the result here has no
+framework to read it with — the likely reading is "chain of thought does not work", which inverts
+the page. Tab order matches figure 2's bar order, so the two figures are one argument read twice.
 
 **The stepper survives from the current page and is good:** Back / Next / Play walking the chain a
 line at a time. What changes is that all three outputs are real, and that the chain being walked is
@@ -133,13 +134,11 @@ animates real token boundaries and stops at step ends.
 One model, three bars, 95% Wilson intervals, with both paired contrasts annotated beneath.
 
 ```
-  forced blurt              ███                                7%
-  bare                      ████████████████████              43%
-  + "Explain step by step." ████████████████████              43%
+  forced blurt              ███                                7%   ·      6 tokens
+  bare                      ████████████████████              43%   ·    573 tokens
                             └──── share of problems solved ────┘
 
   suppression:   −36 points  ·  40 broken, 4 fixed   ·  p < 0.0001
-  the instruction: +0 points ·  12 broken, 12 fixed  ·  95% CI [−9.6, +9.6]
 ```
 
 **Contrasts are paired, by exact McNemar over discordant items.** Every condition runs on the same
@@ -148,11 +147,15 @@ symmetric 12-versus-12 result as "unresolved" rather than as measured. Wilson in
 the bars because a reader should see the precision of each level; the *comparison* is the paired
 test.
 
-**A claimed null needs an equivalence bound, not a p-value.** The page wants to say the
-instruction does nothing, and `p = 1.0` does not support that: absence of evidence is not evidence
-of absence. The notebook emits the 95% interval on the paired difference so the caption can say
-*any effect is smaller than ten points*, which the run supports, rather than *there is no effect*,
-which it does not.
+**The instruction condition is measured and not plotted.** It runs, it is in `traces.jsonl`, and
+`derived.json` carries its paired difference and the 95% bound. It is not a bar because the page
+cannot explain it: a model that reasons unprompted does so because of how it was trained, and the
+deck reaches training at page 12. Section 5 records the handoff so the finding is spent where it
+pays rather than dropped here.
+
+If a later draft does put it on this page, it needs an equivalence bound rather than a p-value —
+`p = 1.0` is absence of evidence, not evidence of absence — which is why the notebook emits the
+interval on the paired difference and never lets a caption say "nothing".
 
 **One honest detail the caption must carry.** On the smallest model the instruction *does* move
 something visible: chain share goes from 87% to 100%. It finishes the chaining behaviour on the
@@ -289,6 +292,24 @@ floor.
 ---
 
 ## 5. Transition / Flow
+
+### What page 5 hands forward to page 12, deliberately unspent
+
+Page 5 measures that **asking for reasoning adds nothing** — Qwen2.5-3B, *n* = 100, +0.0 points,
+12 problems fixed and 12 broken, 95% interval [−9.6, +9.6] — and does not put it on the page.
+
+It is not a null result about prompting. It is a result about **training**: the instruction is
+redundant because the behaviour is already in the weights. Page 5 has no vocabulary for that yet,
+and a reader who meets 12-versus-12 here will read it as "chain of thought does not work".
+
+**Page 12 should open on it.** That page argues STaR, ExIt and RFT are RL in disguise — training a
+model to produce the reasoning it would otherwise have to be asked for. A callback lands the point
+before the page has spent a word on it: *on page 5 the instruction moved twelve problems one way
+and twelve the other, on a model that reasons anyway. Here is what put it there.*
+
+The number lives in page 5's `derived.json` under `figure_2.measured_only`, so the callback cites
+a measurement rather than a memory.
+
 
 **From page 4.** Unchanged and already good. Act 1 closed on whether a machine can be walked down
 a road; page 5 shows what the road is worth.

@@ -223,3 +223,25 @@ reference grammar:
    cite sat mid-figcaption; the heading subtitle now carries the sup. The
    References notes split per section — 1–3 beside the listing, GVM beside
    the closing blocks it supports.
+
+---
+
+## Inherited from page 5 — the callback that opens this page
+
+Page 5 measured something it deliberately did not plot: on Qwen2.5-3B over 100 MATH-500 L4-5
+problems, adding "Explain step by step." to a bare prompt moved **12 problems right and 12
+wrong** — +0.0 points, 95% interval [−9.6, +9.6]. The same model, told *not* to explain, fell
+from 43% to 7%.
+
+So the reasoning is worth 36 points and the instruction that asks for it is worth nothing,
+because the behaviour is already in the weights. Page 5 states the first and withholds the
+second, on the grounds that a reader without the training frame reads 12-versus-12 as "chain of
+thought does not work".
+
+**This page is where that frame arrives**, and the finding is the cheapest possible opening for
+it: the page's argument is that STaR, ExIt and RFT are RL in disguise — training a model to
+produce reasoning it would otherwise have to be asked for. The callback lands that before a word
+is spent defending it.
+
+Cite it from page 5's `derived.json` (`figure_2.measured_only`), not from memory. If page 5's run
+is re-done the number moves, and a hard-coded 12-versus-12 here would silently stop being true.
