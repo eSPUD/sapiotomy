@@ -97,7 +97,7 @@ const H = PAGE7.handoff;
 const M = PAGE7.manifest;
 
 const NOTEBOOK_ZIP = "/notebooks/page-07-frequency-voting.zip";
-const NOTEBOOK_SIZE = "3.2 MB";
+const NOTEBOOK_SIZE = "3.1 MB";
 const RUN_DATE = M.timestamp_utc.slice(0, 10);
 
 /** Cited for the technique. Every number on this page is ours. */
