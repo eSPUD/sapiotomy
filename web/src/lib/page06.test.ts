@@ -275,4 +275,21 @@ describe("tidyMath, on this page's traces", () => {
     // not invent a closing brace to make it look finished.
     expect(tidyMath("so we get \\frac{3\\sqrt")).toContain("\\frac{3");
   });
+
+  it("keeps the grouping the braces were doing", () => {
+    // Flattened naively this reads "√ab + a/√ab - b", which is a different
+    // expression from the one the model wrote. A term that is not single keeps
+    // a bracket; a single term does not collect a redundant one.
+    expect(tidyMath("\\frac{\\sqrt{ab + a}}{\\sqrt{ab - b}}")).toBe("√(ab + a)/√(ab - b)");
+    expect(tidyMath("\\frac{a+b}{c-d}")).toBe("(a+b)/(c-d)");
+    expect(tidyMath("\\frac{3\\sqrt{3}}{4}")).toBe("3√3/4");
+    expect(tidyMath("\\sqrt{27}")).toBe("√27");
+  });
+
+  it("renders a forced answer as maths, not as the LaTeX we spliced", () => {
+    // Figure 1 prints the model's committed answer through the same tidying as
+    // the rest of the trace, so a square root looks like one.
+    expect(tidyMath("\\boxed{ANSWER \\frac{3\\sqrt{3}}{4}}")).toBe("ANSWER 3√3/4");
+    expect(tidyMath("\\boxed{2\\sqrt{113}}")).toBe("2√113");
+  });
 });

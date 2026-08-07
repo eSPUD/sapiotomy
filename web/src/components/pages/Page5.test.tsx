@@ -18,6 +18,7 @@ const mm = (q: string) => ({
 vi.stubGlobal("matchMedia", mm);
 
 import { Page5 } from "./Page5";
+import { SYSTEMS } from "@/lib/authored";
 import { PAGE5, SUPPRESSION_TABLE, tidyMath } from "@/lib/page05";
 
 const BLURT = PAGE5.figure1.tabs[0];
@@ -33,6 +34,62 @@ function walk(steps: number) {
   for (let i = 0; i < steps; i++) fireEvent.click(nextBtn());
 }
 
+// The page defines its own term before it measures it, and the definition is
+// built out of what the deck already gave the reader (page 1's two speeds, page
+// 4's roads) rather than out of a citation.
+describe("Page 5, step 1: what a chain of thought is", () => {
+  beforeEach(() => {
+    reducedMotion = true;
+  });
+
+  it("defines the term before any figure", () => {
+    render(<Page5 />);
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
+    expect(headings[0]).toContain("What a chain of thought is");
+    expect(body()).toContain("you did not recognise the answer, you built it");
+    expect(body()).toContain("a thread of steps running from the question to the goal");
+  });
+
+  // The callback is page 1's round, read off SYSTEMS rather than retyped, so
+  // editing page 1's worked example cannot leave page 5 quoting numbers the
+  // reader never saw.
+  it("calls back to page 1 with page 1's own numbers", () => {
+    render(<Page5 />);
+    expect(body()).toContain(SYSTEMS.slow.prompt);
+    expect(body()).toContain("you built it: 340, then 68, then 408");
+  });
+
+  // The load-bearing half of the definition, and the only unmeasured claim in
+  // the step: the chain is the thinking, which is what makes it something the
+  // rest of the act can budget, sample, vote on and score.
+  it("says the chain is the thinking rather than a report of it", () => {
+    render(<Page5 />);
+    expect(body()).toContain("the thread is not a report of the thinking");
+    expect(body()).toContain("it is the thinking");
+    expect(body()).toContain("every step is text the model has to write before it can write");
+  });
+
+  // The page turns on the ask having stopped being necessary, which a reader
+  // cannot feel unless the ask is named first. Quoted off the manifest, so the
+  // string on the page is the string the run actually appended.
+  it("names the classic ask, in the run's own words", () => {
+    render(<Page5 />);
+    expect(body()).toContain("The classic way to get one is to ask");
+    expect(body()).toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
+  });
+
+  // Two badges and nothing else. A gloss here is duplication the reader pays
+  // for twice, once in reading and once in the whitespace it opens beside a
+  // four-line step, since each note sets its own grid row's height.
+  it("carries the citations with no gloss around them", () => {
+    render(<Page5 />);
+    const note = screen.getByText(/cited for the technique/i).closest("aside")!;
+    expect(within(note).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
+    expect(within(note).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
+    expect(note.querySelectorAll("p")).toHaveLength(1); // the kicker, and no prose
+  });
+});
+
 describe("Page 5, figure 1: the chain is already there", () => {
   beforeEach(() => {
     reducedMotion = true;
@@ -40,11 +97,37 @@ describe("Page 5, figure 1: the chain is already there", () => {
 
   it("lands on the bare prompt with nothing revealed yet", () => {
     render(<Page5 />);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("How to Reason");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Chain of Thought: Reasoning Out Loud",
+    );
     expect(bareTab()).toHaveAttribute("aria-pressed", "true");
     expect(blurtTab()).toHaveAttribute("aria-pressed", "false");
     expect(body()).toContain(`0 of ${BARE.tokensGenerated} tokens written`);
     expect(screen.queryByText(tidyMath(BARE.steps[0].text))).toBeNull();
+  });
+
+  // The step's premise, and the reason its heading is "what it looks like"
+  // rather than a claim: the technique is not being demonstrated here, it is
+  // already in the weights and the figure is a look at what that produces.
+  it("says the model does this natively before showing the trace", () => {
+    render(<Page5 />);
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
+    expect(headings[1]).toContain("What it looks like");
+    expect(body()).toContain("does this natively");
+    expect(body()).toContain(`writes ${BARE.tokensGenerated} tokens of chain before it answers`);
+  });
+
+  // The trace and the prompt are listings of what a machine read and wrote, so
+  // they take the deck's one licensed non-serif face. The broadsheet serif is
+  // unreadable at 573 tokens of half-LaTeX.
+  it("sets the prompt and the revealed trace in mono", () => {
+    const { container } = render(<Page5 />);
+    expect(container.querySelector("p.font-code")?.textContent).toBe(tidyMath(PAGE5.figure1.question));
+    walk(1);
+    const revealed = container.querySelector("ol > li");
+    expect(revealed?.textContent).toContain(tidyMath(BARE.steps[0].text));
+    expect(revealed?.className).toContain("font-code");
+    expect(container.querySelector("pre")?.className).toContain("font-code");
   });
 
   it("walks the model's own output to a correct answer it was never asked to work for", () => {
@@ -86,6 +169,18 @@ describe("Page 5, figure 1: the chain is already there", () => {
 describe("Page 5, figure 2: the cost of forbidding the working", () => {
   beforeEach(() => {
     reducedMotion = true;
+  });
+
+  // "43" is not a claim. "43 of the same 100" is, and the reader gets both
+  // conditions and the denominator in words before the switch exists.
+  it("sets up the contrast with both scores and their denominator", () => {
+    render(<Page5 />);
+    expect(body()).toContain(
+      `solves ${PAGE5.figure2.bare.nCorrect} of the ${PAGE5.figure2.bare.n}`,
+    );
+    expect(body()).toContain(`solves ${PAGE5.figure2.blurt.nCorrect}`);
+    expect(body()).toContain("the same model forbidden to reason");
+    expect(body()).toContain(`Each square below is one of those ${PAGE5.figure2.bare.n} problems`);
   });
 
   it("starts with the model left alone and flips to the floor", () => {
@@ -134,6 +229,16 @@ describe("Page 5, figure 3: the floor is flat", () => {
     reducedMotion = true;
   });
 
+  // The bars get longer going down for a reason that is not this figure's
+  // subject, so the intro says so and tells the reader what to discount.
+  it("says why a third figure exists and which end of the bars to read", () => {
+    render(<Page5 />);
+    expect(body()).toContain("Maybe the 3B is just an odd checkpoint");
+    expect(body()).toContain("what it still gets right with the working forbidden");
+    expect(body()).toContain("Bigger models are better at maths, so the bars get longer");
+    expect(body()).toContain("Watch where the left piece ends instead");
+  });
+
   it("compares named checkpoints and never puts size on an axis", () => {
     render(<Page5 />);
     expect(body()).toContain("A 7B forbidden to reason solves 11%");
@@ -173,29 +278,45 @@ describe("Page 5: provenance and what the page may claim", () => {
   it("states the instruction null as a bound and hands it to page 12", () => {
     render(<Page5 />);
     expect(body()).toContain(
-      `${PAGE5.figure2.instruction.fixed} problems fixed and ${PAGE5.figure2.instruction.broken} broken`,
+      `${PAGE5.figure2.instruction.fixed} fixed, ${PAGE5.figure2.instruction.broken} broken`,
     );
-    expect(body()).toContain("which is a bound and not a zero");
+    expect(body()).toContain("A bound, not a zero");
     expect(body()).toContain("page 12 opens on it");
   });
 
-  it("cites the techniques and says the numbers are ours", () => {
+  // §6 of the spec: the exemplar rungs may be absent, but only with a note
+  // saying why, because "we tried it and it did nothing" is a different claim.
+  it("says why the worked-example rungs are not on the page", () => {
     render(<Page5 />);
-    expect(body()).toContain("Techniques cited. The measurements on this page are ours:");
-    expect(screen.getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
-    expect(body()).toContain("Every number on this page is ours.");
+    expect(body()).toContain("Worked examples in the prompt did not help either");
+    expect(body()).toContain("answer-format rate");
   });
 
-  it("carries the limits rather than burying them", () => {
+  // The plate above the figures carries "ours, not a redrawing"; the badges
+  // carry the technique. Neither needs restating beside the other.
+  it("cites the techniques and says the numbers are ours exactly once", () => {
     render(<Page5 />);
-    expect(body()).toMatch(/traces hit the cap, which biases the headline conservative/);
-    expect(body()).toContain("fallback to the last number");
+    expect(screen.getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
+    expect(body()).toContain("one measurement of ours, not a redrawing of anyone");
+  });
+
+  // The three-paragraph footer these came from was doing the notebook's job.
+  // What survives sits in the margin beside the figure it qualifies, and only
+  // what a reader cannot work out from that figure: method went back to the
+  // download, including the grading provenance, which is true and not needed
+  // while looking at 100 squares.
+  it("carries the limits in the margin rather than in a footer", () => {
+    render(<Page5 />);
+    expect(body()).toMatch(/traces hit the token cap, which biases the headline conservative/);
+    expect(body()).toContain("is one phrasing and another would move the floor");
     expect(body()).toContain("never whether the working was sound");
+    expect(body()).not.toContain("reasoning-from-scratch");
   });
 
   it("hands page 6 the token multiple rather than a size claim", () => {
     render(<Page5 />);
+    expect(body()).toContain("You have probably done this before");
     expect(body()).toContain(`${PAGE5.close.blurt_median_tokens} tokens`);
     expect(body()).toContain(`${PAGE5.close.bare_median_tokens} tokens`);
     expect(body()).toContain(`×${PAGE5.close.token_multiple}`);

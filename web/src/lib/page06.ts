@@ -119,6 +119,25 @@ interface RawInsetArm {
   accuracy: number;
 }
 
+interface RawWaitPoint {
+  waits: number;
+  n: number;
+  n_correct: number;
+  accuracy: number;
+  mean_tokens: number;
+  /** Share whose committed answer moved at all, by the grader's equivalence. */
+  churn: number;
+  offered_a_stop: number;
+}
+
+interface RawWaitPaired {
+  waits: number;
+  fixed: number;
+  broken: number;
+  p: number;
+  n: number;
+}
+
 const D = rawDerived as unknown as {
   manifest: {
     run_id: string;
@@ -188,6 +207,18 @@ const D = rawDerived as unknown as {
     n_regressions: number;
     clickable_row_ids: string[];
   };
+  figure_wait: {
+    waits: number[];
+    word: string;
+    curves: {
+      model_id: string;
+      label: string;
+      params: number;
+      points: RawWaitPoint[];
+      paired: RawWaitPaired[];
+    }[];
+    integrity: { k0_matches_uncapped: [number, number] };
+  } | null;
   handoff: {
     model_id: string;
     max_budget: number;
@@ -228,6 +259,9 @@ const NEVER_FLIP_MAX = 0.6;
 
 /** Above this share truncated at the top budget, the grid's top still binds. */
 const TOP_TRUNCATION_MAX = 0.1;
+
+/** The row figure 1 opens on. See `PAGE6.figure1.openingId` for why not the notebook's. */
+const OPENING_ID = "test/counting_and_probability/1014.json";
 
 if (D.manifest.run_mode !== "FULL") {
   fail(`run mode is "${D.manifest.run_mode}"; only a FULL run may be translated to the page`);
@@ -272,6 +306,23 @@ if (
       fail(
         `${curve.label} is still truncated on ${pct(atTop!.truncation_rate)} of items at ${top} tokens, so the top of the grid still binds`,
       );
+    }
+  }
+}
+
+if (D.figure_wait) {
+  // k=0 is the model left alone, which IS the cap arm at the top budget. If those
+  // traces do not reproduce, the two arms are not one experiment and the page may
+  // not put them on one instrument.
+  const [same, of] = D.figure_wait.integrity.k0_matches_uncapped;
+  if (of > 0 && same / of < 0.9) {
+    fail(`the wait arm reproduces only ${same} of ${of} uncapped traces at k=0, so the two arms are not the same experiment`);
+  }
+  for (const c of D.figure_wait.curves) {
+    for (const pt of c.points) {
+      if (Math.abs(pt.n_correct / pt.n - pt.accuracy) > 1e-9) {
+        fail(`${c.label} at ${pt.waits} waits reports ${pt.n_correct}/${pt.n} but an accuracy of ${pt.accuracy}`);
+      }
     }
   }
 }
@@ -376,6 +427,24 @@ for (const row of D.figure_1.rows) {
   if (!bundled.has(D.figure_1.specimen_id)) {
     fail(`figure 1's specimen ${D.figure_1.specimen_id} is not among the bundled traces`);
   }
+  if (!bundled.has(OPENING_ID)) {
+    fail(`figure 1 opens on ${OPENING_ID}, whose traces are not bundled`);
+  }
+  {
+    // The row the page opens on has to demonstrate the thing the page claims:
+    // wrong below some budget, right at and above it, and cut where it is
+    // wrong. A run that no longer satisfies that is a run this page was not
+    // written against.
+    const opening = D.figure_1.rows.find((r) => r.problem_id === OPENING_ID)!;
+    const flip = opening.by_budget.findIndex((r) => r.correct);
+    if (flip < 1) fail(`figure 1's opening row does not flip above the smallest budget`);
+    if (!opening.by_budget[flip - 1].forced) {
+      fail(`figure 1's opening row is not cut at the budget below its flip`);
+    }
+    if (!opening.by_budget.slice(flip).every((r) => r.correct)) {
+      fail(`figure 1's opening row goes right and then wrong again`);
+    }
+  }
 }
 
 {
@@ -420,6 +489,17 @@ export interface SpecimenRow {
 }
 
 const BUDGETS = D.budgets;
+
+/**
+ * Lower median: on an even count take the lower of the two middle values rather
+ * than their mean, so the number the page prints is a length some chain in the
+ * run actually ran to and not an average of two that no chain did.
+ */
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  if (!s.length) throw new Page06DataError("median of an empty set");
+  return s[Math.floor((s.length - 1) / 2)];
+}
 
 function row(raw: RawRow): SpecimenRow {
   return {
@@ -495,6 +575,19 @@ export const PAGE6 = {
     specimenId: D.figure_1.specimen_id,
     flipBudget: D.figure_1.flip_budget,
     nCandidates: D.figure_1.n_candidate_specimens,
+    /**
+     * The row figure 1 opens on, which is NOT the notebook's specimen.
+     *
+     * The notebook ranks candidates by where they flip and how short they are;
+     * it cannot see what the answer says. Its pick flips at 512 because at 256
+     * the model wrote the right value behind the prompt template's placeholder
+     * ("ANSWER 3√3/4") and the grader could not read it. Two records in 1,500
+     * are like that and the notebook's specimen is one, so its flip is partly
+     * the grader rather than the budget, which is the one thing figure 1 exists
+     * to show. This row answers 360 and then 480: wrong for a real reason, then
+     * right. Both rows ship, and the notebook's pick is still in the picker.
+     */
+    openingId: OPENING_ID,
     rows,
     /**
      * Asked nicely against cut off. Read the token columns, not the accuracies:
@@ -517,9 +610,40 @@ export const PAGE6 = {
     neverFlipShare: D.figure_3.never_flip_share,
     nRegressions: D.figure_3.n_regressions,
     clickableRowIds: D.figure_3.clickable_row_ids,
+    /**
+     * Chains still running when the top budget arrived. Their `tokens_at_max`
+     * is a lower bound rather than a length, so the figure draws them off the
+     * axis and the page never averages them in with the measured ones.
+     */
+    censoredCount: D.figure_3.items.filter((d) => d.truncated_at_max).length,
+    /**
+     * The median length of a chain that never grades correct. Load-bearing for
+     * the page's third claim: these chains stopped on their own, well inside
+     * the budget, so what limits them is not the dial.
+     */
+    medianLengthNever: median(
+      D.figure_3.items.filter((d) => !d.correct_by_budget.some(Boolean)).map((d) => d.tokens_at_max),
+    ),
   },
+  /**
+   * The extension arm: what the model did when it was not allowed to stop.
+   * Null when the run predates the arm, and the page drops the step rather than
+   * drawing an empty one.
+   */
+  figureWait: D.figure_wait,
   handoff: D.handoff,
 } as const;
+
+/**
+ * Where this chain stops needing the dial: the length it runs to when nothing
+ * cuts it, and the first budget that lets it get there. Past that stop the
+ * dial has no more travel on this problem, and figure 1 says so rather than
+ * leaving the reader dragging a control that does nothing.
+ */
+export function naturalLength(r: SpecimenRow): { tokens: number; fromBudget: number } | null {
+  const finished = r.byBudget.find((b) => !b.forced);
+  return finished ? { tokens: finished.ownTokens, fromBudget: finished.budget } : null;
+}
 
 /** Look up a bundled problem by id. Figure 3's row picker feeds figure 1. */
 export function rowById(problemId: string): SpecimenRow {
