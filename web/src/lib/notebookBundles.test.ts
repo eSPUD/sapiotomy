@@ -23,32 +23,36 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFileSync, statSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+
+/** Resolved from this file, not from cwd: these paths are the point of the test. */
+const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 
 /**
  * `declared` is the size the page prints beside the link, or null where the
  * page prints none. `extras` are run artifacts beyond the three every bundle
- * carries. `derivedIsStale` marks a bundle known to ship a `derived.json` that
- * is not the one its page plots: see the note on the parity test below.
+ * carries.
  */
 const PAGES = [
   { n: 5, slug: "page-05-how-to-reason", notebook: "page_05_how_to_reason.ipynb",
-    declared: "0.8 MB", extras: [], derivedIsStale: false },
+    declared: "0.8 MB", extras: [] },
   { n: 6, slug: "page-06-thinking-longer", notebook: "page_06_thinking_longer.ipynb",
-    declared: "2.0 MB", extras: [], derivedIsStale: false },
+    declared: "2.0 MB", extras: [] },
   { n: 7, slug: "page-07-frequency-voting", notebook: "page_07_frequency_voting.ipynb",
-    declared: "3.1 MB", extras: [], derivedIsStale: false },
+    declared: "3.1 MB", extras: [] },
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
-    declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"], derivedIsStale: true },
+    declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"] },
 ] as const;
 
-const zipPath = (slug: string) => `public/notebooks/${slug}.zip`;
+const zipPath = (slug: string) => resolve(WEB, `public/notebooks/${slug}.zip`);
 const entries = (slug: string) =>
   execFileSync("unzip", ["-Z1", zipPath(slug)], { encoding: "utf8" }).trim().split("\n");
 const member = (slug: string, name: string) =>
   execFileSync("unzip", ["-p", zipPath(slug), name], { maxBuffer: 1 << 28 });
 
-describe.each(PAGES)("page $n's notebook bundle", ({ n, slug, notebook, declared, extras, derivedIsStale }) => {
+describe.each(PAGES)("page $n's notebook bundle", ({ n, slug, notebook, declared, extras }) => {
   const pad = String(n).padStart(2, "0");
 
   it("exists, and the size on the page is the size on disk", () => {
@@ -98,18 +102,13 @@ describe.each(PAGES)("page $n's notebook bundle", ({ n, slug, notebook, declared
 
   // The page plots `web/data/page-NN-derived.json`; the download has to carry
   // the file that produced it, or "re-derive this yourself" is not an offer.
-  //
-  // Page 8's does not, and `it.fails` records that rather than hiding it: its
-  // bundle is from a run 25 minutes older than the data the page ships, so the
-  // two disagree on figure 1's specimen and the bundle predates the paired
-  // baseline entirely. See docs/finishing_touches.md. Rebuilding that zip makes
-  // THIS test fail, which is the point: the marker is meant to be deleted with
-  // the defect, not to live here.
-  const parity = derivedIsStale ? it.fails : it;
-  parity("carries the same derived.json the page plots", () => {
+  // Page 8 shipped a bundle 25 minutes older than its data for a while, which
+  // disagreed with the page on figure 1's specimen and predated the paired
+  // baseline entirely. This is the assertion that would have caught it.
+  it("carries the same derived.json the page plots", () => {
     const sha = (b: Buffer | Uint8Array) => createHash("sha256").update(b).digest("hex");
     expect(sha(member(slug, `${slug}/out/page_${pad}/derived.json`))).toBe(
-      sha(readFileSync(`data/page-${pad}-derived.json`)),
+      sha(readFileSync(resolve(WEB, `data/page-${pad}-derived.json`))),
     );
   });
 });

@@ -519,8 +519,8 @@ export function Page8() {
         <strong className="text-ink">
           scoring {PAGE8.paired.n} candidates and keeping the best takes {pct(PAGE8.oneChain)} to{" "}
           {pct(PAGE8.headline.accuracy)}
-        </strong>{" "}
-        — {PAGE8.headline.fixed} problems fixed against {PAGE8.headline.broke} broken,{" "}
+        </strong>
+        : {PAGE8.headline.fixed} problems fixed against {PAGE8.headline.broke} broken,{" "}
         {pValue(PAGE8.headline.p)}. Then the part nobody promised us: page 7&apos;s vote, reading
         the same candidates, gets there too.
       </p>

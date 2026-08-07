@@ -90,4 +90,12 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(PAGE8.heuristic.net).toBeLessThan(0);
     expect(screen.getByText(/shortest wins/)).toBeInTheDocument();
   });
+
+  // Deck-wide copy rule. Pages 5, 6 and 7 each carry this assertion; page 8 did
+  // not, which is how one survived in the lede.
+  it("has no em dash or en dash anywhere in its copy", () => {
+    render(<Page8 />);
+    expect(document.body.textContent).not.toContain("\u2014");
+    expect(document.body.textContent).not.toContain("\u2013");
+  });
 });

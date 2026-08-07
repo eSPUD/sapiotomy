@@ -201,38 +201,7 @@ Not done because the section was explicitly held for review.
 
 ---
 
-## 8. Page 8's notebook download ships a `derived.json` the page does not plot
-
-**Status:** found while merging pages 5-7; pre-existing on `main`, not caused by that branch.
-Recorded as a deliberate `it.fails` in
-[`notebookBundles.test.ts`](../web/src/lib/notebookBundles.test.ts), so rebuilding the zip makes
-that test fail and the marker gets deleted with the defect.
-
-`web/public/notebooks/page-08-best-of-n.zip` carries an **older run** than
-`web/data/page-08-derived.json`:
-
-| | bundle | what the page plots |
-|---|---|---|
-| run timestamp | 2026-08-07T**20:51:47** | 2026-08-07T**21:16:35** |
-| figure 1's specimen | `test/intermediate_algebra/190.json` | `test/number_theory/357.json` |
-| `paired.baseline` | `null` | "candidate index 0, one fixed chain per problem" |
-| `paired.baseline_accuracy` | `null` | 0.43 |
-
-So a reader who takes the download and runs it in REPLAY gets **a different figure 1 than the one
-they just read**, and no paired baseline at all. The commit that landed it says the pages "agree
-byte for byte"; for this bundle they do not.
-
-Everything else about that bundle is correct, which is why it is one line to fix rather than a
-rebuild of the pipeline: it unpacks into `page-08-best-of-n/`, puts its five artifacts under
-`out/page_08/`, and ships at `RUN_MODE = "REPLAY"`. Re-zipping it against the 21:16 run closes
-this.
-
-Page 8 also prints no size beside its download link, where 5, 6 and 7 do. Not wrong, just
-inconsistent, and the test skips the size assertion for it.
-
----
-
-## 9. Small, verified, unglamorous
+## 8. Small, verified, unglamorous
 
 - `web/data/PROVENANCE.md` should name which pages share the `9ab2b579` item draw. Pages 5, 6 and 7
   all score it and nothing on the pages says they are the same problems, which is the single most
