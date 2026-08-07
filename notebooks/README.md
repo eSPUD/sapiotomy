@@ -51,20 +51,22 @@ The page ships what it draws and links what it drew it from.
 
 ## Contents
 
-**The page notebooks**, each with the three run modes below:
+**The page notebooks.** Pages 5 to 7 share the three run modes below; page 8's modes are the
+phases of its own experiment and are documented in its section 0.
 
 | File | Page | Status |
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** Run complete and replayable; `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4).** `FULL` run complete and replayable; `derived.json` is committed to `web/data/page-06-derived.json`, and the notebook, `harness.py` and all 1,500 records ship as `web/public/notebooks/page-06-thinking-longer.zip`, linked from the page |
-| `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **built, step 1.** No run yet. Two axes: one pile of N full-length chains, subsampled for the N axis, and one fixed budget split N ways. Consumes page 6's item set, spend and curve; produces page 8's candidate pile |
-| `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** No run yet. Generates nothing: it opens page 7's `traces.jsonl` and applies selectors |
+| `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **run complete (step 1 done).** 5,920 unique generations over 100 MATH-500 L4/5 items: one pile of 16 full-length chains at T=0.3, a greedy line, a diversity family at T=0.6/0.9/1.2 on 30 items, and a fixed budget split N ways. Voting beats bare CoT by 12 points (55% against 43%, McNemar p=0.0075); coverage is 78%, so the vote discards a correct answer on 23% of items. That pile is page 8's phase 0 bed |
+| `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** Runs end to end on page 7's completed pool with no verifier scored. Its modes are the phases of one experiment, not tiers of one run: `REPLAY` analyses, `SCORE` runs the verifier tiers over a pool that already exists, `GENERATE` draws page 8's own pool. `SCORE` is the decision point |
 
-Pages 7 and 8 are one chain of dependency: page 7 needs page 6's `out/page_06/` on disk for its
-grid derivation and its temperature-0 cross-check, and page 8 needs page 7's `traces.jsonl` for
-every number it reports. Each degrades to a printed skip rather than an exception when the run
-above it is missing, except page 8, which has nothing to do without page 7 and says so.
+Page 7 needs page 6's `out/page_06/` on disk for its grid derivation and its temperature-0
+cross-check. Page 8 reads page 7's `traces.jsonl` as the pool for its **phase 0 pilot**, which is
+what makes the pilot free, and writes its own pool in `GENERATE` once that pilot has cleared its
+gate. Each degrades to a printed skip rather than an exception when the run above it is missing,
+except page 8 in `REPLAY` and `SCORE`, which have no pool to work on and say so.
 
 Page 6's run is now the one on disk, so page 7's dependency on it is satisfied.
 
@@ -88,6 +90,8 @@ jupyter lab
 
 Each page notebook has a `RUN_MODE` variable at the top with **three tiers**. Reproducing the
 *figures* and reproducing the *run* are separate choices, and the cheap one is the default.
+(Page 8 is the exception: its three modes are `REPLAY`, `SCORE` and `GENERATE`, because its
+expensive step is scoring candidates rather than making them.)
 
 | Mode | What it does | Hardware | Time |
 |---|---|---|---|
@@ -140,7 +144,8 @@ notebooks/
     page_07/
       …same four. Its traces.jsonl is also page 8's input
     page_08/
-      scores.jsonl     # one logprob per candidate — the only thing this page computes
+      traces.jsonl     # its own pool, written only in GENERATE
+      scores.jsonl     # one verifier score per candidate, per tier
       derived.json, manifest.json, figure_*.png
     experiment_3/
       …plus tables.md, paste-ready
@@ -149,8 +154,8 @@ notebooks/
 Pages 5 to 8 share one trace-bank schema, so a record from any of them is readable by the same
 code. What differs is the key: page 5 varies the **prompt** at unlimited length and keys by
 `condition`; page 6 fixes the prompt and varies the **length**, keying by `budget`; page 7 varies
-**how many chains and how hot**, keying by `config_id` and `sample_index`; page 8 adds no records
-at all and writes scores keyed the same way. Everything
+**how many chains and how hot**, keying by `config_id` and `sample_index`; page 8 keys the same way
+and adds `scores.jsonl`, one row per (candidate, scorer). Everything
 else — `problem_id`, `trace`, `tokens`, `truncated`, `extracted_answer`, `correct`,
 `tokens_generated` — is common, and page 9 extends the same shape.
 
@@ -158,8 +163,8 @@ They also share an instrument, the same Qwen2.5 checkpoints over the same items,
 lets each page check itself against the one before it. Page 5's two endpoints are the ends of the
 segment page 6 sweeps, and page 6's handoff cell overlays them. Page 7's temperature-0 line *is*
 page 6's budget curve, because N copies of one greedy chain of B/N tokens is one greedy chain of
-B/N tokens, and its section 14 asserts the two agree. Page 8's majority rung must reproduce page
-7's vote on the same pile, and its section 13 asserts that. Those three cross-checks are where a
+B/N tokens, and its section 14 asserts the two agree. Page 8's vote must reproduce page 7's on the
+same pile, and its section 13 asserts that. Those three cross-checks are where a
 drifting reimplementation would otherwise hide.
 
 `out/` and `data/` are gitignored. Promoting a run to the page means copying its `derived.json`
