@@ -242,220 +242,167 @@ function BudgetCurve({ budgetIndex }: { budgetIndex: number }) {
 
 const S_W = 620;
 const S_H = 300;
-const S_M = { top: 18, right: 122, bottom: 44, left: 58 };
+const S_M = { top: 30, right: 86, bottom: 44, left: 30 };
 const S_IW = S_W - S_M.left - S_M.right;
 const S_IH = S_H - S_M.top - S_M.bottom;
 
-/**
- * One row per problem, sorted by flip point, so each row is a step and the
- * smooth climb in figure 2 is revealed as the average of a hundred steps
- * landing in different places. Regressions (correct, then wrong again at a
- * larger budget) are marked rather than hidden, which is why a flip point is
- * defined as FIRST correct and not permanently correct.
- *
- * Two marks do the teaching. The y axis is labelled easy at the top and hard at
- * the bottom, because without it a reader has no reason to know the rows are
- * sorted at all. And the boundary between unsolved and solved is drawn as a
- * heavy staircase: that line IS "the budget this problem needs", which is the
- * section's title and was previously only implied by where the colour changed.
- * It runs off the right-hand edge at the never-flipping band, which is the
- * whole handoff in one stroke.
- */
-function FlipStrip({ budgetIndex, selectedId }: { budgetIndex: number; selectedId: string }) {
-  const items = F3.items;
-  const rowH = S_IH / items.length;
-  const colW = S_IW / B.length;
-  const firstNever = items.findIndex((d) => d.first_correct_budget === null);
-  const selectedIndex = items.findIndex((d) => d.problem_id === selectedId);
-  const maxHist = Math.max(...Object.values(F3.histogram), F3.neverFlipCount);
+/** One column per 128 tokens, so the bins land exactly on the dial's stops. */
+const BIN = 128;
+const N_BINS = TOP / BIN;
+const COL_W = S_IW / N_BINS;
+const SQ = 9;
+const SQ_PITCH = 10.8;
+/** Past the axis: a chain still running at the cap has a floor, not a length. */
+const GUTTER_X = S_IW + 34;
 
-  // The staircase along the unsolved/solved boundary. Two points per row, so
-  // the polyline turns a corner wherever the required budget changes; past the
-  // last problem that flips it leaves the chart to the right, because those
-  // problems' budget is not on this axis.
-  const frontier: string[] = [];
-  const flipping = firstNever >= 0 ? firstNever : items.length;
-  for (let i = 0; i < flipping; i++) {
-    const x = items[i].correct_by_budget.findIndex(Boolean) * colW;
-    frontier.push(`${x},${i * rowH}`, `${x},${(i + 1) * rowH}`);
+const lengthX = (t: number) => (Math.min(t, TOP) / TOP) * S_IW;
+
+/** Ever solved at any budget in the grid. The one thing colour encodes here. */
+const everSolved = (d: (typeof F3.items)[number]) => d.correct_by_budget.some(Boolean);
+
+/**
+ * Figure 3, rebuilt. It used to be a hundred 2px rows sorted by flip point, and
+ * it failed three ways: half the plot was the empty rectangle left by the 51
+ * problems that never flip, adjacent rows merged so "one row is one problem"
+ * was invisible, and what remained read as a second drawing of figure 2's curve.
+ *
+ * What replaced it is the same hundred problems placed by a MEASURED quantity:
+ * how long each chain actually ran when nothing cut it. That single change does
+ * most of the work.
+ *
+ *   · The silhouette stops being a block and becomes a distribution, so it can
+ *     never be confused with page 5's grid, which is a hundred squares whose
+ *     ARRANGEMENT is explicitly not data. Here position is the data, and this
+ *     figure needs no such caveat.
+ *   · The dial earns its keep. The line is the budget the reader holds; left of
+ *     it a chain finished on its own, right of it the cap was still biting.
+ *     Sweeping the dial gives 0, 8, 45, 84, 94 finishing inside, which IS
+ *     figure 2's truncation series read from the other side. The two figures
+ *     become one measurement seen twice rather than two views of accuracy.
+ *   · "Was it cut off" moves from a colour to a POSITION relative to the line,
+ *     so it re-reads on every drag, and colour is left carrying one thing.
+ *
+ * The payload is visible rather than asserted: at the top budget the shaded
+ * still-being-cut zone holds six squares, and the mass of never-solved problems
+ * sits well to its left, finished and wrong.
+ */
+function LengthStrip({ budgetIndex }: { budgetIndex: number }) {
+  const budget = B[budgetIndex];
+  const bx = lengthX(budget);
+  const atTop = budgetIndex === B.length - 1;
+
+  // Censored chains leave the axis: their length is a lower bound, so binning
+  // them with the measured ones would draw six floors as six values.
+  const censored = F3.items.filter((d) => d.truncated_at_max);
+  const stacks = new Map<number, typeof F3.items>();
+  for (const d of F3.items) {
+    if (d.truncated_at_max) continue;
+    const k = Math.min(N_BINS - 1, Math.floor(d.tokens_at_max / BIN));
+    // solved first, so each column reads as one band under one band
+    const col = stacks.get(k) ?? [];
+    col.push(d);
+    stacks.set(k, col);
   }
-  if (firstNever >= 0) frontier.push(`${S_IW},${flipping * rowH}`);
+  for (const col of stacks.values()) {
+    col.sort((a, b) => Number(everSolved(b)) - Number(everSolved(a)));
+  }
+
+  const inside = F3.items.filter((d) => d.tokens_at_max <= budget).length;
+  const square = (d: (typeof F3.items)[number], x: number, y: number, key: string) => (
+    <rect
+      key={key}
+      x={x}
+      y={y}
+      width={SQ}
+      height={SQ}
+      rx={1.5}
+      className={everSolved(d) ? "fill-compute" : "fill-wrong"}
+      opacity={everSolved(d) ? 1 : 0.85}
+      strokeDasharray={d.truncated_at_max ? "2 1.4" : undefined}
+      strokeWidth={d.truncated_at_max ? 1.2 : 0}
+      stroke={d.truncated_at_max ? "currentColor" : undefined}
+    />
+  );
 
   return (
     <ChartFrame
-      title={`One row per problem, ${items.length} problems sorted by the budget at which each first grades correct, for ${F3.modelId}. ${Object.entries(
-        F3.histogram,
-      )
-        .map(([b, n]) => `${n} first solved at ${b} tokens`)
-        .join(", ")}, and ${F3.neverFlipCount} never solved at any budget in this grid.`}
+      title={`How long each of ${F3.items.length} chains ran when nothing cut it, one square per problem, against the token budget. ${
+        F3.items.length - F3.neverFlipCount
+      } are solved at some budget and ${F3.neverFlipCount} are never solved. At the ${budget}-token budget ${inside} chains finish on their own and ${
+        F3.items.length - inside
+      } are still being cut. ${censored.length} chains were still running at ${TOP} tokens, so their length is a lower bound.`}
       width={S_W}
       height={S_H}
       margin={S_M}
-      xLabel="token budget"
+      xLabel="tokens the chain actually ran to, with nothing cutting it"
     >
-      {items.map((d, y) =>
-        d.correct_by_budget.map((solved, x) =>
-          solved ? (
-            <rect
-              key={`${y}-${x}`}
-              x={x * colW}
-              y={y * rowH}
-              width={colW}
-              // A hair over one row: at a hundred rows the fractional y values
-              // would otherwise antialias a white seam through every band.
-              height={Math.max(rowH + 0.6, 1)}
-              className="fill-compute"
-            />
-          ) : null,
-        ),
-      )}
-
-      {/* regressions: solved once, wrong again at a larger budget */}
-      {items.map((d, y) =>
-        d.monotone
-          ? null
-          : d.correct_by_budget.map((solved, x) =>
-              !solved && d.correct_by_budget.slice(0, x).some(Boolean) ? (
-                <circle
-                  key={`r-${y}-${x}`}
-                  cx={x * colW + colW / 2}
-                  cy={y * rowH + rowH / 2}
-                  r={1.8}
-                  className="fill-wrong"
-                />
-              ) : null,
-            ),
-      )}
-
-      {/* where the dial runs out */}
-      {firstNever >= 0 ? (
-        <>
-          <line
-            x1={0}
-            x2={S_IW}
-            y1={firstNever * rowH}
-            y2={firstNever * rowH}
-            className="stroke-wrong"
-            strokeWidth={1}
-            strokeDasharray="4 3"
-          />
-          <text
-            x={S_IW + 8}
-            y={firstNever * rowH + (S_IH - firstNever * rowH) / 2}
-            className="fill-wrong text-[11px] font-semibold"
-          >
-            never flips
-          </text>
-          <text
-            x={S_IW + 8}
-            y={firstNever * rowH + (S_IH - firstNever * rowH) / 2 + 13}
-            className="fill-ink-muted text-[10px]"
-          >
-            {F3.neverFlipCount} of {items.length}
-          </text>
-        </>
-      ) : null}
-
-      {/* The budget each problem needs. The staircase is the figure's claim:
-          not "more is better" but "each problem has a threshold, and they are
-          not the same threshold".
-
-          Drawn twice. The line sits exactly on the boundary, so half its width
-          falls on the solved fill, where near-black on dark teal is invisible;
-          a casing in the page colour underneath lifts it off the fill and the
-          staircase reads as an edge on both sides. */}
-      <polyline
-        points={frontier.join(" ")}
-        fill="none"
-        className="stroke-canvas"
-        strokeWidth={4.5}
-      />
-      <polyline points={frontier.join(" ")} fill="none" className="stroke-ink" strokeWidth={1.75} />
-
-      {/* the budget the reader is holding, dashed compute as in figure 2 */}
-      <line
-        x1={(budgetIndex + 1) * colW}
-        x2={(budgetIndex + 1) * colW}
-        y1={0}
-        y2={S_IH}
-        className="stroke-compute"
-        strokeWidth={1.5}
-        strokeDasharray="3 3"
+      {/* Everything right of the dial was still being cut at this budget, and
+          that includes the gutter: a chain censored at the top budget is being
+          cut at every budget, so the shading has to reach it. */}
+      <rect
+        x={bx}
+        y={0}
+        width={GUTTER_X + SQ + 4 - bx}
+        height={S_IH}
+        className="fill-ink opacity-[0.055]"
       />
 
-      {/* easy at the top, hard at the bottom: without this the sort is invisible */}
-      <text x={-10} y={10} textAnchor="end" className="fill-ink-muted text-[10px] font-semibold">
-        easy
-      </text>
-      <text x={-10} y={S_IH - 2} textAnchor="end" className="fill-ink-muted text-[10px] font-semibold">
-        hard
-      </text>
-      <line x1={-16} x2={-16} y1={14} y2={S_IH - 14} className="stroke-grid" strokeWidth={1} />
-      <text
-        x={-16}
-        y={S_IH / 2}
-        textAnchor="middle"
-        transform={`rotate(-90, -16, ${S_IH / 2})`}
-        className="fill-ink-muted text-[9px]"
-      >
-        <tspan dy={-4}>{items.length} problems</tspan>
-      </text>
-
-      {/* the problem currently loaded into figure 1 */}
-      {selectedIndex >= 0 ? (
-        <g>
-          <line
-            x1={-6}
-            x2={S_IW}
-            y1={selectedIndex * rowH + rowH / 2}
-            y2={selectedIndex * rowH + rowH / 2}
-            className="stroke-ink opacity-40"
-            strokeWidth={0.75}
-          />
-          <text x={-10} y={selectedIndex * rowH + rowH / 2 + 3} textAnchor="end" className="fill-ink text-[10px]">
-            ▸
-          </text>
-        </g>
-      ) : null}
-
-      {B.map((b, i) => (
+      <line x1={0} x2={S_IW} y1={S_IH} y2={S_IH} className="stroke-grid" strokeWidth={1} />
+      {[0, 512, 1024, 1536, 2048].map((t) => (
         <text
-          key={b}
-          x={i * colW + colW / 2}
+          key={t}
+          x={lengthX(t)}
           y={S_IH + 16}
           textAnchor="middle"
-          className="fill-ink-muted text-[11px]"
+          className="fill-ink-muted text-[10px] tabular-nums"
         >
-          {b}
+          {t}
         </text>
       ))}
 
-      {/* the flip-point distribution, as the strip's own margin */}
-      {[...B.map((b) => [String(b), F3.histogram[String(b)] ?? 0] as const), ["never", F3.neverFlipCount] as const].map(
-        ([label, n], i) => {
-          const barY = i * 14 + 2;
-          return (
-            <g key={label} transform={`translate(${S_IW + 62}, 0)`}>
-              <rect
-                x={0}
-                y={barY}
-                width={(n / maxHist) * 44}
-                height={9}
-                className={label === "never" ? "fill-wrong" : "fill-compute"}
-              />
-              <text x={-4} y={barY + 8} textAnchor="end" className="fill-ink-muted text-[9px]">
-                {label}
-              </text>
-              <text x={(n / maxHist) * 44 + 3} y={barY + 8} className="fill-ink-muted text-[9px] tabular-nums">
-                {n}
-              </text>
-            </g>
-          );
-        },
+      {[...stacks.entries()].map(([k, col]) =>
+        col.map((d, i) =>
+          square(d, k * COL_W + (COL_W - SQ) / 2, S_IH - (i + 1) * SQ_PITCH, `${k}-${i}`),
+        ),
       )}
+
+      {/* the gutter: still running when the cap arrived */}
+      <g className="text-ink">
+        {censored.map((d, i) => square(d, GUTTER_X, S_IH - (i + 1) * SQ_PITCH, `c-${i}`))}
+      </g>
+      <text x={GUTTER_X + SQ / 2} y={S_IH + 16} textAnchor="middle" className="fill-ink-muted text-[10px]">
+        ≥{TOP}
+      </text>
+
+      {/* The two readings sit at the corners rather than beside the line, so
+          they cannot clip off the left edge when the dial is at its lowest stop
+          or collide with each other when it is near an end. Only the budget tag
+          tracks the line, and it flips side at the midpoint. */}
+      <text x={0} y={-14} className="fill-compute text-[10px] font-semibold tabular-nums">
+        {inside} finished on their own
+      </text>
+      <text
+        x={GUTTER_X + SQ}
+        y={-14}
+        textAnchor="end"
+        className="fill-ink-muted text-[10px] tabular-nums"
+      >
+        {F3.items.length - inside} still being cut
+      </text>
+
+      <line x1={bx} x2={bx} y1={-6} y2={S_IH} className="stroke-compute" strokeWidth={2} />
+      <text
+        x={atTop ? bx - 5 : bx + 5}
+        y={-1}
+        textAnchor={atTop ? "end" : "start"}
+        className="fill-compute text-[10px] font-semibold tabular-nums"
+      >
+        {budget}
+      </text>
     </ChartFrame>
   );
 }
+
 
 /* ------------------------------------------------------------------ figure 4 */
 
@@ -566,6 +513,16 @@ export function Page6() {
   const run = row.byBudget[budgetIndex];
   const zones = useMemo(() => traceZones(row, budgetIndex), [row, budgetIndex]);
   const natural = useMemo(() => naturalLength(row), [row]);
+  /**
+   * The last stop that actually cuts THIS chain. Past it the dial has travel
+   * and no effect, which is a property of the problem rather than of the grid:
+   * this chain stops on its own and the remaining stops have nothing left to
+   * take away. Drawn on the track so it reads before the reader drags into it.
+   */
+  const lastBiting = useMemo(
+    () => row.byBudget.reduce((last, b, i) => (b.forced ? i : last), -1),
+    [row],
+  );
   const curvePoint = F2.primary.points[budgetIndex];
 
   // The cut is the figure. A trace long enough to scroll would otherwise open
@@ -654,8 +611,8 @@ export function Page6() {
         <p className="text-xs text-ink-muted">
           Qwen2.5-Instruct at 1.5B, 3B and 7B, greedy, budget forced at the cap; MATH-500 levels 4
           and 5, n = {M.items.n} items across {B.length} budgets, {tokens(M.integrity.n_records)}{" "}
-          records, {RUN_DATE}. Every figure below is one measurement of ours, not a redrawing of
-          anyone&apos;s.
+          records, run <span className="font-mono">{M.run_id}</span>, {RUN_DATE}. Every figure below
+          is one measurement of ours, not a redrawing of anyone&apos;s.
         </p>
         <div className="flex flex-wrap items-center gap-3">
           <a
@@ -682,6 +639,15 @@ export function Page6() {
               one problem · one model · the cap on a dial
             </span>
           </h2>
+          <p className="text-ink-muted">
+            The dial below is <span className="font-code">max_new_tokens</span>, a hard limit on how
+            much the model may write. Turn it down and the model gets cut off mid-sentence, so we
+            close off its working, append{" "}
+            <span className="font-code">{M.forcing.stem.trim()}</span>, and give it{" "}
+            {M.forcing.answer_allowance} more tokens to commit to something. That is why a starved
+            model still produces an answer to grade rather than nothing at all. The same dial drives
+            the next two figures.
+          </p>
           <section
             aria-label="The truncation view"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
@@ -691,7 +657,10 @@ export function Page6() {
               {row.subject.replace(/_/g, " ")}
             </p>
 
-            <p className="text-lg text-ink">{tidyMath(row.question)}</p>
+            {/* The question and the trace are listings of what a machine read
+                and wrote, so they take the deck's one licensed non-serif face,
+                the same rule page 5 settled on. */}
+            <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(row.question)}</p>
 
             <div className="flex flex-col gap-1">
               <Slider
@@ -703,21 +672,44 @@ export function Page6() {
                 format={(i) => String(B[i])}
                 suffix=" tokens"
               />
-              {/* A stop this chain is actually cut at reads in ink; a stop it
-                  already finished inside is greyed, so the dead travel at the
-                  top of the dial is visible before the reader drags into it. */}
-              <div
-                aria-hidden="true"
-                className="flex justify-between px-0.5 font-mono text-[10px] tabular-nums"
-              >
-                {B.map((b, i) => (
-                  <span
-                    key={b}
-                    className={row.byBudget[i].forced ? "text-ink" : "text-ink-muted opacity-50"}
-                  >
-                    {b}
-                  </span>
-                ))}
+              {/* Dead travel, drawn rather than implied. Most chains finish
+                  well inside the top of the grid, so on any given problem the
+                  last stops cut nothing and dragging into them does nothing.
+                  Greying the tick labels was too quiet to be read as a fact, so
+                  the track carries a bar: solid where this chain is still being
+                  cut, hatched where the dial has run past it. That is the same
+                  fact figure 3 draws for all 100 problems at once, and it is
+                  the page's finding rather than an artefact of the grid.
+
+                  The stops are evenly spaced because the slider is indexed, not
+                  scaled, so a stop's position is i/(n-1) of the track. */}
+              <div aria-hidden="true" className="flex flex-col gap-1 px-0.5">
+                <div className="relative h-1.5 w-full overflow-hidden rounded-sm bg-surface-raised">
+                  {lastBiting >= 0 ? (
+                    <span
+                      className="absolute inset-y-0 left-0 rounded-sm bg-compute opacity-70"
+                      style={{ width: `${(lastBiting / (B.length - 1)) * 100}%` }}
+                    />
+                  ) : null}
+                  {lastBiting < B.length - 1 ? (
+                    <span
+                      className="absolute inset-y-0 right-0 rounded-sm bg-grid"
+                      style={{
+                        width: `${((B.length - 1 - lastBiting) / (B.length - 1)) * 100}%`,
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div className="flex justify-between font-mono text-[10px] tabular-nums">
+                  {B.map((b, i) => (
+                    <span
+                      key={b}
+                      className={row.byBudget[i].forced ? "text-ink" : "text-ink-muted opacity-50"}
+                    >
+                      {b}
+                    </span>
+                  ))}
+                </div>
               </div>
               {natural ? (
                 <p className="text-xs text-ink-muted">
@@ -740,7 +732,10 @@ export function Page6() {
               <p className="border-b border-dashed border-grid px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-ink-muted">
                 the model →
               </p>
-              <div ref={scrollRef} className="max-h-64 overflow-y-auto px-3 py-2 text-sm leading-relaxed">
+              <div
+                ref={scrollRef}
+                className="max-h-64 overflow-y-auto px-3 py-2 font-code text-xs leading-relaxed"
+              >
                 <span className="whitespace-pre-wrap text-ink">{tidyMath(zones.own)}</span>
                 {zones.wasCut ? (
                   <>
@@ -793,45 +788,6 @@ export function Page6() {
               </span>
             </div>
 
-            {/* Inset: asked nicely versus cut off. Read the reliability, not
-                the means: the arms ran to different caps, so their token totals
-                and their scores are not a like-for-like comparison. */}
-            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                asked nicely vs cut off · {F1.inset.n} items at a nominal {F1.inset.nominal_budget}{" "}
-                tokens
-              </p>
-              {(
-                [
-                  ["asked nicely in the prompt", F1.inset.soft, "bg-wrong"],
-                  [`capped at ${F1.inset.nominal_budget}`, F1.inset.hard, "bg-compute"],
-                ] as const
-              ).map(([label, arm, tone]) => (
-                <div key={label} className="grid grid-cols-[minmax(0,10rem)_minmax(0,1fr)_auto] items-center gap-2">
-                  <span className="text-xs text-ink">{label}</span>
-                  <span className="h-3 w-full rounded-sm bg-surface-raised">
-                    <span
-                      className={`block h-3 rounded-sm ${tone}`}
-                      style={{ width: `${Math.max(arm.over_budget_rate * 100, 1)}%` }}
-                    />
-                  </span>
-                  <span className="font-mono text-xs tabular-nums text-ink-muted">
-                    {pct(arm.over_budget_rate)} over
-                  </span>
-                </div>
-              ))}
-              <p className="text-xs text-ink-muted">
-                Same nominal length, two ways of imposing it. The request holds the median under the
-                line ({F1.inset.soft.median_own_tokens} tokens) and then misses it on{" "}
-                {pct(F1.inset.soft.over_budget_rate)} of items;{" "}
-                <span className="font-mono">max_new_tokens</span> misses on none. A prompt is a
-                preference, not a cap.
-              </p>
-              <p className="text-xs text-ink-muted">
-                Read the token columns and not the scores: the two arms ran to different caps, so
-                what they solved is not comparable and this page does not compare it.
-              </p>
-            </div>
           </section>
           <p className="text-sm text-ink-muted">
             The grey text is what the model would have written and was not allowed to; the tinted
@@ -843,6 +799,11 @@ export function Page6() {
         </section>
         <Note kicker="Try it">
           <p>Drag to {F1.flipBudget} tokens and back.</p>
+          <p>
+            A cap, not a request: asking for {F1.inset.nominal_budget} tokens in the prompt overran
+            on {pct(F1.inset.soft.over_budget_rate)} of items and{" "}
+            <span className="font-code">max_new_tokens</span> overran on none.
+          </p>
         </Note>
 
         {/* Step 2 — figure 2 */}
@@ -853,6 +814,12 @@ export function Page6() {
               three checkpoints · the same {curvePoint.n} problems
             </span>
           </h2>
+          <p className="text-ink-muted">
+            One problem is an anecdote. Below is the same sweep run over all {curvePoint.n}, on
+            three checkpoints: how many each solves at every stop on the dial. Read the shape rather
+            than the heights, because the three differ in size and in training and the largest ran
+            at a different precision.
+          </p>
           <section
             aria-label="The population curve"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
@@ -894,61 +861,102 @@ export function Page6() {
             is not about any of these checkpoints.
           </p>
         </section>
-        <Note kicker="References">
-          <p>Cited for the technique. Every number on this page is ours.</p>
+        <Note kicker="Cited for the technique">
+          <div className="flex flex-wrap gap-2">
+            <CitationBadge citation={S1} />
+          </div>
           <p>
-            Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em>: forcing a model to stop
-            thinking, or to keep going, at a budget you choose.
+            The heights are not a claim. The three differ in size and in training, and the 7B ran at
+            8-bit against bf16 for the other two, so a level comparison is barred twice over.
+          </p>
+          <p>
+            {pct(F2.primary.points[B.length - 1].truncation_rate)} of chains still hit the cap at{" "}
+            {TOP}, which understates the right-hand end rather than flattering it.
           </p>
         </Note>
 
         {/* Step 3 — figure 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            3. Not every problem costs the same
+            3. It stops mattering before you run out of dial
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              one row per problem · sorted by where it flips
+              one square per problem · placed by how long its chain ran
             </span>
           </h2>
+          <p className="text-ink-muted">
+            So why does the curve flatten? Below are the same {F3.items.length} problems again, each
+            one placed by how long its chain ran when nothing cut it off. The line is the budget you
+            are holding: everything to its left finished on its own, everything to its right was
+            still being cut. Drag the dial and watch the line move past the pile.
+          </p>
           <section
-            aria-label="The flip-point strip"
+            aria-label="The chain-length distribution"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <FlipStrip budgetIndex={budgetIndex} selectedId={rowId} />
+            <LengthStrip budgetIndex={budgetIndex} />
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
               <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm bg-compute" /> graded correct at this budget
+                <span className="h-3 w-3 rounded-sm bg-compute" /> solved at some budget (
+                {F3.items.length - F3.neverFlipCount})
               </span>
               <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm border border-grid bg-surface" /> graded wrong
+                <span className="h-3 w-3 rounded-sm bg-wrong opacity-85" /> never solved (
+                {F3.neverFlipCount})
               </span>
               <span className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-wrong" /> solved, then wrong again ·{" "}
-                {F3.nRegressions} problems
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-0.5 w-5 bg-ink" /> the budget each problem needs
+                <span className="h-3 w-3 rounded-sm border border-dashed border-ink bg-wrong opacity-85" />{" "}
+                still running at {TOP}, so its length is a floor ({F3.censoredCount})
               </span>
               <span className="flex items-center gap-2">
                 <span className="h-3 w-px bg-compute" /> the budget you are holding
               </span>
             </div>
 
-            {/* Clicking a row loads that problem into figure 1. The rows are
-                two pixels tall, so the affordance is a button rather than the
-                row itself: the nine problems whose full traces ship with the
-                page, spanning the strip from top to bottom. */}
+            {/* The threshold distribution, promoted out of the old figure's
+                right margin where it sat at 9px. It answers a different
+                question from the strip above (how much do problems DIFFER in
+                what they need) and it deserves to be legible. */}
+            <div className="flex flex-col gap-1.5 border-t border-dashed border-grid pt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                and where each problem first grades correct
+              </p>
+              {[...B.map((b) => [String(b), F3.histogram[String(b)] ?? 0] as const), ["never", F3.neverFlipCount] as const].map(
+                ([label, n]) => (
+                  <div key={label} className="grid grid-cols-[3.2rem_minmax(0,1fr)_1.6rem] items-center gap-2">
+                    <span className="text-right font-mono text-xs tabular-nums text-ink-muted">
+                      {label}
+                    </span>
+                    <span className="h-3 rounded-sm bg-surface-raised">
+                      <span
+                        className={`block h-3 rounded-sm ${label === "never" ? "bg-wrong" : "bg-compute"}`}
+                        style={{ width: `${(n / F3.neverFlipCount) * 100}%` }}
+                      />
+                    </span>
+                    <span className="font-mono text-xs tabular-nums text-ink-muted">{n}</span>
+                  </div>
+                ),
+              )}
+            </div>
+
+            {/* The affordance for figure 1. Labelled by what each problem
+                DEMONSTRATES rather than by a row index into a sort the reader
+                cannot see, which is what the old strip's buttons did. */}
             <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                load one into figure 1 · nine of these rows ship with their full traces
+                load one into figure 1 · nine of these ship with their full traces
               </p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Bundled problems">
                 {F3.clickableRowIds.map((id) => {
                   const r = rowById(id);
+                  const d = F3.items.find((x) => x.problem_id === id);
                   const active = id === rowId;
-                  // Four of the nine never flip, so the flip point alone does
-                  // not name a row. The subject and the strip position do.
-                  const place = F3.items.findIndex((d) => d.problem_id === id) + 1;
+                  const what = !d
+                    ? r.flipLabel
+                    : d.correct_by_budget.some(Boolean)
+                      ? `needs ${r.flipLabel}`
+                      : d.truncated_at_max
+                        ? "cut off at every budget"
+                        : `finished at ${d.tokens_at_max}, still wrong`;
                   return (
                     <button
                       key={id}
@@ -961,7 +969,7 @@ export function Page6() {
                           : "border-grid bg-surface-raised text-ink-muted"
                       }`}
                     >
-                      row {place} · {r.subject.replace(/_/g, " ")} · flips at {r.flipLabel}
+                      {r.subject.replace(/_/g, " ")} · {what}
                     </button>
                   );
                 })}
@@ -969,18 +977,24 @@ export function Page6() {
             </div>
           </section>
           <p className="text-sm text-ink-muted">
-            Every row is a step, and figure 2&apos;s smooth climb is a hundred steps landing in
-            different places: {F3.histogram[String(B[0])]} problems are already solved at {B[0]}{" "}
-            tokens and {F3.histogram[String(B[B.length - 2])]} wait until {B[B.length - 2]}. Then
-            there is the band at the bottom:{" "}
+            At {TOP} tokens the shaded strip holds {F3.censoredCount} squares. Every other chain
+            stopped when it had nothing left to say, a median of {F3.medianLengthNever} tokens for
+            the ones that never come right, with {TOP - F3.medianLengthNever} still unspent. So{" "}
             <strong className="text-ink">
-              {F3.neverFlipCount} of {F3.items.length}
-            </strong>{" "}
-            problems that no budget in this grid reaches. The dial runs out before they do.
+              {F3.neverFlipCount - F3.censoredCount} of these problems did not run out of room, they
+              ran out of ideas
+            </strong>
+            . The dial was never what was holding them back.
           </p>
         </section>
         <Note kicker="Try it">
-          <p>Load a never-flipping row into figure 1 and take it to {TOP} tokens.</p>
+          <p>
+            Take the dial from {B[0]} to {TOP} and watch the shaded strip empty out.
+          </p>
+          <p>
+            Not reached at any length we ran is what this grid at this decoding does not reach,
+            never a claim that those problems are unsolvable. Page 7 changes the decoding.
+          </p>
         </Note>
 
         {/* Step 4 — figure 4, the other direction */}
@@ -1086,12 +1100,14 @@ export function Page6() {
               </div>
               <div className="flex flex-col rounded-lg border-l-4 border-grid bg-surface-raised px-3 py-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  the same budget, split
+                  never reached
                 </p>
                 <p className="font-mono text-2xl tabular-nums text-ink">
-                  {H.chains_at_min_budget} × {H.min_budget}
+                  {F3.neverFlipCount} of {F3.items.length}
                 </p>
-                <p className="font-mono text-xs tabular-nums text-ink-muted">chains, not one</p>
+                <p className="font-mono text-xs tabular-nums text-ink-muted">
+                  at any length we ran
+                </p>
               </div>
             </div>
           </div>
@@ -1108,72 +1124,22 @@ export function Page6() {
             </em>
           </p>
         </section>
-        <div aria-hidden="true" />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-ink-muted">
-          Technique cited. The measurements on this page are ours:
-        </span>
-        <CitationBadge citation={S1} />
-      </div>
-
-      {/* Apparatus, not a tail of apology. The manifest is in the download, so
-          this carries only what a download cannot state: grading we did not
-          write, the seam with page 5, and the limits. Never folded away. */}
-      <div className="grid gap-x-8 gap-y-3 text-xs text-ink-muted sm:grid-cols-2">
-        <p>
-          <strong className="text-ink">Grading is not ours to defend.</strong> Answers are
-          extracted and graded by ch03&apos;s{" "}
-          <a
-            className="underline underline-offset-2"
-            href="https://github.com/rasbt/reasoning-from-scratch"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            reasoning-from-scratch
-          </a>{" "}
-          functions, used unchanged. At the cap we close the block, append{" "}
-          <span className="font-code">{M.forcing.stem.trim()}</span> and allow{" "}
-          {M.forcing.answer_allowance} more tokens, so a small budget grades as a wrong answer
-          rather than as no answer at all. Run{" "}
-          <span className="font-mono">{M.run_id}</span>.
-        </p>
-        <p>
-          <strong className="text-ink">One measurement with page 5, not two.</strong> Same
-          checkpoints, same {M.items.n} items, same grader.{" "}
+        <Note kicker="One measurement with page 5, not two">
           {H.page_5_endpoints ? (
-            <>
-              Page 5 measured both ends of the segment swept here: forbidden to reason the 3B
-              scores {pct(H.page_5_endpoints.suppressed)} at a median of{" "}
-              {H.page_5_endpoints.suppressed_tokens} tokens, and unconstrained it scores{" "}
-              {pct(H.page_5_endpoints.unconstrained)} at{" "}
-              {H.page_5_endpoints.unconstrained_tokens}.{" "}
-            </>
+            <p>
+              Page 5 measured both ends of the segment swept here: forbidden to reason the 3B scores{" "}
+              {pct(H.page_5_endpoints.suppressed)} at {H.page_5_endpoints.suppressed_tokens} tokens,
+              and left alone it scores {pct(H.page_5_endpoints.unconstrained)} at{" "}
+              {H.page_5_endpoints.unconstrained_tokens}. This page fills in the middle.
+            </p>
           ) : null}
-          This page fills in the middle.
-        </p>
-        <p>
-          <strong className="text-ink">The heights are not a claim.</strong> The three curves
-          differ in size and in training, and the 7B ran at 8-bit while the other two ran at bf16,
-          so nothing here is a statement about scale. The never-flipping band is what{" "}
-          <em>this</em> grid at <em>this</em> decoding does not reach, never a claim that those
-          problems are unsolvable; page 7 changes the decoding and revisits them.
-        </p>
-        <p>
-          <strong className="text-ink">What the run does not resolve.</strong> The 3B&apos;s last
-          doubling scores {F2.primary.gains[F2.primary.gains.length - 1].gain_pts.toFixed(0)} point,
-          one problem out of {curvePoint.n}, drawn as measured and too small to read either way.{" "}
-          {pct(F2.primary.points[B.length - 1].truncation_rate)} of chains still hit the cap at{" "}
-          {TOP} tokens, which understates the right end of the curve rather than flattering it,
-          since a truncated chain loses its <span className="font-mono">{"\\boxed{}"}</span>.
-          Greedy decoding diverges on a handful of items across hardware, so re-deriving reproduces
-          the shape and not every digit, and this is one benchmark in one language. Cut at the
-          smallest budget, the 3B answers with the prompt template&apos;s own placeholder on{" "}
-          {pct(0.21)} of items, which is a model with nothing to commit rather than a wrong value;
-          two records in {tokens(M.integrity.n_records)} hide a right value behind it, and figure 1
-          opens on a problem that does neither.
-        </p>
+          <p>
+            The 3B&apos;s last doubling scores{" "}
+            {F2.primary.gains[F2.primary.gains.length - 1].gain_pts.toFixed(0)} point, one problem
+            out of {curvePoint.n}, drawn as measured and too small to read either way. Page 17 owns
+            overthinking; this page owns the flattening.
+          </p>
+        </Note>
       </div>
 
       <div aria-live="polite" className="sr-only">

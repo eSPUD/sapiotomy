@@ -1,11 +1,12 @@
 "use client";
 
 /**
- * Page 5, "How to Reason" — Act 2 opens on page 4's question: can a machine be
- * walked down a road? In 2026 the answer arrives before the question does. A
- * plain instruct model reasons on a hard maths problem with nothing in the
- * prompt asking it to, so the page cannot be about summoning a chain. It is
- * about what the chain is worth, measured the only way left: by taking it away.
+ * Page 5, "Chain of Thought: Reasoning Out Loud" — Act 2 opens on page 4's
+ * question: can a machine be walked down a road? In 2026 the answer arrives
+ * before the question does. A plain instruct model reasons on a hard maths
+ * problem with nothing in the prompt asking it to, so the page cannot be about
+ * summoning a chain. It is about what the chain is worth, measured the only way
+ * left: by taking it away.
  *
  * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED. Nothing is redrawn from a
  * paper and nothing is authored. The source is one run of
@@ -17,19 +18,46 @@
  * inference runs at demonstration time; the page replays committed logs.
  *
  * Layout: page 6's shell. One reading column of numbered steps, each beside its
- * own margin note that scrolls with it.
+ * own margin note that scrolls with it. Every step that carries a figure opens
+ * with a sentence saying what the figure is a picture OF, because the numbers
+ * are meaningless without their denominator: "43" is not a claim, "43 of the
+ * same 100 problems" is.
  *
- *   Step 1 — figure 1, the specimen. One problem, one model, one decoding
- *   setting, two prompts that differ only by a suffix. Tabs are ordered to match
- *   figure 2's bars and the reader lands on `bare`. A "see the full prompt"
+ *   Step 1 — no figure and no card, four sentences. What a chain of thought IS,
+ *   told with the reader's OWN numbers: page 1's 17 × 24 and the three results
+ *   they built it from, pulled live off `SYSTEMS.slow` so the callback cannot
+ *   drift from the page it calls back to. Two clauses are load-bearing and both
+ *   are the payload of the step. That for a model the chain is the thinking
+ *   rather than a report of it, which is the only unmeasured claim here and what
+ *   makes reasoning something you can put a budget on. And that the classic way
+ *   to get one is to ASK, quoting the `zero_shot_cot` suffix off the manifest,
+ *   because the whole page turns on that ask having stopped being necessary and
+ *   the reader cannot feel that unless the ask is named first. Resist
+ *   re-narrating page 1 or page 4 here: the lede already has the road, and page 6
+ *   cuts the chain off two clicks later, so a forward-pointer is padding.
+ *
+ *   The margin note beside it is TWO BADGES AND NOTHING ELSE. Wei and Kojima are
+ *   cited for the technique and the plate above already says every number is
+ *   ours, so a gloss on either is duplication that a reader pays for twice: once
+ *   in reading, and once in the whitespace it opens beside a four-line step,
+ *   since each note sets its own grid row's height.
+ *
+ *   Step 2 — figure 1, the specimen, and the step where the page's premise lands:
+ *   this model does it NATIVELY, and the figure is a look at what that produces
+ *   rather than a demonstration of a technique working. One problem, one model,
+ *   one decoding setting, two prompts that differ only by a suffix. Tabs are
+ *   ordered to match figure 2's bars and the reader lands on `bare`. A "see the
+ *   full prompt"
  *   disclosure shows the exact strings, with the suffix highlighted, so the
- *   reader can confirm that nothing in the bare prompt asks for working. The
- *   stepper (Back / Next / Play) walks the model's own output using the token
- *   ranges the notebook emitted, so the reveal stops at real token boundaries
- *   rather than faking a typewriter. The instruction condition is NOT a third
- *   tab: it is measured, and it is spent on page 12 (see the footnote).
+ *   reader can confirm that nothing in the bare prompt asks for working. Prompt
+ *   and trace are both set in `font-code`: they are listings of what a machine
+ *   read and wrote, and the deck's serif makes a 573-token trace unreadable.
+ *   The stepper (Back / Next / Play) walks the model's own output using the
+ *   token ranges the notebook emitted, so the reveal stops at real token
+ *   boundaries rather than faking a typewriter. The instruction condition is NOT
+ *   a third tab: it is measured, and it is spent on page 12 (margin note).
  *
- *   Step 2 — figure 2, the page's headline. The McNemar 2x2 drawn as 100 cells,
+ *   Step 3 — figure 2, the page's headline. The McNemar 2x2 drawn as 100 cells,
  *   one per problem, with the gag on a switch. Flip it and 40 solved problems go
  *   out while 4 arrive. The four cell counts are fully determined by the two
  *   discordant counts and the two solve counts the notebook reports, so the
@@ -37,12 +65,26 @@
  *   caption says so. Do not label a cell with a problem id: we do not ship
  *   per-item outcomes to the page.
  *
- *   Step 3 — figure 3, three checkpoints. The claim is the FLAT FLOOR, never
+ *   Step 4 — figure 3, three checkpoints. The claim is the FLAT FLOOR, never
  *   scale: three points are not a scaling law, our trend has no sign flip, and
  *   emergence is page 11's subject. No size axis, no line through the points,
  *   and no caption that can be read as either. Section 1 of the spec.
  *
- *   Close — 6 tokens against 573, and the handoff page 6 actually opens on.
+ *   Step 5 — 6 tokens against 573, and the handoff page 6 actually opens on.
+ *
+ * The apparatus lives in the margin, one note per step, not in a footer. The
+ * three-paragraph footnote this page used to end on was doing the notebook's
+ * job: a reader who wants the full method downloads the run. What survives in
+ * the margin is only what a reader needs while looking at THAT figure, plus the
+ * two things the claims contract requires on the page in words (the instruction
+ * null as a bound, and why the exemplar rungs are absent).
+ *
+ * The notes have been cut twice and the rule that survived both is: a note may
+ * say what a reader cannot work out from the figure beside it, and nothing else.
+ * The grading provenance went back to the notebook under that rule even though
+ * it is true and load-bearing, because a reader looking at 100 squares does not
+ * need to know whose `grade_answer` drew them. Anything that reads as method
+ * belongs in the download.
  *
  * Load-bearing and easy to lose:
  *   · the notebook download is the whole point of the pipeline. The link carries
@@ -72,9 +114,15 @@ import {
   tidyMath,
   type PairedClass,
 } from "@/lib/page05";
+import { SYSTEMS } from "@/lib/authored";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 5;
+
+/** Page 1's System 2 round, so the callback cannot drift from what it calls back to. */
+const S2 = SYSTEMS.slow;
+/** "17 × 20 = 340" → "340": the three results the reader watched themselves build. */
+const S2_RESULTS = S2.steps.map((s) => s.slice(s.lastIndexOf("=") + 1).trim());
 const F1 = PAGE5.figure1;
 const F2 = PAGE5.figure2;
 const F3 = PAGE5.figure3;
@@ -404,14 +452,50 @@ export function Page5() {
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — figure 1 */}
+        {/* Step 1 — the definition. No figure: the reader needs the term before
+            any measurement of it means anything, and the deck has already built
+            both halves of it (page 1's two speeds, page 4's roads). */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. The chain is already there
+            1. What a chain of thought is
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              the term, before the measurement
+            </span>
+          </h2>
+          <p className="text-ink">
+            Page 1 handed you <strong className="font-code">{S2.prompt}</strong> and you did not
+            recognise the answer, you built it: {S2_RESULTS.join(", then ")}. A{" "}
+            <strong>chain of thought</strong> is that building written down, a thread of steps
+            running from the question to the goal. What is strange in a language model is that the
+            thread is not a report of the thinking,{" "}
+            <strong>it is the thinking</strong>: every step is text the model has to write before it
+            can write the next one. The classic way to get one is to ask, by appending{" "}
+            <span className="font-code">{M.conditions.zero_shot_cot.trim()}</span> to the question.
+          </p>
+        </section>
+        <Note kicker="Cited for the technique">
+          <div className="flex flex-wrap gap-2">
+            <CitationBadge citation={WEI} />
+            <CitationBadge citation={KOJIMA} />
+          </div>
+        </Note>
+
+        {/* Step 2 — figure 1 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            2. What it looks like
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               one problem · one model · two prompts
             </span>
           </h2>
+          <p className="text-ink-muted">
+            A model you can download in 2026 does this natively. Nothing has to ask it to: given a
+            hard maths question and nothing else, Qwen2.5-3B-Instruct writes{" "}
+            {F1.tabs[bareIndex].tokensGenerated} tokens of chain before it answers. Below is one
+            MATH-500 problem put to it twice, at the same decoding settings, on two prompts that are
+            the same string apart from what is appended at the end. Pick a prompt and step through
+            what it wrote.
+          </p>
           <section
             aria-label="One problem, two prompts"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
@@ -422,7 +506,10 @@ export function Page5() {
               <span className={chip}>picked from {F1.nCandidates} problems that qualified</span>
             </div>
 
-            <p className="text-lg text-ink">{tidyMath(F1.question)}</p>
+            {/* Prompt and trace are listings, so they get the one licensed
+                non-serif face. A 573-token trace in the broadsheet serif is a
+                wall; in mono the reader can see where a step starts and ends. */}
+            <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(F1.question)}</p>
 
             <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Prompt">
               <span className="text-sm font-semibold text-ink">Prompt:</span>
@@ -460,7 +547,9 @@ export function Page5() {
 
             {/* the model's own output, revealed at real token boundaries */}
             <div>
-              <p className="font-mono text-xs uppercase tracking-wide text-ink-muted">the model →</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                what the model wrote back →
+              </p>
               <div className="mt-1 flex flex-col gap-2 rounded-lg border-l-4 border-compute bg-surface-raised p-3">
                 {/* Unrevealed steps stay on the page as bars scaled by how many
                     tokens they hold, so the length of what is coming is visible
@@ -468,13 +557,16 @@ export function Page5() {
                 <ol className="flex flex-col gap-2">
                   {tab.steps.map((s, i) =>
                     i < step ? (
-                      <li key={i} className="flex gap-2 text-sm text-ink motion-safe:animate-fade-in">
-                        <span className="font-mono text-xs text-compute">{i + 1}</span>
+                      <li
+                        key={i}
+                        className="flex gap-2 font-code text-xs leading-relaxed text-ink motion-safe:animate-fade-in"
+                      >
+                        <span className="shrink-0 text-compute">{i + 1}</span>
                         <span className="whitespace-pre-wrap">{tidyMath(s.text)}</span>
                       </li>
                     ) : (
                       <li key={i} className="flex items-center gap-2" aria-hidden="true">
-                        <span className="font-mono text-xs text-ink-muted">{i + 1}</span>
+                        <span className="font-code text-xs text-ink-muted">{i + 1}</span>
                         <span
                           className="h-2 rounded-sm bg-grid"
                           style={{ width: `${barPct(s.tokenEnd - s.tokenStart)}%` }}
@@ -550,28 +642,33 @@ export function Page5() {
               </div>
             ) : null}
           </section>
-          <p className="text-sm text-ink-muted">
-            Only the suffix on the prompt changed between those two buttons: same model, same
-            decoding, same problem. Nothing in the bare prompt asks for working, and{" "}
-            {F1.tabs[bareIndex].tokensGenerated} tokens of it arrive anyway.
-          </p>
         </section>
-        <Note kicker="References">
-          <p>Cited for the technique. Every number on this page is ours.</p>
+        <Note kicker="One trace only">
           <p>
-            Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
-            Models</em>: putting the worked chain in the prompt.
+            This is a specimen, not evidence. It is one problem out of {F1.nCandidates} that
+            qualified, and the evidence is the next two figures.
           </p>
+          <p>Play walks the real token boundaries the run recorded, not a typewriter.</p>
         </Note>
 
-        {/* Step 2 — figure 2 */}
+        {/* Step 3 — figure 2 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            2. Take it away
+            3. What the chain is worth
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               the same {F2.bare.n} problems, both ways
             </span>
           </h2>
+          <p className="text-ink-muted">
+            One trace proves nothing, so both prompts were run across{" "}
+            {F2.bare.n} problems from the same difficulty band. Below is that comparison: the model
+            reasoning freely, against the same model forbidden to reason. Left alone it writes a
+            median of {CLOSE.bare_median_tokens} tokens of working and solves{" "}
+            <strong className="text-ink">{F2.bare.nCorrect} of the {F2.bare.n}</strong>. Gagged, it
+            answers in {CLOSE.blurt_median_tokens} tokens and solves{" "}
+            <strong className="text-ink">{F2.blurt.nCorrect}</strong>. Each square below is one of
+            those {F2.bare.n} problems; the switch is the same suffix you just read.
+          </p>
           <section
             aria-label="The cost of forbidding the working"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
@@ -642,23 +739,30 @@ export function Page5() {
               </p>
             </div>
           </section>
-          <p className="text-sm text-ink-muted">
-            One cell is one problem and the counts are measured; which square a problem sits in is
-            arrangement, not data.
-          </p>
         </section>
-        <Note kicker="Try it">
-          <p>Flip the gag and count the cells that change colour.</p>
+        <Note kicker="How to read it">
+          <p>Flip the gag and count the squares that change colour.</p>
+          <p>
+            One square is one problem and the counts are measured, but which square a problem sits
+            in is arrangement, not data.
+          </p>
         </Note>
 
-        {/* Step 3 — figure 3 */}
+        {/* Step 4 — figure 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            3. Not one checkpoint&apos;s accident
+            4. The same test on two more checkpoints
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               three checkpoints · same {F2.bare.n} problems · same harness
             </span>
           </h2>
+          <p className="text-ink-muted">
+            Maybe the 3B is just an odd checkpoint. So the same test ran on its smaller and larger
+            siblings, on the same {F2.bare.n} problems. Each bar below is one model&apos;s score,
+            cut in two: on the left, what it still gets right with the working forbidden; on the
+            right, what the working adds. Bigger models are better at maths, so the bars get longer
+            going down. Watch where the left piece ends instead.
+          </p>
           <section
             aria-label="The floor is flat"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
@@ -693,17 +797,30 @@ export function Page5() {
               other.
             </div>
           </section>
-          <p className="text-sm text-ink-muted">
-            The right-hand ends of the bars fan out; the left-hand ends do not, and that shaded
-            strip is the finding. Three checkpoints are not a scaling law and nothing here is
-            plotted against size.
+          <p className="text-ink-muted">
+            The right-hand ends fan out with size, the way you would expect. The left-hand ends do
+            not: forbidden to reason, all three land in the same narrow strip, and that flat floor
+            is the finding.
           </p>
         </section>
-        <div aria-hidden="true" />
+        <Note kicker="Limits">
+          <p>
+            Three checkpoints are not a scaling law, and nothing here is plotted against size.
+          </p>
+          <p>
+            {pct(PAGE5.truncation.worst.rate)} of the {PAGE5.truncation.worst.condition} traces hit
+            the token cap, which biases the headline {PAGE5.truncation.biases_headline}.
+          </p>
+          <p>
+            &ldquo;Forbidden to reason&rdquo; is one phrasing and another would move the floor. And
+            the run records whether working appeared and whether the answer landed, never whether
+            the working was sound.
+          </p>
+        </Note>
 
         {/* Close */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">4. What the working cost</h2>
+          <h2 className="text-xl font-semibold text-ink">5. What the working cost</h2>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="flex flex-col rounded-lg border-l-4 border-wrong bg-surface-raised px-3 py-2">
@@ -741,8 +858,8 @@ export function Page5() {
               </div>
             </div>
             <p className="text-ink">
-              You have done this. You told the model to skip the working and answer, and the answer
-              got worse.{" "}
+              You have probably done this before. When telling the model to skip the working and
+              answer, the answer gets worse.{" "}
               <em className="text-ink-muted">
                 Page 6 asks how much of that working it actually needed, and what happens when you
                 cut it off mid-sentence.
@@ -750,61 +867,18 @@ export function Page5() {
             </p>
           </div>
         </section>
-        <div aria-hidden="true" />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs text-ink-muted">
-          Techniques cited. The measurements on this page are ours:
-        </span>
-        <CitationBadge citation={WEI} />
-        <CitationBadge citation={KOJIMA} />
-      </div>
-
-      {/* The apparatus. Not a recap of the manifest (the plate at the top of the
-          page carries that, and the notebook carries the rest): these are the
-          three things a reader cannot get by downloading the run. Labelled so
-          they skim, and never folded away, least of all the limits. */}
-      <div className="border-t border-grid pt-4 text-xs leading-relaxed text-ink-muted lg:columns-2 lg:gap-10 [&>p]:mb-3 [&>p]:break-inside-avoid">
-        <p>
-          <strong className="font-semibold text-ink">Grading is not ours.</strong> One pass per
-          condition; answers extracted and graded by ch03&apos;s{" "}
-          <a
-            className="underline underline-offset-2"
-            href="https://github.com/rasbt/reasoning-from-scratch"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            reasoning-from-scratch
-          </a>{" "}
-          functions, used unchanged, so the grading is not ours to defend. Contrasts are paired and
-          use exact McNemar over discordant items, and the discordant counts are printed beside
-          every contrast, so a symmetric result reads as measured rather than as nothing happening.
-        </p>
-        <p>
-          <strong className="font-semibold text-ink">Measured, and deliberately not plotted.</strong>{" "}
-          A third condition was measured and is not plotted here: adding &ldquo;Explain step by
-          step.&rdquo; to a model that already reasons moved the score by{" "}
-          {F2.instruction.deltaPts.toFixed(1)} points, {F2.instruction.fixed} problems fixed and{" "}
-          {F2.instruction.broken} broken, 95% interval ±{F2.instructionBoundPts.toFixed(1)} points,
-          which is a bound and not a zero. It is a result about training rather than about
-          prompting, and page 12 opens on it. The one-shot and few-shot rungs are off the ladder for
-          a related reason: across our ablations they moved the{" "}
-          <span className="font-mono">{"\\boxed{}"}</span> answer-format rate far more than the
-          score.
-        </p>
-        <p>
-          <strong className="font-semibold text-ink">Limits.</strong>{" "}
-          {pct(PAGE5.truncation.worst.rate)} of the {PAGE5.truncation.worst.condition}{" "}
-          traces hit the cap, which biases the headline {PAGE5.truncation.biases_headline}; the
-          gagged condition writes almost no <span className="font-mono">{"\\boxed{}"}</span> by
-          construction, so its answers come from the grader&apos;s fallback to the last number;
-          &ldquo;forbidden to reason&rdquo; is one phrasing and another would move the floor; greedy
-          decoding diverges on a handful of items across hardware, so re-deriving reproduces the
-          shape and the ranking rather than every digit; this is one benchmark in one language, and
-          the page measures whether the model wrote working and whether it landed the answer, never
-          whether the working was sound.
-        </p>
+        <Note kicker="Also measured">
+          <p>
+            Asking, on a model that already reasons, moved the score by{" "}
+            {F2.instruction.deltaPts.toFixed(1)} points: {F2.instruction.fixed} fixed,{" "}
+            {F2.instruction.broken} broken, ±{F2.instructionBoundPts.toFixed(1)}. A bound, not a
+            zero, and page 12 opens on it.
+          </p>
+          <p>
+            Worked examples in the prompt did not help either. Mostly they moved the{" "}
+            <span className="font-code">{"\\boxed{}"}</span> answer-format rate.
+          </p>
+        </Note>
       </div>
 
       <div aria-live="polite" className="sr-only">

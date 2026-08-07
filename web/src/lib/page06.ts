@@ -490,6 +490,17 @@ export interface SpecimenRow {
 
 const BUDGETS = D.budgets;
 
+/**
+ * Lower median: on an even count take the lower of the two middle values rather
+ * than their mean, so the number the page prints is a length some chain in the
+ * run actually ran to and not an average of two that no chain did.
+ */
+function median(xs: number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  if (!s.length) throw new Page06DataError("median of an empty set");
+  return s[Math.floor((s.length - 1) / 2)];
+}
+
 function row(raw: RawRow): SpecimenRow {
   return {
     problemId: raw.problem_id,
@@ -599,6 +610,20 @@ export const PAGE6 = {
     neverFlipShare: D.figure_3.never_flip_share,
     nRegressions: D.figure_3.n_regressions,
     clickableRowIds: D.figure_3.clickable_row_ids,
+    /**
+     * Chains still running when the top budget arrived. Their `tokens_at_max`
+     * is a lower bound rather than a length, so the figure draws them off the
+     * axis and the page never averages them in with the measured ones.
+     */
+    censoredCount: D.figure_3.items.filter((d) => d.truncated_at_max).length,
+    /**
+     * The median length of a chain that never grades correct. Load-bearing for
+     * the page's third claim: these chains stopped on their own, well inside
+     * the budget, so what limits them is not the dial.
+     */
+    medianLengthNever: median(
+      D.figure_3.items.filter((d) => !d.correct_by_budget.some(Boolean)).map((d) => d.tokens_at_max),
+    ),
   },
   /**
    * The extension arm: what the model did when it was not allowed to stop.
