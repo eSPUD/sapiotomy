@@ -81,10 +81,11 @@ const F1 = PAGE6.figure1;
 const F2 = PAGE6.figure2;
 const F3 = PAGE6.figure3;
 const H = PAGE6.handoff;
+const FW = PAGE6.figureWait;
 
 /** The download: notebook + harness + every generation the page rests on. */
 const NOTEBOOK_ZIP = "/notebooks/page-06-thinking-longer.zip";
-const NOTEBOOK_SIZE = "1.3 MB";
+const NOTEBOOK_SIZE = "2.0 MB";
 
 const RUN_DATE = M.timestamp_utc.slice(0, 10);
 const TOP = B[B.length - 1];
@@ -452,6 +453,101 @@ function FlipStrip({ budgetIndex, selectedId }: { budgetIndex: number; selectedI
           );
         },
       )}
+    </ChartFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ figure 4 */
+
+const K_W = 620;
+const K_H = 250;
+const K_M = { top: 22, right: 104, bottom: 46, left: 52 };
+const K_IW = K_W - K_M.left - K_M.right;
+const K_IH = K_H - K_M.top - K_M.bottom;
+
+/**
+ * The other direction: not a cap, but a refusal to let the model stop. Accuracy
+ * against the number of injections, same items, same grader.
+ *
+ * The figure has to make a flat line readable, because a flat line here has two
+ * completely different causes. So churn rides underneath it as a bar: the share
+ * whose committed answer moved at all. Three curves that barely move over bars
+ * that are large is the finding — it is doing plenty, and none of it helps.
+ */
+function WaitCurve() {
+  if (!FW) return null;
+  const ks = FW.waits;
+  const kx = (k: number) => (k / (ks[ks.length - 1] || 1)) * K_IW;
+  const ky = (a: number) => K_IH - a * K_IH;
+  const primary = FW.curves.find((c) => c.model_id === F2.primary.model_id) ?? FW.curves[0];
+  return (
+    <ChartFrame
+      title={`Share of problems solved against the number of "${FW.word}" injections, for three Qwen2.5-Instruct checkpoints. ${FW.curves
+        .map((c) => `${c.label}: ${c.points.map((p) => `${pct(p.accuracy)} at ${p.waits}`).join(", ")}`)
+        .join(". ")}. Churn, the share whose answer moved at all, reaches ${pct(
+        primary.points[primary.points.length - 1].churn,
+      )} on the ${shortLabel(primary.label)}.`}
+      width={K_W}
+      height={K_H}
+      margin={K_M}
+      xLabel={`number of "${FW.word}" injections`}
+      yLabel="solved (%)"
+    >
+      {[0, 0.2, 0.4, 0.6].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={K_IW} y1={ky(t)} y2={ky(t)} className="stroke-grid" strokeWidth={1} />
+          <text x={-8} y={ky(t) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t * 100}
+          </text>
+        </g>
+      ))}
+
+      {/* churn under the curves: what moved, whether or not it helped */}
+      {primary.points.map((p) =>
+        p.churn > 0 ? (
+          <rect
+            key={p.waits}
+            x={kx(p.waits) - 9}
+            y={K_IH - p.churn * K_IH}
+            width={18}
+            height={p.churn * K_IH}
+            className="fill-wrong opacity-20"
+          />
+        ) : null,
+      )}
+      <text x={kx(ks[ks.length - 1]) + 8} y={K_IH - primary.points[ks.length - 1].churn * K_IH + 4}
+            className="fill-wrong text-[10px]">
+        churn {pct(primary.points[ks.length - 1].churn)}
+      </text>
+
+      {ks.map((k) => (
+        <text key={k} x={kx(k)} y={K_IH + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
+          {k}
+        </text>
+      ))}
+
+      {FW.curves.map((c) => {
+        const isP = c.model_id === primary.model_id;
+        const last = c.points[c.points.length - 1];
+        return (
+          <g key={c.model_id}>
+            <polyline
+              points={c.points.map((p) => `${kx(p.waits)},${ky(p.accuracy)}`).join(" ")}
+              fill="none"
+              className={curveStroke(c.model_id)}
+              strokeWidth={isP ? 2.5 : 1.25}
+            />
+            {c.points.map((p) => (
+              <circle key={p.waits} cx={kx(p.waits)} cy={ky(p.accuracy)} r={isP ? 3.5 : 2}
+                      className={curveFill(c.model_id)} />
+            ))}
+            <text x={K_IW + 8} y={ky(last.accuracy) + 4}
+                  className={`${curveFill(c.model_id)} text-[11px] ${isP ? "font-semibold" : ""}`}>
+              {shortLabel(c.label)}
+            </text>
+          </g>
+        );
+      })}
     </ChartFrame>
   );
 }
@@ -887,9 +983,89 @@ export function Page6() {
           <p>Load a never-flipping row into figure 1 and take it to {TOP} tokens.</p>
         </Note>
 
+        {/* Step 4 — figure 4, the other direction */}
+        {FW ? (
+          <>
+            <section className="flex min-w-0 flex-col gap-3">
+              <h2 className="text-xl font-semibold text-ink">
+                4. The other direction: refuse to let it stop
+                <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                  the same {H.n_items} problems · told to keep going
+                </span>
+              </h2>
+              <section
+                aria-label="The extension arm"
+                className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+              >
+                <p className="text-sm text-ink-muted">
+                  Everything above takes room away. This does the opposite: when the model tries
+                  to end its turn, the stop is dropped, the word{" "}
+                  <span className="font-mono text-ink">{FW.word}</span> is appended to what it has
+                  written, and it carries on. {FW.waits[FW.waits.length - 1]} times over.
+                </p>
+                <WaitCurve />
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[30rem] text-left text-xs tabular-nums">
+                    <thead className="text-ink-muted">
+                      <tr>
+                        <th className="py-1 pr-3 font-semibold">checkpoint</th>
+                        <th className="py-1 pr-3 font-semibold">at 0</th>
+                        <th className="py-1 pr-3 font-semibold">
+                          at {FW.waits[FW.waits.length - 1]}
+                        </th>
+                        <th className="py-1 pr-3 font-semibold">answers moved</th>
+                        <th className="py-1 pr-3 font-semibold">fixed</th>
+                        <th className="py-1 pr-3 font-semibold">broken</th>
+                        <th className="py-1 font-semibold">tokens</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-ink">
+                      {FW.curves.map((c) => {
+                        const first = c.points[0];
+                        const last = c.points[c.points.length - 1];
+                        const paired = c.paired[c.paired.length - 1];
+                        return (
+                          <tr key={c.model_id} className="border-t border-grid">
+                            <td className="py-1 pr-3">{shortLabel(c.label)}</td>
+                            <td className="py-1 pr-3">{pct(first.accuracy)}</td>
+                            <td className="py-1 pr-3">{pct(last.accuracy)}</td>
+                            <td className="py-1 pr-3">{pct(last.churn)}</td>
+                            <td className="py-1 pr-3 text-correct">{paired.fixed}</td>
+                            <td className="py-1 pr-3 text-wrong">{paired.broken}</td>
+                            <td className="py-1">
+                              ×{(last.mean_tokens / first.mean_tokens).toFixed(1)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-ink-muted">
+                  Fixed and broken are counted against the same item at zero injections, so they
+                  are paired. A net near zero with both columns large is a different result from
+                  nothing happening, which is what the moved-answers column is there to tell you.
+                </p>
+              </section>
+              <p className="text-sm text-ink-muted">
+                It <strong className="text-ink">redistributes rather than adds</strong>. Roughly
+                double the tokens buys a third of the answers changed and no more of them right:
+                across the three checkpoints it rescues{" "}
+                {FW.curves.reduce((n, c) => n + c.paired[c.paired.length - 1].fixed, 0)} problems
+                and wrecks{" "}
+                {FW.curves.reduce((n, c) => n + c.paired[c.paired.length - 1].broken, 0)}. The
+                model was not holding back; it had already spent what the problem was worth to it.
+              </p>
+            </section>
+            <Note kicker="Reading it">
+              <p>Watch the bars, not the lines: the flat curve is a lot of motion going nowhere.</p>
+            </Note>
+          </>
+        ) : null}
+
         {/* Close */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">4. Where the length runs out</h2>
+          <h2 className="text-xl font-semibold text-ink">5. Where the length runs out</h2>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="flex flex-col rounded-lg border-l-4 border-wrong bg-surface-raised px-3 py-2">
@@ -965,11 +1141,16 @@ export function Page6() {
         </p>
         <p>
           <strong className="text-ink">One measurement with page 5, not two.</strong> Same
-          checkpoints, same {M.items.n} items, same grader. Page 5 measured both ends of the
-          segment swept here: forbidden to reason the 3B scores{" "}
-          {pct(H.page_5_endpoints!.suppressed)} at a median of{" "}
-          {H.page_5_endpoints!.suppressed_tokens} tokens, and unconstrained it scores{" "}
-          {pct(H.page_5_endpoints!.unconstrained)} at {H.page_5_endpoints!.unconstrained_tokens}.
+          checkpoints, same {M.items.n} items, same grader.{" "}
+          {H.page_5_endpoints ? (
+            <>
+              Page 5 measured both ends of the segment swept here: forbidden to reason the 3B
+              scores {pct(H.page_5_endpoints.suppressed)} at a median of{" "}
+              {H.page_5_endpoints.suppressed_tokens} tokens, and unconstrained it scores{" "}
+              {pct(H.page_5_endpoints.unconstrained)} at{" "}
+              {H.page_5_endpoints.unconstrained_tokens}.{" "}
+            </>
+          ) : null}
           This page fills in the middle.
         </p>
         <p>

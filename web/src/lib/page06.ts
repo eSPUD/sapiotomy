@@ -119,6 +119,25 @@ interface RawInsetArm {
   accuracy: number;
 }
 
+interface RawWaitPoint {
+  waits: number;
+  n: number;
+  n_correct: number;
+  accuracy: number;
+  mean_tokens: number;
+  /** Share whose committed answer moved at all, by the grader's equivalence. */
+  churn: number;
+  offered_a_stop: number;
+}
+
+interface RawWaitPaired {
+  waits: number;
+  fixed: number;
+  broken: number;
+  p: number;
+  n: number;
+}
+
 const D = rawDerived as unknown as {
   manifest: {
     run_id: string;
@@ -188,6 +207,18 @@ const D = rawDerived as unknown as {
     n_regressions: number;
     clickable_row_ids: string[];
   };
+  figure_wait: {
+    waits: number[];
+    word: string;
+    curves: {
+      model_id: string;
+      label: string;
+      params: number;
+      points: RawWaitPoint[];
+      paired: RawWaitPaired[];
+    }[];
+    integrity: { k0_matches_uncapped: [number, number] };
+  } | null;
   handoff: {
     model_id: string;
     max_budget: number;
@@ -275,6 +306,23 @@ if (
       fail(
         `${curve.label} is still truncated on ${pct(atTop!.truncation_rate)} of items at ${top} tokens, so the top of the grid still binds`,
       );
+    }
+  }
+}
+
+if (D.figure_wait) {
+  // k=0 is the model left alone, which IS the cap arm at the top budget. If those
+  // traces do not reproduce, the two arms are not one experiment and the page may
+  // not put them on one instrument.
+  const [same, of] = D.figure_wait.integrity.k0_matches_uncapped;
+  if (of > 0 && same / of < 0.9) {
+    fail(`the wait arm reproduces only ${same} of ${of} uncapped traces at k=0, so the two arms are not the same experiment`);
+  }
+  for (const c of D.figure_wait.curves) {
+    for (const pt of c.points) {
+      if (Math.abs(pt.n_correct / pt.n - pt.accuracy) > 1e-9) {
+        fail(`${c.label} at ${pt.waits} waits reports ${pt.n_correct}/${pt.n} but an accuracy of ${pt.accuracy}`);
+      }
     }
   }
 }
@@ -552,6 +600,12 @@ export const PAGE6 = {
     nRegressions: D.figure_3.n_regressions,
     clickableRowIds: D.figure_3.clickable_row_ids,
   },
+  /**
+   * The extension arm: what the model did when it was not allowed to stop.
+   * Null when the run predates the arm, and the page drops the step rather than
+   * drawing an empty one.
+   */
+  figureWait: D.figure_wait,
   handoff: D.handoff,
 } as const;
 

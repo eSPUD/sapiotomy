@@ -58,9 +58,17 @@ phases of its own experiment and are documented in its section 0.
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** Run complete and replayable; `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
-| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4).** `FULL` run complete and replayable; `derived.json` is committed to `web/data/page-06-derived.json`, and the notebook, `harness.py` and all 1,500 records ship as `web/public/notebooks/page-06-thinking-longer.zip`, linked from the page |
+| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4), both arms run.** The cap sweep and the extension arm are complete: 2,720 records, three checkpoints, committed to `web/data/page-06-derived.json` and drawn on the page. Injecting `Wait` when the model tries to stop redistributes rather than adds, so `figure_wait` reports paired fixed and broken counts and churn rather than a net |
 | `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **run complete (step 1 done).** 5,920 unique generations over 100 MATH-500 L4/5 items: one pile of 16 full-length chains at T=0.3, a greedy line, a diversity family at T=0.6/0.9/1.2 on 30 items, and a fixed budget split N ways. Voting beats bare CoT by 12 points (55% against 43%, McNemar p=0.0075); coverage is 78%, so the vote discards a correct answer on 23% of items. That pile is page 8's phase 0 bed |
 | `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** Runs end to end on page 7's completed pool with no verifier scored. Its modes are the phases of one experiment, not tiers of one run: `REPLAY` analyses, `SCORE` runs the verifier tiers over a pool that already exists, `GENERATE` draws page 8's own pool. `SCORE` is the decision point |
+| `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **built, step 1.** No run yet. Runs its own uncapped pass rather than reusing pages 6 or 7 (see below); grades it twice, once on the answer and once step by step |
+
+**Page 6 carries two arms of one technique.** Budget forcing can cut a chain short or refuse to let
+it end; the sweep does the first and section 11 does the second. They share the prompt, the items,
+the decoding and the grader, and `k` = 0 of the second reproduced all 94 untruncated traces of
+the first, so the two are one experiment. The second arm is the ablation s1 leaves
+implicit: that paper's model is this family *after* reasoning fine-tuning, and ours is the family
+without it.
 
 Page 7 needs page 6's `out/page_06/` on disk for its grid derivation and its temperature-0
 cross-check. Page 8 reads page 7's `traces.jsonl` as the pool for its **phase 0 pilot**, which is
@@ -147,6 +155,8 @@ notebooks/
       traces.jsonl     # its own pool, written only in GENERATE
       scores.jsonl     # one verifier score per candidate, per tier
       derived.json, manifest.json, figure_*.png
+    page_09/
+      …same four, plus its traces carry per-step labels
     experiment_3/
       …plus tables.md, paste-ready
 ```
@@ -166,6 +176,14 @@ page 6's budget curve, because N copies of one greedy chain of B/N tokens is one
 B/N tokens, and its section 14 asserts the two agree. Page 8's vote must reproduce page 7's on the
 same pile, and its section 13 asserts that. Those three cross-checks are where a
 drifting reimplementation would otherwise hide.
+
+**Page 9 is the one page that does not reuse the pile above it, and that is deliberate.** Page 6
+caps generation and forces the model to commit, so a broken step in one of its chains is *our*
+intervention rather than the model's error; page 7's high-N samples are budget-starved for the
+same reason. Grading either for bad reasoning would report our own experiment as the model
+reasoning badly. So page 9 runs its own uncapped pass on the same instrument and the same item
+band. It still consumes page 8, whose selector rung reads *selections* rather than traces and
+does not care how the candidates were produced.
 
 `out/` and `data/` are gitignored. Promoting a run to the page means copying its `derived.json`
 and `manifest.json` into `web/data/` as part of step 4, which is also where the cross-language

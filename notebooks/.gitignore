@@ -7,3 +7,6 @@ data/
 .ipynb_checkpoints/
 .venv/
 __pycache__/
+# also as a bare name: a symlink called `data` is not a directory,
+# so `data/` does not match it and it slips into a commit.
+data

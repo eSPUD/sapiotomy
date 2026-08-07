@@ -1,108 +1,96 @@
 "use client";
 
 /**
- * Page 7, "Frequency Voting" — page 6 bought accuracy by making ONE chain
- * longer. This page buys it a different way: run the chain MANY times and keep
- * the answer that comes up most often. Same trade (compute at answer time for
- * accuracy), different axis — parallel instead of serial.
+ * Page 7, "Frequency Voting" — page 6 made one chain longer. This page runs the
+ * chain many times and keeps the answer the most chains agree on.
  *
- * The analogy is a vote, and it is load-bearing rather than decorative. A party
- * picking one of three pizza places asks everyone; the hope is that with enough
- * voters the best place collects the most votes. That only works if the voters
- * are actually different people. Which is the page's real lesson, and the
- * reason the temperature dial exists: turn it to zero and all 64 "voters" are
- * one voter answering 64 times, and the curve goes flat at the single-chain
- * rate. No diversity, no vote.
+ * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED. Nothing is redrawn from a
+ * paper and nothing is simulated. The source is one run of
+ * `notebooks/page_07_frequency_voting.ipynb` — Qwen2.5-3B-Instruct at bf16,
+ * MATH-500 levels 4 and 5, the same 100 paired items pages 5 and 6 use, 16
+ * sampled chains per problem, 5,920 generations. Its `derived.json` is committed
+ * verbatim to `web/data/page-07-derived.json` and loaded through `@/lib/page07`,
+ * which reads the run's `claims` gates BEFORE any number and throws if a
+ * blocking one is false. No inference runs at demonstration time.
  *
- * The interactive is a sampling chamber: set N (1-64) and temperature, watch N
- * chains stream in, land in one of four buckets (lib/authored SAMPLING_CHAMBER,
- * one correct path and three named misreadings), and tally into a live
- * histogram with the winning bucket called out. The companion plot is accuracy
- * against log N, flattening into the plateau.
+ * WHAT THE OLD PAGE DID THAT THIS ONE MUST NOT. The previous build simulated the
+ * vote with `CHAMBER_MODEL` (a Monte Carlo tuned to land on Wang et al.'s
+ * published GSM8K curve) over four hand-authored "misreadings" in
+ * `SAMPLING_CHAMBER`, and its temperature dial was explicitly modelled because
+ * temperature appears in no reported number. All three are gone. Do not
+ * reintroduce `lib/sim` or `lib/authored` here.
  *
- * Anchoring: the vote model (lib/sim CHAMBER_MODEL) is calibrated to Wang et
- * al. 2022 — GSM8K, PaLM-540B, 56.5% single chain -> 74.4% with self-consistency
- * — and reduces EXACTLY to that curve at the reference temperature. Temperature
- * itself is not in the paper's reported numbers, so the dial is modelled, and two
- * places on the page say so: the step-2 heading chip ("modelled temperature
- * dial") and the bottom provenance footnote.
+ * THE HEADLINE, AND THE TRAP IN IT. Bare chain of thought is ONE GREEDY CHAIN —
+ * page 5's `bare` condition, page 6's top rung, 43% on these items. The vote over
+ * 16 sampled chains solves 55%: +12 points, p = 0.0075. Against one SAMPLED
+ * chain the same vote gains only 4 points and does not resolve (p = 0.39),
+ * because sampling at T=0.3 is already worth something on its own. The page
+ * quotes the greedy contrast because that is what "improves on chain of thought"
+ * means here, and the footnote carries the other one. Never quote the 12 and the
+ * sampled baseline in the same breath.
  *
- * NO GATE (load-bearing). An earlier build hid the ENTIRE page behind the
- * PredictBar — `prediction === null ? <PredictBar/> : <>whole page</>` — so
- * pressing "Lock it in" replaced the whole document in one jump. That is the
- * one interaction on the page that must not feel like a page change. The
- * chamber and the curve now render from first paint; committing a prediction
- * swaps only the small strip above the chart and draws your line on it. Keep it
- * that way: if you find yourself wrapping a section in `prediction === null ?`,
- * you are rebuilding the thing that was removed.
+ * Layout: pages 5 and 6's shell. One reading column of numbered steps, each
+ * beside its own margin note.
  *
- * Layout: page 1's per-step grid. The intro paragraph runs full width above the
- * grid; each numbered step (1. run the vote · 2. what the vote buys · 3. where
- * it leaves us) is a left-hand grid cell followed immediately by its own margin
- * cell — either a <Note> that scrolls with the step, or an empty spacer. There
- * is no sticky instructions rail and no "how to read this page" heading: the
- * only notes are one operating hint beside the chamber and the bare Wang et al.
- * cite beside the curve. Keep notes to page 1's budget (a kicker plus at most
- * two short sentences; references are cites only, no gloss), and keep the hint
- * to what the controls and the live narration do not already say. The author-year
- * "Wang et al. 2022" is written out in exactly ONE prose place — the References
- * note beside figure 2 — so do not add it back to the heading chip or the
- * figcaption. The <CitationBadge> above the footnote also renders it (from
- * citation.ref in data/self-consistency.json) and the footnote carries the full
- * provenance; both of those are deliberate and protected.
+ *   Step 1 — figure 1, the pile. One problem, 16 chains, tallied into a ranked
+ *   histogram. Truth concentrates (the modal answer holds 9.9 of 16 votes on
+ *   average) and the tail is real (41% of answer classes appear exactly once).
+ *   Lead with the CONCENTRATION: the run's `errors_are_diffuse` gate is FALSE at
+ *   a 50% threshold, so "wrong answers all disagree" overstates it. Opening a bar
+ *   shows the chains that landed there, and two chains agreeing on a wrong answer
+ *   usually made different mistakes. Do not bucket the singletons.
+ *
+ *   Step 2 — figure 2, what the vote buys. Accuracy against N, built by
+ *   subsampling one pile so chain length is fixed. The temperature-0 line is FLAT
+ *   by construction and that is the page's cleanest proof that the vote needs
+ *   diversity. THE DIP AT N=2 IS REAL AND MUST BE EXPLAINED, not smoothed: with
+ *   two chains a disagreement is a tie, a tie is not a vote, and 52% of N=2 votes
+ *   tie. The coverage line is page 8's ceiling arriving early.
+ *
+ *   Step 3 — the split, and it is the honest half. At a FIXED budget, splitting
+ *   loses: N=1 51%, N=4 35%, N=16 8%. `splitting_a_fixed_budget_pays` is false
+ *   and the page says so. Voting buys accuracy; the budget comes from somewhere.
+ *
+ *   Step 4 — one number, no figure: 23% of problems where the model produced the
+ *   right answer and the vote threw it away. That is page 8's whole subject and
+ *   it is deliberately not drawn here (see docs/page_8_refactor.md).
+ *
+ * Load-bearing and easy to lose:
+ *   · the diversity readout is measured on 30 items, not 100. It is a count of
+ *     answers, not an accuracy, and the label must keep saying so.
+ *   · Wang et al. is cited for the TECHNIQUE. No cite may carry one of our
+ *     numbers.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
+import { ChartFrame } from "@/components/ChartFrame";
 import { CitationBadge } from "@/components/CitationBadge";
-import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
-import { PredictBar } from "@/components/PredictBar";
-import { Slider } from "@/components/Slider";
-import { SAMPLING_CHAMBER } from "@/lib/authored";
+import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves } from "@/lib/curves";
-import {
-  CHAMBER_MODEL,
-  chamberCurve,
-  chamberDiversity,
-  chamberProbs,
-  representativeChamberBallot,
-} from "@/lib/sim";
+import { PAGE7, chainsFor, pLabel, pct, tidyMath, tokens } from "@/lib/page07";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 7;
-const C = SAMPLING_CHAMBER;
+const F1 = PAGE7.figure1;
+const F2 = PAGE7.figure2;
+const H = PAGE7.handoff;
+const M = PAGE7.manifest;
 
-const MAX_VOTES = 64;
-/** 40 is on the list so the step-2 curve can mark it exactly (the predict N). */
-const CURVE_NS = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 40, 48, 64];
-const TRIALS = 1500;
-const SEED = 20220311; // arXiv id of Wang et al. — a stable, documented seed
-/** Milliseconds between chains arriving in the chamber. */
-const STREAM_MS = 45;
-/** The step-2 curve is about this many chains — the question the reader predicts.
- *  It is fixed and independent of step 1's N slider (the two figures are decoupled). */
-const PREDICT_N = 40;
+const NOTEBOOK_ZIP = "/notebooks/page-07-frequency-voting.zip";
+const NOTEBOOK_SIZE = "3.2 MB";
+const RUN_DATE = M.timestamp_utc.slice(0, 10);
 
-/**
- * One colour per reasoning bucket, so the dot array above and the tally bars
- * below share a legend. Correct is the deck's green; the three misreadings are
- * muted, distinct hues mixed from the semantic tokens (theme-aware, no raw hex).
- * Order matches SAMPLING_CHAMBER.paths: [22 correct, 33, 17, 11].
- */
-const PATH_COLORS = [
-  "var(--correct)",
-  "var(--wrong)",
-  "color-mix(in srgb, var(--wrong) 55%, var(--compute))",
-  "color-mix(in srgb, var(--wrong) 38%, var(--canvas))",
-];
+/** Cited for the technique. Every number on this page is ours. */
+const WANG: Citation = {
+  ref: "Wang et al. 2022",
+  url: "https://arxiv.org/abs/2203.11171",
+  venue: "ICLR 2023",
+  preprint: false,
+};
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
+const chip = "rounded-full border border-grid px-2 py-0.5 text-ink-muted";
 
-/** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
@@ -112,99 +100,147 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
+/* ------------------------------------------------------------------ figure 1 */
+
+/**
+ * The pile as a ranked tally. One row per distinct answer, the correct one
+ * marked, and the singletons kept as their own rows because that row IS the
+ * argument.
+ */
+function Tally({ onOpen, open }: { onOpen: (a: string) => void; open: string | null }) {
+  const s = F1.specimen;
+  const max = s.ranked[0]?.votes ?? 1;
+  return (
+    <ol className="flex flex-col gap-1">
+      {s.ranked.map((row) => {
+        const isOpen = open === row.answer;
+        return (
+          <li key={row.answer}>
+            <button
+              type="button"
+              onClick={() => onOpen(row.answer)}
+              aria-expanded={isOpen}
+              className={`flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-surface-raised ${
+                isOpen ? "bg-surface-raised" : ""
+              }`}
+            >
+              <span
+                className={`w-24 shrink-0 truncate font-mono text-xs ${
+                  row.correct ? "text-correct" : "text-ink-muted"
+                }`}
+                title={row.answer}
+              >
+                {tidyMath(row.answer)}
+              </span>
+              <span className="flex h-4 min-w-0 flex-1 items-center">
+                <span
+                  className={`h-3 rounded-sm ${row.correct ? "bg-correct" : "bg-grid"}`}
+                  style={{ width: `${Math.max(2, (row.votes / max) * 100)}%` }}
+                />
+              </span>
+              <span className="w-6 shrink-0 text-right font-mono text-xs tabular-nums text-ink-muted">
+                {row.votes}
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/* ------------------------------------------------------------------ figure 2 */
+
+const W = 620;
+const HGT = 280;
+const MARGIN = { top: 26, right: 96, bottom: 46, left: 46 };
+const IW = W - MARGIN.left - MARGIN.right;
+const IH = HGT - MARGIN.top - MARGIN.bottom;
+
+/** Accuracy against N, one pile subsampled. Log-2 x, because N doubles. */
+function PileChart() {
+  const pts = F2.hot.points;
+  const ns = pts.map((p) => p.n);
+  const x = (n: number) =>
+    (Math.log2(n) / Math.log2(Math.max(...ns))) * IW;
+  const y = (v: number) => IH - (v / 100) * IH;
+  const line = (get: (p: (typeof pts)[number]) => number) =>
+    pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(get(p) * 100)}`).join(" ");
+  const cold = F2.cold.points[0].accuracy;
+
+  return (
+    <ChartFrame
+      title={`Share of 100 MATH-500 problems solved against the number of chains the vote sees, at temperature ${F2.hot.temperature}. One chain ${pct(pts[0].accuracy)}, sixteen chains ${pct(pts[pts.length - 1].accuracy)}. The right answer is somewhere in the pile on ${pct(pts[pts.length - 1].coverage)}. At temperature zero every chain is identical and the line is flat at ${pct(cold)}.`}
+      width={W}
+      height={HGT}
+      margin={MARGIN}
+      xLabel="chains the vote may see"
+      yLabel="solved (%)"
+    >
+      {[0, 25, 50, 75, 100].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={IW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={1} />
+          <text x={-8} y={y(t) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t}
+          </text>
+        </g>
+      ))}
+      {ns.map((n) => (
+        <text key={n} x={x(n)} y={IH + 16} textAnchor="middle" className="fill-ink-muted text-[10px]">
+          {n}
+        </text>
+      ))}
+
+      {/* the ceiling: the right answer was generated */}
+      <path d={line((p) => p.coverage)} fill="none" className="stroke-wrong" strokeWidth={1.4} strokeDasharray="4 3" />
+      <text x={IW + 6} y={y(pts[pts.length - 1].coverage * 100) + 4} className="fill-wrong text-[10px]">
+        in the pile
+      </text>
+
+      {/* temperature zero: N copies of one greedy chain */}
+      <line x1={0} x2={IW} y1={y(cold * 100)} y2={y(cold * 100)} className="stroke-ink-muted" strokeWidth={1.4} strokeDasharray="2 3" />
+      <text x={IW + 6} y={y(cold * 100) + 4} className="fill-ink-muted text-[10px]">
+        T = 0
+      </text>
+
+      {/* the vote */}
+      <path d={line((p) => p.accuracy)} fill="none" className="stroke-compute" strokeWidth={2.4} />
+      {pts.map((p) => (
+        <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy * 100)} r={3.4} className="fill-compute" />
+      ))}
+      <text x={IW + 6} y={y(pts[pts.length - 1].accuracy * 100) + 4} className="fill-compute text-[10px] font-semibold">
+        the vote
+      </text>
+
+      {/* the dip at N=2 is the tie rule, not noise */}
+      {pts[1] ? (
+        <text x={x(pts[1].n)} y={y(pts[1].accuracy * 100) + 18} textAnchor="middle" className="fill-ink-muted text-[10px]">
+          ties
+        </text>
+      ) : null}
+    </ChartFrame>
+  );
+}
+
+/* -------------------------------------------------------------------- page */
+
 export function Page7() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-  const anchor = curves.selfConsistency;
+  const [open, setOpen] = useState<string | null>(null);
 
-  const [prediction, setPrediction] = useState<number | null>(null);
-  const [votes, setVotes] = useState(16);
-  const [temperature, setTemperature] = useState(0.7);
-  const [shown, setShown] = useState(0);
-  const [openPath, setOpenPath] = useState(0);
-  const [announcement, setAnnouncement] = useState("");
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const s = F1.specimen;
+  const openChains = open ? chainsFor(s, open) : [];
+  const openRow = open ? s.ranked.find((r) => r.answer === open) : null;
+  const last = F2.hot.points[F2.hot.points.length - 1];
+  // What one chain spends against what the pile spends. The gap between them is why
+  // "just give one chain more" is not on the table: the chain ends on its own.
+  const oneChainTokens = F2.hot.points[0].mean_tokens;
+  const pileTokens = last.mean_tokens;
 
-  useEffect(() => {
-    setReducedMotion(prefersReducedMotion());
-  }, []);
-
-  // One representative ballot: which path each of the N chains walked.
-  const ballot = useMemo(
-    () => representativeChamberBallot(votes, temperature, SEED + 1000),
-    [votes, temperature],
-  );
-
-  const curve = useMemo(
-    () => chamberCurve(CURVE_NS, temperature, TRIALS, SEED),
-    [temperature],
-  );
-
-  // Step 2 reads accuracy at the fixed PREDICT_N, NOT at step 1's votes slider:
-  // the curve (the average over many trials) is decoupled from the single ballot.
-  const accuracyAtPredict = useMemo(() => {
-    const nearest = curve.reduce((best, p) =>
-      Math.abs(p.x - PREDICT_N) < Math.abs(best.x - PREDICT_N) ? p : best,
-    );
-    return nearest.y;
-  }, [curve]);
-
-  // Hot temperatures start the curve well below 56.5% (each chain is individually
-  // worse), and a low prediction line can dip too. Drop the y-axis floor to
-  // contain them so the line never spills off the plot — the lower start at high
-  // temperature is the lesson, not a glitch. Stays at 50 for the default range.
-  const yFloor = useMemo(() => {
-    const yLow = Math.min(...curve.map((p) => p.y), prediction ?? 100);
-    return Math.max(30, Math.min(50, Math.floor((yLow - 4) / 5) * 5));
-  }, [curve, prediction]);
-
-  const diversity = chamberDiversity(CHAMBER_MODEL, temperature);
-  const probs = chamberProbs(CHAMBER_MODEL, temperature);
-
-  // Stream the chains in whenever the batch changes. Deliberately NOT gated on
-  // the prediction: the chamber runs from first paint, so committing a guess
-  // adds a reference line to the chart instead of swapping the page.
-  useEffect(() => {
-    setShown(reducedMotion ? votes : 0);
-  }, [votes, temperature, reducedMotion]);
-
-  useEffect(() => {
-    if (reducedMotion || shown >= votes) return;
-    const t = setTimeout(() => setShown((s) => Math.min(votes, s + 1)), STREAM_MS);
-    return () => clearTimeout(t);
-  }, [reducedMotion, shown, votes]);
-
-  const visible = ballot.draws.slice(0, shown);
-  const liveTally = new Array(C.paths.length).fill(0) as number[];
-  for (const d of visible) liveTally[d] += 1;
-  const liveMax = Math.max(...liveTally, 0);
-  const leaders = liveTally
-    .map((v, i) => ({ v, i }))
-    .filter((e) => e.v === liveMax && e.v > 0)
-    .map((e) => e.i);
-  const leader = leaders.length === 1 ? leaders[0] : -1;
-  const streamDone = shown >= votes;
-
-  const touched = useRef(false);
-  const mark = () => {
-    if (!touched.current) {
-      touched.current = true;
-    }
+  const pick = (answer: string) => {
     recordInteraction(PAGE_N);
-  };
-
-  const onVotes = (v: number) => {
-    mark();
-    setVotes(v);
-  };
-  const onTemp = (v: number) => {
-    mark();
-    setTemperature(v);
-    if (v === 0) {
-      setAnnouncement(
-        "Temperature zero: every chain is a copy of the first one, so the vote is a single vote repeated and accuracy stays at the single-chain rate.",
-      );
-    }
+    setOpen((cur) => (cur === answer ? null : answer));
   };
 
   return (
@@ -217,309 +253,306 @@ export function Page7() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        One traveller on a good road can still take a wrong turn. So stop asking once: ask the{" "}
-        <em>same</em> question many times and keep the answer that comes up{" "}
-        <strong className="text-ink">most often</strong>. Choosing between three pizza places, one
-        friend gives you one opinion and all their quirks; ask everyone and the quirks scatter while
-        the best place keeps collecting votes. Nobody had to be right alone; the crowd only had to be
-        wrong in <em>uncorrelated</em> ways. Done to a model, that is{" "}
-        <strong className="text-ink">self-consistency</strong>.
+        Page 6 made <strong className="text-ink">one chain longer</strong>. This page runs the chain{" "}
+        <strong className="text-ink">many times</strong> and keeps the answer the most chains agree
+        on. One friend gives you one opinion and all their quirks; ask everyone and the quirks
+        scatter while the best answer keeps collecting votes.
       </p>
 
-      {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
+      <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className={chip}>Qwen2.5-3B-Instruct · bf16</span>
+          <span className={chip}>
+            sampled at T = {F2.hot.temperature} · top-p {M.decoding.top_p}
+          </span>
+          <span className={chip}>
+            MATH-500 levels 4 and 5 · n = {M.items.n} paired items
+          </span>
+          <span className={chip}>{F1.n_chains} chains each · {RUN_DATE}</span>
+        </div>
+        <p className="text-sm text-ink">
+          Every figure below is one measurement of ours, on the same items pages 5 and 6 use.{" "}
+          <a className="font-semibold text-compute underline underline-offset-2" href={NOTEBOOK_ZIP} download>
+            Download the notebook, the harness and all 5,920 chains ({NOTEBOOK_SIZE})
+          </a>
+          . It opens in a replay mode that redraws every figure here from those chains, on no GPU.
+        </p>
+      </div>
+
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the chamber */}
+        {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. Run the vote
+            1. Ask the same question sixteen times
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              one question · many independent chains · no live model
+              one problem · {F1.n_chains} chains · {s.distinct_answers} distinct answers
             </span>
           </h2>
           <section
-            aria-label="The sampling chamber"
-            className="flex flex-col rounded-lg border-l-4 border-compute bg-surface"
+            aria-label="One problem, sixteen chains, tallied"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <div className="flex flex-col gap-4 p-4">
-              <p className="text-ink">{C.question}</p>
+            <p className="text-lg text-ink">{tidyMath(s.question)}</p>
+            <p className="font-mono text-xs text-ink-muted">
+              the answer is {tidyMath(s.ground_truth)} · picked from {F1.n_candidates} problems that
+              qualified
+            </p>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Slider
-                  label="Chains sampled (N)"
-                  min={1}
-                  max={MAX_VOTES}
-                  value={votes}
-                  suffix=" chains"
-                  onChange={onVotes}
-                />
-                <Slider
-                  label="Temperature"
-                  min={0}
-                  max={1.4}
-                  step={0.1}
-                  value={temperature}
-                  onChange={onTemp}
-                />
-              </div>
+            <Tally onOpen={pick} open={open} />
 
-              <p className="text-xs text-ink-muted">
-                {temperature === 0 ? (
-                  <>
-                    <strong className="text-wrong">Frozen.</strong> Every chain is the same chain.{" "}
-                    {votes} votes, one opinion.
-                  </>
-                ) : diversity < 1 ? (
-                  <>
-                    Only <strong className="text-ink">{Math.round(diversity * 100)}%</strong> of
-                    chains are genuinely independent; the rest are duplicates of the first.
-                  </>
-                ) : (
-                  <>
-                    All chains independent. Each one lands on the right answer{" "}
-                    <strong className="text-ink">{Math.round(probs[0] * 100)}%</strong> of the time
-                    on its own.
-                  </>
-                )}
-              </p>
+            <p className="text-xs text-ink-muted">
+              Click a row to read the chains that landed on it.
+            </p>
 
-              {/* The chamber: one dot per sampled chain, coloured by the bucket
-                  it landed in. A unit array reads as a distribution at a glance;
-                  the tally below shares the same colours as its legend. */}
+            {openRow ? (
               <div
-                className="flex flex-wrap gap-1.5"
-                role="img"
-                aria-label={`${shown} of ${votes} chains sampled. Tally: ${liveTally
-                  .map((v, i) => `${C.paths[i].display} appears ${v} times`)
-                  .join(", ")}.`}
+                className={`flex flex-col gap-3 rounded-lg border-l-4 p-3 ${
+                  openRow.correct ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
+                }`}
               >
-                {ballot.draws.map((d, i) => {
-                  const on = i < shown;
-                  const p = C.paths[d];
-                  return (
-                    <span
-                      key={i}
-                      title={on ? `chain ${i + 1} → ${p.display}` : undefined}
-                      className={`h-3 w-3 rounded-full transition-opacity ${
-                        on
-                          ? p.correct
-                            ? "ring-1 ring-correct/50"
-                            : ""
-                          : "border border-dashed border-grid"
-                      }`}
-                      style={on ? { backgroundColor: PATH_COLORS[d] } : undefined}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Tally and the chain behind the selected row, side by side —
-                  they are one read (pick a bucket, see its reasoning), and
-                  stacking them ran the section a screen taller. */}
-              <div className="grid gap-4 border-t border-dashed border-grid pt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
-                <div className="flex flex-col gap-1.5">
-                  <p className="text-xs uppercase tracking-wide text-ink-muted">
-                    the tally · click a row to read its chain
-                  </p>
-                  {C.paths.map((p, i) => {
-                    const count = liveTally[i];
-                    const pct = shown > 0 ? (count / shown) * 100 : 0;
-                    const winning = streamDone && i === leader;
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          setOpenPath(i);
-                          recordInteraction(PAGE_N);
-                        }}
-                        aria-pressed={openPath === i}
-                        className={`flex items-center gap-2 rounded-sm px-1 py-0.5 text-left text-sm ${
-                          openPath === i ? "bg-surface-raised" : ""
-                        }`}
-                      >
-                        <span
-                          className="h-2.5 w-2.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: PATH_COLORS[i] }}
-                          aria-hidden="true"
-                        />
-                        <span className="w-8 shrink-0 font-mono text-ink">{p.display}</span>
-                        <span className="relative h-4 flex-1 rounded-sm bg-surface-raised">
-                          <span
-                            className={`absolute inset-y-0 left-0 rounded-sm ${
-                              winning ? "ring-2 ring-compute" : ""
-                            }`}
-                            style={{ width: `${pct}%`, backgroundColor: PATH_COLORS[i] }}
-                          />
-                        </span>
-                        <span className="w-8 shrink-0 text-right font-mono text-xs tabular-nums text-ink">
-                          {count}
-                        </span>
-                        <span className="w-24 shrink-0 text-right text-xs text-ink-muted">
-                          {p.correct ? "correct" : "wrong"}
-                          {winning ? " · wins" : ""}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* The selected reasoning path, in full. */}
-                <div className="rounded-lg border border-dashed border-grid bg-surface-raised p-3">
-                  <p className="text-xs uppercase tracking-wide text-ink-muted">
-                    a chain landing on {C.paths[openPath].display}: {C.paths[openPath].gist}
-                  </p>
-                  <ol className="mt-2 flex flex-col gap-1">
-                    {C.paths[openPath].steps.map((s, i) => (
-                      <li key={i} className="text-sm text-ink">
-                        <span className="mr-2 font-mono text-xs text-compute">{i + 1}</span>
-                        {s}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
-
-              {/* The winner. */}
-              {streamDone ? (
-                leader === 0 ? (
-                  <div className="rounded-lg border-l-4 border-correct bg-correct/15 p-3 text-sm text-ink">
-                    <span className="font-semibold text-correct">
-                      ✓ The vote lands on {C.display}.
-                    </span>{" "}
-                    The plurality agreed on the right answer, even though {shown - liveTally[0]} of{" "}
-                    {shown} chains got it wrong.
-                  </div>
-                ) : leader === -1 ? (
-                  <div className="rounded-lg border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-                    A tie: too few chains to separate the buckets.
-                  </div>
-                ) : (
-                  <div className="rounded-lg border-l-4 border-wrong bg-wrong/15 p-3 text-sm text-ink">
-                    <span className="font-semibold text-wrong">
-                      ✗ The vote lands on {C.paths[leader].display}.
-                    </span>{" "}
-                    This batch&apos;s plurality was wrong: {C.paths[leader].gist}. One ballot is not
-                    the whole story; the curve below is the average.
-                  </div>
-                )
-              ) : (
-                <p className="flex items-center gap-2 text-sm text-ink-muted">
-                  <span aria-hidden="true" className="animate-pulse text-compute">
-                    ▍
-                  </span>
-                  sampling chain {shown + 1} of {votes}…
+                <p className="text-sm text-ink">
+                  <strong className={openRow.correct ? "text-correct" : "text-wrong"}>
+                    {tidyMath(openRow.answer)}
+                  </strong>{" "}
+                  · {openRow.votes} of {F1.n_chains} chains ·{" "}
+                  {openRow.correct ? "correct" : "wrong"}
+                  {!openRow.correct && openRow.votes > 1
+                    ? " — and they got there by different routes"
+                    : ""}
                 </p>
-              )}
-            </div>
+                {openChains.slice(0, 2).map((c) => (
+                  <div key={c.sample_index} className="flex flex-col gap-1">
+                    <p className="font-mono text-xs text-ink-muted">
+                      chain {c.sample_index} · {tokens(c.own_tokens)} tokens
+                      {c.truncated ? " · hit its cap and was made to commit" : ""}
+                    </p>
+                    <p className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded bg-surface-raised p-2 text-xs leading-relaxed text-ink-muted">
+                      {tidyMath(c.trace)}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </section>
+          <p className="text-sm text-ink-muted">
+            The winning answer holds {F1.shape.mean_top_votes.toFixed(1)} of {F1.shape.n_chains}{" "}
+            votes on average across all {M.items.n} problems, against{" "}
+            {F1.shape.mean_distinct.toFixed(1)} distinct answers. Agreement concentrates; the rest
+            is a scatter of near-misses, {pct(F1.shape.singleton_share)} of which are said exactly
+            once.
+          </p>
         </section>
-        <Note kicker="The two dials">
-          <p>Chains is how many voters you ask.</p>
-          <p>Temperature is how different they are allowed to be.</p>
+        <Note kicker="References">
+          <p>Cited for the technique. Every number on this page is ours.</p>
+          <p>
+            Wang et al. 2022, <em>Self-Consistency Improves Chain of Thought Reasoning</em>:
+            sampling many chains and keeping what recurs.
+          </p>
         </Note>
 
-        {/* Step 2 — the curve */}
+        {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
             2. What the vote buys
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              GSM8K · anchored · modelled temperature dial
+              the same {M.items.n} problems · one pile, subsampled
             </span>
           </h2>
-
-          {/* The prediction. This strip is the ONLY thing that swaps when you
-              commit — the curve below stays put. See the no-gate note above. */}
-          {prediction === null ? (
-            <PredictBar
-              prompt="Before you read it off the curve: a single chain of thought gets 56.5% on GSM8K. Sample 40 chains and take the majority answer. What accuracy do you predict?"
-              min={40}
-              max={100}
-              suffix="%"
-              onCommit={(p) => {
-                setPrediction(p);
-                recordInteraction(PAGE_N);
-                setAnnouncement(
-                  `Prediction locked at ${p} percent. Your line is drawn on the curve; the real majority-vote accuracy at ${PREDICT_N} chains is ${accuracyAtPredict.toFixed(1)} percent.`,
-                );
-              }}
-            />
-          ) : (
-            <p className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-sm text-ink">
-              You predicted <strong className="font-mono text-compute">{prediction}%</strong>; it is
-              the dashed line on the curve. The marker sits at {PREDICT_N} chains — the accuracy the
-              majority vote actually reaches.
-            </p>
-          )}
-
-          <figure
-            aria-label="Majority-vote accuracy against the number of sampled chains"
-            className="m-0 flex flex-col rounded-lg border-l-4 border-grid bg-surface"
+          <section
+            aria-label="Accuracy against the number of chains"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <div className="flex flex-col gap-3 p-4">
-              <LineChart
-                title={`Majority-vote accuracy versus number of sampled chains on GSM8K, log x axis. At the reference temperature accuracy climbs from 56.5 percent at one chain toward a plateau near 74.4 percent, with most of the gain arriving in the first dozen chains. Marking ${PREDICT_N} chains, where the majority vote reaches ${accuracyAtPredict.toFixed(1)} percent.`}
-                points={curve}
-                logX
-                xDomain={[1, MAX_VOTES]}
-                yDomain={[yFloor, 80]}
-                markerX={PREDICT_N}
-                referenceY={prediction ?? undefined}
-                referenceLabel={prediction !== null ? `you predicted ${prediction}%` : undefined}
-                xLabel="chains sampled (log scale)"
-                yLabel="accuracy (%)"
-                width={620}
-                height={300}
-              />
-              <figcaption className="text-sm text-ink-muted">
-                <strong className="font-mono text-lg text-correct">
-                  {accuracyAtPredict.toFixed(1)}%
-                </strong>{" "}
-                at {PREDICT_N} chains, temperature {temperature.toFixed(1)}. The gain is large (
-                <strong className="text-ink">+17.9 points</strong>, 56.5% → 74.4%), but it{" "}
-                <strong className="text-ink">flattens</strong>: the first handful of chains buy
-                almost everything, and 32 → 64 buys almost nothing at double the cost. Voting
-                cancels <em>uncorrelated</em> errors, so the diversity is what you are paying for.
-              </figcaption>
+            <PileChart />
+            <div className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-ink">
+              One chain of chain-of-thought, decoded greedily, solves{" "}
+              <strong className="font-mono">{pct(F2.gain.bare_cot)}</strong>. The vote over{" "}
+              {F1.n_chains} sampled chains solves{" "}
+              <strong className="font-mono">{pct(F2.gain.vote)}</strong>:{" "}
+              <strong>+{F2.gain.gain_pts.toFixed(0)} points</strong> ·{" "}
+              {pLabel(F2.gain.p)}, exact McNemar over the {F2.gain.fixed + F2.gain.broken} problems
+              where the two disagree ({F2.gain.fixed} fixed, {F2.gain.broken} broken).
             </div>
-          </figure>
+            <div className="grid gap-3 text-xs text-ink-muted sm:grid-cols-2">
+              <p>
+                <strong className="text-ink">The flat line is the point.</strong> At temperature 0
+                every chain is the same chain, so the vote is one voter answering{" "}
+                {F1.n_chains} times and nothing is gained. Diversity is the whole mechanism.
+              </p>
+              <p>
+                <strong className="text-ink">The dip at N = 2 is the tie rule.</strong> Two chains
+                that disagree are a tie, and a tie returns no answer, so it grades wrong.{" "}
+                {pct(F2.hot.points[1]?.tie_rate ?? 0)} of two-chain votes tie; by sixteen it is{" "}
+                {pct(last.tie_rate)}.
+              </p>
+            </div>
+          </section>
+          <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              distinct answers among {F2.diversity[0].n_chains} chains, by temperature
+            </p>
+            <div className="flex flex-wrap items-end gap-3">
+              {[...F2.diversity]
+                .sort((a, b) => a.temperature - b.temperature)
+                .map((d) => (
+                  <div key={d.temperature} className="flex flex-col items-center gap-1">
+                    <span className="font-mono text-lg tabular-nums text-ink">
+                      {d.mean_distinct.toFixed(1)}
+                    </span>
+                    <span className="font-mono text-[10px] text-ink-muted">T {d.temperature}</span>
+                  </div>
+                ))}
+            </div>
+            <p className="text-xs text-ink-muted">
+              Measured on {F2.diversity[0].n_items} items. This is a count of answers, not an
+              accuracy: turning the dial up makes the chains differ, which is necessary and not
+              sufficient — past T = {F2.hot.temperature} each chain gets worse faster than the vote
+              recovers it.
+            </p>
+          </div>
         </section>
-        <Note kicker="References">
-          <p>
-            Wang et al. 2022, <em>Self-Consistency Improves Chain of Thought Reasoning in Language
-            Models</em>.
-          </p>
+        <Note kicker="Try it">
+          <p>Open a row in step 1 and read two chains that agreed on a wrong answer.</p>
         </Note>
 
-        {/* Step 3 — the handoff */}
+        {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            Voting picks by frequency alone; nothing ever asks whether an answer is any{" "}
-            <em>good</em>. Fine while the crowd leans right.{" "}
-            <em className="text-ink-muted">
-              So what happens when the popular answer is the wrong one? Turn the page.
-            </em>
+          <h2 className="text-xl font-semibold text-ink">
+            3. And what it costs
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              one budget of {tokens(M.split.budget_total)} tokens, split N ways
+            </span>
+          </h2>
+          <section
+            aria-label="The same budget split N ways"
+            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+          >
+            <table className="w-full text-sm">
+              <caption className="pb-2 text-left text-xs text-ink-muted">
+                The same number of chains, capped to share {tokens(M.split.budget_total)} tokens
+                against allowed to finish. Read the cut-off column before concluding anything
+                about the vote.
+              </caption>
+              <thead>
+                <tr className="border-b border-grid text-xs uppercase tracking-wide text-ink-muted">
+                  <th className="py-1 text-left font-semibold">chains</th>
+                  <th className="py-1 text-right font-semibold">capped</th>
+                  <th className="py-1 text-right font-semibold">cut off</th>
+                  <th className="py-1 text-right font-semibold">allowed to finish</th>
+                  <th className="py-1 text-right font-semibold">tokens</th>
+                </tr>
+              </thead>
+              <tbody>
+                {F2.split.map((sp) => {
+                  const free = F2.hot.points.find((p) => p.n === sp.n);
+                  return (
+                    <tr key={sp.n} className="border-b border-grid/50">
+                      <td className="py-1.5 font-mono tabular-nums text-ink">{sp.n}</td>
+                      <td className="py-1.5 text-right font-mono tabular-nums text-wrong">
+                        {pct(sp.accuracy)}
+                      </td>
+                      <td className="py-1.5 text-right font-mono tabular-nums text-ink-muted">
+                        {pct(sp.truncated_rate)}
+                      </td>
+                      <td className="py-1.5 text-right font-mono tabular-nums text-compute">
+                        {free ? pct(free.accuracy) : "—"}
+                      </td>
+                      <td className="py-1.5 text-right font-mono tabular-nums text-ink-muted">
+                        {free ? tokens(free.mean_tokens) : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <p className="text-ink">
+              Dividing a fixed budget does two things at once: it adds chains{" "}
+              <em>and</em> it shortens them. On this band the second swamps the first. At sixteen
+              chains every one is cut off mid-thought, and page 6 measured a chain that short at
+              7% on its own — the vote is being asked to pool fragments.{" "}
+              <strong className="text-ink">Splitting is not what fails here; capping is.</strong>
+            </p>
+            <p className="text-ink">
+              Which is why the honest comparison is the last two columns, at the same number of
+              chains. Let them finish and the vote works. That costs more —{" "}
+              {tokens(pileTokens)} tokens against {tokens(oneChainTokens)} for one chain — and{" "}
+              <strong className="text-ink">there is no cheaper way to buy it</strong>, because
+              page 6&apos;s chain stops on its own at this cap and will not take more. Sideways is
+              the only direction left.
+            </p>
+          </section>
+        </section>
+        <div aria-hidden="true" />
+
+        {/* Step 4 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">4. What the vote threw away</h2>
+          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-lg text-ink">
+              On <strong className="font-mono text-2xl text-wrong">{pct(H.thrown_away)}</strong> of
+              these problems the model produced the right answer and the vote discarded it.
+            </p>
+            <p className="text-sm text-ink-muted">
+              The right answer was somewhere in the pile on {pct(H.coverage)} of problems. The vote
+              returned it on {pct(H.plurality_accuracy)}. Counting can only ever return the answer
+              that comes up most, and the right answer is sometimes rare — on{" "}
+              {pct(H.tie_rate)} of problems the vote could not even break a tie.{" "}
+              <em>
+                Page 8 keeps the same {H.n_chains} candidates and changes only the rule for picking
+                one: stop counting, start judging.
+              </em>
+            </p>
           </div>
         </section>
         <div aria-hidden="true" />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={anchor.citation} />
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-ink-muted">
+          Technique cited. The measurements on this page are ours:
+        </span>
+        <CitationBadge citation={WANG} />
       </div>
-      <p className="text-xs text-ink-muted">
-        the accuracy curve is a seeded Monte Carlo over a two-population model calibrated to Wang
-        et al. 2022 (arXiv:2203.11171, ICLR 2023), GSM8K with PaLM-540B: 56.5% single chain to
-        74.4% under self-consistency, both endpoints reproduced at the reference temperature · the
-        four reasoning paths are authored teaching examples, not model transcripts, and their
-        arithmetic is recomputed by the test suite · the temperature dial is modelled, not
-        measured: below the reference it duplicates chains, above it flattens the answer
-        distribution
-      </p>
 
-      <div aria-live="polite" className="sr-only">
-        {announcement}
+      <div className="flex flex-col gap-2 text-xs text-ink-muted">
+        <p>
+          run <span className="font-mono">{M.run_id}</span>, {RUN_DATE} · Qwen2.5-3B-Instruct at
+          bf16, sampled at temperature {F2.hot.temperature} with top-p {M.decoding.top_p}, a{" "}
+          {tokens(M.pile.chain_cap)}-token cap per chain and a forced commitment for any chain that
+          reached it; MATH-500 levels 4 and 5 at n = {M.items.n} paired items, the same draw pages 5
+          and 6 use. Answers are extracted and graded by ch03&apos;s{" "}
+          <a
+            className="underline underline-offset-2"
+            href="https://github.com/rasbt/reasoning-from-scratch"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            reasoning-from-scratch
+          </a>{" "}
+          functions, used unchanged, so the grading is not ours to defend. Two chains count as
+          agreeing when that same grader says their answers are equivalent, so{" "}
+          <span className="font-mono">1/2</span> and <span className="font-mono">0.5</span> are one
+          bucket rather than two. A tie returns no answer and grades wrong.
+        </p>
+        <p>
+          The N axis is one pile of {F1.n_chains} chains, subsampled {M.pile.n_resamples} times per
+          problem at each N, so the chain length is fixed and the only thing changing is how many
+          candidates the vote sees. Intervals and the paired test are over the {M.items.n} items,
+          which are the independent unit. A second contrast was measured and is not plotted: against
+          one <em>sampled</em> chain rather than a greedy one, the same vote gains{" "}
+          {F2.gainVsOneSample.pts.toFixed(0)} points at {pLabel(F2.gainVsOneSample.p)}, which does
+          not resolve. Sampling at this temperature is already worth a few points on its own, and
+          the headline above is the vote against chain of thought as pages 5 and 6 measured it.
+        </p>
+        <p>
+          Limits: one model, one benchmark, one language. Temperature was chosen by which value
+          voted best on {F2.diversity[0].n_items} items, so it is fitted on a subset rather than
+          held out. Sampling is seeded per group of chains, and floating-point reduction order
+          shifts with batch size and hardware, so re-deriving reproduces the shape and the ranking
+          rather than every digit. The page measures whether a chain landed on the right answer,
+          never whether its reasoning was sound.
+        </p>
       </div>
+
       <PageNav n={PAGE_N} />
     </article>
   );
