@@ -36,6 +36,7 @@ The page ships what it draws and links what it drew it from.
 |---|---|---|
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | step 1 complete, awaiting a real run and step-3 approval |
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | step 1 complete, awaiting a real run and step-3 approval |
+| `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | step 1 complete, awaiting a real run and step-3 approval |
 
 ## Running one
 
@@ -69,7 +70,16 @@ notebooks/
       figure_*.png     # reference renders; the page redraws these in the browser
     page_06/
       …same four
+    page_09/
+      …same four
 ```
+
+**Page 9 does not reuse pages 6 or 7's traces, and that is deliberate.** Page 6 caps generation
+and forces the model to commit, so its chains are broken by *us*; grading those for bad reasoning
+would report our own intervention as the model's error. Page 9 generates its own uncapped pass.
+It is also the one notebook on a different generator, Qwen2.5-Math rather than Qwen3, because the
+only open process reward model in reach is `Qwen2.5-Math-PRM-7B` and a grader is most trustworthy
+on the family it was trained around. Page 9's subject is the grader, not the generator.
 
 Pages 5 and 6 share one trace-bank schema, so a record from either is readable by the same code:
 page 5 varies the **prompt** at unlimited length and keys its records by `rung`, page 6 fixes the
