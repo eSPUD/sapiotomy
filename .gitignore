@@ -3,3 +3,6 @@
 
 # dependencies
 node_modules/
+
+# Local agent/editor config: launch targets and per-machine settings.
+.claude/
