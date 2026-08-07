@@ -16,6 +16,29 @@
  * it. The untouched trace ships in `traces.jsonl` beside the notebook.
  */
 /**
+ * A fraction or a root loses its braces on the way to plain text, and with them
+ * the grouping the braces were doing. `\frac{\sqrt{ab+a}}{\sqrt{ab-b}}` flattened
+ * naively reads `√ab + a/√ab - b`, which is a different expression from the one
+ * the model wrote. So an argument that is not a single term keeps a bracket.
+ */
+const isOneTerm = (x: string): boolean => {
+  if (!/[+\-−=<>\s]/.test(x)) return true;
+  // Already bracketed as a whole, e.g. `√(ab + a)` or `(x + 1)`: no second pair.
+  const inner = x.replace(/^√/, "");
+  if (!inner.startsWith("(") || !inner.endsWith(")")) return false;
+  let depth = 0;
+  for (let i = 0; i < inner.length; i++) {
+    if (inner[i] === "(") depth += 1;
+    else if (inner[i] === ")") {
+      depth -= 1;
+      if (depth === 0) return i === inner.length - 1;
+    }
+  }
+  return false;
+};
+const group = (x: string): string => (isOneTerm(x) ? x : `(${x})`);
+
+/**
  * The three macros that wrap an argument in braces. Each pass resolves the
  * innermost level, because the brace class cannot match across a nested pair;
  * `tidyMath` runs them to a fixed point so `\boxed{\frac{3\sqrt{3}}{4}}` comes
@@ -24,8 +47,10 @@
 const unwrapOnce = (s: string): string =>
   s
     .replace(/\\boxed\{([^{}]*)\}/g, "$1")
-    .replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, "$1/$2")
-    .replace(/\\sqrt\{([^{}]*)\}/g, "√$1");
+    .replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, (_, a: string, b: string) =>
+      `${group(a)}/${group(b)}`,
+    )
+    .replace(/\\sqrt\{([^{}]*)\}/g, (_, a: string) => `√${group(a)}`);
 
 /** More levels than any trace in the deck carries, and a guard against a cycle. */
 const MAX_NESTING = 8;
@@ -42,6 +67,11 @@ export function tidyMath(text: string): string {
     // Escaped punctuation is the character itself. `\$` stays out of this: the
     // next rule strips `$` as a maths delimiter and would eat it.
     .replace(/\\([&%#_])/g, "$1")
+    // These models write markdown headings into a maths trace. The asterisks
+    // are formatting the page has no renderer for, so they come out as the
+    // words they were wrapping; a lone `**` is left alone in case it is an
+    // exponent the model actually wrote.
+    .replace(/\*\*(.+?)\*\*/g, "$1")
     .replace(/\\cdot/g, "·")
     .replace(/\\times/g, "×")
     .replace(/\\div/g, "÷")

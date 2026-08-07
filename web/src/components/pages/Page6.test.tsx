@@ -24,8 +24,10 @@ const F1 = PAGE6.figure1;
 const F2 = PAGE6.figure2;
 const F3 = PAGE6.figure3;
 
-const SPECIMEN = rowById(F1.specimenId);
-const FLIP_INDEX = B.indexOf(F1.flipBudget!);
+// The page opens on a curated row that is NOT the notebook's specimen; see
+// PAGE6.figure1.openingId for why. The notebook's pick is still in the picker.
+const OPENING = rowById(F1.openingId);
+const FLIP_INDEX = B.indexOf(OPENING.firstCorrectBudget!);
 
 const body = () => document.body.textContent ?? "";
 const dial = () => screen.getByRole("slider", { name: /token budget/i });
@@ -35,15 +37,15 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
   it("opens on the specimen at the smallest budget, cut and forced", () => {
     render(<Page6 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Thinking Longer");
-    expect(screen.getByText(tidyMath(SPECIMEN.question))).toBeInTheDocument();
+    expect(screen.getByText(tidyMath(OPENING.question))).toBeInTheDocument();
     expect(dial()).toHaveValue("0");
-    expect(body()).toContain(`${SPECIMEN.byBudget[0].ownTokens} of ${B[0]} tokens thought`);
+    expect(body()).toContain(`${OPENING.byBudget[0].ownTokens} of ${B[0]} tokens thought`);
     expect(body()).toContain("✗ graded wrong");
   });
 
   it("shows the model's own words and what it was not allowed to write", () => {
     render(<Page6 />);
-    const z = traceZones(SPECIMEN, 0);
+    const z = traceZones(OPENING, 0);
     // Both halves are on the page. The greyed continuation is the single most
     // important pixel here: hiding it would turn the figure into a progress bar.
     expect(body()).toContain(tidyMath(z.own).slice(0, 60));
@@ -60,15 +62,40 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
     }
     drag(FLIP_INDEX);
     expect(body()).toContain("✓ graded correct");
-    expect(body()).toContain(`answered ${tidyMath(SPECIMEN.byBudget[FLIP_INDEX].extractedAnswer)}`);
+    expect(body()).toContain(`answered ${tidyMath(OPENING.byBudget[FLIP_INDEX].extractedAnswer)}`);
   });
 
   it("stops cutting once the chain finishes inside its budget", () => {
     render(<Page6 />);
-    const finishedIndex = SPECIMEN.byBudget.findIndex((r) => !r.forced);
+    const finishedIndex = OPENING.byBudget.findIndex((r) => !r.forced);
     drag(finishedIndex);
     expect(body()).toContain("nothing was cut and nothing was forced");
     expect(body()).not.toContain("we close the block and make it commit");
+  });
+
+  it("opens on a flip the model earned, not one the grader handed it", () => {
+    // The notebook's own specimen flips at 512 only because at 256 it wrote the
+    // right value behind the prompt template's placeholder. The page opens on a
+    // row that is wrong for a real reason and then right.
+    expect(F1.openingId).not.toBe(F1.specimenId);
+    for (const r of OPENING.byBudget) expect(r.extractedAnswer).not.toContain("ANSWER");
+    expect(OPENING.byBudget[FLIP_INDEX - 1].correct).toBe(false);
+    expect(OPENING.byBudget.slice(FLIP_INDEX).every((r) => r.correct)).toBe(true);
+    // The notebook's pick is still reachable, so nothing is hidden.
+    expect(F3.clickableRowIds).toContain(F1.specimenId);
+  });
+
+  it("says where the dial stops biting instead of leaving dead travel", () => {
+    render(<Page6 />);
+    const natural = OPENING.byBudget.find((r) => !r.forced)!;
+    expect(body()).toContain(`runs to ${natural.ownTokens} tokens`);
+    expect(body()).toContain(`${natural.budget} and up are the same chain`);
+  });
+
+  it("prints the committed answer as maths, not as the LaTeX we spliced", () => {
+    render(<Page6 />);
+    expect(body()).not.toContain("\\boxed{ANSWER");
+    expect(body()).toContain(`Final answer: ${tidyMath(OPENING.byBudget[0].extractedAnswer)}`);
   });
 
   it("carries the inset as a reliability comparison, not an overshoot one", () => {
