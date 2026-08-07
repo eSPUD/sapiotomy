@@ -376,7 +376,7 @@ export function Page7() {
                   · {openRow.votes} of {F1.n_chains} chains ·{" "}
                   {openRow.correct ? "correct" : "wrong"}
                   {!openRow.correct && openRow.votes > 1
-                    ? " — and they got there by different routes"
+                    ? ", and they got there by different routes"
                     : ""}
                 </p>
                 {openChains.slice(0, 2).map((c) => (
@@ -385,7 +385,7 @@ export function Page7() {
                       chain {c.sample_index} · {tokens(c.own_tokens)} tokens
                       {c.truncated ? " · hit its cap and was made to commit" : ""}
                     </p>
-                    <p className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded bg-surface-raised p-2 text-xs leading-relaxed text-ink-muted">
+                    <p className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded bg-surface-raised p-2 font-code text-xs leading-relaxed text-ink-muted">
                       {tidyMath(c.trace)}
                     </p>
                   </div>
@@ -536,10 +536,10 @@ export function Page7() {
                         {pct(sp.truncated_rate)}
                       </td>
                       <td className="py-1.5 text-right font-mono tabular-nums text-compute">
-                        {free ? pct(free.accuracy) : "—"}
+                        {free ? pct(free.accuracy) : "n/a"}
                       </td>
                       <td className="py-1.5 text-right font-mono tabular-nums text-ink-muted">
-                        {free ? tokens(free.mean_tokens) : "—"}
+                        {free ? tokens(free.mean_tokens) : "n/a"}
                       </td>
                     </tr>
                   );
@@ -575,7 +575,7 @@ export function Page7() {
             <p className="text-sm text-ink-muted">
               The right answer was somewhere in the pile on {pct(H.coverage)} of problems. The vote
               returned it on {pct(H.plurality_accuracy)}. Counting can only ever return the answer
-              that comes up most, and the right answer is sometimes rare — on{" "}
+              that comes up most, and the right answer is sometimes rare: on{" "}
               {pct(H.tie_rate)} of problems the vote could not even break a tie.{" "}
               <em>
                 Page 8 keeps the same {H.n_chains} candidates and changes only the rule for picking

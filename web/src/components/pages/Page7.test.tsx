@@ -122,6 +122,15 @@ describe("Page 7 (frequency voting) component", () => {
     for (const b of badges) expect(b.textContent).not.toMatch(/\d+%/);
   });
 
+  // Deck-wide copy rule, and the reason it is only being added now: pages 5 and
+  // 6 carried this test and page 7 did not, so four em dashes survived a rebuild
+  // here that would have failed on either neighbour.
+  it("has no em dash or en dash anywhere in its copy", () => {
+    render(<Page7 />);
+    expect(document.body.textContent).not.toContain("\u2014");
+    expect(document.body.textContent).not.toContain("\u2013");
+  });
+
   it("does not reintroduce the simulation the refactor removed", () => {
     render(<Page7 />);
     const body = document.body.textContent ?? "";
