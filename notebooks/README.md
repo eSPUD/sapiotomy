@@ -60,6 +60,7 @@ The page ships what it draws and links what it drew it from.
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4).** `FULL` run complete and replayable; `derived.json` is committed to `web/data/page-06-derived.json`, and the notebook, `harness.py` and all 1,500 records ship as `web/public/notebooks/page-06-thinking-longer.zip`, linked from the page |
 | `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **built, step 1.** No run yet. Two axes: one pile of N full-length chains, subsampled for the N axis, and one fixed budget split N ways. Consumes page 6's item set, spend and curve; produces page 8's candidate pile |
 | `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** No run yet. Generates nothing: it opens page 7's `traces.jsonl` and applies selectors |
+| `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **built, step 1.** No run yet. Runs its own uncapped pass rather than reusing pages 6 or 7 (see below); grades it twice, once on the answer and once step by step |
 
 Pages 7 and 8 are one chain of dependency: page 7 needs page 6's `out/page_06/` on disk for its
 grid derivation and its temperature-0 cross-check, and page 8 needs page 7's `traces.jsonl` for
@@ -142,6 +143,8 @@ notebooks/
     page_08/
       scores.jsonl     # one logprob per candidate — the only thing this page computes
       derived.json, manifest.json, figure_*.png
+    page_09/
+      …same four, plus its traces carry per-step labels
     experiment_3/
       …plus tables.md, paste-ready
 ```
@@ -161,6 +164,14 @@ page 6's budget curve, because N copies of one greedy chain of B/N tokens is one
 B/N tokens, and its section 14 asserts the two agree. Page 8's majority rung must reproduce page
 7's vote on the same pile, and its section 13 asserts that. Those three cross-checks are where a
 drifting reimplementation would otherwise hide.
+
+**Page 9 is the one page that does not reuse the pile above it, and that is deliberate.** Page 6
+caps generation and forces the model to commit, so a broken step in one of its chains is *our*
+intervention rather than the model's error; page 7's high-N samples are budget-starved for the
+same reason. Grading either for bad reasoning would report our own experiment as the model
+reasoning badly. So page 9 runs its own uncapped pass on the same instrument and the same item
+band. It still consumes page 8, whose selector rung reads *selections* rather than traces and
+does not care how the candidates were produced.
 
 `out/` and `data/` are gitignored. Promoting a run to the page means copying its `derived.json`
 and `manifest.json` into `web/data/` as part of step 4, which is also where the cross-language
