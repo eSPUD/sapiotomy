@@ -60,12 +60,19 @@ The page ships what it draws and links what it drew it from.
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4).** `FULL` run complete and replayable; `derived.json` is committed to `web/data/page-06-derived.json`, and the notebook, `harness.py` and all 1,500 records ship as `web/public/notebooks/page-06-thinking-longer.zip`, linked from the page |
 | `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **built, step 1.** No run yet. Two axes: one pile of N full-length chains, subsampled for the N axis, and one fixed budget split N ways. Consumes page 6's item set, spend and curve; produces page 8's candidate pile |
 | `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** No run yet. Generates nothing: it opens page 7's `traces.jsonl` and applies selectors |
-| `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **built, step 1.** No run yet. Runs its own uncapped pass rather than reusing pages 6 or 7 (see below); grades it twice, once on the answer and once step by step |
+| `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **translated (step 4).** `FULL` run complete and replayable; `derived.json` is committed to `web/data/page-09-derived.json`, and the notebook, `harness.py` and all 1,580 graded chains ship as `web/public/notebooks/page-09-outcome-vs-process.zip`, linked from the page. Reuses page 7's pile under one filter — only chains the model ended itself — and grades each twice, on the answer and step by step |
 
-Pages 7 and 8 are one chain of dependency: page 7 needs page 6's `out/page_06/` on disk for its
-grid derivation and its temperature-0 cross-check, and page 8 needs page 7's `traces.jsonl` for
-every number it reports. Each degrades to a printed skip rather than an exception when the run
+Pages 7, 8 and 9 are one chain of dependency: page 7 needs page 6's `out/page_06/` on disk for its
+grid derivation and its temperature-0 cross-check, and pages 8 and 9 need page 7's `traces.jsonl` for
+every number they report. Each degrades to a printed skip rather than an exception when the run
 above it is missing, except page 8, which has nothing to do without page 7 and says so.
+
+**Page 9's download is self-contained, and deliberately so.** It reuses page 7's pile, but the
+`traces.jsonl` it ships beside its notebook *is* that pile after page 9's filter, so `REPLAY` falls
+back to it when `out/page_07/` is absent and recomputes every label from the trace text rather than
+reading the stored ones. It accepts that file either in `out/page_09/` or flat beside the notebook,
+which is how the zip unpacks. A reader who downloads it can re-derive the page without first
+downloading page 7.
 
 Page 6's run is now the one on disk, so page 7's dependency on it is satisfied.
 
