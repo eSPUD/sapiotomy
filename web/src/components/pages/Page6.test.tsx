@@ -180,6 +180,41 @@ describe("Page 6, figure 3: not every problem costs the same", () => {
   });
 });
 
+describe("Page 6, figure 4: refuse to let it stop", () => {
+  it("draws the extension arm and reports it as redistribution, not a gain", () => {
+    render(<Page6 />);
+    const fw = PAGE6.figureWait!;
+    expect(fw).not.toBeNull();
+    expect(body()).toContain("The other direction: refuse to let it stop");
+    for (const c of fw.curves) {
+      expect(body()).toContain(c.label.replace("Qwen2.5-", "").replace("-Instruct", ""));
+    }
+    expect(body()).toContain("redistributes rather than adds");
+    // Churn is the column that makes a flat line readable; without it the two
+    // very different nulls are indistinguishable.
+    expect(body()).toContain("answers moved");
+    const last = fw.curves[0].points[fw.curves[0].points.length - 1];
+    expect(body()).toContain(pct(last.churn));
+  });
+
+  it("never claims the injections help, because on this run they did not", () => {
+    const fw = PAGE6.figureWait!;
+    for (const c of fw.curves) {
+      const gain = (c.points[c.points.length - 1].accuracy - c.points[0].accuracy) * 100;
+      expect(gain).toBeLessThan(2);
+      expect(c.paired[c.paired.length - 1].p).toBeGreaterThan(0.05);
+    }
+    render(<Page6 />);
+    expect(body()).not.toMatch(/thinking longer (?:works|helps)/i);
+  });
+
+  it("ties the two arms together: k=0 reproduces the uncapped sweep", () => {
+    const [same, of] = PAGE6.figureWait!.integrity.k0_matches_uncapped;
+    expect(of).toBeGreaterThan(0);
+    expect(same).toBe(of);
+  });
+});
+
 describe("Page 6: provenance and the claims it is allowed to make", () => {
   it("names the run rather than flagging an authored demo", () => {
     render(<Page6 />);
@@ -235,10 +270,15 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     expect(body()).toContain(`what ${h.chains_at_min_budget} voters at ${pct(h.accuracy_at_min)} each are worth`);
   });
 
-  it("carries page 5's endpoints, so the two pages are one measurement", () => {
+  it("carries page 5's endpoints when the run had them beside it", () => {
     render(<Page6 />);
-    const e = PAGE6.handoff.page_5_endpoints!;
-    expect(body()).toContain(`${e.suppressed_tokens} tokens`);
-    expect(body()).toContain(pct(e.unconstrained));
+    const e = PAGE6.handoff.page_5_endpoints;
+    // The overlay is null when the generating run had no page 5 artifact on disk.
+    // The seam sentence stays either way; only the two numbers are conditional.
+    expect(body()).toContain("One measurement with page 5, not two.");
+    if (e) {
+      expect(body()).toContain(`${e.suppressed_tokens} tokens`);
+      expect(body()).toContain(pct(e.unconstrained));
+    }
   });
 });
