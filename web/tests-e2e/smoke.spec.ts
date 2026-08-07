@@ -76,7 +76,7 @@ test.describe("M0 smoke", () => {
   });
 
   test("arrow keys do not hijack a focused slider", async ({ page }) => {
-    await page.goto("/p/6"); // has a Samples slider
+    await page.goto("/p/6"); // has the token-budget slider
     const slider = page.getByRole("slider").first();
     await slider.focus();
     await page.keyboard.press("ArrowLeft");

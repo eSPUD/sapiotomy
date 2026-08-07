@@ -503,6 +503,66 @@ this section bounds the sentences they can support. Field names below refer to `
 - Any number from a published paper. Budget forcing gets an author-year attribution on the page with
   **no figures attached** — we show our curve, not theirs.
 
+### The extension arm, added after the first run
+
+The sweep above is the *terminating* half of budget forcing. Reviewing the built page against the
+page's title exposed the gap: capping asks how little a chain can get away with, which is an
+accounting question, while the page promises *what if it thought longer*. Section 11 of the
+notebook adds the other half — suppress the end of the turn, append `Wait`, continue, repeat *k*
+times — and `figure_wait` in `derived.json` is what it produces.
+
+**What makes this arm worth running rather than a stunt:** s1-32B is Qwen2.5-32B-Instruct after
+supervised fine-tuning on a thousand reasoning traces. Our checkpoints are that same family
+*without* that step, so injecting the word into them is precisely the ablation the paper leaves
+implicit: is the gain in the technique, or in the training? A flat or negative arm is therefore a
+result and not a failed reproduction, and it hands to pages 12 and 13 where the training is the
+subject.
+
+**Supported by this arm:**
+
+- What `figure_wait.curves[].points` shows, on these checkpoints, at this decoding, with the
+  injection landing where it lands. `paired[].fixed` and `paired[].broken` are the counts in each
+  direction against *k* = 0 on the same item, with an exact McNemar over the discordant pairs, so a
+  net near zero with both columns large reads as measured churn rather than as nothing happening.
+- That `k` = 0 is the same generation as the sweep's top budget, checked trace-by-trace, which is
+  what makes the two arms one experiment rather than two.
+
+**Churn is measured, not inferred, because an accuracy curve cannot read its own null.** A model
+that restates the answer it already had and a model that changes its mind and breaks even draw the
+same flat line and are completely different findings. `points[].churn` is the share whose committed
+answer moved at all, by the grader's own notion of equivalence, and `WAIT_VERDICT` separates *does
+nothing* from *churns without gaining* from *helps* on the numbers rather than by eye.
+
+**Not supported, and load-bearing:**
+
+- **This is not s1's intervention and the page may not say it reproduces one.** These checkpoints
+  have no thinking block, so the word lands after a finished answer rather than inside a
+  deliberation. That is closer to asking for a second pass than to extending a first one, and a
+  reader who knows the paper will notice if the page blurs it.
+- Any claim that "thinking longer does not work". What we measured is one word, on models not
+  trained to deliberate, at the end of the turn. A null here bounds *this* intervention.
+- Any comparison between the two arms as a fair trade of tokens. Capping and extending spend tokens
+  at different points in the chain, and only the extension arm ever exceeds the natural length.
+
+**What a null costs the page, and what fixes it.** Page 6 has already proved that thinking longer
+helps, on its own instrument: 7% at 128 tokens to 44% at 1,024. The extension arm asks a different
+question — whether you can force *more* thinking than the model wanted — so a null there completes
+the page's arc rather than contradicting it: too little hurts, enough helps, forcing past that buys
+nothing, therefore spend the budget differently, which is page 7. That is the third beat and it is
+where a null belongs.
+
+The real cost of a null is that *"Waits do not help Qwen2.5"* is a fact about one vendor's three
+checkpoints, and section 1's standard is shape, not level. The contrast arm is what converts it:
+the same word injected into a model that **does** deliberate, so the claim becomes about
+deliberation rather than about a vendor — the word needs something to extend, which is also why s1
+needed a thousand traces and not one word. Qwen3 with thinking on is the candidate, and the
+tokenizer objection that barred it from figure 2 does not apply, because this axis counts
+injections rather than tokens. It is **deliberately deferred** until the Qwen2.5 arm reports: if
+the injections help, the contrast is unnecessary, and if they do not, its size can be chosen
+against a real number. Its two known costs are a larger base allowance, since a thinking model's
+natural chain runs past 2,048 tokens, and a second suppression target, since the token to intercept
+is the closing think tag rather than the end of the turn.
+
 **Two things to check before the page ships**, because they can only be answered after a `FULL` run:
 
 1. Does the curve bend inside the grid? If `knee_budget` is None, extend the grid to 4,096 rather

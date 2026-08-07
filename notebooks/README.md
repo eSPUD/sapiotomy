@@ -51,13 +51,32 @@ The page ships what it draws and links what it drew it from.
 
 ## Contents
 
-**The page notebooks**, each with the three run modes below:
+**The page notebooks.** Pages 5 to 7 share the three run modes below; page 8's modes are the
+phases of its own experiment and are documented in its section 0.
 
 | File | Page | Status |
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** Run complete and replayable; `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
-| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | built and verified; no real run yet |
+| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4), both arms run.** The cap sweep and the extension arm are complete: 2,720 records, three checkpoints, committed to `web/data/page-06-derived.json` and drawn on the page. Injecting `Wait` when the model tries to stop redistributes rather than adds, so `figure_wait` reports paired fixed and broken counts and churn rather than a net |
+| `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **run complete (step 1 done).** 5,920 unique generations over 100 MATH-500 L4/5 items: one pile of 16 full-length chains at T=0.3, a greedy line, a diversity family at T=0.6/0.9/1.2 on 30 items, and a fixed budget split N ways. Voting beats bare CoT by 12 points (55% against 43%, McNemar p=0.0075); coverage is 78%, so the vote discards a correct answer on 23% of items. That pile is page 8's phase 0 bed |
+| `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** Runs end to end on page 7's completed pool with no verifier scored. Its modes are the phases of one experiment, not tiers of one run: `REPLAY` analyses, `SCORE` runs the verifier tiers over a pool that already exists, `GENERATE` draws page 8's own pool. `SCORE` is the decision point |
+| `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **built, step 1.** No run yet. Runs its own uncapped pass rather than reusing pages 6 or 7 (see below); grades it twice, once on the answer and once step by step |
+
+**Page 6 carries two arms of one technique.** Budget forcing can cut a chain short or refuse to let
+it end; the sweep does the first and section 11 does the second. They share the prompt, the items,
+the decoding and the grader, and `k` = 0 of the second reproduced all 94 untruncated traces of
+the first, so the two are one experiment. The second arm is the ablation s1 leaves
+implicit: that paper's model is this family *after* reasoning fine-tuning, and ours is the family
+without it.
+
+Page 7 needs page 6's `out/page_06/` on disk for its grid derivation and its temperature-0
+cross-check. Page 8 reads page 7's `traces.jsonl` as the pool for its **phase 0 pilot**, which is
+what makes the pilot free, and writes its own pool in `GENERATE` once that pilot has cleared its
+gate. Each degrades to a printed skip rather than an exception when the run above it is missing,
+except page 8 in `REPLAY` and `SCORE`, which have no pool to work on and say so.
+
+Page 6's run is now the one on disk, so page 7's dependency on it is satisfied.
 
 **The ablations** that chose page 5's instrument. One-off studies, not page artifacts, and they
 do not carry run modes — they sweep a roster once and write paste-ready tables.
@@ -79,12 +98,20 @@ jupyter lab
 
 Each page notebook has a `RUN_MODE` variable at the top with **three tiers**. Reproducing the
 *figures* and reproducing the *run* are separate choices, and the cheap one is the default.
+(Page 8 is the exception: its three modes are `REPLAY`, `SCORE` and `GENERATE`, because its
+expensive step is scoring candidates rather than making them.)
 
 | Mode | What it does | Hardware | Time |
 |---|---|---|---|
-| **`REPLAY`** *(default)* | draws every figure from the published generations | **none** | ~1 min |
+| **`REPLAY`** | draws every figure from the published generations | **none** | ~1 min |
 | `QUICK` | one 3B checkpoint on a reduced grid, on your own hardware | ~6 GB GPU | tens of minutes |
 | `FULL` | the grid the page ships, three checkpoints | 16 GB+ GPU | hours |
+
+**`REPLAY` is the default in the download, and the copy here is left at the mode that generated
+the shipped run.** The manifest records the notebook's sha256, so "this file made these numbers"
+is checkable rather than asserted, and flipping `RUN_MODE` in place would break it. The packaged
+copy is that file with one string changed, which is what a reader who wants the figures and not
+the afternoon should open.
 
 - **`REPLAY`** loads no model and downloads no weights. It is not a shortcut past the evidence: it
   adopts the published run's `RUN_ID`, asserts the traces cover the item set the notebook draws,
@@ -110,6 +137,8 @@ notebooks/
   harness.py
   page_05_how_to_reason.ipynb          # REPLAY / QUICK / FULL
   page_06_thinking_longer.ipynb        # REPLAY / QUICK / FULL
+  page_07_frequency_voting.ipynb       # REPLAY / QUICK / FULL
+  page_08_best_of_n.ipynb              # REPLAY / QUICK / FULL, and it generates nothing
   experiment_*.ipynb                   # the ablations, no run modes
   data/          # datasets fetched on first run (gitignored)
   out/
@@ -120,17 +149,41 @@ notebooks/
       figure_*.png     # reference renders; the page redraws these in the browser
     page_06/
       …same four
+    page_07/
+      …same four. Its traces.jsonl is also page 8's input
+    page_08/
+      traces.jsonl     # its own pool, written only in GENERATE
+      scores.jsonl     # one verifier score per candidate, per tier
+      derived.json, manifest.json, figure_*.png
+    page_09/
+      …same four, plus its traces carry per-step labels
     experiment_3/
       …plus tables.md, paste-ready
 ```
 
-Pages 5 and 6 share one trace-bank schema, so a record from either is readable by the same code:
-page 5 varies the **prompt** at unlimited length and keys its records by `condition`, page 6 fixes
-the prompt and varies the **length**, keying by `budget`. They also share an instrument — the same
-Qwen2.5 checkpoints over the same items — so page 5's two endpoints are the ends of the segment
-page 6 sweeps, and page 6's handoff cell overlays them. Everything else — `problem_id`, `trace`,
-`tokens`, `truncated`, `extracted_answer`, `correct`, `tokens_generated` — is common, and pages 7
-through 9 extend the same shape.
+Pages 5 to 8 share one trace-bank schema, so a record from any of them is readable by the same
+code. What differs is the key: page 5 varies the **prompt** at unlimited length and keys by
+`condition`; page 6 fixes the prompt and varies the **length**, keying by `budget`; page 7 varies
+**how many chains and how hot**, keying by `config_id` and `sample_index`; page 8 keys the same way
+and adds `scores.jsonl`, one row per (candidate, scorer). Everything
+else — `problem_id`, `trace`, `tokens`, `truncated`, `extracted_answer`, `correct`,
+`tokens_generated` — is common, and page 9 extends the same shape.
+
+They also share an instrument, the same Qwen2.5 checkpoints over the same items, and that is what
+lets each page check itself against the one before it. Page 5's two endpoints are the ends of the
+segment page 6 sweeps, and page 6's handoff cell overlays them. Page 7's temperature-0 line *is*
+page 6's budget curve, because N copies of one greedy chain of B/N tokens is one greedy chain of
+B/N tokens, and its section 14 asserts the two agree. Page 8's vote must reproduce page 7's on the
+same pile, and its section 13 asserts that. Those three cross-checks are where a
+drifting reimplementation would otherwise hide.
+
+**Page 9 is the one page that does not reuse the pile above it, and that is deliberate.** Page 6
+caps generation and forces the model to commit, so a broken step in one of its chains is *our*
+intervention rather than the model's error; page 7's high-N samples are budget-starved for the
+same reason. Grading either for bad reasoning would report our own experiment as the model
+reasoning badly. So page 9 runs its own uncapped pass on the same instrument and the same item
+band. It still consumes page 8, whose selector rung reads *selections* rather than traces and
+does not care how the candidates were produced.
 
 `out/` and `data/` are gitignored. Promoting a run to the page means copying its `derived.json`
 and `manifest.json` into `web/data/` as part of step 4, which is also where the cross-language
