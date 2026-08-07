@@ -60,7 +60,7 @@ phases of its own experiment and are documented in its section 0.
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** Run complete and replayable; `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4), both arms run.** The cap sweep and the extension arm are complete: 2,720 records, three checkpoints, committed to `web/data/page-06-derived.json` and drawn on the page. Injecting `Wait` when the model tries to stop redistributes rather than adds, so `figure_wait` reports paired fixed and broken counts and churn rather than a net |
 | `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **run complete (step 1 done).** 5,920 unique generations over 100 MATH-500 L4/5 items: one pile of 16 full-length chains at T=0.3, a greedy line, a diversity family at T=0.6/0.9/1.2 on 30 items, and a fixed budget split N ways. Voting beats bare CoT by 12 points (55% against 43%, McNemar p=0.0075); coverage is 78%, so the vote discards a correct answer on 23% of items. That pile is page 8's phase 0 bed |
-| `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** Runs end to end on page 7's completed pool with no verifier scored. Its modes are the phases of one experiment, not tiers of one run: `REPLAY` analyses, `SCORE` runs the verifier tiers over a pool that already exists, `GENERATE` draws page 8's own pool. `SCORE` is the decision point |
+| `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **translated (step 4).** Its own pool: 12,800 chains over the same 100 items at four temperatures, scored by five judges (64,000 judgements). Best-of-16 by a trained verifier takes 43% to 60%, 21 fixed against 4 broken, McNemar p=0.0009; against page 7's vote on identical candidates it is +4 at p=0.45, which is not a difference. `derived.json` is committed to `web/data/page-08-derived.json`, and the notebook, `harness.py`, all 12,800 traces and 70,960 scores ship as `web/public/notebooks/page-08-best-of-n.zip`. Its modes are the phases of one experiment rather than tiers of one run: `REPLAY` analyses, `SCORE` judges an existing pool, `GENERATE` makes one |
 | `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **built, step 1.** No run yet. Runs its own uncapped pass rather than reusing pages 6 or 7 (see below); grades it twice, once on the answer and once step by step |
 
 **Page 6 carries two arms of one technique.** Budget forcing can cut a chain short or refuse to let
@@ -71,10 +71,15 @@ implicit: that paper's model is this family *after* reasoning fine-tuning, and o
 without it.
 
 Page 7 needs page 6's `out/page_06/` on disk for its grid derivation and its temperature-0
-cross-check. Page 8 reads page 7's `traces.jsonl` as the pool for its **phase 0 pilot**, which is
-what makes the pilot free, and writes its own pool in `GENERATE` once that pilot has cleared its
-gate. Each degrades to a printed skip rather than an exception when the run above it is missing,
-except page 8 in `REPLAY` and `SCORE`, which have no pool to work on and say so.
+cross-check. Page 8 used page 7's `traces.jsonl` as the pool for its **phase 0 pilot**, which is
+what made that pilot free, and then generated its own; it now depends on page 7 only for the
+cross-check that both pages report the same vote on the same candidates. Each degrades to a
+printed skip rather than an exception when the run above it is missing.
+
+**Page 8's T=0.3 chains came back 98.8% byte-identical to page 7's** from the seed alone, the
+residual being GPU non-determinism. That is the strongest reproducibility statement the deck
+can make, and it is free: the two notebooks share a seed rule and a sampler, so agreeing was
+the only thing they could do.
 
 Page 6's run is now the one on disk, so page 7's dependency on it is satisfied.
 
