@@ -72,6 +72,16 @@ export function tidyMath(text: string): string {
     // words they were wrapping; a lone `**` is left alone in case it is an
     // exponent the model actually wrote.
     .replace(/\*\*(.+?)\*\*/g, "$1")
+    // `\pmod{n}` before `\pm`, or the modulus loses its head and reads "±od".
+    .replace(/\\pmod\{([^{}]*)\}/g, " (mod $1)")
+    .replace(/\\pmod\s+(\w+)/g, " (mod $1)")
+    .replace(/\\[bd]mod\b/g, " mod ")
+    .replace(/\\equiv\b/g, "≡")
+    .replace(/\\approx\b/g, "≈")
+    .replace(/\\infty\b/g, "∞")
+    .replace(/\\to\b/g, "→")
+    .replace(/\\in\b/g, "∈")
+    .replace(/\\(ldots|cdots|dots)\b/g, "…")
     .replace(/\\cdot/g, "·")
     .replace(/\\times/g, "×")
     .replace(/\\div/g, "÷")
@@ -80,6 +90,8 @@ export function tidyMath(text: string): string {
     .replace(/\\neq\b/g, "≠")
     .replace(/\\pm\b/g, "±")
     .replace(/\\[[\]()]/g, "")
+    // `~` is LaTeX's non-breaking space, not a character the reader should see.
+    .replace(/~/g, " ")
     .replace(/\$+/g, "")
     .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")

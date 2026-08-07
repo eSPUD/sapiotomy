@@ -48,8 +48,15 @@
  *   tie. The coverage line is page 8's ceiling arriving early.
  *
  *   Step 3 — the split, and it is the honest half. At a FIXED budget, splitting
- *   loses: N=1 51%, N=4 35%, N=16 8%. `splitting_a_fixed_budget_pays` is false
- *   and the page says so. Voting buys accuracy; the budget comes from somewhere.
+ *   loses: 46% / 35% / 8% at N = 1 / 4 / 16. `splitting_a_fixed_budget_pays` is
+ *   false and the page says so — but says WHY, because "splitting loses" alone
+ *   reads as "voting loses", which step 2 disproves. The cause is the cap: the
+ *   cut-off column runs 1% / 55% / 100%, so at N=16 every chain is force-answered
+ *   mid-thought and page 6 measured a chain that short at 7% alone. The table
+ *   groups its headers because that column is a property of the run and not a
+ *   score, and three bare percentages in a row invite reading it as one.
+ *   The N=1 row is the control: the cap barely binds, so both runs ARE the same
+ *   run and report the same 46%.
  *
  *   Step 4 — one number, no figure: 23% of problems where the model produced the
  *   right answer and the vote threw it away. That is page 8's whole subject and
@@ -153,24 +160,44 @@ function Tally({ onOpen, open }: { onOpen: (a: string) => void; open: string | n
 
 const W = 620;
 const HGT = 280;
-const MARGIN = { top: 26, right: 96, bottom: 46, left: 46 };
+const MARGIN = { top: 26, right: 104, bottom: 46, left: 46 };
 const IW = W - MARGIN.left - MARGIN.right;
 const IH = HGT - MARGIN.top - MARGIN.bottom;
 
-/** Accuracy against N, one pile subsampled. Log-2 x, because N doubles. */
+/**
+ * The page's main figure, and the one a reader can most easily misread.
+ *
+ * Three lines, and the SPACE BETWEEN TWO OF THEM is the point:
+ *   · the flat one is bare chain of thought, one greedy chain, and it is flat
+ *     because sixteen copies of one chain is one chain;
+ *   · the solid one is what the vote actually returns;
+ *   · the dashed one is what the model PRODUCED — how often the right answer was
+ *     somewhere among the chains, whether the vote found it or not.
+ *
+ * The band between the last two is what voting generated and discarded, which is
+ * page 8's entire subject, so it is shaded and named rather than left for the
+ * reader to infer. Earlier labels read "in the pile" / "the vote" / "T = 0",
+ * which is the notebook's vocabulary and not a reader's.
+ */
 function PileChart() {
   const pts = F2.hot.points;
   const ns = pts.map((p) => p.n);
-  const x = (n: number) =>
-    (Math.log2(n) / Math.log2(Math.max(...ns))) * IW;
+  const x = (n: number) => (Math.log2(n) / Math.log2(Math.max(...ns))) * IW;
   const y = (v: number) => IH - (v / 100) * IH;
   const line = (get: (p: (typeof pts)[number]) => number) =>
     pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(get(p) * 100)}`).join(" ");
   const cold = F2.cold.points[0].accuracy;
+  const last = pts[pts.length - 1];
+  // The shaded band: coverage along the top, the vote back along the bottom.
+  const band =
+    pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(p.coverage * 100)}`).join(" ") +
+    " " +
+    [...pts].reverse().map((p) => `L${x(p.n)},${y(p.accuracy * 100)}`).join(" ") +
+    " Z";
 
   return (
     <ChartFrame
-      title={`Share of 100 MATH-500 problems solved against the number of chains the vote sees, at temperature ${F2.hot.temperature}. One chain ${pct(pts[0].accuracy)}, sixteen chains ${pct(pts[pts.length - 1].accuracy)}. The right answer is somewhere in the pile on ${pct(pts[pts.length - 1].coverage)}. At temperature zero every chain is identical and the line is flat at ${pct(cold)}.`}
+      title={`Share of 100 MATH-500 problems solved against the number of chains the vote sees. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. The vote over sixteen sampled chains solves ${pct(last.accuracy)}. At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.`}
       width={W}
       height={HGT}
       margin={MARGIN}
@@ -191,28 +218,40 @@ function PileChart() {
         </text>
       ))}
 
-      {/* the ceiling: the right answer was generated */}
+      {/* what was generated and then discarded: page 8's whole subject */}
+      <path d={band} className="fill-wrong opacity-10" />
+
       <path d={line((p) => p.coverage)} fill="none" className="stroke-wrong" strokeWidth={1.4} strokeDasharray="4 3" />
-      <text x={IW + 6} y={y(pts[pts.length - 1].coverage * 100) + 4} className="fill-wrong text-[10px]">
-        in the pile
+      <text x={IW + 6} y={y(last.coverage * 100) - 2} className="fill-wrong text-[10px]">
+        <tspan x={IW + 6} dy="0">at least one</tspan>
+        <tspan x={IW + 6} dy="11">chain is right</tspan>
       </text>
 
-      {/* temperature zero: N copies of one greedy chain */}
-      <line x1={0} x2={IW} y1={y(cold * 100)} y2={y(cold * 100)} className="stroke-ink-muted" strokeWidth={1.4} strokeDasharray="2 3" />
-      <text x={IW + 6} y={y(cold * 100) + 4} className="fill-ink-muted text-[10px]">
-        T = 0
-      </text>
-
-      {/* the vote */}
       <path d={line((p) => p.accuracy)} fill="none" className="stroke-compute" strokeWidth={2.4} />
       {pts.map((p) => (
         <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy * 100)} r={3.4} className="fill-compute" />
       ))}
-      <text x={IW + 6} y={y(pts[pts.length - 1].accuracy * 100) + 4} className="fill-compute text-[10px] font-semibold">
-        the vote
+      <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute text-[10px] font-semibold">
+        <tspan x={IW + 6} dy="0">the vote</tspan>
+        <tspan x={IW + 6} dy="11">returns it</tspan>
       </text>
 
-      {/* the dip at N=2 is the tie rule, not noise */}
+      <line x1={0} x2={IW} y1={y(cold * 100)} y2={y(cold * 100)} className="stroke-ink-muted" strokeWidth={1.4} strokeDasharray="2 3" />
+      <text x={IW + 6} y={y(cold * 100) + 4} className="fill-ink-muted text-[10px]">
+        <tspan x={IW + 6} dy="0">one greedy</tspan>
+        <tspan x={IW + 6} dy="11">chain</tspan>
+      </text>
+
+      {/* name the band in the middle of the chart, where the eye already is */}
+      <text
+        x={x(pts[Math.max(pts.length - 2, 0)].n)}
+        y={(y(last.coverage * 100) + y(last.accuracy * 100)) / 2}
+        textAnchor="middle"
+        className="fill-wrong text-[10px] font-semibold"
+      >
+        generated, then thrown away
+      </text>
+
       {pts[1] ? (
         <text x={x(pts[1].n)} y={y(pts[1].accuracy * 100) + 18} textAnchor="middle" className="fill-ink-muted text-[10px]">
           ties
@@ -363,6 +402,14 @@ export function Page7() {
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <PileChart />
+            <p className="text-xs text-ink-muted">
+              Three lines. The flat one is one chain of chain-of-thought — flat because sixteen
+              copies of one greedy chain is still one chain. The solid one is what the vote
+              returns. The dashed one is what the model <em>produced</em>: how often the right
+              answer was somewhere among the chains, whether the vote found it or not. The shaded
+              band between the last two is the answer the model had and the vote discarded, and it
+              widens as you add chains.
+            </p>
             <div className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-ink">
               One chain of chain-of-thought, decoded greedily, solves{" "}
               <strong className="font-mono">{pct(F2.gain.bare_cot)}</strong>. The vote over{" "}
@@ -429,15 +476,32 @@ export function Page7() {
             <table className="w-full text-sm">
               <caption className="pb-2 text-left text-xs text-ink-muted">
                 The same number of chains, capped to share {tokens(M.split.budget_total)} tokens
-                against allowed to finish. Read the cut-off column before concluding anything
-                about the vote.
+                against allowed to run to their own end. <strong>Cut off</strong> is the share of
+                that run&apos;s chains that reached their cap and were made to commit
+                mid-thought — a property of the run, not a score.
               </caption>
               <thead>
+                <tr className="text-xs uppercase tracking-wide text-ink-muted">
+                  <th className="py-1 text-left font-semibold" rowSpan={2}>
+                    chains
+                  </th>
+                  <th
+                    className="border-b border-l border-grid px-2 pb-1 text-center font-semibold text-wrong"
+                    colSpan={2}
+                  >
+                    capped to share {tokens(M.split.budget_total)}
+                  </th>
+                  <th
+                    className="border-b border-l border-grid px-2 pb-1 text-center font-semibold text-compute"
+                    colSpan={2}
+                  >
+                    allowed to finish
+                  </th>
+                </tr>
                 <tr className="border-b border-grid text-xs uppercase tracking-wide text-ink-muted">
-                  <th className="py-1 text-left font-semibold">chains</th>
-                  <th className="py-1 text-right font-semibold">capped</th>
+                  <th className="border-l border-grid py-1 pl-2 text-right font-semibold">solved</th>
                   <th className="py-1 text-right font-semibold">cut off</th>
-                  <th className="py-1 text-right font-semibold">allowed to finish</th>
+                  <th className="border-l border-grid py-1 pl-2 text-right font-semibold">solved</th>
                   <th className="py-1 text-right font-semibold">tokens</th>
                 </tr>
               </thead>
@@ -447,13 +511,13 @@ export function Page7() {
                   return (
                     <tr key={sp.n} className="border-b border-grid/50">
                       <td className="py-1.5 font-mono tabular-nums text-ink">{sp.n}</td>
-                      <td className="py-1.5 text-right font-mono tabular-nums text-wrong">
+                      <td className="border-l border-grid py-1.5 pl-2 text-right font-mono tabular-nums text-wrong">
                         {pct(sp.accuracy)}
                       </td>
                       <td className="py-1.5 text-right font-mono tabular-nums text-ink-muted">
                         {pct(sp.truncated_rate)}
                       </td>
-                      <td className="py-1.5 text-right font-mono tabular-nums text-compute">
+                      <td className="border-l border-grid py-1.5 pl-2 text-right font-mono tabular-nums text-compute">
                         {free ? pct(free.accuracy) : "—"}
                       </td>
                       <td className="py-1.5 text-right font-mono tabular-nums text-ink-muted">
@@ -464,6 +528,12 @@ export function Page7() {
                 })}
               </tbody>
             </table>
+            <p className="text-xs text-ink-muted">
+              Read the first row as the control: at one chain the cap almost never binds, only{" "}
+              {pct(F2.split[0].truncated_rate)} are cut off, and the two runs are the same run —
+              which is why they report the same {pct(F2.split[0].accuracy)}. Everything that
+              follows is the cap starting to bite.
+            </p>
             <p className="text-ink">
               Dividing a fixed budget does two things at once: it adds chains{" "}
               <em>and</em> it shortens them. On this band the second swamps the first. At sixteen

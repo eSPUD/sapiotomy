@@ -50,6 +50,18 @@ describe("Page 7 (frequency voting) component", () => {
     ).toBeInTheDocument();
   });
 
+  it("names the three lines in plain English, not in the notebook's vocabulary", () => {
+    render(<Page7 />);
+    // "in the pile" / "the vote" / "T = 0" is how the notebook talks. A reader needs
+    // to be told which line is what the model produced and which is what the vote kept.
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/at least one\s*chain is right/i);
+    expect(body).toMatch(/the vote\s*returns it/i);
+    expect(body).toMatch(/one greedy\s*chain/i);
+    // and the band between the last two must be named, because it is page 8
+    expect(body).toMatch(/generated, then thrown away/i);
+  });
+
   it("explains the flat temperature-zero line rather than hiding it", () => {
     render(<Page7 />);
     expect(screen.getByText(/every chain is the same chain/i)).toBeInTheDocument();
