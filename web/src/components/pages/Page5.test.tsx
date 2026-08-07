@@ -68,6 +68,26 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     expect(body()).toContain("it is the thinking");
     expect(body()).toContain("every step is text the model has to write before it can write");
   });
+
+  // The page turns on the ask having stopped being necessary, which a reader
+  // cannot feel unless the ask is named first. Quoted off the manifest, so the
+  // string on the page is the string the run actually appended.
+  it("names the classic ask, in the run's own words", () => {
+    render(<Page5 />);
+    expect(body()).toContain("The classic way to get one is to ask");
+    expect(body()).toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
+  });
+
+  // Two badges and nothing else. A gloss here is duplication the reader pays
+  // for twice, once in reading and once in the whitespace it opens beside a
+  // four-line step, since each note sets its own grid row's height.
+  it("carries the citations with no gloss around them", () => {
+    render(<Page5 />);
+    const note = screen.getByText(/cited for the technique/i).closest("aside")!;
+    expect(within(note).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
+    expect(within(note).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
+    expect(note.querySelectorAll("p")).toHaveLength(1); // the kicker, and no prose
+  });
 });
 
 describe("Page 5, figure 1: the chain is already there", () => {
@@ -86,12 +106,15 @@ describe("Page 5, figure 1: the chain is already there", () => {
     expect(screen.queryByText(tidyMath(BARE.steps[0].text))).toBeNull();
   });
 
-  // A figure the reader has not been told the shape of is a picture, not
-  // evidence: the intro names the model, the manipulation and what to press.
-  it("introduces the specimen before showing it", () => {
+  // The step's premise, and the reason its heading is "what it looks like"
+  // rather than a claim: the technique is not being demonstrated here, it is
+  // already in the weights and the figure is a look at what that produces.
+  it("says the model does this natively before showing the trace", () => {
     render(<Page5 />);
-    expect(body()).toContain("a single MATH-500 problem put twice to Qwen2.5-3B-Instruct");
-    expect(body()).toContain(`${BARE.tokensGenerated} tokens of chain arrive anyway`);
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
+    expect(headings[1]).toContain("What it looks like");
+    expect(body()).toContain("does this natively");
+    expect(body()).toContain(`writes ${BARE.tokensGenerated} tokens of chain before it answers`);
   });
 
   // The trace and the prompt are listings of what a machine read and wrote, so
@@ -206,11 +229,14 @@ describe("Page 5, figure 3: the floor is flat", () => {
     reducedMotion = true;
   });
 
-  it("says why a third figure exists and how to read the bars", () => {
+  // The bars get longer going down for a reason that is not this figure's
+  // subject, so the intro says so and tells the reader what to discount.
+  it("says why a third figure exists and which end of the bars to read", () => {
     render(<Page5 />);
-    expect(body()).toContain("could be a quirk of that checkpoint");
-    expect(body()).toContain("the left segment is what that model keeps when it is forbidden");
-    expect(body()).toContain("where the left segments end, not where the bars do");
+    expect(body()).toContain("Maybe the 3B is just an odd checkpoint");
+    expect(body()).toContain("what it still gets right with the working forbidden");
+    expect(body()).toContain("Bigger models are better at maths, so the bars get longer");
+    expect(body()).toContain("Watch where the left piece ends instead");
   });
 
   it("compares named checkpoints and never puts size on an axis", () => {
@@ -252,9 +278,9 @@ describe("Page 5: provenance and what the page may claim", () => {
   it("states the instruction null as a bound and hands it to page 12", () => {
     render(<Page5 />);
     expect(body()).toContain(
-      `${PAGE5.figure2.instruction.fixed} problems fixed and ${PAGE5.figure2.instruction.broken} broken`,
+      `${PAGE5.figure2.instruction.fixed} fixed, ${PAGE5.figure2.instruction.broken} broken`,
     );
-    expect(body()).toContain("a bound and not a zero");
+    expect(body()).toContain("A bound, not a zero");
     expect(body()).toContain("page 12 opens on it");
   });
 
@@ -262,28 +288,35 @@ describe("Page 5: provenance and what the page may claim", () => {
   // saying why, because "we tried it and it did nothing" is a different claim.
   it("says why the worked-example rungs are not on the page", () => {
     render(<Page5 />);
-    expect(body()).toContain("answer-format rate far more than the score");
+    expect(body()).toContain("Worked examples in the prompt did not help either");
+    expect(body()).toContain("answer-format rate");
   });
 
-  it("cites the techniques and says the numbers are ours", () => {
+  // The plate above the figures carries "ours, not a redrawing"; the badges
+  // carry the technique. Neither needs restating beside the other.
+  it("cites the techniques and says the numbers are ours exactly once", () => {
     render(<Page5 />);
     expect(screen.getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
-    expect(body()).toContain("Every number on this page is ours, not theirs.");
+    expect(body()).toContain("one measurement of ours, not a redrawing of anyone");
   });
 
   // The three-paragraph footer these came from was doing the notebook's job.
-  // What survives sits in the margin beside the figure it qualifies.
+  // What survives sits in the margin beside the figure it qualifies, and only
+  // what a reader cannot work out from that figure: method went back to the
+  // download, including the grading provenance, which is true and not needed
+  // while looking at 100 squares.
   it("carries the limits in the margin rather than in a footer", () => {
     render(<Page5 />);
     expect(body()).toMatch(/traces hit the token cap, which biases the headline conservative/);
     expect(body()).toContain("is one phrasing and another would move the floor");
     expect(body()).toContain("never whether the working was sound");
-    expect(body()).toContain("the grading is not ours to defend");
+    expect(body()).not.toContain("reasoning-from-scratch");
   });
 
   it("hands page 6 the token multiple rather than a size claim", () => {
     render(<Page5 />);
+    expect(body()).toContain("You have probably done this before");
     expect(body()).toContain(`${PAGE5.close.blurt_median_tokens} tokens`);
     expect(body()).toContain(`${PAGE5.close.bare_median_tokens} tokens`);
     expect(body()).toContain(`×${PAGE5.close.token_multiple}`);

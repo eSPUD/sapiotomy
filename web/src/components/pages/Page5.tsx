@@ -23,20 +23,31 @@
  * are meaningless without their denominator: "43" is not a claim, "43 of the
  * same 100 problems" is.
  *
- *   Step 1 — no figure and no card, three sentences. What a chain of thought IS,
+ *   Step 1 — no figure and no card, four sentences. What a chain of thought IS,
  *   told with the reader's OWN numbers: page 1's 17 × 24 and the three results
  *   they built it from, pulled live off `SYSTEMS.slow` so the callback cannot
- *   drift from the page it calls back to. The load-bearing clause is the last
- *   one, that for a model the chain is the thinking rather than a report of it,
- *   because it is the only claim in this step that is not measured and it is
- *   what makes reasoning something you can put a budget on. Resist re-narrating
- *   page 1 or page 4 here: the lede already has the road, and page 6 shows the
- *   chain being cut off two clicks later, so a forward-pointer is padding.
- *   Wei and Kojima are named in the margin, where the TECHNIQUE is the subject.
+ *   drift from the page it calls back to. Two clauses are load-bearing and both
+ *   are the payload of the step. That for a model the chain is the thinking
+ *   rather than a report of it, which is the only unmeasured claim here and what
+ *   makes reasoning something you can put a budget on. And that the classic way
+ *   to get one is to ASK, quoting the `zero_shot_cot` suffix off the manifest,
+ *   because the whole page turns on that ask having stopped being necessary and
+ *   the reader cannot feel that unless the ask is named first. Resist
+ *   re-narrating page 1 or page 4 here: the lede already has the road, and page 6
+ *   cuts the chain off two clicks later, so a forward-pointer is padding.
  *
- *   Step 2 — figure 1, the specimen. One problem, one model, one decoding
- *   setting, two prompts that differ only by a suffix. Tabs are ordered to match
- *   figure 2's bars and the reader lands on `bare`. A "see the full prompt"
+ *   The margin note beside it is TWO BADGES AND NOTHING ELSE. Wei and Kojima are
+ *   cited for the technique and the plate above already says every number is
+ *   ours, so a gloss on either is duplication that a reader pays for twice: once
+ *   in reading, and once in the whitespace it opens beside a four-line step,
+ *   since each note sets its own grid row's height.
+ *
+ *   Step 2 — figure 1, the specimen, and the step where the page's premise lands:
+ *   this model does it NATIVELY, and the figure is a look at what that produces
+ *   rather than a demonstration of a technique working. One problem, one model,
+ *   one decoding setting, two prompts that differ only by a suffix. Tabs are
+ *   ordered to match figure 2's bars and the reader lands on `bare`. A "see the
+ *   full prompt"
  *   disclosure shows the exact strings, with the suffix highlighted, so the
  *   reader can confirm that nothing in the bare prompt asks for working. Prompt
  *   and trace are both set in `font-code`: they are listings of what a machine
@@ -67,6 +78,13 @@
  * the margin is only what a reader needs while looking at THAT figure, plus the
  * two things the claims contract requires on the page in words (the instruction
  * null as a bound, and why the exemplar rungs are absent).
+ *
+ * The notes have been cut twice and the rule that survived both is: a note may
+ * say what a reader cannot work out from the figure beside it, and nothing else.
+ * The grading provenance went back to the notebook under that rule even though
+ * it is true and load-bearing, because a reader looking at 100 squares does not
+ * need to know whose `grade_answer` drew them. Anything that reads as method
+ * belongs in the download.
  *
  * Load-bearing and easy to lose:
  *   · the notebook download is the whole point of the pipeline. The link carries
@@ -451,15 +469,11 @@ export function Page5() {
             running from the question to the goal. What is strange in a language model is that the
             thread is not a report of the thinking,{" "}
             <strong>it is the thinking</strong>: every step is text the model has to write before it
-            can write the next one.
+            can write the next one. The classic way to get one is to ask, by appending{" "}
+            <span className="font-code">{M.conditions.zero_shot_cot.trim()}</span> to the question.
           </p>
         </section>
         <Note kicker="Cited for the technique">
-          <p>
-            Wei et al. 2022 put worked chains in the prompt. Kojima et al. 2022 found one appended
-            sentence was often enough.
-          </p>
-          <p>Every number on this page is ours, not theirs.</p>
           <div className="flex flex-wrap gap-2">
             <CitationBadge citation={WEI} />
             <CitationBadge citation={KOJIMA} />
@@ -469,18 +483,18 @@ export function Page5() {
         {/* Step 2 — figure 1 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            2. A chain nobody asked for
+            2. What it looks like
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               one problem · one model · two prompts
             </span>
           </h2>
           <p className="text-ink-muted">
-            Here is one, from a model you can download. Below is a single MATH-500 problem put twice
-            to Qwen2.5-3B-Instruct, at the same decoding settings. The two prompts are the same
-            string apart from what is appended at the end: the first stops at the question, the
-            second adds an order to skip the working and answer. Pick a prompt and step through what
-            the model actually wrote. Nothing in the first one asks for a chain, and{" "}
-            {F1.tabs[bareIndex].tokensGenerated} tokens of chain arrive anyway.
+            A model you can download in 2026 does this natively. Nothing has to ask it to: given a
+            hard maths question and nothing else, Qwen2.5-3B-Instruct writes{" "}
+            {F1.tabs[bareIndex].tokensGenerated} tokens of chain before it answers. Below is one
+            MATH-500 problem put to it twice, at the same decoding settings, on two prompts that are
+            the same string apart from what is appended at the end. Pick a prompt and step through
+            what it wrote.
           </p>
           <section
             aria-label="One problem, two prompts"
@@ -732,18 +746,6 @@ export function Page5() {
             One square is one problem and the counts are measured, but which square a problem sits
             in is arrangement, not data.
           </p>
-          <p>
-            Answers are extracted and graded by ch03&apos;s{" "}
-            <a
-              className="underline underline-offset-2"
-              href="https://github.com/rasbt/reasoning-from-scratch"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              reasoning-from-scratch
-            </a>{" "}
-            functions, used unchanged, so the grading is not ours to defend.
-          </p>
         </Note>
 
         {/* Step 4 — figure 3 */}
@@ -755,11 +757,11 @@ export function Page5() {
             </span>
           </h2>
           <p className="text-ink-muted">
-            A result from one checkpoint could be a quirk of that checkpoint, so the whole contrast
-            was run again on the 1.5B and the 7B. Each bar below is one model&apos;s score on those
-            same {F2.bare.n} problems, split in two: the left segment is what that model keeps when
-            it is forbidden to reason, and the right segment is what the working adds on top. The
-            thing to watch is where the left segments end, not where the bars do.
+            Maybe the 3B is just an odd checkpoint. So the same test ran on its smaller and larger
+            siblings, on the same {F2.bare.n} problems. Each bar below is one model&apos;s score,
+            cut in two: on the left, what it still gets right with the working forbidden; on the
+            right, what the working adds. Bigger models are better at maths, so the bars get longer
+            going down. Watch where the left piece ends instead.
           </p>
           <section
             aria-label="The floor is flat"
@@ -856,8 +858,8 @@ export function Page5() {
               </div>
             </div>
             <p className="text-ink">
-              You have done this. You told the model to skip the working and answer, and the answer
-              got worse.{" "}
+              You have probably done this before. When telling the model to skip the working and
+              answer, the answer gets worse.{" "}
               <em className="text-ink-muted">
                 Page 6 asks how much of that working it actually needed, and what happens when you
                 cut it off mid-sentence.
@@ -865,19 +867,16 @@ export function Page5() {
             </p>
           </div>
         </section>
-        <Note kicker="Measured, not plotted">
+        <Note kicker="Also measured">
           <p>
-            A third prompt was run and is not drawn: adding &ldquo;Explain step by step.&rdquo; to a
-            model that already reasons moved the score by {F2.instruction.deltaPts.toFixed(1)}{" "}
-            points,{" "}
-            {F2.instruction.fixed} problems fixed and {F2.instruction.broken} broken, ±
-            {F2.instructionBoundPts.toFixed(1)} points. That is a bound and not a zero, it is a
-            result about training rather than prompting, and page 12 opens on it.
+            Asking, on a model that already reasons, moved the score by{" "}
+            {F2.instruction.deltaPts.toFixed(1)} points: {F2.instruction.fixed} fixed,{" "}
+            {F2.instruction.broken} broken, ±{F2.instructionBoundPts.toFixed(1)}. A bound, not a
+            zero, and page 12 opens on it.
           </p>
           <p>
-            The worked-example rungs are off the ladder for a related reason: across our ablations
-            they moved the <span className="font-code">{"\\boxed{}"}</span> answer-format rate far
-            more than the score.
+            Worked examples in the prompt did not help either. Mostly they moved the{" "}
+            <span className="font-code">{"\\boxed{}"}</span> answer-format rate.
           </p>
         </Note>
       </div>
