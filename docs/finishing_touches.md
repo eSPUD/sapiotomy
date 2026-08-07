@@ -144,17 +144,64 @@ of these six models. That is the gate working, and it is worth saying so somewhe
 
 ---
 
-## 5. Pages 6 and 7 have page 5's old problems
+## 5. Page 7 has page 5's old problems
 
-**Status:** in flight. Page 5 is done ([`b43618d`](../)); 6 and 7 are the rest of this branch.
+**Status:** in flight. Pages 5 and 6 are done; page 7 is the rest of this branch.
 
-Same three faults page 5 had: a footer doing the notebook's job, subsection titles that name a
-conclusion instead of the content, and figures that arrive with no sentence saying what they are a
-picture of. Page 6 additionally carries the precision label problem in entry 2.
+Same three faults: a footer doing the notebook's job, subsection titles that name a conclusion
+instead of the content, and figures that arrive with no sentence saying what they are a picture of.
 
 ---
 
-## 6. Small, verified, unglamorous
+## 6. Page 6's budget grid spends two of five stops on dead travel
+
+**Status:** needs a GPU re-run, so it is not in the copy pass.
+
+The dial is `{128, 256, 512, 1024, 2048}`. The action is entirely between 128 and 1024:
+
+| budget | 128 | 256 | 512 | 1024 | 2048 |
+|---|---|---|---|---|---|
+| solved | 7 | 17 | 35 | **44** | 43 |
+| gain | — | +10 | +18 | +9 | **−1** |
+| chains still hitting the cap | 100% | 92% | 55% | 16% | 6% |
+
+Two of five stops sit in the flat tail, so a reader drags through a third of the control's travel
+for one problem's worth of change. Re-spacing to something like `{64, 128, 192, 256, 384, 512, 768,
+1024}` with 2048 kept as the endpoint puts the resolution in the knee. That is ~8 budgets × 100
+items × 3 models ≈ 2,400 records against the current 1,500, so roughly 1.6× the run.
+
+**Going fully continuous is not available, and the reason is worth recording.** Greedy decoding is
+deterministic, so the 2048-token trace contains every shorter prefix exactly, and the page already
+relies on this (`traceZones` builds the greyed continuation by slicing `referenceTokens`). So the
+*trace* could slide continuously for free. The *verdict* could not: at cap N we close the block,
+append the forcing stem and generate the answer, which is a forward pass that exists only at the
+measured stops. A continuous dial would slide the cut smoothly and snap the verdict, which is a lie
+unless heavily labelled. Denser discrete stops, not a continuous slider.
+
+---
+
+## 7. Page 6's extension arm encodes the boring half of its result at full size
+
+**Status:** deliberately left alone pending a decision. Flagged because it is a presentation
+problem, not a data problem.
+
+`Wait` injection on the 3B: 43% → 42% over three injections, **30% of answers changed**, 9 fixed
+and 10 broken, at 1.8× the tokens. The finding is that forcing a model to keep going *redistributes
+rather than adds*, which is a rarer and more useful result than a small positive would have been,
+and it is the direct confirmation of section 3's diagnosis: chains that stop early and are wrong do
+not improve when you refuse to let them stop.
+
+The figure draws three nearly flat accuracy lines at full size and puts churn underneath at 20%
+opacity, so it reads as "nothing happened" when the truth is "a great deal happened and none of it
+helped". The fixed/broken counts, which are the actual result, are columns 5 and 6 of a table.
+
+Inverting it would mean leading with what moved (9 fixed / 10 broken / 81 unchanged, in page 5's
+paired-flip vocabulary) and demoting the accuracy line to a small inset that says the net was zero.
+Not done because the section was explicitly held for review.
+
+---
+
+## 8. Small, verified, unglamorous
 
 - `web/data/PROVENANCE.md` should name which pages share the `9ab2b579` item draw. Pages 5, 6 and 7
   all score it and nothing on the pages says they are the same problems, which is the single most

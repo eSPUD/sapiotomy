@@ -98,15 +98,33 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
     expect(body()).toContain(`Final answer: ${tidyMath(OPENING.byBudget[0].extractedAnswer)}`);
   });
 
-  it("carries the inset as a reliability comparison, not an overshoot one", () => {
+  // The figure opens on a sentence naming what the dial IS and what happens at
+  // the cap, because a starved model still producing a gradeable answer is
+  // otherwise inexplicable.
+  it("explains the forcing before the reader touches the dial", () => {
     render(<Page6 />);
-    // The measured finding is that a request misses the line on a quarter of
-    // items while the cap misses on none. A caption claiming the soft arm
-    // overspends would be describing the expectation, not the run.
-    expect(body()).toContain(`${pct(F1.inset.soft.over_budget_rate)} over`);
-    expect(body()).toContain(`${pct(F1.inset.hard.over_budget_rate)} over`);
+    expect(body()).toContain("max_new_tokens");
+    expect(body()).toContain(PAGE6.manifest.forcing.stem.trim());
+    expect(body()).toContain("This one dial drives all three figures on the page.");
+  });
+
+  // The listing face, as page 5 settled it: the question and the trace are what
+  // a machine read and wrote, and the broadsheet serif is unreadable at length.
+  it("sets the question and the trace in mono", () => {
+    const { container } = render(<Page6 />);
+    const q = container.querySelector("p.font-code");
+    expect(q?.textContent).toBe(tidyMath(OPENING.question));
+  });
+
+  // The inset was a two-bar chart with one bar at zero, defending a method
+  // choice nobody had questioned, for a third of the figure's height. The
+  // reliability fact survives as one line in the margin.
+  it("keeps the cap-versus-request fact without spending a chart on it", () => {
+    render(<Page6 />);
+    expect(body()).toContain(`overran on ${pct(F1.inset.soft.over_budget_rate)} of items`);
     expect(F1.inset.hard.over_budget_rate).toBe(0);
-    expect(body()).toContain("A prompt is a preference, not a cap.");
+    expect(body()).toContain("overran on none");
+    expect(body()).not.toContain("A prompt is a preference, not a cap.");
   });
 });
 
@@ -127,19 +145,22 @@ describe("Page 6, figure 2: the same dial, every problem", () => {
     expect(body()).toContain(PAGE6.procedure);
   });
 
+  // The heights bar is load-bearing and cannot go in the notebook, because the
+  // figure invites the comparison on screen. It moved from the retired footer
+  // into the margin beside the curve it qualifies.
   it("names every checkpoint but claims shape rather than level", () => {
     render(<Page6 />);
     for (const c of F2.curves) {
       expect(body()).toContain(c.label.replace("Qwen2.5-", "").replace("-Instruct", ""));
     }
     expect(body()).toContain("the shape is the part that is not about any of these checkpoints");
-    expect(body()).toContain("nothing here is a statement about scale");
+    expect(body()).toContain("Read the shape rather than the heights");
+    expect(body()).toContain("a level comparison is barred twice over");
   });
 
   it("attributes budget forcing with no number of theirs attached", () => {
     render(<Page6 />);
-    expect(body()).toContain("Muennighoff et al. 2025");
-    expect(body()).toContain("Every number on this page is ours");
+    expect(screen.getByRole("link", { name: /Muennighoff et al. 2025/ })).toBeInTheDocument();
     // The retired page redrew an AIME24 curve for a 32B checkpoint. Nothing on
     // this page may carry a reported number again.
     expect(body()).not.toContain("AIME");
@@ -147,36 +168,62 @@ describe("Page 6, figure 2: the same dial, every problem", () => {
   });
 });
 
-describe("Page 6, figure 3: not every problem costs the same", () => {
-  it("names the never-flipping band as this grid's limit, never as unsolvable", () => {
+describe("Page 6, figure 3: it stops mattering before you run out of dial", () => {
+  // The claim the rebuilt figure exists to make, and the one the old flip-point
+  // staircase could not: these chains were not cut short, they finished.
+  it("says the never-solved ran out of ideas rather than out of room", () => {
+    render(<Page6 />);
+    expect(body()).toContain(
+      `${F3.neverFlipCount - F3.censoredCount} of these problems did not run out of room, they ran out of ideas`,
+    );
+    expect(body()).toContain(`a median of ${F3.medianLengthNever} tokens`);
+    // Only chains still running when the cap arrived are censored, and their
+    // length is a floor rather than a value.
+    expect(F3.censoredCount).toBe(F3.items.filter((d) => d.truncated_at_max).length);
+    expect(body()).toContain(`still running at ${TOP}, so its length is a floor`);
+  });
+
+  it("names the never-solved band as this grid's limit, never as unsolvable", () => {
     render(<Page6 />);
     expect(body()).toContain(`${F3.neverFlipCount} of ${F3.items.length}`);
-    expect(body()).toContain("no budget in this grid reaches");
-    expect(body()).toContain("The dial runs out before they do.");
     // The word appears once, inside its own disclaimer, and nowhere else.
     expect(body()).toContain("never a claim that those problems are unsolvable");
     expect(body().match(/unsolvable/g)).toHaveLength(1);
+    expect(body()).toContain("Page 7 changes the decoding");
   });
 
-  it("loads a bundled problem into figure 1 when its row is picked", () => {
+  // The figure places each problem by a MEASURED quantity, so the dial line
+  // separates finished from still-being-cut and its two readouts have to track
+  // the notebook's own truncation series.
+  it("reads the truncation series off the dial as it moves", () => {
+    render(<Page6 />);
+    for (const [i, b] of B.entries()) {
+      drag(i);
+      const inside = F3.items.filter((d) => d.tokens_at_max <= b).length;
+      expect(body()).toContain(`${inside} finished on their own`);
+      expect(body()).toContain(`${F3.items.length - inside} still being cut`);
+      // the same fact figure 2 reports as a truncation rate
+      expect(F3.items.length - inside).toBe(
+        Math.round(F2.primary.points[i].truncation_rate * F3.items.length),
+      );
+    }
+  });
+
+  // Buttons name what each problem demonstrates rather than indexing a sort the
+  // reader cannot see, which is what the retired staircase's buttons did.
+  it("loads a bundled problem into figure 1, labelled by what it shows", () => {
     render(<Page6 />);
     const never = F1.rows.find((r) => r.firstCorrectBudget === null)!;
-    // Four bundled rows never flip, so a button is named by its place in the
-    // strip and its subject as well as by its flip point.
-    const place = F3.items.findIndex((d) => d.problem_id === never.problemId) + 1;
-    fireEvent.click(
-      screen.getByRole("button", { name: new RegExp(`row ${place} .* flips at never`, "i") }),
-    );
+    const d = F3.items.find((x) => x.problem_id === never.problemId)!;
+    const label = d.truncated_at_max
+      ? /cut off at every budget/i
+      : new RegExp(`finished at ${d.tokens_at_max}, still wrong`, "i");
+    fireEvent.click(screen.getByRole("button", { name: label }));
     expect(screen.getByText(tidyMath(never.question))).toBeInTheDocument();
     // Take it to the top of the grid: the chain gets longer, the verdict does not move.
     drag(B.length - 1);
     expect(body()).toContain("✗ graded wrong");
     expect(body()).toContain(`of ${TOP} tokens thought`);
-  });
-
-  it("reports the regressions rather than implying a flip is permanent", () => {
-    render(<Page6 />);
-    expect(body()).toContain(`solved, then wrong again · ${F3.nRegressions} problems`);
   });
 });
 
@@ -275,7 +322,7 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     const e = PAGE6.handoff.page_5_endpoints;
     // The overlay is null when the generating run had no page 5 artifact on disk.
     // The seam sentence stays either way; only the two numbers are conditional.
-    expect(body()).toContain("One measurement with page 5, not two.");
+    expect(body()).toContain("One measurement with page 5, not two");
     if (e) {
       expect(body()).toContain(`${e.suppressed_tokens} tokens`);
       expect(body()).toContain(pct(e.unconstrained));
