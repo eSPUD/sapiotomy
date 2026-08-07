@@ -372,27 +372,34 @@ export function Page5() {
         measure what the road is worth is to <strong className="text-ink">take it away</strong>.
       </p>
 
-      {/* Provenance, and the run itself. The download is the pipeline's whole
-          claim: a reader who doubts a figure re-derives it. */}
-      <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className={chip}>Qwen2.5-Instruct · 1.5B, 3B, 7B</span>
-          <span className={chip}>bf16 · greedy · cap {M.decoding.max_new_tokens}</span>
-          <span className={chip}>MATH-500 levels 4 and 5 · n = {M.items.n} paired items</span>
-          <span className={chip}>900 generations · {RUN_DATE}</span>
+      {/* Provenance, as a specimen label rather than a banner: hairline rules,
+          no fill, the instrument on one mono line, and the download carrying the
+          page's own button vocabulary so it is the only lit thing here. It is
+          the pipeline's whole claim, so it stays above the fold. */}
+      <div className="flex flex-col gap-4 border-y border-grid py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
+        <div className="flex min-w-0 flex-col gap-2">
+          <p className="text-sm text-ink">
+            Every figure below is one measurement of ours, not a redrawing of anyone&apos;s. The
+            notebook that made them opens in a replay mode that redraws every figure here from
+            those traces, on no GPU, in about a minute.
+          </p>
+          <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
+            Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16, greedy, {M.decoding.max_new_tokens}-token cap ·
+            MATH-500 levels 4 and 5, n = {M.items.n} paired items · 900 generations · run{" "}
+            {M.run_id} · {RUN_DATE}
+          </p>
         </div>
-        <p className="text-sm text-ink">
-          Every figure below is one measurement of ours, not a redrawing of anyone&apos;s.{" "}
-          <a
-            className="font-semibold text-compute underline underline-offset-2"
-            href={NOTEBOOK_ZIP}
-            download
-          >
-            Download the notebook, the harness and all 900 traces ({NOTEBOOK_SIZE})
-          </a>
-          . It opens in a replay mode that redraws every figure here from those traces, on no GPU,
-          in about a minute.
-        </p>
+        <a
+          className="inline-flex shrink-0 items-start gap-2 self-start rounded border border-compute px-3 py-2 text-sm font-semibold leading-snug text-compute lg:max-w-[15rem]"
+          href={NOTEBOOK_ZIP}
+          download
+        >
+          <span aria-hidden="true">⤓</span>
+          <span className="flex flex-col">
+            Download the notebook, the harness and all 900 traces
+            <span className="font-normal text-ink-muted">zip, {NOTEBOOK_SIZE}</span>
+          </span>
+        </a>
       </div>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -754,11 +761,14 @@ export function Page5() {
         <CitationBadge citation={KOJIMA} />
       </div>
 
-      <div className="flex flex-col gap-2 text-xs text-ink-muted">
+      {/* The apparatus. Not a recap of the manifest (the plate at the top of the
+          page carries that, and the notebook carries the rest): these are the
+          three things a reader cannot get by downloading the run. Labelled so
+          they skim, and never folded away, least of all the limits. */}
+      <div className="border-t border-grid pt-4 text-xs leading-relaxed text-ink-muted lg:columns-2 lg:gap-10 [&>p]:mb-3 [&>p]:break-inside-avoid">
         <p>
-          run <span className="font-mono">{M.run_id}</span>, {RUN_DATE} · Qwen2.5-Instruct at bf16,
-          greedy, one pass per condition, {M.decoding.max_new_tokens}-token cap; MATH-500 levels 4
-          and 5 at n = {M.items.n} paired items; answers extracted and graded by ch03&apos;s{" "}
+          <strong className="font-semibold text-ink">Grading is not ours.</strong> One pass per
+          condition; answers extracted and graded by ch03&apos;s{" "}
           <a
             className="underline underline-offset-2"
             href="https://github.com/rasbt/reasoning-from-scratch"
@@ -772,6 +782,7 @@ export function Page5() {
           every contrast, so a symmetric result reads as measured rather than as nothing happening.
         </p>
         <p>
+          <strong className="font-semibold text-ink">Measured, and deliberately not plotted.</strong>{" "}
           A third condition was measured and is not plotted here: adding &ldquo;Explain step by
           step.&rdquo; to a model that already reasons moved the score by{" "}
           {F2.instruction.deltaPts.toFixed(1)} points, {F2.instruction.fixed} problems fixed and{" "}
@@ -783,7 +794,8 @@ export function Page5() {
           score.
         </p>
         <p>
-          Limits: {pct(PAGE5.truncation.worst.rate)} of the {PAGE5.truncation.worst.condition}{" "}
+          <strong className="font-semibold text-ink">Limits.</strong>{" "}
+          {pct(PAGE5.truncation.worst.rate)} of the {PAGE5.truncation.worst.condition}{" "}
           traces hit the cap, which biases the headline {PAGE5.truncation.biases_headline}; the
           gagged condition writes almost no <span className="font-mono">{"\\boxed{}"}</span> by
           construction, so its answers come from the grader&apos;s fallback to the last number;
