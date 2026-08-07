@@ -57,9 +57,16 @@ The page ships what it draws and links what it drew it from.
 |---|---|---|
 | `harness.py` | shared | plumbing for every notebook; ships in each download |
 | `page_05_how_to_reason.ipynb` | 5 — How to Reason | **translated (step 4).** Run complete and replayable; `derived.json` is committed to `web/data/page-05-derived.json`, and the notebook, `harness.py` and all 900 traces ship as `web/public/notebooks/page-05-how-to-reason.zip`, linked from the page |
-| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4).** `FULL` run complete and replayable; `derived.json` is committed to `web/data/page-06-derived.json`, and the notebook, `harness.py` and all 1,500 records ship as `web/public/notebooks/page-06-thinking-longer.zip`, linked from the page |
+| `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4), and re-opened.** The cap sweep is run, committed to `web/data/page-06-derived.json` and on the page. Section 11 adds the *extension* arm (suppress the end of the turn, append `Wait`, repeat) and has not been run; `figure_wait` is null until it is. A reasoning-tuned contrast arm is deferred until that one reports |
 | `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **built, step 1.** No run yet. Two axes: one pile of N full-length chains, subsampled for the N axis, and one fixed budget split N ways. Consumes page 6's item set, spend and curve; produces page 8's candidate pile |
 | `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **built, step 1.** No run yet. Generates nothing: it opens page 7's `traces.jsonl` and applies selectors |
+
+**Page 6 carries two arms of one technique.** Budget forcing can cut a chain short or refuse to let
+it end; the sweep does the first and section 11 does the second. They share the prompt, the items,
+the decoding and the grader, and `k` = 0 of the second is asserted to be the same generation as the
+top budget of the first, so the two are one experiment. The second arm is the ablation s1 leaves
+implicit: that paper's model is this family *after* reasoning fine-tuning, and ours is the family
+without it.
 
 Pages 7 and 8 are one chain of dependency: page 7 needs page 6's `out/page_06/` on disk for its
 grid derivation and its temperature-0 cross-check, and page 8 needs page 7's `traces.jsonl` for
