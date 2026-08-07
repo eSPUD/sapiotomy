@@ -105,7 +105,7 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
     render(<Page6 />);
     expect(body()).toContain("max_new_tokens");
     expect(body()).toContain(PAGE6.manifest.forcing.stem.trim());
-    expect(body()).toContain("This one dial drives all three figures on the page.");
+    expect(body()).toContain("The same dial drives the next two figures.");
   });
 
   // The listing face, as page 5 settled it: the question and the trace are what

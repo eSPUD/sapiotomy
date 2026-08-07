@@ -68,8 +68,8 @@ describe("Page 7 (frequency voting) component", () => {
     // short scores 7% on its own. Saying "splitting loses" without saying why would
     // read as "voting loses", which the pile disproves.
     expect(PAGE7.claims.splitting_a_fixed_budget_pays).toBe(false);
-    expect(screen.getByText(/Splitting is not what fails here; capping is\./i)).toBeInTheDocument();
-    expect(screen.getByText(/no cheaper way to buy it/i)).toBeInTheDocument();
+    expect(screen.getByText(/Splitting is not what fails; capping is\./i)).toBeInTheDocument();
+    expect(document.body.textContent).toContain("no cheaper way to buy it");
   });
 
   it("shows capped against uncapped at the SAME number of chains", () => {
@@ -103,10 +103,15 @@ describe("Page 7 (frequency voting) component", () => {
     expect(screen.getByText(/count of answers, not an\s+accuracy/i)).toBeInTheDocument();
   });
 
+  // Provenance is a plate, not a row of pills: the instrument on one mono line
+  // and the download as the only lit ink. The grading provenance went back to
+  // the notebook with the rest of the retired footer.
   it("carries the provenance and the download", () => {
     render(<Page7 />);
     expect(screen.getByRole("link", { name: /Download the notebook/i })).toBeInTheDocument();
-    expect(screen.getByText(/reasoning-from-scratch/i)).toBeInTheDocument();
+    expect(document.body.textContent).toContain(PAGE7.manifest.run_id);
+    expect(document.body.textContent).toContain("one measurement of ours");
+    expect(document.body.textContent).not.toContain("reasoning-from-scratch");
   });
 
   it("cites the technique without attaching a number to it", () => {

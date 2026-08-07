@@ -78,7 +78,13 @@ export function tidyMath(text: string): string {
     .replace(/\\leq?\b/g, "≤")
     .replace(/\\geq?\b/g, "≥")
     .replace(/\\neq\b/g, "≠")
+    // `\pmod{n}` before `\pm`, or the shorter rule eats its first three
+    // characters and leaves `±od{n}`. Page 7's specimen is a congruence.
+    .replace(/\\pmod\{([^{}]*)\}/g, "(mod $1)")
     .replace(/\\pm\b/g, "±")
+    .replace(/\\equiv\b/g, "≡")
+    // A LaTeX non-breaking space, which these traces use before punctuation.
+    .replace(/~/g, " ")
     .replace(/\\[[\]()]/g, "")
     .replace(/\$+/g, "")
     .replace(/[ \t]+/g, " ")

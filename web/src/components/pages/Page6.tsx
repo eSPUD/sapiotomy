@@ -513,6 +513,16 @@ export function Page6() {
   const run = row.byBudget[budgetIndex];
   const zones = useMemo(() => traceZones(row, budgetIndex), [row, budgetIndex]);
   const natural = useMemo(() => naturalLength(row), [row]);
+  /**
+   * The last stop that actually cuts THIS chain. Past it the dial has travel
+   * and no effect, which is a property of the problem rather than of the grid:
+   * this chain stops on its own and the remaining stops have nothing left to
+   * take away. Drawn on the track so it reads before the reader drags into it.
+   */
+  const lastBiting = useMemo(
+    () => row.byBudget.reduce((last, b, i) => (b.forced ? i : last), -1),
+    [row],
+  );
   const curvePoint = F2.primary.points[budgetIndex];
 
   // The cut is the figure. A trace long enough to scroll would otherwise open
@@ -630,13 +640,13 @@ export function Page6() {
             </span>
           </h2>
           <p className="text-ink-muted">
-            The dial below is <span className="font-code">max_new_tokens</span>, the hard limit on
-            how much a model may write. Turn it down and the model is cut off mid-sentence, so we
-            close its working, append{" "}
-            <span className="font-code">{M.forcing.stem.trim()}</span> and give it{" "}
-            {M.forcing.answer_allowance} tokens to commit to something. That is why a starved model
-            still produces an answer to grade instead of nothing at all. This one dial drives all
-            three figures on the page.
+            The dial below is <span className="font-code">max_new_tokens</span>, a hard limit on how
+            much the model may write. Turn it down and the model gets cut off mid-sentence, so we
+            close off its working, append{" "}
+            <span className="font-code">{M.forcing.stem.trim()}</span>, and give it{" "}
+            {M.forcing.answer_allowance} more tokens to commit to something. That is why a starved
+            model still produces an answer to grade rather than nothing at all. The same dial drives
+            the next two figures.
           </p>
           <section
             aria-label="The truncation view"
@@ -662,21 +672,44 @@ export function Page6() {
                 format={(i) => String(B[i])}
                 suffix=" tokens"
               />
-              {/* A stop this chain is actually cut at reads in ink; a stop it
-                  already finished inside is greyed, so the dead travel at the
-                  top of the dial is visible before the reader drags into it. */}
-              <div
-                aria-hidden="true"
-                className="flex justify-between px-0.5 font-mono text-[10px] tabular-nums"
-              >
-                {B.map((b, i) => (
-                  <span
-                    key={b}
-                    className={row.byBudget[i].forced ? "text-ink" : "text-ink-muted opacity-50"}
-                  >
-                    {b}
-                  </span>
-                ))}
+              {/* Dead travel, drawn rather than implied. Most chains finish
+                  well inside the top of the grid, so on any given problem the
+                  last stops cut nothing and dragging into them does nothing.
+                  Greying the tick labels was too quiet to be read as a fact, so
+                  the track carries a bar: solid where this chain is still being
+                  cut, hatched where the dial has run past it. That is the same
+                  fact figure 3 draws for all 100 problems at once, and it is
+                  the page's finding rather than an artefact of the grid.
+
+                  The stops are evenly spaced because the slider is indexed, not
+                  scaled, so a stop's position is i/(n-1) of the track. */}
+              <div aria-hidden="true" className="flex flex-col gap-1 px-0.5">
+                <div className="relative h-1.5 w-full overflow-hidden rounded-sm bg-surface-raised">
+                  {lastBiting >= 0 ? (
+                    <span
+                      className="absolute inset-y-0 left-0 rounded-sm bg-compute opacity-70"
+                      style={{ width: `${(lastBiting / (B.length - 1)) * 100}%` }}
+                    />
+                  ) : null}
+                  {lastBiting < B.length - 1 ? (
+                    <span
+                      className="absolute inset-y-0 right-0 rounded-sm bg-grid"
+                      style={{
+                        width: `${((B.length - 1 - lastBiting) / (B.length - 1)) * 100}%`,
+                      }}
+                    />
+                  ) : null}
+                </div>
+                <div className="flex justify-between font-mono text-[10px] tabular-nums">
+                  {B.map((b, i) => (
+                    <span
+                      key={b}
+                      className={row.byBudget[i].forced ? "text-ink" : "text-ink-muted opacity-50"}
+                    >
+                      {b}
+                    </span>
+                  ))}
+                </div>
               </div>
               {natural ? (
                 <p className="text-xs text-ink-muted">
