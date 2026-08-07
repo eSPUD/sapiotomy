@@ -85,7 +85,7 @@ const FW = PAGE6.figureWait;
 
 /** The download: notebook + harness + every generation the page rests on. */
 const NOTEBOOK_ZIP = "/notebooks/page-06-thinking-longer.zip";
-const NOTEBOOK_SIZE = "1.3 MB";
+const NOTEBOOK_SIZE = "2.0 MB";
 
 const RUN_DATE = M.timestamp_utc.slice(0, 10);
 const TOP = B[B.length - 1];
