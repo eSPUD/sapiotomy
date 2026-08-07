@@ -71,7 +71,7 @@ import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
-import { PAGE6, pct, rowById, tidyMath, tokens, traceZones } from "@/lib/page06";
+import { PAGE6, naturalLength, pct, rowById, tidyMath, tokens, traceZones } from "@/lib/page06";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 6;
@@ -241,7 +241,7 @@ function BudgetCurve({ budgetIndex }: { budgetIndex: number }) {
 
 const S_W = 620;
 const S_H = 300;
-const S_M = { top: 18, right: 122, bottom: 44, left: 34 };
+const S_M = { top: 18, right: 122, bottom: 44, left: 58 };
 const S_IW = S_W - S_M.left - S_M.right;
 const S_IH = S_H - S_M.top - S_M.bottom;
 
@@ -251,6 +251,14 @@ const S_IH = S_H - S_M.top - S_M.bottom;
  * landing in different places. Regressions (correct, then wrong again at a
  * larger budget) are marked rather than hidden, which is why a flip point is
  * defined as FIRST correct and not permanently correct.
+ *
+ * Two marks do the teaching. The y axis is labelled easy at the top and hard at
+ * the bottom, because without it a reader has no reason to know the rows are
+ * sorted at all. And the boundary between unsolved and solved is drawn as a
+ * heavy staircase: that line IS "the budget this problem needs", which is the
+ * section's title and was previously only implied by where the colour changed.
+ * It runs off the right-hand edge at the never-flipping band, which is the
+ * whole handoff in one stroke.
  */
 function FlipStrip({ budgetIndex, selectedId }: { budgetIndex: number; selectedId: string }) {
   const items = F3.items;
@@ -259,6 +267,18 @@ function FlipStrip({ budgetIndex, selectedId }: { budgetIndex: number; selectedI
   const firstNever = items.findIndex((d) => d.first_correct_budget === null);
   const selectedIndex = items.findIndex((d) => d.problem_id === selectedId);
   const maxHist = Math.max(...Object.values(F3.histogram), F3.neverFlipCount);
+
+  // The staircase along the unsolved/solved boundary. Two points per row, so
+  // the polyline turns a corner wherever the required budget changes; past the
+  // last problem that flips it leaves the chart to the right, because those
+  // problems' budget is not on this axis.
+  const frontier: string[] = [];
+  const flipping = firstNever >= 0 ? firstNever : items.length;
+  for (let i = 0; i < flipping; i++) {
+    const x = items[i].correct_by_budget.findIndex(Boolean) * colW;
+    frontier.push(`${x},${i * rowH}`, `${x},${(i + 1) * rowH}`);
+  }
+  if (firstNever >= 0) frontier.push(`${S_IW},${flipping * rowH}`);
 
   return (
     <ChartFrame
@@ -335,15 +355,50 @@ function FlipStrip({ budgetIndex, selectedId }: { budgetIndex: number; selectedI
         </>
       ) : null}
 
-      {/* the budget the reader is holding, shared with figures 1 and 2 */}
+      {/* The budget each problem needs. The staircase is the figure's claim:
+          not "more is better" but "each problem has a threshold, and they are
+          not the same threshold".
+
+          Drawn twice. The line sits exactly on the boundary, so half its width
+          falls on the solved fill, where near-black on dark teal is invisible;
+          a casing in the page colour underneath lifts it off the fill and the
+          staircase reads as an edge on both sides. */}
+      <polyline
+        points={frontier.join(" ")}
+        fill="none"
+        className="stroke-canvas"
+        strokeWidth={4.5}
+      />
+      <polyline points={frontier.join(" ")} fill="none" className="stroke-ink" strokeWidth={1.75} />
+
+      {/* the budget the reader is holding, dashed compute as in figure 2 */}
       <line
         x1={(budgetIndex + 1) * colW}
         x2={(budgetIndex + 1) * colW}
         y1={0}
         y2={S_IH}
-        className="stroke-ink"
+        className="stroke-compute"
         strokeWidth={1.5}
+        strokeDasharray="3 3"
       />
+
+      {/* easy at the top, hard at the bottom: without this the sort is invisible */}
+      <text x={-10} y={10} textAnchor="end" className="fill-ink-muted text-[10px] font-semibold">
+        easy
+      </text>
+      <text x={-10} y={S_IH - 2} textAnchor="end" className="fill-ink-muted text-[10px] font-semibold">
+        hard
+      </text>
+      <line x1={-16} x2={-16} y1={14} y2={S_IH - 14} className="stroke-grid" strokeWidth={1} />
+      <text
+        x={-16}
+        y={S_IH / 2}
+        textAnchor="middle"
+        transform={`rotate(-90, -16, ${S_IH / 2})`}
+        className="fill-ink-muted text-[9px]"
+      >
+        <tspan dy={-4}>{items.length} problems</tspan>
+      </text>
 
       {/* the problem currently loaded into figure 1 */}
       {selectedIndex >= 0 ? (
@@ -353,8 +408,8 @@ function FlipStrip({ budgetIndex, selectedId }: { budgetIndex: number; selectedI
             x2={S_IW}
             y1={selectedIndex * rowH + rowH / 2}
             y2={selectedIndex * rowH + rowH / 2}
-            className="stroke-ink"
-            strokeWidth={1}
+            className="stroke-ink opacity-40"
+            strokeWidth={0.75}
           />
           <text x={-10} y={selectedIndex * rowH + rowH / 2 + 3} textAnchor="end" className="fill-ink text-[10px]">
             ▸
@@ -408,12 +463,13 @@ export function Page6() {
   const recordInteraction = useStore((s) => s.recordInteraction);
 
   const [budgetIndex, setBudgetIndex] = useState(0);
-  const [rowId, setRowId] = useState(F1.specimenId);
+  const [rowId, setRowId] = useState<string>(F1.openingId);
   const [announce, setAnnounce] = useState("");
 
   const row = useMemo(() => rowById(rowId), [rowId]);
   const run = row.byBudget[budgetIndex];
   const zones = useMemo(() => traceZones(row, budgetIndex), [row, budgetIndex]);
+  const natural = useMemo(() => naturalLength(row), [row]);
   const curvePoint = F2.primary.points[budgetIndex];
 
   // The cut is the figure. A trace long enough to scroll would otherwise open
@@ -551,14 +607,34 @@ export function Page6() {
                 format={(i) => String(B[i])}
                 suffix=" tokens"
               />
+              {/* A stop this chain is actually cut at reads in ink; a stop it
+                  already finished inside is greyed, so the dead travel at the
+                  top of the dial is visible before the reader drags into it. */}
               <div
                 aria-hidden="true"
-                className="flex justify-between px-0.5 font-mono text-[10px] tabular-nums text-ink-muted"
+                className="flex justify-between px-0.5 font-mono text-[10px] tabular-nums"
               >
-                {B.map((b) => (
-                  <span key={b}>{b}</span>
+                {B.map((b, i) => (
+                  <span
+                    key={b}
+                    className={row.byBudget[i].forced ? "text-ink" : "text-ink-muted opacity-50"}
+                  >
+                    {b}
+                  </span>
                 ))}
               </div>
+              {natural ? (
+                <p className="text-xs text-ink-muted">
+                  This chain runs to <strong className="text-ink">{natural.tokens} tokens</strong>{" "}
+                  and stops on its own, so the dial bites at{" "}
+                  {B.filter((_, i) => row.byBudget[i].forced).join(" and ")} and then has nothing
+                  left to cut: {natural.fromBudget} and up are the same chain.
+                </p>
+              ) : (
+                <p className="text-xs text-ink-muted">
+                  This chain is still going at {TOP} tokens, so every stop on the dial cuts it.
+                </p>
+              )}
             </div>
 
             {/* The model's own words, then what it would have written and was
@@ -586,15 +662,19 @@ export function Page6() {
                   <p className="font-mono text-[10px] uppercase tracking-wide text-compute">
                     budget spent · we close the block and make it commit
                   </p>
-                  <p className="mt-1 break-words font-code text-sm text-ink">
-                    {zones.stem.trim()}
-                    <span className="font-semibold">{zones.answer}</span>
+                  {/* The stem is ours and stays verbatim, because it is the
+                      intervention. What the model then committed to is its
+                      text, and reads as maths like the rest of the trace. */}
+                  <p className="mt-1 break-words text-sm text-ink">
+                    <span className="font-code text-ink-muted">Final answer:</span>{" "}
+                    <span className="font-semibold">{tidyMath(`\\boxed{${zones.answer}`)}</span>
                   </p>
                 </div>
               ) : (
                 <div className="border-t border-dashed border-grid px-3 py-2">
                   <p className="font-mono text-[10px] uppercase tracking-wide text-ink-muted">
-                    it finished inside the budget · nothing was cut and nothing was forced
+                    it stopped at {run.ownTokens} tokens, inside the budget · nothing was cut and
+                    nothing was forced
                   </p>
                 </div>
               )}
@@ -751,7 +831,10 @@ export function Page6() {
                 {F3.nRegressions} problems
               </span>
               <span className="flex items-center gap-2">
-                <span className="h-3 w-px bg-ink" /> the budget you are holding
+                <span className="h-0.5 w-5 bg-ink" /> the budget each problem needs
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-px bg-compute" /> the budget you are holding
               </span>
             </div>
 
@@ -904,7 +987,11 @@ export function Page6() {
           {TOP} tokens, which understates the right end of the curve rather than flattering it,
           since a truncated chain loses its <span className="font-mono">{"\\boxed{}"}</span>.
           Greedy decoding diverges on a handful of items across hardware, so re-deriving reproduces
-          the shape and not every digit, and this is one benchmark in one language.
+          the shape and not every digit, and this is one benchmark in one language. Cut at the
+          smallest budget, the 3B answers with the prompt template&apos;s own placeholder on{" "}
+          {pct(0.21)} of items, which is a model with nothing to commit rather than a wrong value;
+          two records in {tokens(M.integrity.n_records)} hide a right value behind it, and figure 1
+          opens on a problem that does neither.
         </p>
       </div>
 

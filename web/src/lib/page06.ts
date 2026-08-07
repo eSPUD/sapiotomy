@@ -229,6 +229,9 @@ const NEVER_FLIP_MAX = 0.6;
 /** Above this share truncated at the top budget, the grid's top still binds. */
 const TOP_TRUNCATION_MAX = 0.1;
 
+/** The row figure 1 opens on. See `PAGE6.figure1.openingId` for why not the notebook's. */
+const OPENING_ID = "test/counting_and_probability/1014.json";
+
 if (D.manifest.run_mode !== "FULL") {
   fail(`run mode is "${D.manifest.run_mode}"; only a FULL run may be translated to the page`);
 }
@@ -376,6 +379,24 @@ for (const row of D.figure_1.rows) {
   if (!bundled.has(D.figure_1.specimen_id)) {
     fail(`figure 1's specimen ${D.figure_1.specimen_id} is not among the bundled traces`);
   }
+  if (!bundled.has(OPENING_ID)) {
+    fail(`figure 1 opens on ${OPENING_ID}, whose traces are not bundled`);
+  }
+  {
+    // The row the page opens on has to demonstrate the thing the page claims:
+    // wrong below some budget, right at and above it, and cut where it is
+    // wrong. A run that no longer satisfies that is a run this page was not
+    // written against.
+    const opening = D.figure_1.rows.find((r) => r.problem_id === OPENING_ID)!;
+    const flip = opening.by_budget.findIndex((r) => r.correct);
+    if (flip < 1) fail(`figure 1's opening row does not flip above the smallest budget`);
+    if (!opening.by_budget[flip - 1].forced) {
+      fail(`figure 1's opening row is not cut at the budget below its flip`);
+    }
+    if (!opening.by_budget.slice(flip).every((r) => r.correct)) {
+      fail(`figure 1's opening row goes right and then wrong again`);
+    }
+  }
 }
 
 {
@@ -495,6 +516,19 @@ export const PAGE6 = {
     specimenId: D.figure_1.specimen_id,
     flipBudget: D.figure_1.flip_budget,
     nCandidates: D.figure_1.n_candidate_specimens,
+    /**
+     * The row figure 1 opens on, which is NOT the notebook's specimen.
+     *
+     * The notebook ranks candidates by where they flip and how short they are;
+     * it cannot see what the answer says. Its pick flips at 512 because at 256
+     * the model wrote the right value behind the prompt template's placeholder
+     * ("ANSWER 3√3/4") and the grader could not read it. Two records in 1,500
+     * are like that and the notebook's specimen is one, so its flip is partly
+     * the grader rather than the budget, which is the one thing figure 1 exists
+     * to show. This row answers 360 and then 480: wrong for a real reason, then
+     * right. Both rows ship, and the notebook's pick is still in the picker.
+     */
+    openingId: OPENING_ID,
     rows,
     /**
      * Asked nicely against cut off. Read the token columns, not the accuracies:
@@ -520,6 +554,17 @@ export const PAGE6 = {
   },
   handoff: D.handoff,
 } as const;
+
+/**
+ * Where this chain stops needing the dial: the length it runs to when nothing
+ * cuts it, and the first budget that lets it get there. Past that stop the
+ * dial has no more travel on this problem, and figure 1 says so rather than
+ * leaving the reader dragging a control that does nothing.
+ */
+export function naturalLength(r: SpecimenRow): { tokens: number; fromBudget: number } | null {
+  const finished = r.byBudget.find((b) => !b.forced);
+  return finished ? { tokens: finished.ownTokens, fromBudget: finished.budget } : null;
+}
 
 /** Look up a bundled problem by id. Figure 3's row picker feeds figure 1. */
 export function rowById(problemId: string): SpecimenRow {
