@@ -2,7 +2,7 @@
   "manifest": {
     "run_id": "full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
     "notebook": "page_07_frequency_voting.ipynb",
-    "notebook_sha256": "2d1a51aff62ea64580b5286d903bce10a3be8d8887e23b0edfaf6e01e34ed6ee",
+    "notebook_sha256": "504216a0cbae1418c890b44a57ff581f2a75271073ad94f9503430c83f8e07b1",
     "harness": {
       "version": "1.3",
       "sha256": "7076c1218c6345ec9202087a98a2bd0c71ae47d6e406a81dc1901a0c7c78d6d8"
@@ -17,7 +17,7 @@
         "id": "Qwen/Qwen2.5-3B-Instruct",
         "label": "Qwen2.5-3B-Instruct",
         "params": 3000000000,
-        "quant": null,
+        "quant": "bf16",
         "dtype": null,
         "tokenizer_sha256": null,
         "revision": null,
@@ -2534,6 +2534,6 @@
     "n_chains": 16,
     "chain_cap": 2048,
     "temperature": 0.3,
-    "note": "page 8's candidate pile: the same chains, read by other selection rules"
+    "note": "this page's candidate pile; page 8 re-runs the same protocol on its own chains"
   }
 }
