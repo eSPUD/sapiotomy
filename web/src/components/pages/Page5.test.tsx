@@ -321,14 +321,13 @@ describe("Page 5: provenance and what the page may claim", () => {
   });
 
   // The pipeline's whole claim: a reader who doubts a figure re-derives it.
-  // The link sits at the right end of the provenance plate, beside the
-  // sentence that says what opening it does.
-  it("links the notebook, the harness and the traces as one download, on the plate", () => {
+  // The link sits at the top right of the page, on the act kicker's row.
+  it("links the notebook, the harness and the traces as one download, at the top", () => {
     render(<Page5 />);
     const link = screen.getByRole("link", { name: /download the notebook, the harness and all/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-05-how-to-reason.zip");
     expect(link).toHaveAttribute("download");
-    expect(link.parentElement?.textContent).toContain("one measurement of ours");
+    expect(link.parentElement?.textContent).toContain("Act 2");
     expect(body()).toContain("redraws every figure here from those traces");
   });
 

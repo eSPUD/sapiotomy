@@ -104,9 +104,8 @@
  * Load-bearing and easy to lose:
  *   · the notebook download is the whole point of the pipeline. The link carries
  *     the notebook, `harness.py` and all 900 traces, so a reader who doubts a
- *     figure re-derives it. It sits at the right end of the provenance plate,
- *     beside the sentence that says what opening it does (the replay mode);
- *     the references sit in right-hand References sidenotes beside the
+ *     figure re-derives it. It sits at the top right of the page, beside the act
+ *     kicker; the references sit in right-hand References sidenotes beside the
  *     steps that cite them (Wei and Kojima beside step 1, the model card and the
  *     dataset beside step 5). The run's ledger sits INSIDE step 5's figure card,
  *     where it has the card's width: the margin column wrapped it mid-hash.
@@ -568,9 +567,20 @@ export function Page5() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
+      {/* The download shares the top line with the act kicker: the first thing
+          on the page after the title row is the way to re-derive all of it. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
+        <a
+          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+          href={NOTEBOOK_ZIP}
+          download
+        >
+          Download the notebook, the harness and all 900 traces (zip, {NOTEBOOK_SIZE}) ↓
+        </a>
+      </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
@@ -582,24 +592,16 @@ export function Page5() {
       </p>
 
       {/* Provenance, as a specimen label rather than a banner: hairline rules,
-          no fill, one plain sentence with the download at its right end, beside
-          the sentence that names what the download does. The mono spec line the
-          plate used to carry was jargon this early: the reader has not met a
-          token cap or a decoding strategy yet. The run's vitals now sit in the
-          ledger inside step 5's figure card. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-y border-grid py-4">
-        <p className="max-w-2xl flex-1 basis-96 text-sm text-ink">
+          no fill, one plain sentence. The mono spec line it used to carry was
+          jargon this early: the reader has not met a token cap or a decoding
+          strategy yet. The run's vitals now sit in "The run" ledger beside
+          step 5, and the download sits at the top right of the page. */}
+      <div className="border-y border-grid py-4">
+        <p className="text-sm text-ink">
           Every figure below is one measurement of ours, not a redrawing of anyone&apos;s. The
           notebook that made them opens in a replay mode that redraws every figure here from those
           traces, on no GPU, in about a minute.
         </p>
-        <a
-          className="shrink-0 rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          Download the notebook, the harness and all 900 traces (zip, {NOTEBOOK_SIZE}) ↓
-        </a>
       </div>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
