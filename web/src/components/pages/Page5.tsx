@@ -38,10 +38,12 @@
  *
  *   Wei and Kojima are cited here, in pages 1 to 3's grammar: a numbered marker
  *   on the claim, and the entry itself in a right-hand References sidenote beside
- *   this step. The plate above already says every number is ours, so no gloss
- *   sits with the references: that would be duplication a reader pays for twice,
- *   once in reading and once in the whitespace it opens beside a four-line step,
- *   since each note sets its own grid row's height.
+ *   this step. No gloss sits with the references: that would be whitespace a
+ *   reader pays for beside a four-line step, since each note sets its own grid
+ *   row's height. The provenance plate that used to sit above the steps
+ *   ("Every figure below is one measurement of ours...") was removed 2026-08-08
+ *   as jargon; the ledger in step 5's figure card and the download at the top
+ *   right are all the provenance the page carries in words.
  *
  *   Step 2 — figure 1, the specimen, and the step where the page's premise lands:
  *   this model does it NATIVELY, and the figure is a look at what that produces
@@ -56,9 +58,8 @@
  *   The stepper (Back / Next / Play) walks the model's own output using the
  *   token ranges the notebook emitted, so the reveal stops at real token
  *   boundaries rather than faking a typewriter. The instruction condition is NOT
- *   a third tab: it is measured, and it is reported in a margin note. That note
- *   used to promise "page 12 opens on it" and page 12 does not, so the clause is
- *   now the finding itself rather than a forward reference.
+ *   a third tab: it is measured, and it lives in the notebook download, not on
+ *   the page (see the load-bearing list below).
  *
  *   Step 3 — figure 2, the page's headline. The McNemar 2x2 drawn as 100 cells,
  *   one per problem, with the gag on a switch. Flip it and 40 solved problems go
@@ -89,9 +90,11 @@
  * The apparatus lives in the margin, one note per step, not in a footer. The
  * three-paragraph footnote this page used to end on was doing the notebook's
  * job: a reader who wants the full method downloads the run. What survives in
- * the margin is only what a reader needs while looking at THAT figure, plus the
- * two things the claims contract requires on the page in words (the instruction
- * null as a bound, and why the exemplar rungs are absent).
+ * the margin is only what a reader needs while looking at THAT figure. The
+ * instruction null and the exemplar rungs went back to the notebook on
+ * 2026-08-08: the page shows what the chain is worth, and a note on how a model
+ * that already reasons responds to being asked to was prompt engineering the
+ * reader had no use for.
  *
  * The notes have been cut twice and the rule that survived both is: a note may
  * say what a reader cannot work out from the figure beside it, and nothing else.
@@ -103,11 +106,19 @@
  * Load-bearing and easy to lose:
  *   · the notebook download is the whole point of the pipeline. The link carries
  *     the notebook, `harness.py` and all 900 traces, so a reader who doubts a
- *     figure re-derives it. It sits in the footer, where pages 6, 7 and 8 keep
- *     theirs; the references now sit in a right-hand References sidenote beside
- *     step 1.
- *   · the instruction null is a BOUND, never a zero, and never the word
- *     "nothing" unqualified (claims gate `instruction_null_bounded`).
+ *     figure re-derives it. It sits at the top right of the page, beside the act
+ *     kicker; the references sit in right-hand References sidenotes beside the
+ *     steps that cite them (Wei and Kojima beside step 1, the model card and the
+ *     dataset beside step 5). The run's ledger sits INSIDE step 5's figure card,
+ *     where it has the card's width: the margin column wrapped it mid-hash.
+ *   · the conditions are named plainly, "reasoning" and "non-reasoning", on
+ *     every surface: buttons, cluster labels, aria titles, prose. No euphemism
+ *     ("left alone", "forbidden to reason") may come back.
+ *   · the instruction null and the exemplar rungs are measured, in the run, and
+ *     deliberately NOT on the page (removed 2026-08-08; the claims gate
+ *     `instruction_null_bounded` still gates the data load). If they return,
+ *     the bound rule returns with them: a BOUND, never a zero, never the word
+ *     "nothing" unqualified.
  *   · chain share is a blurt detector and nothing more. It verifies the gag
  *     worked; it is not a measure of how much reasoning happened.
  *   · figure 4's dots stay unjoined, and no sentence on the page may say the
@@ -159,10 +170,12 @@ const NOTEBOOK_SIZE = "0.8 MB";
 const STEP_MS = 700;
 
 /**
- * Cited for the technique, numbered in order of first appearance. Every number
- * on this page is ours, so neither entry may carry a figure.
+ * Numbered in order of first appearance. Wei and Kojima are cited for the
+ * techniques they introduced; the model card and the dataset are cited as the
+ * instruments the run was made with. Every number on this page is ours, so no
+ * entry may carry a figure.
  */
-const REF = { wei: 1, kojima: 2 } as const;
+const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -225,7 +238,7 @@ function TokenMeter({ written, total, blurtTokens }: { written: number; total: n
 
 /**
  * The gag is the baseline and the chain is the change, so `afterOnly` is a
- * problem solved only when the model is left alone: green while the switch is
+ * problem solved only when the model reasons: green while the switch is
  * off, red once the gag takes it away.
  */
 const cellTone = (cell: PairedClass, gagged: boolean): string => {
@@ -243,8 +256,8 @@ const FLOOR_INNER_W = FLOOR_W - FLOOR_MARGIN.left - FLOOR_MARGIN.right;
 const FLOOR_INNER_H = FLOOR_H - FLOOR_MARGIN.top - FLOOR_MARGIN.bottom;
 
 /**
- * Three checkpoints, each bar split at the accuracy it keeps when it is
- * forbidden to reason. The shaded band is the claim: gagged, every model lands
+ * Three checkpoints, each bar split at the accuracy it keeps non-reasoning.
+ * The shaded band is the claim: gagged, every model lands
  * in the same narrow strip, and the strip does not move with size. There is no
  * size axis and no line through the points, deliberately.
  */
@@ -258,7 +271,7 @@ function FloorChart() {
 
   return (
     <ChartFrame
-      title={`Share of 100 MATH-500 problems solved by three Qwen2.5-Instruct checkpoints, each bar split into the part it keeps when forbidden to reason and the part its reasoning adds. Forbidden to reason: ${rows.map((m) => `${m.label} ${pct(m.blurtAccuracy)}`).join(", ")}. Left alone: ${rows.map((m) => `${m.label} ${pct(m.bareAccuracy)}`).join(", ")}.`}
+      title={`Share of 100 MATH-500 problems solved by three Qwen2.5-Instruct checkpoints, each bar split into the part it keeps non-reasoning and the part its reasoning adds. Non-reasoning: ${rows.map((m) => `${m.label} ${pct(m.blurtAccuracy)}`).join(", ")}. Reasoning: ${rows.map((m) => `${m.label} ${pct(m.bareAccuracy)}`).join(", ")}.`}
       width={FLOOR_W}
       height={FLOOR_H}
       margin={FLOOR_MARGIN}
@@ -276,7 +289,7 @@ function FloorChart() {
         strokeDasharray="3 3"
       />
       <text x={x(maxBlurt * 100) + 6} y={-10} className="fill-wrong text-[11px] font-semibold">
-        the floor: forbidden to reason, all three land in here
+        the floor: non-reasoning, all three land in here
       </text>
 
       {/* gridlines */}
@@ -341,7 +354,7 @@ const COST_INNER_W = COST_W - COST_MARGIN.left - COST_MARGIN.right;
 const COST_INNER_H = COST_H - COST_MARGIN.top - COST_MARGIN.bottom;
 /** Three decades, because 6 tokens and 573 share no linear axis worth reading. */
 const COST_DECADES = 3;
-/** Percent at the top of the accuracy axis: the 7B left alone reaches 60. */
+/** Percent at the top of the accuracy axis: the reasoning 7B reaches 60. */
 const COST_Y_MAX = 70;
 
 /** Short enough to sit beside a dot: "Qwen2.5-1.5B-Instruct" is not. */
@@ -394,7 +407,7 @@ function CostChart() {
 
   return (
     <ChartFrame
-      title={`Median tokens written against the share of the same ${F2.bare.n} MATH-500 problems solved, for three Qwen2.5-Instruct checkpoints under two prompts. Forbidden to reason: ${describe(true)}. Left alone: ${describe(false)}.`}
+      title={`Median tokens written against the share of the same ${F2.bare.n} MATH-500 problems solved, for three Qwen2.5-Instruct checkpoints under two prompts. Non-reasoning: ${describe(true)}. Reasoning: ${describe(false)}.`}
       width={COST_W}
       height={COST_H}
       margin={COST_MARGIN}
@@ -443,7 +456,7 @@ function CostChart() {
         textAnchor="middle"
         className="fill-wrong text-[11px] font-semibold"
       >
-        forbidden to reason
+        non-reasoning
       </text>
       <text
         x={clusterX(rows.map((m) => m.bareMedianTokens))}
@@ -451,7 +464,7 @@ function CostChart() {
         textAnchor="middle"
         className="fill-compute text-[11px] font-semibold"
       >
-        left alone
+        reasoning
       </text>
 
       {points.map((p) => (
@@ -549,16 +562,27 @@ export function Page5() {
     setGagged(on);
     setAnnounce(
       on
-        ? `Forbidden to reason, the model solves ${F2.blurt.nCorrect} of ${F2.blurt.n}: ${T.afterOnly} problems it had are gone and ${T.beforeOnly} it did not have arrive.`
-        : `Left alone, the model solves ${F2.bare.nCorrect} of ${F2.bare.n}.`,
+        ? `Non-reasoning, the model solves ${F2.blurt.nCorrect} of ${F2.blurt.n}: ${T.afterOnly} problems it had are gone and ${T.beforeOnly} it did not have arrive.`
+        : `Reasoning, the model solves ${F2.bare.nCorrect} of ${F2.bare.n}.`,
     );
   };
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
+      {/* The download shares the top line with the act kicker: the first thing
+          on the page after the title row is the way to re-derive all of it. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
+        <a
+          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+          href={NOTEBOOK_ZIP}
+          download
+        >
+          Download the notebook, the harness and all 900 traces (zip, {NOTEBOOK_SIZE}) ↓
+        </a>
+      </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
@@ -568,23 +592,6 @@ export function Page5() {
         road</strong>? A model you can download in 2026 walks it unasked, so the only way left to
         measure what the road is worth is to <strong className="text-ink">take it away</strong>.
       </p>
-
-      {/* Provenance, as a specimen label rather than a banner: hairline rules,
-          no fill, the instrument on one mono line. The download it used to carry
-          sits at the foot of the page; the references now sit in a right-hand
-          References sidenote beside step 1. */}
-      <div className="flex flex-col gap-2 border-y border-grid py-4">
-        <p className="text-sm text-ink">
-          Every figure below is one measurement of ours, not a redrawing of anyone&apos;s. The
-          notebook that made them opens in a replay mode that redraws every figure here from those
-          traces, on no GPU, in about a minute.
-        </p>
-        <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
-          Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16, greedy, {M.decoding.max_new_tokens}-token cap ·
-          MATH-500 levels 4 and 5, n = {M.items.n} paired items · 900 generations · run {M.run_id} ·{" "}
-          {RUN_DATE}
-        </p>
-      </div>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -806,8 +813,8 @@ export function Page5() {
               figure's whole job is to show what leaves when you press it. */}
           <p className="text-ink-muted">
             One trace proves nothing, so both prompts were run across{" "}
-            {F2.bare.n} problems from the same difficulty band. Below is that comparison: the model
-            reasoning freely, against the same model forbidden to reason. Left alone it writes a
+            {F2.bare.n} problems from the same difficulty band. Below is that comparison: the same
+            model, reasoning against non-reasoning. Reasoning, it writes a
             median of {CLOSE.bare_median_tokens} tokens of working and solves{" "}
             <strong className="text-ink">{F2.bare.nCorrect} of the {F2.bare.n}</strong>. Each square
             below is one of those {F2.bare.n} problems; the switch is the same suffix you just read.
@@ -819,10 +826,10 @@ export function Page5() {
             <div className="flex flex-wrap items-center gap-2" role="group" aria-label="The gag">
               <span className="text-sm font-semibold text-ink">Qwen2.5-3B-Instruct:</span>
               <button type="button" aria-pressed={!gagged} onClick={() => setGag(false)} className={seg(!gagged)}>
-                left alone
+                reasoning
               </button>
               <button type="button" aria-pressed={gagged} onClick={() => setGag(true)} className={seg(gagged)}>
-                forbidden to reason
+                non-reasoning
               </button>
             </div>
             <p className="font-code text-xs text-ink-muted">
@@ -856,7 +863,7 @@ export function Page5() {
                       until the reader has pressed the switch. */}
                   <li className="flex items-center gap-2">
                     <span className="h-3 w-3 shrink-0 rounded-sm border border-wrong bg-wrong" />
-                    solved when left alone, lost to the gag{gagged ? ` (${T.afterOnly})` : ""}
+                    solved when reasoning, lost to the gag{gagged ? ` (${T.afterOnly})` : ""}
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="h-3 w-3 shrink-0 rounded-sm border border-grid bg-surface-raised" />
@@ -877,7 +884,7 @@ export function Page5() {
               <p className={`font-semibold ${gagged ? "text-wrong" : "text-correct"}`}>
                 {gagged
                   ? `✗ ${T.afterOnly} problems it had are gone. ${T.beforeOnly} it did not have arrive.`
-                  : `✓ press "forbidden to reason" and watch what leaves.`}
+                  : `✓ press "non-reasoning" and watch what leaves.`}
               </p>
               {/* The cost, and the test behind it, arrive with the reveal. Rendering them
                   under an unpressed switch spends the figure before it is touched. */}
@@ -935,13 +942,13 @@ export function Page5() {
                 gagged bars end inside it
               </span>
               <span className="flex items-center gap-2">
-                <span className="h-3 w-px bg-compute" /> the 1.5B, left alone
+                <span className="h-3 w-px bg-compute" /> the 1.5B, reasoning
               </span>
             </div>
             <div className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-ink">
-              A 7B forbidden to reason solves{" "}
-              <strong className="font-mono">{pct(F3.cross.gagged_large_accuracy)}</strong>. A 1.5B
-              allowed to reason solves{" "}
+              A non-reasoning 7B solves{" "}
+              <strong className="font-mono">{pct(F3.cross.gagged_large_accuracy)}</strong>. A
+              reasoning 1.5B solves{" "}
               <strong className="font-mono">{pct(F3.cross.ungagged_small_accuracy)}</strong>. The
               working is worth more than {F3.cross.param_ratio.toFixed(1)} times the parameters ·{" "}
               {pLabel(F3.cross.p)}, {F3.cross.fixed} problems one way and {F3.cross.broken} the
@@ -950,7 +957,7 @@ export function Page5() {
           </section>
           <p className="text-ink-muted">
             The right-hand ends fan out with size, the way you would expect. The left-hand ends do
-            not: forbidden to reason, all three land in the same narrow strip, and that flat floor
+            not: non-reasoning, all three land in the same narrow strip, and that flat floor
             is the finding.
           </p>
         </section>
@@ -963,7 +970,7 @@ export function Page5() {
             the token cap, which biases the headline {PAGE5.truncation.biases_headline}.
           </p>
           <p>
-            &ldquo;Forbidden to reason&rdquo; is one phrasing and another would move the floor. And
+            The gag is one phrasing and another would move the floor. And
             the run records whether working appeared and whether the answer landed, never whether
             the working was sound.
           </p>
@@ -980,19 +987,49 @@ export function Page5() {
             </span>
           </h2>
           <p className="text-ink-muted">
-            Figures 1 and 2 are one checkpoint, the {sizeLabel(PRIMARY_ROW.params)}. Here are all
-            three, each plotted twice. Across is the median number of tokens the model
-            wrote per problem, on a log scale because the two prompts sit two orders of magnitude
-            apart. Up is the share of the same {F2.bare.n} problems it solved.
+            Figures 1 and 2 are one checkpoint, the {sizeLabel(PRIMARY_ROW.params)}.
+            <Cite n={REF.qwen} /> Here are all three, each plotted twice. Across is the median
+            number of tokens the model wrote per problem, on a log scale because the two prompts sit
+            two orders of magnitude apart. Up is the share of the same {F2.bare.n} MATH-500 problems
+            <Cite n={REF.math500} />{" "}
+            it solved.
           </p>
           <section
             aria-label="Tokens written against problems solved"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className={chip}>Qwen2.5-Instruct · 1.5B, 3B, 7B · all bf16</span>
-              <span className={chip}>greedy · the same {F2.bare.n} problems</span>
-            </div>
+            {/* The run's ledger, inside the figure it certifies: every vital the
+                top plate's mono line used to carry, as label and value pairs
+                with the card's full width to breathe in rather than a 15rem
+                margin column that wrapped the run id mid-hash. */}
+            <dl className="flex flex-wrap gap-x-6 gap-y-1 border-b border-grid pb-3 font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
+              <div className="flex gap-2">
+                <dt>model</dt>
+                <dd className="text-ink">Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16</dd>
+              </div>
+              <div className="flex gap-2">
+                <dt>decoding</dt>
+                <dd className="text-ink">
+                  {M.decoding.strategy} · {M.decoding.max_new_tokens}-token cap
+                </dd>
+              </div>
+              <div className="flex gap-2">
+                <dt>problems</dt>
+                <dd className="text-ink">
+                  MATH-500 levels {M.items.eval_levels.join(" and ")} · n = {M.items.n} paired
+                </dd>
+              </div>
+              <div className="flex gap-2">
+                <dt>output</dt>
+                <dd className="text-ink">900 generations</dd>
+              </div>
+              <div className="flex gap-2">
+                <dt>run</dt>
+                <dd className="text-ink">
+                  {M.run_id} · {RUN_DATE}
+                </dd>
+              </div>
+            </dl>
             <CostChart />
             <p className="text-xs text-ink-muted">
               One dot is one checkpoint under one prompt. The dots are not joined: the two prompts
@@ -1001,10 +1038,10 @@ export function Page5() {
             </p>
           </section>
           <p className="text-ink-muted">
-            Both numbers rise with the checkpoint, but not together. Left alone, the three models
+            Both numbers rise with the checkpoint, but not together. Reasoning, the three models
             write almost the same amount, a median of {F3.models.map((m) => m.bareMedianTokens).join(", ")}{" "}
             tokens, and solve {F3.models.map((m) => pct(m.bareAccuracy)).join(", ")} of the same
-            hundred. Forbidden to reason they write{" "}
+            hundred. Non-reasoning they write{" "}
             {F3.models.map((m) => m.blurtMedianTokens).join(", ")} tokens and solve{" "}
             {F3.models.map((m) => pct(m.blurtAccuracy)).join(", ")}. The tokens move with the
             prompt; the accuracy moves with the model.
@@ -1020,34 +1057,22 @@ export function Page5() {
             </p>
           </div>
         </section>
-        <Note kicker="Also measured">
-          <p>
-            Asking, on a model that already reasons, moved the score by{" "}
-            {F2.instruction.deltaPts.toFixed(1)} points: {F2.instruction.fixed} fixed,{" "}
-            {F2.instruction.broken} broken, ±{F2.instructionBoundPts.toFixed(1)}. A bound, not a
-            zero: on a model that has already been trained to reason, the prompt is close to spent.
-          </p>
-          <p>
-            Worked examples in the prompt did not help either. Mostly they moved the{" "}
-            <span className="font-code">{"\\boxed{}"}</span> answer-format rate.
-          </p>
+        {/* Beside the close, only the instruments' references. The run's ledger
+            sits inside the figure card itself, where the sidebar's 15rem track
+            wrapped its values mid-hash. The "Also measured" note (the
+            instruction null and the exemplar rungs) went back to the notebook:
+            the page shows what the chain is worth, not how a model that already
+            reasons responds to being asked to. */}
+        <Note kicker="References">
+          <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct">
+            Qwen team 2024, <em>Qwen2.5-3B-Instruct</em> model card (Hugging Face). The 1.5B and
+            7B cards sit alongside it.
+          </RefItem>
+          <RefItem n={REF.math500} href="https://huggingface.co/datasets/HuggingFaceH4/MATH-500">
+            <em>MATH-500</em> dataset card (Hugging Face): 500 MATH test problems (Hendrycks et
+            al. 2021), the subset of Lightman et al. 2023.
+          </RefItem>
         </Note>
-      </div>
-
-      {/* The download, at the foot of the page. The references it used to sit
-          beside now live in a right-hand References sidenote next to step 1,
-          each entry numbered and claimed by a marker up in the prose, so a
-          reader who follows one back lands on the sentence it supports. */}
-      <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
-        <div className="flex flex-wrap items-center gap-2">
-          <a
-            className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-            href={NOTEBOOK_ZIP}
-            download
-          >
-            Download the notebook, the harness and all 900 traces (zip, {NOTEBOOK_SIZE}) ↓
-          </a>
-        </div>
       </div>
 
       <div aria-live="polite" className="sr-only">
