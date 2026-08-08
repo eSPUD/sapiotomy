@@ -7,13 +7,24 @@
  * a number is fine and expected when one work supports two claims.
  */
 
-/** A superscript citation marker, e.g. the 1 in "...a voice is angry.1" */
+/**
+ * A superscript citation marker, e.g. the 1 in "...a voice is angry.1"
+ *
+ * The marker is an in-page anchor to its References entry (`#ref-{n}`): clicking
+ * or activating it jumps to that entry in the margin note, which lights up via
+ * the `:target` highlight RefItem carries. Pure anchor behaviour, no script.
+ */
 export function Cite({ n }: { n: number }) {
   return (
-    <sup className="ml-0.5 font-semibold text-compute">
-      {/* Without this a screen reader announces a bare digit mid-sentence. */}
-      <span className="sr-only">reference </span>
-      {n}
+    <sup className="ml-0.5 font-semibold">
+      <a
+        href={`#ref-${n}`}
+        className="text-compute no-underline hover:underline focus-visible:underline"
+      >
+        {/* Without this a screen reader announces a bare digit mid-sentence. */}
+        <span className="sr-only">reference </span>
+        {n}
+      </a>
     </sup>
   );
 }
@@ -41,7 +52,12 @@ export function RefItem({
   children: React.ReactNode;
 }) {
   return (
-    <p className="flex flex-wrap gap-1.5">
+    <p
+      id={`ref-${n}`}
+      // scroll-mt clears the sticky header when jumped to; the -mx/px pair
+      // reserves room for the :target tint so nothing shifts when it appears.
+      className="flex flex-wrap gap-1.5 scroll-mt-24 -mx-1.5 rounded px-1.5 py-0.5 transition-colors target:bg-compute/10"
+    >
       <span className="font-semibold text-compute">{n}.</span>
       {href ? (
         <a

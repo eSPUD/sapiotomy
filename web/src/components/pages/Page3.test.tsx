@@ -210,12 +210,21 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(screen.queryByText(/where the bill comes from/i)).toBeNull();
     expect(screen.queryByText(/where the wall comes from/i)).toBeNull();
     expect(screen.getAllByText("References")).toHaveLength(1);
-    // The figures carry inline numbered markers; the link chips left the steps
-    // for a single row at the foot of the page.
+    // The figures carry inline numbered markers; the external reference chips
+    // left the steps for a single row at the foot of the page. The markers
+    // themselves are in-page anchors to the sidenote (#ref-n), so a figure may
+    // hold those, but never an external link.
     const bill = screen.getByRole("figure", { name: /problem one/i });
     const data = screen.getByRole("region", { name: /problem two/i });
-    expect(bill.querySelector("a")).toBeNull();
-    expect(data.querySelector("a")).toBeNull();
+    const externalLinks = (el: HTMLElement) =>
+      Array.from(el.querySelectorAll("a")).filter((a) =>
+        a.getAttribute("href")?.startsWith("http"),
+      );
+    expect(externalLinks(bill)).toHaveLength(0);
+    expect(externalLinks(data)).toHaveLength(0);
+    // Every citation marker in a figure points at its sidenote entry.
+    for (const a of bill.querySelectorAll("sup a"))
+      expect(a.getAttribute("href")).toMatch(/^#ref-\d+$/);
     expect(bill.querySelectorAll("sup")).toHaveLength(3);
     // three now: the scaling law, the stock, and the observed dataset-size table
     expect(data.querySelectorAll("sup")).toHaveLength(3);

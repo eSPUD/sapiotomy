@@ -447,6 +447,8 @@ export function Page3() {
                 yTickFormat={(t) => (t >= 1000 ? `${t / 1000}Q` : `${t}T`)}
                 xTickFormat={(t) => String(Math.round(t))}
                 xTicks={PROJ.points.map((p) => p.x)}
+                xLabel="projected year"
+                yLabel="largest training set (tokens)"
                 referenceY={PP.stockTrillionTokens}
                 referenceLabel={`${PP.stockTrillionTokens}T stock`}
                 markerX={projYear}
