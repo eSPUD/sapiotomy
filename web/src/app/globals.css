@@ -33,6 +33,15 @@
 }
 .animate-fade-in { animation: fade-in 0.28s ease-out both; }
 
+/* STaR loop graph (Page 12): the fine-tune outer loop's dashes march forward,
+   and a comet segment travels the whole cycle. Both are CSS animations, so the
+   reduced-motion media query above neutralizes them. The comet path is drawn
+   with pathLength=100, so the dash values below are percentages of its length. */
+@keyframes star-flow { to { stroke-dashoffset: -12; } }
+.animate-star-flow { animation: star-flow 0.9s linear infinite; }
+@keyframes star-comet { to { stroke-dashoffset: -100; } }
+.animate-star-comet { animation: star-comet 4.5s linear infinite; }
+
 html,
 body {
   background-color: theme("colors.canvas");

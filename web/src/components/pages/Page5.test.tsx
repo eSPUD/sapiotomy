@@ -78,11 +78,10 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     expect(body()).toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
   });
 
-  // Pages 1 to 3's grammar: the marker sits on the claim, the entry sits in the
-  // footer, and the number ties the two together. Nothing sits beside the step,
-  // because a gloss there is duplication the reader pays for twice, once in
-  // reading and once in the whitespace it opens beside a four-line step.
-  it("marks the two techniques in the prose and resolves them in the footer", () => {
+  // Pages 1 to 3's grammar: the marker sits on the claim, and the entry sits in
+  // a right-hand References sidenote beside the step, with the number tying the
+  // two together.
+  it("marks the two techniques in the prose and resolves them in a References sidenote", () => {
     render(<Page5 />);
     expect(screen.queryByText(/cited for the technique/i)).not.toBeInTheDocument();
 
@@ -93,12 +92,11 @@ describe("Page 5, step 1: what a chain of thought is", () => {
       "reference 2",
     ]);
 
-    // Both entries and the download share one footer block, page 8's shape.
-    const footer = screen
-      .getByRole("link", { name: /download the notebook/i })
-      .closest("div.border-t")!;
-    expect(within(footer as HTMLElement).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
-    expect(within(footer as HTMLElement).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
+    // Both entries live in the first right-hand References sidenote, beside
+    // this step. (The second References sidenote sits beside the close.)
+    const refs = screen.getAllByText("References")[0].closest("aside")!;
+    expect(within(refs).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
+    expect(within(refs).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
   });
 });
 
@@ -191,20 +189,20 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
     expect(body()).toContain(
       `solves ${PAGE5.figure2.bare.nCorrect} of the ${PAGE5.figure2.bare.n}`,
     );
-    expect(body()).toContain("the same model forbidden to reason");
+    expect(body()).toContain("the same model, reasoning against non-reasoning");
     expect(body()).toContain(`Each square below is one of those ${PAGE5.figure2.bare.n} problems`);
     const intro = screen.getByText(/One trace proves nothing/).textContent ?? "";
     expect(intro).not.toContain(`solves ${PAGE5.figure2.blurt.nCorrect}`);
   });
 
-  it("starts with the model left alone and flips to the floor", () => {
+  it("starts with the model reasoning and flips to the floor", () => {
     render(<Page5 />);
     const fig2 = screen.getByLabelText("The cost of forbidding the working");
     expect(body()).toContain(`solved, of the same ${PAGE5.figure2.bare.n} problems`);
     expect(within(fig2).getByText(String(PAGE5.figure2.bare.nCorrect))).toBeInTheDocument();
     expect(body()).toContain(`median ${PAGE5.figure2.bare.medianTokens} tokens written`);
 
-    fireEvent.click(screen.getByRole("button", { name: /forbidden to reason/i }));
+    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
     expect(within(fig2).getByText(String(PAGE5.figure2.blurt.nCorrect))).toBeInTheDocument();
     expect(body()).toContain(`median ${PAGE5.figure2.blurt.medianTokens} tokens written`);
     expect(body()).toContain(
@@ -219,7 +217,7 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
   it("prints the paired contrast with its discordant count and p-value", () => {
     render(<Page5 />);
     expect(body()).not.toContain("Forbidding the working costs");
-    fireEvent.click(screen.getByRole("button", { name: /forbidden to reason/i }));
+    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
     expect(body()).toContain(
       `Forbidding the working costs ${PAGE5.figure2.suppression.deltaPts} points`,
     );
@@ -232,7 +230,7 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
 
   it("shows the exact gag string, since one phrasing is all it is", () => {
     render(<Page5 />);
-    fireEvent.click(screen.getByRole("button", { name: /forbidden to reason/i }));
+    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
     expect(body()).toContain("Give only the final answer.");
   });
 
@@ -259,8 +257,8 @@ describe("Page 5, figure 3: the floor is flat", () => {
 
   it("compares named checkpoints and never puts size on an axis", () => {
     render(<Page5 />);
-    expect(body()).toContain("A 7B forbidden to reason solves 11%");
-    expect(body()).toContain("A 1.5B allowed to reason solves 22%");
+    expect(body()).toContain("A non-reasoning 7B solves 11%");
+    expect(body()).toContain("A reasoning 1.5B solves 22%");
     expect(body()).toContain("Three checkpoints are not a scaling law");
     // The emergence claim and the redrawn PaLM chart left the page with the
     // premise. Our trend is smooth and monotone; a sign flip is not in it.
@@ -293,8 +291,8 @@ describe("Page 5, figure 4: what each checkpoint wrote against what it solved", 
       expect(title).toContain(`${m.blurtMedianTokens} tokens and ${Math.round(m.blurtAccuracy * 100)}%`);
       expect(title).toContain(`${m.bareMedianTokens} tokens and ${Math.round(m.bareAccuracy * 100)}%`);
     }
-    expect(title).toContain("Forbidden to reason");
-    expect(title).toContain("Left alone");
+    expect(title).toContain("Non-reasoning");
+    expect(title).toContain("Reasoning");
   });
 
   // The reading the figure supports: the horizontal axis is set by the prompt,
@@ -323,52 +321,76 @@ describe("Page 5: provenance and what the page may claim", () => {
   });
 
   // The pipeline's whole claim: a reader who doubts a figure re-derives it.
-  it("links the notebook, the harness and the traces as one download", () => {
+  // The link sits at the top right of the page, on the act kicker's row.
+  it("links the notebook, the harness and the traces as one download, at the top", () => {
     render(<Page5 />);
     const link = screen.getByRole("link", { name: /download the notebook, the harness and all/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-05-how-to-reason.zip");
     expect(link).toHaveAttribute("download");
-    expect(body()).toContain("redraws every figure here from those traces");
+    expect(link.parentElement?.textContent).toContain("Act 2");
   });
 
-  it("names the instrument on the page, not only in the footnote", () => {
+  // The run's vitals moved off the top plate (jargon before the reader has met
+  // a token cap) into a ledger inside the close's figure card, where they have
+  // the card's width instead of a margin column that wrapped the run id.
+  it("names the instrument on the page, in a ledger inside the close's figure", () => {
     render(<Page5 />);
-    expect(body()).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B");
-    expect(body()).toContain("MATH-500 levels 4 and 5");
-    expect(body()).toContain("900 generations");
-    expect(body()).toContain(PAGE5.manifest.run_id);
+    const card = screen.getByLabelText("Tokens written against problems solved");
+    const vitals = card.querySelector("dl")?.textContent ?? "";
+    expect(vitals).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B");
+    expect(vitals).toContain("MATH-500 levels 4 and 5");
+    expect(vitals).toContain("900 generations");
+    expect(vitals).toContain(PAGE5.manifest.run_id);
   });
 
-  // The instruction contrast is measured and not plotted, and it is stated as a
-  // bound. "Nothing" unqualified is the one word the claims contract forbids.
-  // It used to hand the null to page 12, which never picked it up: the built page 12
-  // opens on the answer-key question and never mentions the instruction null. The clause
-  // is the finding itself now, and this asserts the dangling pointer stays gone.
-  it("states the instruction null as a bound, and promises no page that does not receive it", () => {
+  // The instruments are cited where the close names all three checkpoints: the
+  // model card and the dataset resolve in a References sidenote, on Hugging Face.
+  it("cites the model card and the dataset, linked to Hugging Face", () => {
     render(<Page5 />);
-    expect(body()).toContain(
-      `${PAGE5.figure2.instruction.fixed} fixed, ${PAGE5.figure2.instruction.broken} broken`,
+    const qwen = screen.getByRole("link", { name: /Qwen2\.5-3B-Instruct.*model card/i });
+    expect(qwen).toHaveAttribute("href", "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct");
+    const math500 = screen.getByRole("link", { name: /MATH-500 dataset card/i });
+    expect(math500).toHaveAttribute(
+      "href",
+      "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
     );
-    expect(body()).toContain("A bound, not a zero");
-    expect(body()).toContain("the prompt is close to spent");
-    expect(body()).not.toContain("page 12 opens on it");
+
+    // Both markers sit in the close's opening paragraph, numbered after step 1's.
+    const close = screen.getByText(/Figures 1 and 2 are one checkpoint/).closest("p")!;
+    expect(Array.from(close.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
+      "reference 3",
+      "reference 4",
+    ]);
   });
 
-  // §6 of the spec: the exemplar rungs may be absent, but only with a note
-  // saying why, because "we tried it and it did nothing" is a different claim.
-  it("says why the worked-example rungs are not on the page", () => {
+  // The "Also measured" note (the instruction null, the exemplar rungs) went
+  // back to the notebook on 2026-08-08: the page shows what the chain is worth,
+  // not how a model that already reasons responds to prompt engineering. Both
+  // findings stay measured, in the download.
+  it("does not carry the instruction and exemplar findings on the page", () => {
     render(<Page5 />);
-    expect(body()).toContain("Worked examples in the prompt did not help either");
-    expect(body()).toContain("answer-format rate");
+    expect(body()).not.toContain("Also measured");
+    expect(body()).not.toContain("A bound, not a zero");
+    expect(body()).not.toContain("Worked examples in the prompt");
   });
 
-  // The plate above the figures carries "ours, not a redrawing"; the badges
-  // carry the technique. Neither needs restating beside the other.
-  it("cites the techniques and says the numbers are ours exactly once", () => {
+  // The conditions are named plainly on every surface: buttons, cluster
+  // labels, aria titles, prose. The euphemisms may not come back.
+  it("says reasoning and non-reasoning, never the old euphemisms", () => {
+    render(<Page5 />);
+    expect(body()).not.toMatch(/forbidden to reason/i);
+    expect(body()).not.toMatch(/left alone/i);
+    expect(body()).not.toMatch(/allowed to reason/i);
+  });
+
+  // The provenance plate ("one measurement of ours, not a redrawing...") was
+  // removed 2026-08-08 as jargon; the techniques stay cited, once each.
+  it("cites the techniques once, with no provenance plate above the steps", () => {
     render(<Page5 />);
     expect(screen.getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
-    expect(body()).toContain("one measurement of ours, not a redrawing of anyone");
+    expect(body()).not.toContain("one measurement of ours");
+    expect(body()).not.toContain("replay mode");
   });
 
   // The three-paragraph footer these came from was doing the notebook's job.

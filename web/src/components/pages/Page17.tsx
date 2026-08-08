@@ -21,7 +21,6 @@ import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { Toggle } from "@/components/Toggle";
-import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { SELF_CORRECTION, selfCorrectionCurve } from "@/lib/frontier";
@@ -32,34 +31,6 @@ const P = SELF_CORRECTION;
 
 /** Page 17's references, numbered in order of first appearance. */
 const REF = { huang: 1, zeng: 2, wang: 3, stroebl: 4, balachandran: 5 } as const;
-
-const STROEBL: Citation = {
-  ref: "Stroebl et al. 2024",
-  url: "https://arxiv.org/abs/2411.17501",
-  venue: "arXiv",
-  preprint: true,
-};
-
-const ZENG: Citation = {
-  ref: "Zeng et al. 2025",
-  url: "https://arxiv.org/abs/2502.12215",
-  venue: "ACL 2025",
-  preprint: false,
-};
-
-const WANG: Citation = {
-  ref: "Wang et al. 2025",
-  url: "https://arxiv.org/abs/2501.18585",
-  venue: "arXiv",
-  preprint: true,
-};
-
-const BALACHANDRAN: Citation = {
-  ref: "Balachandran et al. 2025",
-  url: "https://arxiv.org/abs/2504.00294",
-  venue: "arXiv",
-  preprint: true,
-};
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -309,22 +280,19 @@ export function Page17() {
               ask what sets the new ceiling.
             </p>
           </Note>
-          <aside className="flex flex-col gap-2 text-sm text-ink-muted">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              References
-            </p>
+          <Note kicker="References">
             <RefItem n={REF.zeng} href="https://arxiv.org/abs/2502.12215">
               Zeng et al. 2025, <em>Revisiting the Test-Time Scaling of o1-like Models</em> (ACL
               2025).
             </RefItem>
-            <RefItem n={REF.wang} href="https://arxiv.org/abs/2501.18585">
+            <RefItem n={REF.wang} href="https://arxiv.org/abs/2501.18585" preprint>
               Wang et al. 2025, <em>Thoughts Are All Over the Place</em>.
             </RefItem>
             <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
               Stroebl et al. 2024, <em>Inference Scaling fLaws</em> — the verifier ceiling, from
               page 8.
             </RefItem>
-          </aside>
+          </Note>
         </div>
 
         {/* Step 3 — what still works */}
@@ -363,19 +331,17 @@ export function Page17() {
         </Note>
       </div>
 
-      
       <p className="text-xs text-ink-muted">
-        the bar panels are verbatim Table 3 values from Huang et al. (ICLR 2024, arXiv:2310.01798)
-        · the slider demo is an exact three-state chain, not a digitized curve: no paper fixes its
-        transition rates, and the constants (solve 45%, break 10%, fix 3%, 15% out of reach,
-        verifier reliability 90%) are authored so the shape matches the published directions —
-        correct→wrong flips outnumber wrong→correct (Huang et al.), forced revision lowers weaker
-        o1-style models&apos; accuracy and correct solutions run shorter than incorrect ones (Zeng
-        et al. 2025, arXiv:2502.12215), wrong answers burn ~225% more tokens amid ~4× more strategy
-        switches (Wang et al. 2025, arXiv:2501.18585), and an imperfect verifier caps — and can
-        reverse — resampling gains (Stroebl et al. 2024, arXiv:2411.17501) · AIME 2025 drops are
-        reported values from Balachandran et al. 2025 (arXiv:2504.00294) · every number in the demo
-        is pinned by the test suite
+        the bar panels are verbatim Table 3 values<Cite n={REF.huang} /> · the slider demo is an
+        exact three-state chain, not a digitized curve: no paper fixes its transition rates, and the
+        constants (solve 45%, break 10%, fix 3%, 15% out of reach, verifier reliability 90%) are
+        authored so the shape matches the published directions — correct→wrong flips outnumber
+        wrong→correct,<Cite n={REF.huang} /> forced revision lowers weaker o1-style models&apos;
+        accuracy and correct solutions run shorter than incorrect ones,<Cite n={REF.zeng} /> wrong
+        answers burn ~225% more tokens amid ~4× more strategy switches,<Cite n={REF.wang} /> and an
+        imperfect verifier caps — and can reverse — resampling gains<Cite n={REF.stroebl} /> · AIME
+        2025 drops are reported values<Cite n={REF.balachandran} /> · every number in the demo is
+        pinned by the test suite
       </p>
 
       <PageNav n={PAGE_N} />

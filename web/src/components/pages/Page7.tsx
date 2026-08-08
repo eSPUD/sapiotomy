@@ -310,7 +310,8 @@ export function Page7() {
 
       {/* Provenance as a specimen label rather than a row of pills: hairline
           rules and the instrument on one mono line. The download it used to
-          carry sits with the reference at the foot of the page, page 8's shape. */}
+          carry sits at the foot of the page; the reference now sits in a
+          right-hand References sidenote beside step 1. */}
       <div className="flex flex-col gap-2 border-y border-grid py-4">
         <p className="text-sm text-ink">
           Every figure below is one measurement of ours, on the same items pages 5 and 6 use. The
@@ -350,7 +351,12 @@ export function Page7() {
             <Cite n={REF.wang} />
           </p>
         </section>
-        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem n={REF.wang} href="https://arxiv.org/abs/2203.11171">
+            Wang et al. 2022, <em>Self-Consistency Improves Chain of Thought Reasoning in Language
+            Models</em> (ICLR 2023).
+          </RefItem>
+        </Note>
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -662,14 +668,10 @@ export function Page7() {
         </Note>
       </div>
 
-      {/* The reference and the download, at the foot of the page: page 8's
-          shape, with pages 1 to 3's reference grammar. The number is claimed by
-          a marker in step 1, where the technique is named. */}
+      {/* The download, at the foot of the page. The reference it used to sit
+          beside now lives in a right-hand References sidenote next to step 1,
+          where the technique is named and the marker claims the number. */}
       <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
-        <RefItem n={REF.wang} href="https://arxiv.org/abs/2203.11171">
-          Wang et al. 2022, <em>Self-Consistency Improves Chain of Thought Reasoning in Language
-          Models</em> (ICLR 2023).
-        </RefItem>
         <div className="flex flex-wrap items-center gap-2">
           <a
             className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"

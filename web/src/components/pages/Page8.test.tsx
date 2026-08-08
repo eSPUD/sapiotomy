@@ -149,6 +149,25 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(note.textContent).toContain(pct(PAGE8.agreement.page8Coverage));
   });
 
+  // The two sources moved from CitationBadge chips into numbered RefItem entries
+  // in their margin notes, each reachable from an inline Cite superscript in the
+  // prose. Both are non-peer-reviewed, so both keep the preprint flag.
+  it("cites Cobbe and Stroebl as numbered references with inline markers", () => {
+    render(<Page8 />);
+    const cobbe = screen.getByRole("link", {
+      name: /Training Verifiers to Solve Math Word Problems/,
+    });
+    expect(cobbe).toHaveAttribute("href", "https://arxiv.org/abs/2110.14168");
+    const stroebl = screen.getByRole("link", { name: /Inference Scaling fLaws/ });
+    expect(stroebl).toHaveAttribute("href", "https://arxiv.org/abs/2411.17501");
+    expect(screen.getAllByText("preprint")).toHaveLength(2);
+    // Each source carries an inline superscript marker pointing at its entry.
+    expect(document.querySelector("a[href='#ref-1']")).not.toBeNull();
+    expect(document.querySelector("a[href='#ref-2']")).not.toBeNull();
+    expect(document.getElementById("ref-1")).not.toBeNull();
+    expect(document.getElementById("ref-2")).not.toBeNull();
+  });
+
   it("links the notebook and traces for download", () => {
     render(<Page8 />);
     const link = screen.getByRole("link", { name: /notebook \+ .* traces/ });

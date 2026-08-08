@@ -41,7 +41,6 @@ import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import {
@@ -66,20 +65,6 @@ const TOK_PER_QUERY = 10_000;
 const VOL_MIN = 20; // 10^2
 const VOL_MAX = 70; // 10^7
 const CHART_QS = Array.from({ length: 26 }, (_, i) => Math.pow(10, 2 + i * 0.2));
-
-const BENDER: Citation = {
-  ref: "Bender et al. 2025",
-  url: "https://arxiv.org/abs/2501.07458",
-  venue: "arXiv",
-  preprint: true,
-};
-
-const STROEBL: Citation = {
-  ref: "Stroebl et al. 2024",
-  url: "https://arxiv.org/abs/2411.17501",
-  venue: "arXiv",
-  preprint: true,
-};
 
 const fmtQ = (q: number) =>
   q >= 1e6
@@ -572,7 +557,9 @@ export function Page16() {
         <Note kicker="Try it">
           <p>Hold 72% and push the volume: renting wins early, owning wins late.</p>
           <p>Then hold the volume and raise the target past ~77%: the samples stop paying.</p>
-          <p className="pt-1 text-xs font-semibold uppercase tracking-wide">References</p>
+        </Note>
+        <div aria-hidden="true" />
+        <Note kicker="References">
           <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
           </RefItem>

@@ -86,9 +86,9 @@ export interface ModelRow {
   quant: string;
   blurtAccuracy: number;
   bareAccuracy: number;
-  /** Median tokens this checkpoint wrote per problem, forbidden to reason. */
+  /** Median tokens this checkpoint wrote per problem, non-reasoning. */
   blurtMedianTokens: number;
-  /** Median tokens this checkpoint wrote per problem, left alone. */
+  /** Median tokens this checkpoint wrote per problem, reasoning. */
   bareMedianTokens: number;
   deltaPts: number;
   fixed: number;
@@ -269,7 +269,7 @@ if (!blurt || !bare || !suppression || !instruction) {
  *
  * The orientation, which is the one thing easy to get backwards: the GAG is the
  * baseline and the chain is the change, so `afterOnly` is a problem solved only
- * when the model is left alone, which is what the gag costs.
+ * when the model reasons, which is what the gag costs.
  */
 export { pairedTable, solvedIn, PairedTableError } from "./paired";
 export type { PairedClass, PairedTable } from "./paired";
@@ -334,10 +334,10 @@ if (!primaryRow) {
   );
 }
 for (const [what, a, b] of [
-  ["median tokens left alone", primaryRow.bareMedianTokens, bare.medianTokens],
-  ["median tokens forbidden to reason", primaryRow.blurtMedianTokens, blurt.medianTokens],
-  ["accuracy left alone", primaryRow.bareAccuracy, bare.accuracy],
-  ["accuracy forbidden to reason", primaryRow.blurtAccuracy, blurt.accuracy],
+  ["median tokens reasoning", primaryRow.bareMedianTokens, bare.medianTokens],
+  ["median tokens non-reasoning", primaryRow.blurtMedianTokens, blurt.medianTokens],
+  ["accuracy reasoning", primaryRow.bareAccuracy, bare.accuracy],
+  ["accuracy non-reasoning", primaryRow.blurtAccuracy, blurt.accuracy],
 ] as const) {
   if (a !== b) {
     throw new Page05DataError(

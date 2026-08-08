@@ -215,6 +215,18 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     }
   });
 
+  // Lightman moved from a CitationBadge chip into a numbered RefItem in the
+  // References note, reachable from an inline Cite superscript on the process
+  // reward model claim. It is a preprint, so it keeps the flag.
+  it("cites Lightman as a numbered reference reachable from an inline marker", () => {
+    render(<Page9 />);
+    const link = screen.getByRole("link", { name: /Let's Verify Step by Step/ });
+    expect(link).toHaveAttribute("href", "https://arxiv.org/abs/2305.20050");
+    expect(screen.getByText("preprint")).toBeInTheDocument();
+    expect(document.querySelector("a[href='#ref-1']")).not.toBeNull();
+    expect(document.getElementById("ref-1")).not.toBeNull();
+  });
+
   it("leaves the run conditions to the notebook instead of a footnote", () => {
     render(<Page9 />);
     expect(screen.getByText(/live in the notebook/i)).toBeInTheDocument();

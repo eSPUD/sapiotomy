@@ -32,6 +32,7 @@
  */
 
 import { useEffect, useId, useMemo, useState } from "react";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { GAME_ROUNDS, MULT_METHODS, type MultMethodKey } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
@@ -40,6 +41,9 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 4;
 const M = MULT_METHODS;
 const P = M.problem;
+
+/** Page 4's one reference, numbered in order of first appearance. */
+const REF = { vedic: 1 } as const;
 
 /** Milliseconds between auto-advanced steps when Play is pressed. */
 const PLAY_MS = 900;
@@ -505,9 +509,9 @@ export function Page4() {
           </section>
         </section>
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.vedic}>
             Bharati Krishna Tirtha, <em>Vedic Mathematics</em> (1965).
-          </p>
+          </RefItem>
         </Note>
 
         {/* Step 2 — the three roads side by side */}
@@ -567,8 +571,8 @@ export function Page4() {
         the three walkthroughs are authored teaching examples; every intermediate number is derived
         from {P.a} × {P.b} and recomputed by the test suite · line multiplication is a visual method
         commonly taught as a Japanese technique; &ldquo;Vedic&rdquo; names the Urdhva-Tiryagbhyam
-        (&ldquo;vertically and crosswise&rdquo;) sutra · the destination {P.display} is page
-        1&apos;s round 3
+        (&ldquo;vertically and crosswise&rdquo;) sutra
+        <Cite n={REF.vedic} /> · the destination {P.display} is page 1&apos;s round 3
       </p>
 
       <div aria-live="polite" className="sr-only">

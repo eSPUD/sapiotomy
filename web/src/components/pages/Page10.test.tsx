@@ -218,15 +218,15 @@ describe("Page 10 — step 3 and house style", () => {
     expect(container.textContent).not.toMatch(/game of 24/i);
   });
 
-  it("keeps both reference notes to bare cites, as pages 3-8 do", () => {
+  it("carries both references as RefItem entries in the margin notes, as page 3 does", () => {
     render(<Page10 />);
     const notes = screen.getAllByText("References").map((el) => el.closest("aside")!);
     expect(notes).toHaveLength(2);
     const all = notes.map((n) => n.textContent).join(" | ");
     expect(all).toMatch(/Holtzman et al\. 2020, The Curious Case of Neural Text Degeneration/);
     expect(all).toMatch(/Yao et al\. 2023, Tree of Thoughts/);
-    // no venue, table number, sample size or arXiv id in a note
-    expect(all).not.toMatch(/NeurIPS|ICLR|Table 1|Table 3|20 puzzles|GPT-2|arXiv/);
+    // venue is fine (page-3 house style); no table number, sample size or arXiv id in a note
+    expect(all).not.toMatch(/Table 1|Table 3|20 puzzles|GPT-2|arXiv/);
   });
 
   it("anchors the trap in Holtzman's measured numbers, beside step 1", () => {
@@ -244,7 +244,7 @@ describe("Page 10 — step 3 and house style", () => {
     ).toBeInTheDocument();
   });
 
-  it("carries both citation chips at the foot", () => {
+  it("links each reference from its RefItem entry, not a footer chip", () => {
     render(<Page10 />);
     expect(screen.getByRole("link", { name: /Yao et al\. 2023/ })).toHaveAttribute(
       "href",
@@ -256,13 +256,18 @@ describe("Page 10 — step 3 and house style", () => {
     );
   });
 
-  it("has no footnote: the page ends at the citation chip", () => {
+  it("has no footer chips: the page ends on nav, references live in the margin notes", () => {
     const { container } = render(<Page10 />);
     const article = container.querySelector("article")!;
     const kids = [...article.children];
+    // last child is the page nav; the grid of steps + margin notes sits directly
+    // before it — no citation-chip row in between
     expect(kids.at(-1)?.querySelector("a[href*='p/']")).toBeTruthy();
-    expect(kids.at(-2)?.textContent).toMatch(/Yao et al\. 2023/);
-    expect(kids.at(-2)?.textContent).toMatch(/Holtzman et al\. 2020/);
+    const grid = kids.at(-2)!;
+    expect(grid.textContent).toMatch(/Yao et al\. 2023/);
+    expect(grid.textContent).toMatch(/Holtzman et al\. 2020/);
+    // the References notes are the last thing before nav; no bare link chips follow the grid
+    expect(grid.querySelector('aside a[href*="arxiv"]')).toBeTruthy();
   });
 
   // Pages 5 to 9 each hand the next one a question. This page's last content sentence
