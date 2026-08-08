@@ -414,7 +414,7 @@
             "token_end": 51
           },
           {
-            "text": "\\[\n\\frac{1}{2}(3x - 9) = x + 37\n\\]",
+            "text": "\\[\n\\frac{3x - 9}{2} = x + 37\n\\]",
             "token_start": 51,
             "token_end": 75
           },
