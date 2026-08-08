@@ -64,11 +64,10 @@
  *     our curve, not theirs.
  */
 
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
 import { CitationBadge } from "@/components/CitationBadge";
 import { PageNav } from "@/components/PageNav";
-import { Slider } from "@/components/Slider";
 import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import { PAGE6, naturalLength, pct, rowById, tidyMath, tokens, traceZones } from "@/lib/page06";
@@ -90,13 +89,82 @@ const NOTEBOOK_SIZE = "2.0 MB";
 const RUN_DATE = M.timestamp_utc.slice(0, 10);
 const TOP = B[B.length - 1];
 
+/**
+ * The last doubling's move, in words. It comes out negative on the primary
+ * checkpoint, and "moves it by -1 point" reads as a typo rather than as the
+ * measurement it is, so the direction goes in the sentence and the number
+ * stays unsigned.
+ */
+const LAST_GAIN = F2.primary.gains[F2.primary.gains.length - 1].gain_pts;
+const LAST_GAIN_PTS = Math.abs(Math.round(LAST_GAIN));
+const LAST_GAIN_MOVE = `${LAST_GAIN < 0 ? "down" : "up"} by ${LAST_GAIN_PTS} point${
+  LAST_GAIN_PTS === 1 ? "" : "s"
+}`;
+/** The same move counted in problems, which is how the page reads a point. */
+const LAST_GAIN_PROBLEMS = LAST_GAIN_PTS === 1 ? "one problem" : `${LAST_GAIN_PTS} problems`;
+
 /** Cited for the technique it introduced. No number of theirs appears here. */
 const S1: Citation = {
   ref: "Muennighoff et al. 2025",
   url: "https://arxiv.org/abs/2501.19393",
-  venue: "preprint",
+  venue: "arXiv",
   preprint: true,
 };
+
+/**
+ * The budget control, drawn as what it actually is: five stops, not a slide.
+ *
+ * It was a range input, and a range input has to be propped up to be read at
+ * all here: a label row, a readout, a track, and a row of tick numbers, four
+ * stacked rows to choose one of five values. Native radios collapse that to
+ * one row, keep arrow-key operation for free, and let the dead stops be a
+ * property of the stop itself rather than a second bar underneath it.
+ *
+ * `deadFrom` is the first stop that no longer cuts the chain on show. Those
+ * stops stay live rather than disabled, because "you can pick it and nothing
+ * happens" is the fact the page is teaching, and a disabled control teaches
+ * nothing.
+ */
+function BudgetStops({
+  value,
+  onChange,
+  deadFrom,
+}: {
+  value: number;
+  onChange: (i: number) => void;
+  deadFrom?: number;
+}) {
+  const name = useId();
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="text-sm text-ink-muted">Token budget</span>
+      <div role="radiogroup" aria-label="Token budget" className="flex flex-wrap gap-1">
+        {B.map((b, i) => {
+          const dead = deadFrom !== undefined && i >= deadFrom;
+          return (
+            <label key={b} className="cursor-pointer">
+              <input
+                type="radio"
+                name={name}
+                className="peer sr-only"
+                checked={value === i}
+                aria-label={`${b} tokens`}
+                onChange={() => onChange(i)}
+              />
+              <span
+                className={`block rounded border px-2 py-0.5 font-mono text-xs tabular-nums peer-focus-visible:ring-2 peer-focus-visible:ring-compute peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas ${
+                  dead ? "border-dashed border-grid text-ink-muted" : "border-grid text-ink"
+                }`}
+              >
+                {b}
+              </span>
+            </label>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -286,10 +354,59 @@ const everSolved = (d: (typeof F3.items)[number]) => d.correct_by_budget.some(Bo
  * still-being-cut zone holds six squares, and the mass of never-solved problems
  * sits well to its left, finished and wrong.
  */
-function LengthStrip({ budgetIndex }: { budgetIndex: number }) {
+function LengthStrip({
+  budgetIndex,
+  onBudget,
+}: {
+  budgetIndex: number;
+  onBudget: (i: number) => void;
+}) {
   const budget = B[budgetIndex];
   const bx = lengthX(budget);
   const atTop = budgetIndex === B.length - 1;
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  /**
+   * Here the line IS the control, so this figure carries no widget of its own.
+   * The reader is already looking at the line when the prose asks them to move
+   * it, and a stop row under this chart would be a third copy of a control
+   * whose whole job on this page is to be somewhere else.
+   *
+   * Client pixels go through the svg's own coordinate space, because the chart
+   * scales to fit its column, and they snap to a stop: the budget is one of
+   * five values, and a line resting between two of them would be a lie.
+   */
+  const indexFromClient = useCallback((clientX: number) => {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const r = svg.getBoundingClientRect();
+    const scale = (r.width || S_W) / S_W;
+    const local = (clientX - r.left) / (scale || 1) - S_M.left;
+    let best = 0;
+    for (let i = 1; i < B.length; i++) {
+      if (Math.abs(lengthX(B[i]) - local) < Math.abs(lengthX(B[best]) - local)) best = i;
+    }
+    return best;
+  }, []);
+
+  const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
+    if (e.type === "pointerdown") e.currentTarget.setPointerCapture(e.pointerId);
+    else if (!(e.buttons & 1)) return;
+    const next = indexFromClient(e.clientX);
+    if (next !== null && next !== budgetIndex) onBudget(next);
+  };
+
+  const onKey = (e: React.KeyboardEvent<SVGGElement>) => {
+    const step: Record<string, number> = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 };
+    let next: number | null = null;
+    if (e.key in step) next = budgetIndex + step[e.key];
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = B.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    next = Math.min(B.length - 1, Math.max(0, next));
+    if (next !== budgetIndex) onBudget(next);
+  };
 
   // Censored chains leave the axis: their length is a lower bound, so binning
   // them with the measured ones would draw six floors as six values.
@@ -334,6 +451,8 @@ function LengthStrip({ budgetIndex }: { budgetIndex: number }) {
       width={S_W}
       height={S_H}
       margin={S_M}
+      role="group"
+      svgRef={svgRef}
       xLabel="tokens the chain actually ran to, with nothing cutting it"
     >
       {/* Everything right of the dial was still being cut at this budget, and
@@ -390,15 +509,51 @@ function LengthStrip({ budgetIndex }: { budgetIndex: number }) {
         {F3.items.length - inside} still being cut
       </text>
 
-      <line x1={bx} x2={bx} y1={-6} y2={S_IH} className="stroke-compute" strokeWidth={2} />
-      <text
-        x={atTop ? bx - 5 : bx + 5}
-        y={-1}
-        textAnchor={atTop ? "end" : "start"}
-        className="fill-compute text-[10px] font-semibold tabular-nums"
+      {/* Grab anywhere along the plot rather than having to hit the rule. It
+          sits under the line and over the squares, so a drag that starts on a
+          problem still moves the budget. */}
+      <rect
+        x={0}
+        y={0}
+        width={S_IW}
+        height={S_IH}
+        fill="transparent"
+        className="cursor-ew-resize"
+        onPointerDown={onPointer}
+        onPointerMove={onPointer}
+      />
+
+      <g
+        role="slider"
+        tabIndex={0}
+        aria-label="Token budget"
+        aria-valuemin={B[0]}
+        aria-valuemax={TOP}
+        aria-valuenow={budget}
+        aria-valuetext={`${budget} tokens`}
+        onKeyDown={onKey}
+        className="cursor-ew-resize focus:outline-none"
       >
-        {budget}
-      </text>
+        <line x1={bx} x2={bx} y1={-6} y2={S_IH} className="stroke-compute" strokeWidth={2} />
+        {/* The handle is what says "this moves", and it is also the focus ring
+            target, so keyboard and pointer readers are looking at one object. */}
+        <rect
+          x={bx - 4}
+          y={-12}
+          width={8}
+          height={10}
+          rx={2}
+          className="fill-compute"
+        />
+        <text
+          x={atTop ? bx - 8 : bx + 8}
+          y={-3}
+          textAnchor={atTop ? "end" : "start"}
+          className="fill-compute text-[10px] font-semibold tabular-nums"
+        >
+          {budget}
+        </text>
+      </g>
     </ChartFrame>
   );
 }
@@ -641,12 +796,11 @@ export function Page6() {
           </h2>
           <p className="text-ink-muted">
             The dial below is <span className="font-code">max_new_tokens</span>, a hard limit on how
-            much the model may write. Turn it down and the model gets cut off mid-sentence, so we
-            close off its working, append{" "}
-            <span className="font-code">{M.forcing.stem.trim()}</span>, and give it{" "}
-            {M.forcing.answer_allowance} more tokens to commit to something. That is why a starved
-            model still produces an answer to grade rather than nothing at all. The same dial drives
-            the next two figures.
+            much the model may write. Turn it down and the chain stops mid-thought, so at the cap we
+            close its working off, start the answer line for it, and allow it{" "}
+            {M.forcing.answer_allowance} more tokens to finish. That is why a starved model still
+            produces an answer to grade rather than nothing at all. The tinted band in the trace
+            below is that line, printed as we wrote it. The same dial drives the next two figures.
           </p>
           <section
             aria-label="The truncation view"
@@ -662,55 +816,18 @@ export function Page6() {
                 the same rule page 5 settled on. */}
             <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(row.question)}</p>
 
-            <div className="flex flex-col gap-1">
-              <Slider
-                label="Token budget"
-                min={0}
-                max={B.length - 1}
+            <div className="flex flex-col gap-2">
+              {/* Dead travel, carried by the stops themselves. Most chains
+                  finish well inside the top of the grid, so on any given
+                  problem the last stops cut nothing and picking one does
+                  nothing. That is the same fact figure 3 draws for all 100
+                  problems at once, and it is the page's finding rather than an
+                  artefact of the grid, so it is drawn rather than implied. */}
+              <BudgetStops
                 value={budgetIndex}
                 onChange={onBudget}
-                format={(i) => String(B[i])}
-                suffix=" tokens"
+                deadFrom={lastBiting + 1}
               />
-              {/* Dead travel, drawn rather than implied. Most chains finish
-                  well inside the top of the grid, so on any given problem the
-                  last stops cut nothing and dragging into them does nothing.
-                  Greying the tick labels was too quiet to be read as a fact, so
-                  the track carries a bar: solid where this chain is still being
-                  cut, hatched where the dial has run past it. That is the same
-                  fact figure 3 draws for all 100 problems at once, and it is
-                  the page's finding rather than an artefact of the grid.
-
-                  The stops are evenly spaced because the slider is indexed, not
-                  scaled, so a stop's position is i/(n-1) of the track. */}
-              <div aria-hidden="true" className="flex flex-col gap-1 px-0.5">
-                <div className="relative h-1.5 w-full overflow-hidden rounded-sm bg-surface-raised">
-                  {lastBiting >= 0 ? (
-                    <span
-                      className="absolute inset-y-0 left-0 rounded-sm bg-compute opacity-70"
-                      style={{ width: `${(lastBiting / (B.length - 1)) * 100}%` }}
-                    />
-                  ) : null}
-                  {lastBiting < B.length - 1 ? (
-                    <span
-                      className="absolute inset-y-0 right-0 rounded-sm bg-grid"
-                      style={{
-                        width: `${((B.length - 1 - lastBiting) / (B.length - 1)) * 100}%`,
-                      }}
-                    />
-                  ) : null}
-                </div>
-                <div className="flex justify-between font-mono text-[10px] tabular-nums">
-                  {B.map((b, i) => (
-                    <span
-                      key={b}
-                      className={row.byBudget[i].forced ? "text-ink" : "text-ink-muted opacity-50"}
-                    >
-                      {b}
-                    </span>
-                  ))}
-                </div>
-              </div>
               {natural ? (
                 <p className="text-xs text-ink-muted">
                   This chain runs to <strong className="text-ink">{natural.tokens} tokens</strong>{" "}
@@ -788,162 +905,19 @@ export function Page6() {
               </span>
             </div>
 
-          </section>
-          <p className="text-sm text-ink-muted">
-            The grey text is what the model would have written and was not allowed to; the tinted
-            line is ours, not its conclusion. Drag the dial and the verdict does not slide, it{" "}
-            <strong className="text-ink">flips</strong>: for one problem, thinking longer is a
-            threshold and not a gradient. That is Act 1&apos;s slow deliberate System 2, priced in
-            the only currency a model has.
-          </p>
-        </section>
-        <Note kicker="Try it">
-          <p>Drag to {F1.flipBudget} tokens and back.</p>
-          <p>
-            A cap, not a request: asking for {F1.inset.nominal_budget} tokens in the prompt overran
-            on {pct(F1.inset.soft.over_budget_rate)} of items and{" "}
-            <span className="font-code">max_new_tokens</span> overran on none.
-          </p>
-        </Note>
+            {/* The problem picker belongs to this figure, because this figure
+                is the only thing it changes. It used to sit inside figure 3,
+                two screens down, on the grounds that its labels are figure 3's
+                measurement; but every one of those labels is a statement about
+                the flip that THIS figure draws, so the reader met the labels
+                nowhere near the thing they describe.
 
-        {/* Step 2 — figure 2 */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. The same dial, every problem
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              three checkpoints · the same {curvePoint.n} problems
-            </span>
-          </h2>
-          <p className="text-ink-muted">
-            One problem is an anecdote. Below is the same sweep run over all {curvePoint.n}, on
-            three checkpoints: how many each solves at every stop on the dial. Read the shape rather
-            than the heights, because the three differ in size and in training and the largest ran
-            at a different precision.
-          </p>
-          <section
-            aria-label="The population curve"
-            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
-          >
-            <BudgetCurve budgetIndex={budgetIndex} />
-            <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  at {B[budgetIndex]} tokens, {F2.primary.label.replace("Qwen2.5-", "")} solves
-                </p>
-                <p className="font-mono text-3xl tabular-nums text-ink">
-                  {curvePoint.n_correct}
-                  <span className="text-base text-ink-muted"> of {curvePoint.n}</span>
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  tokens generated to get there
-                </p>
-                <p className="font-mono text-3xl tabular-nums text-ink">
-                  {tokens(curvePoint.total_tokens)}
-                </p>
-              </div>
-              <p className="font-mono text-xs tabular-nums text-ink-muted">
-                the cap bound {pct(curvePoint.truncation_rate)} of these {curvePoint.n} chains
-              </p>
-            </div>
-            <p className="border-t border-dashed border-grid pt-3 text-xs text-ink-muted">
-              <span className="font-semibold uppercase tracking-wide">the procedure</span> ·{" "}
-              {PAGE6.procedure}
-            </p>
-          </section>
-          <p className="text-sm text-ink-muted">
-            Every curve climbs steeply and then enters the same slab: past{" "}
-            {F2.primary.knee_budget} tokens, one more doubling moves the{" "}
-            {shortLabel(F2.primary.label)} by{" "}
-            {F2.primary.gains[F2.primary.gains.length - 1].gain_pts.toFixed(0)} point, which is one
-            problem out of {curvePoint.n}. Three heights, one shape, and the shape is the part that
-            is not about any of these checkpoints.
-          </p>
-        </section>
-        <Note kicker="Cited for the technique">
-          <div className="flex flex-wrap gap-2">
-            <CitationBadge citation={S1} />
-          </div>
-          <p>
-            The heights are not a claim. The three differ in size and in training, and the 7B ran at
-            8-bit against bf16 for the other two, so a level comparison is barred twice over.
-          </p>
-          <p>
-            {pct(F2.primary.points[B.length - 1].truncation_rate)} of chains still hit the cap at{" "}
-            {TOP}, which understates the right-hand end rather than flattering it.
-          </p>
-        </Note>
-
-        {/* Step 3 — figure 3 */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            3. It stops mattering before you run out of dial
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              one square per problem · placed by how long its chain ran
-            </span>
-          </h2>
-          <p className="text-ink-muted">
-            So why does the curve flatten? Below are the same {F3.items.length} problems again, each
-            one placed by how long its chain ran when nothing cut it off. The line is the budget you
-            are holding: everything to its left finished on its own, everything to its right was
-            still being cut. Drag the dial and watch the line move past the pile.
-          </p>
-          <section
-            aria-label="The chain-length distribution"
-            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
-          >
-            <LengthStrip budgetIndex={budgetIndex} />
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-compute" /> solved at some budget (
-                {F3.items.length - F3.neverFlipCount})
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-wrong opacity-85" /> never solved (
-                {F3.neverFlipCount})
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm border border-dashed border-ink bg-wrong opacity-85" />{" "}
-                still running at {TOP}, so its length is a floor ({F3.censoredCount})
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-px bg-compute" /> the budget you are holding
-              </span>
-            </div>
-
-            {/* The threshold distribution, promoted out of the old figure's
-                right margin where it sat at 9px. It answers a different
-                question from the strip above (how much do problems DIFFER in
-                what they need) and it deserves to be legible. */}
-            <div className="flex flex-col gap-1.5 border-t border-dashed border-grid pt-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                and where each problem first grades correct
-              </p>
-              {[...B.map((b) => [String(b), F3.histogram[String(b)] ?? 0] as const), ["never", F3.neverFlipCount] as const].map(
-                ([label, n]) => (
-                  <div key={label} className="grid grid-cols-[3.2rem_minmax(0,1fr)_1.6rem] items-center gap-2">
-                    <span className="text-right font-mono text-xs tabular-nums text-ink-muted">
-                      {label}
-                    </span>
-                    <span className="h-3 rounded-sm bg-surface-raised">
-                      <span
-                        className={`block h-3 rounded-sm ${label === "never" ? "bg-wrong" : "bg-compute"}`}
-                        style={{ width: `${(n / F3.neverFlipCount) * 100}%` }}
-                      />
-                    </span>
-                    <span className="font-mono text-xs tabular-nums text-ink-muted">{n}</span>
-                  </div>
-                ),
-              )}
-            </div>
-
-            {/* The affordance for figure 1. Labelled by what each problem
-                DEMONSTRATES rather than by a row index into a sort the reader
-                cannot see, which is what the old strip's buttons did. */}
+                Labelled by what each problem demonstrates rather than by a row
+                index into a sort the reader cannot see, which is what the old
+                strip's buttons did. */}
             <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                load one into figure 1 · nine of these ship with their full traces
+                or run a different problem · nine of these ship with their full traces
               </p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Bundled problems">
                 {F3.clickableRowIds.map((id) => {
@@ -977,6 +951,162 @@ export function Page6() {
             </div>
           </section>
           <p className="text-sm text-ink-muted">
+            The grey text is what the model would have written and was not allowed to; the tinted
+            line is ours, not its conclusion. Step through the stops and the verdict does not
+            slide, it{" "}
+            <strong className="text-ink">flips</strong>: for one problem, thinking longer is a
+            threshold and not a gradient. That is Act 1&apos;s slow deliberate System 2, priced in
+            the only currency a model has.
+          </p>
+        </section>
+        <Note kicker="Try it">
+          <p>Step to {F1.flipBudget} tokens and back.</p>
+          <p>
+            A cap, not a request: asked in the prompt for a sentence or two, the model ran past{" "}
+            {F1.inset.nominal_budget} tokens on {pct(F1.inset.soft.over_budget_rate)} of items. Held
+            to the same {F1.inset.nominal_budget} by{" "}
+            <span className="font-code">max_new_tokens</span>, it overran on none.
+          </p>
+        </Note>
+
+        {/* Step 2 — figure 2 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            2. The same dial, every problem
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              three checkpoints · the same {curvePoint.n} problems
+            </span>
+          </h2>
+          <p className="text-ink-muted">
+            One problem is an anecdote. Below is the same sweep run over all {curvePoint.n}, on
+            three checkpoints: how many each solves at every stop on the dial. Read the shape rather
+            than the heights, because the three differ in size and in training and the largest ran
+            at a different precision.
+          </p>
+          <section
+            aria-label="The population curve"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+          >
+            {/* The same budget as figure 1, which is the section's whole
+                point, so the control comes with it rather than being left a
+                screen and a half up the page. */}
+            <BudgetStops value={budgetIndex} onChange={onBudget} />
+            <BudgetCurve budgetIndex={budgetIndex} />
+            <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  at {B[budgetIndex]} tokens, {F2.primary.label.replace("Qwen2.5-", "")} solves
+                </p>
+                <p className="font-mono text-3xl tabular-nums text-ink">
+                  {curvePoint.n_correct}
+                  <span className="text-base text-ink-muted"> of {curvePoint.n}</span>
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  tokens generated to get there
+                </p>
+                <p className="font-mono text-3xl tabular-nums text-ink">
+                  {tokens(curvePoint.total_tokens)}
+                </p>
+              </div>
+              <p className="font-mono text-xs tabular-nums text-ink-muted">
+                the cap bound {pct(curvePoint.truncation_rate)} of these {curvePoint.n} chains
+              </p>
+            </div>
+            <p className="border-t border-dashed border-grid pt-3 text-xs text-ink-muted">
+              <span className="font-semibold uppercase tracking-wide">the procedure</span> ·{" "}
+              {PAGE6.procedure}
+            </p>
+          </section>
+          <p className="text-sm text-ink-muted">
+            Every curve climbs steeply and then enters the same slab: past{" "}
+            {F2.primary.knee_budget} tokens, one more doubling moves the{" "}
+            {shortLabel(F2.primary.label)} {LAST_GAIN_MOVE}, which is {LAST_GAIN_PROBLEMS} out of{" "}
+            {curvePoint.n}. Three heights, one shape, and the shape is the part that is not about
+            any of these checkpoints.
+          </p>
+        </section>
+        <Note kicker="Cited for the technique">
+          <div className="flex flex-wrap gap-2">
+            <CitationBadge citation={S1} />
+          </div>
+          <p>
+            The heights are not a claim. The three differ in size and in training, and the 7B ran at
+            8-bit against bf16 for the other two, so a level comparison is barred twice over.
+          </p>
+          <p>
+            {pct(F2.primary.points[B.length - 1].truncation_rate)} of chains still hit the cap at{" "}
+            {TOP}, which understates the right-hand end rather than flattering it.
+          </p>
+        </Note>
+
+        {/* Step 3 — figure 3 */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            3. It stops mattering before you run out of dial
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              one square per problem · placed by how long its chain ran
+            </span>
+          </h2>
+          <p className="text-ink-muted">
+            So why does the curve flatten? Below are the same {F3.items.length} problems again, each
+            one placed by how long its chain ran when nothing cut it off. The line is the budget you
+            are holding: everything to its left finished on its own, everything to its right was
+            still being cut, and here the line is the control: drag it along the axis and watch it
+            move past the pile.
+          </p>
+          <section
+            aria-label="The chain-length distribution"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+          >
+            <LengthStrip budgetIndex={budgetIndex} onBudget={onBudget} />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-sm bg-compute" /> solved at some budget (
+                {F3.items.length - F3.neverFlipCount})
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-sm bg-wrong opacity-85" /> never solved (
+                {F3.neverFlipCount})
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-sm border border-dashed border-ink bg-wrong opacity-85" />{" "}
+                still running at {TOP}, so its length is a floor ({F3.censoredCount})
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-px bg-compute" /> the budget you are holding · drag it
+              </span>
+            </div>
+
+            {/* The threshold distribution, promoted out of the old figure's
+                right margin where it sat at 9px. It answers a different
+                question from the strip above (how much do problems DIFFER in
+                what they need) and it deserves to be legible. */}
+            <div className="flex flex-col gap-1.5 border-t border-dashed border-grid pt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                and where each problem first grades correct
+              </p>
+              {[...B.map((b) => [String(b), F3.histogram[String(b)] ?? 0] as const), ["never", F3.neverFlipCount] as const].map(
+                ([label, n]) => (
+                  <div key={label} className="grid grid-cols-[3.2rem_minmax(0,1fr)_1.6rem] items-center gap-2">
+                    <span className="text-right font-mono text-xs tabular-nums text-ink-muted">
+                      {label}
+                    </span>
+                    <span className="h-3 rounded-sm bg-surface-raised">
+                      <span
+                        className={`block h-3 rounded-sm ${label === "never" ? "bg-wrong" : "bg-compute"}`}
+                        style={{ width: `${(n / F3.neverFlipCount) * 100}%` }}
+                      />
+                    </span>
+                    <span className="font-mono text-xs tabular-nums text-ink-muted">{n}</span>
+                  </div>
+                ),
+              )}
+            </div>
+
+          </section>
+          <p className="text-sm text-ink-muted">
             At {TOP} tokens the shaded strip holds {F3.censoredCount} squares. Every other chain
             stopped when it had nothing left to say, a median of {F3.medianLengthNever} tokens for
             the ones that never come right, with {TOP - F3.medianLengthNever} still unspent. So{" "}
@@ -989,11 +1119,11 @@ export function Page6() {
         </section>
         <Note kicker="Try it">
           <p>
-            Take the dial from {B[0]} to {TOP} and watch the shaded strip empty out.
+            Drag the line from {B[0]} to {TOP} and watch the shaded strip empty out.
           </p>
           <p>
-            Not reached at any length we ran is what this grid at this decoding does not reach,
-            never a claim that those problems are unsolvable. Page 7 changes the decoding.
+            <em>Not reached at any length we ran</em> means this grid at this decoding, never a
+            claim that those problems are unsolvable. Page 7 changes the decoding.
           </p>
         </Note>
 
@@ -1134,9 +1264,8 @@ export function Page6() {
             </p>
           ) : null}
           <p>
-            The 3B&apos;s last doubling scores{" "}
-            {F2.primary.gains[F2.primary.gains.length - 1].gain_pts.toFixed(0)} point, one problem
-            out of {curvePoint.n}, drawn as measured and too small to read either way. Page 17 owns
+            The 3B&apos;s last doubling moves it {LAST_GAIN_MOVE}, {LAST_GAIN_PROBLEMS} out of{" "}
+            {curvePoint.n}, drawn as measured and too small to read either way. Page 17 owns
             overthinking; this page owns the flattening.
           </p>
         </Note>

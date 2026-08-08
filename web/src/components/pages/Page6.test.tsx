@@ -30,15 +30,20 @@ const OPENING = rowById(F1.openingId);
 const FLIP_INDEX = B.indexOf(OPENING.firstCorrectBudget!);
 
 const body = () => document.body.textContent ?? "";
-const dial = () => screen.getByRole("slider", { name: /token budget/i });
-const drag = (i: number) => fireEvent.change(dial(), { target: { value: String(i) } });
+// One budget, two instruments. Figures 1 and 2 carry a stop per budget, since
+// there are five of them and a slide would be a fiction; figure 3's budget line
+// IS its control, and answers to the keyboard as a slider.
+const stops = () => screen.getAllByRole("radio", { name: /tokens$/ });
+const stopFor = (i: number) => screen.getAllByRole("radio", { name: `${B[i]} tokens` });
+const lineHandle = () => screen.getByRole("slider", { name: /token budget/i });
+const drag = (i: number) => fireEvent.click(stopFor(i)[0]);
 
 describe("Page 6, figure 1: cut it off, make it answer", () => {
   it("opens on the specimen at the smallest budget, cut and forced", () => {
     render(<Page6 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Thinking Longer");
     expect(screen.getByText(tidyMath(OPENING.question))).toBeInTheDocument();
-    expect(dial()).toHaveValue("0");
+    for (const s of stopFor(0)) expect(s).toBeChecked();
     expect(body()).toContain(`${OPENING.byBudget[0].ownTokens} of ${B[0]} tokens thought`);
     expect(body()).toContain("✗ graded wrong");
   });
@@ -100,11 +105,13 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
 
   // The figure opens on a sentence naming what the dial IS and what happens at
   // the cap, because a starved model still producing a gradeable answer is
-  // otherwise inexplicable.
+  // otherwise inexplicable. The stem itself is shown where it is applied, in
+  // the trace's tinted band, rather than pasted into the prose as a raw string.
   it("explains the forcing before the reader touches the dial", () => {
     render(<Page6 />);
     expect(body()).toContain("max_new_tokens");
-    expect(body()).toContain(PAGE6.manifest.forcing.stem.trim());
+    expect(body()).toContain("start the answer line for it");
+    expect(body()).toContain(`${PAGE6.manifest.forcing.answer_allowance} more tokens`);
     expect(body()).toContain("The same dial drives the next two figures.");
   });
 
@@ -118,12 +125,16 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
 
   // The inset was a two-bar chart with one bar at zero, defending a method
   // choice nobody had questioned, for a third of the figure's height. The
-  // reliability fact survives as one line in the margin.
+  // reliability fact survives as one line in the margin. The soft arm asked for
+  // brevity in words, never for a token count, so the line may not say it did.
   it("keeps the cap-versus-request fact without spending a chart on it", () => {
     render(<Page6 />);
-    expect(body()).toContain(`overran on ${pct(F1.inset.soft.over_budget_rate)} of items`);
+    expect(body()).toContain(
+      `ran past ${F1.inset.nominal_budget} tokens on ${pct(F1.inset.soft.over_budget_rate)} of items`,
+    );
     expect(F1.inset.hard.over_budget_rate).toBe(0);
     expect(body()).toContain("overran on none");
+    expect(body()).not.toContain(`asking for ${F1.inset.nominal_budget} tokens in the prompt`);
     expect(body()).not.toContain("A prompt is a preference, not a cap.");
   });
 });
@@ -259,6 +270,62 @@ describe("Page 6, figure 4: refuse to let it stop", () => {
     const [same, of] = PAGE6.figureWait!.integrity.k0_matches_uncapped;
     expect(of).toBeGreaterThan(0);
     expect(same).toBe(of);
+  });
+});
+
+describe("Page 6: one budget, reachable from every figure it drives", () => {
+  // The control used to live in figure 1 alone, a screen or more above the two
+  // other figures that answer to it, while their prose told the reader to drag
+  // something off screen.
+  it("gives figures 1 and 2 a stop per budget, not a slide", () => {
+    render(<Page6 />);
+    // Two figures, one stop each per budget, and nothing else claims the role.
+    expect(stops()).toHaveLength(B.length * 2);
+    for (const [i, b] of B.entries()) expect(stopFor(i)).toHaveLength(2);
+    expect(B.every((b) => body().includes(String(b)))).toBe(true);
+  });
+
+  it("keeps both stop rows and the strip's line on one budget", () => {
+    render(<Page6 />);
+    for (const [i, b] of B.entries()) {
+      // Drive the copy in figure 2, the one that used to have no control.
+      fireEvent.click(stopFor(i)[1]);
+      for (const s of stopFor(i)) expect(s).toBeChecked();
+      expect(lineHandle()).toHaveAttribute("aria-valuetext", `${b} tokens`);
+    }
+  });
+
+  // Figure 3 carries no widget: its budget line is the control, so it has to
+  // answer to the keyboard as well as to a pointer.
+  it("moves the strip's line with the arrow keys, and stops at both ends", () => {
+    render(<Page6 />);
+    drag(0);
+    fireEvent.keyDown(lineHandle(), { key: "ArrowLeft" });
+    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
+
+    fireEvent.keyDown(lineHandle(), { key: "ArrowRight" });
+    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${B[1]} tokens`);
+    for (const s of stopFor(1)) expect(s).toBeChecked();
+
+    fireEvent.keyDown(lineHandle(), { key: "End" });
+    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
+    fireEvent.keyDown(lineHandle(), { key: "ArrowRight" });
+    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
+
+    fireEvent.keyDown(lineHandle(), { key: "Home" });
+    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
+  });
+
+  // The picker only ever changed figure 1, so it sat two screens from the thing
+  // it moved. It is now inside figure 1's own panel.
+  it("keeps the problem picker inside the figure it loads into", () => {
+    render(<Page6 />);
+    const picker = screen.getByRole("group", { name: /bundled problems/i });
+    const figure1 = document.querySelector('section[aria-label="The truncation view"]');
+    const figure3 = document.querySelector('section[aria-label="The chain-length distribution"]');
+    expect(figure1).toContainElement(picker);
+    expect(figure3).not.toContainElement(picker);
+    expect(body()).not.toContain("load one into figure 1");
   });
 });
 
