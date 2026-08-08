@@ -42,13 +42,19 @@
  * is no footer. What the footer used to carry that lives nowhere else is now
  * in the margin note beside the sentence it qualifies.
  *
- * Provenance is pills at the figures rather than a plate under the lede, which
- * is where this page departs from pages 5 to 7. The plate opened the page in
- * the notebook's own language (a token cap, four temperatures, an exact
+ * THERE IS NO PROVENANCE PLATE, and one must not come back. It opened the page
+ * in the notebook's own language (a token cap, four temperatures, an exact
  * McNemar, a run id forty characters long) and asked the reader to carry all of
- * it down three figures. A reader needs to know a figure is measured and on
- * what, at the figure. The rest is in the download on the top line, which is
- * the only place it can be acted on anyway.
+ * it down three figures. Provenance is a row of pills on each figure instead:
+ * every one says it is measured, the first says which model and which problems,
+ * the second says every rule read the same chains, and the third says what its
+ * bars average over. Everything else the run recorded is in the download on the
+ * top line, which is the only place it can be acted on anyway.
+ *
+ * Page 7 retired its plate the same day and reached the same two facts a reader
+ * needs, WHICH MODEL and WHICH PROBLEMS. It carries them in prose and specimen
+ * labels; this page carries them in pills. The facts are the convention, the
+ * furniture is the page's own.
  *
  * No figure on this page renders a notebook identifier. `page08.ts` maps every
  * selector to a reader-facing label and throws on one it does not know, because
@@ -65,6 +71,12 @@ import { useStore } from "@/store/useStore";
 
 const PAGE_N = 8;
 const NOTEBOOK_ZIP = "/notebooks/page-08-best-of-n.zip";
+
+/* Page 7's convention, arrived at independently and adopted here: of everything
+   the run recorded, the two facts a reader needs are WHICH MODEL and WHICH
+   PROBLEMS, and they belong on the figure rather than in a plate above it. The
+   levels, the token cap and the run id stay in the download. */
+const BENCHMARK = "MATH-500";
 
 /** Reference numbers, in order of first appearance on the page. */
 const REF = {
@@ -584,7 +596,7 @@ export function Page8() {
               items={[
                 `measured ${PAGE8.run.date}`,
                 model ?? PAGE8.run.model,
-                `${PAGE8.run.items} problems, ${PAGE8.paired.n} chains each`,
+                `${PAGE8.run.items} ${BENCHMARK} problems, ${PAGE8.paired.n} chains each`,
               ]}
             />
             <p className="text-sm text-ink">{tidyMath(s.question)}</p>

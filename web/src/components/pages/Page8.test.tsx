@@ -72,28 +72,30 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
 
   // Provenance is pills at the figures, not the plate this page used to open
   // on. What survives the move is the claim, not the apparatus: every figure
-  // says it is measured, the first one says what and when, and the evidence
-  // figure says the rules read the same chains, which is what lets its rows be
-  // compared at all.
+  // says it is measured, the first one names the model and the problems, and
+  // the evidence figure says the rules read the same chains, which is what lets
+  // its rows be compared at all.
   it("marks every figure as measured, at the figure", () => {
     render(<Page8 />);
     expect(screen.getAllByText(/^measured/).length).toBe(3);
     const first = screen.getByText(`measured ${PAGE8.run.date}`);
     const row = first.closest("ul")!;
+    // Page 7's two facts: which model, which problems. Named, not implied.
     expect(row.textContent).toContain(PAGE8.run.model.split("/").pop());
-    expect(row.textContent).toContain(`${PAGE8.run.items} problems`);
+    expect(row.textContent).toContain(`${PAGE8.run.items} MATH-500 problems`);
     expect(screen.getByText("every rule reads the same chains")).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/illustrative|simulation/i);
   });
 
-  // The plate opened the page in the notebook's own language. None of it is
-  // actionable on the page, all of it is in the download on the top line.
+  // The rest of what the plate carried opened the page in the notebook's own
+  // language. None of it is actionable on the page, all of it is in the
+  // download on the top line.
   it("prints no run id, token cap or test name at the reader", () => {
     render(<Page8 />);
     const body = document.body.textContent ?? "";
     expect(body).not.toContain(PAGE8.run.runId);
     expect(body).not.toContain(String(PAGE8.run.chainCap));
-    expect(body).not.toMatch(/McNemar|MATH-500|GPU|\bT =|\bN=/);
+    expect(body).not.toMatch(/McNemar|GPU|\bT =|\bN=|levels 4 and 5/);
   });
 
   // The main evidence figure used to print `best-of-N (qwen1.5b)` and `logprob`
