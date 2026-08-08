@@ -1,5 +1,34 @@
 # Finishing touches — pages 1–12
 
+> **Applied 2026-08-08, pages 1 to 10.** Everything in priority 1 and everything in priority 2 for
+> pages 1, 3, 4, 5, 6, 7, 8, 9 and 10 is done, plus the deck-wide jargon ledger for `parameter`,
+> `greedy`, `temperature`, `verifier` and `MCTS`. Per-page receipts are in
+> [`page_7_concerns.md`](page_7_concerns.md), [`page_8_concerns.md`](page_8_concerns.md) and
+> [`page_2_concerns.md`](page_2_concerns.md) §1.
+>
+> **Deliberately not done, and why:**
+>
+> - **Pages 11, 12, 13 and 14** were placed out of scope by the author for this pass. That leaves
+>   page 11's mechanism sentence (priority 1.2), page 11's FLOPs gloss, page 12's counterweight, and
+>   the direction-check items for 11 to 14 open. Page 5's dangling forward reference was closed on
+>   page 5's side instead of by adding the pickup to page 12.
+> - **Anything needing a GPU.** Page 5's base arm (`docs/page_5_base_arm.md`, and with it
+>   `docs/finishing_touches.md` §1), page 6's denser budget grid (§6, whose *reason* has been
+>   restated in the tracker), and the R1-distill run Act 3 would like. No page copy was changed to
+>   pre-empt any of them.
+> - **Pages 5 and 8's bundled notebooks still lag their repo copies.** Both bundles are internally
+>   consistent, so the download re-derives its own numbers, but the repo notebook has moved ahead of
+>   the run that produced the shipped figures and re-bundling would need a re-run. This is now
+>   recorded as data rather than as a silence: `notebookBundles.test.ts` carries a
+>   `repoNotebookIsTheShippedOne` flag per page and asserts it two-way, so paying the debt down (or
+>   letting a new page drift) fails the test.
+> - **`page_2_concerns.md` §2 onward**, which is its own file and its own pass.
+>
+> **Found while applying, not in this review:** page 9's download unpacks flat into the reader's
+> working directory and carries no README, which is the exact fault the bundle test was written for
+> on page 7, and page 9 is the one page the test does not cover. Page 9's copy also carries em
+> dashes, which pages 5 to 8 assert against. Neither is fixed here.
+
 A five-dimension review of the deck as it stands on 2026-08-07, focused on whether the new
 pages 5–9 do their assigned jobs, plus a direction check on the unbuilt pages 11–14.
 

@@ -112,6 +112,16 @@ interface RawVerifier {
   complete: boolean;
 }
 
+interface RawAgreement {
+  config_id: string;
+  n: number;
+  same_candidates: boolean;
+  page_07_vote: number;
+  page_08_vote: number;
+  page_07_coverage: number;
+  page_08_coverage: number;
+}
+
 interface RawDerived {
   manifest: {
     timestamp_utc: string;
@@ -153,6 +163,7 @@ interface RawDerived {
     writer_solves: number | null;
     reliability_across_temperatures: Record<string, RawAcross>;
   };
+  page_7_agreement: RawAgreement;
 }
 
 const raw = rawDerived as unknown as RawDerived;
@@ -251,10 +262,69 @@ for (const r of raw.paired.vs_one_chain) {
   }
 }
 
+/* --------------------------------------------------------- reader-facing names */
+
+/**
+ * The notebook's identifiers are keys, never labels. `selector` and `name` stay
+ * as they are for every lookup and no figure ever renders one: a row that reads
+ * `best-of-N (qwen1.5b)` tells a reader nothing, and `logprob` tells them less.
+ *
+ * One map serves both figures. Figure 2's rows are `best-of-N, <judge>` and
+ * figure 3's points are the judge alone, so the two cannot drift apart, and the
+ * judge names are short because in figure 3 they sit beside a plotted point.
+ */
+const JUDGE_LABELS: Record<string, string> = {
+  self: "the writer itself",
+  "qwen1.5b": "1.5B generalist",
+  "qwen7b": "7B generalist",
+  "math1.5b": "1.5B math specialist",
+  "skywork-prm": "trained verifier",
+};
+
+/** The rules that are not a judge scoring candidates. */
+const RULE_LABELS: Record<string, string> = {
+  majority: "majority vote",
+  heuristic: "hand-written length heuristic",
+  logprob: "answer log-probability",
+  "one chain": "one chain",
+  coverage: "a correct answer is present",
+};
+
+/**
+ * An unmapped selector is a load error rather than a raw identifier drawn on a
+ * figure. A re-run that adds a judge has to name it here before the page can
+ * show it, which is the point.
+ */
+function judgeLabel(name: string): string {
+  const label = JUDGE_LABELS[name];
+  if (!label) {
+    throw new Page08DataError(
+      `no reader-facing label for the judge "${name}". Add one to JUDGE_LABELS in ` +
+        `web/src/lib/page08.ts: page 8 does not render notebook identifiers.`,
+    );
+  }
+  return label;
+}
+
+function labelFor(selector: string): string {
+  const judge = /^best-of-N \((.+)\)$/.exec(selector);
+  if (judge) return `best-of-N, ${judgeLabel(judge[1])}`;
+  const rule = RULE_LABELS[selector];
+  if (!rule) {
+    throw new Page08DataError(
+      `no reader-facing label for the selector "${selector}". Add one to RULE_LABELS in ` +
+        `web/src/lib/page08.ts: page 8 does not render notebook identifiers.`,
+    );
+  }
+  return rule;
+}
+
 /* ------------------------------------------------------------------ exports */
 
 export interface PairedRow {
   selector: string;
+  /** What the figure prints. `selector` is the key; this is the English. */
+  label: string;
   accuracy: number;
   fixed: number;
   broke: number;
@@ -265,6 +335,7 @@ export interface PairedRow {
 
 const asPaired = (r: RawPairedRow): PairedRow => ({
   selector: r.selector,
+  label: labelFor(r.selector),
   accuracy: r.accuracy,
   fixed: r.fixed,
   broke: r.broke,
@@ -275,6 +346,8 @@ const asPaired = (r: RawPairedRow): PairedRow => ({
 
 export interface JudgeRow {
   name: string;
+  /** What the figure prints beside the point. */
+  label: string;
   /** What it solves unaided. Null when it has no generative head at all. */
   solves: number | null;
   mean: number;
@@ -292,6 +365,7 @@ const judges: JudgeRow[] = Object.entries(raw.figure_3.reliability_across_temper
     const spec = verifiersByName.get(name);
     return {
       name,
+      label: judgeLabel(name),
       solves: spec?.solves_these_items ?? null,
       mean: across.mean,
       lo: across.lo,
@@ -310,6 +384,13 @@ const majorityVsOne = row(raw.paired.vs_one_chain, "majority");
 const heuristic = raw.paired.vs_one_chain.find((r) => r.selector === "heuristic");
 
 const trainedVerifier = raw.manifest.verifiers.find((v) => v.kind === "rm" && v.complete);
+
+// Page 7 closes on the problems where a right answer was generated and thrown
+// away, so page 8 has to be able to say what judging recovers of it. This is
+// figure 1's dotted ceiling read at the widest N, which is the same quantity
+// page 7 calls coverage.
+const coverageLine = raw.figure_1.lines.find((l) => l.selector === "coverage");
+const coverage = coverageLine ? coverageLine.points[coverageLine.points.length - 1].accuracy : null;
 
 export const PAGE8 = {
   /** The run itself, for the provenance chip. */
@@ -345,6 +426,25 @@ export const PAGE8 = {
   /** Figure 3: what a judge is worth, across every temperature. */
   judges,
   bar: majorityAcross,
+
+  /** How often a right answer was there to be found at all. Page 7's number. */
+  coverage,
+
+  /**
+   * The receipt behind page 7's handoff. Page 8 did not reuse page 7's chains,
+   * it re-ran the protocol, so the honest seam claim is that the two runs land
+   * in the same place and only the selection rule changed. These are the numbers
+   * that say so, and the page renders them rather than asserting an identity.
+   */
+  agreement: {
+    configId: raw.page_7_agreement.config_id,
+    n: raw.page_7_agreement.n,
+    sameCandidates: raw.page_7_agreement.same_candidates,
+    page7Vote: raw.page_7_agreement.page_07_vote,
+    page8Vote: raw.page_7_agreement.page_08_vote,
+    page7Coverage: raw.page_7_agreement.page_07_coverage,
+    page8Coverage: raw.page_7_agreement.page_08_coverage,
+  },
 
   /** The three sentences the page is allowed to say, with their statistics. */
   headline: asPaired(headline),

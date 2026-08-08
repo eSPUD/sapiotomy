@@ -94,13 +94,17 @@ export const SORTING_ITEMS: SortItem[] = [
  * ends before the final counts off stale data and lands exactly one short — it
  * never saw the newest win.
  *
- * !! PLACEHOLDER FACT !! The trap needs Spain to have actually WON the 2026
- * final (their 2nd title, after the real 2010 win). This was authored by a tool
- * whose own training ALSO ends before the final — the page's failure mode, live.
- * Before shipping: verify the 2026 result. If Spain won, `trueCount` is 2 and it
- * ships as-is; if someone else won, swap `country`/`wins` to the real 2026 winner
- * and their true total (the machine still undercounts by one). Chip + footer flag
- * this until confirmed.
+ * VERIFIED, and it used to be a shipping blocker. The trap needs Spain to have
+ * actually WON the 2026 final, and the numbers below were first authored by a
+ * tool whose own training ALSO ended before that final, which is the page's
+ * failure mode happening live in its own source. The result was checked
+ * externally during the 2026-08-07 review (`finishing_touches/page_2_concerns.md`
+ * section 1): Spain beat Argentina 1-0 after extra time, Ferran Torres in the
+ * 106th minute, their second title after 2010. So `wins`, `trueCount` and
+ * `latestYear` below are correct and the page ships as it stands.
+ *
+ * Worth keeping in view: verifying it took exactly the external lookup this page
+ * argues a model cannot do for itself.
  *
  * The machine's reply is an authored EXAMPLE of the ideal System-1 blurt: a flat,
  * confident count off its frozen memory (2010 only -> "one"), wrong by omission.
@@ -110,8 +114,7 @@ export const SORTING_ITEMS: SortItem[] = [
 export const SPAIN_WORLD_CUPS = {
   question: "How many FIFA World Cups has Spain won?",
   country: "Spain",
-  /** Spain's titles as of the 2026 final. 2010 is real; 2026 is the flagged,
-   *  verify-before-shipping part — the trap needs Spain to have won it. */
+  /** Spain's titles as of the 2026 final, both verified: 2010 and 2026. */
   wins: [2010, 2026],
   /** The answer a reader who kept up would give. */
   trueCount: 2,

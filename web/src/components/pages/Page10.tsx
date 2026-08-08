@@ -705,6 +705,17 @@ export function Page10() {
               about.
             </p>
           </figure>
+          {/* Every page from 5 to 9 hands the next one a question; this one used to end
+              inside a caption. The seam page 11 opens on is the price, in the one
+              currency both sides of it are denominated in. */}
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            <em>
+              Everything on pages 5 to 10 spends the same thing: arithmetic at answer time, bought
+              by the token and paid for once per question. Parameters are bought with the same
+              currency, in bulk, before any question arrives. So which is the better buy at a
+              matched bill? Turn the page.
+            </em>
+          </div>
         </section>
 
         <Note kicker="References">

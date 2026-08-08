@@ -558,9 +558,9 @@ export function Page9() {
                   <p className="text-sm text-ink-muted">
                     That is a <em>floor</em>, because the checker only sees arithmetic. The
                     process reward model, which also sees method, calls a step unsound in{" "}
-                    <strong className="text-ink">{pct(det.prm.rate)}</strong> of them — an opinion
-                    rather than a proof, measured at AUC {det.prm.auc.toFixed(2)} against the
-                    checker where the two overlap.
+                    <strong className="text-ink">{pct(det.prm.rate)}</strong> of them: an opinion
+                    rather than a proof, and the margin says what that opinion was measured to be
+                    worth.
                   </p>
                 ) : null}
                 <p className="text-xs text-ink-muted">

@@ -17,6 +17,13 @@ describe("the run that shipped", () => {
     expect(PAGE7.manifest.items.n).toBe(100);
   });
 
+  // The plate prints the precision. It used to print a literal while the manifest
+  // recorded `quant: null`, which is a claim on screen with nothing behind it.
+  it("records the precision the page prints", () => {
+    expect(PAGE7.primary.precision).toBeTruthy();
+    expect(PAGE7.primary.label).toBe(PAGE7.manifest.primary_model.split("/").pop());
+  });
+
   it("passes every blocking claim", () => {
     for (const gate of [
       "vote_beats_bare_cot",

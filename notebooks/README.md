@@ -197,13 +197,18 @@ B/N tokens, and its section 14 asserts the two agree. Page 8's vote must reprodu
 same pile, and its section 13 asserts that. Those three cross-checks are where a
 drifting reimplementation would otherwise hide.
 
-**Page 9 is the one page that does not reuse the pile above it, and that is deliberate.** Page 6
-caps generation and forces the model to commit, so a broken step in one of its chains is *our*
-intervention rather than the model's error; page 7's high-N samples are budget-starved for the
-same reason. Grading either for bad reasoning would report our own experiment as the model
-reasoning badly. So page 9 runs its own uncapped pass on the same instrument and the same item
-band. It still consumes page 8, whose selector rung reads *selections* rather than traces and
-does not care how the candidates were produced.
+**Page 9 reuses page 7's pile and then filters it, and the filter is the interesting part.** Page 6
+caps generation and forces the model to commit, so a broken step in one of *its* chains is our
+intervention rather than the model's error. Page 7's chains carry the same hazard wherever the cap
+bound. Grading a truncated chain for bad reasoning would report our own experiment as the model
+reasoning badly, so page 9 grades only the chains the model ended itself: `chain_provenance` records
+`source: "page_07_pile"` at `chain_budget: 2048`, and the filter keeps the chains that finished
+inside it. That is a real restriction rather than a free one, and the page says so in its Provenance
+note: every figure on it is conditional on the easier population the filter leaves behind.
+
+*(Corrected 2026-08-08. This paragraph used to claim page 9 "runs its own uncapped pass". It does
+not, and never did: the artifact and the page footer both name page 7's pile, which is what line 84
+above says too. The claim was a plan that the implementation replaced with the filter.)*
 
 `out/` and `data/` are gitignored. Promoting a run to the page means copying its `derived.json`
 and `manifest.json` into `web/data/` as part of step 4, which is also where the cross-language

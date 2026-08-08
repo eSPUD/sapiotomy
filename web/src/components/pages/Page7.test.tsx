@@ -62,6 +62,61 @@ describe("Page 7 (frequency voting) component", () => {
     expect(body).toMatch(/generated, then thrown away/i);
   });
 
+  // The intro is the reading key for the central figure, so it has to use the chart's
+  // own names. It named them "The vote / In the pile / T = 0" while the chart said
+  // something else, because the chart was renamed and the intro was not.
+  it("names the three lines the same way in the intro and on the chart", () => {
+    render(<Page7 />);
+    const intro = screen.getByText(/Three lines below/).closest("p")!;
+    expect(intro.textContent).toMatch(/The vote returns it/);
+    expect(intro.textContent).toMatch(/At least one chain is right/);
+    expect(intro.textContent).toMatch(/One greedy chain/);
+    expect(intro.textContent).not.toMatch(/In the pile/);
+  });
+
+  // "Greedy" is load-bearing here and first explained on page 10. The fix is to tie the
+  // word to the definition this page already gives, not to import page 10's mechanism,
+  // which docs/page_7_refactor.md:225-234 forbids at this altitude.
+  it("ties the word greedy to the definition it already gives", () => {
+    render(<Page7 />);
+    const intro = screen.getByText(/Three lines below/).closest("p")!;
+    expect(intro.textContent).toMatch(/sampling is off, which is greedy decoding/);
+    expect(document.body.textContent).not.toMatch(/likeliest|probability distribution/i);
+  });
+
+  // Prose trims: each of these was said twice.
+  it("says each thing once around figure 2", () => {
+    render(<Page7 />);
+    const body = document.body.textContent ?? "";
+    expect(screen.getAllByText(/Click a row to read the chains/i)).toHaveLength(1);
+    expect(body).not.toMatch(/never the first two/);
+    // "turning it up makes them disagree more" is now the temperature gloss in step
+    // 2's intro, said once. It may not also sit above the diversity numbers, where it
+    // pre-narrated exactly what they show.
+    expect(body.match(/makes them disagree more/g) ?? []).toHaveLength(1);
+    const readout = screen.getByText(/How many .*answers those/).textContent ?? "";
+    expect(readout.trimEnd()).toMatch(/averaged per problem\.$/);
+  });
+
+  // Load-bearing on this page and first explained on page 10, so it gets an
+  // operational gloss here and no mechanism: docs/page_7_refactor.md:225-234 keeps
+  // tokens and probability distributions off this page.
+  it("glosses temperature without importing page 10's mechanism", () => {
+    render(<Page7 />);
+    const intro = screen.getByText(/Here is one box/).textContent ?? "";
+    expect(intro).toMatch(/which is what temperature does/);
+    expect(intro).toMatch(/at zero every chain comes back identical/);
+    expect(intro).not.toMatch(/likel|distribution|logit/i);
+  });
+
+  // The +12 is voting AND sampling. The decomposition is in the margin; the box has to
+  // point at it, or a reader who stops there credits all of it to counting.
+  it("does not let the headline box own sampling's contribution", () => {
+    render(<Page7 />);
+    const callout = screen.getByText(/decoded greedily/i).closest("div")!;
+    expect(callout.textContent).toMatch(/Sampling alone is worth part of this/);
+  });
+
   it("explains the flat temperature-zero line rather than hiding it", () => {
     render(<Page7 />);
     expect(screen.getByText(/every chain is the same chain/i)).toBeInTheDocument();

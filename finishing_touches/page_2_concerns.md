@@ -18,7 +18,14 @@ None of the work below is structural. It is one copy pass and one deletion.
 
 ---
 
-## 1. The placeholder fact — resolved
+## 1. The placeholder fact — resolved, and the cleanup is done
+
+> **Cleared 2026-08-08.** The `!! PLACEHOLDER FACT !!` block and the verify-before-shipping note in
+> the `wins` comment are gone from `authored.ts`; the comment now records the verification and the
+> irony instead. There were no chip or footer flags to remove: that part of the block described a
+> plan that was never built, and page 2's only chip is the widget's own `✓ current` / `✗ one short`
+> readout. Nothing else in this file has been actioned; §2 onward are still open.
+
 
 `web/src/lib/authored.ts:92-104` carries this, in the codebase, today:
 

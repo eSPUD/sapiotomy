@@ -184,8 +184,17 @@ problems. Rows ordered by net gain. The p-value sits at the end of each row as p
 Read it as: the trained verifier fixes 21 and breaks 4. Majority fixes 17 and breaks 4. The ch05
 heuristic fixes 8 and breaks 16, the only row whose mass sits on the left.
 
-Six rows, two colours, no bands, no second axis. If it needs a legend it is too complicated: the
-two directions are labelled once, above the axis.
+**Eight rows** (revised 2026-08-08, was six), two colours, no bands, no second axis. If it needs a
+legend it is too complicated: the two directions are labelled once, above the axis.
+
+The two diagnostic rungs, `logprob` and `self`, stay on the chart rather than moving to a printed
+table. The "diagnostics live in a table" rule above is about *series on shared axes*, where a
+seventh line is a smear; here each rung is one row of its own and costs nothing but 30 pixels.
+`logprob` earns its row by being the page's only exact null, nine fixed against nine broken, and
+`self` by being the rung a reader asks about unprompted. What was actually wrong with them was that
+they arrived as identifiers: every row now prints English, mapped in `page08.ts`, which throws on a
+selector it cannot name. A row that reads `best-of-N (qwen1.5b)` is the fault; a row that reads
+`best-of-N, 1.5B generalist` is evidence.
 
 ### Figure 3 — what a judge is worth
 

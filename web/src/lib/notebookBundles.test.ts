@@ -37,14 +37,23 @@ const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
  */
 const PAGES = [
   { n: 5, slug: "page-05-how-to-reason", notebook: "page_05_how_to_reason.ipynb",
-    declared: "0.8 MB", extras: [] },
+    declared: "0.8 MB", extras: [], repoNotebookIsTheShippedOne: false },
   { n: 6, slug: "page-06-thinking-longer", notebook: "page_06_thinking_longer.ipynb",
-    declared: "2.0 MB", extras: [] },
+    declared: "2.0 MB", extras: [], repoNotebookIsTheShippedOne: true },
   { n: 7, slug: "page-07-frequency-voting", notebook: "page_07_frequency_voting.ipynb",
-    declared: "3.1 MB", extras: [] },
+    declared: "3.1 MB", extras: [], repoNotebookIsTheShippedOne: true },
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
-    declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"] },
+    declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"],
+    repoNotebookIsTheShippedOne: false },
 ] as const;
+
+const NOTEBOOKS = resolve(WEB, "../notebooks");
+
+/** Code cells only, joined. Outputs, execution counts and metadata are not the code. */
+const codeCells = (ipynb: Buffer | string): string[] =>
+  (JSON.parse(ipynb.toString()) as { cells: { cell_type: string; source: string[] }[] }).cells
+    .filter((c) => c.cell_type === "code")
+    .map((c) => c.source.join(""));
 
 const zipPath = (slug: string) => resolve(WEB, `public/notebooks/${slug}.zip`);
 const entries = (slug: string) =>
@@ -52,7 +61,9 @@ const entries = (slug: string) =>
 const member = (slug: string, name: string) =>
   execFileSync("unzip", ["-p", zipPath(slug), name], { maxBuffer: 1 << 28 });
 
-describe.each(PAGES)("page $n's notebook bundle", ({ n, slug, notebook, declared, extras }) => {
+describe.each(PAGES)("page $n's notebook bundle", ({
+  n, slug, notebook, declared, extras, repoNotebookIsTheShippedOne,
+}) => {
   const pad = String(n).padStart(2, "0");
 
   it("exists, and the size on the page is the size on disk", () => {
@@ -109,6 +120,37 @@ describe.each(PAGES)("page $n's notebook bundle", ({ n, slug, notebook, declared
     const sha = (b: Buffer | Uint8Array) => createHash("sha256").update(b).digest("hex");
     expect(sha(member(slug, `${slug}/out/page_${pad}/derived.json`))).toBe(
       sha(readFileSync(resolve(WEB, `data/page-${pad}-derived.json`))),
+    );
+  });
+
+  // `notebooks/README.md`: "The manifest records the notebook's sha256, so 'this file
+  // made these numbers' is checkable rather than asserted." Pages 6 and 7 shipped
+  // manifests naming a notebook that existed in no obtainable copy, which made that
+  // promise false for two of five downloads. This is the assertion behind the sentence.
+  it("names the notebook it ships, in both copies of the manifest", () => {
+    const sha = (b: Buffer | Uint8Array) => createHash("sha256").update(b).digest("hex");
+    const shipped = sha(member(slug, `${slug}/${notebook}`));
+    const bundled = JSON.parse(member(slug, `${slug}/out/page_${pad}/manifest.json`).toString());
+    expect(bundled.notebook_sha256).toBe(shipped);
+    const plotted = JSON.parse(
+      readFileSync(resolve(WEB, `data/page-${pad}-derived.json`), "utf8"),
+    );
+    expect(plotted.manifest.notebook_sha256).toBe(shipped);
+  });
+
+  // A whole-file hash moves when a notebook is merely re-saved, so it cannot answer the
+  // question a reader cares about: is the code in my download the code in the repo?
+  // Page 7's bundle differed by a crash fix the repo already had, and no hash caught it.
+  //
+  // `repoNotebookIsTheShippedOne: false` records a page whose repo copy has moved AHEAD of
+  // the run that produced the shipped numbers. Re-bundling it needs a re-run, so it is a
+  // known debt rather than a failure; the assertion is two-way, so paying it down (or
+  // letting a new page drift) fails here and forces the flag to be updated deliberately.
+  it("ships the repo notebook's code, or declares that it does not", () => {
+    const shipped = codeCells(member(slug, `${slug}/${notebook}`));
+    const repo = codeCells(readFileSync(resolve(NOTEBOOKS, notebook)));
+    expect(shipped.length === repo.length && shipped.every((c, i) => c === repo[i])).toBe(
+      repoNotebookIsTheShippedOne,
     );
   });
 });

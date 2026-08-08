@@ -1,5 +1,16 @@
 # Page 7 — Frequency Voting
 
+> **Status: all seven fixed, 2026-08-08.** §1 the handoff sentence, the `pool.note` in the notebook
+> and the shipped artifact, and the agreement receipt now rendered in page 8's step 2 margin. §2 the
+> bundle repacked from the current notebook (the crash fix ships now) with `notebook_sha256`
+> reconciled in both manifest copies, and two new assertions in `notebookBundles.test.ts`: the
+> manifest must name the notebook it ships, and the shipped code cells must match the repo copy or
+> the page must declare that they do not. The precision backfill came with it, and the plate now
+> reads it from the manifest instead of a code literal, gated in `page07.ts`. §3 and §4 the intro
+> renamed to the chart's own labels with "greedy" tied to the definition the page already gives.
+> §5 four trims, §6 the sampling clause in the headline box, §7 the tracker entry closed. Page 6's
+> bundle was repacked in the same pass (`finishing_touches.md` priority 1.4).
+
 **Why this page has its own file.** Not because it is weak — as an explainable it is one of the best
 in the deck, and two dimensions grade it `good`. It gets its own file because it carries the single
 most damaging defect in the review (a sentence the deck's own data denies), because its download

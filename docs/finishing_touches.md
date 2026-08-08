@@ -144,18 +144,23 @@ of these six models. That is the gate working, and it is worth saying so somewhe
 
 ---
 
-## 5. Page 7 has page 5's old problems
+## 5. Page 7 has page 5's old problems — **closed**
 
-**Status:** in flight. Pages 5 and 6 are done; page 7 is the rest of this branch.
-
-Same three faults: a footer doing the notebook's job, subsection titles that name a conclusion
-instead of the content, and figures that arrive with no sentence saying what they are a picture of.
+Done in `ae6b70d` and merge `2fa1206`, foot layout in `aec0009`: the footer is retired into margin
+notes, the titles name content, and every figure arrives on a sentence. The heading is kept as a
+stub only because entries 6, 7 and 8 are cited by number elsewhere.
 
 ---
 
-## 6. Page 6's budget grid spends two of five stops on dead travel
+## 6. Page 6's budget grid is coarse inside the knee
 
-**Status:** needs a GPU re-run, so it is not in the copy pass.
+**Status:** needs a GPU re-run, so it is not in the copy pass. **Reason restated 2026-08-08**, and
+the old heading ("two of five stops on dead travel") was wrong twice over. By the committed data
+only 2048 is accuracy-dead: `knee_budget` is 1024 and 512 to 1024 still gains 9 points. And
+`06bff87` replaced the slider with five radio stops, so there is no travel to drag through and the
+page deliberately teaches the flat stop. What is actually wrong is the resolution *inside* the knee:
+7 to 44 solved across three interior steps. The re-run below is still the fix; nothing changes on
+the page before it.
 
 The dial is `{128, 256, 512, 1024, 2048}`. The action is entirely between 128 and 1024:
 
@@ -195,9 +200,14 @@ The figure draws three nearly flat accuracy lines at full size and puts churn un
 opacity, so it reads as "nothing happened" when the truth is "a great deal happened and none of it
 helped". The fixed/broken counts, which are the actual result, are columns 5 and 6 of a table.
 
-Inverting it would mean leading with what moved (9 fixed / 10 broken / 81 unchanged, in page 5's
-paired-flip vocabulary) and demoting the accuracy line to a small inset that says the net was zero.
-Not done because the section was explicitly held for review.
+**Decided and done, 2026-08-08.** The review in `finishing_touches/finishing_touches.md` was the
+decision this entry was waiting for, and it said invert. The step now opens on the paired grid, 9
+fixed / 10 broken / 81 unchanged over 100 squares, and the three accuracy lines are an inset
+captioned "and the net, on all three checkpoints". Page 5's grid was lifted into
+`lib/paired.ts` and `components/PairedGrid.tsx` so both pages draw the same picture from the same
+arithmetic. One thing the inversion surfaced: churn counts every answer that moved, 30, while the
+grid lights only the 19 that changed the verdict, so the legend now names the 11 that swapped one
+wrong answer for another.
 
 ---
 

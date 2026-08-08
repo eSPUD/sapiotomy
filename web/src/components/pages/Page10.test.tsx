@@ -264,4 +264,21 @@ describe("Page 10 — step 3 and house style", () => {
     expect(kids.at(-2)?.textContent).toMatch(/Yao et al\. 2023/);
     expect(kids.at(-2)?.textContent).toMatch(/Holtzman et al\. 2020/);
   });
+
+  // Pages 5 to 9 each hand the next one a question. This page's last content sentence
+  // used to be inside a caption, leaving page 11 to open the seam on its own.
+  it("closes with the handoff to page 11, in the currency page 11 uses", () => {
+    render(<Page10 />);
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/arithmetic at answer time/);
+    expect(body).toMatch(/which is the better buy at a matched bill/);
+  });
+
+  // MCTS is load-bearing here and glossed nowhere else in the deck. The blurb is the
+  // first thing a reader gets after pressing the button, so the acronym opens there.
+  it("spells out MCTS where the reader meets the button", () => {
+    render(<Page10 />);
+    fireEvent.click(screen.getByRole("button", { name: /^MCTS$/ }));
+    expect(document.body.textContent).toMatch(/Monte Carlo tree search/);
+  });
 });

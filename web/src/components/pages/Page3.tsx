@@ -227,6 +227,13 @@ export function Page3() {
 
   const frontierAtM = frontierCumulativeUSDM(months);
   const sameAtM = sameModelCumulativeUSDM((months / 12) * DAYS);
+  /**
+   * The milestone, derived rather than latched: the compounding plan has passed a
+   * whole year of the flat rate. It announces itself to a screen reader once, on
+   * the crossing, and the chip below reads it live, so dragging back reads the
+   * month the reader is actually standing on.
+   */
+  const crossedFlatYear = frontierAtM >= sameModelCumulativeUSDM(DAYS);
 
   const onMonths = (v: number) => {
     if (!monthsTouchedRef.current) {
@@ -338,6 +345,15 @@ export function Page3() {
                   </p>
                 </div>
               </div>
+              {/* The designed aha, on screen. It reached the sr-only live region only, so
+                  a sighted reader dragged straight past the moment the page is built
+                  around. Lights when the crossing happens and stays lit. */}
+              {crossedFlatYear ? (
+                <p className="rounded-lg border-l-4 border-wrong bg-wrong/10 px-3 py-2 text-sm text-ink">
+                  <strong className="text-wrong">Month {months}:</strong> chasing the frontier has
+                  already outspent a <em>whole year</em> at the flat rate.
+                </p>
+              ) : null}
               {months > 0 ? (
                 <p className="text-sm text-ink-muted">
                   Chasing the frontier costs{" "}
@@ -386,9 +402,12 @@ export function Page3() {
             className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
           >
             <p className="text-sm text-ink">
+              {/* First load-bearing use of "parameter" in the deck, and pages 5 and 11 are
+                  both denominated in it. One parenthetical, at the altitude of this page. */}
               Suppose money were no object. It still fails. A <strong>bigger</strong> model only pays
               off if it also <strong>reads more</strong>, in step: about {cp.tokensPerParam} tokens
-              per parameter, which is the scaling law.
+              per <strong>parameter</strong> (one of the numbers inside the model that training
+              adjusts, and the usual way of saying how big it is), which is the scaling law.
               <Cite n={REF.chinchilla} /> So the ceiling was never money. It is how much there is
               worth reading, and{" "}
               <strong className="text-ink">no budget buys tokens that do not exist</strong>.

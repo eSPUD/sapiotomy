@@ -219,6 +219,12 @@ export function Page1() {
             The other comes line by line, slow, deliberate, and you feel every step. Recognizing an
             answer and constructing one are not the same act.
           </p>
+          {/* The only seam in the deck that had no hook: this page ended here and page 2
+              opened cold on "an LLM", leaving the bridge to be built twice. */}
+          <p className="leading-relaxed text-ink-muted">
+            Keep the distinction. The next page asks a question that looks like recognition and is
+            not, and watches a machine answer it on reflex.
+          </p>
         </section>
         <div aria-hidden="true" />
       </div>

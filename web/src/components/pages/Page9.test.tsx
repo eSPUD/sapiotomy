@@ -23,6 +23,19 @@ const markEverySoundThenReveal = () => {
   fireEvent.click(screen.getByRole("button", { name: /reveal what the graders found/i }));
 };
 
+// docs/page_9_refactor.md: the AUC appears ONCE, in the note that admits the PRM. It
+// had crept back into the detection figure, which is where a reader would read it as a
+// property of the finding rather than of the grader.
+describe("Page 9's PRM reliability is quoted once", () => {
+  it("keeps the AUC in the margin and out of the figures", () => {
+    render(<Page9 />);
+    const body = document.body.textContent ?? "";
+    expect(body.match(/AUC/g) ?? []).toHaveLength(1);
+    const note = screen.getByText(/admitted only after being measured against the checker/);
+    expect(note.textContent).toMatch(/AUC/);
+  });
+});
+
 describe("Page 9 (outcome vs process supervision) component", () => {
   it("sets up what a gradable step requires before the figure asks for one", () => {
     render(<Page9 />);

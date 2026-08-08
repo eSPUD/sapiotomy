@@ -254,8 +254,14 @@ keeps the arithmetic honest: nothing here is buying more compute, only spending 
 **To page 8.** The step 3 callout is the bridge, and it is a much stronger one than the current
 close. The model already had the right answer in hand on those problems and the vote discarded
 it, because voting can only ever return the *most common* answer, and the right answer is
-sometimes rare. Page 8 opens by pointing at that number, keeps the same N candidates, and
-changes only the selection rule: stop counting, start judging.
+sometimes rare. Page 8 opens by pointing at that number and changes only the selection rule: stop
+counting, start judging.
+
+*Corrected 2026-08-08.* This paragraph used to say page 8 "keeps the same N candidates". It does
+not: page 8 generated its own 12,800 chains and its `derived.json` says so in a field called
+`same_candidates`. What it does do is re-run this protocol and land where page 7 landed, vote 56%
+against 55% and coverage 78% both ways, which is the claim the page now makes and page 8's step 2
+margin renders as the receipt.
 
 **Boundary with page 11, worth respecting.** Page 11 owns the parameters-versus-thinking
 exchange rate. Page 7 owns splitting one fixed inference budget across chains. Both are
