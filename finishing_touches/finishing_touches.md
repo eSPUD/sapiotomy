@@ -59,7 +59,7 @@ Grades by dimension (`good` / `fair`; no page graded `poor`):
 | **6** | good | fair | good | good | fair |
 | **7** | fair | fair | good | fair | good |
 | **8** | fair | good | **fair** | **fair** | **fair** |
-| **9** | good | good | good | good | fair |
+| **9** | good | good | good | good | fair → improved by `df199a3` |
 | 10 | fair | good | good | good | good |
 | 11 | fair | good | good | good | fair |
 | 12 | good | good | good | good | good |
@@ -213,24 +213,34 @@ house-style pass entirely, renders raw notebook selectors (`best-of-N (skywork-p
 "lead with the win" structure are **not** faults — that is a settled decision in
 `docs/page_8_measured_payoff.md` §9, and the reviewer who challenged it was refuted.
 
-### Page 9 — Outcome vs Process · **good; apparatus in the wrong place**
+### Page 9 — Outcome vs Process · **good — and the two findings below have since been fixed**
+
+> **Superseded by `df199a3`, merged while this review was being written.** Page 9 was substantially
+> rewritten (934 lines) and the fix matches this review's recommendation closely enough that the
+> commit message states the same diagnosis in its own words: *"`prm_label` was in derived.json the
+> whole time."* Both findings below are resolved. They are kept, struck through, because the
+> reasoning behind them explains what the rewrite bought — and because one sub-point survives.
 
 The in-card localisation caveat — *"The direction is solid; the digit is not"* — is the deck's best
 honest-number treatment, and the mode-conditional coaching boxes are exactly-sized.
 
-- **The trained PRM is visually subordinate to the arithmetic checker**, which declines ~94% of
-  steps. Do **not** promote it to a co-equal column: `docs/page_9_refactor.md` §4 deliberately moved
-  the reveal's verdict from the PRM to the checker (the page's founding defect was hand-written
-  booleans attributed to a PRM), and the AUC 0.89 was measured only on the 5.8% of steps the checker
-  can judge. The real, small gap is that the bare per-step decimal is uninterpretable: the shipped
-  data carries a thresholded `prm_label` at the fitted 0.747 operating point that `asSpecimen` in
-  `web/src/lib/page09.ts` drops. Surface it, or render the score relative to that threshold.
-  **[weakened]**
-- **The footer is the deck's longest** (`Page9.tsx:592-607`), and it is the *only* carrier of a
-  spec-mandated disclosure: `docs/page_9_refactor.md` §3d requires the clause "on chains this model
-  finished on its own" on the section-2 rate captions, which currently state rates with no
-  population. Move that clause to the captions; cut the segmentation sentence as duplicative of
-  `507-514`; cut two of the three AUC mentions (the spec says it appears once). **[weakened]**
+- ~~**The trained PRM is visually subordinate to the arithmetic checker**, which declines ~94% of
+  steps.~~ **Fixed.** Do **not** promote it to a co-equal column: `docs/page_9_refactor.md` §4
+  deliberately moved the reveal's verdict from the PRM to the checker (the page's founding defect
+  was hand-written booleans attributed to a PRM), and the AUC 0.89 was measured only on the 5.8% of
+  steps the checker can judge. The gap was that the bare per-step decimal was uninterpretable while
+  the shipped data already carried a thresholded `prm_label`, which `asSpecimen` dropped.
+  `df199a3` surfaces it as `prmVerdict` (`web/src/lib/page09.ts:305-306`) and gives every step both
+  verdicts — a solid chip for the checker, because its labels are recomputable facts, and an
+  outlined chip for the PRM, because a score is an opinion — with only the checker tinting the step
+  body. That distinction is better than what this review proposed, and it closes the
+  over-attribution risk the weakened verdict was worried about. **[weakened → fixed]**
+- ~~**The footer is the deck's longest** (`Page9.tsx:592-607`)~~ **Fixed.** It has been broken into
+  margin notes ("Provenance", "The PRM"), and the spec-mandated conditioning clause — *"every figure
+  on this page is conditional on the easier population"* — now sits in the Provenance note rather
+  than buried at the page foot. **One sub-point survives:** `docs/page_9_refactor.md` says the AUC
+  appears **once**; it now appears twice (`Page9.tsx:521` and `562`), down from three. Minor.
+  **[weakened → mostly fixed]**
 - **`notebooks/README.md` contradicts itself about this page.** Line 84 says *"Page 9 reuses page
   7's pile"*; lines 199-205 say *"Page 9 is the one page that does not reuse the pile above it …
   page 9 runs its own uncapped pass."* The artifact (`detection.source: "page_07_pile"`,
@@ -272,10 +282,13 @@ explained on page 10; note the correct fix is to attach the word to the operatio
 
 ## Cross-cutting themes
 
-**1. The pages 5–7 pass stopped before it finished.** The provenance plate above the fold, the
-retired footer, the one-note-per-step margin apparatus — pages 5, 6 and 7 have all of it; pages 8
-and 9 have none of it. Treat this as one act-wide conversion, not two page defects. Fixing page 8
-alone just moves the outlier to page 9.
+**1. The pages 5–7 pass stopped before it finished — and page 8 is now the only page left behind.**
+The provenance plate above the fold, the retired footer, the one-note-per-step margin apparatus:
+pages 5, 6 and 7 have all of it. When this review ran, pages 8 and 9 had none of it, and the
+recommendation was to convert both together so neither was left as the outlier. **`df199a3` has
+since converted page 9**, which both removes half the problem and supplies a worked template — page
+9's "Provenance" and "The PRM" notes are the shape page 8 needs. Page 8 is now the single
+unconverted page in the act.
 
 **2. Reveal-spoiling is the most common prose fault.** Ledes and intros hand over an interactive's
 payoff before the reader touches the control: page 5's gag figure (told four times), page 4's lede,

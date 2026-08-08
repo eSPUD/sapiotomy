@@ -139,8 +139,10 @@ not an ancestor of the rewrite.
   Only one thing is footer-only and needs relocating — the "the comparison between counting and
   selection is ours" disclosure, which fits the step 4 margin (`678` is an empty placeholder).
   The McNemar rationale is already in the notebook; that is a deletion, not a migration.
-- **Do this in the same pass as page 9**, which has the identical footer-plus-bottom-chip shape.
-  Fixing page 8 alone makes page 9 the new outlier.
+- ~~**Do this in the same pass as page 9**, which has the identical footer-plus-bottom-chip shape.~~
+  **Page 9 was converted in `df199a3` while this review was being written**, so page 8 is now the
+  only unconverted page in the act — and page 9 supplies the template. Copy the shape of its
+  "Provenance" and "The PRM" margin notes (`Page9.tsx:500-525`) rather than inventing one.
 
 ## 6. Page 7's promise is never explicitly settled
 
