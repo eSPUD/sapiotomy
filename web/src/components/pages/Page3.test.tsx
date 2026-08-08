@@ -41,18 +41,19 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("shows both problems, the slider, and the guess box up front", () => {
     render(<Page3 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training-Time Scaling");
-    // The two walls are sub-heads under section 1 now.
-    // Every challenge is its own sub-head: four under section 1, the top two under section 2.
+    // Section 1's four walls are each their own sub-head; section 2 is now a
+    // two-sentence summary with no sub-heads.
     for (const h of [
       /The bill compounds/i,
       /It always lags/i,
       /It cannot be aimed/i,
       /The data runs out/i,
-      /The fact was already there/i,
-      /More text sharpens the default/i,
     ]) {
       expect(screen.getByRole("heading", { level: 3, name: h })).toBeInTheDocument();
     }
+    // The bias section states both limits as prose.
+    expect(screen.getByText(/more reading cannot answer\s*it/i)).toBeInTheDocument();
+    expect(screen.getByText(/sharpens that\s*default/i)).toBeInTheDocument();
     // Step 1: the combined cost curve. The old one-year meter stays gone.
     expect(
       screen.getByRole("heading", { level: 2, name: /1\. Challenges in addressing knowledge gaps/i }),
@@ -180,20 +181,23 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expectClean();
   });
 
-  it("the References margin note carries only the sources the page uses", () => {
+  it("each margin note carries only the sources its section uses", () => {
     render(<Page3 />);
     const notes = Array.from(document.querySelectorAll("aside")).map((a) => a.textContent ?? "");
-    // Only section 1 cites now; the bias section's two sources left with its
-    // trimmed-away challenges.
-    expect(notes).toHaveLength(1);
-    const [gaps] = notes;
+    // Section 1's References note, and section 2's "Why bias happens" sidenote.
+    expect(notes).toHaveLength(2);
+    const [gaps, bias] = notes;
 
-    // The gap section owns every cost and data source.
+    // The gap section owns every cost and data source, and none of the bias one.
     for (const ref of [/Sevilla/, /Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
       expect(gaps).toMatch(ref);
     }
-    // The dropped bias sources are gone from the page entirely.
-    expect(gaps).not.toMatch(/Shumailov|Askell/);
+    expect(gaps).not.toMatch(/Zhao/);
+    // The bias sidenote explains the cause and cites Zhao et al. for it.
+    expect(bias).toMatch(/Why bias happens/i);
+    expect(bias).toMatch(/likeliest next token/i);
+    expect(bias).toMatch(/Zhao/);
+    // The trimmed-away challenges' sources are gone from the page entirely.
     expect(document.body.textContent ?? "").not.toMatch(/Shumailov|Askell/);
     expectClean();
   });

@@ -20,16 +20,18 @@
  *
  * Layout rule: no reveals, no drag-to-unlock. TWO numbered sections down the
  * left, one per failure page 2 raises: the knowledge gap (cost, lag, aim, data)
- * and the bias (was-already-there, more-text-sharpens-the-default — the top two;
- * the model-collapse and alignment challenges were trimmed away). The figures
- * are h3 sub-heads inside them, so the page reads as two arguments rather than a
- * list of walls. Each section is followed by its margin cell. Citations
+ * and the bias. Section 1's four walls are h3 sub-heads, so its argument reads
+ * as a list; section 2 is now a two-sentence summary of the bias (the fact was
+ * already there, so more reading cannot answer it; more text only sharpens the
+ * default) with no sub-heads — the model-collapse and alignment challenges were
+ * trimmed away. Each section is followed by its margin cell. Citations
  * follow the page-2 house style: numbered inline markers (Cite) at the claim
  * they support, a References margin note (RefItem) beside the step that uses
  * each source. References live only in those margin notes; non-peer-reviewed
- * sources carry a preprint flag there. Only section 1 cites now, so its
- * References note sits beside it; section 2 cites nothing, so its margin cell is
- * an empty <div aria-hidden="true" />. There is still no "how to
+ * sources carry a preprint flag there. Section 1's References note sits beside
+ * it; section 2's margin cell holds a "Why bias happens" sidenote that explains
+ * the next-token-prediction cause and cites Zhao et al. 2018 for it. There is
+ * still no "how to
  * read this page" rail (a slider, a dial and a text box need no instructions).
  * What is cited vs derived is said inline in each step's h2 annotation
  * ("derived from the two Epoch trends", "cited stock, derived demand"), and the
@@ -88,6 +90,7 @@ const REF = {
   chinchilla: 4,
   dataStock: 5,
   datasetSizes: 6,
+  winobias: 7,
 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
@@ -529,20 +532,28 @@ export function Page3() {
             2. Challenges in addressing knowledge bias
           </h2>
 
-          <h3 className="text-lg font-semibold text-ink">a. The fact was already there</h3>
           <p className="text-ink">
-            Page 2&apos;s model held the 2023 title the whole time and dropped it anyway. That miss
-            was never about what it had read, so more reading cannot answer it.
-          </p>
-
-          <h3 className="text-lg font-semibold text-ink">b. More text sharpens the default</h3>
-          <p className="text-ink">
-            The reading a model picks is whatever its corpus says most. More text from the same
-            world strengthens that majority rather than loosening it.
+            Page 2&apos;s model held the 2023 title the whole time and dropped it anyway, so the
+            miss was never about what it had read &mdash; <strong>more reading cannot answer
+            it</strong>. And because a model settles on whatever its corpus says most, more text
+            from the same world only <strong>sharpens that default</strong> rather than loosening
+            it.
           </p>
         </section>
 
-        <div aria-hidden="true" />
+        <Note kicker="Why bias happens">
+          <p>
+            A model is trained to predict the likeliest next token over its corpus, so an ambiguous
+            question returns whichever reading that corpus makes most probable. The majority pattern
+            wins by default, and nothing in the objective flags that a quieter reading was there to
+            pick.
+            <Cite n={REF.winobias} />
+          </p>
+          <RefItem n={REF.winobias} href="https://arxiv.org/abs/1804.06876">
+            Zhao et al. 2018, <em>Gender Bias in Coreference Resolution: Evaluation and Debiasing
+            Methods</em> (NAACL 2018).
+          </RefItem>
+        </Note>
         {/* Both sections in two sentences, in the content column so it does not
             run under the sidenotes. */}
         <PullQuote>
