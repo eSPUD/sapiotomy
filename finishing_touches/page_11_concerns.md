@@ -3,8 +3,14 @@
 **Why this page has its own file.** It carries the only place in the deck where one page states
 something another page measured to be false. It is also the act's payoff page and its only invented
 centerpiece, sitting immediately after five pages that proved everything on them can be measured.
-The refactor spec in `page-11-experiment-treatment/` fixes both, and this review endorses it — but
+The refactor spec at `docs/page_11_refactor_spec.md` fixes both, and this review endorses it — but
 the contradiction is on the live page today and does not need to wait for a GPU.
+
+> **Updated after the merge of `c194308`.** The spec and `notebooks/page_11_training_vs_scale.ipynb`
+> are now on main. **Arm 0 has been run and gate 1 passed bit-exactly** (max drift 0.0 against pages
+> 6/7/8's shipped aggregates), so §2's first step below is complete and pages 6–8 have been
+> independently audited as a side effect. Gate 2 and arms A–C await a GPU. Nothing on `Page11.tsx`
+> changed, so §1 — the contradiction — is still live and still the priority.
 
 ---
 
@@ -50,12 +56,16 @@ to the cited findings, not digitized data."* That disclosure is honest and the p
 anywhere. But it lands immediately after five consecutive pages that replay their own measured runs,
 and it is the page the whole act is built toward.
 
-**This is what the refactor spec exists to fix, and its first step needs no GPU.** Arm 0 derives the
-accuracy-vs-FLOPs family chart from `out/page_06/`, `out/page_07/` and `out/page_08/` — runs the
-deck already owns — and gate 1 requires it to reproduce the shipped numbers exactly (3B greedy 43%,
-vote@16 55%, best-of-16 60%, coverage 78%, 7B greedy 60%) before anything else runs. If gate 1
-fails, the deck has a reproducibility bug worth more than this page. That is the right first move
-whether or not the rest of the experiment ever runs.
+**This is what the refactor spec exists to fix, and its first step needed no GPU — and has now
+run.** Arm 0 derives the accuracy-vs-FLOPs family chart from `out/page_06/`, `out/page_07/` and
+`out/page_08/` — runs the deck already owns — and gate 1 required it to reproduce the shipped
+numbers exactly (3B greedy 43%, vote@16 55%, best-of-16 60%, coverage 78%, 7B greedy 60%) before
+anything else ran. **It passed bit-exactly, max drift 0.0.**
+
+That result is worth more than this page. It means a second, independently written derivation
+reproduces pages 6, 7 and 8's published aggregates to the digit — the strongest evidence in this
+whole review that the measured pipeline is sound, and it arrived as a free side effect of a page 11
+gate. Note it in the reproducibility section of any writeup.
 
 ## 3. The distribution mechanism is stated twice at length
 
@@ -93,7 +103,7 @@ staging the controls rather than presenting all of them at once.
 ## On the refactor spec: endorsed, with three additions
 
 Both direction reviewers independently rated
-`page-11-experiment-treatment/docs/page_11_refactor_spec.md` **right direction**, and one called it
+`docs/page_11_refactor_spec.md` **right direction**, and one called it
 the strongest spec of the set. Its discipline matches what pages 5–9 established: pre-registered
 outcome branches written before the run ("Every branch ships"), build-blocking gates, an arm 0 that
 must reproduce shipped numbers before anything new runs, and era-instance scoping that keeps Snell
@@ -137,5 +147,6 @@ one is a clean seam — but only if they are merged by one hand, in one pass.
 
 1. §1 — the contradiction. One paragraph, no run, highest embarrassment risk in the deck.
 2. §3 and §4 — the duplication and the gloss. Both compose with §1; do all three in one commit.
-3. Arm 0 of the refactor spec, with gate 1. No GPU, and it independently audits pages 6–8.
-4. The rest of the refactor, with the three additions above folded into the spec first.
+3. ~~Arm 0 of the refactor spec, with gate 1.~~ **Done in `c194308` — gate 1 passed bit-exactly.**
+4. The rest of the refactor, with the three additions above folded into the spec first. Gate 2 and
+   arms A–C are implemented in the notebook and need only a GPU.

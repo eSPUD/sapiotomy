@@ -304,7 +304,15 @@ Two agents assessed this independently, one of them with no access to the other'
 agreed on every page and converged on the same three additions, which is the strongest signal in
 this review.
 
-### Page 11 — **right direction** (`page-11-experiment-treatment/docs/page_11_refactor_spec.md`)
+### Page 11 — **right direction** (`docs/page_11_refactor_spec.md`)
+
+> **Updated after the merge of `c194308`.** This spec, and the notebook implementing it, are now on
+> main. The review below was written against the spec when its status read "plan only"; the spec is
+> otherwise byte-identical, so every judgement stands. What changed: **arm 0 has been run, and gate
+> 1 passed bit-exactly** — max drift 0.0 against pages 6/7/8's shipped aggregates. That was
+> recommendation 3 in the order below, and it is done. It also independently audits pages 6–8's
+> reproducibility, which is the strongest confirmation in this document that the measured pipeline
+> holds. Gate 2 and arms A–C are implemented and await a GPU.
 
 The best spec of the set. It brings the act's payoff page up to the 5–9 measured standard using runs
 the deck already owns (arm 0 needs no GPU and must reproduce the shipped numbers before anything
@@ -327,7 +335,7 @@ Three things to add:
    the "waste" clause (reasoning bought at answer time and discarded) that page 12's lede and page
    13's seam were both written to receive.
 
-### Page 12 — **right direction** (`pages-11-12-experiment-ideas/docs/page_12_refactor.md`)
+### Page 12 — **right direction** (`pages-11-12-experiment-ideas` worktree, `docs/page_12_refactor.md` — not yet on main)
 
 Correctly scoped: keep the page's shape (loop → listing → bars → counterweight → handoff, with the
 o1/R1 block and `starListing` frozen so the 12→13 seam survives) and replace only the invented
