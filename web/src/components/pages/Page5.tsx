@@ -56,7 +56,9 @@
  *   The stepper (Back / Next / Play) walks the model's own output using the
  *   token ranges the notebook emitted, so the reveal stops at real token
  *   boundaries rather than faking a typewriter. The instruction condition is NOT
- *   a third tab: it is measured, and it is spent on page 12 (margin note).
+ *   a third tab: it is measured, and it is reported in a margin note. That note
+ *   used to promise "page 12 opens on it" and page 12 does not, so the clause is
+ *   now the finding itself rather than a forward reference.
  *
  *   Step 3 — figure 2, the page's headline. The McNemar 2x2 drawn as 100 cells,
  *   one per problem, with the gag on a switch. Flip it and 40 solved problems go
@@ -103,6 +105,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
+import { PairedGrid } from "@/components/PairedGrid";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
@@ -202,25 +205,16 @@ function TokenMeter({ written, total, blurtTokens }: { written: number; total: n
 
 /* ------------------------------------------------------------------ figure 2 */
 
+/**
+ * The gag is the baseline and the chain is the change, so `afterOnly` is a
+ * problem solved only when the model is left alone: green while the switch is
+ * off, red once the gag takes it away.
+ */
 const cellTone = (cell: PairedClass, gagged: boolean): string => {
-  if (solvedIn(cell, gagged)) return "border-correct bg-correct";
-  if (gagged && cell === "chainOnly") return "border-wrong bg-wrong";
+  if (solvedIn(cell, gagged ? "before" : "after")) return "border-correct bg-correct";
+  if (gagged && cell === "afterOnly") return "border-wrong bg-wrong";
   return "border-grid bg-surface-raised";
 };
-
-/** The paired table as 100 problems. Flipping the gag moves 44 of them. */
-function PairedGrid({ gagged }: { gagged: boolean }) {
-  return (
-    <div className="grid w-full grid-cols-10 gap-1.5" aria-hidden="true">
-      {SUPPRESSION_TABLE.cells.map((cell, i) => (
-        <span
-          key={i}
-          className={`aspect-square rounded-sm border motion-safe:transition-colors motion-safe:duration-500 ${cellTone(cell, gagged)}`}
-        />
-      ))}
-    </div>
-  );
-}
 
 /* ------------------------------------------------------------------ figure 3 */
 
@@ -393,7 +387,7 @@ export function Page5() {
     setGagged(on);
     setAnnounce(
       on
-        ? `Forbidden to reason, the model solves ${F2.blurt.nCorrect} of ${F2.blurt.n}: ${T.chainOnly} problems it had are gone and ${T.blurtOnly} it did not have arrive.`
+        ? `Forbidden to reason, the model solves ${F2.blurt.nCorrect} of ${F2.blurt.n}: ${T.afterOnly} problems it had are gone and ${T.beforeOnly} it did not have arrive.`
         : `Left alone, the model solves ${F2.bare.nCorrect} of ${F2.bare.n}.`,
     );
   };
@@ -635,15 +629,16 @@ export function Page5() {
               the same {F2.bare.n} problems, both ways
             </span>
           </h2>
+          {/* The denominator and the free-run number only. This paragraph used to give
+              the gagged number too, which left the switch with nothing to deliver: the
+              figure's whole job is to show what leaves when you press it. */}
           <p className="text-ink-muted">
             One trace proves nothing, so both prompts were run across{" "}
             {F2.bare.n} problems from the same difficulty band. Below is that comparison: the model
             reasoning freely, against the same model forbidden to reason. Left alone it writes a
             median of {CLOSE.bare_median_tokens} tokens of working and solves{" "}
-            <strong className="text-ink">{F2.bare.nCorrect} of the {F2.bare.n}</strong>. Gagged, it
-            answers in {CLOSE.blurt_median_tokens} tokens and solves{" "}
-            <strong className="text-ink">{F2.blurt.nCorrect}</strong>. Each square below is one of
-            those {F2.bare.n} problems; the switch is the same suffix you just read.
+            <strong className="text-ink">{F2.bare.nCorrect} of the {F2.bare.n}</strong>. Each square
+            below is one of those {F2.bare.n} problems; the switch is the same suffix you just read.
           </p>
           <section
             aria-label="The cost of forbidding the working"
@@ -668,7 +663,7 @@ export function Page5() {
                 build sized its track `auto`, which collapsed 100 problems into a
                 110px smudge; keep it on an fr track. */}
             <div className="grid gap-5 sm:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] sm:items-center">
-              <PairedGrid gagged={gagged} />
+              <PairedGrid cells={SUPPRESSION_TABLE.cells} tone={(c) => cellTone(c, gagged)} />
               <div className="flex flex-col gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
@@ -685,14 +680,18 @@ export function Page5() {
                     <span className="h-3 w-3 shrink-0 rounded-sm border border-correct bg-correct" />
                     solved here
                   </li>
+                  {/* The discordant counts ARE the reveal, so the legend keeps them
+                      until the reader has pressed the switch. */}
                   <li className="flex items-center gap-2">
                     <span className="h-3 w-3 shrink-0 rounded-sm border border-wrong bg-wrong" />
-                    solved when left alone, lost to the gag ({T.chainOnly})
+                    solved when left alone, lost to the gag{gagged ? ` (${T.afterOnly})` : ""}
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="h-3 w-3 shrink-0 rounded-sm border border-grid bg-surface-raised" />
-                    unsolved either way ({T.neither}), plus the {T.blurtOnly} that only the gag gets
-                    right
+                    unsolved either way
+                    {gagged
+                      ? ` (${T.neither}), plus the ${T.beforeOnly} that only the gag gets right`
+                      : ", plus the few that only the gag gets right"}
                   </li>
                 </ul>
               </div>
@@ -705,14 +704,18 @@ export function Page5() {
             >
               <p className={`font-semibold ${gagged ? "text-wrong" : "text-correct"}`}>
                 {gagged
-                  ? `✗ ${T.chainOnly} problems it had are gone. ${T.blurtOnly} it did not have arrive.`
-                  : `✓ press "forbidden to reason" and watch ${T.chainOnly} of these go out.`}
+                  ? `✗ ${T.afterOnly} problems it had are gone. ${T.beforeOnly} it did not have arrive.`
+                  : `✓ press "forbidden to reason" and watch what leaves.`}
               </p>
-              <p className="text-ink">
-                Forbidding the working costs {F2.suppression.deltaPts} points ·{" "}
-                {pLabel(F2.suppression.p)}, exact McNemar over the {T.chainOnly + T.blurtOnly}{" "}
-                problems where the two conditions disagree
-              </p>
+              {/* The cost, and the test behind it, arrive with the reveal. Rendering them
+                  under an unpressed switch spends the figure before it is touched. */}
+              {gagged ? (
+                <p className="text-ink">
+                  Forbidding the working costs {F2.suppression.deltaPts} points ·{" "}
+                  {pLabel(F2.suppression.p)}, exact McNemar over the {T.afterOnly + T.beforeOnly}{" "}
+                  problems where the two conditions disagree
+                </p>
+              ) : null}
             </div>
           </section>
         </section>
@@ -848,7 +851,7 @@ export function Page5() {
             Asking, on a model that already reasons, moved the score by{" "}
             {F2.instruction.deltaPts.toFixed(1)} points: {F2.instruction.fixed} fixed,{" "}
             {F2.instruction.broken} broken, ±{F2.instructionBoundPts.toFixed(1)}. A bound, not a
-            zero, and page 12 opens on it.
+            zero: on a model that has already been trained to reason, the prompt is close to spent.
           </p>
           <p>
             Worked examples in the prompt did not help either. Mostly they moved the{" "}

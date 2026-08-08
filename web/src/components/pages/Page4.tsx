@@ -412,15 +412,17 @@ export function Page4() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
+      {/* The lede poses the walk; step 2 owns the convergence. It used to give away
+          "three cultures built three roads to the same 223,300" here, and then step 2's
+          verdict box and step 3 said it again. */}
       <p className="max-w-2xl text-lg text-ink-muted">
         Working a problem out instead of looking it up has a name:{" "}
         <strong className="text-ink">reasoning</strong>. And here is the surprise: it is never one
         fixed procedure. Page 1 gave you{" "}
         <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> and one way to build
-        it; take a bigger one, <strong className="font-mono text-ink">{P.a} × {P.b}</strong>, and
-        three cultures built three different roads to the same{" "}
-        <strong className="font-mono text-ink">{P.display}</strong>. Each is a real method with its
-        own strengths and weaknesses, so pick one below, walk it, then try another and compare.
+        it. Take a bigger one, <strong className="font-mono text-ink">{P.a} × {P.b}</strong>, and
+        three cultures worked it three different ways, each a real method with its own strengths and
+        weaknesses. Pick one below, walk it to the end, then try another and compare what they cost.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}

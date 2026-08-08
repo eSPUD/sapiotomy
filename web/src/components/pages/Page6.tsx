@@ -67,9 +67,21 @@
 import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
+import { PairedGrid } from "@/components/PairedGrid";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
-import { PAGE6, naturalLength, pct, rowById, tidyMath, tokens, traceZones } from "@/lib/page06";
+import {
+  PAGE6,
+  WAIT_TABLE,
+  naturalLength,
+  pLabel,
+  pct,
+  rowById,
+  tidyMath,
+  tokens,
+  traceZones,
+} from "@/lib/page06";
+import type { PairedClass } from "@/lib/paired";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 6;
@@ -556,19 +568,35 @@ function LengthStrip({
 /* ------------------------------------------------------------------ figure 4 */
 
 const K_W = 620;
-const K_H = 250;
-const K_M = { top: 22, right: 104, bottom: 46, left: 52 };
+// Half the height it had: this is now the inset under the paired grid, and its
+// job is one sentence, that the net went nowhere.
+const K_H = 170;
+const K_M = { top: 16, right: 104, bottom: 40, left: 52 };
 const K_IW = K_W - K_M.left - K_M.right;
 const K_IH = K_H - K_M.top - K_M.bottom;
+
+/**
+ * Zero injections is the baseline and the injections are the change, so
+ * `afterOnly` is a problem that being made to keep going rescued and
+ * `beforeOnly` is one it wrecked. Both blocks are lit at once here, because the
+ * grid is showing the churn rather than animating a switch.
+ */
+const waitTone = (cell: PairedClass): string => {
+  if (cell === "afterOnly") return "border-correct bg-correct";
+  if (cell === "beforeOnly") return "border-wrong bg-wrong";
+  return "border-grid bg-surface-raised";
+};
 
 /**
  * The other direction: not a cap, but a refusal to let the model stop. Accuracy
  * against the number of injections, same items, same grader.
  *
- * The figure has to make a flat line readable, because a flat line here has two
- * completely different causes. So churn rides underneath it as a bar: the share
- * whose committed answer moved at all. Three curves that barely move over bars
- * that are large is the finding — it is doing plenty, and none of it helps.
+ * This is now the INSET, under the paired grid. It led the step for a while and
+ * that was the wrong way round: three nearly flat lines read as "nothing
+ * happened" when the finding is that a third of the answers moved and the net
+ * was zero. The grid above carries the movement; these lines carry the net, and
+ * churn stays under them as a bar because a flat line here has two completely
+ * different causes and the bar is what tells them apart.
  */
 function WaitCurve() {
   if (!FW) return null;
@@ -962,10 +990,11 @@ export function Page6() {
             </span>
           </h2>
           <p className="text-ink-muted">
+            {/* The instruction here, the reason in the margin. Both used to carry the
+                reason, with "differ in size and in training" repeated word for word. */}
             One problem is an anecdote. Below is the same sweep run over all {curvePoint.n}, on
             three checkpoints: how many each solves at every stop on the dial. Read the shape rather
-            than the heights, because the three differ in size and in training and the largest ran
-            at a different precision.
+            than the heights.
           </p>
           <section
             aria-label="The population curve"
@@ -1128,7 +1157,61 @@ export function Page6() {
                   <span className="font-mono text-ink">{FW.word}</span> is appended to what it has
                   written, and it carries on. {FW.waits[FW.waits.length - 1]} times over.
                 </p>
-                <WaitCurve />
+
+                {/* The result, in page 5's paired-flip vocabulary and its picture. The
+                    step used to open on the accuracy lines, which is the boring half:
+                    the net is zero and both discordant blocks are large, and only the
+                    grid can say both of those at once. */}
+                {WAIT_TABLE ? (
+                  <div className="grid gap-5 sm:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] sm:items-center">
+                    <PairedGrid cells={WAIT_TABLE.table.cells} tone={waitTone} />
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                          answers that moved, of {WAIT_TABLE.table.n}, after{" "}
+                          {WAIT_TABLE.waits} injections
+                        </p>
+                        <p className="font-mono text-4xl tabular-nums text-ink">
+                          {pct(WAIT_TABLE.churn)}
+                        </p>
+                        <p className="font-mono text-xs tabular-nums text-ink-muted">
+                          {shortLabel(WAIT_TABLE.label)} · ×{WAIT_TABLE.tokenMultiple.toFixed(1)} the
+                          tokens
+                        </p>
+                      </div>
+                      <ul className="flex flex-col gap-1 text-xs text-ink-muted">
+                        <li className="flex items-center gap-2">
+                          <span className="h-3 w-3 shrink-0 rounded-sm border border-correct bg-correct" />
+                          fixed by being made to keep going ({WAIT_TABLE.table.afterOnly})
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="h-3 w-3 shrink-0 rounded-sm border border-wrong bg-wrong" />
+                          broken by it ({WAIT_TABLE.table.beforeOnly})
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <span className="h-3 w-3 shrink-0 rounded-sm border border-grid bg-surface-raised" />
+                          same verdict either way ({WAIT_TABLE.table.both + WAIT_TABLE.table.neither}
+                          ), including {WAIT_TABLE.movedWithoutChangingTheVerdict} that swapped one
+                          wrong answer for another
+                        </li>
+                      </ul>
+                      <p className="text-sm text-ink">
+                        {WAIT_TABLE.table.afterOnly} rescued against{" "}
+                        {WAIT_TABLE.table.beforeOnly} wrecked, {pLabel(WAIT_TABLE.p)}. Both blocks
+                        are large and they cancel.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* The inset: the net, which is the part that looks like nothing. */}
+                <div className="flex flex-col gap-1 rounded-lg border border-grid bg-surface-raised p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    and the net, on all three checkpoints
+                  </p>
+                  <WaitCurve />
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[30rem] text-left text-xs tabular-nums">
                     <thead className="text-ink-muted">
@@ -1166,10 +1249,11 @@ export function Page6() {
                     </tbody>
                   </table>
                 </div>
+                {/* Down to its definition: the grid above now makes the "a net near zero
+                    is not nothing happening" point in a picture. */}
                 <p className="text-xs text-ink-muted">
                   Fixed and broken are counted against the same item at zero injections, so they
-                  are paired. A net near zero with both columns large is a different result from
-                  nothing happening, which is what the moved-answers column is there to tell you.
+                  are paired.
                 </p>
               </section>
               <p className="text-sm text-ink-muted">
@@ -1182,9 +1266,10 @@ export function Page6() {
                 model was not holding back; it had already spent what the problem was worth to it.
               </p>
             </section>
-            <Note kicker="Reading it">
-              <p>Watch the bars, not the lines: the flat curve is a lot of motion going nowhere.</p>
-            </Note>
+            {/* No margin note here. It said "watch the bars, not the lines", which was
+                advice for a figure that led with the lines; the grid leads now and the
+                takeaway above it is the same sentence, better placed. */}
+            <div aria-hidden="true" />
           </>
         ) : null}
 

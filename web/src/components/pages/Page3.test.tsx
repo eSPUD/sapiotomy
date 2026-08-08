@@ -111,6 +111,29 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expectClean();
   });
 
+  // The page's designed aha reached the sr-only live region and nowhere else, so a
+  // sighted reader dragged straight past the moment the figure is built around.
+  it("shows the crossing on screen, not only to a screen reader", () => {
+    render(<Page3 />);
+    dragMonths(0);
+    expect(screen.queryByText(/outspent a/)).toBeNull();
+    dragMonths(12);
+    // Two matches: the live region for a screen reader, and the chip for everyone else.
+    const said = screen.getAllByText(/already outspent a/);
+    expect(said.length).toBe(2);
+    expect(said.filter((el) => el.closest(".sr-only") === null)).toHaveLength(1);
+    expectClean();
+  });
+
+  // First load-bearing use of the word in the deck, and pages 5 and 11 are denominated
+  // in it.
+  it("glosses parameter where it first carries weight", () => {
+    render(<Page3 />);
+    expect(document.body.textContent).toMatch(
+      /one of the numbers inside the model that training adjusts/,
+    );
+  });
+
   it("each figure answers only to its own control", () => {
     render(<Page3 />);
     const projMarker = screen.getByRole("slider", { name: /drag through the projected years/i });

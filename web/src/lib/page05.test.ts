@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   PAGE5,
-  Page05DataError,
+  PairedTableError,
   SUPPRESSION_TABLE,
   pLabel,
   pairedTable,
@@ -88,18 +88,18 @@ describe("page 5 figure 2: the paired table", () => {
   it("reconciles the discordant counts with both solve counts", () => {
     const t = SUPPRESSION_TABLE;
     expect(t.cells).toHaveLength(PAGE5.figure2.bare.n);
-    expect(t.both + t.chainOnly).toBe(PAGE5.figure2.bare.nCorrect);
-    expect(t.both + t.blurtOnly).toBe(PAGE5.figure2.blurt.nCorrect);
-    expect(t.both + t.chainOnly + t.blurtOnly + t.neither).toBe(t.n);
+    expect(t.both + t.afterOnly).toBe(PAGE5.figure2.bare.nCorrect);
+    expect(t.both + t.beforeOnly).toBe(PAGE5.figure2.blurt.nCorrect);
+    expect(t.both + t.afterOnly + t.beforeOnly + t.neither).toBe(t.n);
     // The contrast the page prints is exactly those two discordant counts.
-    expect(t.chainOnly).toBe(PAGE5.figure2.suppression.fixed);
-    expect(t.blurtOnly).toBe(PAGE5.figure2.suppression.broken);
+    expect(t.afterOnly).toBe(PAGE5.figure2.suppression.fixed);
+    expect(t.beforeOnly).toBe(PAGE5.figure2.suppression.broken);
   });
 
   it("flipping the gag moves precisely the discordant cells", () => {
     const t = SUPPRESSION_TABLE;
-    const solvedFree = t.cells.filter((c) => solvedIn(c, false)).length;
-    const solvedGagged = t.cells.filter((c) => solvedIn(c, true)).length;
+    const solvedFree = t.cells.filter((c) => solvedIn(c, "after")).length;
+    const solvedGagged = t.cells.filter((c) => solvedIn(c, "before")).length;
     expect(solvedFree).toBe(PAGE5.figure2.bare.nCorrect);
     expect(solvedGagged).toBe(PAGE5.figure2.blurt.nCorrect);
     expect(solvedFree - solvedGagged).toBe(PAGE5.figure2.suppression.deltaPts);
@@ -107,7 +107,7 @@ describe("page 5 figure 2: the paired table", () => {
 
   it("rejects counts that cannot come from one paired run", () => {
     const bad: Contrast = { ...PAGE5.figure2.suppression, fixed: 90, broken: 90 };
-    expect(() => pairedTable(100, 7, 43, bad)).toThrow(Page05DataError);
+    expect(() => pairedTable(100, 7, 43, bad)).toThrow(PairedTableError);
   });
 
   it("keeps the suppression contrast resolved and the instruction bounded", () => {

@@ -197,4 +197,15 @@ describe("Page 4 animated Play (no reduced motion)", () => {
     });
     expect(screen.getByText("step 2 of 4")).toBeInTheDocument();
   });
+
+  // The lede posed the walk AND gave away the convergence, which step 2's verdict box
+  // and step 3 then said again. The payoff belongs to the interactive.
+  it("poses the walk in the lede and leaves the convergence to step 2", () => {
+    render(<Page4 />);
+    const lede = screen.getByText(/Working a problem out instead of looking it up/).textContent ?? "";
+    expect(lede).toMatch(/three cultures worked it three different ways/);
+    expect(lede).not.toMatch(/to the same/);
+    // Step 2 still owns it.
+    expect(screen.getByText(/Three journeys, one destination/)).toBeInTheDocument();
+  });
 });

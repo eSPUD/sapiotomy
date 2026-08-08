@@ -72,9 +72,11 @@ export const STRATEGIES: { key: Strategy; label: string; blurb: string }[] = [
   },
   {
     key: "mcts",
+    // The acronym is load-bearing on page 10 and glossed nowhere else in the deck,
+    // so it is unpacked here, where the reader meets the button.
     label: "MCTS",
     blurb:
-      "Finish a few lines at random from each starting point, see which openings tend to end well, and spend the next tries there. The AlphaGo family's answer.",
+      "Monte Carlo tree search: finish a few lines at random from each starting point, see which openings tend to end well, and spend the next tries there. The AlphaGo family's answer.",
   },
 ];
 
