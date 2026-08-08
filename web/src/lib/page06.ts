@@ -34,6 +34,7 @@
  * rather than drawing a plausible wrong figure.
  */
 import rawDerived from "@data/page-06-derived.json";
+import { pairedTable } from "./paired";
 import { pct, tidyMath } from "./traceText";
 
 export { pct, tidyMath };
@@ -633,6 +634,47 @@ export const PAGE6 = {
   figureWait: D.figure_wait,
   handoff: D.handoff,
 } as const;
+
+/** A p-value the way the other pages print it. */
+export const pLabel = (p: number): string =>
+  p < 0.001 ? "p < 0.001" : `p = ${p.toFixed(p < 0.01 ? 4 : 3)}`;
+
+/**
+ * The extension arm as page 5's paired grid: one square per problem, at the
+ * deepest injection count, for the primary checkpoint.
+ *
+ * This figure used to lead with three nearly flat accuracy lines, which reads as
+ * "nothing happened" when the finding is that a great deal happened and none of
+ * it helped. The grid says that in one picture: the two discordant blocks are
+ * both large and they cancel. Built from the notebook's own fixed and broken
+ * counts, so nothing here is a second measurement.
+ */
+export const WAIT_TABLE = (() => {
+  const w = D.figure_wait;
+  if (!w) return null;
+  const curve = w.curves.find((c) => c.model_id === D.figure_2.curves[0].model_id) ?? w.curves[0];
+  const paired = curve.paired[curve.paired.length - 1];
+  const before = curve.points[0];
+  const after = curve.points.find((p) => p.waits === paired.waits);
+  if (!after) return null;
+  // Churn counts every answer that moved; the grid lights only the ones that
+  // changed the VERDICT. The difference is the wrong answers that became other
+  // wrong answers, and it has to be said, or a reader who compares 30% against
+  // 19 lit squares finds the figure and the readout disagreeing.
+  const moved = Math.round(after.churn * paired.n);
+  return {
+    label: curve.label,
+    waits: paired.waits,
+    p: paired.p,
+    churn: after.churn,
+    moved,
+    movedWithoutChangingTheVerdict: Math.max(0, moved - paired.fixed - paired.broken),
+    tokenMultiple: after.mean_tokens / before.mean_tokens,
+    before: before.n_correct,
+    after: after.n_correct,
+    table: pairedTable(paired.n, before.n_correct, after.n_correct, paired),
+  };
+})();
 
 /**
  * Where this chain stops needing the dial: the length it runs to when nothing

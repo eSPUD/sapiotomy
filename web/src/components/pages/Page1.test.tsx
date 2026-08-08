@@ -103,4 +103,13 @@ describe("Page 1 sorting game (SystemSort)", () => {
     });
     expect(within(game).getByText(/0 \/ 6 sorted/)).toBeInTheDocument();
   });
+
+  // The only seam in the deck with no hook: it closed on the definition and page 2
+  // opened cold on "an LLM", so the bridge had to be built twice.
+  it("hands the reader to page 2 rather than stopping on the definition", () => {
+    render(<Page1 />);
+    const body = document.body.textContent ?? "";
+    expect(body).toContain("Recognizing an answer and constructing one are not the same act");
+    expect(body).toMatch(/The next page asks a question that looks like recognition and is not/);
+  });
 });

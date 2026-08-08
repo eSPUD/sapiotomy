@@ -132,6 +132,7 @@ interface RawDerived {
     timestamp_utc: string;
     primary_model: string;
     run_mode: string;
+    models: { id: string; label: string; quant: string | null; dtype: string | null }[];
     decoding: { top_p: number; temperatures: number[]; pile_temperature: number };
     pile: { chain_cap: number; n_chains: number; n_axis: number[]; n_resamples: number };
     split: { budget_total: number; n_grid: number[] };
@@ -232,6 +233,18 @@ function near(a: number, b: number, tol: number, what: string): void {
   if (Math.abs(a - b) > tol) {
     throw new Page07DataError(`${what}: ${a} and ${b} disagree by more than ${tol}`);
   }
+}
+
+// The page prints the precision on its provenance plate, so the run has to record one.
+// It shipped as `quant: null` for a while, with the page asserting bf16 out of a code
+// literal: a claim on screen with nothing behind it in the artifact.
+const PRIMARY_MODEL = D.manifest.models.find((m) => m.id === D.manifest.primary_model);
+if (!PRIMARY_MODEL?.quant) {
+  throw new Page07DataError(
+    `page-07-derived.json records no precision for ${D.manifest.primary_model}, so the ` +
+      `page cannot state one. A REPLAY reads it off the run id; see the notebook's ` +
+      `model_meta block.`,
+  );
 }
 
 const BARE = D.figure_2.gain.vs_bare_cot;
@@ -337,6 +350,8 @@ export const share = (votes: number, total: number): number => votes / total;
 
 export const PAGE7 = {
   manifest: D.manifest,
+  /** The primary model as the run recorded it, label and precision, for the plate. */
+  primary: { label: PRIMARY_MODEL.label, precision: PRIMARY_MODEL.quant },
   claims: D.claims,
   procedure: D.procedure,
 

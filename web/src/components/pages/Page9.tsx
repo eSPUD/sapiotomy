@@ -648,10 +648,10 @@ export function Page9() {
                 {det.prm ? (
                   <p className="text-sm text-ink-muted">
                     For scale, the process reward model — which also sees method — calls a step
-                    unsound in <strong className="text-ink">{pct(det.prm.rate)}</strong> of the same
-                    chains. That is an opinion rather than a proof, measured at AUC{" "}
-                    {det.prm.auc.toFixed(2)} against the checker where the two overlap, and it is
-                    quoted here to bound the gap rather than to replace the {pct(det.rate, 2)}.
+                    unsound in <strong className="text-ink">{pct(det.prm.rate)}</strong> of the
+                    same chains: an opinion rather than a proof, and the margin says what that
+                    opinion was measured to be worth. It is quoted to bound the gap, not to
+                    replace the {pct(det.rate, 2)}.
                   </p>
                 ) : null}
                 <p className="text-xs text-ink-muted">

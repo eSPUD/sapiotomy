@@ -250,7 +250,7 @@ function PileChart() {
       <line x1={0} x2={IW} y1={y(cold * 100)} y2={y(cold * 100)} className="stroke-ink-muted" strokeWidth={1.4} strokeDasharray="2 3" />
       <text x={IW + 6} y={y(cold * 100) + 4} className="fill-ink-muted text-[10px]">
         <tspan x={IW + 6} dy="0">one greedy</tspan>
-        <tspan x={IW + 6} dy="11">chain</tspan>
+        <tspan x={IW + 6} dy="11">chain (T = 0)</tspan>
       </text>
 
       {/* name the band in the middle of the chart, where the eye already is */}
@@ -318,7 +318,8 @@ export function Page7() {
           chains, on no GPU.
         </p>
         <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
-          Qwen2.5-3B-Instruct · bf16 · sampled at T = {F2.hot.temperature}, top-p{" "}
+          {PAGE7.primary.label} · {PAGE7.primary.precision} · sampled at T ={" "}
+          {F2.hot.temperature}, top-p{" "}
           {M.decoding.top_p} · MATH-500 levels 4 and 5, n = {M.items.n} paired items ·{" "}
           {F1.n_chains} chains each · run {M.run_id} · {RUN_DATE}
         </p>
@@ -360,9 +361,14 @@ export function Page7() {
             </span>
           </h2>
           <p className="text-ink-muted">
-            Here is one box. The problem below went to Qwen2.5-3B-Instruct {F1.n_chains} times, with
-            sampling on so the chains can differ, and every answer it came back with is tallied.
-            Click a row to read the chains that landed there.
+            {/* Temperature glossed operationally, which is all this page is allowed to
+                say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens and
+                probability distributions, off this page and on page 10. */}
+            Here is one box. The problem below went to Qwen2.5-3B-Instruct {F1.n_chains} times with
+            sampling turned on, which is what <strong className="text-ink">temperature</strong> does:
+            at zero every chain comes back identical, and turning it up makes them disagree more.
+            Every answer it came back with is tallied. Click a row to read the chains that landed
+            there.
           </p>
           <section
             aria-label="One problem, sixteen chains, tallied"
@@ -374,11 +380,9 @@ export function Page7() {
               qualified
             </p>
 
+            {/* The invitation is the last line of the step's intro, directly above this
+                card. It used to be repeated here, near-verbatim. */}
             <Tally onOpen={pick} open={open} />
-
-            <p className="text-xs text-ink-muted">
-              Click a row to read the chains that landed on it.
-            </p>
 
             {openRow ? (
               <div
@@ -434,27 +438,29 @@ export function Page7() {
             </span>
           </h2>
           <p className="text-ink-muted">
+            {/* Named exactly as the chart names them. The intro used to say "The vote /
+                In the pile / T = 0" while the chart said something else, so a reader
+                scanning for a line called "T = 0" had to supply the equivalence. */}
             Now all {M.items.n} problems, with the box emptied at every size from one slip to{" "}
             {F1.n_chains}. Three lines below.{" "}
-            <strong className="text-ink">The vote</strong> is what counting returns: the answer most
-            chains agreed on. <strong className="text-ink">In the pile</strong> is how often the
-            right answer was written on <em>some</em> slip, whether or not counting picked it, so
-            the gap between the two is what the rule throws away.{" "}
-            <strong className="text-ink">T = 0</strong> turns sampling off, which makes all{" "}
-            {F1.n_chains} chains identical.
+            <strong className="text-ink">The vote returns it</strong> is what counting gets: the
+            answer most chains agreed on.{" "}
+            <strong className="text-ink">At least one chain is right</strong> is how often the right
+            answer was written on <em>some</em> slip, whether or not counting picked it, so the gap
+            between the two is what the rule throws away.{" "}
+            <strong className="text-ink">One greedy chain</strong> is the baseline: at T = 0
+            sampling is off, which is <em>greedy decoding</em>, the setting pages 5 and 6 ran, and
+            it makes all {F1.n_chains} chains the same chain.
           </p>
           <section
             aria-label="Accuracy against the number of chains"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <PileChart />
-            {/* The three lines are named in the step's intro, above the chart,
-                so this says only the thing the intro cannot: what the GAP
-                between two of them is. */}
-            <p className="text-xs text-ink-muted">
-              The shaded band between the last two is the answer the model had and the vote
-              discarded, and it widens as you add chains.
-            </p>
+            {/* The band was explained three times: here, in the intro, and by its own
+                in-chart label. The intro now carries the definition and the chart names
+                itself, so this is down to the one fact neither of them has. */}
+            <p className="text-xs text-ink-muted">The band widens as you add chains.</p>
             <div className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-ink">
               One chain of chain-of-thought, decoded greedily, solves{" "}
               <strong className="font-mono">{pct(F2.gain.bare_cot)}</strong>. The vote over{" "}
@@ -462,7 +468,13 @@ export function Page7() {
               <strong className="font-mono">{pct(F2.gain.vote)}</strong>:{" "}
               <strong>+{F2.gain.gain_pts.toFixed(0)} points</strong> ·{" "}
               {pLabel(F2.gain.p)}, exact McNemar over the {F2.gain.fixed + F2.gain.broken} problems
-              where the two disagree ({F2.gain.fixed} fixed, {F2.gain.broken} broken).
+              where the two disagree ({F2.gain.fixed} fixed, {F2.gain.broken} broken).{" "}
+              {/* The greedy contrast is the one the page is built on, but part of that
+                  +12 is sampling rather than counting, and a reader who stops at this box
+                  would credit it all to the vote. The decomposition is in the margin. */}
+              <span className="text-ink-muted">
+                Sampling alone is worth part of this, and the margin says how much.
+              </span>
             </div>
             <div className="grid gap-3 text-xs text-ink-muted sm:grid-cols-2">
               <p>
@@ -484,7 +496,7 @@ export function Page7() {
             </p>
             <p className="text-xs text-ink-muted">
               How many <em>different</em> answers those {F2.diversity[0].n_chains} chains came back
-              with, averaged per problem. Turning the temperature up makes them disagree more.
+              with, averaged per problem.
             </p>
             <div className="flex flex-wrap items-end gap-3">
               {[...F2.diversity]
@@ -605,10 +617,7 @@ export function Page7() {
           </section>
         </section>
         <Note kicker="Read the cut-off column">
-          <p>
-            A capped row and a finished row at the same N are not the same experiment. The
-            comparison the page makes is the last two columns, never the first two.
-          </p>
+          <p>A capped row and a finished row at the same N are not the same experiment.</p>
         </Note>
 
         {/* Step 5 */}
@@ -624,9 +633,14 @@ export function Page7() {
               returned it on {pct(H.plurality_accuracy)}. Counting can only ever return the answer
               that comes up most, and the right answer is sometimes rare: on{" "}
               {pct(H.tie_rate)} of problems the vote could not even break a tie.{" "}
+              {/* Not "keeps the same candidates": page 8 generated its own pool,
+                  and its own derived.json says so in a field called
+                  same_candidates. What it did do is re-run this protocol and land
+                  here, which is the claim that survives the artifact. */}
               <em>
-                Page 8 keeps the same {H.n_chains} candidates and changes only the rule for picking
-                one: stop counting, start judging.
+                Page 8 re-runs this protocol on the same problems, checks it lands where this page
+                landed, and then changes only the rule for picking one of the {H.n_chains}: stop
+                counting, start judging.
               </em>
             </p>
           </div>

@@ -16,7 +16,7 @@ const mm = (q: string) => ({
 vi.stubGlobal("matchMedia", mm);
 
 import { Page6 } from "./Page6";
-import { PAGE6, pct, rowById, tidyMath, traceZones } from "@/lib/page06";
+import { PAGE6, WAIT_TABLE, pct, rowById, tidyMath, traceZones } from "@/lib/page06";
 
 const B = PAGE6.budgets;
 const TOP = B[B.length - 1];
@@ -253,6 +253,40 @@ describe("Page 6, figure 4: refuse to let it stop", () => {
     expect(body()).toContain("answers moved");
     const last = fw.curves[0].points[fw.curves[0].points.length - 1];
     expect(body()).toContain(pct(last.churn));
+  });
+
+  // The step used to open on three nearly flat accuracy lines, which reads as
+  // "nothing happened" when the finding is that a third of the answers moved and none
+  // of it helped. It opens on page 5's paired grid now, with the lines as the inset.
+  it("leads with what moved, in page 5's paired-flip vocabulary", () => {
+    render(<Page6 />);
+    const w = WAIT_TABLE!;
+    expect(w).not.toBeNull();
+    const arm = screen.getByLabelText("The extension arm");
+    // The grid is the two discordant blocks, and both counts are in the legend.
+    expect(arm.textContent).toContain(`fixed by being made to keep going (${w.table.afterOnly})`);
+    expect(arm.textContent).toContain(`broken by it (${w.table.beforeOnly})`);
+    expect(arm.textContent).toContain(
+      `${w.table.afterOnly} rescued against ${w.table.beforeOnly} wrecked`,
+    );
+    // 100 squares, one per problem, from the shared paired table.
+    expect(w.table.cells).toHaveLength(w.table.n);
+    // And the accuracy lines are demoted to an inset that says so.
+    expect(arm.textContent).toContain("and the net, on all three checkpoints");
+  });
+
+  // Churn counts every answer that moved; the grid lights only the ones that changed
+  // the verdict. A reader comparing 30% against 19 lit squares must not find the
+  // figure and the readout disagreeing.
+  it("reconciles the churn readout with the number of lit squares", () => {
+    render(<Page6 />);
+    const w = WAIT_TABLE!;
+    expect(w.movedWithoutChangingTheVerdict).toBe(
+      w.moved - w.table.afterOnly - w.table.beforeOnly,
+    );
+    expect(body()).toContain(
+      `including ${w.movedWithoutChangingTheVerdict} that swapped one wrong answer for another`,
+    );
   });
 
   it("never claims the injections help, because on this run they did not", () => {

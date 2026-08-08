@@ -20,6 +20,7 @@
  * `web/data/` fails the build rather than drawing a plausible wrong figure.
  */
 import rawDerived from "@data/page-05-derived.json";
+import { pairedTable as sharedPairedTable } from "./paired";
 import { pct, tidyMath } from "./traceText";
 
 export class Page05DataError extends Error {}
@@ -257,53 +258,17 @@ if (!blurt || !bare || !suppression || !instruction) {
 }
 
 /**
- * The four outcome classes of one paired contrast, in the order figure 2 lays
- * them out. This is the McNemar 2x2 table written as 100 cells: `fixed` and
- * `broken` are the discordant counts the notebook reports, and the two
- * concordant counts follow from them and the two solve counts, so the grid is
- * fully determined by measurement. A cell is a problem, but WHICH problem sits
- * in which square is arrangement, not data, and the caption says so.
+ * Figure 2's 10x10 grid is the deck's paired-contrast picture, and page 6's
+ * extension arm now draws the same one, so the arithmetic lives in
+ * `lib/paired.ts`. Re-exported here because page 5 is where it is used most and
+ * where the figure was designed.
+ *
+ * The orientation, which is the one thing easy to get backwards: the GAG is the
+ * baseline and the chain is the change, so `afterOnly` is a problem solved only
+ * when the model is left alone, which is what the gag costs.
  */
-export type PairedClass = "both" | "chainOnly" | "blurtOnly" | "neither";
-
-export interface PairedTable {
-  both: number;
-  chainOnly: number;
-  blurtOnly: number;
-  neither: number;
-  n: number;
-  /** One entry per problem, grouped by class in the order above. */
-  cells: PairedClass[];
-}
-
-export function pairedTable(
-  n: number,
-  blurtCorrect: number,
-  bareCorrect: number,
-  c: Contrast,
-): PairedTable {
-  const both = bareCorrect - c.fixed;
-  const neither = n - c.fixed - c.broken - both;
-  if (both < 0 || neither < 0 || both !== blurtCorrect - c.broken) {
-    throw new Page05DataError(
-      `page-05-derived.json: the paired counts (${c.fixed} fixed, ${c.broken} broken) do not reconcile with ${blurtCorrect} and ${bareCorrect} of ${n}`,
-    );
-  }
-  const cells: PairedClass[] = [
-    ...Array<PairedClass>(both).fill("both"),
-    ...Array<PairedClass>(c.fixed).fill("chainOnly"),
-    ...Array<PairedClass>(c.broken).fill("blurtOnly"),
-    ...Array<PairedClass>(neither).fill("neither"),
-  ];
-  return { both, chainOnly: c.fixed, blurtOnly: c.broken, neither, n, cells };
-}
-
-/** Is this problem solved in the given condition? Reads straight off the class. */
-export function solvedIn(cell: PairedClass, gagged: boolean): boolean {
-  if (cell === "both") return true;
-  if (cell === "neither") return false;
-  return gagged ? cell === "blurtOnly" : cell === "chainOnly";
-}
+export { pairedTable, solvedIn, PairedTableError } from "./paired";
+export type { PairedClass, PairedTable } from "./paired";
 
 export const PAGE5 = {
   manifest: D.manifest,
@@ -350,7 +315,7 @@ export const PAGE5 = {
 } as const;
 
 /** The 10x10 paired table figure 2 animates. Built once; it is pure arithmetic. */
-export const SUPPRESSION_TABLE = pairedTable(
+export const SUPPRESSION_TABLE = sharedPairedTable(
   PAGE5.figure2.bare.n,
   PAGE5.figure2.blurt.nCorrect,
   PAGE5.figure2.bare.nCorrect,

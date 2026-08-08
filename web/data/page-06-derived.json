@@ -6,7 +6,7 @@
     "run_mode": "FULL",
     "timestamp_utc": "2026-08-07T05:03:00+00:00",
     "notebook_git_sha": "8cc4cfdbc8f3639add065d7c5ab3af2128ced650",
-    "notebook_sha256": "8c1feac67c34c6e47711a6551f12dbea069e3584b50185b0cbd0be86ccb1ac98",
+    "notebook_sha256": "9d7ef5730a24bac83d306d6b1f6f0e7f7178aba3e18a6f9e57b35f86cadc32f4",
     "models": [
       {
         "id": "Qwen/Qwen2.5-3B-Instruct",

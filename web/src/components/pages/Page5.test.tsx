@@ -183,16 +183,18 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
     reducedMotion = true;
   });
 
-  // "43" is not a claim. "43 of the same 100" is, and the reader gets both
-  // conditions and the denominator in words before the switch exists.
-  it("sets up the contrast with both scores and their denominator", () => {
+  // "43" is not a claim. "43 of the same 100" is, so the intro carries the denominator
+  // and the free-run score. It does NOT carry the gagged score: that is what the switch
+  // is for, and an intro that gives both endpoints leaves the figure nothing to deliver.
+  it("sets up the contrast with the denominator, and withholds the gagged score", () => {
     render(<Page5 />);
     expect(body()).toContain(
       `solves ${PAGE5.figure2.bare.nCorrect} of the ${PAGE5.figure2.bare.n}`,
     );
-    expect(body()).toContain(`solves ${PAGE5.figure2.blurt.nCorrect}`);
     expect(body()).toContain("the same model forbidden to reason");
     expect(body()).toContain(`Each square below is one of those ${PAGE5.figure2.bare.n} problems`);
+    const intro = screen.getByText(/One trace proves nothing/).textContent ?? "";
+    expect(intro).not.toContain(`solves ${PAGE5.figure2.blurt.nCorrect}`);
   });
 
   it("starts with the model left alone and flips to the floor", () => {
@@ -206,21 +208,25 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
     expect(within(fig2).getByText(String(PAGE5.figure2.blurt.nCorrect))).toBeInTheDocument();
     expect(body()).toContain(`median ${PAGE5.figure2.blurt.medianTokens} tokens written`);
     expect(body()).toContain(
-      `${SUPPRESSION_TABLE.chainOnly} problems it had are gone. ${SUPPRESSION_TABLE.blurtOnly} it did not have arrive.`,
+      `${SUPPRESSION_TABLE.afterOnly} problems it had are gone. ${SUPPRESSION_TABLE.beforeOnly} it did not have arrive.`,
     );
   });
 
   // Paired, and printed as such: the discordant counts sit beside the contrast
   // so a reader never reads a paired result as two independent bars.
+  // ...once the switch has been pressed. The figure's job is to show what leaves, so
+  // the cost and its test arrive with the reveal rather than above an untouched control.
   it("prints the paired contrast with its discordant count and p-value", () => {
     render(<Page5 />);
+    expect(body()).not.toContain("Forbidding the working costs");
+    fireEvent.click(screen.getByRole("button", { name: /forbidden to reason/i }));
     expect(body()).toContain(
       `Forbidding the working costs ${PAGE5.figure2.suppression.deltaPts} points`,
     );
     expect(body()).toContain("exact McNemar");
     expect(body()).toContain("p < 0.0001");
     expect(body()).toContain(
-      `${SUPPRESSION_TABLE.chainOnly + SUPPRESSION_TABLE.blurtOnly} problems where the two conditions disagree`,
+      `${SUPPRESSION_TABLE.afterOnly + SUPPRESSION_TABLE.beforeOnly} problems where the two conditions disagree`,
     );
   });
 
@@ -287,13 +293,17 @@ describe("Page 5: provenance and what the page may claim", () => {
 
   // The instruction contrast is measured and not plotted, and it is stated as a
   // bound. "Nothing" unqualified is the one word the claims contract forbids.
-  it("states the instruction null as a bound and hands it to page 12", () => {
+  // It used to hand the null to page 12, which never picked it up: the built page 12
+  // opens on the answer-key question and never mentions the instruction null. The clause
+  // is the finding itself now, and this asserts the dangling pointer stays gone.
+  it("states the instruction null as a bound, and promises no page that does not receive it", () => {
     render(<Page5 />);
     expect(body()).toContain(
       `${PAGE5.figure2.instruction.fixed} fixed, ${PAGE5.figure2.instruction.broken} broken`,
     );
     expect(body()).toContain("A bound, not a zero");
-    expect(body()).toContain("page 12 opens on it");
+    expect(body()).toContain("the prompt is close to spent");
+    expect(body()).not.toContain("page 12 opens on it");
   });
 
   // §6 of the spec: the exemplar rungs may be absent, but only with a note
