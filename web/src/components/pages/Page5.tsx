@@ -38,10 +38,12 @@
  *
  *   Wei and Kojima are cited here, in pages 1 to 3's grammar: a numbered marker
  *   on the claim, and the entry itself in a right-hand References sidenote beside
- *   this step. The plate above already says every number is ours, so no gloss
- *   sits with the references: that would be duplication a reader pays for twice,
- *   once in reading and once in the whitespace it opens beside a four-line step,
- *   since each note sets its own grid row's height.
+ *   this step. No gloss sits with the references: that would be whitespace a
+ *   reader pays for beside a four-line step, since each note sets its own grid
+ *   row's height. The provenance plate that used to sit above the steps
+ *   ("Every figure below is one measurement of ours...") was removed 2026-08-08
+ *   as jargon; the ledger in step 5's figure card and the download at the top
+ *   right are all the provenance the page carries in words.
  *
  *   Step 2 — figure 1, the specimen, and the step where the page's premise lands:
  *   this model does it NATIVELY, and the figure is a look at what that produces
@@ -590,19 +592,6 @@ export function Page5() {
         road</strong>? A model you can download in 2026 walks it unasked, so the only way left to
         measure what the road is worth is to <strong className="text-ink">take it away</strong>.
       </p>
-
-      {/* Provenance, as a specimen label rather than a banner: hairline rules,
-          no fill, one plain sentence. The mono spec line it used to carry was
-          jargon this early: the reader has not met a token cap or a decoding
-          strategy yet. The run's vitals now sit in "The run" ledger beside
-          step 5, and the download sits at the top right of the page. */}
-      <div className="border-y border-grid py-4">
-        <p className="text-sm text-ink">
-          Every figure below is one measurement of ours, not a redrawing of anyone&apos;s. The
-          notebook that made them opens in a replay mode that redraws every figure here from those
-          traces, on no GPU, in about a minute.
-        </p>
-      </div>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">

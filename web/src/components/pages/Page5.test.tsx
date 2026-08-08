@@ -328,7 +328,6 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(link).toHaveAttribute("href", "/notebooks/page-05-how-to-reason.zip");
     expect(link).toHaveAttribute("download");
     expect(link.parentElement?.textContent).toContain("Act 2");
-    expect(body()).toContain("redraws every figure here from those traces");
   });
 
   // The run's vitals moved off the top plate (jargon before the reader has met
@@ -342,9 +341,6 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(vitals).toContain("MATH-500 levels 4 and 5");
     expect(vitals).toContain("900 generations");
     expect(vitals).toContain(PAGE5.manifest.run_id);
-    // ...and only there: the plate above the figures is one plain sentence now.
-    const plate = screen.getByText(/one measurement of ours/).closest("div")!;
-    expect(plate.textContent).not.toContain(PAGE5.manifest.run_id);
   });
 
   // The instruments are cited where the close names all three checkpoints: the
@@ -387,13 +383,14 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(body()).not.toMatch(/allowed to reason/i);
   });
 
-  // The plate above the figures carries "ours, not a redrawing"; the badges
-  // carry the technique. Neither needs restating beside the other.
-  it("cites the techniques and says the numbers are ours exactly once", () => {
+  // The provenance plate ("one measurement of ours, not a redrawing...") was
+  // removed 2026-08-08 as jargon; the techniques stay cited, once each.
+  it("cites the techniques once, with no provenance plate above the steps", () => {
     render(<Page5 />);
     expect(screen.getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
-    expect(body()).toContain("one measurement of ours, not a redrawing of anyone");
+    expect(body()).not.toContain("one measurement of ours");
+    expect(body()).not.toContain("replay mode");
   });
 
   // The three-paragraph footer these came from was doing the notebook's job.
