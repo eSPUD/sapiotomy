@@ -90,9 +90,8 @@
 
 import { useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
-import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import { PAGE7, chainsFor, pLabel, pct, tidyMath, tokens } from "@/lib/page07";
 import { useStore } from "@/store/useStore";
@@ -108,12 +107,7 @@ const NOTEBOOK_SIZE = "3.1 MB";
 const RUN_DATE = M.timestamp_utc.slice(0, 10);
 
 /** Cited for the technique. Every number on this page is ours. */
-const WANG: Citation = {
-  ref: "Wang et al. 2022",
-  url: "https://arxiv.org/abs/2203.11171",
-  venue: "ICLR 2023",
-  preprint: false,
-};
+const REF = { wang: 1 } as const;
 
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
@@ -315,32 +309,19 @@ export function Page7() {
       </p>
 
       {/* Provenance as a specimen label rather than a row of pills: hairline
-          rules, the instrument on one mono line, and the download carrying the
-          only lit ink on the plate. Pages 5 and 6 settled this shape. */}
-      <div className="flex flex-col gap-4 border-y border-grid py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
-        <div className="flex min-w-0 flex-col gap-2">
-          <p className="text-sm text-ink">
-            Every figure below is one measurement of ours, on the same items pages 5 and 6 use. The
-            notebook that made them opens in a replay mode that redraws every figure here from those
-            chains, on no GPU.
-          </p>
-          <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
-            Qwen2.5-3B-Instruct · bf16 · sampled at T = {F2.hot.temperature}, top-p{" "}
-            {M.decoding.top_p} · MATH-500 levels 4 and 5, n = {M.items.n} paired items ·{" "}
-            {F1.n_chains} chains each · run {M.run_id} · {RUN_DATE}
-          </p>
-        </div>
-        <a
-          className="inline-flex shrink-0 items-start gap-2 self-start rounded border border-compute px-3 py-2 text-sm font-semibold leading-snug text-compute lg:max-w-[15rem]"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          <span aria-hidden="true">⤓</span>
-          <span className="flex flex-col">
-            Download the notebook, the harness and every chain
-            <span className="font-normal text-ink-muted">zip, {NOTEBOOK_SIZE}</span>
-          </span>
-        </a>
+          rules and the instrument on one mono line. The download it used to
+          carry sits with the reference at the foot of the page, page 8's shape. */}
+      <div className="flex flex-col gap-2 border-y border-grid py-4">
+        <p className="text-sm text-ink">
+          Every figure below is one measurement of ours, on the same items pages 5 and 6 use. The
+          notebook that made them opens in a replay mode that redraws every figure here from those
+          chains, on no GPU.
+        </p>
+        <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
+          Qwen2.5-3B-Instruct · bf16 · sampled at T = {F2.hot.temperature}, top-p{" "}
+          {M.decoding.top_p} · MATH-500 levels 4 and 5, n = {M.items.n} paired items ·{" "}
+          {F1.n_chains} chains each · run {M.run_id} · {RUN_DATE}
+        </p>
       </div>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -365,13 +346,10 @@ export function Page7() {
             a model, by sampling the same question many times and keeping the answer that comes up
             most, that is <strong>majority voting</strong>, or{" "}
             <strong>self-consistency</strong>.
+            <Cite n={REF.wang} />
           </p>
         </section>
-        <Note kicker="Cited for the technique">
-          <div className="flex flex-wrap gap-2">
-            <CitationBadge citation={WANG} />
-          </div>
-        </Note>
+        <div aria-hidden="true" />
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -668,6 +646,25 @@ export function Page7() {
             reasoning was sound.
           </p>
         </Note>
+      </div>
+
+      {/* The reference and the download, at the foot of the page: page 8's
+          shape, with pages 1 to 3's reference grammar. The number is claimed by
+          a marker in step 1, where the technique is named. */}
+      <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
+        <RefItem n={REF.wang} href="https://arxiv.org/abs/2203.11171">
+          Wang et al. 2022, <em>Self-Consistency Improves Chain of Thought Reasoning in Language
+          Models</em> (ICLR 2023).
+        </RefItem>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+            href={NOTEBOOK_ZIP}
+            download
+          >
+            Download the notebook, the harness and every chain (zip, {NOTEBOOK_SIZE}) ↓
+          </a>
+        </div>
       </div>
 
       <PageNav n={PAGE_N} />

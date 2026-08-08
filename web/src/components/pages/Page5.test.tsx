@@ -78,15 +78,27 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     expect(body()).toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
   });
 
-  // Two badges and nothing else. A gloss here is duplication the reader pays
-  // for twice, once in reading and once in the whitespace it opens beside a
-  // four-line step, since each note sets its own grid row's height.
-  it("carries the citations with no gloss around them", () => {
+  // Pages 1 to 3's grammar: the marker sits on the claim, the entry sits in the
+  // footer, and the number ties the two together. Nothing sits beside the step,
+  // because a gloss there is duplication the reader pays for twice, once in
+  // reading and once in the whitespace it opens beside a four-line step.
+  it("marks the two techniques in the prose and resolves them in the footer", () => {
     render(<Page5 />);
-    const note = screen.getByText(/cited for the technique/i).closest("aside")!;
-    expect(within(note).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
-    expect(within(note).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
-    expect(note.querySelectorAll("p")).toHaveLength(1); // the kicker, and no prose
+    expect(screen.queryByText(/cited for the technique/i)).not.toBeInTheDocument();
+
+    // Two markers on the definition step, numbered in order of appearance.
+    const step = screen.getByText(/The classic way to get one is to ask/).closest("p")!;
+    expect(Array.from(step.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
+      "reference 1",
+      "reference 2",
+    ]);
+
+    // Both entries and the download share one footer block, page 8's shape.
+    const footer = screen
+      .getByRole("link", { name: /download the notebook/i })
+      .closest("div.border-t")!;
+    expect(within(footer as HTMLElement).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
+    expect(within(footer as HTMLElement).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
   });
 });
 

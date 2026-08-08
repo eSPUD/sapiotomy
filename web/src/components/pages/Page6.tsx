@@ -66,9 +66,8 @@
 
 import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
-import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import { PAGE6, naturalLength, pct, rowById, tidyMath, tokens, traceZones } from "@/lib/page06";
 import { useStore } from "@/store/useStore";
@@ -104,12 +103,7 @@ const LAST_GAIN_MOVE = `${LAST_GAIN < 0 ? "down" : "up"} by ${LAST_GAIN_PTS} poi
 const LAST_GAIN_PROBLEMS = LAST_GAIN_PTS === 1 ? "one problem" : `${LAST_GAIN_PTS} problems`;
 
 /** Cited for the technique it introduced. No number of theirs appears here. */
-const S1: Citation = {
-  ref: "Muennighoff et al. 2025",
-  url: "https://arxiv.org/abs/2501.19393",
-  venue: "arXiv",
-  preprint: true,
-};
+const REF = { s1: 1 } as const;
 
 /**
  * The budget control, drawn as what it actually is: five stops, not a slide.
@@ -760,28 +754,17 @@ export function Page6() {
       </p>
 
       {/* Provenance as a colophon, not as chrome: hairlines, no fill, one line
-          naming the instrument, and the download as the only lit element. It is
-          the pipeline's whole claim, so it stays above the fold. */}
+          naming the instrument. The download it used to carry sits with the
+          reference at the foot of the page, page 8's shape. */}
       <div className="flex flex-col gap-3 border-y border-grid py-3">
         <p className="text-xs text-ink-muted">
           Qwen2.5-Instruct at 1.5B, 3B and 7B, greedy, budget forced at the cap; MATH-500 levels 4
           and 5, n = {M.items.n} items across {B.length} budgets, {tokens(M.integrity.n_records)}{" "}
           records, run <span className="font-mono">{M.run_id}</span>, {RUN_DATE}. Every figure below
-          is one measurement of ours, not a redrawing of anyone&apos;s.
+          is one measurement of ours, not a redrawing of anyone&apos;s, and the notebook at the foot
+          of the page opens in a replay mode that redraws every one of them from those traces, on no
+          GPU, in about a minute.
         </p>
-        <div className="flex flex-wrap items-center gap-3">
-          <a
-            className="rounded border border-compute px-3 py-1.5 text-sm font-semibold text-compute"
-            href={NOTEBOOK_ZIP}
-            download
-          >
-            Download the notebook, the harness and every trace ({NOTEBOOK_SIZE})
-          </a>
-          <span className="text-xs text-ink-muted">
-            it opens in a replay mode that redraws every figure here from those traces, on no GPU,
-            in about a minute
-          </span>
-        </div>
       </div>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -798,7 +781,8 @@ export function Page6() {
             The dial below is <span className="font-code">max_new_tokens</span>, a hard limit on how
             much the model may write. Turn it down and the chain stops mid-thought, so at the cap we
             close its working off, start the answer line for it, and allow it{" "}
-            {M.forcing.answer_allowance} more tokens to finish. That is why a starved model still
+            {M.forcing.answer_allowance} more tokens to finish.
+            <Cite n={REF.s1} /> That is why a starved model still
             produces an answer to grade rather than nothing at all. The tinted band in the trace
             below is that line, printed as we wrote it. The same dial drives the next two figures.
           </p>
@@ -1027,10 +1011,7 @@ export function Page6() {
             any of these checkpoints.
           </p>
         </section>
-        <Note kicker="Cited for the technique">
-          <div className="flex flex-wrap gap-2">
-            <CitationBadge citation={S1} />
-          </div>
+        <Note kicker="What the heights are not">
           <p>
             The heights are not a claim. The three differ in size and in training, and the 7B ran at
             8-bit against bf16 for the other two, so a level comparison is barred twice over.
@@ -1269,6 +1250,25 @@ export function Page6() {
             overthinking; this page owns the flattening.
           </p>
         </Note>
+      </div>
+
+      {/* The reference and the download, at the foot of the page: page 8's
+          shape, with pages 1 to 3's reference grammar. The number is claimed by
+          a marker up in step 1, so a reader who follows it back lands on the
+          sentence describing the technique it names. */}
+      <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
+        <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
+          Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
+        </RefItem>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+            href={NOTEBOOK_ZIP}
+            download
+          >
+            Download the notebook, the harness and every trace ({NOTEBOOK_SIZE}) ↓
+          </a>
+        </div>
       </div>
 
       <div aria-live="polite" className="sr-only">

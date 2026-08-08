@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 // Deterministic reduced-motion (nothing on this page animates, but the stub
 // keeps the environment consistent with the other page tests).
@@ -368,13 +368,18 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
   it("states provenance as a colophon rather than as a row of pill chips", () => {
     const { container } = render(<Page6 />);
     // The specific tell the author flagged on page 5: a filled bordered card
-    // holding rounded chips. The colophon is hairlines and text, and the
-    // download is the only lit element in it.
+    // holding rounded chips. The colophon is hairlines and text only; the
+    // download and the reference moved to the footer, page 8's shape.
     const colophon = container.querySelector(".border-y")!;
     expect(colophon.querySelectorAll(".rounded-full").length).toBe(0);
     expect(colophon.className).not.toMatch(/bg-surface/);
-    expect(colophon.querySelectorAll("a").length).toBe(1);
-    expect(screen.getByRole("link", { name: /download the notebook/i })).toBeInTheDocument();
+    expect(colophon.querySelectorAll("a").length).toBe(0);
+
+    // The reference and the download share one footer block, page 8's shape.
+    const footer = screen
+      .getByRole("link", { name: /download the notebook/i })
+      .closest("div.border-t")!;
+    expect(within(footer as HTMLElement).getByRole("link", { name: /Muennighoff et al. 2025/ })).toBeInTheDocument();
   });
 
   it("hands off to page 7 by splitting the same budget", () => {

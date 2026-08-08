@@ -36,11 +36,12 @@
  *   re-narrating page 1 or page 4 here: the lede already has the road, and page 6
  *   cuts the chain off two clicks later, so a forward-pointer is padding.
  *
- *   The margin note beside it is TWO BADGES AND NOTHING ELSE. Wei and Kojima are
- *   cited for the technique and the plate above already says every number is
- *   ours, so a gloss on either is duplication that a reader pays for twice: once
- *   in reading, and once in the whitespace it opens beside a four-line step,
- *   since each note sets its own grid row's height.
+ *   Wei and Kojima are cited here, in pages 1 to 3's grammar: a numbered marker
+ *   on the claim, and the entry itself at the foot of the page. Nothing else
+ *   sits beside this step. The plate above already says every number is ours, so
+ *   a gloss would be duplication a reader pays for twice: once in reading, and
+ *   once in the whitespace it opens beside a four-line step, since each note
+ *   sets its own grid row's height.
  *
  *   Step 2 — figure 1, the specimen, and the step where the page's premise lands:
  *   this model does it NATIVELY, and the figure is a look at what that produces
@@ -89,7 +90,8 @@
  * Load-bearing and easy to lose:
  *   · the notebook download is the whole point of the pipeline. The link carries
  *     the notebook, `harness.py` and all 900 traces, so a reader who doubts a
- *     figure re-derives it. Keep it above the fold.
+ *     figure re-derives it. It sits in the footer beside the references, where
+ *     pages 6, 7 and 8 keep theirs.
  *   · the instruction null is a BOUND, never a zero, and never the word
  *     "nothing" unqualified (claims gate `instruction_null_bounded`).
  *   · chain share is a blurt detector and nothing more. It verifies the gag
@@ -101,9 +103,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
-import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE5,
@@ -136,19 +137,11 @@ const NOTEBOOK_SIZE = "0.8 MB";
 /** Milliseconds a chain step lingers before the next appears (Play). */
 const STEP_MS = 700;
 
-/** Cited for the technique. Every number on this page is ours. */
-const WEI: Citation = {
-  ref: "Wei et al. 2022",
-  url: "https://arxiv.org/abs/2201.11903",
-  venue: "NeurIPS 2022",
-  preprint: false,
-};
-const KOJIMA: Citation = {
-  ref: "Kojima et al. 2022",
-  url: "https://arxiv.org/abs/2205.11916",
-  venue: "NeurIPS 2022",
-  preprint: false,
-};
+/**
+ * Cited for the technique, numbered in order of first appearance. Every number
+ * on this page is ours, so neither entry may carry a figure.
+ */
+const REF = { wei: 1, kojima: 2 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -421,33 +414,19 @@ export function Page5() {
       </p>
 
       {/* Provenance, as a specimen label rather than a banner: hairline rules,
-          no fill, the instrument on one mono line, and the download carrying the
-          page's own button vocabulary so it is the only lit thing here. It is
-          the pipeline's whole claim, so it stays above the fold. */}
-      <div className="flex flex-col gap-4 border-y border-grid py-4 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
-        <div className="flex min-w-0 flex-col gap-2">
-          <p className="text-sm text-ink">
-            Every figure below is one measurement of ours, not a redrawing of anyone&apos;s. The
-            notebook that made them opens in a replay mode that redraws every figure here from
-            those traces, on no GPU, in about a minute.
-          </p>
-          <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
-            Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16, greedy, {M.decoding.max_new_tokens}-token cap ·
-            MATH-500 levels 4 and 5, n = {M.items.n} paired items · 900 generations · run{" "}
-            {M.run_id} · {RUN_DATE}
-          </p>
-        </div>
-        <a
-          className="inline-flex shrink-0 items-start gap-2 self-start rounded border border-compute px-3 py-2 text-sm font-semibold leading-snug text-compute lg:max-w-[15rem]"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          <span aria-hidden="true">⤓</span>
-          <span className="flex flex-col">
-            Download the notebook, the harness and all 900 traces
-            <span className="font-normal text-ink-muted">zip, {NOTEBOOK_SIZE}</span>
-          </span>
-        </a>
+          no fill, the instrument on one mono line. The download it used to carry
+          sits with the references at the foot of the page, page 8's shape. */}
+      <div className="flex flex-col gap-2 border-y border-grid py-4">
+        <p className="text-sm text-ink">
+          Every figure below is one measurement of ours, not a redrawing of anyone&apos;s. The
+          notebook that made them opens in a replay mode that redraws every figure here from those
+          traces, on no GPU, in about a minute.
+        </p>
+        <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
+          Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16, greedy, {M.decoding.max_new_tokens}-token cap ·
+          MATH-500 levels 4 and 5, n = {M.items.n} paired items · 900 generations · run {M.run_id} ·{" "}
+          {RUN_DATE}
+        </p>
       </div>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -466,19 +445,16 @@ export function Page5() {
             Page 1 handed you <strong className="font-code">{S2.prompt}</strong> and you did not
             recognise the answer, you built it: {S2_RESULTS.join(", then ")}. A{" "}
             <strong>chain of thought</strong> is that building written down, a thread of steps
-            running from the question to the goal. What is strange in a language model is that the
-            thread is not a report of the thinking,{" "}
-            <strong>it is the thinking</strong>: every step is text the model has to write before it
-            can write the next one. The classic way to get one is to ask, by appending{" "}
+            running from the question to the goal.
+            <Cite n={REF.wei} /> What is strange in a language model is that the thread is not a
+            report of the thinking, <strong>it is the thinking</strong>: every step is text the
+            model has to write before it can write the next one. The classic way to get one is to
+            ask, by appending{" "}
             <span className="font-code">{M.conditions.zero_shot_cot.trim()}</span> to the question.
+            <Cite n={REF.kojima} />
           </p>
         </section>
-        <Note kicker="Cited for the technique">
-          <div className="flex flex-wrap gap-2">
-            <CitationBadge citation={WEI} />
-            <CitationBadge citation={KOJIMA} />
-          </div>
-        </Note>
+        <div aria-hidden="true" />
 
         {/* Step 2 — figure 1 */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -879,6 +855,30 @@ export function Page5() {
             <span className="font-code">{"\\boxed{}"}</span> answer-format rate.
           </p>
         </Note>
+      </div>
+
+      {/* References and the download, at the foot of the page: page 8's shape,
+          with pages 1 to 3's reference grammar. Each entry is numbered and each
+          number is claimed by a marker up in the prose, so a reader who follows
+          one back lands on the sentence it supports. */}
+      <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
+        <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
+          Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
+          Models</em> (NeurIPS 2022).
+        </RefItem>
+        <RefItem n={REF.kojima} href="https://arxiv.org/abs/2205.11916">
+          Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em> (NeurIPS
+          2022).
+        </RefItem>
+        <div className="flex flex-wrap items-center gap-2">
+          <a
+            className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+            href={NOTEBOOK_ZIP}
+            download
+          >
+            Download the notebook, the harness and all 900 traces (zip, {NOTEBOOK_SIZE}) ↓
+          </a>
+        </div>
       </div>
 
       <div aria-live="polite" className="sr-only">
