@@ -4,21 +4,32 @@
  * The old suite asserted on the authored trace's prose ("cannot be cancelled").
  * There is no authored prose left, so these assert on the mechanic and on the
  * page's honesty instead: that the outcome view really is blind to the working,
- * that the reveal is gated behind the reader's own marks, that both graders show
- * their verdicts with the right standing (the checker's refusal is not an
- * approval, the PRM's opinion is not a fact), and that the two numbers the page
- * is not allowed to quote flat arrive with their caveats.
+ * that the reveal is gated behind the reader's own answer, that the checker's
+ * reach is shown as reach rather than as a per-step verdict, that the PRM's
+ * opinion never dresses as a fact, and that the three numbers the page is not
+ * allowed to quote flat arrive with their caveats.
+ *
+ * The interaction under test changed with the grey chip that prompted it. The
+ * reader is asked ONE question — which line goes wrong — because the six-mark
+ * version demanded an opinion on prose neither instrument could score, and then
+ * paid it back in `can't check` chips.
  */
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { PAGE9 } from "@/lib/page09";
+import { PAGE9, tidyMath } from "@/lib/page09";
 import { Page9 } from "./Page9";
 
-const markEverySoundThenReveal = () => {
+/** Answer the figure's one question, correctly, and reveal. */
+const findTheBreakThenReveal = (trace = PAGE9.lucky) => {
   fireEvent.click(screen.getByRole("button", { name: /process view/i }));
-  const n = PAGE9.lucky.steps.length;
-  for (let i = 1; i <= n; i += 1) {
-    fireEvent.click(screen.getByRole("button", { name: `Mark step ${i} sound` }));
+  if (trace.firstFalse !== null) {
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `Mark step ${trace.firstFalse + 1} as the line that goes wrong`,
+      }),
+    );
+  } else {
+    fireEvent.click(screen.getByRole("button", { name: /nothing here breaks/i }));
   }
   fireEvent.click(screen.getByRole("button", { name: /reveal what the graders found/i }));
 };
@@ -28,16 +39,27 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     render(<Page9 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
     expect(headings[0]).toMatch(/what can be graded at all/i);
-    expect(headings[1]).toMatch(/grade it yourself/i);
+    expect(headings[1]).toMatch(/find the break/i);
     expect(headings[2]).toMatch(/what step grading buys/i);
   });
 
-  it("warns before the reveal that the checker declines most steps", () => {
+  it("states the checker's reach as a finding before the figure uses it", () => {
     render(<Page9 />);
-    const intro = screen.getByText(/the checker had to decline/i);
-    const figure = screen.getByRole("heading", { level: 2, name: /grade it yourself/i });
-    // The caveat must precede the figure it explains, or the grey labels read as a bug.
+    // The share it COULD read, quoted positively. The old page quoted the 94% it
+    // declined, which is the same fact phrased as an apology for the figure.
+    const intro = screen.getByText(/state nothing it can compute/i);
+    const figure = screen.getByRole("heading", { level: 2, name: /find the break/i });
     expect(intro.compareDocumentPosition(figure) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(intro.textContent).toContain(PAGE9.graders.stepsTotal.toLocaleString());
+  });
+
+  it("never labels a step with the checker's silence", () => {
+    render(<Page9 />);
+    findTheBreakThenReveal();
+    // The reach of the instrument is not a verdict on the step, so it may not be
+    // rendered in the verdict slot. This is the defect the page was rebuilt for.
+    expect(screen.queryByText(/can't check/i)).toBeNull();
+    expect(screen.queryByText(/^unknown$/i)).toBeNull();
   });
 
   it("opens on the outcome view, which passes the lucky chain", () => {
@@ -54,22 +76,23 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     ).toBeNull();
   });
 
-  it("makes the reader grade the steps before showing the graders' labels", () => {
+  it("makes the reader answer before showing the graders' verdicts", () => {
     render(<Page9 />);
     fireEvent.click(screen.getByRole("button", { name: /process view/i }));
-    expect(screen.getByRole("button", { name: /mark every step first/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /pick a line first/i })).toBeDisabled();
   });
 
-  it("reveals a checker label for every step once they are all marked", () => {
+  it("chips a checker verdict only on the steps it could actually read", () => {
     render(<Page9 />);
-    markEverySoundThenReveal();
-    const labelled = screen.getAllByText(/checked: true|checked: FALSE|can't check/);
-    expect(labelled).toHaveLength(PAGE9.lucky.steps.length);
+    findTheBreakThenReveal();
+    const read = PAGE9.lucky.steps.filter((s) => s.check !== "unknown").length;
+    expect(screen.getAllByText(/checked: true|checked: FALSE/)).toHaveLength(read);
+    expect(read).toBeLessThan(PAGE9.lucky.steps.length);
   });
 
-  it("shows the PRM's verdict on every step, because it declines none", () => {
+  it("shows the PRM's verdict on every step, because it is silent on none", () => {
     render(<Page9 />);
-    markEverySoundThenReveal();
+    findTheBreakThenReveal();
     if (PAGE9.graders.prm) {
       expect(screen.getAllByText(/^PRM \d\.\d\d ·/)).toHaveLength(PAGE9.lucky.steps.length);
     }
@@ -77,29 +100,58 @@ describe("Page 9 (outcome vs process supervision) component", () => {
 
   it("flags the lucky chain's false step even though its answer was right", () => {
     render(<Page9 />);
-    markEverySoundThenReveal();
+    findTheBreakThenReveal();
     expect(screen.getAllByText("checked: FALSE").length).toBe(PAGE9.lucky.nFalse);
   });
 
-  it("scores agreement only over the steps the checker could prove", () => {
+  it("reports what the checker could read of the chain, and of the run", () => {
     render(<Page9 />);
-    markEverySoundThenReveal();
-    const judged = PAGE9.lucky.steps.filter((s) => s.check !== "unknown").length;
+    findTheBreakThenReveal();
+    const read = PAGE9.lucky.steps.filter((s) => s.check !== "unknown").length;
     expect(
-      screen.getByText(new RegExp(`${judged} of ${PAGE9.lucky.steps.length}`)),
+      screen.getByText(new RegExp(`${read} of ${PAGE9.lucky.steps.length}`)),
     ).toBeInTheDocument();
   });
 
-  it("says outright that an unchecked step is unproven rather than sound", () => {
+  it("says outright that silence is not approval", () => {
     render(<Page9 />);
-    markEverySoundThenReveal();
-    expect(screen.getByText(/refusals are not approvals/i)).toBeInTheDocument();
+    expect(screen.getByText(/plain is not approval/i)).toBeInTheDocument();
+    findTheBreakThenReveal();
+    expect(screen.getByText(/nothing at all to say about the other/i)).toBeInTheDocument();
   });
 
-  it("shows the judged claim rather than only the step it came from", () => {
+  it("underlines the judged claim in place rather than restating it", () => {
     render(<Page9 />);
-    markEverySoundThenReveal();
-    expect(screen.getAllByText(/^judged:/).length).toBeGreaterThan(0);
+    findTheBreakThenReveal();
+    const judged = PAGE9.lucky.steps.find((s) => s.claim)!;
+    const marked = screen.getByText(tidyMath(judged.claim!));
+    expect(marked.tagName).toBe("MARK");
+    // The old layout printed the claim a second time under its step.
+    expect(screen.queryByText(/^judged:/)).toBeNull();
+  });
+
+  it("settles the reader's answer against the checker's proof", () => {
+    render(<Page9 />);
+    findTheBreakThenReveal();
+    expect(
+      screen.getByText(new RegExp(`that is the line the checker proves false`, "i")),
+    ).toBeInTheDocument();
+    expect(screen.getByText("your pick")).toBeInTheDocument();
+  });
+
+  it("lets a clean chain be answered with 'nothing breaks'", () => {
+    render(<Page9 />);
+    fireEvent.click(screen.getByRole("button", { name: /^Clean/ }));
+    findTheBreakThenReveal(PAGE9.clean);
+    expect(screen.getByText(/and you said so/i)).toBeInTheDocument();
+    // A clean chain is unrefuted, not proven sound, and must say so.
+    expect(screen.getByText(/not the same as proving it sound/i)).toBeInTheDocument();
+  });
+
+  it("quotes detection as a floor rather than as a rate", () => {
+    render(<Page9 />);
+    expect(screen.getByText(/read that as a floor, not a rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/too few to estimate how common/i)).toBeInTheDocument();
   });
 
   it("quotes localisation with its spread whenever the run says it moves", () => {
@@ -126,6 +178,7 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(
       screen.getByText(/deterministic arithmetic checker that judges only/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/nothing computable, not nothing wrong/i)).toBeInTheDocument();
     if (PAGE9.graders.prm) {
       const note = screen.getByText("The PRM").closest("aside")!;
       expect(note.textContent).toContain(PAGE9.graders.prm.id);

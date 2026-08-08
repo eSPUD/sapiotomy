@@ -14,28 +14,47 @@
  * revealed below now comes from a grader that did run, and `@/lib/page09` refuses
  * to load a run that failed the notebook's gates.
  *
+ * THE SECOND DEFECT, FIXED HERE. The measured version put a chip on every step
+ * with three values — `checked: true`, `checked: FALSE`, and `can't check`. The
+ * third was 94% of the run and 4 of the 6 steps in every specimen, so the payoff
+ * of a six-mark interaction was a wall of grey shrugs, and the page had to
+ * apologise for it three separate times before the reader reached it. Two things
+ * were wrong. `can't check` is a fact about the INSTRUMENT'S REACH, not a verdict
+ * on the step, and it was rendered in the slot where the reader looks for a
+ * verdict. And the checker's silence is the most interesting honest fact on this
+ * page — a symbolic checker can prove almost nothing about natural-language
+ * reasoning — which the old layout spent three paragraphs excusing.
+ *
+ * So the grey chip is gone. Coverage is now a property of the TEXT: the reveal
+ * underlines the exact claim the checker recomputed and leaves everything else
+ * plain. Every chain draws the same silhouette — a couple of underlined
+ * fragments in a page of untouched prose — and the reader learns the checker's
+ * reach by looking, with no apology and no third grammatical register.
+ *
  * The three beats, and what each is allowed to say:
  *
- *   1. WHAT CAN BE GRADED AT ALL. The two limits, moved ahead of the figure so
- *      the reveal needs no apology: grading needs a fact, and a step must be big
- *      enough to be wrong. This is where the reader meets the page's two graders
- *      and the asymmetry the figure will show — the checker proves little and
- *      declines the rest, the PRM opines on everything and proves nothing.
+ *   1. WHAT CAN BE GRADED AT ALL. The two limits: grading needs a fact, and a
+ *      step must be big enough to be wrong. This is where the reader meets the
+ *      page's two instruments and their opposite reach — the checker proves
+ *      little and is silent on the rest, the PRM opines on everything and proves
+ *      nothing. Stated as a finding now, not as a warning about the figure.
  *
- *   2. GRADE IT YOURSELF. The mechanic is unchanged, because it was good: mark
- *      each step, then compare. The chains are real, drawn from page 7's pile,
- *      and the reveal is a fact rather than an attribution. Every step now shows
- *      BOTH graders: the checker's three labels (true / FALSE / can't check —
- *      solid chips, because they are facts) and the PRM's score-plus-verdict on
- *      every step (outlined chips, because they are opinions). A checker refusal
- *      is not an approval, and the reveal copy says so, because reading "not
- *      wrong" as "right" was the natural mistake the old layout invited.
+ *   2. FIND THE BREAK. One question, one click: which line goes wrong, or does
+ *      nothing? That is the question process grading actually answers, it is the
+ *      question 70% of localisable chains have a single answer to, and it does
+ *      not force the reader to have an opinion on prose no instrument can score.
+ *      The reveal underlines what the checker read, chips the two verdicts it
+ *      reached, and keeps the PRM's outlined score on every step, so fact and
+ *      opinion stay visibly different without a grey chip mediating.
  *
  *   3. WHAT STEP GRADING BUYS. Two measured numbers replacing a redrawn published
- *      bar chart. Detection is quoted plainly; localisation is quoted WITH its
- *      spread, because the notebook's `localisation_survives_segmentation` claim
- *      came back false: move the rule for where a step ends and the median moves
- *      25 points. The selector rung came back null and is reported as null.
+ *      bar chart. Detection leads with the PROOF and states its smallness — five
+ *      chains in 747 — because a floor quoted as a rate is the overclaim this
+ *      page exists to avoid; the PRM's larger number sits beside it as opinion.
+ *      Localisation is quoted WITH its spread, because the notebook's
+ *      `localisation_survives_segmentation` claim came back false: move the rule
+ *      for where a step ends and the median moves 25 points. The selector rung
+ *      came back null and is reported as null.
  *
  * The old footer paragraph is gone. What had to stay on the page (the checker's
  * rule, the natural-ending filter, the PRM's gate) lives in margin notes beside
@@ -66,7 +85,8 @@ const LIGHTMAN: Citation = {
 };
 
 type Mode = "outcome" | "process";
-type Mark = "unmarked" | "ok" | "error";
+/** The reader's single answer: the index of the line that breaks, or none. */
+type Pick = number | "none";
 
 /** Presentation only: what each measured role is called on screen. */
 const ROLES: { key: string; label: string; kind: string; specimen: Specimen }[] = [
@@ -100,48 +120,65 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
+/**
+ * Split a step around the exact words the checker recomputed, so the reveal can
+ * underline the claim in place rather than restating it underneath. The claim is
+ * a verbatim substring of the step — the notebook writes it that way, and
+ * `@/lib/page09` refuses to load a judged step without one — and the split runs
+ * on the RAW text so `tidyMath` never has to survive being applied twice to the
+ * same characters. If a future run breaks the substring guarantee this returns
+ * null and the step renders whole and unmarked, which loses the underline rather
+ * than dropping text on the floor.
+ */
+function splitOnClaim(text: string, claim: string | null) {
+  if (!claim) return null;
+  const at = text.indexOf(claim);
+  if (at < 0) return null;
+  const before = text.slice(0, at);
+  const after = text.slice(at + claim.length);
+  return {
+    before: tidyMath(before),
+    claim: tidyMath(claim),
+    after: tidyMath(after),
+    // `tidyMath` trims, so the joins the raw text was making have to be put back.
+    // Every claim in the shipped run occupies a whole line; a mid-line one still
+    // reads correctly because the gap is taken from the raw text, not assumed.
+    gapBefore: /\n\s*$/.test(before) ? "\n" : " ",
+    gapAfter: /^\s*\n/.test(after) ? "\n" : " ",
+  };
+}
+
 export function Page9() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
 
   const [roleKey, setRoleKey] = useState(ROLES[0].key);
   const [mode, setMode] = useState<Mode>("outcome");
-  const [marks, setMarks] = useState<Record<string, Mark[]>>({});
+  const [picks, setPicks] = useState<Record<string, Pick>>({});
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
   const role = ROLES.find((r) => r.key === roleKey)!;
   const trace = role.specimen;
-  const myMarks: Mark[] = marks[roleKey] ?? trace.steps.map(() => "unmarked");
+  const myPick = picks[roleKey];
+  const hasPicked = myPick !== undefined;
   const isRevealed = revealed[roleKey] ?? false;
-  const allMarked = myMarks.every((m) => m !== "unmarked");
 
-  const setMark = (i: number, m: Mark) => {
+  const pick = (p: Pick) => {
     recordInteraction(PAGE_N);
-    setMarks((prev) => {
-      const next = [...(prev[roleKey] ?? trace.steps.map(() => "unmarked" as Mark))];
-      next[i] = m;
-      return { ...prev, [roleKey]: next };
-    });
+    setPicks((prev) => ({ ...prev, [roleKey]: p }));
   };
 
-  // Scored only over the steps the checker could judge. Marking a step the checker
-  // declined is not a disagreement, it is a question it refused to answer, and
-  // counting it either way would invent a score.
-  const judged = trace.steps
-    .map((s, i) => ({ s, i }))
-    .filter(({ s }) => s.check !== "unknown");
-  const agreement = judged.filter(
-    ({ s, i }) => myMarks[i] !== "unmarked" && (myMarks[i] === "ok") === (s.check === "true"),
-  ).length;
-  // The PRM, by contrast, has a verdict on every step, so it is compared on all
-  // of them.
+  // The break, and whether the reader put a finger on it. A chain with nothing
+  // provably false has "none" for its answer, which is a real answer rather than
+  // an abstention: the clean specimen is the trap in that direction.
+  const breakAt = trace.firstFalse;
+  const foundIt = breakAt !== null ? myPick === breakAt : myPick === "none";
+
+  // What each instrument could see of THIS chain, which is the sentence that
+  // replaced the grey chip.
+  const nRead = trace.steps.filter((s) => s.check !== "unknown").length;
   const prmScored = trace.steps.filter((s) => s.prmVerdict !== null).length;
-  const prmAgreement = trace.steps.filter(
-    (s, i) =>
-      s.prmVerdict !== null &&
-      myMarks[i] !== "unmarked" &&
-      (myMarks[i] === "ok") === (s.prmVerdict === "true"),
-  ).length;
+  const prmFlagged = trace.steps.filter((s) => s.prmVerdict === "false").length;
 
   const det = PAGE9.detection;
   const loc = PAGE9.localisation;
@@ -184,15 +221,26 @@ export function Page9() {
             that states something checkable.
           </p>
           <p className="text-ink-muted">
-            The figure below grades real chains twice, and the two graders sit on opposite sides of
-            that rule. An <strong className="text-ink">arithmetic checker</strong> proves or
-            refutes only claims it can compute outright, and declines the rest: in this run the
-            checker had to decline {pct(PAGE9.graders.shareUnjudged)} of{" "}
-            {PAGE9.graders.stepsTotal.toLocaleString()} steps, because they state nothing it can
-            verify. A <strong className="text-ink">process reward model</strong> is the opposite
-            trade: it scores every step and declines none, but a score is an opinion where the
-            checker&apos;s label is a fact. Keep both in view — a step the checker leaves
-            unlabelled is a step it could not judge, not a step it approved.
+            Which is why the two instruments below have opposite reach. An{" "}
+            <strong className="text-ink">arithmetic checker</strong> recomputes claims that are
+            closed-form numeric on both sides and proves them true or false. It found one in{" "}
+            <strong className="text-ink">
+              {pct(1 - PAGE9.graders.shareUnjudged, 1)} of{" "}
+              {PAGE9.graders.stepsTotal.toLocaleString()}
+            </strong>{" "}
+            steps: the other {pct(PAGE9.graders.shareUnjudged)} state nothing it can compute. That
+            is the honest ceiling on proof here, and it is low. A{" "}
+            <strong className="text-ink">process reward model</strong> takes the opposite trade: it
+            scores every step and is silent on none, but a score is an opinion where the
+            checker&apos;s label is a fact.
+          </p>
+          <p className="text-ink-muted">
+            So the figure below shows the checker&apos;s reach as reach:{" "}
+            <span className="rounded-sm bg-correct/15 px-1 underline decoration-correct decoration-2 underline-offset-4">
+              it underlines the words it recomputed
+            </span>{" "}
+            and leaves the rest of the chain plain. Plain is not approval. It is the instrument
+            having nothing to say.
           </p>
         </section>
 
@@ -200,7 +248,7 @@ export function Page9() {
         <div className="grid gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
           <section className="flex flex-col gap-3">
             <h2 className="text-xl font-semibold text-ink">
-              2. Grade it yourself
+              2. Find the break
               <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
                 real chains · {PAGE9.run.model.split("/").pop()} · graded twice
               </span>
@@ -271,13 +319,13 @@ export function Page9() {
                   <p className="rounded-lg border border-dashed border-grid bg-surface-raised p-3 text-sm text-ink">
                     <strong>An outcome grader reads one thing: the answer.</strong> The working is
                     redacted below because that is exactly what this grader sees of it. Switch to{" "}
-                    <strong>Process view</strong> to read the steps and mark them yourself.
+                    <strong>Process view</strong> to read the working and find the line that breaks.
                   </p>
                 ) : !isRevealed ? (
                   <p className="rounded-lg border border-dashed border-grid bg-surface-raised p-3 text-sm text-ink">
-                    <strong>You be the process grader.</strong> Mark each step sound or broken,
-                    then reveal what the two graders found: the checker proves what it can and
-                    declines the rest; the PRM has an opinion on every step.
+                    <strong>You be the process grader. Which line goes wrong?</strong> Pick one, or
+                    say the chain holds. That is the question a step grader answers and an outcome
+                    grader cannot, and it is the one thing the reveal will settle.
                   </p>
                 ) : null}
 
@@ -285,21 +333,20 @@ export function Page9() {
                 <ol className="flex flex-col gap-2">
                   {trace.steps.map((step, i) => {
                     const showProcess = mode === "process";
-                    const mine = myMarks[i];
                     const shown = showProcess && isRevealed;
-                    // Only the checker's FACTS colour the step itself; the PRM's
-                    // opinion colours nothing but its own outlined chip.
-                    const tone =
-                      step.check === "true"
-                        ? "border-correct bg-correct/10"
-                        : step.check === "false"
-                          ? "border-wrong bg-wrong/15"
-                          : "border-grid bg-surface-raised";
+                    const parts = shown ? splitOnClaim(step.text, step.claim) : null;
+                    // Only a REFUTED step is worth colouring whole, because that is
+                    // the line the reader was hunting. A proven-true step carries its
+                    // own underline and needs no second signal, and a step the checker
+                    // never read must look like ordinary prose — colouring it would
+                    // put the instrument's reach back into a verdict slot.
                     return (
                       <li
                         key={i}
                         className={`flex flex-col gap-1.5 rounded-lg border-l-4 p-3 ${
-                          shown ? tone : "border-grid bg-surface-raised"
+                          shown && step.check === "false"
+                            ? "border-wrong bg-wrong/10"
+                            : "border-grid bg-surface-raised"
                         }`}
                       >
                         <div className="flex items-start gap-2">
@@ -318,6 +365,25 @@ export function Page9() {
                                 does not read it. Switch to the process view to read it.
                               </span>
                             </span>
+                          ) : parts ? (
+                            /* The claim underlined WHERE IT SITS. A step can open with
+                               two sound lines and break on the third, and marking the
+                               whole step would point at the wrong words. */
+                            <span className="flex-1 whitespace-pre-wrap text-sm text-ink">
+                              {parts.before}
+                              {parts.before ? parts.gapBefore : null}
+                              <mark
+                                className={`rounded-sm bg-transparent px-1 underline decoration-2 underline-offset-4 ${
+                                  step.check === "true"
+                                    ? "bg-correct/15 text-ink decoration-correct"
+                                    : "bg-wrong/15 text-ink decoration-wrong"
+                                }`}
+                              >
+                                {parts.claim}
+                              </mark>
+                              {parts.after ? parts.gapAfter : null}
+                              {parts.after}
+                            </span>
                           ) : (
                             <span className="flex-1 whitespace-pre-wrap text-sm text-ink">
                               {tidyMath(step.text)}
@@ -325,22 +391,24 @@ export function Page9() {
                           )}
                           {shown ? (
                             <span className="flex shrink-0 flex-col items-end gap-1">
-                              {/* fact: solid chip */}
-                              <span
-                                className={`rounded px-2 py-0.5 text-xs font-semibold ${
-                                  step.check === "true"
-                                    ? "bg-correct/25 text-correct"
-                                    : step.check === "false"
-                                      ? "bg-wrong/25 text-wrong"
-                                      : "bg-grid/40 text-ink-muted"
-                                }`}
-                              >
-                                {step.check === "true"
-                                  ? "checked: true"
-                                  : step.check === "false"
-                                    ? "checked: FALSE"
-                                    : "can't check"}
-                              </span>
+                              {myPick === i ? (
+                                <span className="rounded border border-compute px-2 py-0.5 text-xs text-compute">
+                                  your pick
+                                </span>
+                              ) : null}
+                              {/* fact: solid chip, and ONLY where there is a fact. A
+                                  step the checker never read gets no chip at all. */}
+                              {step.check !== "unknown" ? (
+                                <span
+                                  className={`rounded px-2 py-0.5 text-xs font-semibold ${
+                                    step.check === "true"
+                                      ? "bg-correct/25 text-correct"
+                                      : "bg-wrong/25 text-wrong"
+                                  }`}
+                                >
+                                  {step.check === "true" ? "checked: true" : "checked: FALSE"}
+                                </span>
+                              ) : null}
                               {/* opinion: outlined chip, present on EVERY step */}
                               {step.prm !== null && step.prmVerdict !== null ? (
                                 <span
@@ -356,84 +424,100 @@ export function Page9() {
                               ) : null}
                             </span>
                           ) : showProcess ? (
-                            <span className="flex shrink-0 gap-1">
-                              <button
-                                type="button"
-                                aria-pressed={mine === "ok"}
-                                aria-label={`Mark step ${i + 1} sound`}
-                                onClick={() => setMark(i, "ok")}
-                                className={`rounded px-2 py-0.5 text-xs ${
-                                  mine === "ok"
-                                    ? "bg-correct text-canvas"
-                                    : "border border-grid text-ink-muted"
-                                }`}
-                              >
-                                sound
-                              </button>
-                              <button
-                                type="button"
-                                aria-pressed={mine === "error"}
-                                aria-label={`Mark step ${i + 1} broken`}
-                                onClick={() => setMark(i, "error")}
-                                className={`rounded px-2 py-0.5 text-xs ${
-                                  mine === "error"
-                                    ? "bg-wrong text-canvas"
-                                    : "border border-grid text-ink-muted"
-                                }`}
-                              >
-                                broken
-                              </button>
-                            </span>
+                            <button
+                              type="button"
+                              aria-pressed={myPick === i}
+                              aria-label={`Mark step ${i + 1} as the line that goes wrong`}
+                              onClick={() => pick(i)}
+                              className={`shrink-0 rounded px-2 py-0.5 text-xs ${
+                                myPick === i
+                                  ? "bg-wrong text-canvas"
+                                  : "border border-grid text-ink-muted"
+                              }`}
+                            >
+                              breaks here
+                            </button>
                           ) : (
                             <span className="shrink-0 text-xs text-ink-muted">not read</span>
                           )}
                         </div>
-                        {/* The judged CLAIM, not the step. A step can open with two true
-                            lines and break on the third, and highlighting the step would
-                            point at the wrong words. */}
-                        {shown && step.claim ? (
-                          <p className="pl-6 font-mono text-xs text-ink-muted">
-                            judged: {tidyMath(step.claim)}
-                          </p>
-                        ) : null}
                       </li>
                     );
                   })}
                 </ol>
 
                 {mode === "process" && !isRevealed ? (
-                  <button
-                    type="button"
-                    disabled={!allMarked}
-                    onClick={() => {
-                      setRevealed((r) => ({ ...r, [roleKey]: true }));
-                      recordInteraction(PAGE_N);
-                    }}
-                    className="self-start rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-                  >
-                    {allMarked ? "Reveal what the graders found ▸" : "Mark every step first"}
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* The other real answer. A chain with nothing provably false is
+                        one of the three specimens, so "no break" has to be a click
+                        rather than the absence of one. */}
+                    <button
+                      type="button"
+                      aria-pressed={myPick === "none"}
+                      onClick={() => pick("none")}
+                      className={`rounded px-3 py-1.5 text-sm ${
+                        myPick === "none"
+                          ? "bg-correct text-canvas"
+                          : "border border-grid text-ink-muted"
+                      }`}
+                    >
+                      Nothing here breaks
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!hasPicked}
+                      onClick={() => {
+                        setRevealed((r) => ({ ...r, [roleKey]: true }));
+                        recordInteraction(PAGE_N);
+                      }}
+                      className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                    >
+                      {hasPicked ? "Reveal what the graders found ▸" : "Pick a line first"}
+                    </button>
+                  </div>
                 ) : null}
 
                 {mode === "process" && isRevealed ? (
-                  <p className="text-sm text-ink-muted">
-                    The checker could prove{" "}
-                    <strong className="text-ink">
-                      {judged.length} of {trace.steps.length}
-                    </strong>{" "}
-                    steps, and you agreed with it on{" "}
-                    <strong className="text-ink">
-                      {agreement} of {judged.length}
-                    </strong>
-                    . Its refusals are not approvals: a step it left grey is unproven, not sound.{" "}
-                    {prmScored > 0 ? (
-                      <>
-                        The PRM refused nothing — it scored all{" "}
-                        <strong className="text-ink">{prmScored}</strong>, and its verdicts matched
-                        your marks on <strong className="text-ink">{prmAgreement}</strong>.
-                      </>
-                    ) : null}
-                  </p>
+                  <div className="flex flex-col gap-2 text-sm text-ink-muted">
+                    <p>
+                      <strong className={foundIt ? "text-correct" : "text-ink"}>
+                        {breakAt !== null
+                          ? foundIt
+                            ? `You pointed at line ${breakAt + 1}, and that is the line the checker proves false.`
+                            : myPick === "none"
+                              ? `You passed the chain, but the checker proves line ${breakAt + 1} false.`
+                              : `You pointed at line ${(myPick as number) + 1}; the checker proves line ${breakAt + 1} false.`
+                          : myPick === "none"
+                            ? "Nothing in this chain is provably false, and you said so."
+                            : `You flagged line ${(myPick as number) + 1}, and the checker proves nothing false in this chain.`}
+                      </strong>{" "}
+                      {breakAt === null
+                        ? "Which is not the same as proving it sound."
+                        : "One line, named. That is the whole of what an outcome grader cannot tell you."}
+                    </p>
+                    <p>
+                      It read{" "}
+                      <strong className="text-ink">
+                        {nRead} of {trace.steps.length}
+                      </strong>{" "}
+                      lines here — underlined above, the {nRead === 1 ? "only one" : "only ones"}{" "}
+                      stating something it could compute outright — and has nothing at all to say
+                      about the other {trace.steps.length - nRead}. Across the run it could read{" "}
+                      {pct(1 - PAGE9.graders.shareUnjudged, 1)} of{" "}
+                      {PAGE9.graders.stepsTotal.toLocaleString()} steps.{" "}
+                      {prmScored > 0 ? (
+                        <>
+                          The PRM was silent on none: it scored all{" "}
+                          <strong className="text-ink">{prmScored}</strong> and flags{" "}
+                          <strong className="text-ink">
+                            {prmFlagged === 0 ? "none" : prmFlagged}
+                          </strong>
+                          . Those are opinions, and they are the only opinion on offer for the lines
+                          the checker could not reach.
+                        </>
+                      ) : null}
+                    </p>
+                  </div>
                 ) : null}
 
                 {/* the verdict */}
@@ -441,7 +525,7 @@ export function Page9() {
                   <p className="text-sm text-ink">
                     <span className="font-mono text-ink-muted">final answer → </span>
                     <strong className={trace.outcomeCorrect ? "text-correct" : "text-wrong"}>
-                      {trace.answer ?? "—"}
+                      {trace.answer ? tidyMath(trace.answer) : "—"}
                     </strong>
                     <span className="text-ink-muted">
                       {" "}
@@ -477,9 +561,9 @@ export function Page9() {
                     <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm">
                       <p className="text-ink">
                         <span className="font-semibold text-compute">Process grader:</span>{" "}
-                        {trace.firstFalse !== null
-                          ? `the break is step ${trace.firstFalse + 1}. The ${trace.firstFalse} step${trace.firstFalse === 1 ? "" : "s"} before it stand, and a grader that reads the working can say so.`
-                          : "nothing here is provably false. The two graders agree, which is the case that needs no argument."}
+                        {breakAt !== null
+                          ? `the ${breakAt} line${breakAt === 1 ? "" : "s"} before the break ${breakAt === 1 ? "stands" : "stand"}, so this chain needs one line fixed rather than the whole of it thrown away. ${trace.outcomeCorrect ? "And the outcome grader passed it, break and all." : ""}`
+                          : "nothing here is provably false, and the PRM agrees. That is the case that needs no argument, and the reason a clean chain is worth showing beside the other two."}
                       </p>
                     </div>
                   ) : null}
@@ -488,11 +572,11 @@ export function Page9() {
             </section>
 
             <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-base text-ink">
-              <strong className="text-lg">Right answer, broken method is a trap.</strong> The{" "}
-              <em>Lucky</em> chain above reaches the right answer with a step that is
-              arithmetically false. An outcome grader passes it, and page 12&apos;s filter would
-              fine-tune on it. Only a step grader catches it, and only it can say{" "}
-              <em>which line</em> to fix.
+              <strong className="text-lg">A right answer is not a right chain.</strong> The{" "}
+              <em>Lucky</em> chain reaches the right answer with a step that is arithmetically
+              false. An outcome grader passes it, page 12&apos;s filter would fine-tune on it, and
+              only a step grader can say <em>which line</em> to fix. How often that happens is the
+              next beat, and the honest answer is smaller than the story wants.
             </div>
           </section>
 
@@ -509,9 +593,9 @@ export function Page9() {
                 figure on this page is conditional on the easier population.
               </p>
               <p>
-                Solid labels come from a deterministic arithmetic checker that judges only claims
-                that are closed-form numeric on both sides — verdicts a reader can recompute by
-                hand.
+                Underlined claims come from a deterministic arithmetic checker that judges only what
+                is closed-form numeric on both sides — verdicts a reader can recompute by hand.
+                Nothing underlined means nothing computable, not nothing wrong.
               </p>
             </Note>
             {prm ? (
@@ -544,7 +628,7 @@ export function Page9() {
             <div className="grid gap-3 sm:grid-cols-2">
               <figure className="m-0 flex flex-col gap-2 rounded-lg border-l-4 border-wrong bg-surface p-4">
                 <figcaption className="text-sm font-semibold text-ink">
-                  Detection: a right answer is not a right chain
+                  Detection: how often we can prove it
                 </figcaption>
                 <p className="text-sm text-ink-muted">
                   Of the{" "}
@@ -554,13 +638,20 @@ export function Page9() {
                   {pct(det.rate, 2)}), spread over {det.nProblems} of{" "}
                   {det.nProblemsWithARightChain} problems.
                 </p>
+                <p className="text-sm text-ink-muted">
+                  <strong className="text-ink">Read that as a floor, not a rate.</strong>{" "}
+                  {det.nContaminated} chains is too few to estimate how common the trap is; what it
+                  establishes is that the trap is real and that outcome grading cannot see it. The
+                  checker only reads arithmetic, so every lucky chain that goes wrong in prose is
+                  invisible to it, and this number can only move upward.
+                </p>
                 {det.prm ? (
                   <p className="text-sm text-ink-muted">
-                    That is a <em>floor</em>, because the checker only sees arithmetic. The
-                    process reward model, which also sees method, calls a step unsound in{" "}
-                    <strong className="text-ink">{pct(det.prm.rate)}</strong> of them — an opinion
-                    rather than a proof, measured at AUC {det.prm.auc.toFixed(2)} against the
-                    checker where the two overlap.
+                    For scale, the process reward model — which also sees method — calls a step
+                    unsound in <strong className="text-ink">{pct(det.prm.rate)}</strong> of the same
+                    chains. That is an opinion rather than a proof, measured at AUC{" "}
+                    {det.prm.auc.toFixed(2)} against the checker where the two overlap, and it is
+                    quoted here to bound the gap rather than to replace the {pct(det.rate, 2)}.
                   </p>
                 ) : null}
                 <p className="text-xs text-ink-muted">

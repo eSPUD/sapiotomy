@@ -14,19 +14,24 @@ test.describe("Act 2 verifiers (pages 8–10)", () => {
     await expect(page.getByText(/✗ picks \$0\.10/)).toHaveCount(2);
   });
 
-  test("Page 9: grading the steps flags the lucky solution the outcome view passes", async ({
+  test("Page 9: finding the break flags the lucky chain the outcome view passes", async ({
     page,
   }) => {
     await page.goto("/p/9");
-    // Outcome view (default) passes the fake-cancellation solution.
+    // Outcome view (default) passes the lucky chain on its answer alone.
     await expect(page.getByText(/Outcome grader: pass/i)).toBeVisible();
-    // Switch to process view and grade every step, then reveal.
+    // Switch to the process view and answer its one question, then reveal.
     await page.getByRole("button", { name: /process view/i }).click();
-    for (const i of [1, 2, 3]) {
-      await page.getByRole("button", { name: `Mark step ${i} sound` }).click();
-    }
-    await page.getByRole("button", { name: /reveal the prm/i }).click();
-    await expect(page.getByText("step broken")).toBeVisible();
+    // Any answer unlocks the reveal, and the checker's verdict does not depend on
+    // it, so this does not hard-code which line the shipped run proves false.
+    await page
+      .getByRole("button", { name: /as the line that goes wrong$/ })
+      .first()
+      .click();
+    await page.getByRole("button", { name: /reveal what the graders found/i }).click();
+    await expect(page.getByText("checked: FALSE")).toBeVisible();
+    // The checker's reach is stated as reach, never as a per-step verdict.
+    await expect(page.getByText(/can't check/i)).toHaveCount(0);
   });
 
   test("Page 10: the replay steps through the search and prices it", async ({ page }) => {
