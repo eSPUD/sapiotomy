@@ -1,5 +1,15 @@
 # Page 8 — Best-of-N and Verifiers
 
+> **Status: all seven fixed, 2026-08-08.** §1 labels (`page08.ts` maps every selector and throws on
+> one it cannot name; spec updated to bless eight labelled rows rather than dropping two), §2 the
+> `ch05` phrase, §3 the verifier defined at first use with the Cobbe cite in the step 1 margin,
+> §4 the ranking softened to point estimates behind a `judge_ranking_resolved` guard, §5 the footer
+> replaced by a pages 5 to 7 provenance plate with the "whose comparison this is" disclosure moved to
+> the step 4 margin, §6 the recovery sentence in step 4, §7 page 7's sentence rewritten and page 8's
+> agreement receipt rendered in the step 2 margin. One deliberate departure: the McNemar clause was
+> kept, in the plate, rather than deleted, because every p-value on the page depends on it.
+> Seven new assertions in `Page8.test.tsx` hold each of these in place.
+
 **Why this page has its own file.** Four of five review dimensions grade it `fair`, more than any
 other page in Act 2. It is the only one of the new pages 5–9 that never received the copy-and-
 apparatus pass pages 5–7 got, and the seam is visible to a reader inside a single act. Its central

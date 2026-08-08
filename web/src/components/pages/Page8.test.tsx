@@ -70,12 +70,83 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(note.textContent).toMatch(/next page/);
   });
 
-  it("carries a measured provenance chip, not an illustrative one", () => {
+  it("carries a measured provenance plate above the fold, not a footer", () => {
     render(<Page8 />);
-    const chip = screen.getByText(/^measured ·/);
-    expect(chip.textContent).toContain(PAGE8.run.model);
-    expect(chip.textContent).toContain(PAGE8.run.date);
-    expect(chip.textContent).not.toMatch(/illustrative|simulation/i);
+    const plate = screen.getByText(/^measured ·/);
+    expect(plate.textContent).toContain(PAGE8.run.model);
+    expect(plate.textContent).toContain(PAGE8.run.date);
+    expect(plate.textContent).toContain(PAGE8.run.runId);
+    expect(plate.textContent).not.toMatch(/illustrative|simulation/i);
+    // Pages 5 to 7's plate copy, and the fact the whole page rests on.
+    expect(document.body.textContent).toContain("one measurement of ours");
+    expect(document.body.textContent).toContain("reads the same candidates");
+  });
+
+  // The main evidence figure used to print `best-of-N (qwen1.5b)` and `logprob`
+  // at a reader. Every row is now English, and the map is the only place a new
+  // judge can be named.
+  it("labels every selection rule in English, never a notebook identifier", () => {
+    render(<Page8 />);
+    for (const r of PAGE8.paired.vsOneChain) {
+      // getAll: "majority vote" is also figure 1's legend and figure 3's bar.
+      expect(screen.getAllByText(r.label).length).toBeGreaterThan(0);
+      expect(r.label).not.toContain("(");
+    }
+    for (const j of PAGE8.judges) {
+      expect(j.label).not.toMatch(/prm$|^qwen|^math\d/);
+    }
+    expect(document.body.textContent).not.toMatch(/logprob|qwen1\.5b|skywork-prm/);
+  });
+
+  // The book is never named in the deck (Page5.test.tsx, Page7.test.tsx), so a
+  // chapter of it cannot be either.
+  it("names no chapter of a source the reader cannot see", () => {
+    render(<Page8 />);
+    expect(document.body.textContent).not.toMatch(/ch0\d/);
+    expect(document.body.textContent).not.toContain("reasoning-from-scratch");
+    expect(screen.getByText(/heuristic scorer from the source we build on/)).toBeInTheDocument();
+  });
+
+  it("says what a verifier is where the word first appears", () => {
+    render(<Page8 />);
+    const first = screen.getByText(/trained to score finished solutions rather than to write them/);
+    expect(first).toBeInTheDocument();
+    // Before the figure that plots its scores, and before step 3's caption.
+    const body = document.body.textContent ?? "";
+    expect(body.indexOf("trained to score finished solutions")).toBeLessThan(
+      body.indexOf("Being good at the problems"),
+    );
+  });
+
+  // The run refuses to call the judge ordering resolved, and this is the page
+  // that quotes a p-value for everything else.
+  it("does not state the judge ranking as resolved", () => {
+    render(<Page8 />);
+    expect(PAGE8.claims.judge_ranking_resolved).toBe(false);
+    const caption = screen.getByText(/Being good at the problems/).closest("figcaption");
+    expect(caption?.textContent).toMatch(/on this run/);
+    expect(caption?.textContent).toMatch(/no pair of judges here is resolved/);
+  });
+
+  // Page 7 hands over a question. It gets answered in words, not just in a figure.
+  it("answers page 7 on what judging recovers", () => {
+    render(<Page8 />);
+    const trained = PAGE8.judges.find((j) => j.trained)!;
+    const close = screen.getByText(/leftovers are still mostly leftovers/);
+    expect(close.textContent).toContain(pct(PAGE8.coverage!));
+    expect(close.textContent).toContain(pct(PAGE8.bar.mean));
+    expect(close.textContent).toContain(pct(trained.mean));
+  });
+
+  // Page 7 used to claim page 8 reused its chains. It did not, and the receipt
+  // for what actually holds is on this page.
+  it("shows the agreement with page 7 rather than claiming identity", () => {
+    render(<Page8 />);
+    expect(PAGE8.agreement.sameCandidates).toBe(false);
+    const note = screen.getByText(/chains this page generated itself/);
+    expect(note.textContent).toContain(pct(PAGE8.agreement.page7Vote));
+    expect(note.textContent).toContain(pct(PAGE8.agreement.page8Vote));
+    expect(note.textContent).toContain(pct(PAGE8.agreement.page8Coverage));
   });
 
   it("links the notebook and traces for download", () => {

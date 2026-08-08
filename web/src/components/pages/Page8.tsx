@@ -38,7 +38,13 @@
  *
  * Layout follows pages 1 and 6: an intro paragraph full width above one
  * reading column of numbered steps, each beside a margin note that scrolls
- * with it.
+ * with it. Apparatus follows pages 5 to 7: a provenance plate under the lede,
+ * the download at the foot, and no footer. What the footer used to carry that
+ * lives nowhere else is now in the margin note beside the sentence it qualifies.
+ *
+ * No figure on this page renders a notebook identifier. `page08.ts` maps every
+ * selector to a reader-facing label and throws on one it does not know, because
+ * a row reading `best-of-N (qwen1.5b)` is a figure the reader cannot use.
  */
 
 import { useMemo, useState } from "react";
@@ -327,14 +333,16 @@ function CurvePanel() {
 
 /* ------------------------------------------------------------------ figure 2 */
 
-const PAIR_W = 620;
+const PAIR_W = 672;
 const PAIR_ROW = 30;
-const PAIR_M = { top: 26, right: 96, bottom: 34, left: 148 };
+// The left margin holds a sentence fragment, not an identifier: "best-of-N,
+// 1.5B math specialist" is the longest row label and it has to fit unclipped.
+const PAIR_M = { top: 26, right: 96, bottom: 34, left: 206 };
 
 /**
  * Fixed to the right of zero, broken to the left, one row per rule, against
  * the same single-chain baseline on the same problems. The one row whose mass
- * sits left of zero is ch05's presentation-grading scorer.
+ * sits left of zero is the heuristic scorer from the source we build on.
  */
 function PairedFigure() {
   const rows = useMemo(
@@ -356,8 +364,8 @@ function PairedFigure() {
       title={
         `For each selection rule, how many problems it fixed and how many it broke compared ` +
         `with taking a single chain. The trained verifier fixed ${PAGE8.headline.fixed} and ` +
-        `broke ${PAGE8.headline.broke}. ch05's heuristic scorer is the only rule that broke ` +
-        `more than it fixed.`
+        `broke ${PAGE8.headline.broke}. The hand-written length heuristic from the source we ` +
+        `build on is the only rule that broke more than it fixed.`
       }
     >
       <text x={innerW / 2 + 40} y={-10} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
@@ -371,7 +379,7 @@ function PairedFigure() {
         return (
           <g key={r.selector}>
             <text x={-8} y={cy + 4} textAnchor="end" className="fill-ink text-[11px]">
-              {r.selector}
+              {r.label}
             </text>
             <rect
               x={innerW / 2}
@@ -425,8 +433,9 @@ function JudgeFigure() {
       yLabel="picks a correct candidate (%)"
       title={
         `Each judge's own accuracy against how often it picks a correct candidate, averaged ` +
-        `over four temperatures. The points do not trend. The only judge above the majority ` +
-        `line is the trained verifier, which cannot solve any of these problems itself.`
+        `over four temperatures. The points do not trend. The one judge whose mean sits above ` +
+        `the majority line is the trained verifier, which cannot solve any of these problems ` +
+        `itself. The bars overlap, so no pair of judges is resolved at this sample.`
       }
     >
       <rect
@@ -483,7 +492,7 @@ function JudgeFigure() {
               y={y(j.mean) + 4}
               className={`text-[10px] ${j.trained ? "fill-correct" : "fill-ink-muted"}`}
             >
-              {j.name}
+              {j.label}
             </text>
           </g>
         );
@@ -525,6 +534,25 @@ export function Page8() {
         the same candidates, gets there too.
       </p>
 
+      {/* Provenance as a plate under the lede, pages 5 to 7's shape: two
+          sentences of prose and the instrument on one mono line, with the
+          download and the citations at the foot. The run-on footer this
+          replaces carried the same facts where nobody reads them. */}
+      <div className="flex flex-col gap-2 border-y border-grid py-4">
+        <p className="text-sm text-ink">
+          Every figure below is one measurement of ours, on the same problems pages 5 to 7 use, and
+          every selection rule on this page reads the same candidates, which is the fact the whole
+          page rests on. Differences between rules are exact McNemar tests over the problems where
+          the two rules disagree, and the notebook at the foot of the page opens in a replay mode
+          that redraws every figure here from those chains, on no GPU.
+        </p>
+        <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
+          measured · {PAGE8.run.model} · MATH-500 levels 4 and 5, n = {PAGE8.run.items} problems ·{" "}
+          {PAGE8.run.chains.toLocaleString()} chains at a {PAGE8.run.chainCap}-token cap across T ={" "}
+          {PAGE8.run.temperatures.join(", ")} · run {PAGE8.run.runId} · {PAGE8.run.date}
+        </p>
+      </div>
+
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 — one batch, two rules */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -539,7 +567,9 @@ export function Page8() {
               <strong className="text-wrong">
                 {tidyMath(s.vote.answer ?? "no answer")} on {s.vote.votes} of {s.n}
               </strong>
-              , and it is wrong. The verifier takes the rightmost dot:{" "}
+              , and it is wrong. The <strong className="text-ink">verifier</strong>, a second model
+              trained to score finished solutions rather than to write them, takes the rightmost
+              dot:{" "}
               <strong className="text-correct">{tidyMath(s.verifier.answer ?? "")}</strong>, which
               is right. The answer is {tidyMath(s.ground_truth)}.
             </p>
@@ -596,10 +626,19 @@ export function Page8() {
             )}
           </section>
         </section>
-        <Note kicker="Same batch, two rules">
+        {/* The word "verifier" is new to the deck here, so the margin carries the
+            mechanics the prose above does not stop for, and the cite for the
+            technique that used to sit in the footer. */}
+        <Note kicker="What the verifier does">
           <p>
-            Both panels read the same {s.n} chains. Only the rule for choosing differs, so every
-            difference is the rule.
+            It reads the problem and one finished candidate and returns a single number. Best-of-N
+            keeps the candidate with the highest one. It writes nothing, and it never sees the
+            tally, so whatever it buys is not counting in disguise.
+          </p>
+          <CitationBadge citation={COBBE} />
+          <p>
+            Cited for the technique, training a verifier and selecting among N sampled solutions.
+            The numbers on this page are our own.
           </p>
         </Note>
 
@@ -613,7 +652,7 @@ export function Page8() {
               tested where the two disagree. The trained verifier fixes{" "}
               <strong className="text-ink">{PAGE8.headline.fixed}</strong> and breaks{" "}
               <strong className="text-ink">{PAGE8.headline.broke}</strong>. And{" "}
-              <strong className="text-ink">ch05&apos;s own heuristic scorer</strong>
+              <strong className="text-ink">the heuristic scorer from the source we build on</strong>
               {PAGE8.heuristic ? (
                 <>
                   {" "}
@@ -631,6 +670,16 @@ export function Page8() {
             Counting fixes {PAGE8.majority.fixed} and breaks {PAGE8.majority.broke}, {" "}
             {pValue(PAGE8.majority.p)}. It clears the same bar, for free.
           </p>
+          {/* Page 7's handoff used to claim these were page 7's own chains. They
+              are not, and the receipt for what is actually true is better than
+              the claim it replaces. */}
+          <p>
+            That vote is page 7&apos;s rule re-run here, on chains this page generated itself: at
+            the same temperature and {PAGE8.agreement.n} candidates it reads{" "}
+            {pct(PAGE8.agreement.page8Vote)} against page 7&apos;s {pct(PAGE8.agreement.page7Vote)},
+            with a right answer somewhere in the pile on {pct(PAGE8.agreement.page8Coverage)} of
+            problems both times. Different chains, same place.
+          </p>
         </Note>
 
         {/* Step 3 — what a judge is worth */}
@@ -642,18 +691,26 @@ export function Page8() {
               Five judges spanning size, subject and training objective, each averaged over four
               temperatures with the bar spanning its best and worst.{" "}
               <strong className="text-ink">Being good at the problems is not being good at judging them</strong>
-              : the best solver on this ladder is the worst judge on it. The only judge above the
-              vote is{" "}
-              <strong className="text-correct">{trained?.name}</strong>, which cannot solve a single
-              one of these problems, because it was trained to score rather than to answer.
+              : on this run the best solver on the ladder ranked last as a judge, and the only judge
+              whose mean sits above the vote is the{" "}
+              <strong className="text-correct">{trained?.label}</strong>, which cannot solve a
+              single one of these problems, because it was trained to score rather than to answer.{" "}
+              {PAGE8.claims.judge_ranking_resolved ? null : (
+                <>
+                  Read the ordering as a pattern and not a ranking: the bars overlap, no pair of
+                  judges here is resolved at this sample, and that is why this is the one comparison
+                  on the page with no p-value beside it.
+                </>
+              )}
             </figcaption>
           </figure>
         </section>
         <Note kicker="A verifier, not a PRM">
           <p>
-            {trained?.name} is a process reward model read at the final token only: one number for
-            the whole solution. It is here as a <em>trained verifier</em>. Grading the steps is the
-            next page.
+            The trained one is{" "}
+            <span className="font-mono text-xs">{PAGE8.verifierNote?.model ?? trained?.name}</span>,
+            a process reward model read at the final token only: one number for the whole solution.
+            It is here as a <em>trained verifier</em>. Grading the steps is the next page.
           </p>
         </Note>
 
@@ -667,6 +724,18 @@ export function Page8() {
               problems ahead of the vote, {pValue(PAGE8.caveat.p)}, which is not a difference. Two
               routes to the same place, and one of them is free.
             </p>
+            {/* Page 7 closed on the right answers the vote threw away and handed
+                this page the question. Answered here in the numbers both figures
+                already draw, before the pivot that the answer motivates. */}
+            {PAGE8.coverage !== null && trained ? (
+              <p>
+                And page 7&apos;s leftovers are still mostly leftovers. A right answer was in the
+                pile on <strong>{pct(PAGE8.coverage)}</strong> of problems, and on the problems where
+                one exists the vote returns it {pct(PAGE8.bar.mean)} of the time against the trained
+                verifier&apos;s {pct(trained.mean)}. Judging recovers a little of what counting
+                discarded, not most of it.
+              </p>
+            ) : null}
             <p className="text-ink-muted">
               So the question is not how many candidates, nor even how good the judge is, but{" "}
               <em>what the judge is reading</em>. Every rule here grades the final answer and none
@@ -675,12 +744,28 @@ export function Page8() {
             </p>
           </div>
         </section>
-        <div aria-hidden="true" />
+        {/* The one disclosure the retired footer held that lives nowhere else:
+            whose comparison this is. It belongs beside the sentence that makes
+            it, not under the page. */}
+        <Note kicker="Whose comparison this is">
+          <CitationBadge citation={STROEBL} />
+          <p>
+            Cited for the shape behind the two recovery numbers beside it: an imperfect judge asked
+            to pick from more and more candidates eventually reads its own noise. The measurement is
+            ours.
+          </p>
+          <p>
+            So is the comparison. Counting against selection is not a contest anyone else ran here:
+            self-consistency and best-of-N are introduced in different chapters of the source we
+            build on and are never set against each other there.
+          </p>
+        </Note>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <CitationBadge citation={COBBE} />
-        <CitationBadge citation={STROEBL} />
+      {/* The foot carries the download and nothing else: the apparatus is in the
+          plate under the lede and the two cites are beside the sentences that
+          earn them. Pages 5 to 7 end this way. */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-grid pt-4">
         <a
           className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
           href={NOTEBOOK_ZIP}
@@ -688,20 +773,10 @@ export function Page8() {
         >
           notebook + {PAGE8.run.chains.toLocaleString()} traces ↓
         </a>
+        <span className="text-xs text-ink-muted">
+          every judge&apos;s prompt, the seeds and the full decoding conditions live in there
+        </span>
       </div>
-
-      <p className="text-xs text-ink-muted">
-        measured · {PAGE8.run.model} · {PAGE8.run.items} MATH-500 level 4-5 problems ·{" "}
-        {PAGE8.run.chains.toLocaleString()} chains at {PAGE8.run.chainCap} tokens across
-        temperatures {PAGE8.run.temperatures.join(", ")} · {PAGE8.run.date} · every selection rule
-        reads the same candidates, which is the fact the whole page rests on · differences are
-        exact McNemar tests over the problems where two rules disagree · Cobbe et al. 2021 is cited
-        for the technique, training a verifier and selecting among N sampled solutions, and
-        Stroebl et al. 2024 for the shape of the imperfect-verifier limit; the numbers here are our
-        own · the comparison between counting and selection is ours too: self-consistency and
-        best-of-N are introduced in different chapters of the source we build on and are never set
-        against each other there
-      </p>
 
       <PageNav n={PAGE_N} />
     </article>
