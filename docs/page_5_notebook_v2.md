@@ -233,6 +233,7 @@ figure_2{ model_id, conditions[3]{ accuracy, ci, median_tokens, p90_tokens,
                                    chain_share, boxed_rate, n },
           contrasts[2]{ pair, delta_pts, discordant_hi, discordant_lo, p, ci } }
 figure_3{ models[3]{ tag, params, quant, blurt_accuracy, bare_accuracy,
+                     blurt_median_tokens, bare_median_tokens,
                      delta_pts, discordant, p },
           floor_spread_pts, cross{ gagged_large, ungagged_small, delta, p } }
 close{ blurt_tokens, bare_tokens, token_multiple, delta_pts }
@@ -240,6 +241,10 @@ manifest{...}
 ```
 
 `figure_3.models[].quant` is mandatory: the 7B is 8-bit and the page must be able to say so.
+
+`figure_3.models[].{blurt,bare}_median_tokens` were added when the close became a chart of tokens
+against accuracy. Without them the page could plot that pair for the primary only, which is how it
+came to print a token count that never said which of the three checkpoints had written it.
 
 ---
 

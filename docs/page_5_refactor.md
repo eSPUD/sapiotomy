@@ -206,6 +206,24 @@ One paired readout, not a fourth chart: what the chain cost. Six tokens against 
 seventy-three, roughly **95× the tokens for 36 points**. The sentence the page ends on is that the
 chain is not free and nobody has asked yet how much of it is load-bearing.
 
+**Revised after the build: the close IS a fourth chart.** The readout shipped as three stat cards
+and two things were wrong with them. They never said *which* checkpoint they were quoting (the
+3B, and nothing on the page told the reader that), and the third card put the 95× on the page as a
+rate of exchange, which this run cannot price. The two prompts differ by more than the length of
+what they produce, so the ratio describes two conditions and is never the reason one of them
+scores higher. The cards are now one pair of axes. Across, the median tokens a checkpoint wrote
+per problem, log scale. Up, the share of the same 100 problems it solved. Six dots, three
+checkpoints under two prompts, each dot labelled with its checkpoint, and the dots deliberately
+unjoined with the caption saying why.
+
+This needs two numbers per model that the first run's `derived.json` did not carry, so
+`figure_3.models[]` gains `blurt_median_tokens` and `bare_median_tokens`. They make the reading
+the figure exists for: **the tokens move with the prompt and the accuracy moves with the model.**
+Left alone, the three checkpoints write 561, 573 and 582 tokens and solve 22%, 43% and 60%.
+Forbidden to reason they write 5, 6 and 6 and solve 4%, 7% and 11%. A picture in which the
+horizontal spread is set by the prompt and the vertical spread by the checkpoint is the one thing
+the cards could not show, and it is what stops a reader reading the token count as the cause.
+
 ---
 
 ## 3. Empirical Data / Reasoning Traces Needed
@@ -285,7 +303,9 @@ floor.
   stating the bound, never the word "nothing" unqualified. Do not describe the bars.
 - **Figure 3, if it ships:** one sentence, the flat floor. It must not compare heights across the
   right-hand bars as a fact about scale.
-- **Step 4:** one sentence, the handoff, carrying the token multiple.
+- **Step 4:** one sentence, the handoff. It used to carry the token multiple; since the revision
+  above it carries the reading of the close's own figure instead, which is that the tokens move
+  with the prompt and the accuracy moves with the model.
 - **Margin notes:** the deck's existing convention holds. Wei et al. sits beside figure 1 and
   Kojima et al. beside the step-by-step tab, since those are the figures whose *techniques* they
   originate. Cite the technique, not the measurement: the numbers are ours, so no cite carries a
@@ -369,7 +389,13 @@ go on the page regardless of how good the number looks.
   the bound `derived.json` reports. Gated on `instruction_null_bounded`, and stated as a bound
   rather than as a zero.
 - The formulation that reasons writes far more tokens than the one that does not, in the ratio
-  `close.token_multiple` reports.
+  `close.token_multiple` reports. Reportable as two token counts side by side, which is what the
+  close's figure plots; **not** reportable as a price, since nothing in the run isolates length
+  from the rest of what the two prompts changed.
+- What each named checkpoint wrote and what it solved, from
+  `figure_3.models[].{blurt,bare}_median_tokens` beside the accuracies already there. Same gate as
+  the rest of figure 3, `may_compare_across_models`, and the same phrasing rule: named
+  checkpoints, never a fact about size.
 
 **Supported only when the gate says so:**
 

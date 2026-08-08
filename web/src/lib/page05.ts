@@ -86,6 +86,10 @@ export interface ModelRow {
   quant: string;
   blurtAccuracy: number;
   bareAccuracy: number;
+  /** Median tokens this checkpoint wrote per problem, forbidden to reason. */
+  blurtMedianTokens: number;
+  /** Median tokens this checkpoint wrote per problem, left alone. */
+  bareMedianTokens: number;
   deltaPts: number;
   fixed: number;
   broken: number;
@@ -302,6 +306,8 @@ export const PAGE5 = {
         quant: m.quant as string,
         blurtAccuracy: m.blurt_accuracy as number,
         bareAccuracy: m.bare_accuracy as number,
+        blurtMedianTokens: m.blurt_median_tokens as number,
+        bareMedianTokens: m.bare_median_tokens as number,
         deltaPts: m.delta_pts as number,
         fixed: m.fixed as number,
         broken: m.broken as number,
@@ -313,6 +319,32 @@ export const PAGE5 = {
   },
   close: D.close,
 } as const;
+
+/**
+ * Figure 3's rows and figure 2's conditions are the same 100 generations of the
+ * primary checkpoint, aggregated by two different cells of the notebook. The
+ * close plots the per-model medians on the same axes as figure 2's numbers, so
+ * the two aggregations have to agree: if they do not, the halves of the file
+ * came from different runs and neither figure may be drawn.
+ */
+const primaryRow = PAGE5.figure3.models.find((m) => m.modelId === PAGE5.figure2.modelId);
+if (!primaryRow) {
+  throw new Page05DataError(
+    `page-05-derived.json: figure 3 has no row for ${PAGE5.figure2.modelId}, the model figure 2 measures`,
+  );
+}
+for (const [what, a, b] of [
+  ["median tokens left alone", primaryRow.bareMedianTokens, bare.medianTokens],
+  ["median tokens forbidden to reason", primaryRow.blurtMedianTokens, blurt.medianTokens],
+  ["accuracy left alone", primaryRow.bareAccuracy, bare.accuracy],
+  ["accuracy forbidden to reason", primaryRow.blurtAccuracy, blurt.accuracy],
+] as const) {
+  if (a !== b) {
+    throw new Page05DataError(
+      `page-05-derived.json: ${PAGE5.figure2.modelId} reports ${what} as ${a} in figure 3 and ${b} in figure 2`,
+    );
+  }
+}
 
 /** The 10x10 paired table figure 2 animates. Built once; it is pure arithmetic. */
 export const SUPPRESSION_TABLE = sharedPairedTable(

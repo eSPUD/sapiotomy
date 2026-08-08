@@ -73,7 +73,18 @@
  *   emergence is page 11's subject. No size axis, no line through the points,
  *   and no caption that can be read as either. Section 1 of the spec.
  *
- *   Step 5 — 6 tokens against 573, and the handoff page 6 actually opens on.
+ *   Step 5 — figure 4, and the handoff page 6 opens on. This used to be three
+ *   stat cards, one of which was a "trade": 95.5x the tokens for 36 points. Two
+ *   things were wrong with it. It never said which of the three checkpoints it
+ *   was quoting (the 3B, and a reader had no way to know), and putting a ratio
+ *   on a card asserts a rate of exchange the run cannot price, because the two
+ *   prompts differ by more than the length of what they produce. The cards are
+ *   now one pair of axes: median tokens written across, share of the same 100
+ *   solved up, six dots for three checkpoints under two prompts. The dots are
+ *   deliberately unjoined and the caption says why. What the figure shows is the
+ *   thing the cards hid: the tokens move with the PROMPT, in two clusters two
+ *   decades apart, while the accuracy moves with the MODEL, up the page inside
+ *   each cluster.
  *
  * The apparatus lives in the margin, one note per step, not in a footer. The
  * three-paragraph footnote this page used to end on was doing the notebook's
@@ -98,6 +109,10 @@
  *     "nothing" unqualified (claims gate `instruction_null_bounded`).
  *   · chain share is a blurt detector and nothing more. It verifies the gag
  *     worked; it is not a measure of how much reasoning happened.
+ *   · figure 4's dots stay unjoined, and no sentence on the page may say the
+ *     tokens bought the points. Tokens are a cost the page reports, never a
+ *     price it quotes: the only thing that moved between the clusters is the
+ *     prompt, and page 6 is where length itself becomes the variable.
  *   · Wei et al. and Kojima et al. are cited for the TECHNIQUES they introduced.
  *     No cite may carry one of our numbers or sit where it implies the data came
  *     from a paper.
@@ -132,6 +147,8 @@ const F2 = PAGE5.figure2;
 const F3 = PAGE5.figure3;
 const CLOSE = PAGE5.close;
 const M = PAGE5.manifest;
+/** The checkpoint every figure above the close is measured on. */
+const PRIMARY_ROW = F3.models.find((m) => m.modelId === PAGE5.figure2.modelId)!;
 
 /** The download: notebook + harness + every generation the page rests on. */
 const NOTEBOOK_ZIP = "/notebooks/page-05-how-to-reason.zip";
@@ -310,6 +327,150 @@ function FloorChart() {
           </g>
         );
       })}
+    </ChartFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ close */
+
+const COST_W = 700;
+const COST_H = 340;
+const COST_MARGIN = { top: 38, right: 92, bottom: 50, left: 54 };
+const COST_INNER_W = COST_W - COST_MARGIN.left - COST_MARGIN.right;
+const COST_INNER_H = COST_H - COST_MARGIN.top - COST_MARGIN.bottom;
+/** Three decades, because 6 tokens and 573 share no linear axis worth reading. */
+const COST_DECADES = 3;
+/** Percent at the top of the accuracy axis: the 7B left alone reaches 60. */
+const COST_Y_MAX = 70;
+
+/** Short enough to sit beside a dot: "Qwen2.5-1.5B-Instruct" is not. */
+const sizeLabel = (params: number) => `${Number((params / 1e9).toFixed(1))}B`;
+
+/**
+ * The close, as one pair of axes: across, the median tokens a checkpoint wrote
+ * per problem; up, the share of the same 100 problems it solved. Six dots,
+ * three checkpoints under each of two prompts.
+ *
+ * Deliberately six unconnected dots. Joining a checkpoint's two dots would draw
+ * an arrow from tokens to accuracy, and this run cannot support that arrow: the
+ * two prompts differ by more than their length. What the figure IS allowed to
+ * say is where each named checkpoint sits, which is what the reader could not
+ * work out from a card that never said which model it was measuring.
+ */
+function CostChart() {
+  const rows = F3.models;
+  const x = (tokens: number) => (Math.log10(Math.max(tokens, 1)) / COST_DECADES) * COST_INNER_W;
+  const y = (accuracy: number) => COST_INNER_H * (1 - (accuracy * 100) / COST_Y_MAX);
+  /** Where a prompt's label goes: over the middle of its three dots. */
+  const clusterX = (tokens: number[]) => tokens.reduce((a, t) => a + x(t), 0) / tokens.length;
+
+  const points = rows.flatMap((m) => [
+    {
+      key: `${m.modelId}-blurt`,
+      gagged: true,
+      label: sizeLabel(m.params),
+      tokens: m.blurtMedianTokens,
+      accuracy: m.blurtAccuracy,
+    },
+    {
+      key: `${m.modelId}-bare`,
+      gagged: false,
+      label: sizeLabel(m.params),
+      tokens: m.bareMedianTokens,
+      accuracy: m.bareAccuracy,
+    },
+  ]);
+
+  const describe = (gagged: boolean) =>
+    rows
+      .map(
+        (m) =>
+          `${sizeLabel(m.params)} ${gagged ? m.blurtMedianTokens : m.bareMedianTokens} tokens and ${pct(
+            gagged ? m.blurtAccuracy : m.bareAccuracy,
+          )}`,
+      )
+      .join(", ");
+
+  return (
+    <ChartFrame
+      title={`Median tokens written against the share of the same ${F2.bare.n} MATH-500 problems solved, for three Qwen2.5-Instruct checkpoints under two prompts. Forbidden to reason: ${describe(true)}. Left alone: ${describe(false)}.`}
+      width={COST_W}
+      height={COST_H}
+      margin={COST_MARGIN}
+      xLabel="median tokens written per problem (log scale)"
+      yLabel={`share of the same ${F2.bare.n} problems solved (%)`}
+    >
+      {/* gridlines: a decade across, twenty points up */}
+      {[0, 1, 2, 3].map((d) => (
+        <g key={d}>
+          <line
+            x1={x(10 ** d)}
+            x2={x(10 ** d)}
+            y1={0}
+            y2={COST_INNER_H}
+            className="stroke-grid"
+            strokeWidth={1}
+          />
+          <text
+            x={x(10 ** d)}
+            y={COST_INNER_H + 16}
+            textAnchor="middle"
+            className="fill-ink-muted text-[11px] tabular-nums"
+          >
+            {(10 ** d).toLocaleString("en-GB")}
+          </text>
+        </g>
+      ))}
+      {[0, 20, 40, 60].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={COST_INNER_W} y1={y(t / 100)} y2={y(t / 100)} className="stroke-grid" strokeWidth={1} />
+          <text
+            x={-8}
+            y={y(t / 100) + 4}
+            textAnchor="end"
+            className="fill-ink-muted text-[11px] tabular-nums"
+          >
+            {t}
+          </text>
+        </g>
+      ))}
+
+      {/* which prompt each cluster is, above the cluster rather than in a key */}
+      <text
+        x={clusterX(rows.map((m) => m.blurtMedianTokens))}
+        y={-14}
+        textAnchor="middle"
+        className="fill-wrong text-[11px] font-semibold"
+      >
+        forbidden to reason
+      </text>
+      <text
+        x={clusterX(rows.map((m) => m.bareMedianTokens))}
+        y={-14}
+        textAnchor="middle"
+        className="fill-compute text-[11px] font-semibold"
+      >
+        left alone
+      </text>
+
+      {points.map((p) => (
+        <g key={p.key}>
+          <circle
+            cx={x(p.tokens)}
+            cy={y(p.accuracy)}
+            r={5}
+            className={`${p.gagged ? "fill-wrong" : "fill-compute"} stroke-surface`}
+            strokeWidth={1.5}
+          />
+          <text
+            x={x(p.tokens) + 11}
+            y={y(p.accuracy) + 4}
+            className={`text-[10px] tabular-nums ${p.gagged ? "fill-wrong" : "fill-compute"}`}
+          >
+            {p.label} · {pct(p.accuracy)}
+          </text>
+        </g>
+      ))}
     </ChartFrame>
   );
 }
@@ -797,45 +958,47 @@ export function Page5() {
           </p>
         </Note>
 
-        {/* Close */}
+        {/* Close — figure 4. Every figure above this one is the 3B, and the page
+            never said so where it counted. Six dots say it: which checkpoint,
+            under which prompt, wrote how much, and solved how many. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">5. What the working cost</h2>
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="flex flex-col rounded-lg border-l-4 border-wrong bg-surface-raised px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  forbidden to reason
-                </p>
-                <p className="font-mono text-2xl tabular-nums text-ink">
-                  {CLOSE.blurt_median_tokens} tokens
-                </p>
-                <p className="font-mono text-xs tabular-nums text-ink-muted">
-                  {pct(CLOSE.blurt_accuracy)} solved
-                </p>
-              </div>
-              <div className="flex flex-col rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-compute">
-                  left alone
-                </p>
-                <p className="font-mono text-2xl tabular-nums text-ink">
-                  {CLOSE.bare_median_tokens} tokens
-                </p>
-                <p className="font-mono text-xs tabular-nums text-ink-muted">
-                  {pct(CLOSE.bare_accuracy)} solved
-                </p>
-              </div>
-              <div className="flex flex-col rounded-lg border-l-4 border-grid bg-surface-raised px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  the trade
-                </p>
-                <p className="font-mono text-2xl tabular-nums text-ink">
-                  ×{CLOSE.token_multiple}
-                </p>
-                <p className="font-mono text-xs tabular-nums text-ink-muted">
-                  the tokens, for {CLOSE.suppression_pts} points
-                </p>
-              </div>
+          <h2 className="text-xl font-semibold text-ink">
+            5. What each checkpoint wrote, and what it solved
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              three checkpoints · both prompts
+            </span>
+          </h2>
+          <p className="text-ink-muted">
+            Figures 1 and 2 are one checkpoint, the {sizeLabel(PRIMARY_ROW.params)}. Here are all
+            three, each plotted twice. Across is the median number of tokens the model
+            wrote per problem, on a log scale because the two prompts sit two orders of magnitude
+            apart. Up is the share of the same {F2.bare.n} problems it solved.
+          </p>
+          <section
+            aria-label="Tokens written against problems solved"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+          >
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className={chip}>Qwen2.5-Instruct · 1.5B, 3B, 7B · all bf16</span>
+              <span className={chip}>greedy · the same {F2.bare.n} problems</span>
             </div>
+            <CostChart />
+            <p className="text-xs text-ink-muted">
+              One dot is one checkpoint under one prompt. The dots are not joined: the two prompts
+              differ by more than the length of what they produce, so nothing here says the longer
+              answers are better because they are longer.
+            </p>
+          </section>
+          <p className="text-ink-muted">
+            Both numbers rise with the checkpoint, but not together. Left alone, the three models
+            write almost the same amount, a median of {F3.models.map((m) => m.bareMedianTokens).join(", ")}{" "}
+            tokens, and solve {F3.models.map((m) => pct(m.bareAccuracy)).join(", ")} of the same
+            hundred. Forbidden to reason they write{" "}
+            {F3.models.map((m) => m.blurtMedianTokens).join(", ")} tokens and solve{" "}
+            {F3.models.map((m) => pct(m.blurtAccuracy)).join(", ")}. The tokens move with the
+            prompt; the accuracy moves with the model.
+          </p>
+          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <p className="text-ink">
               You have probably done this before. When telling the model to skip the working and
               answer, the answer gets worse.{" "}

@@ -269,6 +269,54 @@ describe("Page 5, figure 3: the floor is flat", () => {
   });
 });
 
+// The close was three stat cards quoting one unnamed checkpoint, one of them a
+// ×95.5 "trade". It is now a scatter: six cells, every one of them named.
+describe("Page 5, figure 4: what each checkpoint wrote against what it solved", () => {
+  beforeEach(() => {
+    reducedMotion = true;
+  });
+
+  it("names the checkpoint every figure above it was measured on", () => {
+    render(<Page5 />);
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
+    expect(headings[4]).toContain("What each checkpoint wrote, and what it solved");
+    expect(body()).toContain("Figures 1 and 2 are one checkpoint, the 3B");
+  });
+
+  // Six dots, and the axes they sit on, in the chart's own accessible title:
+  // a reader on a screen reader gets the same six cells as a reader with eyes.
+  it("plots all three checkpoints under both prompts", () => {
+    render(<Page5 />);
+    const chart = screen.getByLabelText(/Median tokens written against the share/);
+    const title = chart.getAttribute("aria-label") ?? "";
+    for (const m of PAGE5.figure3.models) {
+      expect(title).toContain(`${m.blurtMedianTokens} tokens and ${Math.round(m.blurtAccuracy * 100)}%`);
+      expect(title).toContain(`${m.bareMedianTokens} tokens and ${Math.round(m.bareAccuracy * 100)}%`);
+    }
+    expect(title).toContain("Forbidden to reason");
+    expect(title).toContain("Left alone");
+  });
+
+  // The reading the figure supports: the horizontal axis is set by the prompt,
+  // the vertical one by the model. Read off the data, so it cannot drift.
+  it("reads the two axes off the run rather than asserting a rate", () => {
+    render(<Page5 />);
+    const rows = PAGE5.figure3.models;
+    expect(body()).toContain(`a median of ${rows.map((m) => m.bareMedianTokens).join(", ")} tokens`);
+    expect(body()).toContain("The tokens move with the prompt; the accuracy moves with the model");
+  });
+
+  // The claim the page is not allowed to make, and the words that stop a reader
+  // making it for us.
+  it("does not price the tokens, and says why the dots are not joined", () => {
+    render(<Page5 />);
+    expect(body()).toContain("The dots are not joined");
+    expect(body()).toContain("nothing here says the longer answers are better because they are longer");
+    expect(body()).not.toContain("the trade");
+    expect(body()).not.toContain(`×${PAGE5.close.token_multiple}`);
+  });
+});
+
 describe("Page 5: provenance and what the page may claim", () => {
   beforeEach(() => {
     reducedMotion = true;
@@ -336,12 +384,9 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(body()).not.toContain("reasoning-from-scratch");
   });
 
-  it("hands page 6 the token multiple rather than a size claim", () => {
+  it("hands page 6 the working rather than a size claim", () => {
     render(<Page5 />);
     expect(body()).toContain("You have probably done this before");
-    expect(body()).toContain(`${PAGE5.close.blurt_median_tokens} tokens`);
-    expect(body()).toContain(`${PAGE5.close.bare_median_tokens} tokens`);
-    expect(body()).toContain(`×${PAGE5.close.token_multiple}`);
     expect(body()).toContain("cut it off mid-sentence");
   });
 

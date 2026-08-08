@@ -135,6 +135,28 @@ describe("page 5 figure 3: the floor", () => {
     expect(Math.max(...bares) - Math.min(...bares)).toBeGreaterThan(10);
   });
 
+  // The close plots these against the accuracies, so a row missing one would
+  // draw a dot at token zero rather than fail. They are also the fact that keeps
+  // the close honest: within a prompt the token counts barely move.
+  it("carries what each checkpoint wrote, not only what it solved", () => {
+    const rows = PAGE5.figure3.models;
+    for (const m of rows) {
+      expect(m.blurtMedianTokens).toBeGreaterThan(0);
+      expect(m.bareMedianTokens).toBeGreaterThan(m.blurtMedianTokens * 10);
+    }
+    const bare = rows.map((m) => m.bareMedianTokens);
+    expect(Math.max(...bare) / Math.min(...bare)).toBeLessThan(1.2);
+  });
+
+  // Figure 3's row for the primary and figure 2's conditions are the same 100
+  // generations aggregated twice, and `lib/page05` throws if they disagree.
+  it("agrees with figure 2 on the checkpoint they share", () => {
+    const primary = PAGE5.figure3.models.find((m) => m.modelId === PAGE5.figure2.modelId)!;
+    expect(primary.bareMedianTokens).toBe(PAGE5.figure2.bare.medianTokens);
+    expect(primary.blurtMedianTokens).toBe(PAGE5.figure2.blurt.medianTokens);
+    expect(primary.bareAccuracy).toBe(PAGE5.figure2.bare.accuracy);
+  });
+
   it("has the cross-model comparison the headline sentence rests on", () => {
     const c = PAGE5.figure3.cross;
     expect(c.gagged_large_accuracy).toBeLessThan(c.ungagged_small_accuracy);
