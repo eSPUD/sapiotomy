@@ -12,7 +12,7 @@
  * be would teach the opposite lesson with full confidence.
  */
 import { describe, expect, it } from "vitest";
-import { PAGE9, checkLabel } from "./page09";
+import { PAGE9 } from "./page09";
 
 describe("page 9's measured run", () => {
   it("loads a run that passed every blocking claim", () => {
@@ -127,12 +127,28 @@ describe("page 9's three specimens", () => {
     );
     if (!published) expect(anyScore).toBe(false);
   });
-});
 
-describe("checkLabel", () => {
-  it("words all three labels, including the refusal", () => {
-    expect(checkLabel("true")).toBe("checked");
-    expect(checkLabel("false")).toBe("false");
-    expect(checkLabel("unknown")).toBe("not checkable");
+  it("gives the PRM a verdict on every step, because it never declines", () => {
+    // This is the asymmetry the page is built on: the checker's silence covers
+    // most of the chain, the PRM's never does. A hole here would make the page's
+    // "it scored all of them" false.
+    if (PAGE9.graders.prm) {
+      for (const sp of [PAGE9.lucky, PAGE9.broken, PAGE9.clean]) {
+        for (const step of sp.steps) {
+          expect(step.prm).not.toBeNull();
+          expect(step.prmVerdict).not.toBeNull();
+        }
+      }
+    }
+  });
+
+  it("cuts each PRM verdict at the threshold the run fitted", () => {
+    const prm = PAGE9.graders.prm;
+    if (!prm) return;
+    for (const sp of [PAGE9.lucky, PAGE9.broken, PAGE9.clean]) {
+      for (const step of sp.steps) {
+        expect(step.prmVerdict).toBe(step.prm! >= prm.threshold ? "true" : "false");
+      }
+    }
   });
 });
