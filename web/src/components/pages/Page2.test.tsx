@@ -90,9 +90,13 @@ describe("Page 2 (Thinking in Reality): a training-cutoff slider", () => {
   it("numbers every citation inline and lists the same numbers in the sidenotes", () => {
     const { container } = render(<Page2 />);
     const marks = Array.from(container.querySelectorAll("sup"));
-    expect(marks).toHaveLength(1);
-    expect(marks[0].textContent).toMatch(/1$/);
+    expect(marks).toHaveLength(2);
+    // Both markers are Cite anchors into the References sidenotes.
+    for (const m of marks) {
+      expect(m.querySelector("a")?.getAttribute("href")).toMatch(/^#ref-\d+$/);
+    }
     expect(document.body.textContent ?? "").toMatch(/1\.\s*Zhao et al/);
+    expect(document.body.textContent ?? "").toMatch(/2\.\s*Askell et al/);
   });
 
   it("cites the bias source", () => {

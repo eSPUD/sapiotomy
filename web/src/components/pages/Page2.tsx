@@ -58,7 +58,7 @@ const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i
 const DEFAULT_READING_FINALS = SPAIN_ALL_TITLES.mens.map((y) => monthIndex(y, 6));
 
 /** Page 2's references, numbered in order of first appearance. */
-const REF = { winobias: 1 } as const;
+const REF = { winobias: 1, askell: 2 } as const;
 
 /**
  * The cutoff explorer. `finals` decides which titles count as knowable and
@@ -165,7 +165,7 @@ function Note({
 }: {
   kicker: string;
   /** Sit at the foot of the sidenote column instead of the top of the row. The
-   *  house position for "Further reading", which closes the column on a page. */
+   *  house position for the closing References note beside the final step. */
   bottom?: boolean;
   children: React.ReactNode;
 }) {
@@ -194,8 +194,9 @@ export function Page2() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        What does it take for an LLM to be useful (helpful, harmless and honest) in the real world?
-        What are the pitfalls of System 1 thinking in the real world?
+        What does it take for an LLM to be useful (helpful, harmless and honest)
+        <Cite n={REF.askell} /> in the real world? What are the pitfalls of System 1 thinking in the
+        real world?
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -295,19 +296,10 @@ export function Page2() {
             of this story: what it buys, how to buy more of it, and where buying more stops helping.
           </PullQuote>
         </section>
-        <Note kicker="Further reading" bottom>
-          <p>
-            Askell et al.,{" "}
-            <a
-              href="https://arxiv.org/abs/2112.00861"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-compute underline"
-            >
-              &ldquo;A General Language Assistant as a Laboratory for Alignment&rdquo;
-            </a>{" "}
-            (2021), which introduced the helpful, honest and harmless framing this page opens on.
-          </p>
+        <Note kicker="References" bottom>
+          <RefItem n={REF.askell} href="https://arxiv.org/abs/2112.00861" preprint>
+            Askell et al. 2021, <em>A General Language Assistant as a Laboratory for Alignment</em>.
+          </RefItem>
         </Note>
       </div>
 

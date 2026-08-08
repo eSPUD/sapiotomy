@@ -35,7 +35,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { NEXT_WORD_SPEC } from "@/lib/authored";
@@ -60,6 +60,12 @@ const HEAD = 20;
 const pct = (p: number) => `${Math.round(p * 100)}%`;
 /** Every word in the whole tree — the denominator of the compute bill. */
 const TREE_WORDS = NW_.states.length - 1;
+
+/** Reference numbers, in order of first appearance on the page. */
+const REF = {
+  degen: 1,
+  tot: 2,
+} as const;
 
 /* The tree never changes, so lay it out once: every state gets a row within
    its column, children grouped under their parent's subtree. */
@@ -368,8 +374,8 @@ export function Page10() {
 
             <p className="text-xs text-ink-muted">
               The trap is not a toy. Run for real on GPT-2, always-take-the-likeliest-word gets
-              stuck repeating a phrase in {degenGreedy}% of its continuations. Human text:{" "}
-              {degenHuman}%.
+              stuck repeating a phrase in {degenGreedy}% of its continuations.
+              <Cite n={REF.degen} /> Human text: {degenHuman}%.
             </p>
 
             <div className="flex flex-wrap items-center gap-3">
@@ -395,9 +401,10 @@ export function Page10() {
             <p>That is what a chain of thought does.</p>
           </Note>
           <Note kicker="References">
-            <p>
-              Holtzman et al. 2020, <em>The Curious Case of Neural Text Degeneration</em>.
-            </p>
+            <RefItem n={REF.degen} href="https://arxiv.org/abs/1904.09751">
+              Holtzman et al. 2020, <em>The Curious Case of Neural Text Degeneration</em> (ICLR
+              2020).
+            </RefItem>
           </Note>
         </div>
 
@@ -673,7 +680,8 @@ export function Page10() {
               tens of thousands of branches per word, so breadth-first can never actually be run.
               The closest measurement is the same branch, score, backtrack machinery taken apart
               piece by piece on a real word task: GPT-4 filling 5&times;5 crosswords, with and
-              without the ability to back up. The two middle bars are the ones that matter.
+              without the ability to back up.<Cite n={REF.tot} /> The two middle bars are the ones
+              that matter.
             </p>
             <div
               className="flex flex-col gap-2"
@@ -719,16 +727,11 @@ export function Page10() {
         </section>
 
         <Note kicker="References">
-          <p>
+          <RefItem n={REF.tot} href="https://arxiv.org/abs/2305.10601">
             Yao et al. 2023, <em>Tree of Thoughts: Deliberate Problem Solving with Large Language
-            Models</em>.
-          </p>
+            Models</em> (NeurIPS 2023).
+          </RefItem>
         </Note>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <CitationBadge citation={cross.citation} />
-        <CitationBadge citation={degen.citation} />
       </div>
 
       <PageNav n={PAGE_N} />

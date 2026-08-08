@@ -65,7 +65,7 @@ describe("Page 16 (the bill comes due) component", () => {
   it("keeps margin notes to bare cites, as pages 3-10 do", () => {
     const { container } = render(<Page16 />);
     const asides = container.querySelectorAll("aside");
-    expect(asides.length).toBe(3);
+    expect(asides.length).toBe(4);
     for (const aside of asides) {
       expect(aside.textContent).not.toMatch(/arXiv|ICLR|NeurIPS|Nature|http/);
     }

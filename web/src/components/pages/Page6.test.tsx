@@ -403,17 +403,21 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     const { container } = render(<Page6 />);
     // The specific tell the author flagged on page 5: a filled bordered card
     // holding rounded chips. The colophon is hairlines and text only; the
-    // download and the reference moved to the footer, page 8's shape.
+    // download moved to the footer and the reference to a References sidenote.
     const colophon = container.querySelector(".border-y")!;
     expect(colophon.querySelectorAll(".rounded-full").length).toBe(0);
     expect(colophon.className).not.toMatch(/bg-surface/);
     expect(colophon.querySelectorAll("a").length).toBe(0);
 
-    // The reference and the download share one footer block, page 8's shape.
+    // The reference lives in the right-hand References sidenote, not the footer.
+    const refs = screen.getByText("References").closest("aside")!;
+    expect(within(refs).getByRole("link", { name: /Muennighoff et al. 2025/ })).toBeInTheDocument();
+
+    // The footer keeps only the download link.
     const footer = screen
       .getByRole("link", { name: /download the notebook/i })
       .closest("div.border-t")!;
-    expect(within(footer as HTMLElement).getByRole("link", { name: /Muennighoff et al. 2025/ })).toBeInTheDocument();
+    expect(within(footer as HTMLElement).queryByRole("link", { name: /Muennighoff et al. 2025/ })).not.toBeInTheDocument();
   });
 
   it("hands off to page 7 by splitting the same budget", () => {

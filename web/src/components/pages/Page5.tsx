@@ -37,11 +37,11 @@
  *   cuts the chain off two clicks later, so a forward-pointer is padding.
  *
  *   Wei and Kojima are cited here, in pages 1 to 3's grammar: a numbered marker
- *   on the claim, and the entry itself at the foot of the page. Nothing else
- *   sits beside this step. The plate above already says every number is ours, so
- *   a gloss would be duplication a reader pays for twice: once in reading, and
- *   once in the whitespace it opens beside a four-line step, since each note
- *   sets its own grid row's height.
+ *   on the claim, and the entry itself in a right-hand References sidenote beside
+ *   this step. The plate above already says every number is ours, so no gloss
+ *   sits with the references: that would be duplication a reader pays for twice,
+ *   once in reading and once in the whitespace it opens beside a four-line step,
+ *   since each note sets its own grid row's height.
  *
  *   Step 2 — figure 1, the specimen, and the step where the page's premise lands:
  *   this model does it NATIVELY, and the figure is a look at what that produces
@@ -103,8 +103,9 @@
  * Load-bearing and easy to lose:
  *   · the notebook download is the whole point of the pipeline. The link carries
  *     the notebook, `harness.py` and all 900 traces, so a reader who doubts a
- *     figure re-derives it. It sits in the footer beside the references, where
- *     pages 6, 7 and 8 keep theirs.
+ *     figure re-derives it. It sits in the footer, where pages 6, 7 and 8 keep
+ *     theirs; the references now sit in a right-hand References sidenote beside
+ *     step 1.
  *   · the instruction null is a BOUND, never a zero, and never the word
  *     "nothing" unqualified (claims gate `instruction_null_bounded`).
  *   · chain share is a blurt detector and nothing more. It verifies the gag
@@ -570,7 +571,8 @@ export function Page5() {
 
       {/* Provenance, as a specimen label rather than a banner: hairline rules,
           no fill, the instrument on one mono line. The download it used to carry
-          sits with the references at the foot of the page, page 8's shape. */}
+          sits at the foot of the page; the references now sit in a right-hand
+          References sidenote beside step 1. */}
       <div className="flex flex-col gap-2 border-y border-grid py-4">
         <p className="text-sm text-ink">
           Every figure below is one measurement of ours, not a redrawing of anyone&apos;s. The
@@ -609,7 +611,16 @@ export function Page5() {
             <Cite n={REF.kojima} />
           </p>
         </section>
-        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
+            Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
+            Models</em> (NeurIPS 2022).
+          </RefItem>
+          <RefItem n={REF.kojima} href="https://arxiv.org/abs/2205.11916">
+            Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em> (NeurIPS
+            2022).
+          </RefItem>
+        </Note>
 
         {/* Step 2 — figure 1 */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -1023,19 +1034,11 @@ export function Page5() {
         </Note>
       </div>
 
-      {/* References and the download, at the foot of the page: page 8's shape,
-          with pages 1 to 3's reference grammar. Each entry is numbered and each
-          number is claimed by a marker up in the prose, so a reader who follows
-          one back lands on the sentence it supports. */}
+      {/* The download, at the foot of the page. The references it used to sit
+          beside now live in a right-hand References sidenote next to step 1,
+          each entry numbered and claimed by a marker up in the prose, so a
+          reader who follows one back lands on the sentence it supports. */}
       <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
-        <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
-          Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
-          Models</em> (NeurIPS 2022).
-        </RefItem>
-        <RefItem n={REF.kojima} href="https://arxiv.org/abs/2205.11916">
-          Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em> (NeurIPS
-          2022).
-        </RefItem>
         <div className="flex flex-wrap items-center gap-2">
           <a
             className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"

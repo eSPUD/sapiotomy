@@ -782,8 +782,9 @@ export function Page6() {
       </p>
 
       {/* Provenance as a colophon, not as chrome: hairlines, no fill, one line
-          naming the instrument. The download it used to carry sits with the
-          reference at the foot of the page, page 8's shape. */}
+          naming the instrument. The download it used to carry sits at the foot
+          of the page; the reference now sits in a right-hand References sidenote
+          beside step 1. */}
       <div className="flex flex-col gap-3 border-y border-grid py-3">
         <p className="text-xs text-ink-muted">
           Qwen2.5-Instruct at 1.5B, 3B and 7B, greedy, budget forced at the cap; MATH-500 levels 4
@@ -979,6 +980,15 @@ export function Page6() {
             to the same {F1.inset.nominal_budget} by{" "}
             <span className="font-code">max_new_tokens</span>, it overran on none.
           </p>
+        </Note>
+        {/* The reference sits in a right-hand References sidenote beside step 1,
+            which owns the citation; the empty left cell keeps the grid's
+            section/note alternation intact. */}
+        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
+            Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
+          </RefItem>
         </Note>
 
         {/* Step 2 — figure 2 */}
@@ -1337,14 +1347,11 @@ export function Page6() {
         </Note>
       </div>
 
-      {/* The reference and the download, at the foot of the page: page 8's
-          shape, with pages 1 to 3's reference grammar. The number is claimed by
-          a marker up in step 1, so a reader who follows it back lands on the
-          sentence describing the technique it names. */}
+      {/* The download, at the foot of the page. The reference it used to sit
+          beside now lives in a right-hand References sidenote next to step 1,
+          claimed by a marker up in step 1 so a reader who follows it back lands
+          on the sentence describing the technique it names. */}
       <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
-        <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
-          Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
-        </RefItem>
         <div className="flex flex-wrap items-center gap-2">
           <a
             className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"

@@ -78,11 +78,10 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     expect(body()).toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
   });
 
-  // Pages 1 to 3's grammar: the marker sits on the claim, the entry sits in the
-  // footer, and the number ties the two together. Nothing sits beside the step,
-  // because a gloss there is duplication the reader pays for twice, once in
-  // reading and once in the whitespace it opens beside a four-line step.
-  it("marks the two techniques in the prose and resolves them in the footer", () => {
+  // Pages 1 to 3's grammar: the marker sits on the claim, and the entry sits in
+  // a right-hand References sidenote beside the step, with the number tying the
+  // two together. The download stays in the footer on its own.
+  it("marks the two techniques in the prose and resolves them in a References sidenote", () => {
     render(<Page5 />);
     expect(screen.queryByText(/cited for the technique/i)).not.toBeInTheDocument();
 
@@ -93,12 +92,17 @@ describe("Page 5, step 1: what a chain of thought is", () => {
       "reference 2",
     ]);
 
-    // Both entries and the download share one footer block, page 8's shape.
+    // Both entries live in the right-hand References sidenote, not the footer.
+    const refs = screen.getByText("References").closest("aside")!;
+    expect(within(refs).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
+    expect(within(refs).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
+
+    // The footer keeps only the download link.
     const footer = screen
       .getByRole("link", { name: /download the notebook/i })
       .closest("div.border-t")!;
-    expect(within(footer as HTMLElement).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
-    expect(within(footer as HTMLElement).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
+    expect(within(footer as HTMLElement).queryByRole("link", { name: /Wei et al. 2022/ })).not.toBeInTheDocument();
+    expect(within(footer as HTMLElement).queryByRole("link", { name: /Kojima et al. 2022/ })).not.toBeInTheDocument();
   });
 });
 

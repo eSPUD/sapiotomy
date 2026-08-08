@@ -49,9 +49,8 @@
 
 import { useMemo, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
-import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import type { Citation } from "@/lib/data";
 import { PAGE8, pValue, pct, tidyMath } from "@/lib/page08";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
@@ -59,19 +58,11 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 8;
 const NOTEBOOK_ZIP = "/notebooks/page-08-best-of-n.zip";
 
-const COBBE: Citation = {
-  ref: "Cobbe et al. 2021",
-  url: "https://arxiv.org/abs/2110.14168",
-  venue: "arXiv",
-  preprint: true,
-};
-
-const STROEBL: Citation = {
-  ref: "Stroebl et al. 2024",
-  url: "https://arxiv.org/abs/2411.17501",
-  venue: "arXiv",
-  preprint: true,
-};
+/** Reference numbers, in order of first appearance on the page. */
+const REF = {
+  cobbe: 1,
+  stroebl: 2,
+} as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -568,8 +559,8 @@ export function Page8() {
                 {tidyMath(s.vote.answer ?? "no answer")} on {s.vote.votes} of {s.n}
               </strong>
               , and it is wrong. The <strong className="text-ink">verifier</strong>, a second model
-              trained to score finished solutions rather than to write them, takes the rightmost
-              dot:{" "}
+              trained to score finished solutions rather than to write them
+              <Cite n={REF.cobbe} />, takes the rightmost dot:{" "}
               <strong className="text-correct">{tidyMath(s.verifier.answer ?? "")}</strong>, which
               is right. The answer is {tidyMath(s.ground_truth)}.
             </p>
@@ -635,11 +626,14 @@ export function Page8() {
             keeps the candidate with the highest one. It writes nothing, and it never sees the
             tally, so whatever it buys is not counting in disguise.
           </p>
-          <CitationBadge citation={COBBE} />
           <p>
             Cited for the technique, training a verifier and selecting among N sampled solutions.
             The numbers on this page are our own.
           </p>
+          <RefItem n={REF.cobbe} href="https://arxiv.org/abs/2110.14168" preprint>
+            Cobbe et al. 2021, <em>Training Verifiers to Solve Math Word Problems</em> (arXiv
+            2110.14168).
+          </RefItem>
         </Note>
 
         {/* Step 2 — what each rule fixed and broke */}
@@ -734,6 +728,7 @@ export function Page8() {
                 one exists the vote returns it {pct(PAGE8.bar.mean)} of the time against the trained
                 verifier&apos;s {pct(trained.mean)}. Judging recovers a little of what counting
                 discarded, not most of it.
+                <Cite n={REF.stroebl} />
               </p>
             ) : null}
             <p className="text-ink-muted">
@@ -748,7 +743,6 @@ export function Page8() {
             whose comparison this is. It belongs beside the sentence that makes
             it, not under the page. */}
         <Note kicker="Whose comparison this is">
-          <CitationBadge citation={STROEBL} />
           <p>
             Cited for the shape behind the two recovery numbers beside it: an imperfect judge asked
             to pick from more and more candidates eventually reads its own noise. The measurement is
@@ -759,6 +753,10 @@ export function Page8() {
             self-consistency and best-of-N are introduced in different chapters of the source we
             build on and are never set against each other there.
           </p>
+          <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
+            Stroebl et al. 2024, <em>Inference Scaling fLaws: The Limits of LLM Resampling with
+            Imperfect Verifiers</em> (arXiv 2411.17501).
+          </RefItem>
         </Note>
       </div>
 

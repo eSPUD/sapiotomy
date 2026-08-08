@@ -67,9 +67,8 @@
  */
 
 import { useState } from "react";
-import { CitationBadge } from "@/components/CitationBadge";
+import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import type { Citation } from "@/lib/data";
 import { PAGE9, pct, tidyMath, type Specimen } from "@/lib/page09";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
@@ -77,12 +76,10 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 9;
 const NOTEBOOK_ZIP = "/notebooks/page-09-outcome-vs-process.zip";
 
-const LIGHTMAN: Citation = {
-  ref: "Lightman et al. 2023",
-  url: "https://arxiv.org/abs/2305.20050",
-  venue: "arXiv",
-  preprint: true,
-};
+/** Reference numbers, in order of first appearance on the page. */
+const REF = {
+  lightman: 1,
+} as const;
 
 type Mode = "outcome" | "process";
 /** The reader's single answer: the index of the line that breaks, or none. */
@@ -230,7 +227,8 @@ export function Page9() {
             </strong>{" "}
             steps: the other {pct(PAGE9.graders.shareUnjudged)} state nothing it can compute. That
             is the honest ceiling on proof here, and it is low. A{" "}
-            <strong className="text-ink">process reward model</strong> takes the opposite trade: it
+            <strong className="text-ink">process reward model</strong>
+            <Cite n={REF.lightman} /> takes the opposite trade: it
             scores every step and is silent on none, but a score is an opinion where the
             checker&apos;s label is a fact.
           </p>
@@ -729,12 +727,14 @@ export function Page9() {
           </section>
 
           <Note kicker="References">
-            <CitationBadge citation={LIGHTMAN} />
             <p>
               Cited for the technique and for priority: process supervision, and training a
               reward model on step labels rather than outcomes. The numbers on this page are our
               own, on our own model, and are not comparable to theirs.
             </p>
+            <RefItem n={REF.lightman} href="https://arxiv.org/abs/2305.20050" preprint>
+              Lightman et al. 2023, <em>Let&apos;s Verify Step by Step</em> (arXiv 2305.20050).
+            </RefItem>
           </Note>
         </div>
 
