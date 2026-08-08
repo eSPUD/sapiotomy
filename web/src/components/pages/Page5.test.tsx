@@ -80,7 +80,7 @@ describe("Page 5, step 1: what a chain of thought is", () => {
 
   // Pages 1 to 3's grammar: the marker sits on the claim, and the entry sits in
   // a right-hand References sidenote beside the step, with the number tying the
-  // two together. The download stays in the footer on its own.
+  // two together.
   it("marks the two techniques in the prose and resolves them in a References sidenote", () => {
     render(<Page5 />);
     expect(screen.queryByText(/cited for the technique/i)).not.toBeInTheDocument();
@@ -92,17 +92,11 @@ describe("Page 5, step 1: what a chain of thought is", () => {
       "reference 2",
     ]);
 
-    // Both entries live in the right-hand References sidenote, not the footer.
-    const refs = screen.getByText("References").closest("aside")!;
+    // Both entries live in the first right-hand References sidenote, beside
+    // this step. (The second References sidenote sits beside the close.)
+    const refs = screen.getAllByText("References")[0].closest("aside")!;
     expect(within(refs).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
     expect(within(refs).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
-
-    // The footer keeps only the download link.
-    const footer = screen
-      .getByRole("link", { name: /download the notebook/i })
-      .closest("div.border-t")!;
-    expect(within(footer as HTMLElement).queryByRole("link", { name: /Wei et al. 2022/ })).not.toBeInTheDocument();
-    expect(within(footer as HTMLElement).queryByRole("link", { name: /Kojima et al. 2022/ })).not.toBeInTheDocument();
   });
 });
 
@@ -327,20 +321,49 @@ describe("Page 5: provenance and what the page may claim", () => {
   });
 
   // The pipeline's whole claim: a reader who doubts a figure re-derives it.
-  it("links the notebook, the harness and the traces as one download", () => {
+  // The link sits at the top right of the page, on the act kicker's row.
+  it("links the notebook, the harness and the traces as one download, at the top", () => {
     render(<Page5 />);
     const link = screen.getByRole("link", { name: /download the notebook, the harness and all/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-05-how-to-reason.zip");
     expect(link).toHaveAttribute("download");
+    expect(link.parentElement?.textContent).toContain("Act 2");
     expect(body()).toContain("redraws every figure here from those traces");
   });
 
-  it("names the instrument on the page, not only in the footnote", () => {
+  // The run's vitals moved off the top plate (jargon before the reader has met
+  // a token cap) into a ledger beside the close, but they stay on the page.
+  it("names the instrument on the page, in the run ledger", () => {
     render(<Page5 />);
-    expect(body()).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B");
-    expect(body()).toContain("MATH-500 levels 4 and 5");
-    expect(body()).toContain("900 generations");
-    expect(body()).toContain(PAGE5.manifest.run_id);
+    const ledger = screen.getByText("The run").closest("aside")!;
+    const vitals = ledger.textContent ?? "";
+    expect(vitals).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B");
+    expect(vitals).toContain("MATH-500 levels 4 and 5");
+    expect(vitals).toContain("900 generations");
+    expect(vitals).toContain(PAGE5.manifest.run_id);
+    // ...and only there: the plate above the figures is one plain sentence now.
+    const plate = screen.getByText(/one measurement of ours/).closest("div")!;
+    expect(plate.textContent).not.toContain(PAGE5.manifest.run_id);
+  });
+
+  // The instruments are cited where the close names all three checkpoints: the
+  // model card and the dataset resolve in a References sidenote, on Hugging Face.
+  it("cites the model card and the dataset, linked to Hugging Face", () => {
+    render(<Page5 />);
+    const qwen = screen.getByRole("link", { name: /Qwen2\.5-3B-Instruct.*model card/i });
+    expect(qwen).toHaveAttribute("href", "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct");
+    const math500 = screen.getByRole("link", { name: /MATH-500 dataset card/i });
+    expect(math500).toHaveAttribute(
+      "href",
+      "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
+    );
+
+    // Both markers sit in the close's opening paragraph, numbered after step 1's.
+    const close = screen.getByText(/Figures 1 and 2 are one checkpoint/).closest("p")!;
+    expect(Array.from(close.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
+      "reference 3",
+      "reference 4",
+    ]);
   });
 
   // The instruction contrast is measured and not plotted, and it is stated as a

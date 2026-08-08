@@ -103,9 +103,10 @@
  * Load-bearing and easy to lose:
  *   · the notebook download is the whole point of the pipeline. The link carries
  *     the notebook, `harness.py` and all 900 traces, so a reader who doubts a
- *     figure re-derives it. It sits in the footer, where pages 6, 7 and 8 keep
- *     theirs; the references now sit in a right-hand References sidenote beside
- *     step 1.
+ *     figure re-derives it. It sits at the top right of the page, beside the act
+ *     kicker; the references sit in right-hand References sidenotes beside the
+ *     steps that cite them (Wei and Kojima beside step 1, the model card and the
+ *     dataset beside step 5, where the run's ledger also lives).
  *   · the instruction null is a BOUND, never a zero, and never the word
  *     "nothing" unqualified (claims gate `instruction_null_bounded`).
  *   · chain share is a blurt detector and nothing more. It verifies the gag
@@ -159,15 +160,26 @@ const NOTEBOOK_SIZE = "0.8 MB";
 const STEP_MS = 700;
 
 /**
- * Cited for the technique, numbered in order of first appearance. Every number
- * on this page is ours, so neither entry may carry a figure.
+ * Numbered in order of first appearance. Wei and Kojima are cited for the
+ * techniques they introduced; the model card and the dataset are cited as the
+ * instruments the run was made with. Every number on this page is ours, so no
+ * entry may carry a figure.
  */
-const REF = { wei: 1, kojima: 2 } as const;
+const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4 } as const;
 
-/** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+/** A margin note that sits beside its step and scrolls with the page. `flush`
+ *  drops the heading-alignment padding for notes stacked below another note. */
+function Note({
+  kicker,
+  flush = false,
+  children,
+}: {
+  kicker: string;
+  flush?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${flush ? "" : "lg:pt-9"}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -556,9 +568,20 @@ export function Page5() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
+      {/* The download shares the top line with the act kicker: the first thing
+          on the page after the title row is the way to re-derive all of it. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
+        <a
+          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+          href={NOTEBOOK_ZIP}
+          download
+        >
+          Download the notebook, the harness and all 900 traces (zip, {NOTEBOOK_SIZE}) ↓
+        </a>
+      </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
@@ -570,19 +593,15 @@ export function Page5() {
       </p>
 
       {/* Provenance, as a specimen label rather than a banner: hairline rules,
-          no fill, the instrument on one mono line. The download it used to carry
-          sits at the foot of the page; the references now sit in a right-hand
-          References sidenote beside step 1. */}
-      <div className="flex flex-col gap-2 border-y border-grid py-4">
+          no fill, one plain sentence. The mono spec line it used to carry was
+          jargon this early: the reader has not met a token cap or a decoding
+          strategy yet. The run's vitals now sit in "The run" ledger beside
+          step 5, and the download sits at the top right of the page. */}
+      <div className="border-y border-grid py-4">
         <p className="text-sm text-ink">
           Every figure below is one measurement of ours, not a redrawing of anyone&apos;s. The
           notebook that made them opens in a replay mode that redraws every figure here from those
           traces, on no GPU, in about a minute.
-        </p>
-        <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
-          Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16, greedy, {M.decoding.max_new_tokens}-token cap ·
-          MATH-500 levels 4 and 5, n = {M.items.n} paired items · 900 generations · run {M.run_id} ·{" "}
-          {RUN_DATE}
         </p>
       </div>
 
@@ -980,10 +999,12 @@ export function Page5() {
             </span>
           </h2>
           <p className="text-ink-muted">
-            Figures 1 and 2 are one checkpoint, the {sizeLabel(PRIMARY_ROW.params)}. Here are all
-            three, each plotted twice. Across is the median number of tokens the model
-            wrote per problem, on a log scale because the two prompts sit two orders of magnitude
-            apart. Up is the share of the same {F2.bare.n} problems it solved.
+            Figures 1 and 2 are one checkpoint, the {sizeLabel(PRIMARY_ROW.params)}.
+            <Cite n={REF.qwen} /> Here are all three, each plotted twice. Across is the median
+            number of tokens the model wrote per problem, on a log scale because the two prompts sit
+            two orders of magnitude apart. Up is the share of the same {F2.bare.n} MATH-500 problems
+            <Cite n={REF.math500} />{" "}
+            it solved.
           </p>
           <section
             aria-label="Tokens written against problems solved"
@@ -1020,33 +1041,54 @@ export function Page5() {
             </p>
           </div>
         </section>
-        <Note kicker="Also measured">
-          <p>
-            Asking, on a model that already reasons, moved the score by{" "}
-            {F2.instruction.deltaPts.toFixed(1)} points: {F2.instruction.fixed} fixed,{" "}
-            {F2.instruction.broken} broken, ±{F2.instructionBoundPts.toFixed(1)}. A bound, not a
-            zero: on a model that has already been trained to reason, the prompt is close to spent.
-          </p>
-          <p>
-            Worked examples in the prompt did not help either. Mostly they moved the{" "}
-            <span className="font-code">{"\\boxed{}"}</span> answer-format rate.
-          </p>
-        </Note>
-      </div>
-
-      {/* The download, at the foot of the page. The references it used to sit
-          beside now live in a right-hand References sidenote next to step 1,
-          each entry numbered and claimed by a marker up in the prose, so a
-          reader who follows one back lands on the sentence it supports. */}
-      <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
-        <div className="flex flex-wrap items-center gap-2">
-          <a
-            className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-            href={NOTEBOOK_ZIP}
-            download
-          >
-            Download the notebook, the harness and all 900 traces (zip, {NOTEBOOK_SIZE}) ↓
-          </a>
+        {/* Beside the close: the run's ledger (the vitals the top plate used to
+            carry as one mono line), the instruments' references, then the
+            measured-but-not-plotted note. One cell, three notes, so the grid
+            row still pairs one section with one right-hand column. */}
+        <div className="flex flex-col gap-6 lg:pt-9">
+          <Note kicker="The run" flush>
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 font-mono text-xs leading-relaxed tabular-nums">
+              <dt>model</dt>
+              <dd className="text-ink">Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16</dd>
+              <dt>decoding</dt>
+              <dd className="text-ink">
+                {M.decoding.strategy} · {M.decoding.max_new_tokens}-token cap
+              </dd>
+              <dt>problems</dt>
+              <dd className="text-ink">
+                MATH-500 levels {M.items.eval_levels.join(" and ")} · n = {M.items.n} paired
+              </dd>
+              <dt>output</dt>
+              <dd className="text-ink">900 generations</dd>
+              <dt>run</dt>
+              <dd className="break-all text-ink">
+                {M.run_id} · {RUN_DATE}
+              </dd>
+            </dl>
+          </Note>
+          <Note kicker="References" flush>
+            <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct">
+              Qwen team 2024, <em>Qwen2.5-3B-Instruct</em> model card (Hugging Face). The 1.5B and
+              7B cards sit alongside it.
+            </RefItem>
+            <RefItem n={REF.math500} href="https://huggingface.co/datasets/HuggingFaceH4/MATH-500">
+              <em>MATH-500</em> dataset card (Hugging Face): 500 MATH test problems (Hendrycks et
+              al. 2021), the subset of Lightman et al. 2023.
+            </RefItem>
+          </Note>
+          <Note kicker="Also measured" flush>
+            <p>
+              Asking, on a model that already reasons, moved the score by{" "}
+              {F2.instruction.deltaPts.toFixed(1)} points: {F2.instruction.fixed} fixed,{" "}
+              {F2.instruction.broken} broken, ±{F2.instructionBoundPts.toFixed(1)}. A bound, not a
+              zero: on a model that has already been trained to reason, the prompt is close to
+              spent.
+            </p>
+            <p>
+              Worked examples in the prompt did not help either. Mostly they moved the{" "}
+              <span className="font-code">{"\\boxed{}"}</span> answer-format rate.
+            </p>
+          </Note>
         </div>
       </div>
 
