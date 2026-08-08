@@ -38,10 +38,17 @@
  *
  * Layout follows pages 1 and 6: an intro paragraph full width above one
  * reading column of numbered steps, each beside a margin note that scrolls
- * with it. Apparatus follows pages 5 to 7: a provenance plate under the lede,
- * the download on the top line beside the act kicker, and no footer. What the
- * footer used to carry that lives nowhere else is now in the margin note
- * beside the sentence it qualifies.
+ * with it. The download sits on the top line beside the act kicker, and there
+ * is no footer. What the footer used to carry that lives nowhere else is now
+ * in the margin note beside the sentence it qualifies.
+ *
+ * Provenance is pills at the figures rather than a plate under the lede, which
+ * is where this page departs from pages 5 to 7. The plate opened the page in
+ * the notebook's own language (a token cap, four temperatures, an exact
+ * McNemar, a run id forty characters long) and asked the reader to carry all of
+ * it down three figures. A reader needs to know a figure is measured and on
+ * what, at the figure. The rest is in the download on the top line, which is
+ * the only place it can be acted on anyway.
  *
  * No figure on this page renders a notebook identifier. `page08.ts` maps every
  * selector to a reader-facing label and throws on one it does not know, because
@@ -72,6 +79,27 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
+  );
+}
+
+/**
+ * Provenance beside the figure it belongs to. One row of these replaces the
+ * plate that used to sit under the lede: short enough to read without stopping,
+ * and only on the figures that would otherwise leave the reader asking whether
+ * a number was measured or made up.
+ */
+function Pills({ items }: { items: string[] }) {
+  return (
+    <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+      {items.map((t) => (
+        <li
+          key={t}
+          className="rounded-full border border-grid px-2 py-0.5 text-[11px] text-ink-muted"
+        >
+          {t}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -352,7 +380,7 @@ function PairedFigure() {
       width={PAIR_W}
       height={height}
       margin={PAIR_M}
-      xLabel={`problems, against one chain · ${PAGE8.paired.items} problems, N=${PAGE8.paired.n}`}
+      xLabel="problems, against one chain"
       title={
         `For each selection rule, how many problems it fixed and how many it broke compared ` +
         `with taking a single chain. The trained verifier fixed ${PAGE8.headline.fixed} and ` +
@@ -503,6 +531,9 @@ export function Page8() {
   const s = PAGE8.specimen;
   const chain = open === null ? null : s.candidates.find((c) => c.sample_index === open) ?? null;
   const trained = PAGE8.judges.find((j) => j.trained);
+  // "Qwen/Qwen2.5-3B-Instruct" reads as a file path. What is after the slash is
+  // the model; what is before it is the account that hosts the weights.
+  const model = PAGE8.run.model.split("/").pop();
 
   return (
     <article className="flex flex-col gap-6">
@@ -538,26 +569,6 @@ export function Page8() {
         the same candidates, gets there too.
       </p>
 
-      {/* Provenance as a plate under the lede, pages 5 to 7's shape: two
-          sentences of prose and the instrument on one mono line, with the
-          download on the top line and the citations beside the sentences that
-          earn them. The run-on footer this replaces carried the same facts
-          where nobody reads them. */}
-      <div className="flex flex-col gap-2 border-y border-grid py-4">
-        <p className="text-sm text-ink">
-          Every figure below is one measurement of ours, on the same problems pages 5 to 7 use, and
-          every selection rule on this page reads the same candidates, which is the fact the whole
-          page rests on. Differences between rules are exact McNemar tests over the problems where
-          the two rules disagree, and the notebook at the top of the page opens in a replay mode
-          that redraws every figure here from those chains, on no GPU.
-        </p>
-        <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
-          measured · {PAGE8.run.model} · MATH-500 levels 4 and 5, n = {PAGE8.run.items} problems ·{" "}
-          {PAGE8.run.chains.toLocaleString()} chains at a {PAGE8.run.chainCap}-token cap across T ={" "}
-          {PAGE8.run.temperatures.join(", ")} · run {PAGE8.run.runId} · {PAGE8.run.date}
-        </p>
-      </div>
-
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 — one batch, two rules */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -566,6 +577,16 @@ export function Page8() {
             aria-label="One problem's candidates, counted and scored"
             className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
           >
+            {/* The page's only statement of what was run and when. It sits on
+                the first figure because that is where a reader first has to
+                decide whether to believe a picture. */}
+            <Pills
+              items={[
+                `measured ${PAGE8.run.date}`,
+                model ?? PAGE8.run.model,
+                `${PAGE8.run.items} problems, ${PAGE8.paired.n} chains each`,
+              ]}
+            />
             <p className="text-sm text-ink">{tidyMath(s.question)}</p>
             <p className="text-xs text-ink-muted">
               {s.n} chains. The vote takes the longest row:{" "}
@@ -607,8 +628,8 @@ export function Page8() {
               </div>
             </div>
             <p className="text-xs text-ink-muted">
-              The vote dips below one chain at N=2 and that is the rule, not noise:{" "}
-              <strong className="text-ink">with two candidates any disagreement is a tie</strong>,
+              The vote dips below one chain at two candidates, and that is the rule rather than
+              noise: <strong className="text-ink">with only two, any disagreement is a tie</strong>,
               and page 7 counts a tie as no answer. Voting needs a crowd before it beats not
               voting.
             </p>
@@ -654,6 +675,11 @@ export function Page8() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">2. What each rule fixed, and what it broke</h2>
           <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
+            {/* The fact the whole page rests on, and the reason the rows may be
+                compared to each other at all. */}
+            <Pills
+              items={["measured", `${PAGE8.paired.items} problems`, "every rule reads the same chains"]}
+            />
             <PairedFigure />
             <figcaption className="text-sm text-ink-muted">
               Every rule against the same single chain, on the same {PAGE8.paired.items} problems,
@@ -694,6 +720,15 @@ export function Page8() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. What a judge is worth</h2>
           <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
+            {/* Each point is an average, so the pill says what it averages over
+                before the reader reads a bar as an error. */}
+            <Pills
+              items={[
+                "measured",
+                `${PAGE8.judges.length} judges`,
+                `${PAGE8.run.temperatures.length} temperatures each`,
+              ]}
+            />
             <JudgeFigure />
             <figcaption className="text-sm text-ink-muted">
               Five judges spanning size, subject and training objective, each averaged over four
