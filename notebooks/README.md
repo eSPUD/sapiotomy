@@ -61,7 +61,7 @@ phases of its own experiment and are documented in its section 0.
 | `page_06_thinking_longer.ipynb` | 6 — Thinking Longer | **translated (step 4), both arms run.** The cap sweep and the extension arm are complete: 2,720 records, three checkpoints, committed to `web/data/page-06-derived.json` and drawn on the page. Injecting `Wait` when the model tries to stop redistributes rather than adds, so `figure_wait` reports paired fixed and broken counts and churn rather than a net |
 | `page_07_frequency_voting.ipynb` | 7 — Frequency Voting | **run complete (step 1 done).** 5,920 unique generations over 100 MATH-500 L4/5 items: one pile of 16 full-length chains at T=0.3, a greedy line, a diversity family at T=0.6/0.9/1.2 on 30 items, and a fixed budget split N ways. Voting beats bare CoT by 12 points (55% against 43%, McNemar p=0.0075); coverage is 78%, so the vote discards a correct answer on 23% of items. That pile is page 8's phase 0 bed |
 | `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **translated (step 4).** Its own pool: 12,800 chains over the same 100 items at four temperatures, scored by five judges (64,000 judgements). Best-of-16 by a trained verifier takes 43% to 60%, 21 fixed against 4 broken, McNemar p=0.0009; against page 7's vote on identical candidates it is +4 at p=0.45, which is not a difference. `derived.json` is committed to `web/data/page-08-derived.json`, and the notebook, `harness.py`, all 12,800 traces and 70,960 scores ship as `web/public/notebooks/page-08-best-of-n.zip`. Its modes are the phases of one experiment rather than tiers of one run: `REPLAY` analyses, `SCORE` judges an existing pool, `GENERATE` makes one |
-| `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **built, step 1.** No run yet. Runs its own uncapped pass rather than reusing pages 6 or 7 (see below); grades it twice, once on the answer and once step by step |
+| `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **translated (step 4).** `FULL` run complete and replayable. Reuses page 7's pile under one filter, chains the model ended itself, and grades all 1,580 of them twice: a deterministic arithmetic checker, and `Qwen2.5-Math-PRM-7B` admitted only after clearing a pre-registered gate against it (AUC 0.89). The checker proves a false step in 0.67% of chains that reached the right answer; the PRM calls one unsound in 19.5%. `derived.json` is committed to `web/data/page-09-derived.json`, and the notebook, `harness.py` and all 1,580 graded chains ship as `web/public/notebooks/page-09-outcome-vs-process.zip` |
 
 **Page 6 carries two arms of one technique.** Budget forcing can cut a chain short or refuse to let
 it end; the sweep does the first and section 11 does the second. They share the prompt, the items,
@@ -80,6 +80,20 @@ printed skip rather than an exception when the run above it is missing.
 residual being GPU non-determinism. That is the strongest reproducibility statement the deck
 can make, and it is free: the two notebooks share a seed rule and a sampler, so agreeing was
 the only thing they could do.
+
+**Page 9 reuses page 7's pile, but its download does not need it.** It grades one configuration of
+that pile, the chains where the cap never bound, and the `traces.jsonl` it ships beside its
+notebook *is* that filtered pile. `REPLAY` falls back to it when `out/page_07/` is absent and
+recomputes every step label from the trace text rather than reading the stored ones, so a reader
+re-derives the page from one download instead of two. It accepts the file in `out/page_09/` or
+flat beside the notebook, which is how the zip unpacks.
+
+**Page 9's download is self-contained, and deliberately so.** It reuses page 7's pile, but the
+`traces.jsonl` it ships beside its notebook *is* that pile after page 9's filter, so `REPLAY` falls
+back to it when `out/page_07/` is absent and recomputes every label from the trace text rather than
+reading the stored ones. It accepts that file either in `out/page_09/` or flat beside the notebook,
+which is how the zip unpacks. A reader who downloads it can re-derive the page without first
+downloading page 7.
 
 Page 6's run is now the one on disk, so page 7's dependency on it is satisfied.
 
