@@ -227,9 +227,11 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(document.getElementById("ref-1")).not.toBeNull();
   });
 
-  it("leaves the run conditions to the notebook instead of a footnote", () => {
+  it("leaves the run conditions to the notebook, downloadable from the top line", () => {
     render(<Page9 />);
-    expect(screen.getByText(/live in the notebook/i)).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /graded chains/i });
+    expect(link).toHaveAttribute("href", "/notebooks/page-09-outcome-vs-process.zip");
+    expect(link).toHaveAttribute("download");
     expect(screen.queryByText(/top-p/i)).toBeNull();
   });
 });

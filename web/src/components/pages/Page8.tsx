@@ -39,8 +39,9 @@
  * Layout follows pages 1 and 6: an intro paragraph full width above one
  * reading column of numbered steps, each beside a margin note that scrolls
  * with it. Apparatus follows pages 5 to 7: a provenance plate under the lede,
- * the download at the foot, and no footer. What the footer used to carry that
- * lives nowhere else is now in the margin note beside the sentence it qualifies.
+ * the download on the top line beside the act kicker, and no footer. What the
+ * footer used to carry that lives nowhere else is now in the margin note
+ * beside the sentence it qualifies.
  *
  * No figure on this page renders a notebook identifier. `page08.ts` maps every
  * selector to a reader-facing label and throws on one it does not know, because
@@ -505,9 +506,21 @@ export function Page8() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
+      {/* The download shares the top line with the act kicker, page 5's shape:
+          the first thing on the page after the title row is the way to
+          re-derive all of it. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
+        <a
+          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+          href={NOTEBOOK_ZIP}
+          download
+        >
+          notebook + {PAGE8.run.chains.toLocaleString()} traces ↓
+        </a>
+      </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
@@ -527,14 +540,15 @@ export function Page8() {
 
       {/* Provenance as a plate under the lede, pages 5 to 7's shape: two
           sentences of prose and the instrument on one mono line, with the
-          download and the citations at the foot. The run-on footer this
-          replaces carried the same facts where nobody reads them. */}
+          download on the top line and the citations beside the sentences that
+          earn them. The run-on footer this replaces carried the same facts
+          where nobody reads them. */}
       <div className="flex flex-col gap-2 border-y border-grid py-4">
         <p className="text-sm text-ink">
           Every figure below is one measurement of ours, on the same problems pages 5 to 7 use, and
           every selection rule on this page reads the same candidates, which is the fact the whole
           page rests on. Differences between rules are exact McNemar tests over the problems where
-          the two rules disagree, and the notebook at the foot of the page opens in a replay mode
+          the two rules disagree, and the notebook at the top of the page opens in a replay mode
           that redraws every figure here from those chains, on no GPU.
         </p>
         <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
@@ -758,22 +772,6 @@ export function Page8() {
             Imperfect Verifiers</em> (arXiv 2411.17501).
           </RefItem>
         </Note>
-      </div>
-
-      {/* The foot carries the download and nothing else: the apparatus is in the
-          plate under the lede and the two cites are beside the sentences that
-          earn them. Pages 5 to 7 end this way. */}
-      <div className="flex flex-wrap items-center gap-2 border-t border-grid pt-4">
-        <a
-          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          notebook + {PAGE8.run.chains.toLocaleString()} traces ↓
-        </a>
-        <span className="text-xs text-ink-muted">
-          every judge&apos;s prompt, the seeds and the full decoding conditions live in there
-        </span>
       </div>
 
       <PageNav n={PAGE_N} />

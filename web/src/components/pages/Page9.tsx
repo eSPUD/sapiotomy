@@ -184,9 +184,22 @@ export function Page9() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
+      {/* The download shares the top line with the act kicker, page 5's shape:
+          the first thing on the page after the title row is the way to
+          re-derive all of it. Full run conditions (decoding, dates, step
+          segmentation) are the notebook's to state. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
+        <a
+          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+          href={NOTEBOOK_ZIP}
+          download
+        >
+          notebook + {PAGE9.run.chains.toLocaleString()} graded chains ↓
+        </a>
+      </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
@@ -746,19 +759,6 @@ export function Page9() {
             You can branch, look ahead, and back out. Turn the page.
           </em>
         </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <a
-          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          notebook + {PAGE9.run.chains.toLocaleString()} graded chains ↓
-        </a>
-        <span className="text-xs text-ink-muted">
-          full run conditions (decoding, dates, step segmentation) live in the notebook
-        </span>
       </div>
 
       <PageNav n={PAGE_N} />
