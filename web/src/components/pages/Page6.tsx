@@ -1333,9 +1333,9 @@ export function Page6() {
         <Note kicker="One measurement with page 5, not two">
           {H.page_5_endpoints ? (
             <p>
-              Page 5 measured both ends of the segment swept here: forbidden to reason the 3B scores{" "}
+              Page 5 measured both ends of the segment swept here: non-reasoning the 3B scores{" "}
               {pct(H.page_5_endpoints.suppressed)} at {H.page_5_endpoints.suppressed_tokens} tokens,
-              and left alone it scores {pct(H.page_5_endpoints.unconstrained)} at{" "}
+              and reasoning it scores {pct(H.page_5_endpoints.unconstrained)} at{" "}
               {H.page_5_endpoints.unconstrained_tokens}. This page fills in the middle.
             </p>
           ) : null}

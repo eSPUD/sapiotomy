@@ -189,20 +189,20 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
     expect(body()).toContain(
       `solves ${PAGE5.figure2.bare.nCorrect} of the ${PAGE5.figure2.bare.n}`,
     );
-    expect(body()).toContain("the same model forbidden to reason");
+    expect(body()).toContain("the same model, reasoning against non-reasoning");
     expect(body()).toContain(`Each square below is one of those ${PAGE5.figure2.bare.n} problems`);
     const intro = screen.getByText(/One trace proves nothing/).textContent ?? "";
     expect(intro).not.toContain(`solves ${PAGE5.figure2.blurt.nCorrect}`);
   });
 
-  it("starts with the model left alone and flips to the floor", () => {
+  it("starts with the model reasoning and flips to the floor", () => {
     render(<Page5 />);
     const fig2 = screen.getByLabelText("The cost of forbidding the working");
     expect(body()).toContain(`solved, of the same ${PAGE5.figure2.bare.n} problems`);
     expect(within(fig2).getByText(String(PAGE5.figure2.bare.nCorrect))).toBeInTheDocument();
     expect(body()).toContain(`median ${PAGE5.figure2.bare.medianTokens} tokens written`);
 
-    fireEvent.click(screen.getByRole("button", { name: /forbidden to reason/i }));
+    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
     expect(within(fig2).getByText(String(PAGE5.figure2.blurt.nCorrect))).toBeInTheDocument();
     expect(body()).toContain(`median ${PAGE5.figure2.blurt.medianTokens} tokens written`);
     expect(body()).toContain(
@@ -217,7 +217,7 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
   it("prints the paired contrast with its discordant count and p-value", () => {
     render(<Page5 />);
     expect(body()).not.toContain("Forbidding the working costs");
-    fireEvent.click(screen.getByRole("button", { name: /forbidden to reason/i }));
+    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
     expect(body()).toContain(
       `Forbidding the working costs ${PAGE5.figure2.suppression.deltaPts} points`,
     );
@@ -230,7 +230,7 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
 
   it("shows the exact gag string, since one phrasing is all it is", () => {
     render(<Page5 />);
-    fireEvent.click(screen.getByRole("button", { name: /forbidden to reason/i }));
+    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
     expect(body()).toContain("Give only the final answer.");
   });
 
@@ -257,8 +257,8 @@ describe("Page 5, figure 3: the floor is flat", () => {
 
   it("compares named checkpoints and never puts size on an axis", () => {
     render(<Page5 />);
-    expect(body()).toContain("A 7B forbidden to reason solves 11%");
-    expect(body()).toContain("A 1.5B allowed to reason solves 22%");
+    expect(body()).toContain("A non-reasoning 7B solves 11%");
+    expect(body()).toContain("A reasoning 1.5B solves 22%");
     expect(body()).toContain("Three checkpoints are not a scaling law");
     // The emergence claim and the redrawn PaLM chart left the page with the
     // premise. Our trend is smooth and monotone; a sign flip is not in it.
@@ -291,8 +291,8 @@ describe("Page 5, figure 4: what each checkpoint wrote against what it solved", 
       expect(title).toContain(`${m.blurtMedianTokens} tokens and ${Math.round(m.blurtAccuracy * 100)}%`);
       expect(title).toContain(`${m.bareMedianTokens} tokens and ${Math.round(m.bareAccuracy * 100)}%`);
     }
-    expect(title).toContain("Forbidden to reason");
-    expect(title).toContain("Left alone");
+    expect(title).toContain("Non-reasoning");
+    expect(title).toContain("Reasoning");
   });
 
   // The reading the figure supports: the horizontal axis is set by the prompt,
@@ -332,11 +332,12 @@ describe("Page 5: provenance and what the page may claim", () => {
   });
 
   // The run's vitals moved off the top plate (jargon before the reader has met
-  // a token cap) into a ledger beside the close, but they stay on the page.
-  it("names the instrument on the page, in the run ledger", () => {
+  // a token cap) into a ledger inside the close's figure card, where they have
+  // the card's width instead of a margin column that wrapped the run id.
+  it("names the instrument on the page, in a ledger inside the close's figure", () => {
     render(<Page5 />);
-    const ledger = screen.getByText("The run").closest("aside")!;
-    const vitals = ledger.textContent ?? "";
+    const card = screen.getByLabelText("Tokens written against problems solved");
+    const vitals = card.querySelector("dl")?.textContent ?? "";
     expect(vitals).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B");
     expect(vitals).toContain("MATH-500 levels 4 and 5");
     expect(vitals).toContain("900 generations");
@@ -366,27 +367,24 @@ describe("Page 5: provenance and what the page may claim", () => {
     ]);
   });
 
-  // The instruction contrast is measured and not plotted, and it is stated as a
-  // bound. "Nothing" unqualified is the one word the claims contract forbids.
-  // It used to hand the null to page 12, which never picked it up: the built page 12
-  // opens on the answer-key question and never mentions the instruction null. The clause
-  // is the finding itself now, and this asserts the dangling pointer stays gone.
-  it("states the instruction null as a bound, and promises no page that does not receive it", () => {
+  // The "Also measured" note (the instruction null, the exemplar rungs) went
+  // back to the notebook on 2026-08-08: the page shows what the chain is worth,
+  // not how a model that already reasons responds to prompt engineering. Both
+  // findings stay measured, in the download.
+  it("does not carry the instruction and exemplar findings on the page", () => {
     render(<Page5 />);
-    expect(body()).toContain(
-      `${PAGE5.figure2.instruction.fixed} fixed, ${PAGE5.figure2.instruction.broken} broken`,
-    );
-    expect(body()).toContain("A bound, not a zero");
-    expect(body()).toContain("the prompt is close to spent");
-    expect(body()).not.toContain("page 12 opens on it");
+    expect(body()).not.toContain("Also measured");
+    expect(body()).not.toContain("A bound, not a zero");
+    expect(body()).not.toContain("Worked examples in the prompt");
   });
 
-  // §6 of the spec: the exemplar rungs may be absent, but only with a note
-  // saying why, because "we tried it and it did nothing" is a different claim.
-  it("says why the worked-example rungs are not on the page", () => {
+  // The conditions are named plainly on every surface: buttons, cluster
+  // labels, aria titles, prose. The euphemisms may not come back.
+  it("says reasoning and non-reasoning, never the old euphemisms", () => {
     render(<Page5 />);
-    expect(body()).toContain("Worked examples in the prompt did not help either");
-    expect(body()).toContain("answer-format rate");
+    expect(body()).not.toMatch(/forbidden to reason/i);
+    expect(body()).not.toMatch(/left alone/i);
+    expect(body()).not.toMatch(/allowed to reason/i);
   });
 
   // The plate above the figures carries "ours, not a redrawing"; the badges
