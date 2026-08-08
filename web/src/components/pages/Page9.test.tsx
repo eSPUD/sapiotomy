@@ -41,12 +41,6 @@ describe("Page 9's PRM reliability is quoted once", () => {
 });
 
 describe("Page 9 (outcome vs process supervision) component", () => {
-  it("carries the notebook download at the top right", () => {
-    render(<Page9 />);
-    const link = screen.getByRole("link", { name: /notebook \+ .*chains/i });
-    expect(link).toHaveAttribute("href", "/notebooks/page-09-outcome-vs-process.zip");
-  });
-
   it("sets up what a gradable step requires before the figure asks for one", () => {
     render(<Page9 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
@@ -250,9 +244,11 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(document.getElementById("ref-1")).not.toBeNull();
   });
 
-  it("leaves the run conditions to the notebook instead of a footnote", () => {
+  it("leaves the run conditions to the notebook, downloadable from the top line", () => {
     render(<Page9 />);
-    expect(screen.getByText(/live in the notebook/i)).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /graded chains/i });
+    expect(link).toHaveAttribute("href", "/notebooks/page-09-outcome-vs-process.zip");
+    expect(link).toHaveAttribute("download");
     expect(screen.queryByText(/top-p/i)).toBeNull();
   });
 });

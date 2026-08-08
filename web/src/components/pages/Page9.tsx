@@ -191,24 +191,26 @@ export function Page9() {
 
   return (
     <article className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-4">
-          <p className="text-xs uppercase tracking-wide text-ink-muted">
-            Act {page.act} · {ACTS[page.act].title}
-          </p>
-          <h1 className="text-3xl font-bold text-ink">
-            <span className="font-mono text-ink-muted">{page.n}. </span>
-            {page.title}
-          </h1>
-        </div>
+      {/* The download shares the top line with the act kicker, page 5's shape:
+          the first thing on the page after the title row is the way to
+          re-derive all of it. Full run conditions (decoding, dates, step
+          segmentation) are the notebook's to state. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
         <a
-          className="shrink-0 rounded border border-grid px-3 py-1.5 text-xs text-ink-muted hover:text-ink"
+          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
           href={NOTEBOOK_ZIP}
           download
         >
-          notebook + {PAGE9.run.chains.toLocaleString()} chains ↓
+          notebook + {PAGE9.run.chains.toLocaleString()} graded chains ↓
         </a>
       </div>
+      <h1 className="text-3xl font-bold text-ink">
+        <span className="font-mono text-ink-muted">{page.n}. </span>
+        {page.title}
+      </h1>
 
       <div className="flex min-w-0 flex-col gap-8">
         <p className="text-lg text-ink-muted">

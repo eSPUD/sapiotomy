@@ -97,7 +97,6 @@ const FW = PAGE6.figureWait;
 const NOTEBOOK_ZIP = "/notebooks/page-06-thinking-longer.zip";
 const NOTEBOOK_SIZE = "2.0 MB";
 
-const RUN_DATE = M.timestamp_utc.slice(0, 10);
 const TOP = B[B.length - 1];
 
 /**
@@ -676,6 +675,119 @@ function WaitCurve() {
   );
 }
 
+/* ------------------------------------------------- figure 5: the reallocation */
+
+const RA_W = 620;
+const RA_H = 196;
+const RA_M = { top: 34, right: 108, bottom: 38, left: 16 };
+const RA_IW = RA_W - RA_M.left - RA_M.right;
+const RA_IH = RA_H - RA_M.top - RA_M.bottom;
+
+/**
+ * The handoff, drawn instead of tallied. The three stat cards it replaces each
+ * restated a number already on the page: {min}→7% and {max}→43% are two points
+ * on figure 2's curve, and "51 never reached" is figure 3's band and the callout
+ * below. What no other figure draws is the pivot page 7 turns on — that one long
+ * chain and sixteen short ones cost the SAME budget. So this figure spends that
+ * budget twice down one shared token axis: once as the single chain the page
+ * measured to 43%, and once as the sixteen 7%-each tries page 7 will pit against
+ * it. Bar length is tokens, never accuracy: both rows reach the same right edge
+ * because both spend the same 2,048, and the accuracies ride alongside as text.
+ * What sixteen short chains are worth TOGETHER is drawn as a question, because
+ * that is the one number on this page we have not measured.
+ */
+function ReallocationChart() {
+  const raX = (t: number) => (t / H.max_budget) * RA_IW;
+  const rowH = 30;
+  const longY = 4;
+  const tileY = RA_IH - rowH - 4;
+  const gap = 3;
+  const tileW = RA_IW / H.chains_at_min_budget - gap;
+  return (
+    <ChartFrame
+      title={`The same ${H.max_budget} tokens spent two ways down one token axis. As one chain of ${H.max_budget} tokens it solves ${pct(
+        H.accuracy_at_max,
+      )} of the ${H.n_items} problems. Split into ${H.chains_at_min_budget} chains of ${H.min_budget} tokens, each solves ${pct(
+        H.accuracy_at_min,
+      )}; what the ${H.chains_at_min_budget} together are worth is page 7's question.`}
+      width={RA_W}
+      height={RA_H}
+      margin={RA_M}
+      xLabel={`tokens spent · ${tokens(H.max_budget)} either way`}
+    >
+      {/* row 1: one long chain, the ceiling the page just hit */}
+      <text x={0} y={longY - 5} className="fill-ink text-[11px] font-semibold">
+        one chain of {tokens(H.max_budget)}
+      </text>
+      <rect x={0} y={longY} width={RA_IW} height={rowH} rx={2} className="fill-compute" />
+      <text
+        x={RA_IW + 8}
+        y={longY + rowH / 2 + 4}
+        className="fill-compute text-[12px] font-semibold tabular-nums"
+      >
+        {pct(H.accuracy_at_max)} solved
+      </text>
+
+      {/* the two rows reach the same right edge: same budget, drawn as same width */}
+      <line
+        x1={RA_IW}
+        x2={RA_IW}
+        y1={longY}
+        y2={tileY + rowH}
+        className="stroke-ink-muted"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+        opacity={0.5}
+      />
+      <text
+        x={RA_IW / 2}
+        y={(longY + rowH + tileY) / 2 + 4}
+        textAnchor="middle"
+        className="fill-ink-muted text-[11px]"
+      >
+        the same {tokens(H.max_budget)} tokens, spent differently
+      </text>
+
+      {/* row 2: sixteen short chains, the same total width */}
+      <text x={0} y={tileY - 5} className="fill-ink text-[11px] font-semibold">
+        {H.chains_at_min_budget} chains of {H.min_budget}
+      </text>
+      {Array.from({ length: H.chains_at_min_budget }, (_, i) => (
+        <rect
+          key={i}
+          x={i * (tileW + gap)}
+          y={tileY}
+          width={tileW}
+          height={rowH}
+          rx={1.5}
+          className="fill-compute opacity-30"
+        />
+      ))}
+      <text
+        x={RA_IW + 8}
+        y={tileY + rowH / 2 + 4}
+        className="fill-ink-muted text-[12px] font-semibold tabular-nums"
+      >
+        {pct(H.accuracy_at_min)} each
+      </text>
+
+      {/* shared token axis */}
+      <line x1={0} x2={RA_IW} y1={RA_IH} y2={RA_IH} className="stroke-grid" strokeWidth={1} />
+      {[0, 512, 1024, 1536, 2048].map((t) => (
+        <text
+          key={t}
+          x={raX(t)}
+          y={RA_IH + 16}
+          textAnchor={t === 0 ? "start" : t === H.max_budget ? "end" : "middle"}
+          className="fill-ink-muted text-[10px] tabular-nums"
+        >
+          {t}
+        </text>
+      ))}
+    </ChartFrame>
+  );
+}
+
 /* -------------------------------------------------------------------- page */
 
 export function Page6() {
@@ -768,33 +880,35 @@ export function Page6() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
-      <h1 className="text-3xl font-bold text-ink">
-        <span className="font-mono text-ink-muted">{page.n}. </span>
-        {page.title}
-      </h1>
+      {/* Title and the download share the top line. The page's whole claim is
+          that every figure below replays from committed traces on no GPU, so the
+          file that makes good on it sits top-right, reachable before the reader
+          has scrolled a pixel — not buried in a footer. The run's instrument
+          line used to sit here as a colophon; it belongs to the notebook and is
+          left to it. */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-2">
+          <p className="text-xs uppercase tracking-wide text-ink-muted">
+            Act {page.act} · {ACTS[page.act].title}
+          </p>
+          <h1 className="text-3xl font-bold text-ink">
+            <span className="font-mono text-ink-muted">{page.n}. </span>
+            {page.title}
+          </h1>
+        </div>
+        <a
+          className="shrink-0 rounded border border-grid px-3 py-1.5 text-xs text-ink-muted hover:border-compute hover:text-ink"
+          href={NOTEBOOK_ZIP}
+          download
+        >
+          Notebook, harness &amp; every trace ({NOTEBOOK_SIZE}) ↓
+        </a>
+      </div>
       <p className="max-w-2xl text-lg text-ink-muted">
         Page 5 gave the model a chain. A chain has a{" "}
         <strong className="text-ink">length</strong>, and that length is compute you pay for, one
         token at a time. So put the length on a dial and turn it.
       </p>
-
-      {/* Provenance as a colophon, not as chrome: hairlines, no fill, one line
-          naming the instrument. The download it used to carry sits at the foot
-          of the page; the reference now sits in a right-hand References sidenote
-          beside step 1. */}
-      <div className="flex flex-col gap-3 border-y border-grid py-3">
-        <p className="text-xs text-ink-muted">
-          Qwen2.5-Instruct at 1.5B, 3B and 7B, greedy, budget forced at the cap; MATH-500 levels 4
-          and 5, n = {M.items.n} items across {B.length} budgets, {tokens(M.integrity.n_records)}{" "}
-          records, run <span className="font-mono">{M.run_id}</span>, {RUN_DATE}. Every figure below
-          is one measurement of ours, not a redrawing of anyone&apos;s, and the notebook at the foot
-          of the page opens in a replay mode that redraws every one of them from those traces, on no
-          GPU, in about a minute.
-        </p>
-      </div>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -1285,38 +1399,39 @@ export function Page6() {
 
         {/* Close */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">5. Where the length runs out</h2>
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="flex flex-col rounded-lg border-l-4 border-wrong bg-surface-raised px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  one chain of {H.min_budget}
-                </p>
-                <p className="font-mono text-2xl tabular-nums text-ink">{pct(H.accuracy_at_min)}</p>
-                <p className="font-mono text-xs tabular-nums text-ink-muted">solved</p>
-              </div>
-              <div className="flex flex-col rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-compute">
-                  one chain of {tokens(H.max_budget)}
-                </p>
-                <p className="font-mono text-2xl tabular-nums text-ink">{pct(H.accuracy_at_max)}</p>
-                <p className="font-mono text-xs tabular-nums text-ink-muted">
-                  {Math.round(H.mean_tokens_at_max)} tokens spent per problem
-                </p>
-              </div>
-              <div className="flex flex-col rounded-lg border-l-4 border-grid bg-surface-raised px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  never reached
-                </p>
-                <p className="font-mono text-2xl tabular-nums text-ink">
-                  {F3.neverFlipCount} of {F3.items.length}
-                </p>
-                <p className="font-mono text-xs tabular-nums text-ink-muted">
-                  at any length we ran
-                </p>
-              </div>
+          <h2 className="text-xl font-semibold text-ink">
+            5. Where the length runs out
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              the same {tokens(H.max_budget)} tokens · two ways to spend them
+            </span>
+          </h2>
+          <p className="text-ink-muted">
+            The dial flattened at {pct(H.accuracy_at_max)}, and {pct(F3.neverFlipShare)} of these
+            problems never came right at any length. But a budget is not a length: the same{" "}
+            {tokens(H.max_budget)} tokens can be one long chain or {H.chains_at_min_budget} short
+            ones, and page 7 turns on the difference.
+          </p>
+          {/* The three stat cards this replaces each restated a number already
+              drawn above — 7% and 43% are two points on figure 2's curve, and
+              "51 never reached" is figure 3's band. The reallocation is the one
+              thing no other figure shows, so it gets the picture. */}
+          <section
+            aria-label="The same budget, spent two ways"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+          >
+            <ReallocationChart />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-5 rounded-sm bg-compute" /> one chain of{" "}
+                {tokens(H.max_budget)} → {pct(H.accuracy_at_max)} solved
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-5 rounded-sm bg-compute opacity-30" />{" "}
+                {H.chains_at_min_budget} chains of {H.min_budget} → {pct(H.accuracy_at_min)} each
+              </span>
+              <span>bar length is the token budget; both rows spend {tokens(H.max_budget)}.</span>
             </div>
-          </div>
+          </section>
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
             <strong className="text-ink">The dial has a far end, and you have reached it.</strong>{" "}
             This is inference-time scaling in its simplest form: the curve flattens, and{" "}
@@ -1330,37 +1445,6 @@ export function Page6() {
             </em>
           </p>
         </section>
-        <Note kicker="One measurement with page 5, not two">
-          {H.page_5_endpoints ? (
-            <p>
-              Page 5 measured both ends of the segment swept here: forbidden to reason the 3B scores{" "}
-              {pct(H.page_5_endpoints.suppressed)} at {H.page_5_endpoints.suppressed_tokens} tokens,
-              and left alone it scores {pct(H.page_5_endpoints.unconstrained)} at{" "}
-              {H.page_5_endpoints.unconstrained_tokens}. This page fills in the middle.
-            </p>
-          ) : null}
-          <p>
-            The 3B&apos;s last doubling moves it {LAST_GAIN_MOVE}, {LAST_GAIN_PROBLEMS} out of{" "}
-            {curvePoint.n}, drawn as measured and too small to read either way. Page 17 owns
-            overthinking; this page owns the flattening.
-          </p>
-        </Note>
-      </div>
-
-      {/* The download, at the foot of the page. The reference it used to sit
-          beside now lives in a right-hand References sidenote next to step 1,
-          claimed by a marker up in step 1 so a reader who follows it back lands
-          on the sentence describing the technique it names. */}
-      <div className="flex flex-col gap-2 border-t border-grid pt-4 text-sm text-ink-muted">
-        <div className="flex flex-wrap items-center gap-2">
-          <a
-            className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-            href={NOTEBOOK_ZIP}
-            download
-          >
-            Download the notebook, the harness and every trace ({NOTEBOOK_SIZE}) ↓
-          </a>
-        </div>
       </div>
 
       <div aria-live="polite" className="sr-only">

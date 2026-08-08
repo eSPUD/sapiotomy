@@ -196,7 +196,9 @@ describe("Page 6, figure 3: it stops mattering before you run out of dial", () =
 
   it("names the never-solved band as this grid's limit, never as unsolvable", () => {
     render(<Page6 />);
-    expect(body()).toContain(`${F3.neverFlipCount} of ${F3.items.length}`);
+    // The count lives in figure 3's own legend now that the section-5 pill that
+    // restated it is gone.
+    expect(body()).toContain(`never solved (${F3.neverFlipCount})`);
     // The word appears once, inside its own disclaimer, and nowhere else.
     expect(body()).toContain("never a claim that those problems are unsolvable");
     expect(body().match(/unsolvable/g)).toHaveLength(1);
@@ -364,11 +366,15 @@ describe("Page 6: one budget, reachable from every figure it drives", () => {
 });
 
 describe("Page 6: provenance and the claims it is allowed to make", () => {
-  it("names the run rather than flagging an authored demo", () => {
+  it("names the instrument where it is used, not in a top colophon, and never flags an authored demo", () => {
     render(<Page6 />);
-    expect(body()).toContain("MATH-500 levels 4 and 5");
-    expect(body()).toContain(PAGE6.manifest.run_id);
-    expect(body()).toContain("greedy, budget forced at the cap");
+    // The run id and the "levels 4 and 5, budget forced at the cap" colophon
+    // that used to head the page are jargon the notebook owns; the page names
+    // the instrument where it is applied, in figure 1's own caption.
+    expect(body()).toContain("Qwen2.5-3B-Instruct");
+    expect(body()).toContain("greedy");
+    expect(body()).toContain("MATH-500");
+    expect(body()).not.toContain(PAGE6.manifest.run_id);
     // Both retired chips: the demo is measured, and the axis is tokens because
     // we ran a tokenizer.
     expect(body()).not.toContain("written for this page, no live model");
@@ -377,7 +383,7 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
 
   it("offers the notebook, the harness and the traces as one download", () => {
     render(<Page6 />);
-    const link = screen.getByRole("link", { name: /download the notebook/i });
+    const link = screen.getByRole("link", { name: /notebook, harness/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-06-thinking-longer.zip");
   });
 
@@ -385,7 +391,9 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     render(<Page6 />);
     const last = F2.primary.gains[F2.primary.gains.length - 1];
     expect(last.gain_pts).toBeLessThan(0);
-    expect(body()).toContain("too small to read either way");
+    // Figure 2's closing line reads the dip as a single problem rather than
+    // dressing it as an overthinking finding (page 17 owns that).
+    expect(body()).toContain("which is one problem out of");
   });
 
   it("carries no em dash or en dash in rendered copy", () => {
@@ -399,25 +407,23 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("states provenance as a colophon rather than as a row of pill chips", () => {
+  it("puts the notebook download at the top beside the title, with no run colophon", () => {
     const { container } = render(<Page6 />);
-    // The specific tell the author flagged on page 5: a filled bordered card
-    // holding rounded chips. The colophon is hairlines and text only; the
-    // download moved to the footer and the reference to a References sidenote.
-    const colophon = container.querySelector(".border-y")!;
-    expect(colophon.querySelectorAll(".rounded-full").length).toBe(0);
-    expect(colophon.className).not.toMatch(/bg-surface/);
-    expect(colophon.querySelectorAll("a").length).toBe(0);
+    // The hairline colophon that used to head the page, naming the run, is gone:
+    // its jargon belongs to the notebook and is left to it.
+    expect(container.querySelector(".border-y")).toBeNull();
+    expect(body()).not.toContain(PAGE6.manifest.run_id);
 
-    // The reference lives in the right-hand References sidenote, not the footer.
+    // The download shares the top line with the title rather than sitting in a
+    // footer: it is a sibling of the <h1>'s column, both inside one header row.
+    const heading = screen.getByRole("heading", { level: 1 });
+    const download = screen.getByRole("link", { name: /notebook, harness/i });
+    const headerRow = heading.closest("div")!.parentElement!;
+    expect(headerRow).toContainElement(download);
+
+    // The reference still lives in the right-hand References sidenote.
     const refs = screen.getByText("References").closest("aside")!;
     expect(within(refs).getByRole("link", { name: /Muennighoff et al. 2025/ })).toBeInTheDocument();
-
-    // The footer keeps only the download link.
-    const footer = screen
-      .getByRole("link", { name: /download the notebook/i })
-      .closest("div.border-t")!;
-    expect(within(footer as HTMLElement).queryByRole("link", { name: /Muennighoff et al. 2025/ })).not.toBeInTheDocument();
   });
 
   it("hands off to page 7 by splitting the same budget", () => {
@@ -425,17 +431,5 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     const h = PAGE6.handoff;
     expect(body()).toContain(`${h.chains_at_min_budget} chains of ${h.min_budget}`);
     expect(body()).toContain(`what ${h.chains_at_min_budget} voters at ${pct(h.accuracy_at_min)} each are worth`);
-  });
-
-  it("carries page 5's endpoints when the run had them beside it", () => {
-    render(<Page6 />);
-    const e = PAGE6.handoff.page_5_endpoints;
-    // The overlay is null when the generating run had no page 5 artifact on disk.
-    // The seam sentence stays either way; only the two numbers are conditional.
-    expect(body()).toContain("One measurement with page 5, not two");
-    if (e) {
-      expect(body()).toContain(`${e.suppressed_tokens} tokens`);
-      expect(body()).toContain(pct(e.unconstrained));
-    }
   });
 });

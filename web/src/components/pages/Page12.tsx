@@ -82,7 +82,7 @@
  * provenance footnote at the bottom.
  */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -268,158 +268,244 @@ function StarChart({ history }: { history: StarIteration[] }) {
   );
 }
 
-/** A rounded node box with one or two centred text lines. */
-function LoopBox({
-  x,
-  y,
-  w,
-  h,
-  cls = "fill-surface-raised stroke-grid",
-  strokeWidth = 1,
-  children,
-}: {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  cls?: string;
-  strokeWidth?: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <g>
-      <rect x={x} y={y} width={w} height={h} rx={8} className={cls} strokeWidth={strokeWidth} />
-      {children}
-    </g>
-  );
+/** A point and a cubic edge between two node centres. */
+type Pt = [number, number];
+type Edge = { p0: Pt; p1: Pt; p2: Pt; p3: Pt };
+
+/** Point on cubic Bézier `e` at parameter `t`. */
+function bezier(e: Edge, t: number): Pt {
+  const u = 1 - t;
+  const a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+  return [
+    a * e.p0[0] + b * e.p1[0] + c * e.p2[0] + d * e.p3[0],
+    a * e.p0[1] + b * e.p1[1] + c * e.p2[1] + d * e.p3[1],
+  ];
 }
 
-/** "Rationale, Answer" with the paper's colour coding (rationale red, answer blue). */
-function RAText({ x, y }: { x: number; y: number }) {
+/** The SVG `d` for an edge, so the wire and the signal share one geometry. */
+const edgeD = (e: Edge) =>
+  `M${e.p0[0]} ${e.p0[1]} C ${e.p1[0]} ${e.p1[1]} ${e.p2[0]} ${e.p2[1]} ${e.p3[0]} ${e.p3[1]}`;
+
+/** The four node centres, laid out as a diamond. */
+const N_GEN: Pt = [240, 46];
+const N_FILTER: Pt = [392, 162];
+const N_RAT: Pt = [240, 278];
+const N_TUNE: Pt = [88, 162];
+
+/**
+ * The loop the signal travels, in order: generate → filter → rationalize →
+ * fine-tune → back. Each edge bows outward so the four make a rounded diamond;
+ * the corners sit at node centres, hidden behind the boxes.
+ */
+const EDGES: Edge[] = [
+  { p0: N_GEN, p1: [330, 60], p2: [380, 110], p3: N_FILTER },
+  { p0: N_FILTER, p1: [392, 216], p2: [330, 260], p3: N_RAT },
+  { p0: N_RAT, p1: [150, 260], p2: [90, 216], p3: N_TUNE },
+  { p0: N_TUNE, p1: [102, 110], p2: [150, 60], p3: N_GEN },
+];
+
+/** The shortcut a correct answer takes: straight from filter to fine-tune. */
+const SHORTCUT: Edge = { p0: N_FILTER, p1: [300, 150], p2: [180, 150], p3: N_TUNE };
+
+/* A highlighted node gets a solid compute fill (not a translucent tint), so its
+ * text flips light to stay legible. Full literals, so Tailwind's JIT emits them. */
+const RECT_BASE = "fill-surface-raised stroke-grid";
+const RECT_HOT = "fill-compute stroke-compute";
+const TITLE_BASE = "fill-ink text-[13px] font-semibold";
+const TITLE_HOT = "fill-canvas text-[13px] font-semibold";
+const SUB_BASE = "fill-ink-muted text-[10px]";
+const SUB_HOT = "fill-grid text-[10px]";
+
+/** A direction chevron at an edge's midpoint, angled along its chord. */
+function Chevron({ e, cls = "fill-ink-muted" }: { e: Edge; cls?: string }) {
+  const [mx, my] = bezier(e, 0.5);
+  const deg = (Math.atan2(e.p3[1] - e.p0[1], e.p3[0] - e.p0[0]) * 180) / Math.PI;
   return (
-    <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="text-[13px] font-semibold">
-      <tspan className="fill-wrong">Rationale</tspan>
-      <tspan className="fill-ink-muted">, </tspan>
-      <tspan className="fill-compute">Answer</tspan>
-    </text>
+    <path
+      d="M0,0 L-8,-4 L-8,4 Z"
+      transform={`translate(${mx.toFixed(1)} ${my.toFixed(1)}) rotate(${deg.toFixed(1)})`}
+      className={cls}
+    />
   );
 }
 
 /**
- * Section 1's loop graph — STaR's Figure 1 (Zelikman et al. 2022) redrawn in the
- * deck's grammar and animated to show the loop turning: the fine-tune outer loop
- * (dashed, exactly as the paper draws it) marches forward, and a comet segment
- * travels the whole cycle. Both are pure CSS animations, so the global
- * prefers-reduced-motion rule stops them. It is a static illustration — the
- * controls below drive the chart, not this diagram.
+ * Section 1's loop graph — STaR's cycle with the paper's rationalization branch:
+ * generate a rationale, check the answer, KEEP it if it is right; if it is
+ * wrong, hand the correct answer back as a hint and let the model RATIONALIZE
+ * its way to that answer, then keep the survivor; fine-tune the base model on
+ * the keepers and repeat.
  *
- * The comet rides `LOOP_D`, a single continuous path over the happy loop (model →
- * generate → correct → training set → fine-tune → model); pathLength=100 lets the
- * dash values read as percentages of its length regardless of the real geometry.
+ * A single signal rides the wire (evaluated on EDGES, so it is exactly on the
+ * line). It is staged, not constant: it travels an edge, then dwells at the
+ * node it reaches while that node lights up, then moves on. Driven by rAF over
+ * refs (no per-frame React render) and skipped under prefers-reduced-motion,
+ * which leaves the static wire, chevrons and labels. The filter node's label
+ * echoes the correctness-filter toggle below.
  */
-const LOOP_D =
-  "M410 178 H600 V92 H151 V72 C 232 108 268 128 316 150 L410 178 Z";
+function StarLoop({ filter }: { filter: boolean }) {
+  // Two signals: A carries the trunk (generate→filter, fine-tune→generate) and,
+  // during the split, the correct-answer shortcut; B carries the wrong-answer
+  // detour through rationalize. Both leave filter together and are timed to
+  // reach fine-tune at the same instant.
+  const dotARef = useRef<SVGCircleElement | null>(null);
+  const dotBRef = useRef<SVGCircleElement | null>(null);
+  const rectRefs = useRef<(SVGRectElement | null)[]>([]);
+  const titleRefs = useRef<(SVGTextElement | null)[]>([]);
+  const subRefs = useRef<(SVGTextElement | null)[]>([]);
 
-function StarLoop() {
+  useEffect(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    // Phase durations (ms). The split (SP) is shared by both paths, so they
+    // arrive at fine-tune together: the correct dot eases the whole SP along the
+    // shortcut while the wrong dot spends it on F→R, a dwell, then R→FT.
+    const DG = 480, GF = 620, DF = 480, SP = 1200, DFT = 480, FTG = 620;
+    const S1 = 440, SD = 320, S2 = SP - S1 - SD; // F→R, rationalize dwell, R→FT
+    const B = [DG, DG + GF, DG + GF + DF, DG + GF + DF + SP, DG + GF + DF + SP + DFT];
+    const TOTAL = B[4] + FTG;
+    let raf = 0;
+    let start = 0;
+    const place = (ref: typeof dotARef, x: number, y: number, vis: boolean) => {
+      const el = ref.current;
+      if (!el) return;
+      if (!vis) return void el.setAttribute("opacity", "0");
+      el.setAttribute("cx", x.toFixed(2));
+      el.setAttribute("cy", y.toFixed(2));
+      el.setAttribute("opacity", "1");
+    };
+    const tick = (now: number) => {
+      if (!start) start = now;
+      const e = (now - start) % TOTAL;
+      let hi = -1;
+      let a: [number, number] | null = null;
+      let b: [number, number] | null = null;
+      if (e < B[0]) {
+        hi = 0; // dwell at generate
+      } else if (e < B[1]) {
+        a = bezier(EDGES[0], (e - B[0]) / GF); // generate → filter
+      } else if (e < B[2]) {
+        hi = 1; // dwell at filter
+      } else if (e < B[3]) {
+        const ls = e - B[2]; // the split
+        a = bezier(SHORTCUT, ls / SP); // correct answer, straight to fine-tune
+        if (ls < S1) b = bezier(EDGES[1], ls / S1); // wrong answer → rationalize
+        else if (ls < S1 + SD) hi = 2; // rationalize with the hint (dwell)
+        else b = bezier(EDGES[2], (ls - S1 - SD) / S2); // rationalized → fine-tune
+      } else if (e < B[4]) {
+        hi = 3; // both have arrived: dwell at fine-tune
+      } else {
+        a = bezier(EDGES[3], (e - B[4]) / FTG); // fine-tune → generate
+      }
+      for (let i = 0; i < rectRefs.current.length; i++) {
+        const hot = i === hi;
+        rectRefs.current[i]?.setAttribute("class", hot ? RECT_HOT : RECT_BASE);
+        titleRefs.current[i]?.setAttribute("class", hot ? TITLE_HOT : TITLE_BASE);
+        subRefs.current[i]?.setAttribute("class", hot ? SUB_HOT : SUB_BASE);
+      }
+      // tint the trunk signal green while it rides the correct-answer shortcut
+      dotARef.current?.setAttribute("class", e >= B[2] && e < B[3] ? "fill-correct" : "fill-compute");
+      place(dotARef, a ? a[0] : 0, a ? a[1] : 0, !!a);
+      place(dotBRef, b ? b[0] : 0, b ? b[1] : 0, !!b);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const nodes = [
+    { x: 164, y: 23, title: "generate", sub: "a rationale + answer" },
+    {
+      x: 316,
+      y: 139,
+      title: filter ? "filter" : "filter (off)",
+      sub: filter ? "answer vs. the key" : "no key: keep all",
+    },
+    { x: 164, y: 255, title: "rationalize", sub: "hint = the answer" },
+    { x: 12, y: 139, title: "fine-tune", sub: "base model, on keepers" },
+  ];
+
   return (
     <svg
-      viewBox="0 0 680 360"
+      viewBox="0 0 480 324"
       role="img"
-      aria-label="STaR's loop, after Zelikman et al. 2022, Figure 1. A dataset of questions with known answers fine-tunes the language model. For each question the model generates a rationale and an answer. If the answer is correct, the question, rationale and answer join the training set. If it is wrong, the correct answer is handed back as a hint and the model rationalizes; a rationalization that now checks out also joins the set, with the hint stripped. The enlarged set fine-tunes the base model, and the loop repeats."
-      className="mx-auto w-full max-w-[680px]"
+      aria-label={`STaR's loop. Generate a rationale and answer. Filter: ${
+        filter ? "check the answer against the key" : "the key is off, so every rationale is kept"
+      }. A correct answer is kept directly. A wrong one is handed the correct answer as a hint, and the model rationalizes its way to that answer; the successful rationalization is kept too. The base model is fine-tuned on the keepers, and the loop repeats.`}
+      className="mx-auto w-full max-w-[480px]"
     >
-      <defs>
-        <marker id="star-head" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 z" className="fill-ink-muted" />
-        </marker>
-      </defs>
+      {/* the correct-answer shortcut: dashed, straight from filter to fine-tune */}
+      <path d={edgeD(SHORTCUT)} fill="none" strokeWidth={1.6} strokeDasharray="5 4" className="stroke-ink-muted" />
+      <Chevron e={SHORTCUT} cls="fill-correct" />
+      <text x={240} y={148} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
+        correct ✓ keep
+      </text>
 
-      {/* ---- edges (drawn first, so node boxes sit on top) ---- */}
-      <g fill="none" strokeWidth={1.8} className="stroke-ink-muted" markerEnd="url(#star-head)">
-        <path d="M162 181 H296" />
-        <path d="M410 178 H472" />
-        {/* correct → training set, over the top */}
-        <path d="M600 150 V92 H151 V74" />
-        {/* wrong → hint */}
-        <path d="M566 198 C 612 222 606 248 560 264" />
-        {/* hint → model (retry) */}
-        <path d="M484 286 C 430 282 388 250 360 214" />
-        {/* model → rationalized rationale */}
-        <path d="M346 214 C 326 258 372 286 418 290" />
-        {/* rationalized correct → training set, up the left */}
-        <path d="M250 290 H26 V52 H42" />
+      {/* the loop wire: the four edges the signal travels */}
+      <g fill="none" strokeWidth={2} className="stroke-ink-muted">
+        {EDGES.map((e, i) => (
+          <path key={i} d={edgeD(e)} />
+        ))}
       </g>
 
-      {/* fine-tune outer loop: dashed and flowing */}
-      <path
-        d="M186 72 C 232 108 268 128 314 150"
-        fill="none"
-        strokeWidth={1.8}
-        strokeDasharray="6 6"
-        markerEnd="url(#star-head)"
-        className="stroke-ink-muted animate-star-flow"
-      />
+      {/* direction chevrons at each edge midpoint */}
+      {EDGES.map((e, i) => (
+        <Chevron key={i} e={e} />
+      ))}
 
-      {/* the comet: a short bright segment travelling the whole cycle */}
-      <path
-        d={LOOP_D}
-        pathLength={100}
-        fill="none"
-        strokeWidth={3}
-        strokeLinecap="round"
-        strokeDasharray="4 96"
-        className="stroke-compute animate-star-comet"
-      />
+      {/* branch labels: the wrong-answer path and its hint-driven recovery */}
+      <text x={432} y={214} textAnchor="middle" className="fill-wrong text-[11px] font-semibold">
+        wrong ✗
+      </text>
+      <text x={150} y={250} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
+        ✓ kept
+      </text>
+      <text x={70} y={108} textAnchor="middle" className="fill-ink-muted text-[11px]">
+        ↺ repeat
+      </text>
 
-      {/* ---- edge labels & verdict marks ---- */}
-      <text x={441} y={168} textAnchor="middle" className="fill-ink-muted text-[11px]">generate</text>
-      <text x={372} y={258} textAnchor="middle" className="fill-ink-muted text-[11px]">rationalize</text>
-      <text x={250} y={118} textAnchor="middle" className="fill-ink-muted text-[11px]">fine-tune</text>
-      <text x={626} y={112} textAnchor="middle" className="fill-correct text-[15px] font-bold">✓</text>
-      <text x={626} y={130} textAnchor="middle" className="fill-ink-muted text-[10px]">correct</text>
-      <text x={626} y={232} textAnchor="middle" className="fill-wrong text-[15px] font-bold">✗</text>
-      <text x={626} y={250} textAnchor="middle" className="fill-ink-muted text-[10px]">wrong</text>
-      <text x={232} y={294} textAnchor="middle" className="fill-correct text-[15px] font-bold">✓</text>
+      {/* the travelling signals (positioned by the rAF loop); hidden while dwelling.
+          A = trunk, tinted green on the correct-answer shortcut; B = wrong-answer detour */}
+      <circle ref={dotARef} cx={N_GEN[0]} cy={N_GEN[1]} r={5.5} opacity={0} className="fill-compute" />
+      <circle ref={dotBRef} cx={N_FILTER[0]} cy={N_FILTER[1]} r={5.5} opacity={0} className="fill-compute" />
 
-      {/* ---- nodes ---- */}
-      <LoopBox x={44} y={24} w={214} h={48}>
-        <text x={151} y={49} textAnchor="middle" dominantBaseline="middle" className="text-[13px] font-semibold">
-          <tspan className="fill-compute">Question</tspan>
-          <tspan className="fill-ink-muted">, </tspan>
-          <tspan className="fill-wrong">Rationale</tspan>
-          <tspan className="fill-ink-muted">, </tspan>
-          <tspan className="fill-compute">Answer</tspan>
-        </text>
-      </LoopBox>
-
-      <LoopBox x={44} y={158} w={118} h={44}>
-        <text x={103} y={181} textAnchor="middle" dominantBaseline="middle" className="fill-compute text-[13px] font-semibold">
-          Question
-        </text>
-      </LoopBox>
-
-      <LoopBox x={298} y={150} w={112} h={64} cls="fill-surface stroke-ink" strokeWidth={1.5}>
-        <text x={354} y={175} textAnchor="middle" dominantBaseline="middle" className="fill-ink text-[13px] font-semibold">
-          Language
-        </text>
-        <text x={354} y={192} textAnchor="middle" dominantBaseline="middle" className="fill-ink text-[13px] font-semibold">
-          Model
-        </text>
-      </LoopBox>
-
-      <LoopBox x={474} y={150} w={170} h={48} cls="fill-correct/10 stroke-correct/60">
-        <RAText x={559} y={175} />
-      </LoopBox>
-
-      <LoopBox x={484} y={266} w={118} h={46} cls="fill-surface-raised stroke-ink-muted">
-        <text x={543} y={290} textAnchor="middle" dominantBaseline="middle" className="fill-ink text-[13px] font-semibold">
-          Hint
-        </text>
-      </LoopBox>
-
-      <LoopBox x={250} y={266} w={170} h={48} cls="fill-correct/10 stroke-correct/60">
-        <RAText x={335} y={291} />
-      </LoopBox>
+      {/* the four nodes; each fills solid compute when the signal dwells on it */}
+      {nodes.map((n, i) => (
+        <g key={n.title}>
+          <rect
+            ref={(el) => {
+              rectRefs.current[i] = el;
+            }}
+            x={n.x}
+            y={n.y}
+            width={152}
+            height={46}
+            rx={10}
+            className={RECT_BASE}
+          />
+          <text
+            ref={(el) => {
+              titleRefs.current[i] = el;
+            }}
+            x={n.x + 76}
+            y={n.y + 20}
+            textAnchor="middle"
+            className={TITLE_BASE}
+          >
+            {n.title}
+          </text>
+          <text
+            ref={(el) => {
+              subRefs.current[i] = el;
+            }}
+            x={n.x + 76}
+            y={n.y + 35}
+            textAnchor="middle"
+            className={SUB_BASE}
+          >
+            {n.sub}
+          </text>
+        </g>
+      ))}
     </svg>
   );
 }
@@ -524,8 +610,8 @@ export function Page12() {
           </h2>
 
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            {/* the loop itself, drawn as STaR's Figure 1 and animated to turn */}
-            <StarLoop />
+            {/* the loop itself, with the rationalization branch, signal animated to turn */}
+            <StarLoop filter={filter} />
 
             <p className="text-sm text-ink">
               This is <strong>STaR</strong>&apos;s loop.
