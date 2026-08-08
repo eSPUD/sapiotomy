@@ -232,6 +232,13 @@ for (const sp of [lucky, broken, clean]) {
         `a judged step in the "${sp.role}" specimen carries no claim to point at`,
       );
     }
+    // The page says the PRM never declines. A published specimen with a scoreless
+    // step would make that sentence false, so it may not load.
+    if (sp.prm_labels_published && (typeof step.prm !== "number" || !step.prm_label)) {
+      throw new Page09DataError(
+        `the "${sp.role}" specimen publishes PRM labels but a step is missing one`,
+      );
+    }
   }
 }
 
@@ -264,6 +271,12 @@ export interface Step {
   claim: string | null;
   /** The PRM's score, only when the run's PRM cleared its gate. */
   prm: number | null;
+  /**
+   * The PRM's verdict at the notebook's fitted threshold, published per step so
+   * the page never re-derives it from the score. Unlike the checker, the PRM has
+   * one on every step: it never declines.
+   */
+  prmVerdict: "true" | "false" | null;
 }
 
 export interface Specimen {
@@ -290,6 +303,7 @@ const asSpecimen = (r: RawSpecimen): Specimen => ({
     check: s.check,
     claim: s.claim,
     prm: r.prm_labels_published && typeof s.prm === "number" ? s.prm : null,
+    prmVerdict: r.prm_labels_published && s.prm_label ? s.prm_label : null,
   })),
   firstFalse: r.first_false,
   nFalse: r.n_false,
@@ -379,6 +393,7 @@ export const PAGE9 = {
           recallOnFalse: prm.recall_on_false,
           specificityOnTrue: prm.specificity_on_true,
           nStepsCompared: prm.n_steps_compared,
+          threshold: prm.threshold,
           thresholdSource: prm.threshold_source,
         }
       : null,
@@ -393,7 +408,3 @@ export const PAGE9 = {
 
   claims: raw.claims,
 } as const;
-
-/** A step's label as the reveal words it. */
-export const checkLabel = (check: CheckLabel): string =>
-  check === "true" ? "checked" : check === "false" ? "false" : "not checkable";
