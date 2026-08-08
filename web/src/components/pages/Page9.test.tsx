@@ -1,42 +1,35 @@
 /**
  * Page 9's component tests.
  *
- * The old suite asserted on the authored trace's prose ("cannot be cancelled").
  * There is no authored prose left, so these assert on the mechanic and on the
- * page's honesty instead: that the outcome view really is blind to the working,
- * that the reveal is gated behind the reader's own answer, that the checker's
+ * page's honesty: that the outcome view is blind to the working, that the reveal
+ * is gated behind the reader's own answer and re-answerable, that the checker's
  * reach is shown as reach rather than as a per-step verdict, that the PRM's
- * opinion never dresses as a fact, and that the three numbers the page is not
- * allowed to quote flat arrive with their caveats.
- *
- * The interaction under test changed with the grey chip that prompted it. The
- * reader is asked ONE question — which line goes wrong — because the six-mark
- * version demanded an opinion on prose neither instrument could score, and then
- * paid it back in `can't check` chips.
+ * opinion never dresses as a fact (and, on these specimens, is caught being
+ * wrong), and that the three numbers the page is not allowed to quote flat arrive
+ * with their caveats.
  */
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { PAGE9, tidyMath } from "@/lib/page09";
 import { Page9 } from "./Page9";
 
+/** The mark-a-step button label for a given zero-based step index. */
+const markName = (i: number) => `Mark step ${i + 1} as the line that goes wrong`;
+
 /** Answer the figure's one question, correctly, and reveal. */
 const findTheBreakThenReveal = (trace = PAGE9.lucky) => {
   fireEvent.click(screen.getByRole("button", { name: /process view/i }));
   if (trace.firstFalse !== null) {
-    fireEvent.click(
-      screen.getByRole("button", {
-        name: `Mark step ${trace.firstFalse + 1} as the line that goes wrong`,
-      }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: markName(trace.firstFalse) }));
   } else {
     fireEvent.click(screen.getByRole("button", { name: /nothing here breaks/i }));
   }
   fireEvent.click(screen.getByRole("button", { name: /reveal what the graders found/i }));
 };
 
-// docs/page_9_refactor.md: the AUC appears ONCE, in the note that admits the PRM. It
-// had crept back into the detection figure, which is where a reader would read it as a
-// property of the finding rather than of the grader.
+// The AUC appears ONCE, in the note that admits the PRM. It may not sit in the
+// figure, where a reader would read it as a property of the finding.
 describe("Page 9's PRM reliability is quoted once", () => {
   it("keeps the AUC in the margin and out of the figures", () => {
     render(<Page9 />);
@@ -48,6 +41,12 @@ describe("Page 9's PRM reliability is quoted once", () => {
 });
 
 describe("Page 9 (outcome vs process supervision) component", () => {
+  it("carries the notebook download at the top right", () => {
+    render(<Page9 />);
+    const link = screen.getByRole("link", { name: /notebook \+ .*chains/i });
+    expect(link).toHaveAttribute("href", "/notebooks/page-09-outcome-vs-process.zip");
+  });
+
   it("sets up what a gradable step requires before the figure asks for one", () => {
     render(<Page9 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
@@ -56,10 +55,17 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(headings[2]).toMatch(/what step grading buys/i);
   });
 
+  it("states the three conditions on a gradable step", () => {
+    render(<Page9 />);
+    // 1: a fact to be right about; 2: a right answer can hide a wrong step;
+    // 3: the unit is the step, not the word.
+    expect(screen.getByText(/there has to be a fact/i)).toBeInTheDocument();
+    expect(screen.getByText(/a right answer can be reached by a wrong step/i)).toBeInTheDocument();
+    expect(screen.getByText(/the unit is the step, not the word/i)).toBeInTheDocument();
+  });
+
   it("states the checker's reach as a finding before the figure uses it", () => {
     render(<Page9 />);
-    // The share it COULD read, quoted positively. The old page quoted the 94% it
-    // declined, which is the same fact phrased as an apology for the figure.
     const intro = screen.getByText(/state nothing it can compute/i);
     const figure = screen.getByRole("heading", { level: 2, name: /find the break/i });
     expect(intro.compareDocumentPosition(figure) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -69,8 +75,6 @@ describe("Page 9 (outcome vs process supervision) component", () => {
   it("never labels a step with the checker's silence", () => {
     render(<Page9 />);
     findTheBreakThenReveal();
-    // The reach of the instrument is not a verdict on the step, so it may not be
-    // rendered in the verdict slot. This is the defect the page was rebuilt for.
     expect(screen.queryByText(/can't check/i)).toBeNull();
     expect(screen.queryByText(/^unknown$/i)).toBeNull();
   });
@@ -82,7 +86,6 @@ describe("Page 9 (outcome vs process supervision) component", () => {
 
   it("redacts the working in the outcome view, because that grader cannot read it", () => {
     render(<Page9 />);
-    // The step text must not be on screen while the outcome grader is the one reading.
     const firstStep = PAGE9.lucky.steps[0].text.slice(0, 30);
     expect(
       screen.queryByText(new RegExp(firstStep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))),
@@ -93,6 +96,28 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     render(<Page9 />);
     fireEvent.click(screen.getByRole("button", { name: /process view/i }));
     expect(screen.getByRole("button", { name: /pick a line first/i })).toBeDisabled();
+  });
+
+  it("toggles a pick off when the same line is clicked twice", () => {
+    render(<Page9 />);
+    fireEvent.click(screen.getByRole("button", { name: /process view/i }));
+    const line = markName(PAGE9.lucky.firstFalse!);
+    fireEvent.click(screen.getByRole("button", { name: line }));
+    expect(screen.getByRole("button", { name: /reveal what the graders found/i })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: line }));
+    expect(screen.getByRole("button", { name: /pick a line first/i })).toBeDisabled();
+  });
+
+  it("lets the reader grade again after the reveal", () => {
+    render(<Page9 />);
+    findTheBreakThenReveal();
+    expect(screen.getByText(/that is the line the checker proves false/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /grade another line/i }));
+    // Back to picking: the reveal verdict is gone and the mark buttons return.
+    expect(screen.queryByText(/that is the line the checker proves false/i)).toBeNull();
+    expect(
+      screen.getByRole("button", { name: markName(PAGE9.lucky.firstFalse!) }),
+    ).toBeInTheDocument();
   });
 
   it("chips a checker verdict only on the steps it could actually read", () => {
@@ -117,20 +142,15 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(screen.getAllByText("checked: FALSE").length).toBe(PAGE9.lucky.nFalse);
   });
 
-  it("reports what the checker could read of the chain, and of the run", () => {
+  it("annotates that the PRM missed the break the checker proved", () => {
     render(<Page9 />);
     findTheBreakThenReveal();
-    const read = PAGE9.lucky.steps.filter((s) => s.check !== "unknown").length;
-    expect(
-      screen.getByText(new RegExp(`${read} of ${PAGE9.lucky.steps.length}`)),
-    ).toBeInTheDocument();
-  });
-
-  it("says outright that silence is not approval", () => {
-    render(<Page9 />);
-    expect(screen.getByText(/plain is not approval/i)).toBeInTheDocument();
-    findTheBreakThenReveal();
-    expect(screen.getByText(/nothing at all to say about the other/i)).toBeInTheDocument();
+    const bs = PAGE9.lucky.steps[PAGE9.lucky.firstFalse!];
+    // These specimens are chosen so the PRM scores the proven-false step as sound.
+    if (bs.prm !== null && bs.prmVerdict !== "false") {
+      expect(screen.getByText(/the PRM missed it/i)).toBeInTheDocument();
+      expect(screen.getByText(/difference between a fact and a score/i)).toBeInTheDocument();
+    }
   });
 
   it("underlines the judged claim in place rather than restating it", () => {
@@ -139,7 +159,6 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     const judged = PAGE9.lucky.steps.find((s) => s.claim)!;
     const marked = screen.getByText(tidyMath(judged.claim!));
     expect(marked.tagName).toBe("MARK");
-    // The old layout printed the claim a second time under its step.
     expect(screen.queryByText(/^judged:/)).toBeNull();
   });
 
@@ -147,7 +166,7 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     render(<Page9 />);
     findTheBreakThenReveal();
     expect(
-      screen.getByText(new RegExp(`that is the line the checker proves false`, "i")),
+      screen.getByText(/that is the line the checker proves false/i),
     ).toBeInTheDocument();
     expect(screen.getByText("your pick")).toBeInTheDocument();
   });
@@ -157,23 +176,30 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Clean/ }));
     findTheBreakThenReveal(PAGE9.clean);
     expect(screen.getByText(/and you said so/i)).toBeInTheDocument();
-    // A clean chain is unrefuted, not proven sound, and must say so.
     expect(screen.getByText(/not the same as proving it sound/i)).toBeInTheDocument();
+  });
+
+  it("frames section 3 as one figure and identifies the graders it plots", () => {
+    render(<Page9 />);
+    expect(
+      screen.getByText(/how often a right answer hides a false step/i),
+    ).toBeInTheDocument();
+    // The PRM is named by model, not left as a generic "process reward model", and
+    // the outcome grader is stated as the zero baseline rather than plotted as a model.
+    if (PAGE9.graders.prm) {
+      const name = PAGE9.graders.prm.id.split("/").pop()!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      expect(screen.getAllByText(new RegExp(name)).length).toBeGreaterThan(0);
+    }
+    expect(screen.getByText(/catches none of this by construction/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^Outcome grader$/)).toBeNull();
   });
 
   it("quotes detection as a floor rather than as a rate", () => {
     render(<Page9 />);
-    expect(screen.getByText(/read that as a floor, not a rate/i)).toBeInTheDocument();
-    expect(screen.getByText(/too few to estimate how common/i)).toBeInTheDocument();
+    expect(screen.getByText(/a floor, not a rate/i)).toBeInTheDocument();
+    expect(screen.getByText(/undercounts/i)).toBeInTheDocument();
   });
 
-  // Deck-wide copy rule. Pages 5, 6, 7, 8, 13 and 14 each carry this assertion;
-  // page 9 was the one page without it, which finishing_touches.md caught and left
-  // open ("page 9's copy also carries em dashes, which pages 5 to 8 assert
-  // against"). It is asserted here so the gap closes rather than being noticed
-  // again by the next review.
-  // Checked in BOTH states, because most of this page's copy is behind the
-  // reveal and a default-state-only assertion would not have seen any of it.
   it("has no em dash or en dash anywhere in its copy", () => {
     render(<Page9 />);
     expect(document.body.textContent).not.toContain("—");
@@ -186,7 +212,7 @@ describe("Page 9 (outcome vs process supervision) component", () => {
   it("quotes localisation with its spread whenever the run says it moves", () => {
     render(<Page9 />);
     if (!PAGE9.localisation.survivesSegmentation) {
-      expect(screen.getByText(/moving that rule moves it by up to/i)).toBeInTheDocument();
+      expect(screen.getByText(/moving where a step ends moves it by up to/i)).toBeInTheDocument();
     }
   });
 
@@ -215,9 +241,6 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     }
   });
 
-  // Lightman moved from a CitationBadge chip into a numbered RefItem in the
-  // References note, reachable from an inline Cite superscript on the process
-  // reward model claim. It is a preprint, so it keeps the flag.
   it("cites Lightman as a numbered reference reachable from an inline marker", () => {
     render(<Page9 />);
     const link = screen.getByRole("link", { name: /Let's Verify Step by Step/ });
