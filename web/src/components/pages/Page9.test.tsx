@@ -167,6 +167,22 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(screen.getByText(/too few to estimate how common/i)).toBeInTheDocument();
   });
 
+  // Deck-wide copy rule. Pages 5, 6, 7, 8, 13 and 14 each carry this assertion;
+  // page 9 was the one page without it, which finishing_touches.md caught and left
+  // open ("page 9's copy also carries em dashes, which pages 5 to 8 assert
+  // against"). It is asserted here so the gap closes rather than being noticed
+  // again by the next review.
+  // Checked in BOTH states, because most of this page's copy is behind the
+  // reveal and a default-state-only assertion would not have seen any of it.
+  it("has no em dash or en dash anywhere in its copy", () => {
+    render(<Page9 />);
+    expect(document.body.textContent).not.toContain("—");
+    expect(document.body.textContent).not.toContain("–");
+    findTheBreakThenReveal();
+    expect(document.body.textContent).not.toContain("—");
+    expect(document.body.textContent).not.toContain("–");
+  });
+
   it("quotes localisation with its spread whenever the run says it moves", () => {
     render(<Page9 />);
     if (!PAGE9.localisation.survivesSegmentation) {

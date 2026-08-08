@@ -500,8 +500,8 @@ export function Page9() {
                       <strong className="text-ink">
                         {nRead} of {trace.steps.length}
                       </strong>{" "}
-                      lines here — underlined above, the {nRead === 1 ? "only one" : "only ones"}{" "}
-                      stating something it could compute outright — and has nothing at all to say
+                      lines here, underlined above: the {nRead === 1 ? "only one" : "only ones"}{" "}
+                      stating something it could compute outright. It has nothing at all to say
                       about the other {trace.steps.length - nRead}. Across the run it could read{" "}
                       {pct(1 - PAGE9.graders.shareUnjudged, 1)} of{" "}
                       {PAGE9.graders.stepsTotal.toLocaleString()} steps.{" "}
@@ -525,7 +525,7 @@ export function Page9() {
                   <p className="text-sm text-ink">
                     <span className="font-mono text-ink-muted">final answer → </span>
                     <strong className={trace.outcomeCorrect ? "text-correct" : "text-wrong"}>
-                      {trace.answer ? tidyMath(trace.answer) : "—"}
+                      {trace.answer ? tidyMath(trace.answer) : "not extracted"}
                     </strong>
                     <span className="text-ink-muted">
                       {" "}
@@ -594,7 +594,7 @@ export function Page9() {
               </p>
               <p>
                 Underlined claims come from a deterministic arithmetic checker that judges only what
-                is closed-form numeric on both sides — verdicts a reader can recompute by hand.
+                is closed-form numeric on both sides: verdicts a reader can recompute by hand.
                 Nothing underlined means nothing computable, not nothing wrong.
               </p>
             </Note>
@@ -608,7 +608,7 @@ export function Page9() {
                 <p>
                   Its sound / flags-it verdicts cut its score at {prm.threshold.toFixed(2)}, a
                   threshold {prm.thresholdSource}. That reliability was measured on arithmetic
-                  steps, the friendliest ones — treat it as an upper bound.
+                  steps, the friendliest ones, so treat it as an upper bound.
                 </p>
               </Note>
             ) : null}
@@ -647,7 +647,7 @@ export function Page9() {
                 </p>
                 {det.prm ? (
                   <p className="text-sm text-ink-muted">
-                    For scale, the process reward model — which also sees method — calls a step
+                    For scale, the process reward model, which also sees method, calls a step
                     unsound in <strong className="text-ink">{pct(det.prm.rate)}</strong> of the
                     same chains: an opinion rather than a proof, and the margin says what that
                     opinion was measured to be worth. It is quoted to bound the gap, not to
@@ -719,8 +719,8 @@ export function Page9() {
             {sel && !sel.helps ? (
               <p className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
                 <strong>And one thing it does not buy, on this evidence.</strong> Using the
-                checker as a <em>selector</em> — drop any candidate containing a false step, then
-                vote on what survives — moved {pct(sel.majority)} to {pct(sel.filtered)} over{" "}
+                checker as a <em>selector</em> (drop any candidate containing a false step, then
+                vote on what survives) moved {pct(sel.majority)} to {pct(sel.filtered)} over{" "}
                 {sel.nProblems} problems, changing the answer on {sel.nChanged}. That is a null
                 result, and at this checker&apos;s reach it is the honest one: reading the working
                 earns its keep by catching and locating errors, not by picking winners.
@@ -731,7 +731,7 @@ export function Page9() {
           <Note kicker="References">
             <CitationBadge citation={LIGHTMAN} />
             <p>
-              Cited for the technique and for priority — process supervision, and training a
+              Cited for the technique and for priority: process supervision, and training a
               reward model on step labels rather than outcomes. The numbers on this page are our
               own, on our own model, and are not comparable to theirs.
             </p>
@@ -757,7 +757,7 @@ export function Page9() {
           notebook + {PAGE9.run.chains.toLocaleString()} graded chains ↓
         </a>
         <span className="text-xs text-ink-muted">
-          full run conditions — decoding, dates, step segmentation — live in the notebook
+          full run conditions (decoding, dates, step segmentation) live in the notebook
         </span>
       </div>
 
