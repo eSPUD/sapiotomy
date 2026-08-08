@@ -46,6 +46,7 @@ doubts a figure re-derives it rather than taking the file's word for it. See
 |---|---|---|
 | `page-05-derived.json` | 5 | 900 generations: 3 prompt conditions × 3 Qwen2.5 checkpoints × 100 MATH-500 L4-5 items, greedy |
 | `page-06-derived.json` | 6 | 1,500 records: 5 token budgets × 3 Qwen2.5 checkpoints × the same 100 items, greedy, forced at the cap |
+| `page-09-derived.json` | 9 | 1,580 chains reused from page 7's pile (Qwen2.5-3B-Instruct, T=0.3, the same 100 items) and graded step by step twice: a deterministic arithmetic checker, and `Qwen2.5-Math-PRM-7B` admitted only after being measured against it (AUC 0.89). Only chains the model ended itself are graded |
 
 These are validated by `src/lib/page0N.ts` at import time rather than by `data.ts`: the loader runs
 the spec's claim gates before any number reaches a component, so a run that does not pass fails the

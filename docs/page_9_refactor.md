@@ -1,7 +1,12 @@
 # Page 9 — "Outcome vs Process Supervision" assessment and partial refactor
 
-**Status:** notebook drafted (`notebooks/page_09_outcome_vs_process.ipynb`), revised after a
-data-validity review, pending a run and approval; the page itself is unchanged.
+**Status:** notebook drafted, revised after a data-validity review, and **run end to end in
+`REPLAY` against page 7's pile**. `out/page_09/` now holds real artifacts. The page itself is
+unchanged, and translation is unblocked: all three specimen roles fill with real traces.
+
+**`FULL` has now been run too.** `Qwen2.5-Math-PRM-7B` scored all 1,580 chains and **passed its
+gate**: AUC 0.892 against the checker over 1,092 comparable steps, specificity 85.9%. Its rows
+are therefore published, carrying that AUC. The whole run takes about 20 minutes on a 16 GB card.
 
 **What the validity review changed** is recorded in section 3d below and summarised here, because
 two of the four items were defects rather than refinements: the notebook pooled every one of page
@@ -330,6 +335,99 @@ more than about five points across the four rules, the page reports the range.**
 
 ---
 
+## Results from the first real run
+
+`REPLAY`, page 7's pile `t0.30-c2048`, `Qwen2.5-3B-Instruct` sampled at T=0.3, 1,580 chains that
+ended on their own over 100 MATH-500 L4-5 problems, 747 of them correct. Checker only.
+
+| measurement | value |
+|---|---|
+| steps the checker could judge | 1,092 of 18,772 (5.8%) |
+| **detection, checker** | **5 of 747 correct chains (0.67%), over 4 distinct problems** |
+| **detection, PRM** | **146 of 747 correct chains (19.5%)**, at a measured AUC of 0.89 |
+| **localisation** | **44 of 833 wrong chains have a findable break; median 37% of the chain sound before it** |
+| breaks per chain | 70% have exactly one |
+| selection (3c) | 57.0% to 58.0%, and the filter changed the answer on **1 problem of 100** |
+
+**Read these as the spec said to read them in advance.** Detection came out small, which §3a
+predicted and pre-committed to reporting as small. It is not zero, and every one of the five is
+an arithmetic error a reader can check by hand: `2·((3·4)·5)+1` written as 61, `378·7+105` written
+as 2961, `14−1` written as 15, and two chains where `48/5` becomes `24/5`. All five reached the
+right answer anyway, which is the page's thesis with a number attached rather than an assertion.
+
+**Selection is null and should be reported as null.** A one-point delta resting on a single
+problem out of a hundred is noise, and the notebook now says so rather than quoting the delta.
+That is the outcome §3c warned was likeliest, and it is why 3a and 3b carry the page.
+
+**Localisation carries a caveat detection does not**, and this came out of the §8b check rather
+than out of anyone's judgement. Forcing each segmentation rule on the same chains moves detection
+by 0.0 points and moves the median share-sound by **25 points, from 50% to 75%**. The reason is
+structural: `check_step` splits on newlines itself, so *whether* a false claim is found barely
+depends on the step boundaries, while *how far into the chain* is a ratio of step positions and
+therefore moves with them. **So the page quotes detection plainly and quotes localisation with
+its range.** Without §8b we would have quoted a single confident percentage.
+
+### The PRM, measured rather than assumed
+
+It cleared the gate, and by a margin that makes it worth putting on the page.
+
+| measure | value | over |
+|---|---|---|
+| AUC against the checker | **0.892** | 1,092 steps |
+| operating point | 0.747, **fitted** on the checker's labels | Youden's J |
+| agreement | 85.4% | 1,092 steps |
+| recall on checker-false steps | 78.9% | 76 steps |
+| specificity on checker-true steps | 85.9% | 1,016 steps |
+
+**The threshold fitting earned its place.** At the unfitted 0.5 the same scores give recall 63.2%
+and specificity 90.5%. The fitted 0.747 trades three points of specificity for sixteen points of
+recall, and the honest reading is that this checkpoint's probabilities sit higher on our chains
+than 0.5 assumes, which is exactly the calibration drift §6 predicted and refused to guess about.
+
+**And it changes the page's headline, which is the point of having brought it in.** The checker
+finds a proven-false step in **0.67%** of correct chains. The PRM calls a step unsound in
+**19.5%** of them. The checker only ever sees arithmetic; the PRM also sees method. So the page
+can now say that outcome grading waves through roughly one in five correct chains that a step
+grader would flag, and attach a measured AUC of 0.89 to that claim rather than an assertion. The
+0.67% remains the *hand-verifiable floor*, and both numbers belong on the page: one is certain
+and tiny, the other is larger and carries a stated reliability.
+
+**Two limitations ride along and must be said once.** The PRM is 8-bit, because a 7.6B grader in
+bf16 does not fit beside its activations on a 16 GB card, and that quantisation is part of what
+was measured. And its 85.9% specificity was measured on arithmetic steps, which are the friendly
+ones; on the prose steps where its 19.5% actually lives, its reliability is unmeasured and
+probably worse.
+
+### What the run taught about the checker, which was most of the work
+
+The first execution labelled **1 step in 1,192**. That is not a cautious checker, it is a broken
+one, and the null result it produced would have been a fact about our code reported as a fact
+about the model. Two changes to how a *claim* is found took it to about 6%, neither of them
+touching the precision rule:
+
+- **A newline ends a claim, as a comma does.** This model writes numbered lists inside
+  paragraph-sized steps, so a list of eight computations arrived as one chunk whose leftmost
+  operand was a symbol, discarding all eight.
+- **An equality chain is judged pairwise.** `a_2 = a_1 + 1 = 0 + 1 = 1` is symbolic on the left
+  and a checkable claim on the right. Requiring every term to be numeric threw it away.
+
+Then three **false-positive classes**, every one found by hand-auditing real flagged claims rather
+than by imagining what could go wrong, and every one a case where the checker invented a claim
+nobody made:
+
+| what it flagged | why it was wrong |
+|---|---|
+| `- $5! = 120$` | the markdown bullet parsed as a unary minus, so the left side read −120, and sympy reads `5!` as a factorial |
+| `Sum of proper divisors of 284 = 1 + 2 + 4 + 71 = 78` | stripping the prose left the bare `284`, turning a phrase into an operand |
+| `f(2) = 1/(2²−2) + …` | a division by zero is complex infinity, and `zoo − zoo` compares unequal to zero |
+
+All three are now preflight cases, and the preflight stands at 38, of which 13 are things the
+checker must **refuse**. The general lesson is worth carrying to any future checker in this deck:
+**a rule that only strips text can only ever be tested against real output**, because every one of
+these passed a synthetic preflight of twenty cases and failed on the first hundred real chains.
+
+---
+
 ## On simulating the process grader
 
 Raised as a last resort, and it should stay unused. Page 9's refactor exists because the page
@@ -385,6 +483,25 @@ Miss any of them and its labels are **stripped from `derived.json`**, not publis
 footnote. A suppressed PRM is a finding in its own right and worth one sentence on the page: an
 off-the-shelf process reward model pointed at off-distribution prose is not free, which is a
 concrete version of the thing this page is already arguing about how hard process supervision is.
+
+**How it is loaded is part of the method, and this one nearly cost us the result.** The
+checkpoint ships its own modeling code, written against an older transformers than this project
+pins. Used as shipped it fails twice loudly (`config.pad_token_id`, `DynamicCache.from_legacy_cache`)
+and then, once both are worked around, **once quietly**: the forward pass returns finite hidden
+states that are wrong. Nothing raises. Every step scores about 0.25 and a known-false step
+separates from a true one by 0.002, which reads exactly like "an off-the-shelf PRM cannot grade
+our chains" and would have been written up as a finding about process supervision. It was a
+finding about our loader.
+
+The notebook therefore loads the body with transformers' own `Qwen2Model`, attaches the
+checkpoint's score head by hand, and **preflights the body by asking it for the capital of
+France** before trusting a word it says about mathematics. Loaded correctly it answers " Paris"
+and the separation margin goes from 0.002 to 0.592. The separation preflight now demands a real
+gap rather than the right sign, for the same reason.
+
+The general lesson belongs with the checker's: **a silent numerical failure is indistinguishable
+from a negative result**, and the only defence is a preflight that asks the component something
+whose answer you already know.
 
 **The threshold is fitted, and the reliability is an upper bound.** Two consequences the page
 inherits. First, 0.5 is not a threshold, it is where a probability calibrated on someone else's
@@ -463,6 +580,13 @@ Items 1 to 3 are worth doing even if 4 and 5 are dropped entirely. Item 2 gates 
 checker finds nothing, items 3 to 5 have nothing to work with and the page falls back to the
 position described under "On simulating the process grader".
 
+**Where this actually stands after the first run.** Items 0, 2, 3 and 5 are done and measured;
+item 4's three specimens exist as real traces and the notebook prints them. What remains is the
+page rewrite itself, plus `FULL` once there is disk for the PRM. Item 2's gate passed, but only
+after the checker was made to work: on its first execution it found nothing, and the recovery is
+written up under "What the run taught about the checker" because the same trap is waiting for
+anyone who builds a second deterministic rule for open question 4.
+
 ---
 
 ## Open questions for review
@@ -475,9 +599,12 @@ position described under "On simulating the process grader".
 2. **Do we want a hand-labelled method-error specimen** (the cancel-the-sixes shape) alongside
    the checker-labelled ones? It is the more striking failure and the checker cannot find it.
    Including it means one trace on the page carries a human label.
-3. **Keep the 16/64 problem at all?** It is memorable and it is the canonical case. If a curated
-   real specimen is nearly as legible, the real one should win; if nothing real comes close, the
-   authored one stays with an honest chip.
+3. ~~**Keep the 16/64 problem at all?**~~ **Answerable now, and my recommendation is to drop it
+   from the reveal.** The run fills all three roles with real six-step traces, and the `broken`
+   specimen is better teaching than 16/64 because the model's error is a real slip rather than a
+   famous one: it evaluates a parenthesisation to 144 when the arithmetic gives 122, having
+   already got two lines right. 16/64 keeps its place in the prose as the *method-error* example
+   the checker provably cannot catch, which is a job the real specimens cannot do.
 4. **If the detection rate is near zero, do we add an internal-consistency check?** A second
    deterministic rule: flag a step that *uses* a value contradicting one an earlier step
    established. It stays opinion-free and it reaches errors of bookkeeping that pure arithmetic

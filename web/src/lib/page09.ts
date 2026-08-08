@@ -1,0 +1,399 @@
+/**
+ * Page 9's measured run, loaded from the notebook's committed `derived.json`.
+ *
+ * The boundary (notebooks/README.md): the notebook writes logs, the page reads
+ * them. Nothing here recomputes a claim. `web/data/page-09-derived.json` is a
+ * byte-for-byte copy of `notebooks/out/page_09/derived.json`, produced by
+ * `page_09_outcome_vs_process.ipynb` from page 7's pile: 1,580 chains that the
+ * model ended itself, graded step by step twice.
+ *
+ * This page had the sharpest defect in the deck. The old version invited the
+ * reader to mark each step and then revealed what it called "the PRM's labels",
+ * which were hand-written `ok` booleans in `lib/authored.ts`. Not merely
+ * unchipped: attributed to a system that never ran. Every label the new page
+ * reveals comes from one of two graders that did run, and the manifest records
+ * which one produced which.
+ *
+ * Page 9's `derived.json` carries an explicit `claims` block, so the gates below
+ * are read rather than recomputed, and a run that fails one is a load error here
+ * rather than a conditional in the component.
+ *
+ * The blocking gates are the notebook's own five:
+ *
+ *   · `same_population_as_page_7` — the same hundred problems, so pages 6 to 9
+ *     describe one population rather than four
+ *   · `every_chain_ended_itself` — no chain was cut at our cap. A chain WE ended
+ *     is our experiment, not the model's reasoning, and grading one would report
+ *     our own cap as its error
+ *   · `detection_measurable` / `localisation_has_a_population` — both beats have
+ *     something to measure over
+ *   · `specimens_complete` — all three roles filled with real traces. A missing
+ *     role may NOT be filled with an authored one; that is the defect this page
+ *     exists to remove, and silently falling back would reintroduce it
+ *
+ * Two claims came back FALSE on the shipped run, and both change what the page
+ * says rather than whether it ships:
+ *
+ *   · `localisation_survives_segmentation` — false. Detection barely moves when
+ *     the segmentation rule changes (0 points) because the checker splits on
+ *     newlines itself, but localisation is a ratio of step POSITIONS and moves by
+ *     up to 25. So beat two quotes its median with that spread attached, and
+ *     `localisationSpreadPts` exists to make omitting it awkward.
+ *   · `step_filter_helps_selection` — false. Filtering candidates by their
+ *     working moved one problem in a hundred. The page reports the null.
+ *
+ * The consistency assertions are the cross-language check in miniature: the
+ * specimen roles have to be what they claim (the lucky one right with a false
+ * step, the broken one wrong with exactly one, the clean one right with none),
+ * and the step counts have to sum to the labels the notebook tallied. A copy of
+ * the wrong run into `web/data/` fails the build rather than drawing a plausible
+ * wrong reveal.
+ */
+import rawDerived from "@data/page-09-derived.json";
+import { pct, tidyMath } from "./traceText";
+
+export { pct, tidyMath };
+
+export class Page09DataError extends Error {}
+
+/* --------------------------------------------------------------- raw shape */
+
+type CheckLabel = "true" | "false" | "unknown";
+
+interface RawStep {
+  text: string;
+  check: CheckLabel;
+  claim: string | null;
+  prm?: number;
+  prm_label?: "true" | "false";
+}
+
+interface RawSpecimen {
+  role: string;
+  problem_id: string;
+  level: number;
+  question: string;
+  ground_truth: string;
+  extracted_answer: string | null;
+  outcome_correct: boolean;
+  steps: RawStep[];
+  first_false: number | null;
+  n_false: number;
+  prm_scored: boolean;
+  prm_labels_published: boolean;
+}
+
+interface RawDerived {
+  claims: Record<string, boolean>;
+  headline: {
+    detection_checker: {
+      n_right_chains: number;
+      n_contaminated: number;
+      rate: number;
+      n_problems: number;
+      n_problems_with_a_right_chain: number;
+    };
+    detection_prm: {
+      rate: number;
+      n_chains_scored: number;
+      auc: number;
+      threshold: number;
+    } | null;
+    localisation: {
+      median_share_sound: number | null;
+      segmentation_spread_pts: number | null;
+      share_sound_on_subsample: { n_chains: number; low: number; high: number };
+      n_localisable: number;
+      n_wrong: number;
+      n_problems: number;
+      share_with_one_false_step: number | null;
+    };
+    selection: {
+      n_problems: number;
+      majority: number;
+      majority_after_step_filter: number;
+      delta_pts: number;
+      n_problems_changed: number;
+    } | null;
+    step_labels: Record<CheckLabel, number>;
+    n_chains: number;
+  };
+  localisation: { n_false_distribution: Record<string, number> };
+  prm_reliability: {
+    auc: number;
+    threshold: number;
+    threshold_source: string;
+    agreement: number;
+    recall_on_false: number;
+    specificity_on_true: number;
+    n_steps_compared: number;
+  } | null;
+  prm_reported_on_page: boolean;
+  filter_audit: { n_kept: number; n_dropped: number; kept_outcome_accuracy: number };
+  specimens: Record<string, RawSpecimen>;
+  missing_roles: string[];
+  manifest: {
+    timestamp_utc: string;
+    chains: {
+      generator: string;
+      n: number;
+      temperature: number | null;
+      top_p: number | null;
+      chain_budget: number;
+      decoding: string;
+      page_07_config_id?: string;
+    };
+    items: { n: number; filter: string };
+    graders: {
+      prm: {
+        id: string;
+        quantisation: string;
+        reliability_vs_checker: { auc: number } | null;
+      } | null;
+    };
+    step_segmentation: { min_step_chars: number };
+  };
+}
+
+const raw = rawDerived as unknown as RawDerived;
+
+/* -------------------------------------------------------------------- gates */
+
+const BLOCKING = [
+  "same_population_as_page_7",
+  "every_chain_ended_itself",
+  "detection_measurable",
+  "localisation_has_a_population",
+  "specimens_complete",
+] as const;
+
+for (const claim of BLOCKING) {
+  if (raw.claims[claim] !== true) {
+    throw new Page09DataError(
+      `page-09-derived.json fails the notebook's blocking claim "${claim}". ` +
+        `That run may not be translated to a page: see docs/page_9_refactor.md.`,
+    );
+  }
+}
+
+if (raw.missing_roles.length > 0) {
+  throw new Page09DataError(
+    `page-09-derived.json is missing specimen role(s): ${raw.missing_roles.join(", ")}. ` +
+      `A missing role may not be filled with an authored trace.`,
+  );
+}
+
+/* ------------------------------------------------------- consistency checks */
+
+function specimen(role: string): RawSpecimen {
+  const hit = raw.specimens[role];
+  if (!hit) throw new Page09DataError(`page-09-derived.json bundles no "${role}" specimen`);
+  if (hit.steps.length === 0) {
+    throw new Page09DataError(`the "${role}" specimen has no steps to reveal`);
+  }
+  const counted = hit.steps.filter((s) => s.check === "false").length;
+  if (counted !== hit.n_false) {
+    throw new Page09DataError(
+      `the "${role}" specimen says ${hit.n_false} false step(s) but carries ${counted}`,
+    );
+  }
+  return hit;
+}
+
+const lucky = specimen("lucky");
+const broken = specimen("broken");
+const clean = specimen("clean");
+
+// Each role has to be what the page says it is, because the page's whole argument
+// is the contrast between them. A mislabelled role would teach the opposite lesson.
+if (!lucky.outcome_correct || lucky.n_false === 0) {
+  throw new Page09DataError(
+    "the lucky specimen must reach the RIGHT answer and still contain a false step",
+  );
+}
+if (broken.outcome_correct || broken.first_false === null) {
+  throw new Page09DataError(
+    "the broken specimen must reach the WRONG answer with a findable break",
+  );
+}
+if (!clean.outcome_correct || clean.n_false !== 0) {
+  throw new Page09DataError(
+    "the clean specimen must reach the right answer with nothing proven false",
+  );
+}
+
+// Every step the page reveals as false must carry the claim that was judged. The
+// reveal points at the claim, not at the step: a step can open with two true lines
+// and break on the third, and highlighting the step would point at the wrong words.
+for (const sp of [lucky, broken, clean]) {
+  for (const step of sp.steps) {
+    if (step.check !== "unknown" && !step.claim) {
+      throw new Page09DataError(
+        `a judged step in the "${sp.role}" specimen carries no claim to point at`,
+      );
+    }
+  }
+}
+
+const labels = raw.headline.step_labels;
+const totalSteps = labels.true + labels.false + labels.unknown;
+if (totalSteps <= 0) {
+  throw new Page09DataError("page-09-derived.json tallies no steps at all");
+}
+
+const det = raw.headline.detection_checker;
+if (det.n_contaminated > det.n_right_chains) {
+  throw new Page09DataError("more contaminated chains than correct chains");
+}
+
+const loc = raw.headline.localisation;
+if (loc.n_localisable > loc.n_wrong) {
+  throw new Page09DataError("more localisable chains than wrong chains");
+}
+if (loc.median_share_sound === null) {
+  throw new Page09DataError("no median share-sound, so beat two has nothing to state");
+}
+
+/* ------------------------------------------------------------------ exports */
+
+export interface Step {
+  text: string;
+  /** What the arithmetic checker concluded. `unknown` means it declined to judge. */
+  check: CheckLabel;
+  /** The exact claim that was judged, which is what the reveal points at. */
+  claim: string | null;
+  /** The PRM's score, only when the run's PRM cleared its gate. */
+  prm: number | null;
+}
+
+export interface Specimen {
+  role: string;
+  question: string;
+  groundTruth: string;
+  answer: string | null;
+  outcomeCorrect: boolean;
+  steps: Step[];
+  firstFalse: number | null;
+  nFalse: number;
+  /** The share of the chain that stands once process grading points at the break. */
+  shareSound: number | null;
+}
+
+const asSpecimen = (r: RawSpecimen): Specimen => ({
+  role: r.role,
+  question: r.question,
+  groundTruth: r.ground_truth,
+  answer: r.extracted_answer,
+  outcomeCorrect: r.outcome_correct,
+  steps: r.steps.map((s) => ({
+    text: s.text,
+    check: s.check,
+    claim: s.claim,
+    prm: r.prm_labels_published && typeof s.prm === "number" ? s.prm : null,
+  })),
+  firstFalse: r.first_false,
+  nFalse: r.n_false,
+  shareSound:
+    r.first_false !== null && r.steps.length > 0 ? r.first_false / r.steps.length : null,
+});
+
+const prm = raw.prm_reported_on_page ? raw.prm_reliability : null;
+
+export const PAGE9 = {
+  /** The run itself, for the provenance chip. */
+  run: {
+    model: raw.manifest.chains.generator,
+    chains: raw.manifest.chains.n,
+    items: raw.manifest.items.n,
+    temperature: raw.manifest.chains.temperature,
+    topP: raw.manifest.chains.top_p,
+    chainCap: raw.manifest.chains.chain_budget,
+    decoding: raw.manifest.chains.decoding,
+    date: raw.manifest.timestamp_utc.slice(0, 10),
+    minStepChars: raw.manifest.step_segmentation.min_step_chars,
+  },
+
+  /** The three specimens the reveal is built from. */
+  lucky: asSpecimen(lucky),
+  broken: asSpecimen(broken),
+  clean: asSpecimen(clean),
+
+  /** Beat one: how often outcome grading rewards a chain with a false step in it. */
+  detection: {
+    nRightChains: det.n_right_chains,
+    nContaminated: det.n_contaminated,
+    rate: det.rate,
+    nProblems: det.n_problems,
+    nProblemsWithARightChain: det.n_problems_with_a_right_chain,
+    /** The PRM's rate, present only when its measured reliability cleared the gate. */
+    prm: raw.headline.detection_prm
+      ? {
+          rate: raw.headline.detection_prm.rate,
+          auc: raw.headline.detection_prm.auc,
+          nChains: raw.headline.detection_prm.n_chains_scored,
+        }
+      : null,
+  },
+
+  /** Beat two: how much of a wrong chain was sound before it broke. */
+  localisation: {
+    medianShareSound: loc.median_share_sound,
+    /**
+     * How far that median moves when the segmentation rule changes. The page must
+     * quote this beside the median: on the shipped run it is 25 points, and the
+     * notebook's `localisation_survives_segmentation` claim is false because of it.
+     */
+    spreadPts: loc.segmentation_spread_pts,
+    survivesSegmentation: raw.claims.localisation_survives_segmentation === true,
+    nLocalisable: loc.n_localisable,
+    nWrong: loc.n_wrong,
+    nProblems: loc.n_problems,
+    shareWithOneFalseStep: loc.share_with_one_false_step,
+    breaksPerChain: raw.localisation.n_false_distribution,
+  },
+
+  /** Beat three: the process-aware selector, which came back null. */
+  selection: raw.headline.selection
+    ? {
+        nProblems: raw.headline.selection.n_problems,
+        majority: raw.headline.selection.majority,
+        filtered: raw.headline.selection.majority_after_step_filter,
+        deltaPts: raw.headline.selection.delta_pts,
+        nChanged: raw.headline.selection.n_problems_changed,
+        helps: raw.claims.step_filter_helps_selection === true,
+      }
+    : null,
+
+  /** What the two graders could and could not see, which is the page's honesty. */
+  graders: {
+    stepsTotal: totalSteps,
+    stepsJudged: labels.true + labels.false,
+    stepsFalse: labels.false,
+    shareUnjudged: labels.unknown / totalSteps,
+    prm: prm
+      ? {
+          id: raw.manifest.graders.prm?.id ?? "",
+          quantisation: raw.manifest.graders.prm?.quantisation ?? "",
+          auc: prm.auc,
+          agreement: prm.agreement,
+          recallOnFalse: prm.recall_on_false,
+          specificityOnTrue: prm.specificity_on_true,
+          nStepsCompared: prm.n_steps_compared,
+          thresholdSource: prm.threshold_source,
+        }
+      : null,
+  },
+
+  /** What the natural-ending filter selected away, for the caveat. */
+  filter: {
+    kept: raw.filter_audit.n_kept,
+    dropped: raw.filter_audit.n_dropped,
+    keptAccuracy: raw.filter_audit.kept_outcome_accuracy,
+  },
+
+  claims: raw.claims,
+} as const;
+
+/** A step's label as the reveal words it. */
+export const checkLabel = (check: CheckLabel): string =>
+  check === "true" ? "checked" : check === "false" ? "false" : "not checkable";
