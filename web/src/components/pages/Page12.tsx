@@ -8,9 +8,9 @@
  * model wrote for itself — training data. Generate, keep what checks out,
  * fine-tune, repeat.
  *
- * Section 1 is the loop itself (lib/star.ts), run iteration by iteration. Each
- * press runs one training round, then a held-out test, and appends one point
- * to the section's centerpiece: a chart of the run's whole history in the
+ * Section 1 is the loop itself (lib/star.ts): the animated loop graph (StarLoop)
+ * above its centerpiece, a chart of the whole run computed at once for the
+ * current toggles — no step-through — in the
  * deck's shared grammar (ChartFrame, as on pages 11 and 13) — held-out
  * accuracy (ink; the test) against the share of the pool whose rationale
  * entered the training set (compute; the ratchet), guessing as the dashed
@@ -29,13 +29,14 @@
  * the answer key off and the loop trains on its own mistakes until accuracy
  * sinks toward chance.
  *
- * Section 2 is the loop written down: the paper's Algorithm 1 compressed to
- * ten annotated pseudocode lines, directly under the interactive so the
- * reader parses the mechanism they just ran. A plain-language walkthrough
- * sits below the listing as the safety net for readers who bounced off the
- * pseudocode; the annotation column carries the RL mapping.
+ * Section 1 also carries the loop written down (merged in from the former
+ * section 2): the paper's Algorithm 1 compressed to ten annotated pseudocode
+ * lines, directly under the interactive so the reader parses the mechanism
+ * they just ran. A plain-language walkthrough sits below the listing as the
+ * safety net for readers who bounced off the pseudocode; the annotation column
+ * carries the RL mapping.
  *
- * Section 3 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
+ * Section 2 is the paper's Table 1 (data/star-cqa.json), quoted verbatim: 6B
  * GPT-J plus its own filtered rationales lands at 72.5% on CommonsenseQA —
  * past a 23x larger LaMDA doing few-shot CoT, beside a 30x larger GPT-3
  * fine-tuned on the full human-labelled training set.
@@ -82,7 +83,7 @@
  * provenance footnote at the bottom.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BigNumber } from "@/components/BigNumber";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -556,23 +557,21 @@ export function Page12() {
   const paper = curves.starCqa;
   const p = paper.fit!.params;
 
-  const [history, setHistory] = useState<StarIteration[]>(() => [starBase(POOL)]);
   const [rationalize, setRationalize] = useState(false);
   const [filter, setFilter] = useState(true);
 
-  const iter = history.length - 1;
-  const now = history[iter];
-  const done = iter >= STAR_MAX_ITERS;
-  const trainSize = now.verified + now.rationalized + now.wrong;
+  // The whole run at once — no step-through. The mechanism is seeded
+  // (STAR_SEED), so this is deterministic and safe to compute in render.
+  const history = useMemo(() => {
+    const h: StarIteration[] = [starBase(POOL)];
+    for (let i = 0; i < STAR_MAX_ITERS; i++) {
+      h.push(starStep(POOL, h[h.length - 1], { filter, rationalize }));
+    }
+    return h;
+  }, [filter, rationalize]);
 
-  const runIteration = () => {
-    recordInteraction(PAGE_N);
-    setHistory((h) => [...h, starStep(POOL, h[h.length - 1], { filter, rationalize })]);
-  };
-  const reset = () => {
-    recordInteraction(PAGE_N);
-    setHistory([starBase(POOL)]);
-  };
+  const now = history[history.length - 1];
+  const trainSize = now.verified + now.rationalized + now.wrong;
 
   const bars = [
     { label: "GPT-J, few-shot, answer only", value: p.fewShotDirect, tone: "bg-grid", note: "no reasoning, no training" },
@@ -617,58 +616,39 @@ export function Page12() {
               This is <strong>STaR</strong>&apos;s loop.
               <Cite n={REF.star} /> It still needs a dataset — questions <em>with correct
               answers</em> — but nobody has to write the reasoning; the model authors that itself.
-              Each press runs one training round, then tests on held-out problems the loop never
-              touches.
+              The chart below runs the whole loop at once: each iteration trains on what survived,
+              then tests on held-out problems the loop never touches.
             </p>
 
-            {/* controls */}
-            <div className="grid gap-3 border-t border-dashed border-grid pt-3 sm:grid-cols-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={runIteration}
-                  disabled={done}
-                  className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
-                >
-                  {done ? "budget spent" : `Run iteration ${iter + 1} ▸`}
-                </button>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink"
-                >
-                  Reset ↺
-                </button>
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className={filter ? "" : "pointer-events-none opacity-40"}>
-                  <Toggle
-                    label="Rationalization (hint the missed ones)"
-                    checked={filter && rationalize}
-                    onChange={(v) => {
-                      setRationalize(v);
-                      recordInteraction(PAGE_N);
-                    }}
-                  />
-                </div>
+            {/* controls: the two toggles that reshape the whole run */}
+            <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
+              <div className={filter ? "" : "pointer-events-none opacity-40"}>
                 <Toggle
-                  label="Correctness filter (the answer key)"
-                  checked={filter}
+                  label="Rationalization (hint the missed ones)"
+                  checked={filter && rationalize}
                   onChange={(v) => {
-                    setFilter(v);
+                    setRationalize(v);
                     recordInteraction(PAGE_N);
                   }}
                 />
               </div>
+              <Toggle
+                label="Correctness filter (the answer key)"
+                checked={filter}
+                onChange={(v) => {
+                  setFilter(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
             </div>
             {!filter ? (
               <p className="rounded border-l-4 border-wrong bg-wrong/10 p-2 text-sm text-ink">
                 No answer key: every rationale trains, right or wrong — and rationalization is
-                impossible, because a hint requires knowing the answer. Keep iterating.
+                impossible, because a hint requires knowing the answer.
               </p>
             ) : null}
 
-            {/* readouts — the run's whole history as curves, the big number as per-press feedback */}
+            {/* readouts — the whole run as curves, the big number as the final result */}
             <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-stretch">
               <div className="min-w-0">
                 <StarChart history={history} />
@@ -681,7 +661,7 @@ export function Page12() {
                   value={now.accuracy}
                   suffix="%"
                   tone={now.wrong > 0 ? "wrong" : "correct"}
-                  label={`on held-out problems, after iteration ${iter}`}
+                  label={`on held-out problems, after ${STAR_MAX_ITERS} iterations`}
                 />
               </div>
             </div>
@@ -709,38 +689,9 @@ export function Page12() {
               skill.
             </p>
           </div>
-        </section>
 
-        {/* Section 1's margin: the state matrix, then ref 1 beside its first use. */}
-        <div className="flex flex-col gap-6 lg:gap-0">
-          <Note kicker="What you're watching">
-            <div className="flex flex-col gap-0.5">
-              <p className="text-xs font-semibold text-ink">filter on · rationalization off</p>
-              <p>The bare loop: write, keep what checks out, imitate. Both curves climb, then flatten.</p>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-xs font-semibold text-ink">filter on · rationalization on</p>
-              <p>Full STaR — reach past the stall with the answer in hand. The plateau lifts.</p>
-            </div>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-xs font-semibold text-ink">filter off</p>
-              <p>
-                No reward, no loop. The curves split: the set keeps filling while accuracy walks
-                off the cliff.
-              </p>
-            </div>
-          </Note>
-          <Note kicker="References">
-            <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
-              Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
-              2022.
-            </RefItem>
-          </Note>
-        </div>
-
-        {/* Section 2 — the algorithm, written down and read twice */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. The loop, written down</h2>
+          {/* the loop written down — merged in from the former section 2 */}
+          <h3 className="mt-2 text-lg font-semibold text-ink">The loop, written down</h3>
 
           <p className="text-sm text-ink">
             The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
@@ -778,21 +729,45 @@ export function Page12() {
           </p>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.exit} href="https://arxiv.org/abs/1705.08439">
-            Anthony, Tian &amp; Barber 2017, <em>Thinking Fast and Slow with Deep Learning and
-            Tree Search</em>, NeurIPS 2017.
-          </RefItem>
-          <RefItem n={REF.rft} href="https://arxiv.org/abs/2308.01825" preprint>
-            Yuan et al. 2023, <em>Scaling Relationship on Learning Mathematical Reasoning with
-            Large Language Models</em>.
-          </RefItem>
-        </Note>
+        {/* Merged section 1's margin: what you're watching, then every ref it uses. */}
+        <div className="flex flex-col gap-6 lg:gap-0">
+          <Note kicker="What you're watching">
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-semibold text-ink">filter on · rationalization off</p>
+              <p>The bare loop: write, keep what checks out, imitate. Both curves climb, then flatten.</p>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-semibold text-ink">filter on · rationalization on</p>
+              <p>Full STaR — reach past the stall with the answer in hand. The plateau lifts.</p>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-xs font-semibold text-ink">filter off</p>
+              <p>
+                No reward, no loop. The curves split: the set keeps filling while accuracy walks
+                off the cliff.
+              </p>
+            </div>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
+              Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
+              2022.
+            </RefItem>
+            <RefItem n={REF.exit} href="https://arxiv.org/abs/1705.08439">
+              Anthony, Tian &amp; Barber 2017, <em>Thinking Fast and Slow with Deep Learning and
+              Tree Search</em>, NeurIPS 2017.
+            </RefItem>
+            <RefItem n={REF.rft} href="https://arxiv.org/abs/2308.01825" preprint>
+              Yuan et al. 2023, <em>Scaling Relationship on Learning Mathematical Reasoning with
+              Large Language Models</em>.
+            </RefItem>
+          </Note>
+        </div>
 
-        {/* Section 3 — the paper's result */}
+        {/* Section 2 (was 3) — the paper's result, closing on the loop graph */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            3. What the loop bought
+            2. What the loop bought
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               Zelikman et al. 2022 · CommonsenseQA
               <Cite n={REF.star} />
@@ -879,7 +854,7 @@ export function Page12() {
           rationalization lifting it, degeneration without the filter.
         </p>
         <p>
-          <strong className="text-ink">Cited</strong> — every figure in section 3 is from Zelikman
+          <strong className="text-ink">Cited</strong> — the results in section 2 are from Zelikman
           et al. 2022, Table 1, CommonsenseQA dev.
         </p>
       </div>

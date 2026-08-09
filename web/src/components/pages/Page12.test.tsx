@@ -19,13 +19,13 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getAllByText("73.0%").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("draws the run's history as curves in the deck's chart grammar", () => {
+  it("draws the whole run's history as curves in the deck's chart grammar", () => {
     render(<Page12 />);
-    // The centerpiece: accuracy and training-set share, one point per press.
+    // The centerpiece: the full run at once — all 12 iterations, no step-through.
     expect(
-      screen.getByRole("img", { name: /Held-out accuracy and training-set share across 0 iterations/ }),
+      screen.getByRole("img", { name: /Held-out accuracy and training-set share across 12 iterations/ }),
     ).toBeInTheDocument();
-    // The big number stays as per-press feedback, in a labelled Test panel.
+    // The big number reports the final result, in a labelled Test panel.
     expect(screen.getByText(/Test · how good did it get\?/)).toBeInTheDocument();
     // The old pool strip is gone: no frontier marker, no square legend.
     expect(screen.queryByText(/solve frontier/)).not.toBeInTheDocument();
@@ -33,17 +33,15 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.queryByText(/new this pass/)).not.toBeInTheDocument();
   });
 
-  it("appends a point per press, and splits the curves when the filter goes off", () => {
+  it("shows the whole run at once, and splits the curves when the filter goes off", () => {
     render(<Page12 />);
-    const run = () => fireEvent.click(screen.getByRole("button", { name: /Run iteration/ }));
-    run();
-    run();
+    // The full run is drawn immediately — no Run-iteration step-through.
+    expect(screen.queryByRole("button", { name: /Run iteration/ })).not.toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: /across 2 iterations/ }),
+      screen.getByRole("img", { name: /across 12 iterations/ }),
     ).toBeInTheDocument();
     // No filter: the set fills with mistakes and the chart grows a third curve.
     fireEvent.click(screen.getByRole("switch", { name: /Correctness filter/ }));
-    run();
     expect(screen.getByText("wrong, but kept")).toBeInTheDocument();
     expect(
       screen.getByRole("img", { name: /wrong rationales kept because the filter is off/ }),
@@ -85,7 +83,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
 
   it("orders the page: listing after the interactive, before the results, closers last", () => {
     render(<Page12 />);
-    const interactive = screen.getByText(/Run iteration 1/);
+    const interactive = screen.getByText(/Test · how good did it get/);
     const listing = screen.getByText(/hint = y/);
     const results = screen.getByText("LaMDA 137B, few-shot CoT");
     const counterweight = screen.getByText(/Trained on reasoning, graded on answers/);
@@ -162,18 +160,13 @@ describe("Page 12 (STaR and self-improvement)", () => {
     }
     // RFT and GVM are preprints and must carry the flag; ExIt and STaR are not.
     expect(screen.getAllByText("preprint").length).toBe(2);
-    // Each References note sits beside its ref's first use: the STaR entry
-    // precedes the listing (it serves section 1), ExIt's precedes the results.
-    const starRef = document.querySelector('a[href="https://arxiv.org/abs/2203.14465"]')!;
-    const listing = screen.getByText(/hint = y/);
-    const results = screen.getByText("LaMDA 137B, few-shot CoT");
-    expect(
-      starRef.compareDocumentPosition(listing) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    const exitRef = document.querySelector('a[href="https://arxiv.org/abs/1705.08439"]')!;
-    expect(
-      exitRef.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    // Section 1 and 2 are merged now: STaR, ExIt and RFT share one References
+    // note beside that section; GVM sits last, beside the closing blocks.
+    const gvmRef = document.querySelector('a[href="https://arxiv.org/abs/2505.02391"]')!;
+    for (const href of hrefs.slice(0, 3)) {
+      const ref = document.querySelector(`a[href="${href}"]`)!;
+      expect(ref.compareDocumentPosition(gvmRef) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
   });
 
   it("closes on the hand-off to page 13's frontier reasoners, in page 11's idiom", () => {
