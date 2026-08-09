@@ -108,9 +108,6 @@ export default function Home() {
                 </span>
                 <span>Graduate Student, M.S. in Artificial Intelligence</span>
                 <span>Department of Computer Science, The University of Texas at Austin</span>
-                <a href="mailto:shashankbl@utexas.edu" className="w-fit text-compute underline">
-                  shashankbl@utexas.edu
-                </a>
               </li>
               <li className="flex flex-col gap-0.5">
                 <span className="font-semibold text-ink">
@@ -119,9 +116,6 @@ export default function Home() {
                 </span>
                 <span>Undergraduate Student, B.S. in Computer Science</span>
                 <span>Department of Computer Science, Western Governors University</span>
-                <a href="mailto:seiers1@wgu.edu" className="w-fit text-compute underline">
-                  seiers1@wgu.edu
-                </a>
               </li>
             </ol>
             <div className="flex flex-col gap-1 text-xs text-ink-muted">
