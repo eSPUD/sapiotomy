@@ -34,14 +34,19 @@
  *   accuracy is a step function. Inset: asked nicely against cut off.
  *
  *   Step 2 — figure 2, the population curve. Three checkpoints, one tokenizer,
- *   log x-axis, marker tracking step 1's dial so the two figures are one
- *   instrument. The y-axis is deliberately quiet: the SHAPE is the claim and
- *   the levels are not. The procedure line under the figure is what makes this
- *   re-derivable rather than merely reproducible.
+ *   log x-axis, and its OWN budget line on the chart. The y-axis is
+ *   deliberately quiet: the SHAPE is the claim and the levels are not. The
+ *   procedure line under the figure is what makes this re-derivable rather
+ *   than merely reproducible.
  *
- *   Step 3 — figure 3, the flip-point strip. One row per problem, sorted by the
- *   budget at which it first grades correct. The band that never turns is the
- *   payload and the handoff: those problems are not budget-limited.
+ *   Step 3 — figure 3, the chain-length distribution. One square per problem,
+ *   placed by how long its chain ran with nothing cutting it, and its own
+ *   budget line. The mass that never turns is the payload and the handoff:
+ *   those problems are not budget-limited.
+ *
+ *   Step 4 — figure 4, the crossing. The extension arm as a swap: ten problems
+ *   wrecked passing nine rescued in the middle of the figure, with the two
+ *   ends barely moving.
  *
  * Load-bearing and easy to lose:
  *   · the greying past the cut. Hiding it turns the figure into a progress bar.
@@ -62,12 +67,18 @@
  *     was the expectation, and it is not what the run says.
  *   · budget forcing gets an author-year cite with NO numbers attached. We show
  *     our curve, not theirs.
+ *   · one control per figure. The three budgets were one, and a reader who
+ *     touched any of them silently redrew a figure off screen. See the state
+ *     block in `Page6` before merging them again.
+ *   · a problem whose statement is an Asymptote program never reaches the
+ *     picker (`isDrawingProgram` in `@/lib/page06`), because the page has no
+ *     renderer for it and the reader gets twenty lines of drawing code where a
+ *     question should be. Its traces still ship in the download.
  */
 
 import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
-import { PairedGrid } from "@/components/PairedGrid";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
 import {
@@ -81,7 +92,6 @@ import {
   tokens,
   traceZones,
 } from "@/lib/page06";
-import type { PairedClass } from "@/lib/paired";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 6;
@@ -171,10 +181,157 @@ function BudgetStops({
   );
 }
 
-/** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+/**
+ * The budget line, which IS the control: a rule the reader drags along a chart
+ * whose x-axis is already tokens.
+ *
+ * It began as figure 3's, on the argument that a stop row under that chart
+ * would be a third copy of a widget whose job was to be somewhere else. Then
+ * the widget stopped being somewhere else. Figures 2 and 3 used to answer to
+ * ONE budget, which meant the stop row in step 2 silently moved a figure a
+ * screen and a half below it, and dragging figure 3's line silently moved the
+ * trace two screens above: a reader who touched either one changed something
+ * they could not see. So the state split three ways and this control was
+ * extracted, because the fix for a hidden effect is a control per figure, not a
+ * better caption.
+ *
+ * Everything here is scale-agnostic. Figure 2's axis is log and figure 3's is
+ * linear, so the only thing the caller passes is `xOf`, and the snapping,
+ * capture and keyboard handling stay in one place.
+ *
+ * The pointer maths goes through the svg's own coordinate space, because these
+ * charts scale to fit their column, and it snaps to a stop: the budget is one
+ * of five values, and a line resting between two of them would be a lie.
+ */
+function BudgetLine({
+  svgRef,
+  xOf,
+  width,
+  height,
+  svgWidth,
+  marginLeft,
+  budgetIndex,
+  onBudget,
+  /**
+   * Which figure's budget this is. There are two of these on the page now, and
+   * a screen reader that meets "Token budget" twice cannot tell a reader which
+   * one they have landed on.
+   */
+  label,
+  /** How far right of the plot the shading reaches, for figure 3's gutter. */
+  overhang = 0,
+}: {
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  xOf: (budget: number) => number;
+  width: number;
+  height: number;
+  svgWidth: number;
+  marginLeft: number;
+  budgetIndex: number;
+  onBudget: (i: number) => void;
+  label: string;
+  overhang?: number;
+}) {
+  const budget = B[budgetIndex];
+  const bx = xOf(budget);
+  const atTop = budgetIndex === B.length - 1;
+
+  const indexFromClient = useCallback(
+    (clientX: number) => {
+      const svg = svgRef.current;
+      if (!svg) return null;
+      const r = svg.getBoundingClientRect();
+      const scale = (r.width || svgWidth) / svgWidth;
+      const local = (clientX - r.left) / (scale || 1) - marginLeft;
+      let best = 0;
+      for (let i = 1; i < B.length; i++) {
+        if (Math.abs(xOf(B[i]) - local) < Math.abs(xOf(B[best]) - local)) best = i;
+      }
+      return best;
+    },
+    [svgRef, xOf, svgWidth, marginLeft],
+  );
+
+  const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
+    if (e.type === "pointerdown") e.currentTarget.setPointerCapture(e.pointerId);
+    else if (!(e.buttons & 1)) return;
+    const next = indexFromClient(e.clientX);
+    if (next !== null && next !== budgetIndex) onBudget(next);
+  };
+
+  const onKey = (e: React.KeyboardEvent<SVGGElement>) => {
+    const step: Record<string, number> = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 };
+    let next: number | null = null;
+    if (e.key in step) next = budgetIndex + step[e.key];
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = B.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    next = Math.min(B.length - 1, Math.max(0, next));
+    if (next !== budgetIndex) onBudget(next);
+  };
+
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <>
+      {/* Grab anywhere along the plot rather than having to hit the rule. It
+          sits over the marks, so a drag that starts on a datum still moves the
+          budget. */}
+      <rect
+        x={0}
+        y={0}
+        width={width + overhang}
+        height={height}
+        fill="transparent"
+        className="cursor-ew-resize"
+        onPointerDown={onPointer}
+        onPointerMove={onPointer}
+      />
+      <g
+        role="slider"
+        tabIndex={0}
+        aria-label={label}
+        aria-valuemin={B[0]}
+        aria-valuemax={TOP}
+        aria-valuenow={budget}
+        aria-valuetext={`${budget} tokens`}
+        onKeyDown={onKey}
+        className="cursor-ew-resize focus:outline-none"
+      >
+        <line x1={bx} x2={bx} y1={-6} y2={height} className="stroke-compute" strokeWidth={2} />
+        {/* The handle is what says "this moves", and it is also the focus ring
+            target, so keyboard and pointer readers are looking at one object. */}
+        <rect x={bx - 4} y={-12} width={8} height={10} rx={2} className="fill-compute" />
+        <text
+          x={atTop ? bx - 8 : bx + 8}
+          y={-3}
+          textAnchor={atTop ? "end" : "start"}
+          className="fill-compute text-[10px] font-semibold tabular-nums"
+        >
+          {budget}
+        </text>
+      </g>
+    </>
+  );
+}
+
+/**
+ * A margin note that sits beside its step and scrolls with the page.
+ *
+ * `lg:pt-9` drops the note past its step's <h2> so the two bodies start on the
+ * same line. A note STACKED under another one is already past the heading, so
+ * it takes `tight` and skips the offset.
+ */
+function Note({
+  kicker,
+  tight = false,
+  children,
+}: {
+  kicker: string;
+  tight?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${tight ? "" : "lg:pt-9"}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -184,8 +341,8 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
 /* ------------------------------------------------------------------ figure 2 */
 
 const C_W = 620;
-const C_H = 262;
-const C_M = { top: 22, right: 104, bottom: 46, left: 52 };
+const C_H = 272;
+const C_M = { top: 28, right: 104, bottom: 46, left: 52 };
 const C_IW = C_W - C_M.left - C_M.right;
 const C_IH = C_H - C_M.top - C_M.bottom;
 
@@ -215,19 +372,27 @@ const cy = (accuracy: number) => C_IH - accuracy * C_IH;
  * what the last doubling actually bought. Three curves at three heights enter
  * the same slab, which is the invariant the page is claiming.
  */
-function BudgetCurve({ budgetIndex }: { budgetIndex: number }) {
-  const markX = cx(B[budgetIndex]);
+function BudgetCurve({
+  budgetIndex,
+  onBudget,
+}: {
+  budgetIndex: number;
+  onBudget: (i: number) => void;
+}) {
   const knee = F2.primary.knee_budget!;
   const kneeX = cx(knee);
   const lastGain = F2.primary.gains[F2.primary.gains.length - 1].gain_pts;
+  const svgRef = useRef<SVGSVGElement | null>(null);
   return (
     <ChartFrame
+      svgRef={svgRef}
+      role="group"
       title={`Share of 100 MATH-500 level 4 and 5 problems solved against the token budget, on a log axis, for three Qwen2.5-Instruct checkpoints. ${F2.curves
         .map(
           (c) =>
             `${c.label}: ${c.points.map((p) => `${pct(p.accuracy)} at ${p.budget} tokens`).join(", ")}`,
         )
-        .join(". ")}. Every curve bends at ${knee} tokens. The marker is at ${B[budgetIndex]} tokens.`}
+        .join(". ")}. Every curve bends at ${knee} tokens. The budget line is at ${B[budgetIndex]} tokens.`}
       width={C_W}
       height={C_H}
       margin={C_M}
@@ -258,16 +423,6 @@ function BudgetCurve({ budgetIndex }: { budgetIndex: number }) {
       <polygon
         points={`${F2.primary.points.map((p) => `${cx(p.budget)},${cy(p.accuracy)}`).join(" ")} ${C_IW},${cy(F2.primary.floor)} 0,${cy(F2.primary.floor)}`}
         className="fill-compute opacity-10"
-      />
-
-      <line
-        x1={markX}
-        x2={markX}
-        y1={0}
-        y2={C_IH}
-        className="stroke-compute"
-        strokeWidth={1}
-        strokeDasharray="3 3"
       />
 
       {B.map((b) => (
@@ -307,6 +462,20 @@ function BudgetCurve({ budgetIndex }: { budgetIndex: number }) {
           </g>
         );
       })}
+
+      {/* Last, so the drag surface sits over the curves and the handle over
+          everything: this figure's dial is its own, and it is on the chart. */}
+      <BudgetLine
+        svgRef={svgRef}
+        xOf={cx}
+        width={C_IW}
+        height={C_IH}
+        svgWidth={C_W}
+        marginLeft={C_M.left}
+        budgetIndex={budgetIndex}
+        onBudget={onBudget}
+        label="Token budget, the population curve"
+      />
     </ChartFrame>
   );
 }
@@ -368,50 +537,7 @@ function LengthStrip({
 }) {
   const budget = B[budgetIndex];
   const bx = lengthX(budget);
-  const atTop = budgetIndex === B.length - 1;
   const svgRef = useRef<SVGSVGElement | null>(null);
-
-  /**
-   * Here the line IS the control, so this figure carries no widget of its own.
-   * The reader is already looking at the line when the prose asks them to move
-   * it, and a stop row under this chart would be a third copy of a control
-   * whose whole job on this page is to be somewhere else.
-   *
-   * Client pixels go through the svg's own coordinate space, because the chart
-   * scales to fit its column, and they snap to a stop: the budget is one of
-   * five values, and a line resting between two of them would be a lie.
-   */
-  const indexFromClient = useCallback((clientX: number) => {
-    const svg = svgRef.current;
-    if (!svg) return null;
-    const r = svg.getBoundingClientRect();
-    const scale = (r.width || S_W) / S_W;
-    const local = (clientX - r.left) / (scale || 1) - S_M.left;
-    let best = 0;
-    for (let i = 1; i < B.length; i++) {
-      if (Math.abs(lengthX(B[i]) - local) < Math.abs(lengthX(B[best]) - local)) best = i;
-    }
-    return best;
-  }, []);
-
-  const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
-    if (e.type === "pointerdown") e.currentTarget.setPointerCapture(e.pointerId);
-    else if (!(e.buttons & 1)) return;
-    const next = indexFromClient(e.clientX);
-    if (next !== null && next !== budgetIndex) onBudget(next);
-  };
-
-  const onKey = (e: React.KeyboardEvent<SVGGElement>) => {
-    const step: Record<string, number> = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 };
-    let next: number | null = null;
-    if (e.key in step) next = budgetIndex + step[e.key];
-    else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = B.length - 1;
-    if (next === null) return;
-    e.preventDefault();
-    next = Math.min(B.length - 1, Math.max(0, next));
-    if (next !== budgetIndex) onBudget(next);
-  };
 
   // Censored chains leave the axis: their length is a lower bound, so binning
   // them with the measured ones would draw six floors as six values.
@@ -514,51 +640,17 @@ function LengthStrip({
         {F3.items.length - inside} still being cut
       </text>
 
-      {/* Grab anywhere along the plot rather than having to hit the rule. It
-          sits under the line and over the squares, so a drag that starts on a
-          problem still moves the budget. */}
-      <rect
-        x={0}
-        y={0}
+      <BudgetLine
+        svgRef={svgRef}
+        xOf={lengthX}
         width={S_IW}
         height={S_IH}
-        fill="transparent"
-        className="cursor-ew-resize"
-        onPointerDown={onPointer}
-        onPointerMove={onPointer}
+        svgWidth={S_W}
+        marginLeft={S_M.left}
+        budgetIndex={budgetIndex}
+        onBudget={onBudget}
+        label="Token budget, the chain lengths"
       />
-
-      <g
-        role="slider"
-        tabIndex={0}
-        aria-label="Token budget"
-        aria-valuemin={B[0]}
-        aria-valuemax={TOP}
-        aria-valuenow={budget}
-        aria-valuetext={`${budget} tokens`}
-        onKeyDown={onKey}
-        className="cursor-ew-resize focus:outline-none"
-      >
-        <line x1={bx} x2={bx} y1={-6} y2={S_IH} className="stroke-compute" strokeWidth={2} />
-        {/* The handle is what says "this moves", and it is also the focus ring
-            target, so keyboard and pointer readers are looking at one object. */}
-        <rect
-          x={bx - 4}
-          y={-12}
-          width={8}
-          height={10}
-          rx={2}
-          className="fill-compute"
-        />
-        <text
-          x={atTop ? bx - 8 : bx + 8}
-          y={-3}
-          textAnchor={atTop ? "end" : "start"}
-          className="fill-compute text-[10px] font-semibold tabular-nums"
-        >
-          {budget}
-        </text>
-      </g>
     </ChartFrame>
   );
 }
@@ -566,112 +658,223 @@ function LengthStrip({
 
 /* ------------------------------------------------------------------ figure 4 */
 
-const K_W = 620;
-// Half the height it had: this is now the inset under the paired grid, and its
-// job is one sentence, that the net went nowhere.
-const K_H = 170;
-const K_M = { top: 16, right: 104, bottom: 40, left: 52 };
-const K_IW = K_W - K_M.left - K_M.right;
-const K_IH = K_H - K_M.top - K_M.bottom;
+const X_W = 620;
+const X_H = 258;
+const X_M = { top: 46, right: 16, bottom: 18, left: 16 };
+const X_IW = X_W - X_M.left - X_M.right;
+const X_IH = X_H - X_M.top - X_M.bottom;
+
+/** The two stacks, and the space between right and wrong inside each. */
+const COL_X0 = 116;
+const COL_X1 = 452;
+const COL_WIDTH = 24;
+const X_GAP = 14;
 
 /**
- * Zero injections is the baseline and the injections are the change, so
- * `afterOnly` is a problem that being made to keep going rescued and
- * `beforeOnly` is one it wrecked. Both blocks are lit at once here, because the
- * grid is showing the churn rather than animating a switch.
- */
-const waitTone = (cell: PairedClass): string => {
-  if (cell === "afterOnly") return "border-correct bg-correct";
-  if (cell === "beforeOnly") return "border-wrong bg-wrong";
-  return "border-grid bg-surface-raised";
-};
-
-/**
- * The other direction: not a cap, but a refusal to let the model stop. Accuracy
- * against the number of injections, same items, same grader.
+ * The extension arm, drawn as the crossing it is.
  *
- * This is now the INSET, under the paired grid. It led the step for a while and
- * that was the wrong way round: three nearly flat lines read as "nothing
- * happened" when the finding is that a third of the answers moved and the net
- * was zero. The grid above carries the movement; these lines carry the net, and
- * churn stays under them as a bar because a flat line here has two completely
- * different causes and the bar is what tells them apart.
+ * Two figures used to carry this step and neither could say the finding. The
+ * first was page 5's paired grid, a hundred squares with nineteen of them lit:
+ * WHICH square holds which problem is arrangement rather than data, so the
+ * reader was asked to count lit squares in a field of unlit ones and then to
+ * take it on trust that the two lit blocks were the whole story. The second was
+ * three accuracy lines against injection count, and three flat lines are a
+ * picture of nothing happening, which is the opposite of what happened.
+ *
+ * What happened is a swap. Ten problems the model had right when left alone
+ * came back wrong once it was made to keep going, nine it had wrong came back
+ * right, and the two blocks pass each other in the middle of the figure. The
+ * ends barely move and the middle is thick, and those are one drawing rather
+ * than two. Everything here is the notebook's own paired counts; the concordant
+ * blocks follow from them by arithmetic, in `pairedTable`.
  */
-function WaitCurve() {
-  if (!FW) return null;
-  const ks = FW.waits;
-  const kx = (k: number) => (k / (ks[ks.length - 1] || 1)) * K_IW;
-  const ky = (a: number) => K_IH - a * K_IH;
-  const primary = FW.curves.find((c) => c.model_id === F2.primary.model_id) ?? FW.curves[0];
+function WaitCrossing() {
+  if (!WAIT_TABLE) return null;
+  const t = WAIT_TABLE.table;
+  const u = (X_IH - X_GAP) / t.n;
+  const solvedBefore = t.both + t.beforeOnly;
+  const solvedAfter = t.both + t.afterOnly;
+
+  // Each block is stacked so that the flow which crosses sits against the gap:
+  // right of the left column, right-then-wrong; left of the right column,
+  // right-then-wrong again. The two crossings then meet in the middle instead
+  // of threading past the concordant bands.
+  const wrongTopL = solvedBefore * u + X_GAP;
+  const wrongTopR = solvedAfter * u + X_GAP;
+  const both = { yL: 0, yR: 0, h: t.both * u };
+  const broken = { yL: both.h, yR: wrongTopR, h: t.beforeOnly * u };
+  const fixed = { yL: wrongTopL, yR: both.h, h: t.afterOnly * u };
+  const neither = { yL: wrongTopL + fixed.h, yR: wrongTopR + broken.h, h: t.neither * u };
+
+  const x0 = COL_X0 + COL_WIDTH;
+  const x1 = COL_X1;
+  const mid = (x0 + x1) / 2;
+  const ribbon = (f: { yL: number; yR: number; h: number }) =>
+    `M${x0},${f.yL} C${mid},${f.yL} ${mid},${f.yR} ${x1},${f.yR} ` +
+    `L${x1},${f.yR + f.h} C${mid},${f.yR + f.h} ${mid},${f.yL + f.h} ${x0},${f.yL + f.h} Z`;
+
+  /** A column is two blocks, and the reader reads the block, not the segments. */
+  const column = (x: number, solved: number, wrong: number, wrongTop: number) => (
+    <>
+      <rect x={x} y={0} width={COL_WIDTH} height={solved * u} rx={2} className="fill-correct" />
+      <rect
+        x={x}
+        y={wrongTop}
+        width={COL_WIDTH}
+        height={wrong * u}
+        rx={2}
+        className="fill-ink opacity-20"
+      />
+    </>
+  );
+
   return (
     <ChartFrame
-      title={`Share of problems solved against the number of "${FW.word}" injections, for three Qwen2.5-Instruct checkpoints. ${FW.curves
-        .map((c) => `${c.label}: ${c.points.map((p) => `${pct(p.accuracy)} at ${p.waits}`).join(", ")}`)
-        .join(". ")}. Churn, the share whose answer moved at all, reaches ${pct(
-        primary.points[primary.points.length - 1].churn,
-      )} on the ${shortLabel(primary.label)}.`}
-      width={K_W}
-      height={K_H}
-      margin={K_M}
-      xLabel={`number of "${FW.word}" injections`}
-      yLabel="solved (%)"
+      title={`What ${WAIT_TABLE.waits} "${FW!.word}" injections did to ${t.n} problems on the ${shortLabel(
+        WAIT_TABLE.label,
+      )}. Left alone it solved ${solvedBefore}; made to keep going it solved ${solvedAfter}. ${t.both} were solved either way, ${t.neither} were wrong either way, ${t.afterOnly} were rescued and ${t.beforeOnly} were wrecked.`}
+      width={X_W}
+      height={X_H}
+      margin={X_M}
     >
-      {[0, 0.2, 0.4, 0.6].map((t) => (
-        <g key={t}>
-          <line x1={0} x2={K_IW} y1={ky(t)} y2={ky(t)} className="stroke-grid" strokeWidth={1} />
-          <text x={-8} y={ky(t) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
-            {t * 100}
-          </text>
-        </g>
-      ))}
+      {/* Concordant first, so the two crossings sit on top of them. Each band
+          takes the tint of the verdict it carries all the way across, which is
+          the same tint its column block has: nothing in this figure is a colour
+          the legend cannot name. */}
+      <path d={ribbon(neither)} className="fill-ink opacity-[0.09]" />
+      <path d={ribbon(both)} className="fill-correct opacity-20" />
+      <path d={ribbon(broken)} className="fill-wrong opacity-60" />
+      <path d={ribbon(fixed)} className="fill-correct opacity-60" />
 
-      {/* churn under the curves: what moved, whether or not it helped */}
-      {primary.points.map((p) =>
-        p.churn > 0 ? (
-          <rect
-            key={p.waits}
-            x={kx(p.waits) - 9}
-            y={K_IH - p.churn * K_IH}
-            width={18}
-            height={p.churn * K_IH}
-            className="fill-wrong opacity-20"
-          />
-        ) : null,
-      )}
-      <text x={kx(ks[ks.length - 1]) + 8} y={K_IH - primary.points[ks.length - 1].churn * K_IH + 4}
-            className="fill-wrong text-[10px]">
-        churn {pct(primary.points[ks.length - 1].churn)}
+      {column(COL_X0, solvedBefore, t.n - solvedBefore, wrongTopL)}
+      {column(COL_X1, solvedAfter, t.n - solvedAfter, wrongTopR)}
+
+      {/* Column headings sit above their stack; the counts sit outside it, so
+          nothing is written over a band whose height IS the number. */}
+      <text x={COL_X0 + COL_WIDTH / 2} y={-24} textAnchor="middle" className="fill-ink text-[11px] font-semibold">
+        left alone
+      </text>
+      <text x={COL_X0 + COL_WIDTH / 2} y={-12} textAnchor="middle" className="fill-ink-muted text-[10px]">
+        0 injections
+      </text>
+      <text x={COL_X1 + COL_WIDTH / 2} y={-24} textAnchor="middle" className="fill-ink text-[11px] font-semibold">
+        made to keep going
+      </text>
+      <text x={COL_X1 + COL_WIDTH / 2} y={-12} textAnchor="middle" className="fill-ink-muted text-[10px]">
+        {WAIT_TABLE.waits} injections
       </text>
 
-      {ks.map((k) => (
-        <text key={k} x={kx(k)} y={K_IH + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
-          {k}
-        </text>
-      ))}
+      <text x={COL_X0 - 8} y={(solvedBefore * u) / 2 + 4} textAnchor="end" className="fill-correct text-[11px] font-semibold tabular-nums">
+        {solvedBefore} right
+      </text>
+      <text x={COL_X0 - 8} y={wrongTopL + ((t.n - solvedBefore) * u) / 2 + 4} textAnchor="end" className="fill-ink-muted text-[11px] tabular-nums">
+        {t.n - solvedBefore} wrong
+      </text>
+      <text x={COL_X1 + COL_WIDTH + 8} y={(solvedAfter * u) / 2 + 4} className="fill-correct text-[11px] font-semibold tabular-nums">
+        {solvedAfter} right
+      </text>
+      <text x={COL_X1 + COL_WIDTH + 8} y={wrongTopR + ((t.n - solvedAfter) * u) / 2 + 4} className="fill-ink-muted text-[11px] tabular-nums">
+        {t.n - solvedAfter} wrong
+      </text>
 
-      {FW.curves.map((c) => {
-        const isP = c.model_id === primary.model_id;
-        const last = c.points[c.points.length - 1];
-        return (
-          <g key={c.model_id}>
-            <polyline
-              points={c.points.map((p) => `${kx(p.waits)},${ky(p.accuracy)}`).join(" ")}
-              fill="none"
-              className={curveStroke(c.model_id)}
-              strokeWidth={isP ? 2.5 : 1.25}
-            />
-            {c.points.map((p) => (
-              <circle key={p.waits} cx={kx(p.waits)} cy={ky(p.accuracy)} r={isP ? 3.5 : 2}
-                      className={curveFill(c.model_id)} />
-            ))}
-            <text x={K_IW + 8} y={ky(last.accuracy) + 4}
-                  className={`${curveFill(c.model_id)} text-[11px] ${isP ? "font-semibold" : ""}`}>
-              {shortLabel(c.label)}
-            </text>
-          </g>
-        );
-      })}
+      {/* The two crossings, labelled where they LEAVE rather than where they
+          arrive: at the left edge they are still thirty pixels apart, and in
+          the middle they are on top of each other. Each label sits ON a band of
+          its own hue, so it carries a halo in the page's background colour
+          rather than relying on a contrast that does not survive dark mode. */}
+      <text
+        x={x0 + 0.16 * (x1 - x0)}
+        y={broken.yL + broken.h / 2 + 3.5}
+        paintOrder="stroke"
+        strokeWidth={3}
+        strokeLinejoin="round"
+        className="fill-wrong stroke-surface text-[11px] font-semibold tabular-nums"
+      >
+        {t.beforeOnly} wrecked
+      </text>
+      <text
+        x={x0 + 0.16 * (x1 - x0)}
+        y={fixed.yL + fixed.h / 2 + 3.5}
+        paintOrder="stroke"
+        strokeWidth={3}
+        strokeLinejoin="round"
+        className="fill-correct stroke-surface text-[11px] font-semibold tabular-nums"
+      >
+        {t.afterOnly} rescued
+      </text>
     </ChartFrame>
+  );
+}
+
+/**
+ * The same crossing for all three checkpoints, as the widths of the two things
+ * that crossed. This is what the three accuracy lines were for, and it says the
+ * part they could not: a flat line has two completely different causes, and
+ * "nothing moved" against "everything moved and cancelled" is the whole finding
+ * of this step. Wrecked runs left of the centre and rescued runs right of it,
+ * so a checkpoint that gained would be visibly lopsided. None of them is.
+ */
+function WaitLedger() {
+  if (!FW) return null;
+  const rows = FW.curves.map((c) => ({
+    label: shortLabel(c.label),
+    paired: c.paired[c.paired.length - 1],
+    first: c.points[0],
+    last: c.points[c.points.length - 1],
+  }));
+  const widest = Math.max(...rows.flatMap((r) => [r.paired.fixed, r.paired.broken]));
+  const bar = (n: number) => `${(n / widest) * 100}%`;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[32rem] text-left text-xs tabular-nums">
+        <caption className="sr-only">
+          Problems wrecked and rescued by {FW.waits[FW.waits.length - 1]} injections, one row per
+          checkpoint, against what each solved when left alone.
+        </caption>
+        <thead className="text-ink-muted">
+          <tr>
+            <th className="py-1 pr-3 font-semibold">checkpoint</th>
+            <th className="py-1 pr-3 text-right font-semibold">wrecked</th>
+            <th className="py-1 font-semibold" />
+            <th className="py-1 pl-3 font-semibold">rescued</th>
+            <th className="py-1 pl-6 font-semibold">solved, and what it cost</th>
+          </tr>
+        </thead>
+        <tbody className="text-ink">
+          {rows.map((r) => (
+            <tr key={r.label} className="border-t border-grid">
+              <td className="py-1.5 pr-3 whitespace-nowrap">{r.label}</td>
+              <td className="py-1.5 pr-2 text-right text-wrong">{r.paired.broken}</td>
+              {/* One cell, split down the middle: the centre line is zero, and
+                  the two halves are the same scale. */}
+              {/* A fixed width rather than a percentage: the summary column
+                  next to it is long, and a percentage lets the browser crush
+                  the bars to nothing on a narrow screen, which leaves the row
+                  with two numbers and no picture. */}
+              <td className="w-40 min-w-[10rem] py-1.5">
+                <div className="relative grid h-4 grid-cols-2 items-center">
+                  <div className="flex justify-end">
+                    <span className="h-3 rounded-l-sm bg-wrong" style={{ width: bar(r.paired.broken) }} />
+                  </div>
+                  <div className="flex justify-start">
+                    <span className="h-3 rounded-r-sm bg-correct" style={{ width: bar(r.paired.fixed) }} />
+                  </div>
+                  {/* Zero, drawn, and taller than the bars so it survives them:
+                      without it the two abut and read as one bar of nineteen
+                      rather than as ten against nine. */}
+                  <span className="absolute inset-y-0 left-1/2 w-px bg-ink-muted" />
+                </div>
+              </td>
+              <td className="py-1.5 pl-2 text-correct">{r.paired.fixed}</td>
+              <td className="py-1.5 pl-6 text-ink-muted">
+                {pct(r.first.accuracy)} → {pct(r.last.accuracy)} · {pct(r.last.churn)} of answers
+                moved · ×{(r.last.mean_tokens / r.first.mean_tokens).toFixed(1)} the tokens
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -794,13 +997,32 @@ export function Page6() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const [budgetIndex, setBudgetIndex] = useState(0);
+  /**
+   * Three budgets, one per figure, and that is the point.
+   *
+   * They used to be one. The argument for it was that figures 1, 2 and 3 are
+   * one measurement seen three ways, which is true, and the page said so in
+   * prose: "the same dial drives the next two figures". What the reader got
+   * instead was a control whose effect was off screen in both directions. The
+   * stop row in step 2 also redrew the trace a screen and a half above it; the
+   * line in step 3 also redrew that trace two screens above IT. Moving one
+   * changed two things the reader could not see moving, which is the one
+   * failure mode an explorable cannot absorb: it teaches the reader that the
+   * controls do not mean anything.
+   *
+   * So each figure holds its own, and the invariant is carried by the axis
+   * rather than by the state: all three read the same five stops off the same
+   * measured grid, and a reader who wants to line them up can, deliberately.
+   */
+  const [traceBudget, setTraceBudget] = useState(0);
+  const [curveBudget, setCurveBudget] = useState(0);
+  const [stripBudget, setStripBudget] = useState(0);
   const [rowId, setRowId] = useState<string>(F1.openingId);
   const [announce, setAnnounce] = useState("");
 
   const row = useMemo(() => rowById(rowId), [rowId]);
-  const run = row.byBudget[budgetIndex];
-  const zones = useMemo(() => traceZones(row, budgetIndex), [row, budgetIndex]);
+  const run = row.byBudget[traceBudget];
+  const zones = useMemo(() => traceZones(row, traceBudget), [row, traceBudget]);
   const natural = useMemo(() => naturalLength(row), [row]);
   /**
    * The last stop that actually cuts THIS chain. Past it the dial has travel
@@ -812,7 +1034,7 @@ export function Page6() {
     () => row.byBudget.reduce((last, b, i) => (b.forced ? i : last), -1),
     [row],
   );
-  const curvePoint = F2.primary.points[budgetIndex];
+  const curvePoint = F2.primary.points[curveBudget];
 
   // The cut is the figure. A trace long enough to scroll would otherwise open
   // with the cut below the fold, and the reader would meet a wall of the
@@ -852,18 +1074,43 @@ export function Page6() {
       live = false;
       cancelAnimationFrame(frame);
     };
-  }, [rowId, budgetIndex]);
+  }, [rowId, traceBudget]);
 
-  const onBudget = (i: number) => {
+  /**
+   * One announcer per dial, saying what THAT figure just did. The single
+   * announcer this replaces read out a trace and a population curve on every
+   * move, which was accurate while the dials were shared and is a lie now.
+   */
+  const onTraceBudget = (i: number) => {
     recordInteraction(PAGE_N);
-    setBudgetIndex(i);
+    setTraceBudget(i);
     const r = row.byBudget[i];
     setAnnounce(
       `Budget ${B[i]} tokens. ${
         r.forced
           ? `The chain is cut after ${r.ownTokens} tokens and made to commit`
           : `The chain finished on its own in ${r.ownTokens} tokens`
-      }; it answered ${r.extractedAnswer} and graded ${r.correct ? "correct" : "wrong"}. Across all ${curvePoint.n} problems, ${F2.primary.label} solves ${F2.primary.points[i].n_correct}.`,
+      }; it answered ${r.extractedAnswer} and graded ${r.correct ? "correct" : "wrong"}.`,
+    );
+  };
+
+  const onCurveBudget = (i: number) => {
+    recordInteraction(PAGE_N);
+    setCurveBudget(i);
+    const p = F2.primary.points[i];
+    setAnnounce(
+      `Budget ${B[i]} tokens. Across all ${p.n} problems, ${F2.primary.label} solves ${p.n_correct}.`,
+    );
+  };
+
+  const onStripBudget = (i: number) => {
+    recordInteraction(PAGE_N);
+    setStripBudget(i);
+    const inside = F3.items.filter((d) => d.tokens_at_max <= B[i]).length;
+    setAnnounce(
+      `Budget ${B[i]} tokens. ${inside} of ${F3.items.length} chains finish on their own and ${
+        F3.items.length - inside
+      } are still being cut.`,
     );
   };
 
@@ -927,7 +1174,8 @@ export function Page6() {
             {M.forcing.answer_allowance} more tokens to finish.
             <Cite n={REF.s1} /> That is why a starved model still
             produces an answer to grade rather than nothing at all. The tinted band in the trace
-            below is that line, printed as we wrote it. The same dial drives the next two figures.
+            below is that line, printed as we wrote it. Every figure on this page carries its own
+            copy of this dial, so nothing you do here moves anything below.
           </p>
           <section
             aria-label="The truncation view"
@@ -951,8 +1199,8 @@ export function Page6() {
                   problems at once, and it is the page's finding rather than an
                   artefact of the grid, so it is drawn rather than implied. */}
               <BudgetStops
-                value={budgetIndex}
-                onChange={onBudget}
+                value={traceBudget}
+                onChange={onTraceBudget}
                 deadFrom={lastBiting + 1}
               />
               {natural ? (
@@ -1044,7 +1292,8 @@ export function Page6() {
                 strip's buttons did. */}
             <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                or run a different problem · nine of these ship with their full traces
+                or run a different problem · {F3.clickableRowIds.length} of these ship with their
+                full traces
               </p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Bundled problems">
                 {F3.clickableRowIds.map((id) => {
@@ -1086,24 +1335,29 @@ export function Page6() {
             the only currency a model has.
           </p>
         </section>
-        <Note kicker="Try it">
-          <p>Step to {F1.flipBudget} tokens and back.</p>
-          <p>
-            A cap, not a request: asked in the prompt for a sentence or two, the model ran past{" "}
-            {F1.inset.nominal_budget} tokens on {pct(F1.inset.soft.over_budget_rate)} of items. Held
-            to the same {F1.inset.nominal_budget} by{" "}
-            <span className="font-code">max_new_tokens</span>, it overran on none.
-          </p>
-        </Note>
-        {/* The reference sits in a right-hand References sidenote beside step 1,
-            which owns the citation; the empty left cell keeps the grid's
-            section/note alternation intact. */}
-        <div aria-hidden="true" />
-        <Note kicker="References">
-          <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
-            Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
-          </RefItem>
-        </Note>
+        {/* Both of step 1's notes share step 1's cell.
+            References used to sit in a row of its own, under an EMPTY left
+            cell, which cost four hundred pixels of blank page between step 1's
+            closing line and step 2's heading and left the citation floating in
+            the margin next to nothing. It is a sidenote to step 1, which is the
+            step that carries the citation, so it belongs beside step 1's body,
+            in the column's own unused height. */}
+        <div className="flex flex-col gap-6 lg:pt-9">
+          <Note kicker="Try it" tight>
+            <p>Step to {F1.flipBudget} tokens and back.</p>
+            <p>
+              A cap, not a request: asked in the prompt for a sentence or two, the model ran past{" "}
+              {F1.inset.nominal_budget} tokens on {pct(F1.inset.soft.over_budget_rate)} of items.
+              Held to the same {F1.inset.nominal_budget} by{" "}
+              <span className="font-code">max_new_tokens</span>, it overran on none.
+            </p>
+          </Note>
+          <Note kicker="References" tight>
+            <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
+              Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
+            </RefItem>
+          </Note>
+        </div>
 
         {/* Step 2 — figure 2 */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -1117,22 +1371,22 @@ export function Page6() {
             {/* The instruction here, the reason in the margin. Both used to carry the
                 reason, with "differ in size and in training" repeated word for word. */}
             One problem is an anecdote. Below is the same sweep run over all {curvePoint.n}, on
-            three checkpoints: how many each solves at every stop on the dial. Read the shape rather
-            than the heights.
+            three checkpoints: how many each solves at every stop on the dial. The line on the chart
+            is this figure&apos;s own dial, so drag it. Read the shape rather than the heights.
           </p>
           <section
             aria-label="The population curve"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            {/* The same budget as figure 1, which is the section's whole
-                point, so the control comes with it rather than being left a
-                screen and a half up the page. */}
-            <BudgetStops value={budgetIndex} onChange={onBudget} />
-            <BudgetCurve budgetIndex={budgetIndex} />
+            {/* This figure's dial is the line ON the figure, as figure 3's is.
+                It used to be a second stop row above the chart, wired to
+                figure 1's budget, so a reader who moved it also redrew a trace
+                a screen and a half up the page with no way of knowing. */}
+            <BudgetCurve budgetIndex={curveBudget} onBudget={onCurveBudget} />
             <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                  at {B[budgetIndex]} tokens, {F2.primary.label.replace("Qwen2.5-", "")} solves
+                  at {B[curveBudget]} tokens, {F2.primary.label.replace("Qwen2.5-", "")} solves
                 </p>
                 <p className="font-mono text-3xl tabular-nums text-ink">
                   {curvePoint.n_correct}
@@ -1194,7 +1448,7 @@ export function Page6() {
             aria-label="The chain-length distribution"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <LengthStrip budgetIndex={budgetIndex} onBudget={onBudget} />
+            <LengthStrip budgetIndex={stripBudget} onBudget={onStripBudget} />
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
               <span className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-sm bg-compute" /> solved at some budget (
@@ -1282,103 +1536,57 @@ export function Page6() {
                   written, and it carries on. {FW.waits[FW.waits.length - 1]} times over.
                 </p>
 
-                {/* The result, in page 5's paired-flip vocabulary and its picture. The
-                    step used to open on the accuracy lines, which is the boring half:
-                    the net is zero and both discordant blocks are large, and only the
-                    grid can say both of those at once. */}
-                {WAIT_TABLE ? (
-                  <div className="grid gap-5 sm:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] sm:items-center">
-                    <PairedGrid cells={WAIT_TABLE.table.cells} tone={waitTone} />
-                    <div className="flex flex-col gap-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                          answers that moved, of {WAIT_TABLE.table.n}, after{" "}
-                          {WAIT_TABLE.waits} injections
-                        </p>
-                        <p className="font-mono text-4xl tabular-nums text-ink">
-                          {pct(WAIT_TABLE.churn)}
-                        </p>
-                        <p className="font-mono text-xs tabular-nums text-ink-muted">
-                          {shortLabel(WAIT_TABLE.label)} · ×{WAIT_TABLE.tokenMultiple.toFixed(1)} the
-                          tokens
-                        </p>
-                      </div>
-                      <ul className="flex flex-col gap-1 text-xs text-ink-muted">
-                        <li className="flex items-center gap-2">
-                          <span className="h-3 w-3 shrink-0 rounded-sm border border-correct bg-correct" />
-                          fixed by being made to keep going ({WAIT_TABLE.table.afterOnly})
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="h-3 w-3 shrink-0 rounded-sm border border-wrong bg-wrong" />
-                          broken by it ({WAIT_TABLE.table.beforeOnly})
-                        </li>
-                        <li className="flex items-center gap-2">
-                          <span className="h-3 w-3 shrink-0 rounded-sm border border-grid bg-surface-raised" />
-                          same verdict either way ({WAIT_TABLE.table.both + WAIT_TABLE.table.neither}
-                          ), including {WAIT_TABLE.movedWithoutChangingTheVerdict} that swapped one
-                          wrong answer for another
-                        </li>
-                      </ul>
-                      <p className="text-sm text-ink">
-                        {WAIT_TABLE.table.afterOnly} rescued against{" "}
-                        {WAIT_TABLE.table.beforeOnly} wrecked, {pLabel(WAIT_TABLE.p)}. Both blocks
-                        are large and they cancel.
-                      </p>
-                    </div>
-                  </div>
-                ) : null}
+                {/* The finding is a swap, so the figure is a crossing. The two
+                    pictures this replaces were a hundred squares whose
+                    arrangement is not data and three flat accuracy lines, and
+                    between them they asked the reader to hold "almost nothing
+                    changed" and "a third of the answers changed" in mind at
+                    once without drawing either. */}
+                <WaitCrossing />
 
-                {/* The inset: the net, which is the part that looks like nothing. */}
-                <div className="flex flex-col gap-1 rounded-lg border border-grid bg-surface-raised p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    and the net, on all three checkpoints
-                  </p>
-                  <WaitCurve />
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
+                  <span className="flex items-center gap-2">
+                    <span className="h-3 w-5 rounded-sm bg-correct opacity-60" /> rescued by being
+                    made to keep going ({WAIT_TABLE!.table.afterOnly})
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="h-3 w-5 rounded-sm bg-wrong opacity-60" /> wrecked by it (
+                    {WAIT_TABLE!.table.beforeOnly})
+                  </span>
+                  {/* Four bands, four entries. The legend used to fold the two
+                      concordant ones into a single grey swatch, which is not
+                      what the figure draws: a problem right at both ends keeps
+                      the tint it has at both ends. */}
+                  <span className="flex items-center gap-2">
+                    <span className="h-3 w-5 rounded-sm bg-correct opacity-20" /> right either way (
+                    {WAIT_TABLE!.table.both})
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="h-3 w-5 rounded-sm bg-ink opacity-10" /> wrong either way (
+                    {WAIT_TABLE!.table.neither})
+                  </span>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[30rem] text-left text-xs tabular-nums">
-                    <thead className="text-ink-muted">
-                      <tr>
-                        <th className="py-1 pr-3 font-semibold">checkpoint</th>
-                        <th className="py-1 pr-3 font-semibold">at 0</th>
-                        <th className="py-1 pr-3 font-semibold">
-                          at {FW.waits[FW.waits.length - 1]}
-                        </th>
-                        <th className="py-1 pr-3 font-semibold">answers moved</th>
-                        <th className="py-1 pr-3 font-semibold">fixed</th>
-                        <th className="py-1 pr-3 font-semibold">broken</th>
-                        <th className="py-1 font-semibold">tokens</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-ink">
-                      {FW.curves.map((c) => {
-                        const first = c.points[0];
-                        const last = c.points[c.points.length - 1];
-                        const paired = c.paired[c.paired.length - 1];
-                        return (
-                          <tr key={c.model_id} className="border-t border-grid">
-                            <td className="py-1 pr-3">{shortLabel(c.label)}</td>
-                            <td className="py-1 pr-3">{pct(first.accuracy)}</td>
-                            <td className="py-1 pr-3">{pct(last.accuracy)}</td>
-                            <td className="py-1 pr-3">{pct(last.churn)}</td>
-                            <td className="py-1 pr-3 text-correct">{paired.fixed}</td>
-                            <td className="py-1 pr-3 text-wrong">{paired.broken}</td>
-                            <td className="py-1">
-                              ×{(last.mean_tokens / first.mean_tokens).toFixed(1)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                {/* Down to its definition: the grid above now makes the "a net near zero
-                    is not nothing happening" point in a picture. */}
-                <p className="text-xs text-ink-muted">
-                  Fixed and broken are counted against the same item at zero injections, so they
-                  are paired.
+                <p className="text-sm text-ink">
+                  {WAIT_TABLE!.table.afterOnly} rescued against {WAIT_TABLE!.table.beforeOnly}{" "}
+                  wrecked, {pLabel(WAIT_TABLE!.p)}. Both crossings are thick and they cancel. In all{" "}
+                  {pct(WAIT_TABLE!.churn)} of answers moved, because a further{" "}
+                  {WAIT_TABLE!.movedWithoutChangingTheVerdict} swapped one wrong answer for another
+                  and never touched the verdict.
                 </p>
+
+                {/* What the three accuracy lines were for, drawn as the widths
+                    of the two things that crossed. */}
+                <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                    and the same crossing on all three checkpoints
+                  </p>
+                  <WaitLedger />
+                  <p className="text-xs text-ink-muted">
+                    Wrecked and rescued are counted against the same item at zero injections, so
+                    they are paired.
+                  </p>
+                </div>
               </section>
               <p className="text-sm text-ink-muted">
                 It <strong className="text-ink">redistributes rather than adds</strong>. Roughly
@@ -1391,8 +1599,8 @@ export function Page6() {
               </p>
             </section>
             {/* No margin note here. It said "watch the bars, not the lines", which was
-                advice for a figure that led with the lines; the grid leads now and the
-                takeaway above it is the same sentence, better placed. */}
+                advice for a figure that led with the lines; the crossing leads now and
+                the takeaway above it is the same sentence, better placed. */}
             <div aria-hidden="true" />
           </>
         ) : null}

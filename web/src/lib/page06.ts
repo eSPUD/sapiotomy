@@ -264,6 +264,21 @@ const TOP_TRUNCATION_MAX = 0.1;
 /** The row figure 1 opens on. See `PAGE6.figure1.openingId` for why not the notebook's. */
 const OPENING_ID = "test/counting_and_probability/1014.json";
 
+/**
+ * A problem whose statement is a drawing PROGRAM rather than prose.
+ *
+ * MATH-500 inlines Asymptote source for the geometry figures, and the page has
+ * no Asymptote renderer, so the reader meets twenty lines of `label("$A$", A,
+ * SW);` where a question should be. `tidyMath` cannot help: this is not LaTeX
+ * standing in for a symbol, it is code standing in for a picture, and the only
+ * honest renderings are to draw it or to not offer the problem. The traces
+ * still ship in the download; what this hides is the button.
+ *
+ * The test is on the source rather than on an id, because the next run picks
+ * its own specimens and a hardcoded exclusion would silently stop applying.
+ */
+const isDrawingProgram = (question: string) => /\[asy\]/.test(question);
+
 if (D.manifest.run_mode !== "FULL") {
   fail(`run mode is "${D.manifest.run_mode}"; only a FULL run may be translated to the page`);
 }
@@ -430,6 +445,21 @@ for (const row of D.figure_1.rows) {
   }
   if (!bundled.has(OPENING_ID)) {
     fail(`figure 1 opens on ${OPENING_ID}, whose traces are not bundled`);
+  }
+  {
+    // The picker may lose a problem to `isDrawingProgram`; the row the page
+    // OPENS on may not, because there would be nothing to fall back to and the
+    // first thing the reader meets would be twenty lines of Asymptote.
+    const opening = D.figure_1.rows.find((r) => r.problem_id === OPENING_ID)!;
+    if (isDrawingProgram(opening.question)) {
+      fail(`figure 1 opens on ${OPENING_ID}, whose statement is an Asymptote drawing program`);
+    }
+    const offered = D.figure_3.clickable_row_ids.filter(
+      (id) => !isDrawingProgram(D.figure_1.rows.find((r) => r.problem_id === id)!.question),
+    );
+    if (offered.length < 4) {
+      fail(`only ${offered.length} bundled problems read as prose, which is not a picker`);
+    }
   }
   {
     // The row the page opens on has to demonstrate the thing the page claims:
@@ -610,7 +640,15 @@ export const PAGE6 = {
     neverFlipCount: D.figure_3.never_flip_count,
     neverFlipShare: D.figure_3.never_flip_share,
     nRegressions: D.figure_3.n_regressions,
-    clickableRowIds: D.figure_3.clickable_row_ids,
+    /**
+     * What figure 1's picker offers. The notebook ranks candidates by what they
+     * demonstrate and cannot see how they read, so a problem whose statement is
+     * an Asymptote program is filtered out here rather than there: it is a
+     * presentation fact about this page, not a fact about the run.
+     */
+    clickableRowIds: D.figure_3.clickable_row_ids.filter(
+      (id) => !isDrawingProgram(D.figure_1.rows.find((r) => r.problem_id === id)!.question),
+    ),
     /**
      * Chains still running when the top budget arrived. Their `tokens_at_max`
      * is a lower bound rather than a length, so the figure draws them off the
