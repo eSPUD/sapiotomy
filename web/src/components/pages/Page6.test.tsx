@@ -282,15 +282,18 @@ describe("Page 6, figure 4: refuse to let it stop", () => {
     const w = WAIT_TABLE!;
     expect(w).not.toBeNull();
     const arm = screen.getByLabelText("The extension arm");
-    expect(arm.textContent).toContain(`rescued by being made to keep going (${w.table.afterOnly})`);
-    expect(arm.textContent).toContain(`wrecked by it (${w.table.beforeOnly})`);
+    // The legend names the direction each band crosses in, not a verdict on it.
+    expect(arm.textContent).toContain(
+      `wrong, then right once it could not stop (${w.table.afterOnly})`,
+    );
+    expect(arm.textContent).toContain(`right, then wrong (${w.table.beforeOnly})`);
     // Four bands, four legend entries: a problem right at both ends keeps the
     // tint it has at both ends, so the legend may not fold the concordant two
     // into one grey swatch.
     expect(arm.textContent).toContain(`right either way (${w.table.both})`);
     expect(arm.textContent).toContain(`wrong either way (${w.table.neither})`);
     expect(arm.textContent).toContain(
-      `${w.table.afterOnly} rescued against ${w.table.beforeOnly} wrecked`,
+      `${w.table.afterOnly} answers turned from wrong to right against ${w.table.beforeOnly} that turned from right to wrong`,
     );
     expect(arm.textContent).toContain("Both crossings are thick and they cancel");
 
@@ -323,7 +326,7 @@ describe("Page 6, figure 4: refuse to let it stop", () => {
       expect(p.broken).toBeGreaterThan(0);
     }
     expect(arm.textContent).toContain(
-      "counted against the same item at zero injections, so they are paired",
+      "against the same problem at zero injections, so they are paired",
     );
   });
 
