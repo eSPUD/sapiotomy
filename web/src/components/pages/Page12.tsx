@@ -521,24 +521,52 @@ export function Page12() {
           </h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <div
-              className="flex flex-col gap-2"
               role="img"
               aria-label={`CommonsenseQA accuracy: GPT-J few-shot direct ${p.fewShotDirect} percent, GPT-J few-shot chain of thought ${p.fewShotCot} percent, LaMDA 137B few-shot chain of thought ${p.fewShotCotLamda} percent, GPT-J fine-tuned on human answers ${p.gptjFinetuned} percent, STaR without rationalization ${p.starNoRationalization} percent, STaR ${p.star} percent, GPT-3 thirty times larger fine-tuned ${p.gpt3Finetuned} percent.`}
             >
-              {bars.map((b) => (
-                <div key={b.label} className="flex items-center gap-2 text-sm">
-                  <span className="w-56 shrink-0 text-ink-muted">
-                    {b.label}
-                    <span className="block text-xs text-ink-muted">{b.note}</span>
-                  </span>
-                  <div className="h-5 flex-1 rounded bg-surface-raised">
-                    <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
+              {/* label takes a third, the plot two thirds; rows are equidistant */}
+              <div className="flex flex-col gap-1.5">
+                {bars.map((b) => (
+                  <div key={b.label} className="flex min-h-[3.6rem] items-center gap-3 text-sm">
+                    <span className="w-1/3 shrink-0 text-ink-muted">
+                      {b.label}
+                      <span className="block text-xs text-ink-muted">{b.note}</span>
+                    </span>
+                    <div className="relative flex-1">
+                      {/* gridlines behind the bar, every 20% */}
+                      <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 right-0">
+                        {[0, 20, 40, 60, 80, 100].map((t) => (
+                          <div key={t} className="absolute inset-y-0 w-px bg-grid" style={{ left: `${t}%` }} />
+                        ))}
+                      </div>
+                      <div className="relative h-5 rounded bg-surface-raised">
+                        <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
+                      </div>
+                      {/* value, right-aligned on the plot */}
+                      <span className="absolute right-0 top-1/2 -translate-y-1/2 font-mono text-xs tabular-nums text-ink">
+                        {b.value.toFixed(1)}%
+                      </span>
+                    </div>
                   </div>
-                  <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">
-                    {b.value.toFixed(1)}%
-                  </span>
+                ))}
+              </div>
+              {/* x-axis ticks and label, aligned under the plot column */}
+              <div aria-hidden="true" className="mt-1.5 flex gap-3 text-[10px] text-ink-muted">
+                <div className="w-1/3 shrink-0" />
+                <div className="relative h-4 flex-1">
+                  {[0, 20, 40, 60, 80, 100].map((t) => (
+                    <span key={t} className="absolute -translate-x-1/2" style={{ left: `${t}%` }}>
+                      {t}
+                    </span>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <div aria-hidden="true" className="flex gap-3">
+                <div className="w-1/3 shrink-0" />
+                <p className="flex-1 text-center text-[11px] text-ink-muted">
+                  accuracy on CommonsenseQA (%)
+                </p>
+              </div>
             </div>
             <figcaption className="text-sm text-ink-muted">
               GPT-J has 6B parameters, and nobody wrote it a single worked solution. Fine-tuned on
