@@ -2,11 +2,11 @@
   "manifest": {
     "run_id": "full-9ab2b579",
     "notebook": "page_09_outcome_vs_process.ipynb",
-    "notebook_sha256": "7b806dfccc7bfe3b309244098c32027f6387862b09e1154373bfb9e573bc45b2",
+    "notebook_sha256": "effd23f6ca5d1c02fc12466557f06515969de74bee07e78721db50452ca84fa5",
     "page": 9,
     "run_mode": "FULL",
-    "timestamp_utc": "2026-08-07T21:28:24+00:00",
-    "notebook_git_sha": "86073dec4fe353788006dfa2b74ca50c8cc587be",
+    "timestamp_utc": "2026-08-09T03:47:24+00:00",
+    "notebook_git_sha": "c5162010e0ae9408b848ddab56f115f7b0e600c8",
     "harness": {
       "version": "1.3",
       "sha256": "7076c1218c6345ec9202087a98a2bd0c71ae47d6e406a81dc1901a0c7c78d6d8"
@@ -46,7 +46,7 @@
       "outcome": "reasoning_from_scratch.ch03.grade_answer",
       "arithmetic_checker": {
         "rule": "closed-form numeric on both sides, no symbols; true/false/unknown",
-        "preflight_cases": 38,
+        "preflight_cases": 40,
         "known_limit": "cannot see method errors that use valid arithmetic"
       },
       "prm": {
@@ -74,13 +74,19 @@
         "quantisation": "8bit",
         "quantisation_note": "8-bit was required to fit a 7.6B grader on a 16 GB card; it moves the scores and so is part of what section 6 measured",
         "threshold": 0.7473679780960083,
-        "threshold_source": "fitted on the checker's labels (Youden's J)",
+        "threshold_source": "fitted on the checker's labels: of the cut-offs within 0.01 of the best Youden's J, the one with the highest specificity",
         "reliability_vs_checker": {
           "n_steps_compared": 1092,
           "n_false_steps": 76,
           "auc": 0.8921726067136345,
           "threshold": 0.7473679780960083,
-          "threshold_source": "fitted on the checker's labels (Youden's J)",
+          "threshold_source": "fitted on the checker's labels: of the cut-offs within 0.01 of the best Youden's J, the one with the highest specificity",
+          "threshold_plateau": [
+            0.7473679780960083,
+            0.9734251201152802,
+            7
+          ],
+          "j_tolerance": 0.01,
           "threshold_start": 0.5,
           "agreement": 0.8543956043956044,
           "recall_on_false": 0.7894736842105263,
@@ -263,7 +269,13 @@
     "n_false_steps": 76,
     "auc": 0.8921726067136345,
     "threshold": 0.7473679780960083,
-    "threshold_source": "fitted on the checker's labels (Youden's J)",
+    "threshold_source": "fitted on the checker's labels: of the cut-offs within 0.01 of the best Youden's J, the one with the highest specificity",
+    "threshold_plateau": [
+      0.7473679780960083,
+      0.9734251201152802,
+      7
+    ],
+    "j_tolerance": 0.01,
     "threshold_start": 0.5,
     "agreement": 0.8543956043956044,
     "recall_on_false": 0.7894736842105263,
@@ -1090,6 +1102,7 @@
         }
       ],
       "role": "lucky",
+      "source": "page_07_pile_pinned",
       "delimiter": "paragraph",
       "prm_scored": true,
       "prm_labels_published": true
@@ -1794,6 +1807,7 @@
         }
       ],
       "role": "broken",
+      "source": "page_07_pile_pinned",
       "delimiter": "paragraph",
       "prm_scored": true,
       "prm_labels_published": true
@@ -2142,10 +2156,16 @@
         }
       ],
       "role": "clean",
+      "source": "page_07_pile_pinned",
       "delimiter": "paragraph",
       "prm_scored": true,
       "prm_labels_published": true
     }
+  },
+  "specimen_sources": {
+    "lucky": "page_07_pile_pinned",
+    "broken": "page_07_pile_pinned",
+    "clean": "page_07_pile_pinned"
   },
   "missing_roles": []
 }
