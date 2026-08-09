@@ -11,12 +11,10 @@
  * Section 1 is the loop itself, drawn as the animated loop graph (StarLoop):
  * generate → filter → (correct: keep) / (wrong: rationalize from the answer as a
  * hint → keep) → fine-tune → repeat, with a signal that forks at the filter so
- * both branches reach fine-tune together. One control, the correctness-filter
- * toggle: flip the answer key off and the loop's filter node reads "no key" and
- * a caveat surfaces (every rationale trains, right or wrong — the collapse Act 3
- * returns to). The old seeded accuracy chart (lib/star.ts) was removed — it was
- * an illustrative simulation, not measured data, so the page now shows only the
- * mechanism and the cited results.
+ * both branches reach fine-tune together. The correctness check is always on —
+ * the answer key is what the whole loop rests on. The old seeded accuracy chart
+ * (lib/star.ts) was removed — it was an illustrative simulation, not measured
+ * data, so the page now shows only the mechanism and the cited results.
  *
  * Section 1 also carries the loop written down (merged in from the former
  * section 2): the paper's Algorithm 1 compressed to ten annotated pseudocode
@@ -70,14 +68,12 @@
  * beside the sections that use them, provenance footnote at the bottom.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { STAR_LINES } from "@/lib/starListing";
-import { useStore } from "@/store/useStore";
 
 const PAGE_N = 12;
 
@@ -412,12 +408,8 @@ function CodeLine({
 
 export function Page12() {
   const page = getPage(PAGE_N)!;
-  const recordInteraction = useStore((s) => s.recordInteraction);
   const paper = curves.starCqa;
   const p = paper.fit!.params;
-
-  // The answer-key toggle drives the loop diagram (filter on/off) and its caveat.
-  const [filter, setFilter] = useState(true);
 
   const bars = [
     { label: "GPT-J, few-shot, answer only", value: p.fewShotDirect, tone: "bg-grid", note: "no reasoning, no training" },
@@ -451,32 +443,15 @@ export function Page12() {
 
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             {/* the loop itself, with the rationalization branch, signal animated to turn */}
-            <StarLoop filter={filter} />
+            <StarLoop filter />
 
             <p className="text-sm text-ink">
               This is <strong>STaR</strong>&apos;s loop.
               <Cite n={REF.star} /> It still needs a dataset — questions <em>with correct
               answers</em> — but nobody has to write the reasoning; the model authors that itself.
-              Everything rests on the answer key: toggle it off to see what the loop is without it.
+              Everything rests on the answer key: the correctness check that decides which rationales
+              are allowed to train.
             </p>
-
-            {/* the one control: the answer key that decides what may train */}
-            <div className="border-t border-dashed border-grid pt-3">
-              <Toggle
-                label="Correctness filter (the answer key)"
-                checked={filter}
-                onChange={(v) => {
-                  setFilter(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-            </div>
-            {!filter ? (
-              <p className="rounded border-l-4 border-wrong bg-wrong/10 p-2 text-sm text-ink">
-                No answer key: every rationale trains, right or wrong — and rationalization is
-                impossible, because a hint requires knowing the answer.
-              </p>
-            ) : null}
 
             <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
               The correct answer is the external signal deciding what the model may study.

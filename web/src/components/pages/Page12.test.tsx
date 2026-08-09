@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Page12 } from "./Page12";
 
 describe("Page 12 (STaR and self-improvement)", () => {
@@ -30,13 +30,12 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("toggling the answer key off flips the loop and surfaces the caveat", () => {
+  it("has no controls: the correctness check is always on", () => {
     render(<Page12 />);
-    // No step-through Run button, and no caveat while the key is on.
+    // No step-through button and no answer-key toggle — the check is always on.
     expect(screen.queryByRole("button", { name: /Run iteration/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
     expect(screen.queryByText(/No answer key: every rationale trains/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("switch", { name: /Correctness filter/ }));
-    expect(screen.getByText(/No answer key: every rationale trains/)).toBeInTheDocument();
   });
 
   it("rests the loop on the answer key, with no math notation", () => {
