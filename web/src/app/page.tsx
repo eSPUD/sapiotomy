@@ -3,11 +3,11 @@ import { CiteBlock } from "@/components/CiteBlock";
 import { Reveal } from "@/components/Reveal";
 import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
 
-const CITATION = `@article{bangalorelakshman2026its,
+const CITATION = `@misc{bangalorelakshman2026its,
   title  = {The Story of Inference-Time Scaling: The Training-Time Loop Behind It},
   author = {Bangalore Lakshman, Shashank and Eiers, Scott Lawrence},
-  journal = {VISxAI Workshop at IEEE VIS},
   year   = {2026},
+  note   = {Preprint. Submitted to the VISxAI Workshop at IEEE VIS; not yet peer-reviewed.},
   url    = {https://sapiotomy.vercel.app}
 }`;
 
