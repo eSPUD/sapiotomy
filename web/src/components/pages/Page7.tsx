@@ -226,7 +226,7 @@ function PileChart() {
 
   return (
     <ChartFrame
-      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of chains the vote sees. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. The vote over sixteen sampled chains solves ${pct(last.accuracy)}. At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.`}
+      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of chains the vote sees. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. The vote returns the answer on ${pct(last.accuracy)} over sixteen sampled chains. At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.`}
       width={W}
       height={HGT}
       margin={MARGIN}
@@ -261,8 +261,8 @@ function PileChart() {
         <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy * 100)} r={3.4} className="fill-compute" />
       ))}
       <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute text-[10px] font-semibold">
-        <tspan x={IW + 6} dy="0">the vote</tspan>
-        <tspan x={IW + 6} dy="11">returns it</tspan>
+        <tspan x={IW + 6} dy="0">the vote returns</tspan>
+        <tspan x={IW + 6} dy="11">the answer</tspan>
       </text>
 
       <line x1={0} x2={IW} y1={y(cold * 100)} y2={y(cold * 100)} className="stroke-ink-muted" strokeWidth={1.4} strokeDasharray="2 3" />
@@ -286,6 +286,166 @@ function PileChart() {
           ties
         </text>
       ) : null}
+    </ChartFrame>
+  );
+}
+
+/* ------------------------------------------------------------------ figure 3 */
+
+const FW = 620;
+const FHGT = 320;
+const FMARGIN = { top: 30, right: 116, bottom: 84, left: 46 };
+const FIW = FW - FMARGIN.left - FMARGIN.right;
+const FIH = FHGT - FMARGIN.top - FMARGIN.bottom;
+
+/**
+ * Step 4 as a fork rather than a table.
+ *
+ * What this replaces was a five-column table under a two-decker header: capped
+ * solved, capped cut off, free solved, free tokens, all at three values of N.
+ * The finding lives in the difference between two of those columns, and a
+ * reader had to hold two numbers per row in their head and subtract. It also
+ * hid the one fact that makes the panel an argument rather than two
+ * experiments: at N = 1 the two runs ARE the same run, so the two series start
+ * from a single point.
+ *
+ * So: one shared origin and two lines leaving it in opposite directions. The
+ * gap between them at N = 16 is the whole claim, and it is a distance rather
+ * than a subtraction. Underneath, on the same x positions, the share of chains
+ * that hit the cap before finishing, because that is the CAUSE of the lower
+ * line and the figure should not make the reader take it on trust: the fall
+ * tracks the fill, 1% to 55% to 100%.
+ *
+ * The cost sits in the right-hand labels, since the step's title is a question
+ * about cost and the answer is that finishing is dear and there is no cheaper
+ * version of it.
+ */
+function ForkChart() {
+  const capped = F2.split;
+  const ns = capped.map((sp) => sp.n);
+  const top = Math.max(...ns);
+  const x = (n: number) => (Math.log2(n) / Math.log2(top)) * FIW;
+  const y = (v: number) => FIH - (v / 100) * FIH;
+  const free = (n: number) => F2.hot.points.find((p) => p.n === n);
+
+  const path = (get: (n: number) => number | undefined) =>
+    capped
+      .map((sp, i) => {
+        const v = get(sp.n);
+        return v === undefined ? "" : `${i ? "L" : "M"}${x(sp.n)},${y(v * 100)}`;
+      })
+      .join(" ");
+
+  const lastN = ns[ns.length - 1];
+  const lastFree = free(lastN);
+  const lastCapped = capped[capped.length - 1];
+  const firstFree = free(ns[0]);
+
+  // The cut-off gauge: a fixed track filled by the share that hit the cap.
+  const TRACK = 58;
+  const GAUGE_Y = FIH + 24;
+  const GAUGE_H = 11;
+
+  return (
+    <ChartFrame
+      title={`The same budget of ${tokens(M.split.budget_total)} tokens split N ways, against the same number of chains allowed to run to their own end. At one chain the cap almost never binds and the two are the same run, both solving ${pct(capped[0].accuracy)}. Splitting the fixed budget ${lastN} ways drops it to ${pct(lastCapped.accuracy)}, with ${pct(lastCapped.truncated_rate)} of chains cut off before they finish. The same ${lastN} chains allowed to finish solve ${pct(lastFree?.accuracy ?? 0)} for ${tokens(lastFree?.mean_tokens ?? 0)} tokens.`}
+      width={FW}
+      height={FHGT}
+      margin={FMARGIN}
+      xLabel="chains"
+      yLabel="solved (%)"
+    >
+      {[0, 25, 50, 75, 100].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={FIW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={1} />
+          <text x={-8} y={y(t) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t}
+          </text>
+        </g>
+      ))}
+
+      {/* The fork itself, shaded, so the claim is an area and not an inference */}
+      <path
+        d={`${path((n) => free(n)?.accuracy)} ${[...capped]
+          .reverse()
+          .map((sp) => `L${x(sp.n)},${y(sp.accuracy * 100)}`)
+          .join(" ")} Z`}
+        className="fill-wrong opacity-[0.07]"
+      />
+
+      <path d={path((n) => free(n)?.accuracy)} fill="none" className="stroke-compute" strokeWidth={2.4} />
+      <path d={path((n) => capped.find((sp) => sp.n === n)?.accuracy)} fill="none" className="stroke-wrong" strokeWidth={2.4} />
+
+      {capped.map((sp) => {
+        const f = free(sp.n);
+        return (
+          <g key={sp.n}>
+            {f ? <circle cx={x(sp.n)} cy={y(f.accuracy * 100)} r={3.4} className="fill-compute" /> : null}
+            <circle cx={x(sp.n)} cy={y(sp.accuracy * 100)} r={3.4} className="fill-wrong" />
+          </g>
+        );
+      })}
+
+      {/* The shared origin is the control and the reason this is one experiment */}
+      {firstFree ? (
+        <text x={6} y={y(firstFree.accuracy * 100) - 18} className="fill-ink-muted text-[10px]">
+          at one chain the cap never binds: both lines are the same run
+        </text>
+      ) : null}
+
+      <text x={FIW + 8} y={y((lastFree?.accuracy ?? 0) * 100) - 3} className="fill-compute text-[10px] font-semibold">
+        <tspan x={FIW + 8} dy="0">allowed to finish</tspan>
+        <tspan x={FIW + 8} dy="11" className="fill-ink-muted font-normal">
+          {tokens(lastFree?.mean_tokens ?? 0)} tokens
+        </tspan>
+      </text>
+      <text x={FIW + 8} y={y(lastCapped.accuracy * 100) + 3} className="fill-wrong text-[10px] font-semibold">
+        <tspan x={FIW + 8} dy="0">capped to share</tspan>
+        <tspan x={FIW + 8} dy="11" className="fill-ink-muted font-normal">
+          {tokens(M.split.budget_total)} tokens
+        </tspan>
+      </text>
+
+      {/* x ticks sit above the gauge so each count labels both at once */}
+      {capped.map((sp) => (
+        <text key={sp.n} x={x(sp.n)} y={FIH + 15} textAnchor="middle" className="fill-ink-muted text-[10px] tabular-nums">
+          {sp.n}
+        </text>
+      ))}
+
+      {/* the cause of the lower line, on the same x positions as the effect */}
+      <text x={-8} y={GAUGE_Y + GAUGE_H - 1} textAnchor="end" className="fill-ink-muted text-[9px]">
+        cut off
+      </text>
+      {capped.map((sp) => (
+        <g key={`gauge-${sp.n}`}>
+          <rect
+            x={x(sp.n) - TRACK / 2}
+            y={GAUGE_Y}
+            width={TRACK}
+            height={GAUGE_H}
+            rx={2}
+            className="fill-surface-raised stroke-grid"
+            strokeWidth={1}
+          />
+          <rect
+            x={x(sp.n) - TRACK / 2}
+            y={GAUGE_Y}
+            width={TRACK * sp.truncated_rate}
+            height={GAUGE_H}
+            rx={2}
+            className="fill-wrong opacity-70"
+          />
+          <text
+            x={x(sp.n)}
+            y={GAUGE_Y + GAUGE_H + 12}
+            textAnchor="middle"
+            className="fill-ink-muted text-[10px] tabular-nums"
+          >
+            {pct(sp.truncated_rate)}
+          </text>
+        </g>
+      ))}
     </ChartFrame>
   );
 }
@@ -383,8 +543,10 @@ export function Page7() {
                 say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens and
                 probability distributions, off this page and on page 10. */}
             Here is one box. The problem below went to {PAGE7.primary.label} {F1.n_chains} times
-            with sampling turned on, which is what <strong className="text-ink">temperature</strong> does:
-            at zero every chain comes back identical, and turning it up makes them disagree more.
+            with sampling turned on, which is what <strong className="text-ink">temperature</strong>{" "}
+            does. Temperature is a dial, written <span className="font-mono text-ink">T</span> on
+            every chart on this page: at zero every chain comes back identical, and turning it up
+            makes them disagree more.
             Every answer it came back with is tallied. Click a row to read the chains that landed
             there.
           </p>
@@ -457,19 +619,27 @@ export function Page7() {
             </span>
           </h2>
           <p className="text-ink-muted">
-            {/* Named exactly as the chart names them. The intro used to say "The vote /
-                In the pile / T = 0" while the chart said something else, so a reader
-                scanning for a line called "T = 0" had to supply the equivalence. */}
-            Now all {M.items.n} problems, with the box emptied at every size from one slip to{" "}
-            {F1.n_chains}. Three lines below.{" "}
-            <strong className="text-ink">The vote returns it</strong> is what counting gets: the
-            answer most chains agreed on.{" "}
-            <strong className="text-ink">At least one chain is right</strong> is how often the right
-            answer was written on <em>some</em> slip, whether or not counting picked it, so the gap
-            between the two is what the rule throws away.{" "}
-            <strong className="text-ink">One greedy chain</strong> is the baseline: at T = 0
-            sampling is off, which is <em>greedy decoding</em>, the setting pages 5 and 6 ran, and
-            it makes all {F1.n_chains} chains the same chain.
+            That was one problem. Now all {M.items.n} of them, with the box holding{" "}
+            {F2.hot.points
+              .map((p) => p.n)
+              .slice(0, -1)
+              .join(", ")}{" "}
+            and finally {F2.hot.points[F2.hot.points.length - 1].n} slips. The chart below draws
+            three lines, and each one answers a different question.
+          </p>
+          {/* Named exactly as the chart names them. The intro used to say "The vote /
+              In the pile / T = 0" while the chart said something else, so a reader
+              scanning for a line called "T = 0" had to supply the equivalence. */}
+          <p className="text-ink-muted">
+            <strong className="text-ink">The vote returns the answer</strong> is what counting
+            actually gets you: the answer the most chains agreed on.{" "}
+            <strong className="text-ink">At least one chain is right</strong> is the easier
+            question. Did the right answer turn up on any slip in the box, whether or not counting
+            picked it? The gap between those two lines is the right answer being written down and
+            then thrown away. <strong className="text-ink">One greedy chain</strong> is the baseline
+            to beat: at T = 0, with the temperature dial turned all the way down, sampling is off,
+            which is <em>pure chain-of-thought</em>, also known as <em>greedy decoding</em>. That is
+            what pages 5 and 6 ran, and it makes all {F1.n_chains} chains the same chain.
           </p>
           <section
             aria-label="Accuracy against the number of chains"
@@ -485,14 +655,18 @@ export function Page7() {
               <strong className="font-mono">{pct(F2.gain.bare_cot)}</strong>. The vote over{" "}
               {F1.n_chains} sampled chains solves{" "}
               <strong className="font-mono">{pct(F2.gain.vote)}</strong>:{" "}
-              <strong>+{F2.gain.gain_pts.toFixed(0)} points</strong> ·{" "}
-              {pLabel(F2.gain.p)}, exact McNemar over the {F2.gain.fixed + F2.gain.broken} problems
-              where the two disagree ({F2.gain.fixed} fixed, {F2.gain.broken} broken).{" "}
-              {/* The greedy contrast is the one the page is built on, but part of that
-                  +12 is sampling rather than counting, and a reader who stops at this box
-                  would credit it all to the vote. The decomposition is in the margin. */}
+              <strong>+{F2.gain.gain_pts.toFixed(0)} points</strong>.{" "}
+              {/* "exact McNemar" was the whole justification, and it is a name most
+                  readers do not have. The test is simple enough to just describe: throw
+                  away the problems both methods score the same, then ask whether the
+                  ones left over split evenly. The name stays, in the position of a
+                  citation rather than an argument. */}
               <span className="text-ink-muted">
-                Sampling alone is worth part of this, and the margin says how much.
+                The two methods score the same on most of these problems, so the test looks only at
+                the {F2.gain.fixed + F2.gain.broken} where they differ: the vote wins{" "}
+                {F2.gain.fixed} of those and loses {F2.gain.broken}. A split that lopsided is
+                unlikely to be luck ({pLabel(F2.gain.p)}, exact McNemar). Part of the gain is
+                sampling rather than counting, and the margin says how much.
               </span>
             </div>
             <div className="grid gap-3 text-xs text-ink-muted sm:grid-cols-2">
@@ -536,13 +710,22 @@ export function Page7() {
             </p>
           </div>
         </section>
-        <Note kicker="Try it">
-          <p>Open a row in step 2 and read two chains that agreed on a wrong answer.</p>
+        {/* The step 2 invitation that used to open this note lived one step from the
+            figure it referred to, and step 2's own prose already says to click a row.
+            What is left is the decomposition, which is the honesty guard on the +12 and
+            has to say plainly what it is guarding against. */}
+        <Note kicker="How much of that is the counting">
           <p>
-            A second contrast is measured and not drawn: against one <em>sampled</em> chain rather
-            than a greedy one the same vote gains {F2.gainVsOneSample.pts.toFixed(0)} points at{" "}
-            {pLabel(F2.gainVsOneSample.p)}, which does not resolve. Sampling is already worth
-            something on its own.
+            Not all {F2.gain.gain_pts.toFixed(0)} points of it. Sampling on its own is already worth
+            something.
+          </p>
+          <p>
+            Measured, though not drawn: if the thing being beaten is one <em>sampled</em> chain
+            instead of a greedy one, the same vote gains only{" "}
+            {F2.gainVsOneSample.pts.toFixed(0)} points, too small for this run to tell apart from
+            chance ({pLabel(F2.gainVsOneSample.p)}). The {F2.gain.gain_pts.toFixed(0)} points beside
+            the chart are what the vote adds to the greedy chain pages 5 and 6 ran, which is the
+            comparison this page is about.
           </p>
         </Note>
 
@@ -556,130 +739,99 @@ export function Page7() {
           </h2>
           <p className="text-ink-muted">
             Sixteen chains cost sixteen times the tokens. So what if you do not have sixteen times
-            the budget? The table below takes one fixed budget and divides it, against the same
-            number of chains allowed to run as long as they like.
+            the budget? Below, one fixed budget of {tokens(M.split.budget_total)} tokens is divided
+            between the chains, and the same chains are run again with no budget at all. The two
+            lines start as one run and end a long way apart.
           </p>
           <section
             aria-label="The same budget split N ways"
             className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
           >
-            <table className="w-full text-sm">
-              <caption className="pb-2 text-left text-xs text-ink-muted">
-                The same number of chains, capped to share {tokens(M.split.budget_total)} tokens
-                against allowed to run to their own end. <strong>Cut off</strong> is the share of
-                that run&apos;s chains that reached their cap and were made to commit
-                mid-thought, a property of the run rather than a score.
-              </caption>
-              <thead>
-                <tr className="text-xs uppercase tracking-wide text-ink-muted">
-                  <th className="py-1 text-left font-semibold" rowSpan={2}>
-                    chains
-                  </th>
-                  <th
-                    className="border-b border-l border-grid px-2 pb-1 text-center font-semibold text-wrong"
-                    colSpan={2}
-                  >
-                    capped to share {tokens(M.split.budget_total)}
-                  </th>
-                  <th
-                    className="border-b border-l border-grid px-2 pb-1 text-center font-semibold text-compute"
-                    colSpan={2}
-                  >
-                    allowed to finish
-                  </th>
-                </tr>
-                <tr className="border-b border-grid text-xs uppercase tracking-wide text-ink-muted">
-                  <th className="border-l border-grid py-1 pl-2 text-right font-semibold">solved</th>
-                  <th className="py-1 text-right font-semibold">cut off</th>
-                  <th className="border-l border-grid py-1 pl-2 text-right font-semibold">solved</th>
-                  <th className="py-1 text-right font-semibold">tokens</th>
-                </tr>
-              </thead>
-              <tbody>
-                {F2.split.map((sp) => {
-                  const free = F2.hot.points.find((p) => p.n === sp.n);
-                  return (
-                    <tr key={sp.n} className="border-b border-grid/50">
-                      <td className="py-1.5 font-mono tabular-nums text-ink">{sp.n}</td>
-                      <td className="border-l border-grid py-1.5 pl-2 text-right font-mono tabular-nums text-wrong">
-                        {pct(sp.accuracy)}
-                      </td>
-                      <td className="py-1.5 text-right font-mono tabular-nums text-ink-muted">
-                        {pct(sp.truncated_rate)}
-                      </td>
-                      <td className="border-l border-grid py-1.5 pl-2 text-right font-mono tabular-nums text-compute">
-                        {free ? pct(free.accuracy) : "n/a"}
-                      </td>
-                      <td className="py-1.5 text-right font-mono tabular-nums text-ink-muted">
-                        {free ? tokens(free.mean_tokens) : "n/a"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <ForkChart />
             <p className="text-xs text-ink-muted">
-              Read the first row as the control: at one chain the cap almost never binds, only{" "}
-              {pct(F2.split[0].truncated_rate)} are cut off, and the two runs are the same run,
-              which is why they report the same {pct(F2.split[0].accuracy)}. Everything that
-              follows is the cap starting to bite.
+              The gauge under each count is the share of that run&apos;s chains that hit the cap and
+              were made to commit mid-thought, which is a property of the run rather than a score.
             </p>
             <p className="text-ink">
-              Dividing a budget adds chains <em>and</em> shortens them, and here the second swamps
-              the first: at sixteen chains every one is cut off mid-thought, so the vote is pooling
-              fragments.{" "}
-              <strong className="text-ink">Splitting is not what fails; capping is.</strong> Read
-              the last two columns instead. Let the chains finish and the vote works, at{" "}
-              {tokens(pileTokens)} tokens against {tokens(oneChainTokens)} for one, and there is no
-              cheaper way to buy it: page 6&apos;s chain stops on its own and will not take more.
+              Dividing a budget does two things at once: it adds chains, and it shortens every one
+              of them. The shortening is the one that lands. At {F2.split[F2.split.length - 1].n}{" "}
+              chains the budget leaves each about {tokens(Math.round(M.split.budget_total / F2.split[F2.split.length - 1].n))}{" "}
+              tokens, every chain hits that ceiling before it has finished, and the vote is counting
+              fragments of arguments rather than arguments.{" "}
+              <strong className="text-ink">Splitting is not what fails; capping is.</strong> Let the
+              same chains run to their own end and the vote works, at {tokens(pileTokens)} tokens
+              against {tokens(oneChainTokens)} for one, and there is no cheaper way to buy it:
+              page 6&apos;s chain stops on its own and even when given more tokens, will refuse to
+              continue.
             </p>
           </section>
         </section>
-        <Note kicker="Read the cut-off column">
-          <p>A capped row and a finished row at the same N are not the same experiment.</p>
+        <Note kicker="Read it as">
+          <p>
+            Two lines, not two experiments. At every point on the x axis the model gets the same
+            number of chains, and the only thing that changes between the lines is whether it is
+            allowed to finish them.
+          </p>
         </Note>
 
-        {/* Step 5 */}
-        <section className="flex min-w-0 flex-col gap-3">
+        {/* Step 5. Page 12's closing shape: prose at full width in the reading
+            column, no card and no display number, and the limits brought in from
+            the margin. They were three caveats in 9px grey beside the one claim
+            they qualify, which is the wrong place for the honest half of a page. */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">5. What the vote threw away</h2>
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-lg text-ink">
-              On <strong className="font-mono text-2xl text-wrong">{pct(H.thrown_away)}</strong> of
-              these problems the model produced the right answer and the vote discarded it.
+          <p className="text-ink">
+            <strong className="text-ink">The pile knows more than the count.</strong> The right
+            answer was somewhere in the {H.n_chains} chains on{" "}
+            <strong className="text-ink">{pct(H.coverage)}</strong> of these problems. The vote
+            returned it on <strong className="text-ink">{pct(H.plurality_accuracy)}</strong>. On the{" "}
+            <strong className="text-ink">{pct(H.thrown_away)}</strong> in between, the model
+            produced the right answer and the vote discarded it, because counting can only ever
+            return the answer that comes up most, and on {pct(H.tie_rate)} of problems it could not
+            even break a tie.
+          </p>
+
+          <div className="flex flex-col gap-2 text-ink">
+            <p>
+              <strong className="text-ink">Three things this measurement does not say:</strong>
             </p>
-            <p className="text-sm text-ink-muted">
-              It was in the pile on {pct(H.coverage)} of problems; the vote returned it on{" "}
-              {pct(H.plurality_accuracy)}. Counting can only return the answer that comes up most,
-              and on {pct(H.tie_rate)} it could not even break a tie.
-            </p>
-            {/* Not "keeps the same candidates": page 8 generated its own pool,
-                and its own derived.json says so in a field called
-                same_candidates. What it did do is re-run this protocol and land
-                here, which is the claim that survives the artifact. */}
-            <p className="border-l-4 border-compute pl-3 text-base text-ink">
-              <strong className="text-ink">The pile knows more than the count.</strong>{" "}
-              <em>
-                Page 8 re-runs this protocol, lands where this page landed, then changes one rule
-                for picking one of the {H.n_chains}: stop counting, start judging.
-              </em>
-            </p>
+            <ul className="list-disc space-y-1.5 pl-5 marker:text-ink-muted">
+              <li>
+                <strong className="text-ink">A tie is a loss.</strong> A tie returns no answer and
+                grades wrong, so some of the gap above is the rule refusing to choose rather than
+                the model failing. Two chains count as agreeing when the grader says their answers
+                are equivalent, so <span className="font-code">1/2</span> and{" "}
+                <span className="font-code">0.5</span> are one bucket.
+              </li>
+              <li>
+                <strong className="text-ink">The temperature is fitted, not held out.</strong> T ={" "}
+                {F2.hot.temperature} was picked by which value voted best on{" "}
+                {F2.diversity[0].n_items} items, so the vote is being scored at a setting chosen to
+                flatter it.
+              </li>
+              <li>
+                <strong className="text-ink">Only the answer is graded.</strong> Every number on
+                this page measures whether a chain landed on the right answer, never whether the
+                reasoning that got it there was sound. A chain can agree with the majority for bad
+                reasons and the vote will count it.
+              </li>
+            </ul>
           </div>
+
+          {/* Not "keeps the same candidates": page 8 generated its own pool, and
+              its own derived.json says so in a field called same_candidates. What
+              it did do is re-run this protocol and land here, which is the claim
+              that survives the artifact. */}
+          <p className="text-ink">
+            None of that rescues the counting rule, which is the weakest part of the method: it
+            picks by popularity, and the popular answer is not always the right one when the right
+            one is already sitting in the box.{" "}
+            <em>
+              Page 8 re-runs this protocol, lands where this page landed, then changes one rule for
+              picking one of the {H.n_chains}: stop counting, start judging.
+            </em>
+          </p>
         </section>
-        <Note kicker="Limits">
-          <p>
-            A tie returns no answer and grades wrong. Two chains count as agreeing when the grader
-            says their answers are equivalent, so <span className="font-code">1/2</span> and{" "}
-            <span className="font-code">0.5</span> are one bucket.
-          </p>
-          <p>
-            Temperature was chosen by which value voted best on {F2.diversity[0].n_items} items, so
-            it is fitted on a subset rather than held out.
-          </p>
-          <p>
-            The page measures whether a chain landed on the right answer, never whether its
-            reasoning was sound.
-          </p>
-        </Note>
       </div>
 
       <PageNav n={PAGE_N} />

@@ -27,7 +27,7 @@ describe("Page 7 (frequency voting) component", () => {
   it("keeps the unresolved sampled-chain contrast in the footnote, not the headline", () => {
     render(<Page7 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/against one .*sampled.* chain/i);
+    expect(body).toMatch(/one .*sampled.* chain instead of a greedy one/i);
     expect(body).toMatch(/p = 0\.388/);
   });
 
@@ -56,7 +56,7 @@ describe("Page 7 (frequency voting) component", () => {
     // to be told which line is what the model produced and which is what the vote kept.
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/at least one\s*chain is right/i);
-    expect(body).toMatch(/the vote\s*returns it/i);
+    expect(body).toMatch(/the vote returns\s*the answer/i);
     expect(body).toMatch(/one greedy\s*chain/i);
     // and the band between the last two must be named, because it is page 8
     expect(body).toMatch(/generated, then thrown away/i);
@@ -67,8 +67,8 @@ describe("Page 7 (frequency voting) component", () => {
   // something else, because the chart was renamed and the intro was not.
   it("names the three lines the same way in the intro and on the chart", () => {
     render(<Page7 />);
-    const intro = screen.getByText(/Three lines below/).closest("p")!;
-    expect(intro.textContent).toMatch(/The vote returns it/);
+    const intro = screen.getByText(/is what counting actually gets you/).closest("p")!;
+    expect(intro.textContent).toMatch(/The vote returns the answer/);
     expect(intro.textContent).toMatch(/At least one chain is right/);
     expect(intro.textContent).toMatch(/One greedy chain/);
     expect(intro.textContent).not.toMatch(/In the pile/);
@@ -79,8 +79,12 @@ describe("Page 7 (frequency voting) component", () => {
   // which docs/page_7_refactor.md:225-234 forbids at this altitude.
   it("ties the word greedy to the definition it already gives", () => {
     render(<Page7 />);
-    const intro = screen.getByText(/Three lines below/).closest("p")!;
-    expect(intro.textContent).toMatch(/sampling is off, which is greedy decoding/);
+    const intro = screen.getByText(/is what counting actually gets you/).closest("p")!;
+    // Greedy is the secondary name now: the reader is told what the setting IS before
+    // being told what it is called.
+    expect(intro.textContent).toMatch(
+      /sampling is off, which is pure chain-of-thought, also known as greedy decoding/,
+    );
     expect(document.body.textContent).not.toMatch(/likeliest|probability distribution/i);
   });
 
@@ -114,7 +118,7 @@ describe("Page 7 (frequency voting) component", () => {
   it("does not let the headline box own sampling's contribution", () => {
     render(<Page7 />);
     const callout = screen.getByText(/decoded greedily/i).closest("div")!;
-    expect(callout.textContent).toMatch(/Sampling alone is worth part of this/);
+    expect(callout.textContent).toMatch(/sampling rather than counting, and the margin says how much/);
   });
 
   it("explains the flat temperature-zero line rather than hiding it", () => {

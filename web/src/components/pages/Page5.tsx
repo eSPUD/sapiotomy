@@ -901,9 +901,11 @@ export function Page5() {
                   under an unpressed switch spends the figure before it is touched. */}
               {gagged ? (
                 <p className="text-ink">
-                  Forbidding the working costs {F2.suppression.deltaPts} points ·{" "}
-                  {pLabel(F2.suppression.p)}, exact McNemar over the {T.afterOnly + T.beforeOnly}{" "}
-                  problems where the two conditions disagree
+                  Forbidding the working costs {F2.suppression.deltaPts} points. The two conditions
+                  score the same on most of these problems, so the test looks only at the{" "}
+                  {T.afterOnly + T.beforeOnly} where they differ: reasoning wins {T.afterOnly} of
+                  those and loses {T.beforeOnly}. A split that lopsided is unlikely to be luck (
+                  {pLabel(F2.suppression.p)}, exact McNemar).
                 </p>
               ) : null}
             </div>

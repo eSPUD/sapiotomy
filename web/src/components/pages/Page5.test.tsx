@@ -223,8 +223,13 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
     );
     expect(body()).toContain("exact McNemar");
     expect(body()).toContain("p < 0.0001");
+    // The discordant count is the whole basis of the test, so it stays on the page.
+    // The name is now a citation and the sentence beside it says what was compared.
     expect(body()).toContain(
-      `${SUPPRESSION_TABLE.afterOnly + SUPPRESSION_TABLE.beforeOnly} problems where the two conditions disagree`,
+      `looks only at the ${SUPPRESSION_TABLE.afterOnly + SUPPRESSION_TABLE.beforeOnly} where they differ`,
+    );
+    expect(body()).toContain(
+      `reasoning wins ${SUPPRESSION_TABLE.afterOnly} of those and loses ${SUPPRESSION_TABLE.beforeOnly}`,
     );
   });
 
