@@ -238,11 +238,22 @@ function TokenMeter({ written, total, blurtTokens }: { written: number; total: n
 
 /**
  * The gag is the baseline and the chain is the change, so `afterOnly` is a
- * problem solved only when the model reasons: green while the switch is
- * off, red once the gag takes it away.
+ * problem solved only when the model reasons: blue while the switch is
+ * off, magenta once the gag takes it away.
+ *
+ * Blue, not the deck's `correct` green, because this figure asks the reader to
+ * tell two fills apart and green against magenta is the pair red-green colour
+ * blindness collapses: simulated, the green and the magenta land 9.9 apart in
+ * Lab under deuteranopia, which is no distance at all.
+ *
+ * The BRIGHT step, not `compute`, because the dark blue only moved the failure
+ * to protanopia (13.0) — both fills are dark, so once hue collapses there is
+ * nothing left. `compute-bright` clears every axis (protan 33.2, deutan 42.8)
+ * and carries a 2.14:1 luminance gap, so the squares also survive greyscale.
+ * It is a fill and never text here; on a pale tint it would miss AA.
  */
 const cellTone = (cell: PairedClass, gagged: boolean): string => {
-  if (solvedIn(cell, gagged ? "before" : "after")) return "border-correct bg-correct";
+  if (solvedIn(cell, gagged ? "before" : "after")) return "border-compute-bright bg-compute-bright";
   if (gagged && cell === "afterOnly") return "border-wrong bg-wrong";
   return "border-grid bg-surface-raised";
 };
@@ -856,7 +867,7 @@ export function Page5() {
                 </div>
                 <ul className="flex flex-col gap-1 text-xs text-ink-muted">
                   <li className="flex items-center gap-2">
-                    <span className="h-3 w-3 shrink-0 rounded-sm border border-correct bg-correct" />
+                    <span className="h-3 w-3 shrink-0 rounded-sm border border-compute-bright bg-compute-bright" />
                     solved here
                   </li>
                   {/* The discordant counts ARE the reveal, so the legend keeps them
@@ -878,10 +889,10 @@ export function Page5() {
 
             <div
               className={`rounded-lg border-l-4 px-3 py-2 text-sm ${
-                gagged ? "border-wrong bg-wrong/15" : "border-correct bg-correct/15"
+                gagged ? "border-wrong bg-wrong/15" : "border-compute bg-compute/15"
               }`}
             >
-              <p className={`font-semibold ${gagged ? "text-wrong" : "text-correct"}`}>
+              <p className={`font-semibold ${gagged ? "text-wrong" : "text-compute"}`}>
                 {gagged
                   ? `✗ ${T.afterOnly} problems it had are gone. ${T.beforeOnly} it did not have arrive.`
                   : `✓ press "non-reasoning" and watch what leaves.`}

@@ -648,18 +648,19 @@ export function Page7() {
               these problems the model produced the right answer and the vote discarded it.
             </p>
             <p className="text-sm text-ink-muted">
-              The right answer was somewhere in the pile on {pct(H.coverage)} of problems. The vote
-              returned it on {pct(H.plurality_accuracy)}. Counting can only ever return the answer
-              that comes up most, and the right answer is sometimes rare: on{" "}
-              {pct(H.tie_rate)} of problems the vote could not even break a tie.{" "}
-              {/* Not "keeps the same candidates": page 8 generated its own pool,
-                  and its own derived.json says so in a field called
-                  same_candidates. What it did do is re-run this protocol and land
-                  here, which is the claim that survives the artifact. */}
+              It was in the pile on {pct(H.coverage)} of problems; the vote returned it on{" "}
+              {pct(H.plurality_accuracy)}. Counting can only return the answer that comes up most,
+              and on {pct(H.tie_rate)} it could not even break a tie.
+            </p>
+            {/* Not "keeps the same candidates": page 8 generated its own pool,
+                and its own derived.json says so in a field called
+                same_candidates. What it did do is re-run this protocol and land
+                here, which is the claim that survives the artifact. */}
+            <p className="border-l-4 border-compute pl-3 text-base text-ink">
+              <strong className="text-ink">The pile knows more than the count.</strong>{" "}
               <em>
-                Page 8 re-runs this protocol on the same problems, checks it lands where this page
-                landed, and then changes only the rule for picking one of the {H.n_chains}: stop
-                counting, start judging.
+                Page 8 re-runs this protocol, lands where this page landed, then changes one rule
+                for picking one of the {H.n_chains}: stop counting, start judging.
               </em>
             </p>
           </div>
