@@ -30,9 +30,19 @@
  * sampled baseline in the same breath.
  *
  * Layout: pages 5 and 6's shell. One reading column of numbered steps, each
- * beside its own margin note, and provenance as a plate rather than a row of
- * pills. Every step that carries a figure opens on a sentence saying what the
- * figure is a picture OF.
+ * beside its own margin note. Every step that carries a figure opens on a
+ * sentence saying what the figure is a picture OF.
+ *
+ * THERE IS NO PROVENANCE PLATE, and one must not come back. The page used to
+ * open on one above step 1 — "every figure below is one measurement of ours",
+ * then a mono line of precision, top-p, run id and date. It read as a specimen
+ * label from a lab the reader has not visited, and it front-loaded the apparatus
+ * before the idea. The two facts a reader actually needs, WHICH MODEL and WHICH
+ * PROBLEMS, now sit on the figures that are pictures of them: figure 1's
+ * specimen card carries the benchmark and the specimen's level, step 3's heading
+ * carries the item count, the benchmark and the model, and step 2's intro names
+ * the model in prose. Everything else the run recorded is in the download on the
+ * top line, which is the honest place for it.
  *
  *   Step 1 — no figure. The idea, in slips of paper: you do not know whose taste
  *   to trust, so you do not pick a taster. You collect everyone's favourite,
@@ -104,7 +114,15 @@ const M = PAGE7.manifest;
 
 const NOTEBOOK_ZIP = "/notebooks/page-07-frequency-voting.zip";
 const NOTEBOOK_SIZE = "3.1 MB";
-const RUN_DATE = M.timestamp_utc.slice(0, 10);
+
+/* The instrument used to sit in a provenance plate above step 1, which read as a
+   specimen label from a lab the reader has not visited. What a reader needs is
+   which model and which problems, and they need it beside the figure that is a
+   picture of them: figure 1's specimen card and figure 2's heading. The rest of
+   the apparatus — precision, top-p, run id, date, the item hash — is in the
+   download on the top line. */
+const BENCHMARK = "MATH-500";
+const LEVELS = "levels 4 and 5";
 
 /** Cited for the technique. Every number on this page is ours. */
 const REF = { wang: 1 } as const;
@@ -208,7 +226,7 @@ function PileChart() {
 
   return (
     <ChartFrame
-      title={`Share of 100 MATH-500 problems solved against the number of chains the vote sees. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. The vote over sixteen sampled chains solves ${pct(last.accuracy)}. At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.`}
+      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of chains the vote sees. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. The vote over sixteen sampled chains solves ${pct(last.accuracy)}. At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.`}
       width={W}
       height={HGT}
       margin={MARGIN}
@@ -320,24 +338,6 @@ export function Page7() {
         up <strong className="text-ink">most often</strong>.
       </p>
 
-      {/* Provenance as a specimen label rather than a row of pills: hairline
-          rules and the instrument on one mono line. The download it used to
-          carry sits on the top line beside the act kicker; the reference now
-          sits in a right-hand References sidenote beside step 1. */}
-      <div className="flex flex-col gap-2 border-y border-grid py-4">
-        <p className="text-sm text-ink">
-          Every figure below is one measurement of ours, on the same items pages 5 and 6 use. The
-          notebook that made them opens in a replay mode that redraws every figure here from those
-          chains, on no GPU.
-        </p>
-        <p className="font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
-          {PAGE7.primary.label} · {PAGE7.primary.precision} · sampled at T ={" "}
-          {F2.hot.temperature}, top-p{" "}
-          {M.decoding.top_p} · MATH-500 levels 4 and 5, n = {M.items.n} paired items ·{" "}
-          {F1.n_chains} chains each · run {M.run_id} · {RUN_DATE}
-        </p>
-      </div>
-
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -382,8 +382,8 @@ export function Page7() {
             {/* Temperature glossed operationally, which is all this page is allowed to
                 say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens and
                 probability distributions, off this page and on page 10. */}
-            Here is one box. The problem below went to Qwen2.5-3B-Instruct {F1.n_chains} times with
-            sampling turned on, which is what <strong className="text-ink">temperature</strong> does:
+            Here is one box. The problem below went to {PAGE7.primary.label} {F1.n_chains} times
+            with sampling turned on, which is what <strong className="text-ink">temperature</strong> does:
             at zero every chain comes back identical, and turning it up makes them disagree more.
             Every answer it came back with is tallied. Click a row to read the chains that landed
             there.
@@ -394,8 +394,8 @@ export function Page7() {
           >
             <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(s.question)}</p>
             <p className="font-mono text-xs text-ink-muted">
-              the answer is {tidyMath(s.ground_truth)} · picked from {F1.n_candidates} problems that
-              qualified
+              {BENCHMARK}, level {s.level} · the answer is {tidyMath(s.ground_truth)} · picked from{" "}
+              {F1.n_candidates} problems that qualified
             </p>
 
             {/* The invitation is the last line of the step's intro, directly above this
@@ -452,7 +452,8 @@ export function Page7() {
           <h2 className="text-xl font-semibold text-ink">
             3. What the vote buys
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              the same {M.items.n} problems · one pile, subsampled
+              the same {M.items.n} {BENCHMARK} problems, {LEVELS} · {PAGE7.primary.label} · one
+              pile, subsampled
             </span>
           </h2>
           <p className="text-ink-muted">

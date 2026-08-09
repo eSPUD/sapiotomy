@@ -14,8 +14,13 @@ export function ProgressRail() {
     >
       <ScrollProgress />
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-5">
-        <Link href="/" className="text-sm font-semibold text-ink hover:text-compute">
-          The Story of Inference-Time Scaling
+        <Link href="/" className="group flex flex-col leading-tight">
+          <span className="text-sm font-semibold text-ink group-hover:text-compute">
+            The Story of Inference-Time Scaling
+          </span>
+          <span className="text-xs italic text-ink-muted">
+            and the training-time loop behind it
+          </span>
         </Link>
         <div className="flex items-center gap-3">
           <span className="hidden text-xs uppercase tracking-[0.2em] text-ink-muted sm:inline">

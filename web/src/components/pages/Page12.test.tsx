@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Page12 } from "./Page12";
 
 describe("Page 12 (STaR and self-improvement)", () => {
@@ -19,57 +19,31 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getAllByText("73.0%").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("draws the run's history as curves in the deck's chart grammar", () => {
+  it("draws the loop as a diagram, with no simulated accuracy chart", () => {
     render(<Page12 />);
-    // The centerpiece: accuracy and training-set share, one point per press.
+    // Section 1 is the animated loop graph now.
+    expect(screen.getByRole("img", { name: /STaR's loop/ })).toBeInTheDocument();
+    // The seeded accuracy/training-set chart and its Test panel are gone.
+    expect(screen.queryByText(/Test · how good did it get/)).not.toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: /Held-out accuracy and training-set share across 0 iterations/ }),
-    ).toBeInTheDocument();
-    // The big number stays as per-press feedback, in a labelled Test panel.
-    expect(screen.getByText(/Test · how good did it get\?/)).toBeInTheDocument();
-    // The old pool strip is gone: no frontier marker, no square legend.
-    expect(screen.queryByText(/solve frontier/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/not in the set/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/new this pass/)).not.toBeInTheDocument();
+      screen.queryByRole("img", { name: /Held-out accuracy and training-set share/ }),
+    ).not.toBeInTheDocument();
   });
 
-  it("appends a point per press, and splits the curves when the filter goes off", () => {
+  it("has no controls: the correctness check is always on", () => {
     render(<Page12 />);
-    const run = () => fireEvent.click(screen.getByRole("button", { name: /Run iteration/ }));
-    run();
-    run();
-    expect(
-      screen.getByRole("img", { name: /across 2 iterations/ }),
-    ).toBeInTheDocument();
-    // No filter: the set fills with mistakes and the chart grows a third curve.
-    fireEvent.click(screen.getByRole("switch", { name: /Correctness filter/ }));
-    run();
-    expect(screen.getByText("wrong, but kept")).toBeInTheDocument();
-    expect(
-      screen.getByRole("img", { name: /wrong rationales kept because the filter is off/ }),
-    ).toBeInTheDocument();
+    // No step-through button and no answer-key toggle — the check is always on.
+    expect(screen.queryByRole("button", { name: /Run iteration/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(screen.queryByText(/No answer key: every rationale trains/)).not.toBeInTheDocument();
   });
 
-  it("keeps the state matrix in the margin, the mechanism in the caption, no notation", () => {
+  it("rests the loop on the answer key, with no math notation", () => {
     render(<Page12 />);
-    // The sidenote matrix maps each toggle state to what the reader watches.
-    expect(screen.getByText("filter on · rationalization off")).toBeInTheDocument();
-    expect(screen.getByText(/Full STaR/)).toBeInTheDocument();
-    expect(screen.getByText(/No reward, no loop/)).toBeInTheDocument();
-    // The ratchet's mechanism lives in the caption now, not a frontier marker.
-    expect(screen.getByText(/a training set it could not/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/external signal deciding what the model may study/),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/Dₙ/)).not.toBeInTheDocument();
-  });
-
-  it("carries the GSM8K caveat on the rationalization claim", () => {
-    render(<Page12 />);
-    expect(screen.getByText(/did not substantially improve GSM8K/)).toBeInTheDocument();
-  });
-
-  it("states the calibration anchors the simulation reproduces", () => {
-    render(<Page12 />);
-    expect(screen.getByText(/GPT-J few-shot CoT: 36\.6%/)).toBeInTheDocument();
-    expect(screen.getByText(/STaR's 68\.8%/)).toBeInTheDocument();
   });
 
   it("writes the loop down, with the rationalization branch and fine-tune-from-base", () => {
@@ -85,7 +59,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
 
   it("orders the page: listing after the interactive, before the results, closers last", () => {
     render(<Page12 />);
-    const interactive = screen.getByText(/Run iteration 1/);
+    const interactive = screen.getByText(/Everything rests on the answer key/);
     const listing = screen.getByText(/hint = y/);
     const results = screen.getByText("LaMDA 137B, few-shot CoT");
     const counterweight = screen.getByText(/Trained on reasoning, graded on answers/);
@@ -100,12 +74,17 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(follows(counterweight, handoff)).toBe(true);
   });
 
-  it("explains the algorithm in plain language below the listing", () => {
+  it("explains the algorithm in plain language under the section header, before the listing", () => {
     render(<Page12 />);
     const explained = screen.getByText(/The algorithm, explained/);
+    const header = screen.getByRole("heading", { name: /1\. Run the loop/ });
     const listing = screen.getByText(/hint = y/);
+    // The explanation now leads section 1 (after the header, before the listing).
     expect(
-      listing.compareDocumentPosition(explained) & Node.DOCUMENT_POSITION_FOLLOWING,
+      header.compareDocumentPosition(explained) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      explained.compareDocumentPosition(listing) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
@@ -162,23 +141,19 @@ describe("Page 12 (STaR and self-improvement)", () => {
     }
     // RFT and GVM are preprints and must carry the flag; ExIt and STaR are not.
     expect(screen.getAllByText("preprint").length).toBe(2);
-    // Each References note sits beside its ref's first use: the STaR entry
-    // precedes the listing (it serves section 1), ExIt's precedes the results.
-    const starRef = document.querySelector('a[href="https://arxiv.org/abs/2203.14465"]')!;
-    const listing = screen.getByText(/hint = y/);
-    const results = screen.getByText("LaMDA 137B, few-shot CoT");
-    expect(
-      starRef.compareDocumentPosition(listing) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    const exitRef = document.querySelector('a[href="https://arxiv.org/abs/1705.08439"]')!;
-    expect(
-      exitRef.compareDocumentPosition(results) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    // Section 1 and 2 are merged now: STaR, ExIt and RFT share one References
+    // note beside that section; GVM sits last, beside the closing blocks.
+    const gvmRef = document.querySelector('a[href="https://arxiv.org/abs/2505.02391"]')!;
+    for (const href of hrefs.slice(0, 3)) {
+      const ref = document.querySelector(`a[href="${href}"]`)!;
+      expect(ref.compareDocumentPosition(gvmRef) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
   });
 
   it("closes on the hand-off to page 13's frontier reasoners, in page 11's idiom", () => {
     render(<Page12 />);
-    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("p")!;
+    // The hand-off is a bulleted block now, so read its wrapping div.
+    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("div")!;
     // The lift-vs-slide bridge: page 11 said model size picks your curve; STaR
     // is the first knob that lifts it, which page 13's two-knob law completes.
     expect(handoff.textContent).toMatch(/lifts the curve without buying a single\s+parameter/i);
@@ -186,7 +161,8 @@ describe("Page 12 (STaR and self-improvement)", () => {
 
   it("closes on both ways to spend, then the frontier turning both", () => {
     render(<Page12 />);
-    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("p")!;
+    // The hand-off is a bulleted block now, so read its wrapping div.
+    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("div")!;
     // The hand-off sums the pair page 13's two compute axes pick up: Act 2's
     // answer-time toolbox (5-11, priced by page 11) and this page's
     // train-time loop.
@@ -205,10 +181,12 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
   });
 
-  it("labels the footer provenance as Simulated and Cited", () => {
+  it("has no provenance footnote: the section-2 results are cited inline", () => {
     render(<Page12 />);
-    expect(screen.getByText("Simulated")).toBeInTheDocument();
-    expect(screen.getByText("Cited")).toBeInTheDocument();
-    expect(screen.getByText(/Table 1, CommonsenseQA dev/)).toBeInTheDocument();
+    expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cited")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Table 1, CommonsenseQA dev/)).not.toBeInTheDocument();
+    // The citation still lives in section 2's heading and figcaption.
+    expect(screen.getByRole("heading", { name: /What the loop bought/ })).toBeInTheDocument();
   });
 });

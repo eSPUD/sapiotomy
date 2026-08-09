@@ -4,7 +4,7 @@ import { Reveal } from "@/components/Reveal";
 import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
 
 const CITATION = `@article{bangalorelakshman2026its,
-  title  = {The Story of Inference-Time Scaling},
+  title  = {The Story of Inference-Time Scaling: The Training-Time Loop Behind It},
   author = {Bangalore Lakshman, Shashank and Eiers, Scott Lawrence},
   journal = {VISxAI Workshop at IEEE VIS},
   year   = {2026},
@@ -19,10 +19,15 @@ export default function Home() {
       <section>
         <Reveal>
           <div className="flex max-w-3xl flex-col gap-5 pt-12 pb-6">
-            <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
-              The Story of{" "}
-              <span className="block whitespace-nowrap text-compute">Inference-Time Scaling</span>
-            </h1>
+            <div>
+              <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
+                The Story of{" "}
+                <span className="block whitespace-nowrap text-compute">Inference-Time Scaling</span>
+              </h1>
+              <p className="mt-2 text-2xl italic text-ink-muted sm:text-3xl">
+                and the training-time loop behind it
+              </p>
+            </div>
 
             <p className="max-w-xl text-lg text-ink-muted">
               A language model can get dramatically better answers by{" "}
@@ -103,9 +108,6 @@ export default function Home() {
                 </span>
                 <span>Graduate Student, M.S. in Artificial Intelligence</span>
                 <span>Department of Computer Science, The University of Texas at Austin</span>
-                <a href="mailto:shashankbl@utexas.edu" className="w-fit text-compute underline">
-                  shashankbl@utexas.edu
-                </a>
               </li>
               <li className="flex flex-col gap-0.5">
                 <span className="font-semibold text-ink">

@@ -17,7 +17,7 @@ const serif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "The Story of Inference-Time Scaling",
+  title: "The Story of Inference-Time Scaling — and the training-time loop behind it",
   description:
     "An interactive explorable explanation: how a language model gets better answers by thinking longer at inference time, and where that stops working.",
 };

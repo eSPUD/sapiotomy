@@ -170,15 +170,28 @@ describe("Page 7 (frequency voting) component", () => {
     expect(screen.getByText(/count of answers, not an\s+accuracy/i)).toBeInTheDocument();
   });
 
-  // Provenance is a plate, not a row of pills: the instrument on one mono line
-  // and the download as the only lit ink. The grading provenance went back to
-  // the notebook with the rest of the retired footer.
-  it("carries the provenance and the download", () => {
+  // There is no provenance plate. The instrument used to open the page as a mono
+  // specimen label above step 1, apparatus before idea. The download carries the
+  // run now, and the two facts a reader needs from it are on the figures.
+  it("names the model and the benchmark on the figures that use them", () => {
     render(<Page7 />);
     expect(screen.getByRole("link", { name: /Download the notebook/i })).toBeInTheDocument();
-    expect(document.body.textContent).toContain(PAGE7.manifest.run_id);
-    expect(document.body.textContent).toContain("one measurement of ours");
-    expect(document.body.textContent).not.toContain("reasoning-from-scratch");
+    const text = document.body.textContent ?? "";
+    // figure 1's specimen card and figure 2's heading, both visible copy.
+    expect(text).toContain(PAGE7.primary.label);
+    expect(text).toContain("MATH-500");
+    expect(text).toContain("levels 4 and 5");
+    expect(text).not.toContain("reasoning-from-scratch");
+  });
+
+  it("keeps the retired provenance plate off the page", () => {
+    render(<Page7 />);
+    const text = document.body.textContent ?? "";
+    expect(text).not.toContain("one measurement of ours");
+    expect(text).not.toContain(PAGE7.manifest.run_id);
+    // The apparatus the plate's mono line carried belongs to the notebook.
+    expect(text).not.toMatch(/top-p/i);
+    expect(text).not.toContain(PAGE7.primary.precision ?? "bf16");
   });
 
   it("cites the technique without attaching a number to it", () => {
