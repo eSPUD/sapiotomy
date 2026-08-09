@@ -441,27 +441,35 @@ export function Page12() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Run the loop</h2>
 
+          <p className="text-ink">
+            <strong className="text-ink">The algorithm, explained.</strong> Start with a
+            pretrained model and a stack of problems whose correct answers you know. There are no
+            worked solutions, only the answers. For each problem, the model writes out its
+            reasoning and ends with an answer. If that answer matches the key, the reasoning is
+            kept. If it misses, the model gets one more try with the correct answer shown as a
+            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
+            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
+            everything kept, and the loop starts over with a slightly better model writing the
+            next round of reasoning.
+          </p>
+
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             {/* the loop itself, with the rationalization branch, signal animated to turn */}
             <StarLoop filter />
 
-            <p className="text-sm text-ink">
+            <p className="text-ink">
               This is <strong>STaR</strong>&apos;s loop.
               <Cite n={REF.star} /> It still needs a dataset — questions <em>with correct
               answers</em> — but nobody has to write the reasoning; the model authors that itself.
               Everything rests on the answer key: the correctness check that decides which rationales
-              are allowed to train.
-            </p>
-
-            <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              The correct answer is the external signal deciding what the model may study.
+              are allowed to train, and the external signal deciding what the model may study.
             </p>
           </div>
 
           {/* the loop written down — merged in from the former section 2 */}
           <h3 className="mt-2 text-lg font-semibold text-ink">Algorithm</h3>
 
-          <p className="text-sm text-ink">The same loop from section 1, in ten lines.</p>
+          <p className="text-ink">The same loop from section 1, in ten lines.</p>
 
           <figure
             className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
@@ -482,18 +490,6 @@ export function Page12() {
               <Cite n={REF.rft} />
             </figcaption>
           </figure>
-
-          <p className="rounded border-l-4 border-grid bg-surface-raised p-3 text-sm text-ink">
-            <strong className="text-ink">The algorithm, explained.</strong> Start with a
-            pretrained model and a stack of problems whose correct answers you know. There are no
-            worked solutions, only the answers. For each problem, the model writes out its
-            reasoning and ends with an answer. If that answer matches the key, the reasoning is
-            kept. If it misses, the model gets one more try with the correct answer shown as a
-            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
-            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
-            everything kept, and the loop starts over with a slightly better model writing the
-            next round of reasoning.
-          </p>
         </section>
 
         {/* Merged section 1's margin: every reference it uses. */}
@@ -562,28 +558,26 @@ export function Page12() {
         {/* The two closing blocks — kept at the page bottom on purpose, reading
             over both the listing and the results above them. */}
         <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <p className="rounded border-l-4 border-wrong bg-surface p-4 text-base text-ink">
+          <p className="text-ink">
             <strong className="text-ink">Trained on reasoning, graded on answers.</strong> The
-            rationale is what enters the weights; the answer key is all that decides whether it
-            gets there. A flawed argument that lands correctly isn&apos;t merely kept — it&apos;s
-            imitated.
-            <Cite n={REF.star} /> Not a hypothetical: models often write a wrong reasoning path
-            and still land on the right answer — hint or no hint.
-            <Cite n={REF.gvm} /> Page 9&apos;s outcome-versus-process trade, now deciding what
-            the model becomes.
+            rationale enters the weights, but only the answer key decides whether it gets there, so
+            a flawed argument that lands correctly isn&apos;t just kept, it&apos;s imitated.
+            <Cite n={REF.star} /> That is not hypothetical: models often follow a wrong reasoning
+            path to the right answer.
+            <Cite n={REF.gvm} /> Page 9&apos;s outcome-versus-process trade, now deciding what the
+            model becomes.
           </p>
 
-          <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
+          <p className="text-ink">
             <strong className="text-ink">There are now two ways to buy reasoning.</strong> All of
-            Act 2 spends the compute after the question lands: show the road, cap the tokens,
-            sample and vote, score and re-rank, search the tree, and page 11 priced that whole
-            shelf against parameters. This page is the other way, and it spends long before the
-            question exists: in page 11&apos;s terms, the first knob that lifts the curve without
-            buying a single parameter. o1 and R1 keep this loop&apos;s shape and drop the disguise:
-            the filter becomes an explicit RL reward on checkable tasks, and the model&apos;s own
-            sampling becomes the training set. Next comes the frontier, where one lab turns both
-            kinds of spending at once and bills you for each.{" "}
-            <em>Page 13 picks it up from there.</em>
+            Act 2 spends the compute after the question lands — show the road, cap the tokens,
+            sample and vote, score and re-rank, search the tree — and page 11 priced that shelf
+            against parameters. This page is the other way: it spends long before the question
+            exists, the first knob that lifts the curve without buying a single parameter. o1 and R1
+            keep this loop&apos;s shape and drop the disguise, so the filter becomes an explicit RL
+            reward on checkable tasks and the model&apos;s own sampling becomes the training set.
+            Next comes the frontier, where one lab turns both kinds of spending at once and bills you
+            for each. <em>Page 13 picks it up from there.</em>
           </p>
         </div>
 

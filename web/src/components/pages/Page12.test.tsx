@@ -74,12 +74,17 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(follows(counterweight, handoff)).toBe(true);
   });
 
-  it("explains the algorithm in plain language below the listing", () => {
+  it("explains the algorithm in plain language under the section header, before the listing", () => {
     render(<Page12 />);
     const explained = screen.getByText(/The algorithm, explained/);
+    const header = screen.getByRole("heading", { name: /1\. Run the loop/ });
     const listing = screen.getByText(/hint = y/);
+    // The explanation now leads section 1 (after the header, before the listing).
     expect(
-      listing.compareDocumentPosition(explained) & Node.DOCUMENT_POSITION_FOLLOWING,
+      header.compareDocumentPosition(explained) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      explained.compareDocumentPosition(listing) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
