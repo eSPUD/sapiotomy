@@ -382,7 +382,7 @@ function CodeLine({
   note?: React.ReactNode;
 }) {
   return (
-    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:gap-x-4">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:min-h-[3rem] sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:items-start sm:content-start sm:gap-x-4">
       <span className="w-5 select-none text-right font-code text-xs tabular-nums text-ink-muted" aria-hidden="true">
         {n}
       </span>
@@ -461,10 +461,7 @@ export function Page12() {
           {/* the loop written down — merged in from the former section 2 */}
           <h3 className="mt-2 text-lg font-semibold text-ink">Algorithm</h3>
 
-          <p className="text-sm text-ink">
-            The same loop from section 1, in ten lines. The annotations on lines 2 and 6 name what
-            it secretly is.
-          </p>
+          <p className="text-sm text-ink">The same loop from section 1, in ten lines.</p>
 
           <figure
             className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
@@ -476,10 +473,12 @@ export function Page12() {
               ))}
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-              STaR&apos;s Algorithm 1, compressed.
-              <Cite n={REF.star} /> Line 2&apos;s lineage is real, not an analogy: the same loop
-              ran as expert iteration in RL, five years before LLM reasoning.
-              <Cite n={REF.exit} /> Line 5&apos;s sample-k alternative is RFT.
+              The ten lines above are STaR&apos;s Algorithm 1, condensed.
+              <Cite n={REF.star} /> Line 2&apos;s loop is not just similar to reinforcement learning
+              &mdash; it is the same procedure, <em>expert iteration</em>, from five years before LLM
+              reasoning.
+              <Cite n={REF.exit} /> Line 5 makes one attempt per problem; the <em>RFT</em> variant
+              samples several instead and keeps the ones that reach the right answer.
               <Cite n={REF.rft} />
             </figcaption>
           </figure>
