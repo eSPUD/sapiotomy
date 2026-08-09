@@ -27,4 +27,9 @@ ipywidgets>=8.1                 # NOT optional in a notebook. Without it tqdm.au
                                 # over 100 items becomes ~15,000 retained output events and several
                                 # GB in the editor process, while the kernel sits idle at 2 GB
 
-# bitsandbytes>=0.43            # only for page 6's LOAD_IN_4BIT fallback on small VRAM
+bitsandbytes>=0.43              # NOT optional for page 9's FULL mode: PRM_QUANT="8bit" needs it,
+                                # because a 7.6B grader in bf16 is ~15 GB and does not fit beside
+                                # its activations on a 16 GB card. An environment without it lands
+                                # in the PRM loader's failure path, and page 9 raises there rather
+                                # than publishing a checker-only run under a FULL label. Also
+                                # page 6's LOAD_IN_4BIT fallback on small VRAM
