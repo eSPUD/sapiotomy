@@ -1343,6 +1343,14 @@ export function Page6() {
             step that carries the citation, so it belongs beside step 1's body,
             in the column's own unused height. */}
         <div className="flex flex-col gap-6 lg:pt-9">
+          {/* References first: the marker it answers sits in step 1's opening
+              paragraph, so the citation lands level with the sentence that
+              raised it rather than a screen below. */}
+          <Note kicker="References" tight>
+            <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
+              Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
+            </RefItem>
+          </Note>
           <Note kicker="Try it" tight>
             <p>Step to {F1.flipBudget} tokens and back.</p>
             <p>
@@ -1351,11 +1359,6 @@ export function Page6() {
               Held to the same {F1.inset.nominal_budget} by{" "}
               <span className="font-code">max_new_tokens</span>, it overran on none.
             </p>
-          </Note>
-          <Note kicker="References" tight>
-            <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
-              Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
-            </RefItem>
           </Note>
         </div>
 
