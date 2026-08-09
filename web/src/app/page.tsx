@@ -19,10 +19,15 @@ export default function Home() {
       <section>
         <Reveal>
           <div className="flex max-w-3xl flex-col gap-5 pt-12 pb-6">
-            <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
-              The Story of{" "}
-              <span className="block whitespace-nowrap text-compute">Inference-Time Scaling</span>
-            </h1>
+            <div>
+              <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
+                The Story of{" "}
+                <span className="block whitespace-nowrap text-compute">Inference-Time Scaling</span>
+              </h1>
+              <p className="mt-2 text-2xl italic text-ink-muted sm:text-3xl">
+                and the training-time loop behind it
+              </p>
+            </div>
 
             <p className="max-w-xl text-lg text-ink-muted">
               A language model can get dramatically better answers by{" "}
@@ -114,6 +119,9 @@ export default function Home() {
                 </span>
                 <span>Undergraduate Student, B.S. in Computer Science</span>
                 <span>Department of Computer Science, Western Governors University</span>
+                <a href="mailto:seiers1@wgu.edu" className="w-fit text-compute underline">
+                  seiers1@wgu.edu
+                </a>
               </li>
             </ol>
             <div className="flex flex-col gap-1 text-xs text-ink-muted">
