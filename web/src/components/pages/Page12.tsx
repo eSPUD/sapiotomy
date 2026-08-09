@@ -459,11 +459,11 @@ export function Page12() {
           </div>
 
           {/* the loop written down — merged in from the former section 2 */}
-          <h3 className="mt-2 text-lg font-semibold text-ink">The loop, written down</h3>
+          <h3 className="mt-2 text-lg font-semibold text-ink">Algorithm</h3>
 
           <p className="text-sm text-ink">
-            The same loop, compressed to ten lines. Read it once as an algorithm. Then read it
-            again — the annotations on lines 2 and 6 name what it secretly is.
+            The same loop from section 1, in ten lines. The annotations on lines 2 and 6 name what
+            it secretly is.
           </p>
 
           <figure
