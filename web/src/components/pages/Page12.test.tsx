@@ -179,10 +179,12 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
   });
 
-  it("labels the footer provenance as Cited only (the simulation is gone)", () => {
+  it("has no provenance footnote: the section-2 results are cited inline", () => {
     render(<Page12 />);
     expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
-    expect(screen.getByText("Cited")).toBeInTheDocument();
-    expect(screen.getByText(/Table 1, CommonsenseQA dev/)).toBeInTheDocument();
+    expect(screen.queryByText("Cited")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Table 1, CommonsenseQA dev/)).not.toBeInTheDocument();
+    // The citation still lives in section 2's heading and figcaption.
+    expect(screen.getByRole("heading", { name: /What the loop bought/ })).toBeInTheDocument();
   });
 });

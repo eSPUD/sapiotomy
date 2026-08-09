@@ -525,30 +525,36 @@ export function Page12() {
               aria-label={`CommonsenseQA accuracy: GPT-J few-shot direct ${p.fewShotDirect} percent, GPT-J few-shot chain of thought ${p.fewShotCot} percent, LaMDA 137B few-shot chain of thought ${p.fewShotCotLamda} percent, GPT-J fine-tuned on human answers ${p.gptjFinetuned} percent, STaR without rationalization ${p.starNoRationalization} percent, STaR ${p.star} percent, GPT-3 thirty times larger fine-tuned ${p.gpt3Finetuned} percent.`}
             >
               {/* label takes a third, the plot two thirds; rows are equidistant */}
-              <div className="flex flex-col gap-1.5">
-                {bars.map((b) => (
-                  <div key={b.label} className="flex min-h-[3.6rem] items-center gap-3 text-sm">
-                    <span className="w-1/3 shrink-0 text-ink-muted">
-                      {b.label}
-                      <span className="block text-xs text-ink-muted">{b.note}</span>
-                    </span>
-                    <div className="relative flex-1">
-                      {/* gridlines behind the bar, every 20% */}
-                      <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 right-0">
-                        {[0, 20, 40, 60, 80, 100].map((t) => (
-                          <div key={t} className="absolute inset-y-0 w-px bg-grid" style={{ left: `${t}%` }} />
-                        ))}
-                      </div>
-                      <div className="relative h-5 rounded bg-surface-raised">
-                        <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
-                      </div>
-                      {/* value, right-aligned on the plot */}
-                      <span className="absolute right-0 top-1/2 -translate-y-1/2 font-mono text-xs tabular-nums text-ink">
-                        {b.value.toFixed(1)}%
+              <div className="relative">
+                {/* one continuous x-grid: vertical lines every 20%, spanning all
+                    rows, over just the plot column (offset past the label third) */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-y-0 right-0"
+                  style={{ left: "calc(33.333% + 0.75rem)" }}
+                >
+                  {[0, 20, 40, 60, 80, 100].map((t) => (
+                    <div key={t} className="absolute inset-y-0 w-px bg-grid" style={{ left: `${t}%` }} />
+                  ))}
+                </div>
+                <div className="relative flex flex-col gap-1.5">
+                  {bars.map((b) => (
+                    <div key={b.label} className="flex min-h-[3.6rem] items-center gap-3 text-sm">
+                      <span className="w-1/3 shrink-0 text-ink-muted">
+                        {b.label}
+                        <span className="block text-xs text-ink-muted">{b.note}</span>
                       </span>
+                      <div className="relative flex-1">
+                        {/* the bar sits on the grid; no opaque track hides the lines */}
+                        <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
+                        {/* value, right-aligned on the plot */}
+                        <span className="absolute right-0 top-1/2 -translate-y-1/2 font-mono text-xs tabular-nums text-ink">
+                          {b.value.toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
               {/* x-axis ticks and label, aligned under the plot column */}
               <div aria-hidden="true" className="mt-1.5 flex gap-3 text-[10px] text-ink-muted">
@@ -615,13 +621,6 @@ export function Page12() {
             Minimization in Rejection Sampling and RL</em>.
           </RefItem>
         </Note>
-      </div>
-
-      <div className="flex flex-col gap-1 text-xs text-ink-muted">
-        <p>
-          <strong className="text-ink">Cited</strong> — the results in section 2 are from Zelikman
-          et al. 2022, Table 1, CommonsenseQA dev.
-        </p>
       </div>
 
       <PageNav n={PAGE_N} />
