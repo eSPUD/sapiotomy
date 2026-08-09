@@ -30,13 +30,21 @@ const OPENING = rowById(F1.openingId);
 const FLIP_INDEX = B.indexOf(OPENING.firstCorrectBudget!);
 
 const body = () => document.body.textContent ?? "";
-// One budget, two instruments. Figures 1 and 2 carry a stop per budget, since
-// there are five of them and a slide would be a fiction; figure 3's budget line
-// IS its control, and answers to the keyboard as a slider.
+
+// Three figures, three dials, and no two of them are the same object. Figure 1
+// keeps a stop per budget, since there are five of them and a slide would be a
+// fiction; figures 2 and 3 each carry a budget LINE on the chart, which is the
+// control, and each answers to the keyboard as a slider.
 const stops = () => screen.getAllByRole("radio", { name: /tokens$/ });
 const stopFor = (i: number) => screen.getAllByRole("radio", { name: `${B[i]} tokens` });
-const lineHandle = () => screen.getByRole("slider", { name: /token budget/i });
+const curveLine = () => screen.getByRole("slider", { name: /population curve/i });
+const stripLine = () => screen.getByRole("slider", { name: /chain lengths/i });
 const drag = (i: number) => fireEvent.click(stopFor(i)[0]);
+/** Walk a budget line to a stop the way a keyboard reader would. */
+const walk = (handle: HTMLElement, i: number) => {
+  fireEvent.keyDown(handle, { key: "Home" });
+  for (let k = 0; k < i; k++) fireEvent.keyDown(handle, { key: "ArrowRight" });
+};
 
 describe("Page 6, figure 1: cut it off, make it answer", () => {
   it("opens on the specimen at the smallest budget, cut and forced", () => {
@@ -112,7 +120,11 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
     expect(body()).toContain("max_new_tokens");
     expect(body()).toContain("start the answer line for it");
     expect(body()).toContain(`${PAGE6.manifest.forcing.answer_allowance} more tokens`);
-    expect(body()).toContain("The same dial drives the next two figures.");
+    // It used to promise that this dial drove the next two figures, which it
+    // did, off screen and without saying so. Each figure holds its own now and
+    // the sentence says that instead.
+    expect(body()).not.toContain("The same dial drives the next two figures.");
+    expect(body()).toContain("nothing you do here moves anything below");
   });
 
   // The listing face, as page 5 settled it: the question and the trace are what
@@ -143,7 +155,7 @@ describe("Page 6, figure 2: the same dial, every problem", () => {
   it("reads out the primary curve at whatever budget the dial holds", () => {
     render(<Page6 />);
     for (const [i, b] of B.entries()) {
-      drag(i);
+      walk(curveLine(), i);
       const p = F2.primary.points[i];
       expect(body()).toContain(`at ${b} tokens`);
       expect(body()).toContain(`${p.n_correct}`);
@@ -211,7 +223,7 @@ describe("Page 6, figure 3: it stops mattering before you run out of dial", () =
   it("reads the truncation series off the dial as it moves", () => {
     render(<Page6 />);
     for (const [i, b] of B.entries()) {
-      drag(i);
+      walk(stripLine(), i);
       const inside = F3.items.filter((d) => d.tokens_at_max <= b).length;
       expect(body()).toContain(`${inside} finished on their own`);
       expect(body()).toContain(`${F3.items.length - inside} still being cut`);
@@ -257,37 +269,75 @@ describe("Page 6, figure 4: refuse to let it stop", () => {
     expect(body()).toContain(pct(last.churn));
   });
 
-  // The step used to open on three nearly flat accuracy lines, which reads as
-  // "nothing happened" when the finding is that a third of the answers moved and none
-  // of it helped. It opens on page 5's paired grid now, with the lines as the inset.
-  it("leads with what moved, in page 5's paired-flip vocabulary", () => {
+  /**
+   * Two pictures used to carry this step and neither could say the finding.
+   * Page 5's paired grid put a hundred squares on screen whose ARRANGEMENT is
+   * not data, so nineteen lit ones had to be counted and trusted; the three
+   * accuracy lines were flat, which is a drawing of nothing happening. The
+   * finding is a swap, so the figure is a crossing, and the counts are the
+   * widths of the two bands that cross.
+   */
+  it("leads with the crossing rather than a field of squares", () => {
     render(<Page6 />);
     const w = WAIT_TABLE!;
     expect(w).not.toBeNull();
     const arm = screen.getByLabelText("The extension arm");
-    // The grid is the two discordant blocks, and both counts are in the legend.
-    expect(arm.textContent).toContain(`fixed by being made to keep going (${w.table.afterOnly})`);
-    expect(arm.textContent).toContain(`broken by it (${w.table.beforeOnly})`);
+    expect(arm.textContent).toContain(`rescued by being made to keep going (${w.table.afterOnly})`);
+    expect(arm.textContent).toContain(`wrecked by it (${w.table.beforeOnly})`);
+    // Four bands, four legend entries: a problem right at both ends keeps the
+    // tint it has at both ends, so the legend may not fold the concordant two
+    // into one grey swatch.
+    expect(arm.textContent).toContain(`right either way (${w.table.both})`);
+    expect(arm.textContent).toContain(`wrong either way (${w.table.neither})`);
     expect(arm.textContent).toContain(
       `${w.table.afterOnly} rescued against ${w.table.beforeOnly} wrecked`,
     );
-    // 100 squares, one per problem, from the shared paired table.
-    expect(w.table.cells).toHaveLength(w.table.n);
-    // And the accuracy lines are demoted to an inset that says so.
-    expect(arm.textContent).toContain("and the net, on all three checkpoints");
+    expect(arm.textContent).toContain("Both crossings are thick and they cancel");
+
+    // The crossing is drawn from the notebook's own paired counts, and the two
+    // concordant bands follow from them by arithmetic rather than by a second
+    // measurement: the four bands are the item set.
+    expect(w.table.both + w.table.neither + w.table.afterOnly + w.table.beforeOnly).toBe(w.table.n);
+
+    // The retired grid and the retired lines, both gone.
+    expect(arm.querySelector(".grid-cols-10")).toBeNull();
+    expect(arm.textContent).not.toContain("and the net, on all three checkpoints");
   });
 
-  // Churn counts every answer that moved; the grid lights only the ones that changed
-  // the verdict. A reader comparing 30% against 19 lit squares must not find the
-  // figure and the readout disagreeing.
-  it("reconciles the churn readout with the number of lit squares", () => {
+  // The three flat lines are replaced by the widths of the two things that
+  // crossed, one row per checkpoint, on one scale.
+  it("draws the same crossing for every checkpoint, wrecked against rescued", () => {
+    render(<Page6 />);
+    const arm = screen.getByLabelText("The extension arm");
+    expect(arm.textContent).toContain("and the same crossing on all three checkpoints");
+    for (const c of PAGE6.figureWait!.curves) {
+      const p = c.paired[c.paired.length - 1];
+      const first = c.points[0];
+      const last = c.points[c.points.length - 1];
+      expect(arm.textContent).toContain(
+        `${pct(first.accuracy)} → ${pct(last.accuracy)} · ${pct(last.churn)} of answers moved · ×${(
+          last.mean_tokens / first.mean_tokens
+        ).toFixed(1)} the tokens`,
+      );
+      expect(p.fixed).toBeGreaterThan(0);
+      expect(p.broken).toBeGreaterThan(0);
+    }
+    expect(arm.textContent).toContain(
+      "counted against the same item at zero injections, so they are paired",
+    );
+  });
+
+  // Churn counts every answer that moved; the crossing draws only the ones that
+  // changed the verdict. A reader comparing 30% against two bands of 9 and 10
+  // must not find the figure and the readout disagreeing.
+  it("reconciles the churn readout with the width of the crossings", () => {
     render(<Page6 />);
     const w = WAIT_TABLE!;
     expect(w.movedWithoutChangingTheVerdict).toBe(
       w.moved - w.table.afterOnly - w.table.beforeOnly,
     );
     expect(body()).toContain(
-      `including ${w.movedWithoutChangingTheVerdict} that swapped one wrong answer for another`,
+      `a further ${w.movedWithoutChangingTheVerdict} swapped one wrong answer for another`,
     );
   });
 
@@ -309,47 +359,60 @@ describe("Page 6, figure 4: refuse to let it stop", () => {
   });
 });
 
-describe("Page 6: one budget, reachable from every figure it drives", () => {
-  // The control used to live in figure 1 alone, a screen or more above the two
-  // other figures that answer to it, while their prose told the reader to drag
-  // something off screen.
-  it("gives figures 1 and 2 a stop per budget, not a slide", () => {
+describe("Page 6: one dial per figure, and no dial that reaches past its own", () => {
+  /**
+   * These three figures used to share one budget, on the argument that they are
+   * one measurement seen three ways. What that bought the reader was a control
+   * whose effect was off screen in both directions: the stop row in step 2 also
+   * redrew the trace a screen and a half above it, and the line in step 3 also
+   * redrew that trace two screens above IT. This block is here to stop them
+   * being merged again.
+   */
+  it("gives figure 1 the only stop row, and figures 2 and 3 a line each", () => {
     render(<Page6 />);
-    // Two figures, one stop each per budget, and nothing else claims the role.
-    expect(stops()).toHaveLength(B.length * 2);
-    for (const [i, b] of B.entries()) expect(stopFor(i)).toHaveLength(2);
+    expect(stops()).toHaveLength(B.length);
+    for (const [i] of B.entries()) expect(stopFor(i)).toHaveLength(1);
+    expect(screen.getAllByRole("slider")).toHaveLength(2);
+    expect(curveLine()).toBeInTheDocument();
+    expect(stripLine()).toBeInTheDocument();
     expect(B.every((b) => body().includes(String(b)))).toBe(true);
   });
 
-  it("keeps both stop rows and the strip's line on one budget", () => {
+  it("moves one figure's budget without moving another's", () => {
     render(<Page6 />);
-    for (const [i, b] of B.entries()) {
-      // Drive the copy in figure 2, the one that used to have no control.
-      fireEvent.click(stopFor(i)[1]);
-      for (const s of stopFor(i)) expect(s).toBeChecked();
-      expect(lineHandle()).toHaveAttribute("aria-valuetext", `${b} tokens`);
-    }
+    // Figure 2 to the top of the grid; figure 1 and figure 3 stay where they were.
+    fireEvent.keyDown(curveLine(), { key: "End" });
+    expect(curveLine()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
+    expect(stripLine()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
+    expect(stopFor(0)[0]).toBeChecked();
+    expect(body()).toContain(`${OPENING.byBudget[0].ownTokens} of ${B[0]} tokens thought`);
+
+    // And figure 1 to its flip, with figure 2 left at the top.
+    drag(FLIP_INDEX);
+    expect(curveLine()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
+    expect(stripLine()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
   });
 
-  // Figure 3 carries no widget: its budget line is the control, so it has to
-  // answer to the keyboard as well as to a pointer.
-  it("moves the strip's line with the arrow keys, and stops at both ends", () => {
+  // Each line IS its figure's control, so it has to answer to the keyboard as
+  // well as to a pointer, and it has to stop at both ends of the grid.
+  it.each([
+    ["the population curve", curveLine],
+    ["the chain lengths", stripLine],
+  ])("moves %s line with the arrow keys, and stops at both ends", (_name, handle) => {
     render(<Page6 />);
-    drag(0);
-    fireEvent.keyDown(lineHandle(), { key: "ArrowLeft" });
-    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
+    fireEvent.keyDown(handle(), { key: "ArrowLeft" });
+    expect(handle()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
 
-    fireEvent.keyDown(lineHandle(), { key: "ArrowRight" });
-    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${B[1]} tokens`);
-    for (const s of stopFor(1)) expect(s).toBeChecked();
+    fireEvent.keyDown(handle(), { key: "ArrowRight" });
+    expect(handle()).toHaveAttribute("aria-valuetext", `${B[1]} tokens`);
 
-    fireEvent.keyDown(lineHandle(), { key: "End" });
-    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
-    fireEvent.keyDown(lineHandle(), { key: "ArrowRight" });
-    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
+    fireEvent.keyDown(handle(), { key: "End" });
+    expect(handle()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
+    fireEvent.keyDown(handle(), { key: "ArrowRight" });
+    expect(handle()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
 
-    fireEvent.keyDown(lineHandle(), { key: "Home" });
-    expect(lineHandle()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
+    fireEvent.keyDown(handle(), { key: "Home" });
+    expect(handle()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
   });
 
   // The picker only ever changed figure 1, so it sat two screens from the thing
@@ -424,6 +487,26 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     // The reference still lives in the right-hand References sidenote.
     const refs = screen.getByText("References").closest("aside")!;
     expect(within(refs).getByRole("link", { name: /Muennighoff et al. 2025/ })).toBeInTheDocument();
+  });
+
+  /**
+   * References is a sidenote to step 1, which is the step that carries the
+   * citation, so it shares step 1's cell. It used to sit in a grid row of its
+   * own under an EMPTY left cell, which cost four hundred pixels of blank page
+   * between step 1's closing line and step 2's heading and left the citation
+   * floating in the margin beside nothing at all.
+   */
+  it("keeps References beside step 1 rather than in a row of its own", () => {
+    const { container } = render(<Page6 />);
+    const tryIt = screen.getAllByText("Try it")[0].closest("aside")!;
+    const refs = screen.getByText("References").closest("aside")!;
+    expect(refs.parentElement).toBe(tryIt.parentElement);
+
+    // And no spacer cell is left behind holding the row open.
+    const spacers = Array.from(container.querySelectorAll('div[aria-hidden="true"]')).filter(
+      (d) => d.children.length === 0 && !d.textContent,
+    );
+    expect(spacers.length).toBeLessThanOrEqual(1);
   });
 
   it("hands off to page 7 by splitting the same budget", () => {

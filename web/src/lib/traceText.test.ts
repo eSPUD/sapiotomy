@@ -28,6 +28,59 @@ describe("tidyMath on the LaTeX MATH-500 really writes", () => {
     expect(tidyMath("\\weirdmacro{x}")).toBe("\\weirdmacro{x}");
   });
 
+  /**
+   * A reader who has done calculus and met λ as a Lagrange multiplier still
+   * cannot read "\lambda" off a screen, and the backslash is most of why: it
+   * makes a plain constant look like an operator nobody was taught. The symbol
+   * is what the model was handed, so rendering it is faithful; renaming the
+   * variable would not be, and the trace beside it says `\lambda` 156 times.
+   */
+  it("renders the Greek a maths dataset actually writes", () => {
+    expect(tidyMath("Let $\\lambda$ be a constant, $0 \\le \\lambda \\le 4$")).toBe(
+      "Let λ be a constant, 0 ≤ λ ≤ 4",
+    );
+    expect(tidyMath("$\\alpha + \\beta = \\theta$")).toBe("α + β = θ");
+    expect(tidyMath("$\\Delta$")).toBe("Δ");
+  });
+
+  // Prealgebra and geometry items are mostly these three, and 534 degrees in
+  // page 6's bundled traces alone read as "^\circ" without them.
+  it("renders angles and degrees", () => {
+    expect(tidyMath("$\\angle BAD = 110^\\circ$")).toBe("∠BAD = 110°");
+    expect(tidyMath("In $\\triangle AEF$")).toBe("In △AEF");
+    expect(tidyMath("$10^{\\prime}$ by $8^{\\prime}$")).toBe("10′ by 8′");
+  });
+
+  it("sets a numeric exponent on the line it belongs on", () => {
+    expect(tidyMath("$12t^4+26t^3-8t^2$")).toBe("12t⁴+26t³-8t²");
+    expect(tidyMath("$x_1 + x_{12}$")).toBe("x₁ + x₁₂");
+    // An exponent that is an expression stays written out: flattening it would
+    // change what it says rather than how it looks.
+    expect(tidyMath("$x^{2n}$")).toBe("x^{2n}");
+  });
+
+  it("keeps a named function upright and readable", () => {
+    expect(tidyMath("$\\gcd(a,b)$ and $\\cos \\theta$")).toBe("gcd(a,b) and cos θ");
+  });
+
+  // A macro named after a letter can be the prefix of a longer one, which is
+  // how `\pmod` once came out as "±od". The lookup is on the whole run of
+  // letters, so there is no ordering to get wrong.
+  it("never resolves a macro that is only the head of a longer one", () => {
+    expect(tidyMath("$\\lambda$")).toBe("λ");
+    expect(tidyMath("$\\Lambda$")).toBe("Λ");
+    expect(tidyMath("$\\int$")).toBe("∫");
+    expect(tidyMath("$\\infty$")).toBe("∞");
+  });
+
+  // MATH-500 runs the sentence straight on from a display block's closing
+  // delimiter, so dropping the delimiter welds two sentences into one word.
+  it("breaks the line after display maths rather than welding sentences", () => {
+    expect(tidyMath("by\n\\[f(x) = \\lambda x(1 - x).\\]Find the values")).toBe(
+      "by\n\nf(x) = λ x(1 - x).\nFind the values",
+    );
+  });
+
   it("leaves no raw macro in the specimen the page actually renders", () => {
     // The bug that prompted this file: the question rendered as
     // "14u \equiv 46 \pmod{100}~?" on the page.

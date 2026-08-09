@@ -209,6 +209,27 @@ describe("page 6 figure 1: the bundled traces", () => {
     expect(() => rowById("test/nothing/0.json")).toThrow();
   });
 
+  /**
+   * MATH-500 inlines Asymptote source for its geometry figures, and the page
+   * has no renderer for it, so the reader meets twenty lines of `label("$A$",
+   * A, SW);` where a question should be. `tidyMath` cannot help: this is code
+   * standing in for a picture, not LaTeX standing in for a symbol. The traces
+   * still ship in the download; what the filter hides is the button.
+   */
+  it("never offers a problem whose statement is a drawing program", () => {
+    for (const id of PAGE6.figure3.clickableRowIds) {
+      expect(rowById(id).question).not.toContain("[asy]");
+    }
+    // And the filter is doing work rather than passing everything through: this
+    // run bundles one such problem, so the picker is one shorter than the
+    // notebook's list.
+    const bundledDrawings = PAGE6.figure1.rows.filter((r) => r.question.includes("[asy]"));
+    expect(bundledDrawings.length).toBeGreaterThan(0);
+    expect(PAGE6.figure3.clickableRowIds).not.toContain(bundledDrawings[0].problemId);
+    // Still a picker, not a pair of buttons.
+    expect(PAGE6.figure3.clickableRowIds.length).toBeGreaterThanOrEqual(4);
+  });
+
   it("spans the strip: bundled rows include early flips, late flips and never", () => {
     const flips = PAGE6.figure1.rows.map((r) => r.firstCorrectBudget);
     expect(flips).toContain(PAGE6.budgets[0]);
