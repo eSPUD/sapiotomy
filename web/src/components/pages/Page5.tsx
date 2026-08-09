@@ -834,7 +834,7 @@ export function Page5() {
             aria-label="The cost of forbidding the working"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="The gag">
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Reasoning condition">
               <span className="text-sm font-semibold text-ink">Qwen2.5-3B-Instruct:</span>
               <button type="button" aria-pressed={!gagged} onClick={() => setGag(false)} className={seg(!gagged)}>
                 reasoning
@@ -874,14 +874,14 @@ export function Page5() {
                       until the reader has pressed the switch. */}
                   <li className="flex items-center gap-2">
                     <span className="h-3 w-3 shrink-0 rounded-sm border border-wrong bg-wrong" />
-                    solved when reasoning, lost to the gag{gagged ? ` (${T.afterOnly})` : ""}
+                    solved when reasoning, lost without it{gagged ? ` (${T.afterOnly})` : ""}
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="h-3 w-3 shrink-0 rounded-sm border border-grid bg-surface-raised" />
                     unsolved either way
                     {gagged
-                      ? ` (${T.neither}), plus the ${T.beforeOnly} that only the gag gets right`
-                      : ", plus the few that only the gag gets right"}
+                      ? ` (${T.neither}), plus the ${T.beforeOnly} that only non-reasoning gets right`
+                      : ", plus the few that only non-reasoning gets right"}
                   </li>
                 </ul>
               </div>
@@ -910,7 +910,7 @@ export function Page5() {
           </section>
         </section>
         <Note kicker="How to read it">
-          <p>Flip the gag and count the squares that change colour.</p>
+          <p>Press &quot;non-reasoning&quot; and count the squares that change colour.</p>
           <p>
             One square is one problem and the counts are measured, but which square a problem sits
             in is arrangement, not data.
@@ -950,7 +950,7 @@ export function Page5() {
               </span>
               <span className="flex items-center gap-2">
                 <span className="h-3 w-5 rounded-sm bg-wrong opacity-20" /> the floor: all three
-                gagged bars end inside it
+                non-reasoning bars end inside it
               </span>
               <span className="flex items-center gap-2">
                 <span className="h-3 w-px bg-compute" /> the 1.5B, reasoning
@@ -981,7 +981,7 @@ export function Page5() {
             the token cap, which biases the headline {PAGE5.truncation.biases_headline}.
           </p>
           <p>
-            The gag is one phrasing and another would move the floor. And
+            The non-reasoning suffix is one phrasing and another would move the floor. And
             the run records whether working appeared and whether the answer landed, never whether
             the working was sound.
           </p>

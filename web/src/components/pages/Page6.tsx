@@ -45,7 +45,7 @@
  *   those problems are not budget-limited.
  *
  *   Step 4 — figure 4, the crossing. The extension arm as a swap: ten problems
- *   wrecked passing nine rescued in the middle of the figure, with the two
+ *   turning wrong passing nine turning right in the middle of it, with the two
  *   ends barely moving.
  *
  * Load-bearing and easy to lose:
@@ -681,9 +681,9 @@ const X_GAP = 14;
  * three accuracy lines against injection count, and three flat lines are a
  * picture of nothing happening, which is the opposite of what happened.
  *
- * What happened is a swap. Ten problems the model had right when left alone
- * came back wrong once it was made to keep going, nine it had wrong came back
- * right, and the two blocks pass each other in the middle of the figure. The
+ * What happened is a swap. Ten problems the model had right when it was allowed
+ * to stop came back wrong once its stop was suppressed, nine it had wrong came
+ * back right, and the two blocks pass each other in the middle. The
  * ends barely move and the middle is thick, and those are one drawing rather
  * than two. Everything here is the notebook's own paired counts; the concordant
  * blocks follow from them by arithmetic, in `pairedTable`.
@@ -732,7 +732,7 @@ function WaitCrossing() {
     <ChartFrame
       title={`What ${WAIT_TABLE.waits} "${FW!.word}" injections did to ${t.n} problems on the ${shortLabel(
         WAIT_TABLE.label,
-      )}. Left alone it solved ${solvedBefore}; made to keep going it solved ${solvedAfter}. ${t.both} were solved either way, ${t.neither} were wrong either way, ${t.afterOnly} were rescued and ${t.beforeOnly} were wrecked.`}
+      )}. Allowed to stop it solved ${solvedBefore}; with the stop suppressed it solved ${solvedAfter}. ${t.both} were right either way, ${t.neither} were wrong either way, ${t.afterOnly} turned from wrong to right and ${t.beforeOnly} turned from right to wrong.`}
       width={X_W}
       height={X_H}
       margin={X_M}
@@ -752,13 +752,13 @@ function WaitCrossing() {
       {/* Column headings sit above their stack; the counts sit outside it, so
           nothing is written over a band whose height IS the number. */}
       <text x={COL_X0 + COL_WIDTH / 2} y={-24} textAnchor="middle" className="fill-ink text-[11px] font-semibold">
-        left alone
+        allowed to stop
       </text>
       <text x={COL_X0 + COL_WIDTH / 2} y={-12} textAnchor="middle" className="fill-ink-muted text-[10px]">
         0 injections
       </text>
       <text x={COL_X1 + COL_WIDTH / 2} y={-24} textAnchor="middle" className="fill-ink text-[11px] font-semibold">
-        made to keep going
+        stop suppressed
       </text>
       <text x={COL_X1 + COL_WIDTH / 2} y={-12} textAnchor="middle" className="fill-ink-muted text-[10px]">
         {WAIT_TABLE.waits} injections
@@ -790,7 +790,7 @@ function WaitCrossing() {
         strokeLinejoin="round"
         className="fill-wrong stroke-surface text-[11px] font-semibold tabular-nums"
       >
-        {t.beforeOnly} wrecked
+        {t.beforeOnly} right → wrong
       </text>
       <text
         x={x0 + 0.16 * (x1 - x0)}
@@ -800,7 +800,7 @@ function WaitCrossing() {
         strokeLinejoin="round"
         className="fill-correct stroke-surface text-[11px] font-semibold tabular-nums"
       >
-        {t.afterOnly} rescued
+        {t.afterOnly} wrong → right
       </text>
     </ChartFrame>
   );
@@ -811,7 +811,8 @@ function WaitCrossing() {
  * that crossed. This is what the three accuracy lines were for, and it says the
  * part they could not: a flat line has two completely different causes, and
  * "nothing moved" against "everything moved and cancelled" is the whole finding
- * of this step. Wrecked runs left of the centre and rescued runs right of it,
+ * of this step. Right-to-wrong runs left of the centre and wrong-to-right runs
+ * right of it,
  * so a checkpoint that gained would be visibly lopsided. None of them is.
  */
 function WaitLedger() {
@@ -828,15 +829,15 @@ function WaitLedger() {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[32rem] text-left text-xs tabular-nums">
         <caption className="sr-only">
-          Problems wrecked and rescued by {FW.waits[FW.waits.length - 1]} injections, one row per
-          checkpoint, against what each solved when left alone.
+          Answers turned right and turned wrong by {FW.waits[FW.waits.length - 1]} injections, one
+          row per checkpoint, against what each solved when allowed to stop.
         </caption>
         <thead className="text-ink-muted">
           <tr>
             <th className="py-1 pr-3 font-semibold">checkpoint</th>
-            <th className="py-1 pr-3 text-right font-semibold">wrecked</th>
+            <th className="py-1 pr-3 text-right font-semibold">right → wrong</th>
             <th className="py-1 font-semibold" />
-            <th className="py-1 pl-3 font-semibold">rescued</th>
+            <th className="py-1 pl-3 font-semibold">wrong → right</th>
             <th className="py-1 pl-6 font-semibold">solved, and what it cost</th>
           </tr>
         </thead>
@@ -1525,7 +1526,7 @@ export function Page6() {
               <h2 className="text-xl font-semibold text-ink">
                 4. The other direction: refuse to let it stop
                 <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                  the same {H.n_items} problems · told to keep going
+                  the same {H.n_items} problems · not allowed to stop
                 </span>
               </h2>
               <section
@@ -1549,11 +1550,11 @@ export function Page6() {
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
                   <span className="flex items-center gap-2">
-                    <span className="h-3 w-5 rounded-sm bg-correct opacity-60" /> rescued by being
-                    made to keep going ({WAIT_TABLE!.table.afterOnly})
+                    <span className="h-3 w-5 rounded-sm bg-correct opacity-60" /> wrong, then right
+                    once it could not stop ({WAIT_TABLE!.table.afterOnly})
                   </span>
                   <span className="flex items-center gap-2">
-                    <span className="h-3 w-5 rounded-sm bg-wrong opacity-60" /> wrecked by it (
+                    <span className="h-3 w-5 rounded-sm bg-wrong opacity-60" /> right, then wrong (
                     {WAIT_TABLE!.table.beforeOnly})
                   </span>
                   {/* Four bands, four entries. The legend used to fold the two
@@ -1571,8 +1572,9 @@ export function Page6() {
                 </div>
 
                 <p className="text-sm text-ink">
-                  {WAIT_TABLE!.table.afterOnly} rescued against {WAIT_TABLE!.table.beforeOnly}{" "}
-                  wrecked, {pLabel(WAIT_TABLE!.p)}. Both crossings are thick and they cancel. In all{" "}
+                  {WAIT_TABLE!.table.afterOnly} answers turned from wrong to right against{" "}
+                  {WAIT_TABLE!.table.beforeOnly} that turned from right to wrong,{" "}
+                  {pLabel(WAIT_TABLE!.p)}. Both crossings are thick and they cancel. In all{" "}
                   {pct(WAIT_TABLE!.churn)} of answers moved, because a further{" "}
                   {WAIT_TABLE!.movedWithoutChangingTheVerdict} swapped one wrong answer for another
                   and never touched the verdict.
@@ -1586,18 +1588,18 @@ export function Page6() {
                   </p>
                   <WaitLedger />
                   <p className="text-xs text-ink-muted">
-                    Wrecked and rescued are counted against the same item at zero injections, so
-                    they are paired.
+                    Both counts are against the same problem at zero injections, so they are paired.
                   </p>
                 </div>
               </section>
               <p className="text-sm text-ink-muted">
                 It <strong className="text-ink">redistributes rather than adds</strong>. Roughly
                 double the tokens buys a third of the answers changed and no more of them right:
-                across the three checkpoints it rescues{" "}
-                {FW.curves.reduce((n, c) => n + c.paired[c.paired.length - 1].fixed, 0)} problems
-                and wrecks{" "}
-                {FW.curves.reduce((n, c) => n + c.paired[c.paired.length - 1].broken, 0)}. The
+                across the three checkpoints it turns{" "}
+                {FW.curves.reduce((n, c) => n + c.paired[c.paired.length - 1].fixed, 0)} wrong
+                answers right and{" "}
+                {FW.curves.reduce((n, c) => n + c.paired[c.paired.length - 1].broken, 0)} right
+                answers wrong. The
                 model was not holding back; it had already spent what the problem was worth to it.
               </p>
             </section>
@@ -1647,9 +1649,19 @@ export function Page6() {
             <strong className="text-ink">The dial has a far end, and you have reached it.</strong>{" "}
             This is inference-time scaling in its simplest form: the curve flattens, and{" "}
             {pct(F3.neverFlipShare)} of these problems are not reached at any length we ran. A
-            problem this chain cannot solve, it cannot solve by being longer. So spend the same{" "}
-            {tokens(H.max_budget)} tokens differently: {H.chains_at_min_budget} chains of{" "}
-            {H.min_budget} instead of one long one.{" "}
+            problem <em>this</em> chain cannot solve, it cannot solve by being longer.{" "}
+            {/* The pivot page 7 needs, and the one thing this close was missing: a second
+                chain is not a longer chain. Step 4 already measured that the model has more
+                than one answer in it, so the handoff cites it rather than asserting it. */}
+            {WAIT_TABLE ? (
+              <>
+                A different chain is another matter. Refusing to let this same model stop moved{" "}
+                {pct(WAIT_TABLE.churn)} of its answers without improving them: there is more than
+                one answer in there, and one run only ever shows you one of them.{" "}
+              </>
+            ) : null}
+            So spend the same {tokens(H.max_budget)} tokens on {H.chains_at_min_budget} chains of{" "}
+            {H.min_budget} instead of one long one, sampled rather than greedy so they can differ.{" "}
             <em>
               Page 7 asks what {H.chains_at_min_budget} voters at {pct(H.accuracy_at_min)} each are
               worth.
