@@ -152,7 +152,8 @@ describe("Page 12 (STaR and self-improvement)", () => {
 
   it("closes on the hand-off to page 13's frontier reasoners, in page 11's idiom", () => {
     render(<Page12 />);
-    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("p")!;
+    // The hand-off is a bulleted block now, so read its wrapping div.
+    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("div")!;
     // The lift-vs-slide bridge: page 11 said model size picks your curve; STaR
     // is the first knob that lifts it, which page 13's two-knob law completes.
     expect(handoff.textContent).toMatch(/lifts the curve without buying a single\s+parameter/i);
@@ -160,7 +161,8 @@ describe("Page 12 (STaR and self-improvement)", () => {
 
   it("closes on both ways to spend, then the frontier turning both", () => {
     render(<Page12 />);
-    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("p")!;
+    // The hand-off is a bulleted block now, so read its wrapping div.
+    const handoff = screen.getByText(/Page 13 picks it up from there/).closest("div")!;
     // The hand-off sums the pair page 13's two compute axes pick up: Act 2's
     // answer-time toolbox (5-11, priced by page 11) and this page's
     // train-time loop.

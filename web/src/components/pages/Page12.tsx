@@ -602,17 +602,32 @@ export function Page12() {
             model becomes.
           </p>
 
-          <p className="text-ink">
-            <strong className="text-ink">There are now two ways to buy reasoning.</strong> All of
-            Act 2 spends the compute after the question lands — show the road, cap the tokens,
-            sample and vote, score and re-rank, search the tree — and page 11 priced that shelf
-            against parameters. This page is the other way: it spends long before the question
-            exists, the first knob that lifts the curve without buying a single parameter. o1 and R1
-            keep this loop&apos;s shape and drop the disguise, so the filter becomes an explicit RL
-            reward on checkable tasks and the model&apos;s own sampling becomes the training set.
-            Next comes the frontier, where one lab turns both kinds of spending at once and bills you
-            for each. <em>Page 13 picks it up from there.</em>
-          </p>
+          <div className="flex flex-col gap-2 text-ink">
+            <p>
+              <strong className="text-ink">There are now two ways to buy reasoning:</strong> spend
+              the compute when the question arrives, or spend it long before, building the reasoning
+              into the model.
+            </p>
+            <ul className="list-disc space-y-1.5 pl-5 marker:text-ink-muted">
+              <li>
+                <strong className="text-ink">Spend at answer time.</strong> All of Act 2 spends the
+                compute after the question lands — show the road, cap the tokens, sample and vote,
+                score and re-rank, search the tree — and page 11 priced that shelf against
+                parameters.
+              </li>
+              <li>
+                <strong className="text-ink">Spend at training time.</strong> This page is the other
+                way: it spends long before the question exists, the first knob that lifts the curve
+                without buying a single parameter.
+              </li>
+            </ul>
+            <p>
+              o1 and R1 keep this loop&apos;s shape and drop the disguise, so the filter becomes an
+              explicit RL reward on checkable tasks and the model&apos;s own sampling becomes the
+              training set. Next comes the frontier, where one lab turns both kinds of spending at
+              once and bills you for each. <em>Page 13 picks it up from there.</em>
+            </p>
+          </div>
         </div>
 
         <Note kicker="References">
