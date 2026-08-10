@@ -114,7 +114,15 @@ describe("Page 15 (the scoreboard) component", () => {
 
   it("hands off to page 16's bill through the one metered coordinate", () => {
     render(<Page15 />);
-    expect(screen.getByText(/thinking is billed by the token\. Next: the bill/)).toBeInTheDocument();
+    // The close is now five questions, not four: the fifth asks whether the
+    // instrument could see at all, and the handoff runs through section 3's
+    // measurement rather than through an assertion about billing.
+    expect(screen.getByText(/ask five questions/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/was this test published before the model trained/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/section 3 just watched it climb/)).toBeInTheDocument();
+    expect(screen.getByText(/Next: the bill/)).toBeInTheDocument();
   });
 
   it("defers ARC-AGI to the cost page instead of double-teaching it", () => {
@@ -166,8 +174,10 @@ describe("Page 15 (the scoreboard) component", () => {
     // Read "pages 16 to 20" and a reader hits The End at 19 and assumes the
     // deck failed to load; 18 and 19 also stage no fight to judge.
     expect(document.body.textContent).not.toMatch(/pages 16 to 20/i);
-    expect(screen.getByText(/16 bills you for them, 17 shows you where they came from/i))
-      .toBeInTheDocument();
+    // "17 shows you where they came from" described no page: 17 is When
+    // Reasoning Breaks. The pointer now names what page 17 actually does.
+    expect(document.body.textContent).not.toMatch(/17 shows you where they came from/i);
+    expect(screen.getByText(/17 shows you where more thinking backfires/i)).toBeInTheDocument();
   });
 
   it("gives the capability axis an anchor that cannot rot", () => {
@@ -177,11 +187,66 @@ describe("Page 15 (the scoreboard) component", () => {
     expect(screen.getByText(/Today is always wherever the newest test/i)).toBeInTheDocument();
   });
 
-  it("spends section 2's window idea forward, on page 17's contamination caveat", () => {
+  it("names familiarity as the window's third closer and applies it to our own run", () => {
     render(<Page15 />);
-    const link = screen.getByText(/A benchmark published before the models trained/i);
-    expect(link.textContent).toMatch(/still be measuring\s+familiarity/);
-    expect(link.textContent).toMatch(/Page 17 puts a number on that/);
+    const closer = screen.getByText(/The third closer: familiarity/i).closest("p")!;
+    // The slider shows two closers; this is the one that is not on its axis.
+    expect(screen.getByText(/A window shuts three ways/i)).toBeInTheDocument();
+    expect(closer.textContent).toMatch(/scoring recall rather than reasoning/);
+    expect(closer.textContent).toMatch(/Page 17 puts a number on it/);
+    // The caveat has to reach our own instrument or the page is exempting
+    // itself from the thing it just taught: MATH-500's problems are from 2021.
+    expect(closer.textContent).toMatch(/published in\s+2021/);
+    expect(closer.textContent).toMatch(/flatters our own numbers/);
+  });
+
+  it("prices one rung with the measured run, every model in the same direction", () => {
+    render(<Page15 />);
+    expect(screen.getByRole("heading", { name: /What the window costs/ })).toBeInTheDocument();
+    expect(screen.getByText(/measured · our own run · no new generation/)).toBeInTheDocument();
+    // The three readouts, pinned to lib/page15Price.ts's derivation.
+    for (const [label, ratio, drop] of [
+      ["Qwen2.5-1.5B", "2.5x", "34 points"],
+      ["Qwen2.5-3B", "2.3x", "31 points"],
+      ["Qwen2.5-7B", "2.0x", "28 points"],
+    ] as const) {
+      // The label also appears as an SVG <text> on the chart, which has no <p>
+      // ancestor; the readout strip below the figure is the one with prose.
+      const row = screen
+        .getAllByText(label)
+        .map((el) => el.closest("p"))
+        .find((p): p is HTMLParagraphElement => p !== null);
+      expect(row, `no readout row for ${label}`).toBeDefined();
+      expect(row!.textContent).toMatch(ratio);
+      expect(row!.textContent).toMatch(drop);
+    }
+  });
+
+  it("says why the figure is two difficulty bands and not a benchmark ladder", () => {
+    render(<Page15 />);
+    // Section 1 teaches that a number compared across reports is meaningless.
+    // A cross-benchmark token ladder would break that rule two sections later,
+    // and the page has to say so rather than leave the reader to notice.
+    expect(screen.getByText(/Section 1 is the reason it does not/)).toBeInTheDocument();
+    expect(screen.getByText(/Reading the ladder\s+off it is extrapolation/)).toBeInTheDocument();
+  });
+
+  it("discloses what the measured section leaves out", () => {
+    render(<Page15 />);
+    const prov = screen.getByText(/Readings from page 11/);
+    expect(prov.textContent).toMatch(/not re-generated/);
+    // Unequal n, two runs not one execution, and the unpaired specialist.
+    expect(prov.textContent).toMatch(/50 items/);
+    expect(prov.textContent).toMatch(/100 at/);
+    expect(prov.textContent).toMatch(/two runs on one instrument,\s+not one execution/);
+    expect(prov.textContent).toMatch(/left out rather than\s+drawn with a hole/);
+  });
+
+  it("gives the price chart a label that carries the claim without the pixels", () => {
+    render(<Page15 />);
+    const chart = screen.getByRole("img", { name: /Accuracy against tokens spent per problem/ });
+    expect(chart.getAttribute("aria-label")).toMatch(/moves right and down/);
+    expect(chart.getAttribute("aria-label")).toMatch(/Qwen2\.5-7B spends 323 tokens at 88%/);
   });
 
   it("carries no em dash or en dash in rendered copy", () => {

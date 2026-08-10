@@ -10,7 +10,15 @@
  * version of the test, harness, thinking budget), and the headline keeps the
  * number while dropping the coordinates.
  *
- * Three moves, one per section:
+ * THE SPINE (2026-08-09 rework, docs/page_15_visxai_rework.md). The page used to
+ * be three lessons that shared a subject: a checklist, a mechanism, a history.
+ * It is now one idea with three consequences. A benchmark is an instrument with
+ * a window, the window closes three ways (floor, ceiling, familiarity), and
+ * keeping it open costs more every time. Section 2 shows the two closers that
+ * live on the capability axis and names the third, which does not; section 3
+ * prices the climb.
+ *
+ * Four moves, one per section:
  *   1. The courtroom of headlines. Three real cases, each a pair of
  *      quote-true headlines about the same model on the same test that
  *      disagree wildly (o1's 74.4 vs 93 on AIME, GPT-4o's 12 vs 9.3 on AIME,
@@ -32,7 +40,23 @@
  *      cannot expire. Real history lives in the caption as immutable facts
  *      (each past ceiling arrived faster than the last; FrontierMath opened
  *      under 2% by design).
- *   3. The knob was never new. In 2022 the compute setting traveled inside
+ *   3. What the window costs. MEASURED, and no new generation: page 11's run
+ *      swept two MATH-500 difficulty bands on one family under identical
+ *      settings (greedy, cap 2048, one grader, one seed), and nothing draws the
+ *      token counts underneath its FLOPs price. Pairing each model's two greedy
+ *      points moves exactly one coordinate, which problems were asked, and
+ *      every model in the family pays roughly twice the tokens for 28 to 34
+ *      points less accuracy. That is the price of one harder rung, and a
+ *      benchmark ladder is the same move repeated.
+ *
+ *      Why not the cross-benchmark ladder (MATH-500 to AIME to FrontierMath)
+ *      the reader might expect: it moves the prompt, the grader, the answer
+ *      format and the item count at once, which is exactly what section 1
+ *      spends its length teaching the reader to refuse. The page would break
+ *      its own rule two sections after teaching it. lib/page15Price.ts carries
+ *      the argument in full, plus why this is not a reprint of page 11.
+ *
+ *   4. The knob was never new. In 2022 the compute setting traveled inside
  *      the metric's name (Minerva's MATH headline was maj1@64 = 50.3, with
  *      pass@1 = 33.6 in the same table); reasoning models moved it inside
  *      the product and the metric's name stopped carrying it. Close: put the
@@ -59,9 +83,12 @@
  */
 
 import { useState } from "react";
+import { scaleLinear } from "d3";
+import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
+import { PAGE15_PRICE } from "@/lib/page15Price";
 import {
   CEILING_PCT,
   FLOOR_PCT,
@@ -237,6 +264,132 @@ const CASES: HeadlineCase[] = [
   },
 ];
 
+/* --------------------------- the price of a rung ------------------------- */
+
+const CHART = { w: 720, h: 400 };
+const PRICE_MARGIN = { top: 30, right: 28, bottom: 46, left: 54 };
+
+/**
+ * One arrow per model, tail at its easy-band reading and head at its hard-band
+ * reading. The geometry is the claim: right means more tokens, down means less
+ * accuracy, and all three arrows are near parallel, so the reader sees "every
+ * model does the same thing" before reading a single number.
+ */
+function PriceChart() {
+  const { pairs, bands } = PAGE15_PRICE;
+  const innerW = CHART.w - PRICE_MARGIN.left - PRICE_MARGIN.right;
+  const innerH = CHART.h - PRICE_MARGIN.top - PRICE_MARGIN.bottom;
+
+  const tokens = pairs.flatMap((p) => [p.easy.meanTokens, p.hard.meanTokens]);
+  const accs = pairs.flatMap((p) => [p.easy.accuracy, p.hard.accuracy]);
+  const x = scaleLinear()
+    .domain([Math.min(...tokens) - 60, Math.max(...tokens) + 60])
+    .range([0, innerW]);
+  const y = scaleLinear()
+    .domain([Math.max(0, Math.min(...accs) - 0.1), Math.min(1, Math.max(...accs) + 0.08)])
+    .range([innerH, 0]);
+
+  const xTicks = x.ticks(6);
+  const yTicks = y.ticks(5);
+  const meanEasyX = pairs.reduce((s, p) => s + p.easy.meanTokens, 0) / pairs.length;
+  const meanHardX = pairs.reduce((s, p) => s + p.hard.meanTokens, 0) / pairs.length;
+
+  return (
+    <ChartFrame
+      width={CHART.w}
+      height={CHART.h}
+      margin={PRICE_MARGIN}
+      xLabel="mean tokens generated per problem (the meter reading)"
+      yLabel="accuracy"
+      title={
+        `Accuracy against tokens spent per problem, for three models on two MATH-500 ` +
+        `difficulty bands. Every model moves right and down going from the easy band to ` +
+        `the hard band: ${pairs
+          .map(
+            (p) =>
+              `${p.label} spends ${Math.round(p.easy.meanTokens)} tokens at ${Math.round(
+                p.easy.accuracy * 100,
+              )}% on the easy band and ${Math.round(p.hard.meanTokens)} tokens at ${Math.round(
+                p.hard.accuracy * 100,
+              )}% on the hard band`,
+          )
+          .join("; ")}.`
+      }
+    >
+      <defs>
+        <marker
+          id="p15-arrow"
+          viewBox="0 0 10 10"
+          refX={8}
+          refY={5}
+          markerWidth={7}
+          markerHeight={7}
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 0 L 10 5 L 0 10 z" className="fill-compute" />
+        </marker>
+      </defs>
+
+      {yTicks.map((t) => (
+        <g key={`y${t}`}>
+          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-8} y={y(t)} dy={4} textAnchor="end" className="fill-ink-muted text-[11px]">
+            {Math.round(t * 100)}%
+          </text>
+        </g>
+      ))}
+      {xTicks.map((t) => (
+        <text
+          key={`x${t}`}
+          x={x(t)}
+          y={innerH + 16}
+          textAnchor="middle"
+          className="fill-ink-muted text-[11px]"
+        >
+          {t}
+        </text>
+      ))}
+
+      {/* Which end of the plot is which band, said on the plot itself. */}
+      <text x={x(meanEasyX)} y={-10} textAnchor="middle" className="fill-ink-muted text-[11px]">
+        MATH-500 {bands.easy.levels}
+      </text>
+      <text x={x(meanHardX)} y={-10} textAnchor="middle" className="fill-ink-muted text-[11px]">
+        MATH-500 {bands.hard.levels}
+      </text>
+
+      {pairs.map((p) => (
+        <g key={p.label}>
+          <line
+            x1={x(p.easy.meanTokens)}
+            y1={y(p.easy.accuracy)}
+            x2={x(p.hard.meanTokens)}
+            y2={y(p.hard.accuracy)}
+            className="stroke-compute"
+            strokeWidth={2}
+            markerEnd="url(#p15-arrow)"
+          />
+          <circle
+            cx={x(p.easy.meanTokens)}
+            cy={y(p.easy.accuracy)}
+            r={5}
+            className="fill-canvas stroke-compute"
+            strokeWidth={2}
+          />
+          <text
+            x={x(p.easy.meanTokens)}
+            y={y(p.easy.accuracy) - 12}
+            textAnchor="middle"
+            className="fill-ink text-[12px] font-semibold"
+          >
+            {p.label}
+          </text>
+        </g>
+      ))}
+    </ChartFrame>
+  );
+}
+
 export function Page15() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
@@ -289,12 +442,16 @@ export function Page15() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Pages 13 and 14 argued in benchmark scores, and the four pages left will spend them: 16
-        bills you for them, 17 shows you where they came from, and the last two ask what a score
-        was ever evidence of. So learn what a score is first.{" "}
+        bills you for them, 17 shows you where more thinking backfires, and the last two ask what
+        a score was ever evidence of. So learn what a score is first.{" "}
         <strong className="text-ink">A score is not a property of a model.</strong> It is a point
         with <strong className="text-ink">four coordinates</strong>: which model variant, which
         version of the test, whose harness scored it, and how much thinking was bought. A headline
-        keeps the number and drops the coordinates. This page is where you learn to put them back.
+        keeps the number and drops the coordinates. This page is where you learn to put them back,
+        and then to ask the harder question underneath them:{" "}
+        <strong className="text-ink">whether the test could see anything at all</strong>. A
+        benchmark is an instrument with a window, it shuts three ways, and holding it open gets
+        more expensive every year.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -436,6 +593,11 @@ export function Page15() {
                     </table>
                   </div>
                   <p className="text-sm text-ink">{current.lesson}</p>
+                  <p className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
+                    Keep an eye on the second coordinate. A different version of a test is not
+                    just a different problem count: a version published after a model trained is
+                    a different instrument, and section 2 is about what that does.
+                  </p>
                 </>
               ) : null}
             </div>
@@ -464,6 +626,12 @@ export function Page15() {
               <strong>window</strong>. Slide the frontier past four stylized tests and read each
               one&apos;s verdict: below its window every model fails (no signal), inside it the
               same five models spread out (signal), past it everyone passes (no signal again).
+            </p>
+            <p className="text-sm text-ink">
+              A window shuts three ways. Two of them are on this slider:{" "}
+              <strong>the floor</strong>, where nothing scores, and <strong>the ceiling</strong>,
+              where everything does. The third does not live on this axis at all, and the slider
+              cannot show it. It is underneath the figure.
             </p>
             <p className="text-sm text-ink-muted">
               {/* 15.5: the axis had no referent at all, and "where are we today?"
@@ -572,13 +740,15 @@ export function Page15() {
               retiring a blind test is the honest move.
             </figcaption>
             <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              There is a second way a test loses its window, and it does not need the frontier to
-              move at all. A benchmark published before the models trained is a benchmark the
-              models may have read.{" "}
-              <strong>Page 17 puts a number on that</strong>: on AIME 2025, released after these
-              models trained, reasoning models scored well below their averages on the older
-              years. A test can be inside its window on this figure and still be measuring
-              familiarity.
+              <strong>The third closer: familiarity.</strong> A benchmark published before the
+              models trained is a benchmark the models may have read, and no amount of sliding
+              the frontier reveals it. A test can sit dead centre in its window on this figure
+              and still be scoring recall rather than reasoning. Page 17 puts a number on it: on
+              AIME 2025, released after these models trained, reasoning models scored well below
+              their averages on the older years. And this one reaches us too. The hundred problems
+              underneath Act 2, and underneath the next section, come from a test set published in
+              2021, which is inside the training data of every model in this deck. We cannot say by
+              how much that flatters our own numbers either.
             </p>
           </figure>
         </section>
@@ -591,9 +761,80 @@ export function Page15() {
           </p>
         </Note>
 
-        {/* Step 3 — the knob was never new */}
+        {/* Step 3 — what the window costs (measured, page 11's run) */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Put the coordinates back</h2>
+          <h2 className="text-xl font-semibold text-ink">
+            3. What the window costs
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              measured · our own run · no new generation
+            </span>
+          </h2>
+          <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-sm text-ink">
+              Keeping a test inside its window means making it harder, and harder is not free.
+              Here is one step of that climb, measured: the same three models, the same cap, the
+              same grader, the same day, asked the easy half of MATH-500 and then the hard half.{" "}
+              <strong>The only thing that changes is which problems were asked.</strong>
+            </p>
+
+            <PriceChart />
+
+            <div className="flex flex-col gap-1 border-t border-dashed border-grid pt-2">
+              {PAGE15_PRICE.pairs.map((p) => (
+                <p key={p.label} className="text-sm text-ink-muted">
+                  <strong className="text-ink">{p.label}</strong> pays{" "}
+                  <strong className="text-ink">{p.tokenRatio.toFixed(1)}x</strong> the tokens on
+                  the hard band and scores{" "}
+                  <strong className="text-ink">{Math.round(p.accuracyDropPts)} points</strong>{" "}
+                  lower.
+                </p>
+              ))}
+            </div>
+
+            <p className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
+              Every model in the family does the same thing: <strong>roughly twice the thinking
+              for roughly thirty points less accuracy</strong>. That is the toll for one rung. A
+              benchmark ladder is this move repeated for a decade, which is why the tests that can
+              still see the frontier are the expensive ones, and why the meter on the next page
+              runs faster every year.
+            </p>
+
+            <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
+              You might expect this figure to climb real benchmarks instead: MATH-500, then AIME,
+              then something at the frontier.{" "}
+              <strong className="text-ink">Section 1 is the reason it does not.</strong> Those
+              tests differ in prompt, grader, answer format and item count all at once, so a token
+              gap between them would be exactly the coordinate-free number this page has spent two
+              sections teaching you to refuse. Moving one coordinate is the honest version, and
+              two difficulty bands is what we can move one coordinate across. Reading the ladder
+              off it is extrapolation, and it is labelled as such.
+            </figcaption>
+
+            <p className="text-xs text-ink-muted">
+              Readings from page 11&apos;s measured run, replayed here, not re-generated: greedy,
+              cap 2,048 tokens, one grader, one family, {PAGE15_PRICE.bands.easy.n} items at{" "}
+              {PAGE15_PRICE.bands.easy.levels} and {PAGE15_PRICE.bands.hard.n} at{" "}
+              {PAGE15_PRICE.bands.hard.levels}. Page 11 prices these same runs in FLOPs to ask
+              whether a small model that thinks can beat a big one; this is the raw meter reading
+              underneath that price. The two bands were generated by two runs on one instrument,
+              not one execution, and the item counts differ. One model in the run, a
+              math-specialist 1.5B, was measured on the easy band only and is left out rather than
+              drawn with a hole.
+            </p>
+          </figure>
+        </section>
+
+        <Note kicker="The move">
+          <p>Follow one arrow from its hollow tail to its head.</p>
+          <p>
+            Right is more thinking bought; down is less accuracy returned. Three models, three
+            arrows, one direction.
+          </p>
+        </Note>
+
+        {/* Step 4 — the knob was never new */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">4. Put the coordinates back</h2>
           <p className="text-ink-muted">
             The thinking-budget coordinate is not new; what changed is where it hides.
           </p>
@@ -629,11 +870,14 @@ export function Page15() {
             </div>
           </div>
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            So a score is a reading, not a property. When the next one lands, put the coordinates
-            back: which model variant, which version of the test, whose harness, how much thinking.{" "}
+            So a score is a reading, not a property. When the next one lands, ask five questions.
+            Four of them locate the reading: which model variant, which version of the test, whose
+            harness, how much thinking. The fifth asks whether the instrument could see anything
+            at all: was this test published before the model trained?{" "}
             <em className="text-ink-muted">
-              Only one of the four has a meter running: thinking is billed by the token. Next: the
-              bill. Turn the page.
+              Only one of the five has a meter running, and section 3 just watched it climb: a
+              harder rung cost every model in our family about twice the thinking. Next: the bill.
+              Turn the page.
             </em>
           </div>
         </section>
@@ -667,13 +911,15 @@ export function Page15() {
       </div>
 
       <p className="text-xs text-ink-muted">
-        every real number on this page is transcribed verbatim from the cited report, and the
+        every published number on this page is transcribed verbatim from the cited report, and the
         headline sentence carrying it is written for this page · announcement figures (o3,
         FrontierMath) are vendor-reported and not peer-reviewed; the coordinate rows
         paraphrase the same reports&apos; own disclosed settings, and the case numbers are pinned in
         the test suite · section 2 is an authored simulation (no real benchmark&apos;s numbers),
-        its shape pinned in the test suite · ARC-AGI is missing on purpose: its story is the price
-        tag, and page 16 tells it with a dollar axis
+        its shape pinned in the test suite · section 3 is measured by us, replayed from page
+        11&apos;s committed run rather than generated again, and its readings are pinned in the
+        test suite · ARC-AGI is missing on purpose: its story is the price tag, and page 16 tells
+        it with a dollar axis
       </p>
 
       <PageNav n={PAGE_N} />

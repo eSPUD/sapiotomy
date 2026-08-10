@@ -41,7 +41,9 @@ Pages 5 to 9 each ship the run that produced their numbers, as a zip under
 Page 10 ships a bundle that is **not** a run: `page-10-search-arm.zip` is the search arm
 written and packaged unrun, and the page's label promises the notebook rather than a result.
 Its tree is hand-authored and its bars are Yao et al.'s, so nothing on the page rests on it.
-Page 11 has no bundle at all, and likewise claims no measured result of its own.
+Page 11 ships no bundle, so its measured run (`page-11-derived.json`) is not reader-re-derivable
+the way pages 5 to 9 are, though gate 1 inside it reproduces pages 6, 7 and 8's shipped numbers
+exactly. Page 15 section 3 replays that same file and adds no generation of its own.
 
 `src/lib/notebookBundles.test.ts` checks the layout, replay mode and manifest of the page
 5 to 8 bundles. Pages 9 and 10 are not covered by it.
@@ -75,6 +77,7 @@ change: `grep -rl "curves\.<key>" src/components/pages/` for the parsed curves, 
 | page-07-derived.json | 7 | **The deck's own run.** Sampled chains at two temperatures with per-problem answer tallies, plus the N sweep (N = 1, 2, 4, 8, 16) of accuracy, coverage and tie rate. Manifest as above; loaded by `src/lib/page07.ts` |
 | page-08-derived.json | 8 | **The deck's own run.** Best-of-N against five judges, paired against the vote. Note `manifest.verifiers[4]`: the trained PRM was **rebuilt** on transformers' Qwen2 body plus the checkpoint's value head, because the checkpoint's own modelling code returns NaN under this transformers version, and its solve rate on these items is `null` / unmeasured. Loaded by `src/lib/page08.ts` |
 | page-09-derived.json | 9 | **The deck's own run.** Step-level checking against a process reward model, detection rates, AUC and the selection null. `prm_reliability.threshold_source` records that the PRM's operating point was fitted against the checker's own labels. Loaded by `src/lib/page09.ts` |
+| page-11-derived.json | 11, 15 | **The deck's own run.** Accuracy against measured inference FLOPs for one Qwen2.5 family, re-derived from pages 6/7/8's runs (gate 1 reproduces them exactly) plus a fresh 50-item easy band at MATH-500 levels 1 to 3. Manifest as above; loaded by `src/lib/page11.ts` for page 11's crossing question, and by `src/lib/page15Price.ts` for page 15 section 3, which reads the raw `mean_tokens` underneath the FLOPs price and pairs each model's two difficulty bands. Page 15 re-generates nothing and its readings are pinned in `page15Price.test.ts` |
 | tot-crosswords.json | 10 | Verbatim Table 3 word-success column (Yao et al. 2023, NeurIPS): 5x5 mini crosswords, GPT-4, 20 puzzles; IO 14%, CoT 15.6%, ToT without backtracking 20%, without pruning 41.5%, full ToT 60% |
 | neural-degeneration.json | 10 | Verbatim Table 1 repetition rates (Holtzman et al. 2020, ICLR): GPT-2 Large, 5,000 WebText continuations, up to 200 tokens |
 | rebase-pareto.json | 11 | Verbatim table values (Wu et al. 2024, Table 1, MATH500 accuracy vs inference FLOPs) |
