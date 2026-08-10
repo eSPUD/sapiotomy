@@ -889,39 +889,39 @@ export function Page17() {
         {/* Step 4 — what still works */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">4. What still works</h2>
-          <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4 text-sm text-ink">
-            <p>
-              <strong>Feedback from outside the model.</strong> Self-correction fails <em>unaided</em>;
-              give the reviser real information, a failing unit test, a calculator, a proof checker,
-              and revision has something to push against. Step 3 is why that is not a platitude:
-              on {pct(PAGE17.readable.shareUnjudged, 0)} of the chain there is nothing to check
-              against from inside.
-            </p>
-            <p>
-              <strong>Verifiers, where answers are checkable, and trained ones by preference.</strong>{" "}
-              Selection with a judge (page 8) still beats blind voting, up to the ceiling its
-              reliability sets. Step 3 adds which judge: the trained scorer held across the whole
-              sweep while every model asked to judge lost ground.
-            </p>
-            <p>
-              <strong>Training, not prompting.</strong> The mid-chain &ldquo;wait, let me
-              re-check&rdquo; that RL taught DeepSeek-R1 (page 14) was learned against verified
-              rewards, not requested politely at inference time.
-            </p>
-          </div>
+          <p className="text-ink">
+            <strong className="text-ink">Feedback from outside the model.</strong> Self-correction
+            fails <em>unaided</em>; give the reviser real information, a failing unit test, a
+            calculator, a proof checker, and revision has something to push against. Step 3 is why
+            that is not a platitude: on {pct(PAGE17.readable.shareUnjudged, 0)} of the chain there
+            is nothing to check against from inside.
+          </p>
+          <p className="text-ink">
+            <strong className="text-ink">
+              Verifiers, where answers are checkable, and trained ones by preference.
+            </strong>{" "}
+            Selection with a judge (page 8) still beats blind voting, up to the ceiling its
+            reliability sets. Step 3 adds which judge: the trained scorer held across the whole
+            sweep while every model asked to judge lost ground.
+          </p>
+          <p className="text-ink">
+            <strong className="text-ink">Training, not prompting.</strong> The mid-chain
+            &ldquo;wait, let me re-check&rdquo; that RL taught DeepSeek-R1 (page 14) was learned
+            against verified rewards, not requested politely at inference time.
+          </p>
           <div className="rounded-lg border-l-4 border-wrong bg-wrong/10 p-4 text-sm text-ink">
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
               And one caveat that reaches backwards
             </p>
             <p className="mt-2">
               <strong>Every accuracy number in this story was measured on problems the model may
-              already have seen.</strong> On AIME 2025, released after these models trained,
-              reasoning models scored 7 to 30 points below their 1983 to 2024 averages, and a
-              conventional model fell from 40% to 1%.
-              <Cite n={REF.balachandran} /> Part of every inference-time-scaling gain measured on an
-              older benchmark is familiarity rather than reasoning. That discounts the levers of Act
-              2 and the frontier scores of Act 3 alike; it does not tell you by how much, which is
-              the uncomfortable part.
+              already have seen.</strong> Page 15 called this the third way a test stops working.
+              Here is the size of it: on AIME 2025, released after these models trained, reasoning
+              models scored 7 to 30 points below their 1983 to 2024 averages, and a conventional
+              model fell from 40% to 1%.
+              <Cite n={REF.balachandran} /> That discounts the levers of Act 2 and the frontier
+              scores of Act 3 alike; it does not tell you by how much, which is the uncomfortable
+              part.
             </p>
           </div>
         </section>

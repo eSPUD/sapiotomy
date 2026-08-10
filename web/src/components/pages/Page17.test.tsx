@@ -214,7 +214,13 @@ describe("Page 17 (when reasoning breaks) component", () => {
     // Bolded, and scoped to the whole story rather than to this page's demo.
     const lead = screen.getByText(/measured on problems the model may/i);
     expect(lead.tagName).toBe("STRONG");
-    expect(lead.closest("p")!.textContent).toMatch(/Act\s*2 and the frontier scores of Act 3/);
+    const caveat = lead.closest("p")!;
+    expect(caveat.textContent).toMatch(/Act\s*2 and the frontier scores of Act 3/);
+    // Division of labour with page 15, which teaches familiarity as the third
+    // way a test stops working. This page owns the size of it, not the
+    // mechanism, so it back-references rather than re-deriving.
+    expect(caveat.textContent).toMatch(/Page 15 called this the third way a test stops working/);
+    expect(caveat.textContent).not.toMatch(/familiarity rather than reasoning/);
   });
 
   it("hands a live question forward to 18 instead of ending on a reference note", () => {
