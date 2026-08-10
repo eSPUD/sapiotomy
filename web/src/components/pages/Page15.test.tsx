@@ -225,21 +225,25 @@ describe("Page 15 (the scoreboard) component", () => {
   it("says why the figure is two difficulty bands and not a benchmark ladder", () => {
     render(<Page15 />);
     // Section 1 teaches that a number compared across reports is meaningless.
-    // A cross-benchmark token ladder would break that rule two sections later,
-    // and the page has to say so rather than leave the reader to notice.
-    expect(screen.getByText(/Section 1 is the reason it does not/)).toBeInTheDocument();
-    expect(screen.getByText(/Reading the ladder\s+off it is extrapolation/)).toBeInTheDocument();
+    // A cross-benchmark token ladder would break that rule two sections later.
+    // This has to read as the page applying its own lesson, not as a methods
+    // defence, so it is one caption sentence and not a paragraph.
+    const cap = screen.getByText(/Why two halves of one test/).closest("figcaption")!;
+    expect(cap.textContent).toMatch(/prompt, grader and answer format all at once/);
+    expect(cap.textContent).toMatch(/One rung measured honestly beats a ladder nobody can\s+read/);
+    expect(cap.textContent).toMatch(/replayed here rather than generated\s+again/);
   });
 
-  it("discloses what the measured section leaves out", () => {
+  it("keeps the measured section's caveats out of the figure and in the footer", () => {
     render(<Page15 />);
-    const prov = screen.getByText(/Readings from page 11/);
-    expect(prov.textContent).toMatch(/not re-generated/);
-    // Unequal n, two runs not one execution, and the unpaired specialist.
-    expect(prov.textContent).toMatch(/50 items/);
-    expect(prov.textContent).toMatch(/100 at/);
-    expect(prov.textContent).toMatch(/two runs on one instrument,\s+not one execution/);
-    expect(prov.textContent).toMatch(/left out rather than\s+drawn with a hole/);
+    // The apparatus (unequal n, two runs not one execution, the unpaired
+    // specialist, the extrapolation label) is real and has to ship, but beside
+    // the figure it drowned the finding 4:1. It lives in the fidelity line.
+    const foot = screen.getByText(/every published number on this page/).closest("p")!;
+    expect(foot.textContent).toMatch(/50 items at levels 1 to 3 against 100 at levels 4 and 5/);
+    expect(foot.textContent).toMatch(/two\s+runs on one instrument rather than one execution/);
+    expect(foot.textContent).toMatch(/left out\s+rather than drawn with a hole/);
+    expect(foot.textContent).toMatch(/reading a whole benchmark ladder off two rungs is\s+extrapolation/);
   });
 
   it("gives the price chart a label that carries the claim without the pixels", () => {
