@@ -33,8 +33,22 @@ describe("Page 18 (can we trust the thoughts) component", () => {
     if (first) {
       expect(screen.getByText(/faithful this run/i)).toBeInTheDocument();
     } else {
-      expect(screen.getByText(/unfaithful/i)).toBeInTheDocument();
+      expect(screen.getByText("Unfaithful:")).toBeInTheDocument();
     }
+  });
+
+  it("makes the reader ask how we know, rather than telling them", () => {
+    render(<Page18 />);
+    plantHint();
+    const [first] = draws(1, 0.25, 1);
+    if (first) return; // the seeded first run admitted; nothing to reveal
+    // The page's sharpest epistemic point used to sit in the verdict box as
+    // prose. It is only true because a control run exists, which is exactly
+    // what a monitor in production does not have.
+    expect(screen.queryByText(/comparing it with the clean run/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /how do we know it is unfaithful/i }));
+    const why = screen.getByText(/comparing it with the clean run/i);
+    expect(why.textContent).toMatch(/A monitor in production has one/);
   });
 
   it("the confession meter converges toward the paper's 25% for Claude", () => {
@@ -68,9 +82,45 @@ describe("Page 18 (can we trust the thoughts) component", () => {
 
   it("shows the monitorability gap as the two recall bars, 60% vs 95%", () => {
     render(<Page18 />);
-    expect(screen.getByText(/monitor reads actions & outputs only/i)).toBeInTheDocument();
+    expect(screen.getByText(/reads actions & outputs only/i)).toBeInTheDocument();
     expect(screen.getAllByText("60%").length).toBeGreaterThan(0);
     expect(screen.getAllByText("95%").length).toBeGreaterThan(0);
+  });
+
+  it("lets the reader choose what the monitor may read, and counts the misses", () => {
+    render(<Page18 />);
+    // Step 2 is the page's pivot ("so is the trace worthless? No") and used to
+    // be two static bars with nothing asked of the reader.
+    const status = screen.getByRole("status", { name: "" });
+    expect(status.textContent).toMatch(/catches\s*60\s*and\s*misses\s*40/);
+    fireEvent.click(screen.getByRole("switch", { name: /what the monitor may read/i }));
+    expect(screen.getByRole("status", { name: "" }).textContent).toMatch(
+      /catches\s*95\s*and\s*misses\s*5/,
+    );
+  });
+
+  it("scopes the recall claim to systemic reward hacks in visible copy", () => {
+    render(<Page18 />);
+    // The scope used to live only in the figure's aria-label, so a sighted
+    // reader concluded the monitor catches 95% of all misbehavior.
+    expect(screen.getAllByText(/systemic reward hacks/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/not misbehavior in general/i)).toBeInTheDocument();
+  });
+
+  it("hands a live question forward to 19", () => {
+    render(<Page18 />);
+    expect(
+      screen.getByText(/what is left to read when the thinking stops being words/i),
+    ).toBeInTheDocument();
+  });
+
+  it("carries no em dash or en dash in rendered copy", () => {
+    // Page 18 was already clean and nothing pinned it that way.
+    const { container } = render(<Page18 />);
+    const offenders = Array.from(container.querySelectorAll("*"))
+      .flatMap((el) => [el.textContent ?? "", el.getAttribute("aria-label") ?? ""])
+      .filter((t) => t.includes("—") || t.includes("–"));
+    expect(offenders).toEqual([]);
   });
 
   it("the pressure dial starts legible and obfuscates past the cliff", () => {
