@@ -28,6 +28,28 @@ describe("twoAxisAccuracy (page 13 law)", () => {
     );
   });
 
+  it("substitutes the two dials exactly: the exponents enter as a sum", () => {
+    // Page 13's closing line prints this equality, so it is pinned here: the
+    // mirror settings the Try-it note invites (train ×1 / thinking ×100 and
+    // train ×100 / thinking ×1) land on the same score.
+    const thinkingOnly = twoAxisAccuracy(2, 0, P.intercept, P.slopePerDecade, P.maxExp, P.floor);
+    const trainingOnly = twoAxisAccuracy(0, 2, P.intercept, P.slopePerDecade, P.maxExp, P.floor);
+    expect(thinkingOnly).toBeCloseTo(21.0, 10);
+    expect(trainingOnly).toBeCloseTo(21.0, 10);
+    expect(thinkingOnly).toBeCloseTo(trainingOnly, 10);
+    // More generally, only the sum of the two exponents matters.
+    for (const [t, r] of [
+      [0.5, 1],
+      [1.5, 0],
+      [0, 1.5],
+    ] as const) {
+      expect(twoAxisAccuracy(t, r, P.intercept, P.slopePerDecade, P.maxExp, P.floor)).toBeCloseTo(
+        twoAxisAccuracy(r, t, P.intercept, P.slopePerDecade, P.maxExp, P.floor),
+        10,
+      );
+    }
+  });
+
   it("clamps to the floor rather than going negative", () => {
     expect(twoAxisAccuracy(0, 0, P.intercept, P.slopePerDecade, P.maxExp, P.floor)).toBe(P.floor);
   });

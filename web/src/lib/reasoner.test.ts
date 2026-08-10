@@ -71,7 +71,7 @@ describe("Page 19: build-a-reasoner composite", () => {
     expect(noThoughts.accuracy).toBe(reasonerOutcome({ ...COT, cot: false }).accuracy);
   });
 
-  it("an adaptive budget keeps accuracy and cuts cost and latency", () => {
+  it("an adaptive budget trades a little accuracy for a lot of bill", () => {
     const flat = reasonerOutcome({ ...COT, samples: 8, selection: "verifier", search: true });
     const adaptive = reasonerOutcome({
       ...COT,
@@ -80,10 +80,31 @@ describe("Page 19: build-a-reasoner composite", () => {
       search: true,
       adaptive: true,
     });
-    expect(adaptive.accuracy).toBe(flat.accuracy);
-    expect(adaptive.families).toEqual(flat.families);
+    // Not free, and not nearly free enough to be a reason to leave it off: the
+    // saving is tens of percent and the price is the prompts an imperfect
+    // difficulty estimate under-budgets. A lever with no cost teaches nothing.
+    expect(adaptive.accuracy).toBeLessThan(flat.accuracy);
+    expect(flat.accuracy - adaptive.accuracy).toBeLessThan(2);
     expect(adaptive.cost).toBeLessThan(flat.cost);
     expect(adaptive.latency).toBeLessThan(flat.latency);
+  });
+
+  it("charges readability to every lever that hides something, not only latent", () => {
+    // pages.ts:68 promises "what each costs in readability" for all three
+    // frontier directions; search and adaptive used to be free of it.
+    const base = reasonerOutcome({ ...COT, samples: 8 });
+    expect(reasonerOutcome({ ...COT, samples: 8, search: true }).monitorability).toBeLessThan(
+      base.monitorability,
+    );
+    expect(reasonerOutcome({ ...COT, samples: 8, adaptive: true }).monitorability).toBeLessThan(
+      base.monitorability,
+    );
+    expect(
+      reasonerOutcome({ ...COT, samples: 8, selection: "verifier" }).monitorability,
+    ).toBeLessThan(base.monitorability);
+    // Latent is still the largest single drop by a wide margin.
+    const latent = reasonerOutcome({ ...COT, samples: 8, medium: "latent" });
+    expect(base.monitorability - latent.monitorability).toBeGreaterThan(50);
   });
 
   it("stays within bounds under every lever combination", () => {

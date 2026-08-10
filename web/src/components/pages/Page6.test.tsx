@@ -16,7 +16,7 @@ const mm = (q: string) => ({
 vi.stubGlobal("matchMedia", mm);
 
 import { Page6 } from "./Page6";
-import { PAGE6, WAIT_TABLE, pct, rowById, tidyMath, traceZones } from "@/lib/page06";
+import { PAGE6, WAIT_TABLE, pLabel, pct, rowById, tidyMath, traceZones } from "@/lib/page06";
 
 const B = PAGE6.budgets;
 const TOP = B[B.length - 1];
@@ -144,8 +144,11 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
     expect(body()).toContain(
       `ran past ${F1.inset.nominal_budget} tokens on ${pct(F1.inset.soft.over_budget_rate)} of items`,
     );
-    expect(F1.inset.hard.over_budget_rate).toBe(0);
-    expect(body()).toContain("overran on none");
+    // The capped arm cannot overrun its own cap, and it was measured at 512
+    // against the request arm's 2048, so the line may not score one against the
+    // other. It states what the cap is; only the request arm reports a rate.
+    expect(body()).not.toContain("overran on none");
+    expect(body()).toContain("where the number holds because generation stops there");
     expect(body()).not.toContain(`asking for ${F1.inset.nominal_budget} tokens in the prompt`);
     expect(body()).not.toContain("A prompt is a preference, not a cap.");
   });
@@ -197,13 +200,43 @@ describe("Page 6, figure 3: it stops mattering before you run out of dial", () =
   it("says the never-solved ran out of ideas rather than out of room", () => {
     render(<Page6 />);
     expect(body()).toContain(
-      `${F3.neverFlipCount - F3.censoredCount} of these problems did not run out of room, they ran out of ideas`,
+      `${F3.neverFlipFinishedCount} of these problems did not run out of room, they ran out of ideas`,
     );
     expect(body()).toContain(`a median of ${F3.medianLengthNever} tokens`);
     // Only chains still running when the cap arrived are censored, and their
     // length is a floor rather than a value.
     expect(F3.censoredCount).toBe(F3.items.filter((d) => d.truncated_at_max).length);
+    // The count is an intersection, not a subtraction across two populations:
+    // one censored chain is solved (at 1024), so never-solved minus censored
+    // undercounts by one and a reader counting squares finds the difference.
+    expect(F3.neverFlipFinishedCount).toBe(
+      F3.items.filter((d) => !d.correct_by_budget.some(Boolean) && !d.truncated_at_max).length,
+    );
+    expect(F3.neverFlipFinishedCount).toBe(F3.neverFlipCount - F3.censoredCount + 1);
+    // The quoted median is a measured length, so the floors are not averaged in:
+    // it is the lower median of the never-solved chains that stopped on their own.
+    const measured = F3.items
+      .filter((d) => !d.correct_by_budget.some(Boolean) && !d.truncated_at_max)
+      .map((d) => d.tokens_at_max)
+      .sort((a, b) => a - b);
+    expect(F3.medianLengthNever).toBe(measured[Math.floor((measured.length - 1) / 2)]);
+    expect(measured).toHaveLength(F3.neverFlipFinishedCount);
     expect(body()).toContain(`still running at ${TOP}, so its length is a floor`);
+  });
+
+  // The strip colours every square, gutter included, by whether the problem is
+  // ever solved. One censored chain is, so the legend entry for the gutter has
+  // to be the dash and not the never-solved fill, or a reader matching swatch to
+  // gutter finds a colour the legend does not name.
+  it("legends the censored gutter by its dash, not by a fill it does not all share", () => {
+    render(<Page6 />);
+    const censored = F3.items.filter((d) => d.truncated_at_max);
+    expect(censored.some((d) => d.correct_by_budget.some(Boolean))).toBe(true);
+    const strip = screen.getByLabelText("The chain-length distribution");
+    const swatch = strip.querySelector("span.h-3.w-3.border-dashed");
+    expect(swatch).not.toBeNull();
+    expect(swatch!.className).not.toContain("bg-wrong");
+    expect(swatch!.className).not.toContain("bg-compute");
   });
 
   it("names the never-solved band as this grid's limit, never as unsolvable", () => {
@@ -353,6 +386,23 @@ describe("Page 6, figure 4: refuse to let it stop", () => {
     }
     render(<Page6 />);
     expect(body()).not.toMatch(/thinking longer (?:works|helps)/i);
+    // Three unresolved crossings are a null, and the step may not read one as a
+    // mechanism. The p-values ride in the ledger, where the other vitals are.
+    expect(body()).toContain("Not one of the three crossings resolves");
+    expect(body()).not.toMatch(/was not holding back/i);
+    for (const c of fw.curves) {
+      expect(screen.getByLabelText("The extension arm").textContent).toContain(
+        pLabel(c.paired[c.paired.length - 1].p),
+      );
+    }
+    // "Roughly double" is wrong for two of the three, so the cost is a range.
+    expect(body()).not.toContain("Roughly double the tokens");
+    const multiples = fw.curves.map(
+      (c) => c.points[c.points.length - 1].mean_tokens / c.points[0].mean_tokens,
+    );
+    expect(body()).toContain(
+      `${Math.min(...multiples).toFixed(1)} to ${Math.max(...multiples).toFixed(1)} times the tokens`,
+    );
   });
 
   it("ties the two arms together: k=0 reproduces the uncapped sweep", () => {

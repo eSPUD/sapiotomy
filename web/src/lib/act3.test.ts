@@ -1,15 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { curves, interpolate } from "./curves";
 import {
-  algorithmSolved,
   cheapestStrategy,
   cotPressureRecall,
   cotPressureReward,
   distillCrossover,
-  enumerationSolved,
   faithfulnessAdmitRate,
-  hanoiMoves,
-  hanoiTokens,
   inverseU,
   perQueryCosts,
   rentPerQuery,
@@ -21,7 +17,10 @@ import {
 
 const TOL = 1.0;
 
-describe("Page 19: budget forcing (Muennighoff et al., preprint)", () => {
+// Page 19's "budgets that flex" step was cut: it reprinted this result, which
+// page 6 measures on the deck's own harness. The file is kept and validated,
+// but nothing renders it; PROVENANCE.md records that.
+describe("budget forcing (Muennighoff et al., preprint), retained unrendered", () => {
   const d = curves.budgetForcing;
   it("advances 50% -> 57% across 'Wait' presses", () => {
     expect(Math.abs(interpolate(d, 0) - 50)).toBeLessThan(TOL);
@@ -225,34 +224,12 @@ describe("Page 18: CoT monitoring & obfuscation (Baker et al., preprint)", () =>
   it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 20: Illusion of Thinking (preprints, both sides)", () => {
-  const d = curves.illusion;
-  const { tokensPerMove, tokenBudget, riverCrossingImpossibleN } = d.fit!.params;
-  it("Hanoi requires 2^N - 1 moves and tokens grow with N", () => {
-    expect(hanoiMoves(3)).toBe(7);
-    expect(hanoiMoves(10)).toBe(1023);
-    expect(hanoiTokens(10, tokensPerMove)).toBeGreaterThan(hanoiTokens(5, tokensPerMove));
-  });
-  it("verdict flips between scoring modes past the token wall", () => {
-    // Find an N where enumeration overflows the budget.
-    let n = 1;
-    while (enumerationSolved(n, tokensPerMove, tokenBudget) && n < 20) n++;
-    expect(enumerationSolved(n, tokensPerMove, tokenBudget)).toBe(false); // collapse
-    expect(algorithmSolved()).toBe(true); // but algorithm scoring solves it
-  });
-  it("flags River-Crossing impossible for N >= 6", () => {
-    expect(riverCrossingImpossibleN).toBe(6);
-  });
-  it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
-});
-
 describe("preprint flagging (all Act 3 non-peer-reviewed sources)", () => {
-  it("pages 15, 18, 19, 20 data (and reserved arc-cost) are preprint/non-peer-reviewed", () => {
+  it("pages 15, 17, 18 and 19 data (and reserved arc-cost) are preprint/non-peer-reviewed", () => {
     expect(curves.budgetForcing.citation.preprint).toBe(true);
     expect(curves.arcCost.citation.preprint).toBe(true);
     expect(curves.overthinking.citation.preprint).toBe(true);
     expect(curves.faithfulness.citation.preprint).toBe(true);
     expect(curves.cotObfuscation.citation.preprint).toBe(true);
-    expect(curves.illusion.citation.preprint).toBe(true);
   });
 });

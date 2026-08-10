@@ -102,6 +102,7 @@ import { useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { PAGE7, chainsFor, pLabel, pct, tidyMath, tokens } from "@/lib/page07";
 import { useStore } from "@/store/useStore";
@@ -126,6 +127,20 @@ const LEVELS = "levels 4 and 5";
 
 /** Cited for the technique. Every number on this page is ours. */
 const REF = { wang: 1 } as const;
+
+/* The pile's temperature is the best the sweep found, but it is not the only one:
+   the run votes to the same accuracy at more than one setting. Both places that
+   talk about the sweep have to say so, so the tie is read out of the data here
+   rather than named in prose. */
+const BEST_VOTE = Math.max(...F2.diversity.map((d) => d.plurality_accuracy));
+const TIED_WITH_HOT = [...F2.diversity]
+  .sort((a, b) => a.temperature - b.temperature)
+  .filter(
+    (d) =>
+      Math.abs(d.plurality_accuracy - BEST_VOTE) < 1e-9 && d.temperature !== F2.hot.temperature,
+  )
+  .map((d) => `T = ${d.temperature}`)
+  .join(" and ");
 
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
@@ -208,9 +223,24 @@ const IH = HGT - MARGIN.top - MARGIN.bottom;
  * reader to infer. Earlier labels read "in the pile" / "the vote" / "T = 0",
  * which is the notebook's vocabulary and not a reader's.
  */
-function PileChart() {
+/**
+ * The reader sets N.
+ *
+ * This is the one page in the act whose subject is what happens as you add
+ * voters, and until now the three charts were static: a reader who wanted to
+ * know whether the vote still beats one chain at N = 4 had to read it off a
+ * line. The axis was always measured. `manifest.pile.n_axis` is [1, 2, 4, 8,
+ * 16] and every point is the mean over 64 random N-subsets of the same pile
+ * (`axis_rule`), so moving the handle re-reads the run rather than modelling
+ * anything.
+ *
+ * The handle steps in index, not in N: the axis is log-spaced and the reader
+ * should get one measured point per step, never an interpolated one.
+ */
+function PileChart({ at }: { at: number }) {
   const pts = F2.hot.points;
   const ns = pts.map((p) => p.n);
+  const sel = pts[at];
   const x = (n: number) => (Math.log2(n) / Math.log2(Math.max(...ns))) * IW;
   const y = (v: number) => IH - (v / 100) * IH;
   const line = (get: (p: (typeof pts)[number]) => number) =>
@@ -286,6 +316,30 @@ function PileChart() {
           ties
         </text>
       ) : null}
+
+      {/* The reader's position on the axis. Drawn last so it sits above the band
+          and both lines, and drawn as a rule plus two rings rather than a
+          highlight, so it reads as "here" and not as a sixth quantity. */}
+      <line
+        x1={x(sel.n)}
+        x2={x(sel.n)}
+        y1={0}
+        y2={IH}
+        className="stroke-ink"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+        data-testid="voters-marker"
+      />
+      <circle cx={x(sel.n)} cy={y(sel.coverage * 100)} r={5} className="fill-none stroke-wrong" strokeWidth={2} />
+      <circle cx={x(sel.n)} cy={y(sel.accuracy * 100)} r={5} className="fill-none stroke-compute" strokeWidth={2} />
+      <text
+        x={x(sel.n)}
+        y={-8}
+        textAnchor="middle"
+        className="fill-ink text-[10px] font-semibold"
+      >
+        {sel.n === 1 ? "1 chain" : `${sel.n} chains`}
+      </text>
     </ChartFrame>
   );
 }
@@ -456,13 +510,21 @@ export function Page7() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
   const [open, setOpen] = useState<string | null>(null);
+  // Index into the measured N axis, not N itself. Opens at the top of the axis,
+  // so the reader's first sight of the chart is the finished result the prose
+  // above it quotes, and adding a voter is something they take away rather than
+  // something they build up to.
+  const [voterIx, setVoterIx] = useState(F2.hot.points.length - 1);
+  const voters = F2.hot.points[voterIx];
+  const oneChain = F2.hot.points[0];
 
   const s = F1.specimen;
   const openChains = open ? chainsFor(s, open) : [];
   const openRow = open ? s.ranked.find((r) => r.answer === open) : null;
   const last = F2.hot.points[F2.hot.points.length - 1];
-  // What one chain spends against what the pile spends. The gap between them is why
-  // "just give one chain more" is not on the table: the chain ends on its own.
+  // What one chain spends against what the pile spends. The gap between them is what
+  // "just give one chain more" would have to beat, and page 6 measured that arm: the
+  // chain does carry on when it is pushed, it just does not score any better for it.
   const oneChainTokens = F2.hot.points[0].mean_tokens;
   const pileTokens = last.mean_tokens;
 
@@ -645,7 +707,52 @@ export function Page7() {
             aria-label="Accuracy against the number of chains"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <PileChart />
+            <PileChart at={voterIx} />
+            {/* The act's one page about adding voters, with a control that adds
+                one. Every value below is a measured point on the run's own N
+                axis; the handle steps between them and never lands off one. */}
+            <div className="flex flex-col gap-2">
+              <Slider
+                label="chains the vote may see"
+                min={0}
+                max={F2.hot.points.length - 1}
+                step={1}
+                value={voterIx}
+                ticks={F2.hot.points.map((_, i) => i)}
+                format={(i) => `${F2.hot.points[i].n}`}
+                onChange={(i) => {
+                  recordInteraction(PAGE_N);
+                  setVoterIx(i);
+                }}
+              />
+              <p aria-live="polite" className="text-sm text-ink">
+                On {voters.n === 1 ? "one chain" : `${voters.n} chains`}, the vote returns the
+                answer on <strong className="font-mono">{pct(voters.accuracy)}</strong>{" "}
+                {voters.n === 1 ? (
+                  <>
+                    of problems, which is where the count starts. One sampled chain is not a vote
+                    yet.
+                  </>
+                ) : voters.accuracy > oneChain.accuracy ? (
+                  <>
+                    of problems, <strong>{pct(voters.accuracy - oneChain.accuracy)} above</strong>{" "}
+                    one sampled chain.
+                  </>
+                ) : (
+                  <>
+                    of problems, <strong>{pct(oneChain.accuracy - voters.accuracy)} below</strong>{" "}
+                    one sampled chain: the tie rule is still costing more than the count is
+                    buying.
+                  </>
+                )}{" "}
+                <span className="text-ink-muted">
+                  The right answer was somewhere in the box on {pct(voters.coverage)}, so{" "}
+                  {pct(voters.coverage - voters.accuracy)} of problems had it written down and
+                  thrown away. {pct(voters.tie_rate)} of these votes tie. The bill is{" "}
+                  {tokens(voters.mean_tokens)} tokens a problem.
+                </span>
+              </p>
+            </div>
             {/* The band was explained three times: here, in the intro, and by its own
                 in-chart label. The intro now carries the definition and the chart names
                 itself, so this is down to the one fact neither of them has. */}
@@ -705,8 +812,9 @@ export function Page7() {
             </div>
             <p className="text-xs text-ink-muted">
               Measured on {F2.diversity[0].n_items} items. This is a count of answers, not an
-              accuracy. Disagreement is necessary and not sufficient: past T = {F2.hot.temperature}{" "}
-              each chain gets worse faster than the vote recovers it.
+              accuracy. Disagreement is necessary and not sufficient: the vote comes out the same
+              at T = {F2.hot.temperature} and {TIED_WITH_HOT}, and past that each chain gets worse
+              faster than the vote recovers it.
             </p>
           </div>
         </section>
@@ -760,9 +868,10 @@ export function Page7() {
               fragments of arguments rather than arguments.{" "}
               <strong className="text-ink">Splitting is not what fails; capping is.</strong> Let the
               same chains run to their own end and the vote works, at {tokens(pileTokens)} tokens
-              against {tokens(oneChainTokens)} for one, and there is no cheaper way to buy it:
-              page 6&apos;s chain stops on its own and even when given more tokens, will refuse to
-              continue.
+              against {tokens(oneChainTokens)} for one. Of the two ways of spending tried here,
+              dividing one budget and letting every chain finish, only the second one buys the gain.
+              The obvious cheaper route is the one page 6 already took: pushed past its own stopping
+              point, that chain keeps writing, and the extra tokens do not buy a better answer.
             </p>
           </section>
         </section>
@@ -806,8 +915,9 @@ export function Page7() {
               <li>
                 <strong className="text-ink">The temperature is fitted, not held out.</strong> T ={" "}
                 {F2.hot.temperature} was picked by which value voted best on{" "}
-                {F2.diversity[0].n_items} items, so the vote is being scored at a setting chosen to
-                flatter it.
+                {F2.diversity[0].n_items} items, where {TIED_WITH_HOT} voted exactly as well, so the
+                vote is being scored at a setting chosen to flatter it and not the only setting that
+                would have done.
               </li>
               <li>
                 <strong className="text-ink">Only the answer is graded.</strong> Every number on

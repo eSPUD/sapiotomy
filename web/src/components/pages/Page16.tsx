@@ -30,10 +30,10 @@
  * regime (small model + inference compute stands in for a 14x larger one on
  * easy/medium problems) is where the "sample" verdict comes from.
  *
- * Layout follows pages 3–10: full-width intro, numbered steps in the reading
- * column, margin notes carry numbered cites (Cite/RefItem; venues, ids and
- * links live in the badge row at the bottom), caveats live in step bodies, one
- * short provenance footnote.
+ * Layout follows pages 3 to 10: full-width intro, numbered steps in the
+ * reading column, margin notes carry the numbered cites (Cite/RefItem, with
+ * venues, ids and links in the note itself), caveats live in step bodies, one
+ * short provenance footnote, one handoff.
  */
 
 import { useMemo, useState } from "react";
@@ -142,7 +142,7 @@ function CostStrip({
           className="absolute bottom-0 whitespace-nowrap text-[11px] text-ink-muted"
           style={{ left: `${pct(floorLow)}%` }}
         >
-          humans: ${floorLow}–{floorHigh} floor · ${measured} measured
+          humans: ${floorLow} to ${floorHigh} floor · ${measured} measured
         </p>
       </div>
       <p className="text-[11px] text-ink-muted">estimated $ per task · log scale, $1 to $10,000</p>
@@ -158,9 +158,7 @@ export function Page16() {
   const a = arc.fit!.params;
   const pricing = curves.deepseekPricing;
   const pd = pricing.fit!.params;
-  const brown = curves.coverageScaling;
   const snell = curves.computeOptimal;
-  const nature = curves.deepseekTraining;
 
   // Per-query dollars from the cited list prices; climb/ceiling authored
   // (Brown-shaped, Stroebl-capped) and disclosed in the step body.
@@ -214,18 +212,22 @@ export function Page16() {
   const verdictText: Record<typeof verdict, { head: string; body: string }> = {
     sample: {
       head: "✓ cheapest here: sample the small model",
-      body: `${n} sample${n === 1 ? "" : "s"} per query at ${fmtPerQ(cost.sample ?? 0)} still undercuts one big-model call at ${fmtPerQ(cost.big)} — the regime where inference compute substitutes for size.`,
+      body: `${n} sample${n === 1 ? "" : "s"} per query at ${fmtPerQ(cost.sample ?? 0)} still undercuts one big-model call at ${fmtPerQ(cost.big)}: the regime where inference compute substitutes for size.`,
     },
     big: {
       head: "✓ cheapest here: one big-model call",
       body:
         cost.sample === null
           ? `at a ${target}% target the small model cannot get there by sampling at all, and the volume is too low for a retraining bill to pay off.`
-          : `hitting ${target}% would take ${n} samples (${fmtPerQ(cost.sample)}/query) — the log-linear tax has eaten the whole ${pd.outputRatio}× price gap.`,
+          : `hitting ${target}% would take ${n} samples (${fmtPerQ(cost.sample)}/query): the log-linear tax has eaten the whole ${pd.outputRatio}× price gap.`,
     },
     distill: {
-      head: "✓ cheapest here: distill once, then serve",
-      body: `${fmtUSD(ANCHORS.distillUSD)} up front beats renting by ${fmtUSD(bills.rent - bills.distill)} over ${fmtQ(queries)} queries — per-query cost is paid forever, a training bill only once.`,
+      // The conditional is not hedging: the rent and sample arms both answer
+      // "at this target", and this one cannot. Printed unconditionally next to
+      // a target the page has just called unreachable, it reads as a promise
+      // that $294k buys any accuracy you type in.
+      head: `✓ cheapest here, IF the retrain reaches ${target}%: distill once, then serve`,
+      body: `${fmtUSD(ANCHORS.distillUSD)} up front beats renting by ${fmtUSD(bills.rent - bills.distill)} over ${fmtQ(queries)} queries: per-query cost is paid forever, a training bill only once. Whether a retrain at this price lands on ${target}% is the one thing on this page nothing cited establishes${cost.sample === null ? `, and ${target}% is past the point where sampling can get there at all` : ""}.`,
     },
   };
 
@@ -241,14 +243,13 @@ export function Page16() {
 
       <p className="max-w-2xl text-lg text-ink-muted">
         Every trick in the toolbox spends the same currency: reasoning tokens, metered in dollars
-        and seconds. And the returns diminish —{" "}
+        and seconds. Nobody in this story has yet been handed the bill. This page reads it: what one
+        hard benchmark actually cost, what happened when token prices collapsed by{" "}
+        {Math.round(pd.outputRatio)}×, and{" "}
         <strong className="text-ink">
-          coverage grows with the logarithm of the samples, so each next point of accuracy costs
-          exponentially more than the last
+          how much accuracy a given budget can still buy before you are better off retraining
         </strong>
-        . This page reads the invoice: what one hard benchmark actually cost, why collapsing token
-        prices don&apos;t repeal that math, and when the right move stops being{" "}
-        <em>think longer</em> and becomes <em>go retrain</em>.
+        .
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -266,7 +267,7 @@ export function Page16() {
           >
             <p className="text-sm text-ink">
               December 2024: OpenAI&apos;s o3 attacks ARC-AGI, a benchmark of visual puzzles a
-              person solves in minutes. Same model, two budgets — the only difference is how many
+              person solves in minutes. Same model, two budgets, and the only difference is how many
               reasoning chains it samples per task.
               <Cite n={REF.arcPrize} />
             </p>
@@ -295,7 +296,7 @@ export function Page16() {
                   ~${a.humanMeasuredCost}
                 </p>
                 <p className="text-xs text-ink-muted">
-                  per task measured · ${a.humanFloorLow}–{a.humanCost} plausible floor
+                  per task measured · ${a.humanFloorLow} to ${a.humanCost} plausible floor
                 </p>
               </div>
             </div>
@@ -354,7 +355,7 @@ export function Page16() {
             <div
               className="flex flex-col gap-2"
               role="img"
-              aria-label={`Output price per million reasoning tokens: OpenAI o1 $${pd.o1OutputPerM}, DeepSeek-R1 $${pd.r1OutputPerM} — about ${pd.outputRatio} times cheaper. Input prices: $${pd.o1InputPerM} versus $${pd.r1InputMissPerM} per million.`}
+              aria-label={`Output price per million reasoning tokens: OpenAI o1 $${pd.o1OutputPerM}, DeepSeek-R1 $${pd.r1OutputPerM}, about ${pd.outputRatio} times cheaper. Input prices: $${pd.o1InputPerM} versus $${pd.r1InputMissPerM} per million.`}
             >
               {[
                 { label: "OpenAI o1", value: pd.o1OutputPerM, tone: "bg-wrong" },
@@ -380,12 +381,11 @@ export function Page16() {
             </div>
             <figcaption className="text-sm text-ink">
               But a price cut moves the bill <em>down</em>, not the curve&apos;s <em>shape</em>.
-              Coverage still grows log-linearly — ten times the samples per fixed gain
-              <Cite n={REF.brown} /> — and an imperfect verifier still caps what any amount of
+              Coverage still grows log-linearly, ten times the samples per fixed gain,
+              <Cite n={REF.brown} /> and an imperfect verifier still caps what any amount of
               sampling can reach.
-              <Cite n={REF.stroebl} />{" "}
-              <strong>Exponential spend, linear gains, hard ceiling</strong>: those survive every
-              price cut, which is why the next dial exists.
+              <Cite n={REF.stroebl} /> What that leaves you able to buy is the next dial&apos;s
+              question.
             </figcaption>
           </figure>
         </section>
@@ -415,7 +415,7 @@ export function Page16() {
               You run a product that gets a stream of hard queries. Three ways to serve every one at
               your target accuracy: <strong>rent</strong> a frontier model (one call each),{" "}
               <strong>sample</strong> a {pd.outputRatio}×-cheaper small model N times and pick the
-              best, or <strong>retrain</strong> — pay one distillation bill so the small model does
+              best, or <strong>retrain</strong>, paying one distillation bill so the small model does
               it in a single call, then serve at its rate forever.
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -459,7 +459,7 @@ export function Page16() {
                 <p
                   className={`font-mono text-2xl font-bold tabular-nums ${cost.sample === null ? "text-wrong" : "text-compute"}`}
                 >
-                  {cost.sample === null ? "—" : fmtPerQ(cost.sample)}
+                  {cost.sample === null ? "n/a" : fmtPerQ(cost.sample)}
                 </p>
                 <p className="text-xs text-ink-muted">
                   {cost.sample === null
@@ -474,7 +474,9 @@ export function Page16() {
                 <p className="font-mono text-2xl font-bold tabular-nums text-correct">
                   {fmtPerQ(cost.distilled)}
                 </p>
-                <p className="text-xs text-ink-muted">per query after the one-time bill</p>
+                <p className="text-xs text-ink-muted">
+                  per query after the one-time bill, assuming the retrained model reaches {target}%
+                </p>
               </div>
             </div>
 
@@ -509,7 +511,7 @@ export function Page16() {
               }`}
               points={ownPts}
               secondary={{ points: rentPts, label: "keep renting" }}
-              primaryLabel="distill once, then serve"
+              primaryLabel="distill once, then serve (assumed to reach the target)"
               logX
               logY
               xDomain={[100, 1e7]}
@@ -527,7 +529,7 @@ export function Page16() {
             <figcaption className="text-sm text-ink-muted">
               Two regimes fall out of the arithmetic. At moderate targets and volumes,{" "}
               <strong className="text-ink">answer-time compute wins</strong>: a small model plus
-              sampling stands in for a far larger one — Snell et al. measure the substitution
+              sampling stands in for a far larger one, and Snell et al. measure the substitution
               holding up against a {snell.fit!.params.largerModelFactor}× larger model on easy and
               medium problems.
               <Cite n={REF.snell} /> Push the target up and the log-linear tax compounds ~10× per{" "}
@@ -535,12 +537,15 @@ export function Page16() {
               <em>volume</em> up and <strong className="text-ink">retraining wins</strong>, because
               a per-query price is paid forever and a training bill only once
               {crossover !== null ? (
-                <> — here it pays off past ≈{fmtQ(crossover)} queries</>
+                <>, and here it pays off past ≈{fmtQ(crossover)} queries</>
               ) : (
-                <> — though at this target one sample already suffices, so there is nothing to amortize</>
+                <>, though at this target one sample already suffices, so there is nothing to
+                  amortize</>
               )}
-              . And every extra sample is also latency: the meter runs in seconds as well as
-              dollars.
+              . One assumption sits under the seconds as well as the dollars: this invoice bills
+              the {n === 1 ? "sample" : `${n} samples`} for a query as if they were drawn one after
+              another, so latency rises with the bill. Draw them at once on separate machines, as
+              page 19&apos;s panel assumes, and the dollars still climb while the wait does not.
             </figcaption>
             <p className="text-xs text-ink-muted">
               Illustrative calculator, not a quote: queries are priced at{" "}
@@ -549,14 +554,23 @@ export function Page16() {
               {fmtUSD(pd.r1RlTrainUSD)} RL-stage cost for R1 (base model excluded);
               <Cite n={REF.r1} /> the
               small model&apos;s climb (+{ANCHORS.slopePerDecade} points per 10× samples from{" "}
-              {ANCHORS.baseAcc}%, ceiling {ANCHORS.ceiling}%) is authored — the log-linear shape is
-              Brown et al.&apos;s, the ceiling is Stroebl et al.&apos;s.
+              {ANCHORS.baseAcc}%, ceiling {ANCHORS.ceiling}%) is authored, the log-linear shape is
+              Brown et al.&apos;s and the ceiling is Stroebl et al.&apos;s. The strongest unbacked
+              assumption on this page is the green line itself:{" "}
+              <strong className="text-ink">
+                the distilled model is assumed to hit whatever target you set
+              </strong>
+              , at a flat {fmtUSD(ANCHORS.distillUSD)}. Renting and sampling both get harder as the
+              target rises; that arm does not, because no source here fixes what a retrain at this
+              price can reach. Read it as the bill for a plan, not as evidence the plan works.
             </p>
           </section>
         </section>
         <Note kicker="Try it">
-          <p>Hold 72% and push the volume: renting wins early, owning wins late.</p>
-          <p>Then hold the volume and raise the target past ~77%: the samples stop paying.</p>
+          {/* One imperative, and no interpretation: the verdict banner above is
+              already live, and printing the answer here means the dial confirms
+              instead of revealing. */}
+          <p>Hold the volume at 100k and walk the target from 65% to 92%.</p>
         </Note>
         <div aria-hidden="true" />
         <Note kicker="References">
@@ -567,7 +581,15 @@ export function Page16() {
         </Note>
       </div>
 
-      
+      {/* Handoff to 17 */}
+      <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+        Every line on that invoice priced the same thing: more thinking, and what it buys. The
+        arithmetic assumed the buying works, which it has on every page so far.{" "}
+        <em className="text-ink-muted">
+          It does not always. Next: the side of the dial where spending more makes the answer worse.
+        </em>
+      </div>
+
       <p className="text-xs text-ink-muted">
         every dollar figure on this page is a reported estimate or a list price, presented as
         reported · the step-3 calculator is derived arithmetic over those cited anchors plus the

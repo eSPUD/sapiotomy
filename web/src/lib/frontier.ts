@@ -9,6 +9,11 @@ import { createRng } from "./rng";
 // points. `intercept` is the accuracy at 1 relative unit of thinking on the
 // fully-trained run; pulling train-time compute below `maxTrainExp` decades
 // shifts the whole test-time curve down by the decades forgone.
+// The joint surface is AUTHORED: the o1 announcement published two SEPARATE
+// charts with unlabeled relative compute axes, and no source states that the
+// two axes obey one law with a shared slope. Page 13's fidelity note discloses
+// this. Note also that the two exponents enter as a sum, so they substitute
+// exactly (law(2,0) = law(0,2) = 21.0); the page must not claim otherwise.
 export function twoAxisAccuracy(
   testExp: number,
   trainExp: number,
@@ -72,7 +77,19 @@ export function rentPerQuery(target: number, a: BillAnchors): number {
   return c.sample === null ? c.big : Math.min(c.big, c.sample);
 }
 
-/** Total bills after `queries`: keep renting vs distill once then serve. */
+/**
+ * Total bills after `queries`: keep renting vs distill once then serve.
+ *
+ * THE DISTILL ARM ASSUMES THE RETRAIN LANDS ON THE TARGET, and nothing cited
+ * establishes that. Renting and sampling both depend on `target` (sampling
+ * needs more draws as it rises, and stops entirely at the ceiling); the distill
+ * arm is a fixed bill plus one small-model call at any target you ask for. The
+ * arithmetic is left as is because a capability bound for a distilled model is
+ * not in any source this deck carries, so inventing one would be the larger
+ * offence. The assumption is instead named wherever the number is shown:
+ * Page16.tsx's distill card, its verdict banner, its chart label and its
+ * disclosure. If a measured bound ever arrives, gate it here.
+ */
 export function totalBills(
   queries: number,
   target: number,
@@ -197,20 +214,4 @@ export function cotPressureRecall(
   steep: number,
 ): number {
   return baseRecall / (1 + Math.exp(steep * (pressure - cliff)));
-}
-
-// --- Page 20: Tower of Hanoi token explosion -------------------------------
-export function hanoiMoves(n: number): number {
-  return Math.pow(2, n) - 1;
-}
-export function hanoiTokens(n: number, tokensPerMove: number): number {
-  return hanoiMoves(n) * tokensPerMove;
-}
-/** Under ENUMERATION scoring, the model "fails" once its output exceeds budget. */
-export function enumerationSolved(n: number, tokensPerMove: number, tokenBudget: number): boolean {
-  return hanoiTokens(n, tokensPerMove) <= tokenBudget;
-}
-/** Under ALGORITHM scoring, the model can state the (correct) recursive rule. */
-export function algorithmSolved(): boolean {
-  return true;
 }

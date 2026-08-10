@@ -154,6 +154,15 @@ export function Page9() {
 
   const nRead = trace.steps.filter((s) => s.check !== "unknown").length;
   const prmScored = trace.steps.filter((s) => s.prmVerdict !== null).length;
+  // Steps the checker did not prove false. NOT the same as sound: most of them it
+  // never read. And not `firstFalse` either, which is an index, not a count.
+  const nNotDisproved = trace.steps.length - trace.nFalse;
+  // These specimens all score above the PRM's cut on every line, so the reveal has
+  // to say so rather than let a reader generalise a grader that never disagrees.
+  const prmFlagsNothing = prmScored > 0 && trace.steps.every((s) => s.prmVerdict !== "false");
+  const allSpecimensQuiet = ROLES.every((r) =>
+    r.specimen.steps.every((s) => s.prmVerdict !== "false"),
+  );
 
   const det = PAGE9.detection;
   const loc = PAGE9.localisation;
@@ -516,6 +525,18 @@ export function Page9() {
                         </p>
                       )
                     ) : null}
+                    {prmFlagsNothing && det.prm ? (
+                      <p>
+                        The PRM flagged no line here.{" "}
+                        {allSpecimensQuiet
+                          ? "Every step of all three chains scores above its cut, so nothing you can click on this page shows it disagreeing."
+                          : "Every step of this chain scores above its cut."}{" "}
+                        Over the run it does disagree, flagging a step in{" "}
+                        <strong className="text-ink">{pct(det.prm.rate, 1)}</strong> of the right
+                        answers. That is the bar in the next beat, and these three chains sit at the
+                        quiet end of it.
+                      </p>
+                    ) : null}
                     <button
                       type="button"
                       onClick={gradeAgain}
@@ -560,7 +581,9 @@ export function Page9() {
                           ? trace.nFalse > 0
                             ? `It reads the last line and stops. It cannot see the ${trace.nFalse} step${trace.nFalse === 1 ? "" : "s"} below that the checker proves false.`
                             : "It reads the last line and stops, and here it happens to be right about the whole chain."
-                          : `All ${trace.steps.length} steps are condemned together, including the ${trace.firstFalse ?? 0} that were sound.`}
+                          : nNotDisproved > 0
+                            ? `All ${trace.steps.length} steps are condemned together, including the ${nNotDisproved} the checker never disproved.`
+                            : `All ${trace.steps.length} steps are condemned together, one verdict for the lot.`}
                       </p>
                     </div>
                   ) : isRevealed ? (
@@ -568,7 +591,11 @@ export function Page9() {
                       <p className="text-ink">
                         <span className="font-semibold text-compute">Process grader:</span>{" "}
                         {breakAt !== null
-                          ? `the ${breakAt} line${breakAt === 1 ? "" : "s"} before the break ${breakAt === 1 ? "stands" : "stand"}, so this chain needs one line fixed rather than the whole of it thrown away. ${trace.outcomeCorrect ? "And the outcome grader passed it, break and all." : ""}`
+                          ? `${
+                              breakAt === 0
+                                ? "the break is the first line"
+                                : `nothing in the ${breakAt} line${breakAt === 1 ? "" : "s"} before the break was disproved`
+                            }, so this chain needs one line fixed rather than the whole of it thrown away. ${trace.outcomeCorrect ? "And the outcome grader passed it, break and all." : ""}`
                           : "nothing here is provably false, and the PRM agrees. That is the case that needs no argument, and the reason a clean chain is worth showing beside the other two."}
                       </p>
                     </div>
@@ -608,6 +635,15 @@ export function Page9() {
                   checker: AUC {prm.auc.toFixed(2)} over {prm.nStepsCompared.toLocaleString()} steps.
                   That reliability was measured on arithmetic, its friendliest ground, so treat it as
                   an upper bound, and above you saw it fall short of even that.
+                </p>
+                <p>
+                  <strong className="text-ink">Its cut is fitted, not held out.</strong> The{" "}
+                  {prm.threshold.toFixed(2)} that turns a score into a verdict was picked by which
+                  value best matched the checker&apos;s own labels, and{" "}
+                  {prm.thresholdPlateauCount} cut-offs spanning{" "}
+                  {Math.round(prm.thresholdPlateauSpan * 100)} points of the score matched about as
+                  well. So its share below is not a second, independent reading of the checker&apos;s:
+                  it was calibrated against it, at a setting chosen to agree with it.
                 </p>
               </Note>
             ) : null}
@@ -656,14 +692,19 @@ export function Page9() {
                 the working and it catches none of this by construction; the question is what reading
                 the steps adds. The checker&apos;s{" "}
                 <strong className="text-ink">{pct(det.rate, 2)}</strong> is a proof you can redo by
-                hand and a floor, not a rate: with only {det.nContaminated} chains it undercounts,
-                and it reads arithmetic alone.{" "}
+                hand and a floor, not a rate: it counts chains, and many chains are the same problem
+                sampled again, so the count that stands on its own is problems, where it is{" "}
+                <strong className="text-ink">{pct(det.problemRate, 1)}</strong> ({det.nProblems} of
+                the {det.nProblemsWithARightChain} problems that produced a right answer). With only{" "}
+                {det.nContaminated} chains carrying a provable break it undercounts either way, and
+                it reads arithmetic alone.{" "}
                 {det.prm && prm ? (
                   <>
                     {prmName}&apos;s <strong className="text-ink">{pct(det.prm.rate, 1)}</strong> is a
                     trained model&apos;s opinion, measured reliable enough to quote (see the margin)
-                    but still a score, and on the Lucky chain above it was the one that missed the
-                    slip.
+                    but still a score, and one read at a cut-off fitted on the checker&apos;s own
+                    labels, so these are not two independent readings of the same thing. On the Lucky
+                    chain above it was the one that missed the slip.
                   </>
                 ) : null}
               </figcaption>
@@ -671,13 +712,15 @@ export function Page9() {
 
             <p className="text-sm text-ink-muted">
               <strong className="text-ink">And what it catches, it can place.</strong> On the{" "}
-              {loc.nLocalisable} wrong chains with a findable break, the first{" "}
-              <strong className="text-ink">{pct(loc.medianShareSound ?? 0)}</strong> of the chain
-              still stood; outcome grading throws all of it away.{" "}
+              {loc.nLocalisable} wrong chains with a findable break, the median chain ran{" "}
+              <strong className="text-ink">{pct(loc.medianShareSound ?? 0)}</strong> of its length
+              before the line that breaks; outcome grading throws all of it away.{" "}
               {!loc.survivesSegmentation && loc.spreadPts !== null ? (
                 <>
-                  Read that with its width: moving where a step ends moves it by up to{" "}
-                  {Math.round(loc.spreadPts)} points, so it is a direction, not a digit.
+                  Read it as a direction, not a digit: on a smaller re-cut sample the four ways of
+                  ending a step put that median across {Math.round(loc.spreadPts)} points, from{" "}
+                  {pct(loc.subsample.low)} to {pct(loc.subsample.high)}, and none of them landed on
+                  the figure quoted here.
                 </>
               ) : null}
             </p>

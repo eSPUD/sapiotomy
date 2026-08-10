@@ -35,7 +35,6 @@ import { Toggle } from "@/components/Toggle";
 import { FAITHFULNESS_PROBE } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import type { Citation } from "@/lib/data";
 import { cotPressureRecall, cotPressureReward } from "@/lib/frontier";
 import { bernoulli, createRng } from "@/lib/rng";
 import { useStore } from "@/store/useStore";
@@ -47,21 +46,6 @@ const P = FAITHFULNESS_PROBE;
 const REF = { chen: 1, turpin: 2, baker: 3, korbak: 4 } as const;
 const MAX_RUNS = 400;
 const PRESSURES = Array.from({ length: 21 }, (_, i) => i / 2);
-
-/* Position papers cited in prose carry no on-screen numbers, so they have no
-   data file; their stubs are declared here to keep the bottom row complete. */
-const KORBAK: Citation = {
-  ref: "Korbak et al. 2025",
-  url: "https://arxiv.org/abs/2507.11473",
-  venue: "arXiv (position paper)",
-  preprint: true,
-};
-const TURPIN: Citation = {
-  ref: "Turpin et al. 2023",
-  url: "https://arxiv.org/abs/2305.04388",
-  venue: "NeurIPS 2023",
-  preprint: false,
-};
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -86,6 +70,10 @@ export function Page18() {
   const [isR1, setIsR1] = useState(false);
   const [hintOn, setHintOn] = useState(false);
   const [runs, setRuns] = useState(0);
+  const [showWhy, setShowWhy] = useState(false);
+
+  // Step 2 — what the monitor is allowed to read.
+  const [readsThoughts, setReadsThoughts] = useState(false);
 
   const admitPct = isR1 ? r1Admit : claudeAdmit;
   const modelName = isR1 ? "DeepSeek-R1" : "Claude 3.7 Sonnet";
@@ -233,11 +221,39 @@ export function Page18() {
                   tag moved the answer. A monitor reading it learns the truth.
                 </p>
               ) : (
-                <p className="mt-1">
-                  <strong className="text-wrong">Unfaithful:</strong> not a word about the tag, and
-                  the story it tells instead sounds like expertise. Reading the trace alone, this
-                  passes for honest reasoning. We only know better because the clean run sits above.
-                </p>
+                <div className="mt-1 flex flex-col gap-2">
+                  <p>
+                    <strong className="text-wrong">Unfaithful:</strong> not a word about the tag,
+                    and the story it tells instead sounds like expertise. Reading the trace alone,
+                    this passes for honest reasoning.
+                  </p>
+                  {/* The page's sharpest point, and it lands only if the reader
+                      reaches for it first. Told as prose it is a sentence in a
+                      box; asked as a question it is the reader noticing that
+                      the verdict above needed evidence the monitor never had. */}
+                  {showWhy ? (
+                    <p className="rounded border-l-4 border-compute bg-compute/10 p-2">
+                      Only by comparing it with the clean run. Same question, no tag, and the model
+                      answered {P.correct}. The word <em>unfaithful</em> is a claim about two runs,
+                      and this panel has both.{" "}
+                      <strong>
+                        A monitor in production has one. So do you, every time you read a chain of
+                        thought and find it convincing.
+                      </strong>
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowWhy(true);
+                        recordInteraction(PAGE_N);
+                      }}
+                      className="self-start rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink"
+                    >
+                      Then how do we know it is unfaithful? ▸
+                    </button>
+                  )}
+                </div>
               )}
             </div>
 
@@ -312,33 +328,64 @@ export function Page18() {
               (&ldquo;the tests only check this one function, so just stub it&rdquo;) before its
               code makes the hack look clean.
             </p>
+            <Toggle
+              label="What the monitor may read"
+              checked={readsThoughts}
+              offLabel="actions & outputs"
+              onLabel="and the thoughts"
+              onChange={(v) => {
+                setReadsThoughts(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
             <div
               className="flex flex-col gap-2"
               role="img"
-              aria-label={`Share of systemic reward hacks caught: a monitor reading only the agent's actions and outputs catches ${actionRecall} percent; a monitor also reading the chain of thought catches ${cotRecall} percent.`}
+              aria-label={`Share of systemic reward hacks caught: a monitor reading only the agent's actions and outputs catches ${actionRecall} percent; a monitor also reading the chain of thought catches ${cotRecall} percent. The monitor currently reads ${readsThoughts ? "the thoughts as well" : "actions and outputs only"}.`}
             >
               {[
-                { label: "monitor reads actions & outputs only", value: actionRecall, tone: "bg-grid" },
-                { label: "monitor also reads the thoughts", value: cotRecall, tone: "bg-correct" },
-              ].map((b) => (
-                <div key={b.label} className="flex items-center gap-2 text-sm">
-                  <span className="w-64 shrink-0 text-ink-muted">{b.label}</span>
-                  <div className="h-5 flex-1 rounded bg-surface-raised">
-                    <div className={`h-5 rounded ${b.tone}`} style={{ width: `${b.value}%` }} />
+                { key: "actions", label: "reads actions & outputs only", value: actionRecall },
+                { key: "thoughts", label: "reads the thoughts as well", value: cotRecall },
+              ].map((b) => {
+                const live = readsThoughts === (b.key === "thoughts");
+                return (
+                  <div key={b.key} className="flex items-center gap-2 text-sm">
+                    <span className={`w-56 shrink-0 ${live ? "text-ink" : "text-ink-muted"}`}>
+                      {b.label}
+                    </span>
+                    <div className="h-5 flex-1 rounded bg-surface-raised">
+                      <div
+                        className={`h-5 rounded ${live ? "bg-correct" : "bg-grid"}`}
+                        style={{ width: `${b.value}%` }}
+                      />
+                    </div>
+                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">
+                      {b.value}%
+                    </span>
                   </div>
-                  <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">
-                    {b.value}%
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
+            <p role="status" className="text-sm text-ink">
+              Of 100 <strong>systemic reward hacks</strong>, this monitor catches{" "}
+              <strong className="font-mono">{readsThoughts ? cotRecall : actionRecall}</strong> and
+              misses{" "}
+              <strong className="font-mono text-wrong">
+                {100 - (readsThoughts ? cotRecall : actionRecall)}
+              </strong>
+              . {readsThoughts
+                ? "The extra catches are the ones the agent announced in its thoughts and then hid in its code."
+                : "Turn the thoughts on and watch where the misses go."}
+            </p>
             <p className="text-sm text-ink-muted">
-              Reading the thoughts catches <strong className="text-ink">{cotRecall}%</strong> of the
-              hacks; reading only what the agent does catches {actionRecall}%. This is{" "}
-              <strong className="text-ink">monitorability</strong>: the trace does not have to be
-              perfectly faithful to be a working alarm, it only has to keep verbalizing intent. That
-              is the &ldquo;new and fragile opportunity&rdquo; a joint position paper from OpenAI,
-              Google DeepMind, and Anthropic urges the field to preserve.
+              That gap is <strong className="text-ink">monitorability</strong>: the trace does not
+              have to be perfectly faithful to be a working alarm, it only has to keep verbalizing
+              intent. Note the scope. These are the <em>systemic</em> reward hacks in Baker et
+              al.&apos;s setting, not misbehavior in general, and a monitor that catches{" "}
+              {cotRecall}% of one category is not a monitor that catches {cotRecall}% of everything.
+              Even so, an alarm this good is the &ldquo;new and fragile opportunity&rdquo; a joint
+              position paper from OpenAI, Google DeepMind, and Anthropic urges the field to
+              preserve.
               <Cite n={REF.korbak} />
             </p>
           </figure>
@@ -458,6 +505,17 @@ export function Page18() {
           </div>
         </section>
         <div aria-hidden="true" />
+      </div>
+
+      {/* Handoff to 19 */}
+      <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+        Every page since 5 has assumed the thinking is written down, which is what made all of this
+        arguable in the first place: a chain you can read is a chain you can check, price and
+        police.{" "}
+        <em className="text-ink-muted">
+          The frontier is busy removing that assumption. Next: what is left to read when the
+          thinking stops being words.
+        </em>
       </div>
 
       

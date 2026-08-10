@@ -22,7 +22,8 @@ describe("Page 15 (the scoreboard) component", () => {
     );
     expect(screen.getByText(/“o1 scores 74\.4% on AIME 2024”/)).toBeInTheDocument();
     expect(screen.getByText(/“o1 scores 93% on AIME 2024”/)).toBeInTheDocument();
-    expect(screen.getAllByText("quote-true")).toHaveLength(2);
+    // Two badges on the headlines, plus the inline gloss that defines the term.
+    expect(screen.getAllByText("quote-true")).toHaveLength(3);
     // Receipts stay hidden until the reader guesses or opts out.
     expect(screen.queryByText(/What moved:/)).not.toBeInTheDocument();
   });
@@ -31,7 +32,7 @@ describe("Page 15 (the scoreboard) component", () => {
     render(<Page15 />);
     fireEvent.click(screen.getByRole("button", { name: "the thinking budget" }));
     expect(screen.getByText(/Good guess\./)).toBeInTheDocument();
-    expect(screen.getByText("the thinking budget, and nothing else")).toBeInTheDocument();
+    expect(screen.getByText("the thinking budget, as far as either report says")).toBeInTheDocument();
     expect(screen.getByText(/1,000 chains per problem/)).toBeInTheDocument();
     expect(screen.getByText(/18\.6 points of AIME live in the sampling dial alone/)).toBeInTheDocument();
   });
@@ -42,7 +43,7 @@ describe("Page 15 (the scoreboard) component", () => {
     expect(
       screen.getByText(/Not quite: the model variant is the same in both headlines/),
     ).toBeInTheDocument();
-    expect(screen.getByText("the thinking budget, and nothing else")).toBeInTheDocument();
+    expect(screen.getByText("the thinking budget, as far as either report says")).toBeInTheDocument();
   });
 
   it("the GPT-4o case pins the harness gap: 12 vs 9.3 on the same model", () => {
@@ -51,7 +52,7 @@ describe("Page 15 (the scoreboard) component", () => {
     expect(screen.getByText(/“GPT-4o scores 12% on AIME 2024”/)).toBeInTheDocument();
     expect(screen.getByText(/“GPT-4o scores 9\.3% on AIME 2024”/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "just show me" }));
-    expect(screen.getByText("whose harness scored it, and nothing else")).toBeInTheDocument();
+    expect(screen.getByText("whose harness scored it, as far as either report says")).toBeInTheDocument();
     expect(screen.getByText(/Compare scores only inside one report/)).toBeInTheDocument();
   });
 
@@ -73,7 +74,7 @@ describe("Page 15 (the scoreboard) component", () => {
     pickCase(/^o3 on FrontierMath$/);
     expect(screen.queryByText(/What moved:/)).not.toBeInTheDocument();
     pickCase(/^o1 on AIME 2024$/);
-    expect(screen.getByText("the thinking budget, and nothing else")).toBeInTheDocument();
+    expect(screen.getByText("the thinking budget, as far as either report says")).toBeInTheDocument();
   });
 
   it("the window simulation opens mid-ladder: one ceiling, two windows, one floor", () => {
@@ -145,5 +146,59 @@ describe("Page 15 (the scoreboard) component", () => {
   it("discloses that announcement figures are vendor-reported", () => {
     render(<Page15 />);
     expect(screen.getByText(/vendor-reported and not peer-reviewed/)).toBeInTheDocument();
+  });
+
+  it("claims only the numbers as the reports', not the headline sentences", () => {
+    render(<Page15 />);
+    // Every headline is a template string this page composes, so "both
+    // headlines are lifted from the cited reports" sent a reader looking for
+    // six sentences that were never published. The page footnote always had
+    // the right scope; the body now matches it and defines the badge.
+    expect(document.body.textContent).not.toMatch(/headlines are lifted from the cited reports/i);
+    expect(
+      screen.getByText(/every number in them is lifted verbatim from the cited/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/The sentence around the number is ours/i)).toBeInTheDocument();
+  });
+
+  it("points at the pages that actually spend the scoreboard, none past 19", () => {
+    render(<Page15 />);
+    // Read "pages 16 to 20" and a reader hits The End at 19 and assumes the
+    // deck failed to load; 18 and 19 also stage no fight to judge.
+    expect(document.body.textContent).not.toMatch(/pages 16 to 20/i);
+    expect(screen.getByText(/16 bills you for them, 17 shows you where they came from/i))
+      .toBeInTheDocument();
+  });
+
+  it("gives the capability axis an anchor that cannot rot", () => {
+    render(<Page15 />);
+    expect(screen.getByRole("slider", { name: /ordinal, not calibrated to any date/i }))
+      .toBeInTheDocument();
+    expect(screen.getByText(/Today is always wherever the newest test/i)).toBeInTheDocument();
+  });
+
+  it("spends section 2's window idea forward, on page 17's contamination caveat", () => {
+    render(<Page15 />);
+    const link = screen.getByText(/A benchmark published before the models trained/i);
+    expect(link.textContent).toMatch(/still be measuring\s+familiarity/);
+    expect(link.textContent).toMatch(/Page 17 puts a number on that/);
+  });
+
+  it("carries no em dash or en dash in rendered copy", () => {
+    const { container } = render(<Page15 />);
+    const offenders = Array.from(container.querySelectorAll("*"))
+      .flatMap((el) => [el.textContent ?? "", el.getAttribute("aria-label") ?? ""])
+      .filter((t) => t.includes("—") || t.includes("–"));
+    expect(offenders).toEqual([]);
+  });
+
+  it("gives every numbered cite on the page a reference entry", () => {
+    render(<Page15 />);
+    // Cite renders an anchor to #ref-N and RefItem carries that id, so a cite
+    // with no entry is a link that jumps nowhere.
+    const dangling = Array.from(document.querySelectorAll('a[href^="#ref-"]'))
+      .map((a) => a.getAttribute("href")!.slice(1))
+      .filter((id) => !document.getElementById(id));
+    expect(dangling).toEqual([]);
   });
 });

@@ -27,8 +27,8 @@
  * Section 2 keeps Snell et al. 2024's law (the 4x / 14x / R panels) but reframed
  * as the PUBLISHED 2024 result, on models from before the reasoning recipes, so
  * the measured no-crossing above reads as an era-instance beside it rather than
- * a refutation. Sections 3 and 4 keep Wu et al.'s Pythia bands and REBASE
- * frontier unchanged, as published receipts. The hand-off names the two loose
+ * a refutation. Sections 3 and 4 keep Wu et al.'s Pythia bands (main's handover-strip
+ * treatment) and REBASE frontier as published receipts. The hand-off names the two loose
  * ends (the selection wall and the discarded reasoning) and points at Act 3,
  * which trains the reasoning into the weights. Footer: Measured / Cited, with a
  * download of the notebook that produced section 1.
@@ -373,40 +373,52 @@ function seriesAt(pts: { x: number; y: number }[], xv: number): number | null {
 }
 
 /**
- * Which budgets each series wins: contiguous [x0, x1] bands where that series
- * is the most accurate of those defined there, scanned on a log-spaced grid
- * over the data's span and clamped outward to the chart's domain edges.
+ * The source figure was read by eye, so two curves closer than this many
+ * accuracy points are not separated by the digitization.
  */
-function ownershipBands(
-  allPts: { x: number; y: number }[][],
-  domain: [number, number],
-): { idx: number; x0: number; x1: number }[] {
+const READ_OFF_TOLERANCE = 3;
+
+/**
+ * Who is the best buy at each budget, and where the points cannot tell.
+ * Scanned on a log-spaced grid, and only over budgets where at least two
+ * series were measured: with nothing to compare against there is no leader
+ * to claim. A band is the stretch where one series tops the others; a
+ * handover is the stretch where the top two sit within the read-off
+ * tolerance, so the crossing inside it is bracketed, not located.
+ */
+function ownershipScan(allPts: { x: number; y: number }[][]): {
+  bands: { idx: number; x0: number; x1: number }[];
+  handovers: { x0: number; x1: number }[];
+} {
   const lo = Math.min(...allPts.map((p) => p[0].x));
   const hi = Math.max(...allPts.map((p) => p[p.length - 1].x));
   const STEPS = 240;
-  const leaderAt = (xv: number) => {
-    let best = -1;
-    let bestY = -Infinity;
-    allPts.forEach((pts, i) => {
-      const yv = seriesAt(pts, xv);
-      if (yv !== null && yv > bestY) {
-        bestY = yv;
-        best = i;
-      }
-    });
-    return best;
-  };
   const bands: { idx: number; x0: number; x1: number }[] = [];
+  const handovers: { x0: number; x1: number }[] = [];
+  let scored = false;
+  let wasTight = false;
   for (let s = 0; s <= STEPS; s++) {
     const xv = Math.exp(Math.log(lo) + (Math.log(hi) - Math.log(lo)) * (s / STEPS));
-    const idx = leaderAt(xv);
+    const ranked = allPts
+      .map((pts, i) => ({ i, y: seriesAt(pts, xv) }))
+      .filter((r): r is { i: number; y: number } => r.y !== null)
+      .sort((a, b) => b.y - a.y);
+    if (ranked.length < 2) {
+      scored = false;
+      wasTight = false;
+      continue;
+    }
     const last = bands[bands.length - 1];
-    if (last && last.idx === idx) last.x1 = xv;
-    else bands.push({ idx, x0: xv, x1: xv });
+    if (scored && last && last.idx === ranked[0].i) last.x1 = xv;
+    else bands.push({ idx: ranked[0].i, x0: xv, x1: xv });
+    const tight = ranked[0].y - ranked[1].y <= READ_OFF_TOLERANCE;
+    const lastHandover = handovers[handovers.length - 1];
+    if (tight && wasTight && lastHandover) lastHandover.x1 = xv;
+    else if (tight) handovers.push({ x0: xv, x1: xv });
+    scored = true;
+    wasTight = tight;
   }
-  bands[0].x0 = domain[0];
-  bands[bands.length - 1].x1 = domain[1];
-  return bands;
+  return { bands, handovers };
 }
 
 /**
@@ -460,17 +472,14 @@ function PythiaChart() {
   const path = (pts: { x: number; y: number }[]) =>
     pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.x)},${y(p.y)}`).join("");
 
-  const bands = ownershipBands(
-    series.map((s) => s.pts),
-    [1, 4096],
-  );
+  const { bands, handovers } = ownershipScan(series.map((s) => s.pts));
 
   const title = `GSM8K accuracy against inference FLOPs per question, log x axis, three Pythia models under weighted majority voting. ${series
     .map(
       (s) =>
         `Pythia ${s.label}: from ${s.pts[0].y} percent at ${s.pts[0].x} to ${s.pts[s.pts.length - 1].y} percent at ${s.pts[s.pts.length - 1].x} (times ten to the eleven FLOPs)`,
     )
-    .join("; ")}. The budget axis is shaded into three bands, one per model, marking where that model is the most accurate: the 410M leads at small budgets, flattens near 60 percent, then the 2.8B takes over, and the 12B pulls ahead at the largest budgets.`;
+    .join("; ")}. Only the budgets where more than one model was measured are shaded, into three bands, one per model, marking where that model is the most accurate: the 410M leads at small budgets, flattens near 60 percent, then the 2.8B takes over, and the 12B is ahead at the top of the measured range. Two grey strips mark the handovers, where the curves sit within the ${READ_OFF_TOLERANCE} point read-off tolerance and the crossing is bracketed rather than located; the second strip covers the whole 12B band.`;
 
   return (
     <ChartFrame
@@ -480,9 +489,10 @@ function PythiaChart() {
       xLabel="inference FLOPs per question (×10¹¹, log scale)"
       yLabel="GSM8K accuracy (%)"
     >
-      {/* the ownership bands: who is the best buy at each budget */}
+      {/* the ownership bands: who is the best buy at each budget, drawn only
+          over the budgets where more than one model was measured */}
       {bands.map((b) => (
-        <g key={`band${b.idx}`}>
+        <g key={`band${b.idx}-${b.x0}`}>
           <rect
             data-testid="ownership-band"
             x={x(b.x0)}
@@ -502,18 +512,33 @@ function PythiaChart() {
           </text>
         </g>
       ))}
-      {bands.slice(1).map((b) => (
-        <line
-          key={`edge${b.idx}`}
-          x1={x(b.x0)}
-          x2={x(b.x0)}
-          y1={0}
-          y2={innerH}
-          className="stroke-ink-muted"
-          strokeWidth={0.75}
-          strokeDasharray="3 3"
-          opacity={0.5}
-        />
+      {/* the handovers: brackets, not rules. Across these the curves are
+          within the by-eye read-off, so the crossing is somewhere in here */}
+      {handovers.map((h) => (
+        <g key={`handover${h.x0}`}>
+          <rect
+            data-testid="handover-strip"
+            x={x(h.x0)}
+            y={0}
+            width={px(x(h.x1) - x(h.x0))}
+            height={innerH}
+            className="fill-ink-muted"
+            opacity={0.12}
+          />
+          {[h.x0, h.x1].map((edge) => (
+            <line
+              key={`edge${edge}`}
+              x1={x(edge)}
+              x2={x(edge)}
+              y1={0}
+              y2={innerH}
+              className="stroke-ink-muted"
+              strokeWidth={0.75}
+              strokeDasharray="3 3"
+              opacity={0.45}
+            />
+          ))}
+        </g>
       ))}
 
       {[20, 40, 60, 80].map((t) => (
@@ -531,8 +556,8 @@ function PythiaChart() {
       ))}
 
       <defs>
-        {bands.map((b) => (
-          <clipPath key={`clip${b.idx}`} id={`pythia-band-${b.idx}`}>
+        {bands.map((b, i) => (
+          <clipPath key={`clip${i}`} id={`pythia-band-${i}`}>
             <rect x={x(b.x0)} y={0} width={px(x(b.x1) - x(b.x0))} height={innerH} />
           </clipPath>
         ))}
@@ -543,14 +568,14 @@ function PythiaChart() {
       {series.map((s) => (
         <path key={`ghost${s.label}`} d={path(s.pts)} fill="none" className={s.stroke} strokeWidth={1.25} opacity={0.35} />
       ))}
-      {bands.map((b) => (
+      {bands.map((b, i) => (
         <path
-          key={`lead${b.idx}`}
+          key={`lead${i}`}
           d={path(series[b.idx].pts)}
           fill="none"
           className={series[b.idx].stroke}
           strokeWidth={3}
-          clipPath={`url(#pythia-band-${b.idx})`}
+          clipPath={`url(#pythia-band-${i})`}
         />
       ))}
 
@@ -757,9 +782,10 @@ export function Page11() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         A bigger model and more thinking are{" "}
-        <strong className="text-ink">two ways to spend the same FLOPs</strong>: pretraining burns
-        them once into parameters, sampling and voting burn them at answer time. Act 2 built the
-        second kind. Matched budget for budget on this deck&rsquo;s own instrument,{" "}
+        <strong className="text-ink">two ways to spend the same FLOPs</strong> (floating-point
+        operations, the raw count of arithmetic a chip does): pretraining burns them once into
+        parameters, sampling and voting burn them at answer time. Act 2 built the second kind.
+        Matched budget for budget on this deck&rsquo;s own instrument,{" "}
         <strong className="text-ink">can thinking harder out-buy a bigger model?</strong>
       </p>
 
@@ -907,10 +933,11 @@ export function Page11() {
               <Cite n={REF.monkeys} /> because more samples mine the distribution more
               thoroughly, but the distribution itself never moves. If the right answer has
               essentially zero probability, a thousand samples are a thousand copies of the
-              same blindness, and past a complexity threshold even models trained to think
-              collapse no matter the budget.
-              <Cite n={REF.illusion} /> Parameters are the knob that changes what is in the
-              distribution at all.
+              same blindness. There is contested evidence that this hardens into a cliff: that
+              past a complexity threshold even models trained to think collapse no matter the
+              budget.
+              <Cite n={REF.illusion} /> The argument here does not need the cliff. Parameters are
+              the knob that changes what is in the distribution at all.
             </p>
           </div>
         </section>
@@ -936,20 +963,26 @@ export function Page11() {
             <p className="text-sm text-ink-muted">
               Section 1&rsquo;s chart, measured. Same axes, and the same colour order smallest to
               largest: three real models (
-              <strong className="text-ink">Pythia 410M, 2.8B, and 12B</strong>) stand in for the
-              game&rsquo;s 1×, 2× and 4×, on a growing GSM8K sample budget under weighted majority
-              voting.
-              <Cite n={REF.wu} /> Section 2 allocated by prompt; this allocates by budget. Each
-              curve is drawn bold only where that model is the compute-optimal buy, and the shaded
-              bands hand the budget axis off in order.
+              <strong className="text-ink">Pythia 410M, 2.8B, and 12B</strong>) on a growing GSM8K
+              sample budget under weighted majority voting.
+              <Cite n={REF.wu} /> The real family is wider than the game&rsquo;s: the 2.8B is about
+              7× the 410M and the 12B about 29×, so the colours carry rank here, not the
+              game&rsquo;s multiples, and the game&rsquo;s 14× dot has no counterpart on this
+              chart. Section 2 allocated by prompt; this allocates by budget. Each curve is drawn
+              bold only where that model is the compute-optimal buy, and the shading covers only
+              the budgets where more than one model was measured.
             </p>
             <PythiaChart />
             <figcaption className="text-sm text-ink-muted">
               On a small budget the <strong className="text-ink">410M model is the
               compute-optimal pick</strong>: sampling it many times beats sampling a big model a
               few times. Then every curve flattens. Once the 410M saturates near 60%, the 2.8B and
-              finally the 12B pull ahead. Each scale owns a band of the budget axis, exactly the
-              crossings you just steered through.
+              then the 12B pull ahead, so each scale owns a band of the budget axis, the same
+              handoff you steered through in section 1. The grey strips are those handoffs, and
+              they are wide: inside them the leading curves differ by less than the ±3 points this
+              figure was read to, so the crossing sits somewhere in the strip rather than on a
+              line. The second strip covers the whole 12B band, so the order of the handoffs is
+              what this chart shows, not the budget at which the 12B takes over.
             </figcaption>
             <p className="text-xs text-ink-muted">
               read off the paper&rsquo;s figure by eye (±3 points) and replotted as accuracy; two

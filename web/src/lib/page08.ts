@@ -109,6 +109,7 @@ interface RawVerifier {
   scored_at: string | null;
   solves_these_items: number | null;
   solves_source: string;
+  stronger_generator_than_the_writer: boolean;
   complete: boolean;
 }
 
@@ -157,6 +158,10 @@ interface RawDerived {
     headline_selector: string | null;
     lines: RawLine[];
     specimen: RawSpecimen | null;
+  };
+  figure_2: {
+    /** One row per temperature. `pass_at_1` is every candidate averaged. */
+    by_temperature: { config_id: string; pass_at_1: number }[];
   };
   figure_3: {
     bar: number;
@@ -262,6 +267,35 @@ for (const r of raw.paired.vs_one_chain) {
   }
 }
 
+/**
+ * Two numbers on this page are both called one chain and they are not the same
+ * quantity: figure 1's flat line is every candidate averaged, figure 2's
+ * baseline is one fixed chain, and they sit three points apart. The page labels
+ * them apart rather than reconciling them, and a label is only honest if the
+ * line really is the average, so the identification is checked here instead of
+ * being asserted in the copy.
+ */
+const oneChainLine = raw.figure_1.lines.find((l) => l.selector === "one chain");
+const curveTemperature = raw.figure_2.by_temperature.find(
+  (t) => t.config_id === raw.figure_1.config_id,
+);
+if (!oneChainLine || !curveTemperature) {
+  throw new Page08DataError(
+    "page-08-derived.json draws a one-chain line on figure 1 with no average to name it by, " +
+      "so the page cannot tell it apart from the paired test's fixed chain",
+  );
+}
+const chainAverage = curveTemperature.pass_at_1;
+for (const p of oneChainLine.points) {
+  if (Math.abs(p.accuracy - chainAverage) > 1e-9) {
+    throw new Page08DataError(
+      `figure 1's one-chain line sits at ${(p.accuracy * 100).toFixed(1)}% at N=${p.n}, but the ` +
+        `run's average over all candidates at ${raw.figure_1.config_id} is ` +
+        `${(chainAverage * 100).toFixed(1)}%. The page labels that line as the average.`,
+    );
+  }
+}
+
 /* --------------------------------------------------------- reader-facing names */
 
 /**
@@ -291,6 +325,18 @@ const RULE_LABELS: Record<string, string> = {
 };
 
 /**
+ * Where a solve rate came from, in the reader's words. Figure 3's left gutter
+ * prints one of these under every solve rate it shows, because that column is
+ * not one measurement: most of it is page 6's greedy run and one row was
+ * measured here under sampling. `null` is the row with no number to source.
+ */
+const SOLVES_SOURCE_LABELS: Record<string, string | null> = {
+  "page 6": "from page 6",
+  "measured in this run": "measured here",
+  unmeasured: null,
+};
+
+/**
  * An unmapped selector is a load error rather than a raw identifier drawn on a
  * figure. A re-run that adds a judge has to name it here before the page can
  * show it, which is the point.
@@ -304,6 +350,17 @@ function judgeLabel(name: string): string {
     );
   }
   return label;
+}
+
+function solvesSourceLabel(name: string, source: string): string | null {
+  if (!(source in SOLVES_SOURCE_LABELS)) {
+    throw new Page08DataError(
+      `no reader-facing label for the solve-rate source "${source}" on the judge "${name}". ` +
+        `Add one to SOLVES_SOURCE_LABELS in web/src/lib/page08.ts: figure 3 says where every ` +
+        `solve rate came from and will not print a notebook string.`,
+    );
+  }
+  return SOLVES_SOURCE_LABELS[source];
 }
 
 function labelFor(selector: string): string {
@@ -350,6 +407,17 @@ export interface JudgeRow {
   label: string;
   /** What it solves unaided. Null when it has no generative head at all. */
   solves: number | null;
+  /**
+   * Where `solves` came from. The x axis of figure 3 is not one measurement:
+   * most positions are page 6's greedy scores, one was measured in this run
+   * under sampling, and one was never measured. The figure has to say so, so
+   * the provenance travels with the number rather than being flattened out.
+   */
+  solvesSource: string;
+  /** `solvesSource` as the gutter prints it. Null when there is nothing to source. */
+  solvesSourceLabel: string | null;
+  /** Whether this judge solves these problems better than the model it judges. */
+  strongerThanWriter: boolean;
   mean: number;
   lo: number;
   hi: number;
@@ -363,10 +431,14 @@ const judges: JudgeRow[] = Object.entries(raw.figure_3.reliability_across_temper
   .map(([selector, across]) => {
     const name = selector.slice("best-of-N (".length, -1);
     const spec = verifiersByName.get(name);
+    const source = spec?.solves_source ?? "unmeasured";
     return {
       name,
       label: judgeLabel(name),
       solves: spec?.solves_these_items ?? null,
+      solvesSource: source,
+      solvesSourceLabel: solvesSourceLabel(name, source),
+      strongerThanWriter: spec?.stronger_generator_than_the_writer ?? false,
       mean: across.mean,
       lo: across.lo,
       hi: across.hi,
@@ -427,6 +499,14 @@ export const PAGE8 = {
   judges,
   bar: majorityAcross,
 
+  /**
+   * What the model that wrote the candidates solves on these problems, on the
+   * same axis as the judges. Two of the judges are above it, which the figure
+   * has to say: nothing here held the judge's own ability fixed against the
+   * writer's, and the run keeps a gate for exactly that.
+   */
+  writerSolves: raw.figure_3.writer_solves,
+
   /** How often a right answer was there to be found at all. Page 7's number. */
   coverage,
 
@@ -454,9 +534,26 @@ export const PAGE8 = {
   oneChain: baselineAccuracy,
   baselineIs: raw.paired.baseline,
 
-  /** The side note the plan requires: a PRM read as an ORM. */
+  /**
+   * The other one-chain number: what a candidate scores on average, which is
+   * where figure 1's flat line sits. Three points above `oneChain`, and the two
+   * are labelled apart wherever they are drawn.
+   */
+  chainAverage,
+
+  /**
+   * The side note the plan requires: a PRM read as an ORM. `rebuilt` is the
+   * other half of it. The checkpoint did not run as published here, and every
+   * headline number on the page comes from what did run, so the flag is read
+   * from the manifest rather than asserted in the copy: a re-run that loads it
+   * as published drops the disclosure by itself.
+   */
   verifierNote: trainedVerifier
-    ? { model: trainedVerifier.model, scoredAt: trainedVerifier.scored_at }
+    ? {
+        model: trainedVerifier.model,
+        scoredAt: trainedVerifier.scored_at,
+        rebuilt: trainedVerifier.loaded_as !== "as published",
+      }
     : null,
 
   claims: raw.claims,
