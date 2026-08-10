@@ -63,6 +63,7 @@ phases of its own experiment and are documented in its section 0.
 | `page_08_best_of_n.ipynb` | 8 — Best-of-N and Verifiers | **translated (step 4).** Its own pool: 12,800 chains over the same 100 items at four temperatures, scored by five judges (64,000 judgements). Best-of-16 by a trained verifier takes 43% to 60%, 21 fixed against 4 broken, McNemar p=0.0009; against page 7's vote on identical candidates it is +4 at p=0.45, which is not a difference. `derived.json` is committed to `web/data/page-08-derived.json`, and the notebook, `harness.py`, all 12,800 traces and 70,960 scores ship as `web/public/notebooks/page-08-best-of-n.zip`. Its modes are the phases of one experiment rather than tiers of one run: `REPLAY` analyses, `SCORE` judges an existing pool, `GENERATE` makes one |
 | `page_09_outcome_vs_process.ipynb` | 9 — Outcome vs Process Supervision | **translated (step 4).** `FULL` run complete and replayable. Reuses page 7's pile under one filter, chains the model ended itself, and grades all 1,580 of them twice: a deterministic arithmetic checker, and `Qwen2.5-Math-PRM-7B` admitted only after clearing a pre-registered gate against it (AUC 0.89). The checker proves a false step in 0.67% of chains that reached the right answer; the PRM calls one unsound in 19.5%. `derived.json` is committed to `web/data/page-09-derived.json`, and the notebook, `harness.py` and all 1,580 graded chains ship as `web/public/notebooks/page-09-outcome-vs-process.zip` |
 | `page_11_training_vs_scale.ipynb` | 11 — The Keystone | **arm 0 complete (step 1, REPLAY run).** Generates nothing: re-derives the accuracy-against-measured-FLOPs family chart from pages 6/7/8's runs, and gate 1 reproduces every shipped number it re-aggregates bit-exactly (max drift 0.0 across page 6's 15 cells, page 7's hand-off and 10 pile points, page 8's paired rung). The picture is the spec's B1+B2: the 3B never reaches the 7B's greedy 60% for less — vote@16 is 55% at 6.1× the bill, the trained verifier ties at 9.2× — while coverage is 78%. Gate 2 (Math-1.5B smoke test) and arms A/B (the L1–3 band, the specialist) are implemented and await a GPU; branches are pre-registered in `docs/page_11_refactor_spec.md` §6 |
+| `page_14_distill_dividend.ipynb` | 14 — DeepSeek-R1 | **authored, not yet run (step 1 awaits a GPU).** Puts `DeepSeek-R1-Distill-Qwen-1.5B` and `-7B` on pages 6 and 7's own hundred L4/5 items against `Qwen2.5-1.5B-Instruct` and `-7B-Instruct` under best-of-16: the distill at one chain with nothing selecting between chains, the instructs read as majority vote and as coverage, all of it plotted against tokens spent. Four modes rather than three — `PLAN` (the default: no GPU, no network), `SMOKE`, `FULL`, `REPLAY` — because there is nothing published to replay yet. Gates, thresholds and both branches of the page's payoff sentence are declared before the run, and the truncation gate blocks: the distills write long chains, and a capped arm would measure our budget rather than the model. The finding this answers is F33 in `docs/review/pages_1_through_14_analysis.md` |
 
 **Page 6 carries two arms of one technique.** Budget forcing can cut a chain short or refuse to let
 it end; the sweep does the first and section 11 does the second. They share the prompt, the items,
@@ -119,7 +120,9 @@ jupyter lab
 Each page notebook has a `RUN_MODE` variable at the top with **three tiers**. Reproducing the
 *figures* and reproducing the *run* are separate choices, and the cheap one is the default.
 (Page 8 is the exception: its three modes are `REPLAY`, `SCORE` and `GENERATE`, because its
-expensive step is scoring candidates rather than making them.)
+expensive step is scoring candidates rather than making them. Page 14 is the other: it adds
+`PLAN`, which generates nothing and touches neither the network nor the GPU, and defaults to it
+because it has not been run yet and so has nothing to replay.)
 
 | Mode | What it does | Hardware | Time |
 |---|---|---|---|
@@ -159,6 +162,7 @@ notebooks/
   page_06_thinking_longer.ipynb        # REPLAY / QUICK / FULL
   page_07_frequency_voting.ipynb       # REPLAY / QUICK / FULL
   page_08_best_of_n.ipynb              # REPLAY / QUICK / FULL, and it generates nothing
+  page_14_distill_dividend.ipynb       # PLAN / SMOKE / FULL / REPLAY, four arms
   experiment_*.ipynb                   # the ablations, no run modes
   data/          # datasets fetched on first run (gitignored)
   out/
@@ -177,6 +181,8 @@ notebooks/
       derived.json, manifest.json, figure_*.png
     page_09/
       …same four, plus its traces carry per-step labels
+    page_14/
+      …same four, keyed by arm: two instruct piles and two distill sets
     experiment_3/
       …plus tables.md, paste-ready
 ```

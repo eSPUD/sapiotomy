@@ -46,6 +46,16 @@ import { search, STRATEGIES, type Strategy } from "@/lib/thoughtSearch";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 10;
+
+/**
+ * The one page in Act 2 whose download is not a run.
+ *
+ * Pages 5 to 9 each ship the measurement their claims rest on. This page has
+ * none: the tree is hand-authored and the bars are Yao et al.'s. The arm that
+ * would give it one is written and packaged here unrun, so the label has to
+ * promise the notebook and not a result.
+ */
+const NOTEBOOK_ZIP = "/notebooks/page-10-search-arm.zip";
 const NW_ = buildNextWord(NEXT_WORD_SPEC as unknown as NextWordSpec);
 const SPEC = NW_.spec;
 
@@ -302,9 +312,21 @@ export function Page10() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
+      {/* Pages 5 to 9 put the way to re-derive the page on its top line. This
+          page keeps the position and changes the promise, because there is no
+          run here to re-derive. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
+        <a
+          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+          href={NOTEBOOK_ZIP}
+          download
+        >
+          the search arm, written and not run ↓
+        </a>
+      </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
@@ -415,9 +437,10 @@ export function Page10() {
             <p className="text-sm text-ink-muted">
               Greedy is what you just did: a chain of thought, no checking, no way back. The other
               four are <strong className="text-ink">best-of-N with the judge moved inside the
-              loop</strong>: a verifier scores unfinished lines while they are being written, and
-              the search decides which to extend. Pick one and press play — the shape of the
-              lit-up region is the strategy.
+              loop</strong>, and here the judge is the model&rsquo;s own confidence: it rates
+              unfinished lines while they are being written, and the search decides which to
+              extend. Nothing on this page checks whether a line can still rhyme. Pick one and
+              press play; the shape of the lit-up region is the strategy.
             </p>
 
             <div className="flex flex-wrap gap-1.5" role="group" aria-label="Search strategy">
@@ -628,7 +651,7 @@ export function Page10() {
                   {scoredCount}
                   <span className="text-base font-normal text-ink-muted"> / {TREE_WORDS}</span>
                 </p>
-                <p className="text-xs text-ink">words the verifier scored</p>
+                <p className="text-xs text-ink">words the model rated</p>
                 <p className="text-xs text-ink-muted">the compute bill</p>
               </div>
               {done ? (
@@ -667,7 +690,7 @@ export function Page10() {
         </section>
 
         <Note kicker="Reading the replay">
-          <p>Boxes light up in the order the verifier scores them; the number is that order.</p>
+          <p>Boxes light up in the order the model rates them; the number is that order.</p>
           <p>The bright path is the line it is trying right now.</p>
         </Note>
 
@@ -676,12 +699,16 @@ export function Page10() {
           <h2 className="text-xl font-semibold text-ink">3. What search buys</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Nobody can publish these five head-to-head on a real model — a real vocabulary has
-              tens of thousands of branches per word, so breadth-first can never actually be run.
-              The closest measurement is the same branch, score, backtrack machinery taken apart
-              piece by piece on a real word task: GPT-4 filling 5&times;5 crosswords, with and
-              without the ability to back up.<Cite n={REF.tot} /> The two middle bars are the ones
-              that matter.
+              Nobody can publish these five head-to-head on a real model. Once a step is a
+              sentence rather than a word, only greedy and beam can actually be run: breadth-first
+              would have to keep every line a model could write next, depth-first has no way to
+              know a line is doomed short of writing it out to the end, and MCTS would have to
+              finish thousands of lines per question. That is a limit of the hardware and of steps
+              written in free text, not a verdict on the algorithms. The closest measurement is the same
+              branch, score, backtrack machinery taken apart piece by piece on a real word task:
+              GPT-4 filling 5&times;5 crosswords, with and without the ability to back up.
+              <Cite n={REF.tot} /> The two bars with a piece switched off are the ones that
+              matter.
             </p>
             <div
               className="flex flex-col gap-2"
@@ -709,8 +736,7 @@ export function Page10() {
               {totNoBacktrack}%, almost back to plain chain of thought. That is the whole argument
               in two bars:{" "}
               <em>what search buys is not more thinking, it is the ability to take a thought back</em>
-              . It is also the more expensive half, which is the trade the rest of this act is
-              about.
+              . What that costs is the trade the rest of this act is about.
             </p>
           </figure>
           {/* Every page from 5 to 9 hands the next one a question; this one used to end
@@ -725,6 +751,20 @@ export function Page10() {
             </em>
           </div>
         </section>
+
+        <Note kicker="No run of our own">
+          <p>
+            Pages 5 to 9 each ship the run their numbers come from. This page ships none. The
+            29-word tree is written by hand: its words and their chances were chosen so the five
+            behaviours are legible, not sampled from a model. The bars above are Yao et
+            al.&apos;s.
+          </p>
+          <p>
+            The arm that would give this page a measurement of its own is written and sits in the
+            download at the top, unrun. It holds the 3B writer beside a 7B judge, about 21 GB
+            resident, and of the five strategies only greedy and beam would survive to be measured.
+          </p>
+        </Note>
 
         <Note kicker="References">
           <RefItem n={REF.tot} href="https://arxiv.org/abs/2305.10601">

@@ -239,9 +239,36 @@ describe("Page 10 — step 3 and house style", () => {
 
   it("step 3 owns why the five buttons cannot have a literature chart", () => {
     render(<Page10 />);
-    expect(
-      screen.getByText(/breadth-first can never actually be run/i),
-    ).toBeInTheDocument();
+    // The concession is not breadth-first alone: of the five, only greedy and beam
+    // survive contact with a real reasoning tree.
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/only greedy and beam can actually be run/i);
+    expect(body).toMatch(/depth-first has no way to know a line is doomed/i);
+    expect(body).toMatch(/MCTS would have to finish thousands of lines per question/i);
+    expect(body).toMatch(/not a verdict on the algorithms/i);
+  });
+
+  // The page's scorer is the model's own confidence, not page 8's second-model
+  // verifier; the punchline (the rhyme the likelihood passed over) needs that.
+  it("never calls the model's own confidence a verifier", () => {
+    const { container } = render(<Page10 />);
+    expect(container.textContent).not.toMatch(/verifier/i);
+    expect(screen.getByText(/here the judge is the model’s own confidence/i)).toBeInTheDocument();
+    expect(screen.getByText(/words the model rated/i)).toBeInTheDocument();
+  });
+
+  // Nothing on the page prices backtracking against pruning.
+  it("does not price backtracking against pruning", () => {
+    const { container } = render(<Page10 />);
+    expect(container.textContent).not.toMatch(/more expensive half/i);
+    expect(screen.getByText(/What that costs is the trade the rest of this act is about/)).toBeInTheDocument();
+  });
+
+  // Five bars, so "the two middle bars" points at the wrong pair.
+  it("names the bars that matter instead of pointing by position", () => {
+    const { container } = render(<Page10 />);
+    expect(container.textContent).not.toMatch(/two middle bars/i);
+    expect(container.textContent).toMatch(/two bars with a piece switched off/i);
   });
 
   it("links each reference from its RefItem entry, not a footer chip", () => {
@@ -285,5 +312,30 @@ describe("Page 10 — step 3 and house style", () => {
     render(<Page10 />);
     fireEvent.click(screen.getByRole("button", { name: /^MCTS$/ }));
     expect(document.body.textContent).toMatch(/Monte Carlo tree search/);
+  });
+
+  // Pages 5 to 9 train the reader to download the run behind the numbers. This page
+  // has no run, so the download has to promise the notebook and the page has to say
+  // outright that nothing here was measured by us. Both halves are pinned, because
+  // shipping one without the other is worse than shipping neither: the download in
+  // page 5-9's position implies a run that does not exist.
+  it("offers the search arm and labels it as unrun", () => {
+    render(<Page10 />);
+    const link = screen.getByRole("link", { name: /search arm, written and not run/i });
+    expect(link).toHaveAttribute("href", "/notebooks/page-10-search-arm.zip");
+    expect(link).toHaveAttribute("download");
+  });
+
+  it("says outright that the page carries no measurement of its own", () => {
+    render(<Page10 />);
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/Pages 5 to 9 each ship the run their numbers come from\./);
+    expect(body).toMatch(/This page ships none\./);
+    // the two things a reader could mistake for our measurements, named as what they are
+    expect(body).toMatch(/29-word tree is written by hand/);
+    expect(body).toMatch(/bars above are Yao et al\./);
+    // and why it was not run, so the omission reads as a cost and not an oversight
+    expect(body).toMatch(/21 GB/);
+    expect(body).toMatch(/only greedy and beam would survive to be measured/);
   });
 });

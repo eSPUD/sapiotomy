@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { PAGE9, tidyMath } from "@/lib/page09";
+import { PAGE9, pct, tidyMath } from "@/lib/page09";
 import { Page9 } from "./Page9";
 
 /** The mark-a-step button label for a given zero-based step index. */
@@ -194,6 +194,67 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(screen.getByText(/undercounts/i)).toBeInTheDocument();
   });
 
+  // The chain rate is clustered within problems, and the run says so. Quoting it
+  // alone reads as one independent observation per chain, which it is not.
+  it("names the problem, not the chain, as the unit the count stands on", () => {
+    render(<Page9 />);
+    const caption = screen.getByText(/a floor, not a rate/i);
+    expect(caption.textContent).toMatch(/the same problem sampled again/i);
+    expect(caption.textContent).toContain(
+      `${PAGE9.detection.nProblems} of the ${PAGE9.detection.nProblemsWithARightChain} problems`,
+    );
+  });
+
+  // The PRM's cut was fitted against the checker's labels, so its bar is not a
+  // second, independent reading of the checker's.
+  it("discloses that the PRM's cut was fitted on the checker's labels", () => {
+    render(<Page9 />);
+    if (!PAGE9.graders.prm) return;
+    expect(screen.getByText(/its cut is fitted, not held out/i)).toBeInTheDocument();
+    const note = screen.getByText("The PRM").closest("aside")!;
+    expect(note.textContent).toMatch(/best matched the checker's own labels/i);
+    expect(note.textContent).toContain(`${PAGE9.graders.prm.thresholdPlateauCount} cut-offs`);
+    expect(screen.getByText(/not two independent readings of the same thing/i)).toBeInTheDocument();
+  });
+
+  // Every specimen scores above the PRM's cut on every line. A reader who works
+  // all three must not be left concluding the PRM never disagrees.
+  it("bridges the specimens' silent PRM to the share it flags over the run", () => {
+    render(<Page9 />);
+    findTheBreakThenReveal();
+    const quiet = PAGE9.lucky.steps.every((s) => s.prmVerdict !== "false");
+    if (quiet && PAGE9.detection.prm) {
+      expect(screen.getByText(/the bar in the next beat/i)).toBeInTheDocument();
+      expect(screen.getByText(/quiet end of it/i)).toBeInTheDocument();
+    }
+  });
+
+  // The margin says nothing underlined means nothing computable. No verdict on
+  // the page may call an unread step sound.
+  it("never calls an unjudged step sound", () => {
+    render(<Page9 />);
+    fireEvent.click(screen.getByRole("button", { name: /^Broken/ }));
+    expect(screen.getByText(/the checker never disproved/i)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/that were sound/i);
+    findTheBreakThenReveal(PAGE9.broken);
+    expect(screen.getByText(/before the break was disproved/i)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/before the break stands?\b/i);
+  });
+
+  // `firstFalse` is an index. The count of steps the checker did not disprove is
+  // the chain's length minus its false steps, and the two are not the same number.
+  it("counts the steps the checker did not disprove rather than reusing the break index", () => {
+    render(<Page9 />);
+    fireEvent.click(screen.getByRole("button", { name: /^Broken/ }));
+    const notDisproved = PAGE9.broken.steps.length - PAGE9.broken.nFalse;
+    expect(
+      screen.getByText(
+        new RegExp(`including the ${notDisproved} the checker never disproved`, "i"),
+      ),
+    ).toBeInTheDocument();
+    expect(notDisproved).not.toBe(PAGE9.broken.firstFalse);
+  });
+
   it("has no em dash or en dash anywhere in its copy", () => {
     render(<Page9 />);
     expect(document.body.textContent).not.toContain("—");
@@ -205,8 +266,15 @@ describe("Page 9 (outcome vs process supervision) component", () => {
 
   it("quotes localisation with its spread whenever the run says it moves", () => {
     render(<Page9 />);
-    if (!PAGE9.localisation.survivesSegmentation) {
-      expect(screen.getByText(/moving where a step ends moves it by up to/i)).toBeInTheDocument();
+    const loc = PAGE9.localisation;
+    if (!loc.survivesSegmentation) {
+      const p = screen.getByText(/read it as a direction, not a digit/i);
+      // The re-cuts' own range, not a band centred on the median: none of the four
+      // segmentations produced the median the sentence quotes.
+      expect(p.textContent).toContain(`${pct(loc.subsample.low)} to ${pct(loc.subsample.high)}`);
+      expect(p.textContent).toMatch(/none of them landed on the figure quoted here/i);
+      const median = (loc.medianShareSound ?? 0) * 100;
+      expect(median).toBeLessThan(loc.subsample.low * 100);
     }
   });
 

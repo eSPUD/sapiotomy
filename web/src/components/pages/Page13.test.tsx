@@ -122,7 +122,37 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(screen.queryByText(/That equality is the law/)).not.toBeInTheDocument();
     // The interpretation lives in the card's closing line.
     expect(
-      screen.getByText(/thinking walks your curve and never climbs to the next one/),
+      screen.getByText(/a decade of thinking buys back exactly the decade of RL you skipped/),
+    ).toBeInTheDocument();
+  });
+
+  it("states the substitution the law actually has, not the opposite", () => {
+    render(<Page13 />);
+    // The two exponents enter twoAxisAccuracy as a sum, so they substitute
+    // exactly: law(2, 0) = law(0, 2) = 21.0 (pinned in frontier.test.ts). The
+    // page used to claim they do not, which the Try-it note itself walks the
+    // reader into disproving.
+    expect(screen.queryByText(/they do not\s+substitute/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/×1 training with ×100 thinking scores the same 21\.0 as ×100 training/),
+    ).toBeInTheDocument();
+    // The real asymmetry is when the compute is bought, not what it buys.
+    expect(screen.getByText(/The thinking is bought again on every answer\./)).toBeInTheDocument();
+  });
+
+  it("discloses the joint surface itself as authored, not just its span and slope", () => {
+    render(<Page13 />);
+    // o1-scaling.json's provenance records TWO separate published charts with
+    // unlabeled axes; one shared law in which training is a horizontal shift is
+    // the deck's construction and appears in no source.
+    expect(screen.getByText(/OpenAI published two separate charts, one per axis/)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Joining them into one surface, so that a decade of either dial buys the same points/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/is this deck's construction and not a published result/),
     ).toBeInTheDocument();
   });
 
@@ -142,13 +172,47 @@ describe("Page 13 (frontier reasoners I)", () => {
     );
   });
 
-  it("keeps the waterfall as mechanisms, model names demoted to parentheses", () => {
+  it("keeps the bars as mechanisms, model names demoted to parentheses", () => {
     render(<Page13 />);
     expect(screen.getByText("3. Stack the toolbox, or turn the knobs?")).toBeInTheDocument();
     expect(screen.getByText("no learned chain")).toBeInTheDocument();
     expect(screen.getByText(/one instant answer from a strong LLM \(GPT-4o\)/)).toBeInTheDocument();
-    expect(screen.getByText("+ page 7's voting")).toBeInTheDocument();
-    expect(screen.getByText("+ page 8's re-ranker")).toBeInTheDocument();
+    expect(screen.getByText("page 7's voting")).toBeInTheDocument();
+    expect(screen.getByText("page 8's re-ranker")).toBeInTheDocument();
+  });
+
+  it("draws the three o1 scores as parallel readings, never as an additive stack", () => {
+    render(<Page13 />);
+    // The announcement reports 74.4 pass@1, 83.3 with consensus among 64
+    // samples and 93 re-ranking 1000 samples as three readings of ONE model.
+    // Re-ranking is an alternative to the 64-way vote, not a storey on top of
+    // it, so the rows print absolute scores from a common zero.
+    expect(screen.getByText("o1, one model read three ways")).toBeInTheDocument();
+    for (const score of ["12%", "74.4%", "83.3%", "93%"]) {
+      expect(screen.getByText(score)).toBeInTheDocument();
+    }
+    // The invented increments are gone and must not come back.
+    expect(screen.queryByText("+8.9")).not.toBeInTheDocument();
+    expect(screen.queryByText("+9.7")).not.toBeInTheDocument();
+    expect(screen.queryByText("+62.4")).not.toBeInTheDocument();
+    expect(screen.queryByText(/majority across 64 chains/)).not.toBeInTheDocument();
+    // Every bar is drawn from zero, so none of them starts where another ended.
+    const figure = screen.getByRole("img", { name: /every bar drawn from a common zero/ });
+    const bars = Array.from(figure.querySelectorAll<HTMLElement>("div.absolute"));
+    expect(bars.length).toBe(4);
+    for (const bar of bars) {
+      expect(bar.className).toContain("left-0");
+      expect(bar.style.left).toBe("");
+    }
+    expect(bars.map((b) => b.style.width)).toEqual(["12%", "74.4%", "83.3%", "93%"]);
+    // Page 15's first courtroom case needs the gap legible as one model
+    // measured three ways.
+    expect(
+      screen.getByText(/Same model, same fifteen problems; what changed is how many chains/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/the vote and the re-ranker each replace the single chain/),
+    ).toBeInTheDocument();
   });
 
   it("cut the scoreboard: no benchmark table, no product chronology", () => {

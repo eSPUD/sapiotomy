@@ -656,12 +656,25 @@ export const PAGE6 = {
      */
     censoredCount: D.figure_3.items.filter((d) => d.truncated_at_max).length,
     /**
-     * The median length of a chain that never grades correct. Load-bearing for
-     * the page's third claim: these chains stopped on their own, well inside
-     * the budget, so what limits them is not the dial.
+     * Never solved AND finished on its own. This is an intersection, not the
+     * never-solved count minus the censored count: the two sets overlap in five
+     * items, not six, because one censored chain does come right (at 1024). The
+     * page's third claim counts these, and a reader can count them on the strip.
+     */
+    neverFlipFinishedCount: D.figure_3.items.filter(
+      (d) => !d.correct_by_budget.some(Boolean) && !d.truncated_at_max,
+    ).length,
+    /**
+     * The median length of a chain that never grades correct and was not still
+     * running when the cap arrived. Load-bearing for the page's third claim:
+     * these chains stopped on their own, well inside the budget, so what limits
+     * them is not the dial. The censored ones are excluded because their length
+     * is a lower bound, which is the promise the note above makes.
      */
     medianLengthNever: median(
-      D.figure_3.items.filter((d) => !d.correct_by_budget.some(Boolean)).map((d) => d.tokens_at_max),
+      D.figure_3.items
+        .filter((d) => !d.correct_by_budget.some(Boolean) && !d.truncated_at_max)
+        .map((d) => d.tokens_at_max),
     ),
   },
   /**
