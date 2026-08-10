@@ -1,85 +1,40 @@
 "use client";
 
 /**
- * Page 11, "The Keystone" — the act's tools (voting, verifiers, search) all
- * spend inference FLOPs to buy accuracy. This page states the law that makes
- * that spending strategic: parameters and test-time thinking draw on the SAME
- * currency, and on all but the hardest prompts, thinking is the better buy.
+ * Page 11, "The Keystone" — Act 2's payoff, now measured on the deck's own
+ * instrument instead of the authored allocator it used to open on.
  *
- * Step 1 is the two-knob allocator (lib/allocator.ts). The chart is the
- * centerpiece: full card width, all four model curves drawn in full,
- * Wu-figure style, with the controls in a strip beneath it. The knobs never
- * move a line — model size selects which curve is highlighted and test-time
- * compute slides the marker along it (the page-3 idiom), so the reader SEES
- * the crossings the game is about. To keep four overlapping curves from
- * reading as noise, only the selected curve is drawn at full strength; the
- * rest are thin ghosts, though every end label stays large and legible so the
- * family is always identifiable. The two dials sit side by side in one row
- * (equal height by construction), difficulty above them. Sizes are labeled as
- * multiples (1x..14x) because Snell et al. never publish absolute parameter
- * counts (disclosed in the Simulated footer, not the setup prose). The curves
- * are AUTHORED shapes following Snell et al. 2024's claims, pinned in
- * act2allocator.test.ts; the Snell cite sits beside the chart's caption, not
- * only in the setup prose. The card closes with the mechanism behind the
- * verdicts (sampling re-draws from the model's own distribution: thinking
- * amplifies a foothold, only parameters create one), so hard mode has a
- * reason, not just a result.
+ * The claim under test is the test-time compute scaling law: parameters and
+ * sampling-and-voting spend the same FLOPs, so at a matched bill, can thinking
+ * harder out-buy a bigger model? Section 1 answers it with this deck's own run
+ * (lib/page11.ts, from notebooks/page_11_training_vs_scale.ipynb):
  *
- * Step 2 states the law with a unit on every number, each panel body one
- * concrete comparison in plain words: 4x is flat best-of-N (256 for every
- * question) against guess-difficulty-then-spend (64); 14x is one FLOPs bill
- * paid two ways (14 answers of thinking vs one greedy answer); R is the
- * serve/train token ratio read as amortization (pretraining bought once,
- * thinking a per-query surcharge).
- * Each panel's drawing carries exactly its caption's claim: 4x is two dot
- * clusters (16 vs 4 sample dots, the same 4:1 ratio) under two checkpoints
- * pinned to one same-accuracy line; 14x is two equal-height FLOPs bills, one
- * paid as 14 thin thinking slices, one as a single parameter block; R is one
- * axis with both regime labels on one baseline. The hard-mode boundary closes
- * the step as a deliberate callout, page-12's closing-statement treatment —
- * and now carries the WHY, the page's distribution intuition: test-time
- * compute (sampling, voting, search) can only surface answers the model can
- * already produce — it mines a fixed distribution (coverage grows log-linearly
- * with samples, Brown et al. 2024), while parameters change what is in the
- * distribution at all (complexity-cliff evidence: Shojaee et al. 2025). This
- * intuition is stated once here and reused by pages 12 (the plateau) and 13
- * (RL lifting the curve).
+ *   B1  no crossing. The 3B's vote curve climbs with more samples but never
+ *       reaches the 7B's single greedy answer, on the hard band (pages 6 to 8's
+ *       own 100 items, gate-1 reproduced) OR the fresh easy band, even at
+ *       several times the 7B's bill. A band toggle and a samples slider let the
+ *       reader push it and watch it stall.
+ *   B2  the bottleneck is selection, not coverage. The dashed coverage line
+ *       sits above the target: the right answer is in the pile far more often
+ *       than any realizable selector returns it. This replaces the page's old
+ *       "every chain breaks" mechanism, which the deck's own page 7 refuted.
  *
- * Steps 3 and 4 are field data from Wu et al. 2024, where parameter counts
- * ARE published — split into two sections because they carry two different
- * claims. Step 3 (data/pythia-inference-scaling.json, by-eye digitization,
- * replotted as accuracy): how MUCH compute. It carries two jobs, and its
- * setup line has to state both: it is the RECEIPTS for step 1's illustrative
- * curves (same axes, real published parameter counts, the crossings show up
- * in measured data), and it RE-INDEXES step 2's rule from prompt difficulty
- * to budget (at every bill there is one compute-optimal size). Its hues
- * therefore rank-match step 1's family, smallest green then blue then red, so
- * a colour means the same rank in both charts; getting that order wrong makes
- * the two figures contradict each other. The section title's claim is drawn,
- * not asserted: the budget axis is shaded into tinted ownership bands, one per
- * Pythia scale, and each curve is bold only inside the band where it is the
- * compute-optimal pick (clip-path segments over thin full ghosts), so the
- * baton pass from 410M to 2.8B to 12B is visible before the caption says it.
- * Band boundaries are computed from the digitized points (log-x linear
- * interpolation), not hand-placed. Step 4 (data/rebase-pareto.json, exact
- * table values): how it is SPENT — REBASE tree search shifts the whole
- * MATH500 frontier. Color is the strategy differentiator (muted sampling
- * circles, bright-green search diamonds) and each model's pair is tied by an
- * arrow pointing at the shift, led by their ~2x-less-total-FLOPs finding.
+ * The specialist arm the run also measured (a math-trained 1.5B that beats the
+ * 7B) is deliberately NOT drawn here: that reasoning-vs-general comparison is
+ * page 14's, made at matched size with the R1 distills. Shipping it here would
+ * spoil page 14 and break this page's two-knob frame.
  *
- * The page closes with a hand-off block under step 4 (page-12's border-l
- * closing idiom) that names BOTH loose ends the next page answers: the hard
- * boundary (thinking mines what the weights hold; only weights move the wall)
- * and the waste (every tool spends at answer time and discards the reasoning
- * it bought). Page 12 (STaR) answers both with one move — train on the
- * reasoning — so 11→12→13 reads as a ladder of walls, each page ending on the
- * wall the next one moves (12 ends on its plateau, which 13's budget-exit
- * rewrite answers). The hand-off, not step 4's title, carries the bridge.
+ * Section 2 keeps Snell et al. 2024's law (the 4x / 14x / R panels) but reframed
+ * as the PUBLISHED 2024 result, on models from before the reasoning recipes, so
+ * the measured no-crossing above reads as an era-instance beside it rather than
+ * a refutation. Sections 3 and 4 keep Wu et al.'s Pythia bands and REBASE
+ * frontier unchanged, as published receipts. The hand-off names the two loose
+ * ends (the selection wall and the discarded reasoning) and points at Act 3,
+ * which trains the reasoning into the weights. Footer: Measured / Cited, with a
+ * download of the notebook that produced section 1.
  *
- * Provenance: each chart's fidelity caveat sits directly under that chart;
- * the page footer uses page-12's two-label Simulated / Cited pattern. Refs:
- * Snell (§1–2), Brown/Monkeys + Shojaee/Illusion (§2 hard-mode callout), Wu
- * (§3–4), Stroebl/fLaws (§4 ceiling fine print), each beside first use.
+ * No em or en dashes in the rendered copy (Page11.test.tsx guards it). Refs:
+ * Snell (§2), Brown + Shojaee (§2 hard-mode box), Wu (§3 to 4), Stroebl (§4).
  */
 
 import { useState } from "react";
@@ -88,18 +43,7 @@ import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import {
-  accuracy,
-  BIG_MODEL,
-  ceiling,
-  curvePoints,
-  DIFFICULTIES,
-  flopsOf,
-  MAX_EXP,
-  MODEL_SIZES,
-  target,
-  type Difficulty,
-} from "@/lib/allocator";
+import { PAGE11, type Band } from "@/lib/page11";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
@@ -108,12 +52,6 @@ const PAGE_N = 11;
 
 /** Page 11's references, numbered in order of first appearance. */
 const REF = { snell: 1, monkeys: 2, illusion: 3, wu: 4, resample: 5 } as const;
-
-const DIFFICULTY_BLURB: Record<Difficulty, string> = {
-  easy: "the 1× model already lands most answers on its first try",
-  medium: "the 1× model succeeds now and then, enough traction for thinking to build on",
-  hard: "the 1× model essentially never lands one on its own",
-};
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -294,136 +232,128 @@ function LawPanel({
  */
 const px = (v: number) => Math.round(v * 100) / 100;
 
-const SIZE_HUES: Record<number, { stroke: string; fill: string }> = {
-  1: { stroke: "stroke-correct", fill: "fill-correct" },
-  2: { stroke: "stroke-compute", fill: "fill-compute" },
-  4: { stroke: "stroke-wrong", fill: "fill-wrong" },
-  14: { stroke: "stroke-ink", fill: "fill-ink" },
-};
-
 /**
- * The allocator chart: every model's full trajectory drawn at once, the
- * selected one highlighted, the knobs only moving the marker along it.
+ * The keystone game, measured. Accuracy against inference FLOPs, priced in
+ * multiples of the big model's one greedy answer (the vertical line at 1x). The
+ * small model's vote curve (Qwen2.5-3B, Act 2's shared instrument) climbs with
+ * more samples but never crosses the big model's greedy dot, on either band;
+ * the dashed line above it is coverage, the answer that was in the pile and
+ * went uncashed.
  */
-function FamilyChart({
-  difficulty,
-  size,
-  cost,
-  acc,
-}: {
-  difficulty: Difficulty;
-  size: number;
-  cost: number;
-  acc: number;
-}) {
+function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
   const width = 640;
-  const height = 300;
+  const height = 320;
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
   const innerH = height - CHART_MARGIN.top - CHART_MARGIN.bottom;
-  const xScale = scaleLog().domain([1, 4096]).range([0, innerW]);
+  const xScale = scaleLog().domain([0.1, 20]).range([0, innerW]);
   const yScale = scaleLinear().domain([0, 100]).range([innerH, 0]);
   const x = (v: number) => px(xScale(v));
-  const y = (v: number) => px(yScale(v));
-  const tgt = target(difficulty);
+  const y = (v: number) => px(yScale(v * 100));
+  const tgt = band.target;
+  const xf = (flops: number) => x(flops / tgt.flops);
 
-  const family = MODEL_SIZES.map((s) => ({ s, pts: curvePoints(difficulty, s) }));
-  const path = (pts: { x: number; y: number }[]) =>
-    pts.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.x)},${y(p.y)}`).join("");
+  const vote = band.voteCurve;
+  const votePath = vote.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.xTarget)},${y(p.accuracy)}`).join("");
+  const covPath = vote.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.xTarget)},${y(p.coverage)}`).join("");
+  const marker = vote[nIdx];
+  const last = vote[vote.length - 1];
 
-  const title = `Accuracy against total inference FLOPs on ${difficulty} problems, log x axis. All four model curves are drawn: ${family
-    .map(
-      (f) =>
-        `the ${f.s} times model runs from ${f.pts[0].y.toFixed(0)} percent with one answer up to ${f.pts[f.pts.length - 1].y.toFixed(0)} percent at 256 samples`,
-    )
-    .join("; ")}. The dashed target line marks ${tgt.toFixed(0)} percent, the 14 times model's single greedy answer, at 14 FLOPs units. Your marker: the ${size} times model at ${cost} units, scoring ${acc.toFixed(1)} percent.`;
+  const title =
+    `Accuracy against inference FLOPs on ${band.label} problems (${band.levels}), priced in ` +
+    `multiples of the ${tgt.label}'s single greedy answer, log x axis. The target is ${tgt.label} ` +
+    `greedy at ${PAGE11.pct(tgt.accuracy)} percent, at one times its own bill. The Qwen2.5-3B vote ` +
+    `curve runs from ${PAGE11.pct(vote[0].accuracy)} percent at ${vote[0].n} sample up to ` +
+    `${PAGE11.pct(last.accuracy)} percent at ${last.n} samples and ${last.xTarget.toFixed(1)} times ` +
+    `the target's bill, and never reaches the target line. The dashed line above it is coverage: the ` +
+    `answer was in the pile ${PAGE11.pct(band.coverageAt16)} percent of the time. Your marker: ` +
+    `${marker.n} samples, ${PAGE11.pct(marker.accuracy)} percent, at ${marker.xTarget.toFixed(1)} times the bill.`;
 
   return (
     <ChartFrame
       title={title}
       width={width}
       height={height}
-      xLabel="total inference FLOPs (units of one 1× answer, log scale)"
+      xLabel="inference FLOPs (multiples of the big model's one answer, log scale)"
       yLabel="accuracy (%)"
     >
       {[0, 20, 40, 60, 80, 100].map((t) => (
         <g key={`y${t}`}>
-          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-6} y={y(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+          <line x1={0} x2={innerW} y1={y(t / 100)} y2={y(t / 100)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-6} y={y(t / 100)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
             {t}
           </text>
         </g>
       ))}
-      {[1, 10, 100, 1000].map((t) => (
+      {[0.1, 1, 10].map((t) => (
         <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-          {t}
+          {t}×
         </text>
       ))}
 
-      {/* the target: the 14x model's one greedy answer */}
-      <line
-        x1={0}
-        x2={innerW}
-        y1={y(tgt)}
-        y2={y(tgt)}
-        className="stroke-ink-muted"
-        strokeWidth={1}
-        strokeDasharray="4 3"
-      />
-      <text x={innerW - 4} y={y(tgt) - 5} textAnchor="end" className="fill-ink-muted text-[11px]">
-        the target
+      {/* the target: the big model's one greedy answer, and the bill it costs */}
+      <line x1={0} x2={innerW} y1={y(tgt.accuracy)} y2={y(tgt.accuracy)} className="stroke-ink" strokeWidth={1} strokeDasharray="4 3" />
+      <text x={innerW - 2} y={y(tgt.accuracy) - 5} textAnchor="end" className="fill-ink text-[11px] font-semibold">
+        {tgt.label}, one answer · {PAGE11.pct(tgt.accuracy)}%
+      </text>
+      <line x1={x(1)} x2={x(1)} y1={0} y2={innerH} className="stroke-ink-muted" strokeWidth={0.75} strokeDasharray="3 3" opacity={0.6} />
+      <text x={x(1)} y={11} textAnchor="middle" className="fill-ink-muted text-[9px]">
+        its bill
       </text>
 
-      {/* every curve, drawn in full; the selected one carries the weight, the
-          rest are thin ghosts — but every end label stays large and legible */}
-      {family.map((f) => {
-        const selected = f.s === size;
-        const end = f.pts[f.pts.length - 1];
-        const hue = SIZE_HUES[f.s];
-        return (
-          <g key={f.s}>
-            <path
-              d={path(f.pts)}
-              fill="none"
-              className={hue.stroke}
-              strokeWidth={selected ? 3 : 1}
-              opacity={selected ? 1 : 0.25}
-            />
-            <text
-              x={x(end.x) + (f.s === BIG_MODEL ? -2 : 5)}
-              y={y(end.y) + (f.s === BIG_MODEL ? -10 : 4)}
-              textAnchor={f.s === BIG_MODEL ? "end" : "start"}
-              className={`text-[13px] font-semibold ${hue.fill}`}
-              opacity={selected ? 1 : 0.7}
-            >
-              {f.s}×
+      {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
+      <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.9} />
+      <text x={x(last.xTarget) - 2} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct text-[10px]">
+        coverage {PAGE11.pct(band.coverageAt16)}%
+      </text>
+
+      {/* the small model, thinking harder: the 3B vote curve */}
+      <path d={votePath} fill="none" className="stroke-compute" strokeWidth={2.5} />
+      {vote.map((p) => (
+        <circle key={p.n} cx={x(p.xTarget)} cy={y(p.accuracy)} r={2.5} className="fill-compute stroke-canvas" strokeWidth={1} />
+      ))}
+      <text x={x(last.xTarget) + 5} y={y(last.accuracy) + 4} className="fill-compute text-[10px] font-semibold">
+        3B, vote@{last.n}
+      </text>
+
+      {/* the greedy family: where each size lands with one answer */}
+      {band.greedy.map((g) => (
+        <g key={g.label}>
+          <circle
+            cx={xf(g.flops)}
+            cy={y(g.accuracy)}
+            r={4}
+            className={`${g.label === tgt.label ? "fill-ink" : "fill-ink-muted"} stroke-canvas`}
+            strokeWidth={1.5}
+          />
+          {g.label !== tgt.label ? (
+            <text x={xf(g.flops)} y={y(g.accuracy) + 14} textAnchor="middle" className="fill-ink-muted text-[9px]">
+              {g.label}
             </text>
-          </g>
-        );
-      })}
+          ) : null}
+        </g>
+      ))}
 
-      {/* the 14x model's greedy point — the dot to beat */}
-      <circle cx={x(BIG_MODEL)} cy={y(tgt)} r={5} className="fill-ink stroke-canvas" strokeWidth={1.5} />
-      <text x={x(BIG_MODEL)} y={y(tgt) + 16} textAnchor="middle" className="fill-ink text-[11px]">
-        14× · 1 answer
-      </text>
+      {/* the strongest realizable selector we own, where we own one (page 8) */}
+      {band.bestOf ? (
+        <g>
+          <rect
+            x={x(band.bestOf.xTarget) - 4.5}
+            y={y(band.bestOf.accuracy) - 4.5}
+            width={9}
+            height={9}
+            transform={`rotate(45 ${x(band.bestOf.xTarget)} ${y(band.bestOf.accuracy)})`}
+            className="fill-wrong stroke-canvas"
+            strokeWidth={1.25}
+          />
+          <text x={x(band.bestOf.xTarget)} y={y(band.bestOf.accuracy) - 9} textAnchor="middle" className="fill-wrong text-[9px]">
+            best-of-16
+          </text>
+        </g>
+      ) : null}
 
-      {/* your marker, sliding along the selected curve */}
-      <line
-        x1={x(cost)}
-        x2={x(cost)}
-        y1={0}
-        y2={innerH}
-        className="stroke-ink-muted"
-        strokeWidth={1}
-        strokeDasharray="3 3"
-      />
-      <circle
-        cx={x(cost)}
-        cy={y(acc)}
-        r={5.5}
-        className={`${SIZE_HUES[size].fill} stroke-canvas`}
-        strokeWidth={1.5}
-      />
+      {/* the marker: where the sampling slider is standing right now */}
+      <line x1={x(marker.xTarget)} x2={x(marker.xTarget)} y1={0} y2={innerH} className="stroke-compute" strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
+      <circle cx={x(marker.xTarget)} cy={y(marker.accuracy)} r={6} className="fill-compute stroke-canvas" strokeWidth={2} />
     </ChartFrame>
   );
 }
@@ -808,45 +738,13 @@ export function Page11() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
-  const [sizeIdx, setSizeIdx] = useState(0);
-  const [exp, setExp] = useState(0);
+  const [bandKey, setBandKey] = useState<"hard" | "easy">("hard");
+  const [nIdx, setNIdx] = useState(PAGE11.sampleStops.length - 1);
 
-  const size = MODEL_SIZES[sizeIdx];
-  const k = 2 ** exp;
-  const acc = accuracy(difficulty, size, k);
-  const cost = flopsOf(size, k);
-  const tgt = target(difficulty);
-  const cap = ceiling(difficulty, size);
-
-  const beaten = acc >= tgt;
-  const verdict = beaten
-    ? cost < BIG_MODEL
-      ? {
-          tone: "border-correct bg-correct/15",
-          head: `✓ matched the 14× model's ${tgt.toFixed(0)}%, for ${(BIG_MODEL / cost).toFixed(1)}× less compute`,
-          headTone: "text-correct",
-          body: "Test-time compute just did the work of parameters. That is the FLOPs-matched headline result.",
-        }
-      : {
-          tone: "border-compute bg-compute/10",
-          head: `matched it, but you spent ${cost} units and the 14× model needs only ${BIG_MODEL}`,
-          headTone: "text-ink",
-          body: "The win only counts while your bill stays under the big model's. Back off the knobs and find the cheap crossing.",
-        }
-    : cap < tgt
-      ? {
-          tone: "border-wrong bg-wrong/15",
-          head: `✗ this model saturates near ${cap.toFixed(0)}%; the target is out of reach`,
-          headTone: "text-wrong",
-          body: "No sample budget closes the gap: the curve flattens below the dashed line. On problems this far past the base model, pretraining the larger model is the better buy.",
-        }
-      : {
-          tone: "border-grid bg-surface-raised",
-          head: `${acc.toFixed(1)}% so far; the 14× model gets ${tgt.toFixed(0)}%`,
-          headTone: "text-ink",
-          body: "Keep turning the test-time knob and watch what it costs.",
-        };
+  const band = PAGE11.bands[bandKey];
+  const marker = band.voteCurve[nIdx];
+  const vote16 = band.voteCurve[band.voteCurve.length - 1];
+  const gapPts = Math.round((band.target.accuracy - marker.accuracy) * 100);
 
   return (
     <article className="flex flex-col gap-6">
@@ -858,158 +756,131 @@ export function Page11() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        A bigger model and a longer think are{" "}
+        A bigger model and more thinking are{" "}
         <strong className="text-ink">two ways to spend the same FLOPs</strong>: pretraining burns
-        them once into parameters, test-time compute burns them at answer time, on the question
-        that needs them. Matched budget for budget,{" "}
-        <strong className="text-ink">which buys more accuracy?</strong>
+        them once into parameters, sampling and voting burn them at answer time. Act 2 built the
+        second kind. Matched budget for budget on this deck&rsquo;s own instrument,{" "}
+        <strong className="text-ink">can thinking harder out-buy a bigger model?</strong>
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the two-knob allocator */}
+        {/* Step 1 — the game, measured on our own instrument */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. Problem complexity and the compromise
+            1. The game, on our own instrument
             <span className="block text-xs font-normal text-ink-muted">
-              the game: beat the 14× model · illustrative curves, no live LLM
+              beat the bigger model&rsquo;s one answer · measured, Qwen2.5-3B against 7B
             </span>
           </h2>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <p className="text-ink">
-              One unit is one answer from the 1× model. An M× model costs M units per answer, so
-              the 14× model&rsquo;s single greedy answer costs <strong>14 units</strong> and scores{" "}
-              <strong className="text-ink">{tgt.toFixed(0)}%</strong>: the black dot.{" "}
-              <strong>Model size picks your curve; test-time compute slides
-              you along it.</strong> Win by crossing the dashed line <em>left</em> of the dot.
+              The <strong className="text-ink">{band.target.label}</strong>&rsquo;s single greedy
+              answer is the target: the black line, priced at{" "}
+              <strong>one times its own bill</strong>. The small model
+              {" "}(<strong className="text-ink">3B</strong>) spends that same bill differently, on
+              more samples and a vote. Push the samples and its blue curve climbs, but{" "}
+              <strong>it never reaches the black line</strong>, here or several times past it.
             </p>
 
-            {/* the centerpiece at full card width, controls in a strip beneath */}
-            <FamilyChart difficulty={difficulty} size={size} cost={cost} acc={acc} />
+            <MeasuredGame band={band} nIdx={nIdx} />
             <p className="text-xs text-ink-muted">
-              all four model curves are drawn in full and the knobs never move them; only the
-              highlight and your marker respond. The crossings and ceilings are Snell et
-              al.&rsquo;s claims; the exact coordinates are illustrative, since the paper reports
-              scale only as multiples.
-              <Cite n={REF.snell} />
+              measured on this deck&rsquo;s instrument: the hard band is pages 6 to 8&rsquo;s own
+              100 MATH-500 level 4 to 5 problems, and the run reproduces their shipped numbers
+              exactly before it draws anything new (gate 1). FLOPs are counted 2 × parameters ×
+              tokens, from measured token counts.
             </p>
 
             <div className="flex flex-col gap-4 border-t border-dashed border-grid pt-3">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <p className="text-sm text-ink-muted">Problem difficulty</p>
                 <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
-                  {DIFFICULTIES.map((d) => (
+                  {(["easy", "hard"] as const).map((k) => (
                     <button
-                      key={d}
+                      key={k}
                       type="button"
-                      aria-pressed={difficulty === d}
+                      aria-pressed={bandKey === k}
                       onClick={() => {
-                        setDifficulty(d);
+                        setBandKey(k);
                         recordInteraction(PAGE_N);
                       }}
                       className={`rounded border px-3 py-1.5 text-sm capitalize ${
-                        difficulty === d
+                        bandKey === k
                           ? "border-compute bg-compute/15 font-semibold text-ink"
                           : "border-grid bg-surface-raised text-ink-muted"
                       }`}
                     >
-                      {d}
+                      {k}
                     </button>
                   ))}
                 </div>
-                <p className="basis-full text-xs text-ink-muted">{DIFFICULTY_BLURB[difficulty]}</p>
+                <p className="basis-full text-xs text-ink-muted">
+                  {band.label} problems, MATH-500 {band.levels}, n = {band.nItems}
+                </p>
               </div>
-              {/* the two dials share one row, so they always sit at the same height */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Slider
-                  label="Model size (× base parameters)"
-                  min={0}
-                  max={MODEL_SIZES.length - 1}
-                  value={sizeIdx}
-                  format={(v) => `${MODEL_SIZES[v]}×`}
-                  onChange={(v) => {
-                    setSizeIdx(v);
-                    recordInteraction(PAGE_N);
-                  }}
-                />
-                <Slider
-                  label="Test-time compute"
-                  min={0}
-                  max={MAX_EXP}
-                  value={exp}
-                  format={(v) => `${2 ** v} sample${v === 0 ? "" : "s"}`}
-                  onChange={(v) => {
-                    setExp(v);
-                    recordInteraction(PAGE_N);
-                  }}
-                />
-              </div>
+              <Slider
+                label="Test-time compute (samples the 3B votes over)"
+                min={0}
+                max={PAGE11.sampleStops.length - 1}
+                value={nIdx}
+                format={(v) => `${PAGE11.sampleStops[v]} sample${PAGE11.sampleStops[v] === 1 ? "" : "s"}`}
+                onChange={(v) => {
+                  setNIdx(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
             </div>
 
-            {/* the scoreboard: three numbers + the verdict, one strip */}
-            <div className="grid gap-2 md:grid-cols-[auto_minmax(0,1fr)]">
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  {
-                    label: "your accuracy",
-                    value: `${acc.toFixed(1)}%`,
-                    tone: beaten ? "text-correct" : "text-ink",
-                    note: `${size}× · ${k} sample${k === 1 ? "" : "s"}`,
-                  },
-                  {
-                    label: "your bill",
-                    value: String(cost),
-                    tone: "text-compute",
-                    note: "FLOPs units",
-                  },
-                  {
-                    label: "the target",
-                    value: `${tgt.toFixed(0)}%`,
-                    tone: "text-ink",
-                    note: "14× · 14 units",
-                  },
-                ].map((s) => (
-                  <div key={s.label} className="rounded-lg border border-grid bg-surface-raised px-3 py-2">
-                    <p className={`font-mono text-lg font-bold tabular-nums ${s.tone}`}>{s.value}</p>
-                    <p className="text-xs text-ink">{s.label}</p>
-                    <p className="text-xs text-ink-muted">{s.note}</p>
-                  </div>
-                ))}
-              </div>
-              <div className={`rounded border-l-4 p-3 text-sm ${verdict.tone}`} role="status">
-                <p className={`font-semibold ${verdict.headTone}`}>{verdict.head}</p>
-                <p className="mt-1 text-ink">{verdict.body}</p>
-              </div>
+            <div className="rounded border-l-4 border-wrong bg-wrong/15 p-3 text-sm" role="status">
+              <p className="font-semibold text-wrong">
+                vote@{marker.n}: {PAGE11.pct(marker.accuracy)}%, still {gapPts} point
+                {gapPts === 1 ? "" : "s"} under the {band.target.label}&rsquo;s{" "}
+                {PAGE11.pct(band.target.accuracy)}%
+              </p>
+              <p className="mt-1 text-ink">
+                and now at <strong>{marker.xTarget.toFixed(1)}×</strong> its bill.{" "}
+                {band.bestOf
+                  ? `Even a trained verifier (page 8) only ties it, at ${PAGE11.pct(band.bestOf.accuracy)}%. `
+                  : ""}
+                No sample budget on this band crosses the line.
+              </p>
             </div>
 
-            {/* the mechanism behind the verdicts, so hard mode has a reason */}
+            {/* the mechanism (B2): the bottleneck is selection, not coverage */}
             <p className="border-t border-dashed border-grid pt-3 text-sm text-ink">
-              <strong>Why difficulty decides the game:</strong> extra samples only re-draw from
-              what the model can already produce. On easy problems the first draw is usually
-              right. On medium ones a correct chain turns up now and then, and voting or a
-              verifier can fish it out: thinking amplifies a foothold. On hard ones every chain
-              breaks somewhere, so no number of re-draws holds a right answer to find.{" "}
-              <strong>Thinking amplifies competence; only parameters create it.</strong>
+              <strong>Why more samples do not cross:</strong> the bottleneck is not the thinking,
+              it is the picking. The dashed green line is{" "}
+              <strong className="text-ink">coverage</strong>: a correct answer is somewhere in the{" "}
+              {vote16.n} sampled chains{" "}
+              <strong className="text-ink">{PAGE11.pct(band.coverageAt16)}%</strong> of the time,
+              above the {band.target.label}&rsquo;s {PAGE11.pct(band.target.accuracy)}%. The chains
+              are not breaking; the reasoning is there. What fails is selection: voting returns that
+              answer only{" "}
+              <strong className="text-ink">{PAGE11.pct(vote16.accuracy)}%</strong> of the time.{" "}
+              <strong>
+                The answer is in the pile, and no rule we can run at answer time reliably grabs it.
+              </strong>
             </p>
           </div>
         </section>
         <Note kicker="Try it">
           <p>
-            Drag <em>test-time compute</em> right until your marker crosses the dashed line —
-            before the black dot means you beat the 14× model for less.
+            Push <em>test-time compute</em> to 16 and watch the blue curve stall below the black
+            line, on {vote16.xTarget.toFixed(0)} times the bigger model&rsquo;s bill.
           </p>
-          <p>Then set difficulty to hard and try to cross at all.</p>
+          <p>Then switch to the easy band and try to cross there instead.</p>
         </Note>
 
         {/* Step 2 — the law, stated */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. The law, and its fine print</h2>
+          <h2 className="text-xl font-semibold text-ink">2. The published law, and its fine print</h2>
           <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-sm text-ink">
-              Snell et al. tried two ways of converting test-time FLOPs into accuracy: search over
-              sampled steps under a process verifier (page 9&rsquo;s graders), or letting the
-              model redraft its own answer. Guessing how hard the prompt is first, then choosing
-              the strategy and budget to match, is what they call compute-optimal.
-              <Cite n={REF.snell} /> Three numbers carry the result:
+              That was our own instrument, in 2026. The law that predicted a crossing is older:
+              Snell et al. 2024 measured it on models from before the reasoning-training recipes,
+              and found that guessing how hard a prompt is first, then choosing the strategy and
+              budget to match, can beat a bigger model at a matched bill. They call it
+              compute-optimal.
+              <Cite n={REF.snell} /> Three numbers carry it:
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <LawPanel head="4×" headTone="text-correct" title="fewer samples than best-of-N" art={<ArtFourX />}>
@@ -1106,7 +977,7 @@ export function Page11() {
             </p>
             <ParetoScatter />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-              <Key shape="circle" className="bg-ink-muted" label="sampling + weighted voting (64–256 samples)" />
+              <Key shape="circle" className="bg-ink-muted" label="sampling + weighted voting (64 to 256 samples)" />
               <Key shape="diamond" className="bg-correct-bright" label="REBASE tree search + weighted voting (32 samples)" />
             </div>
             <figcaption className="text-sm text-ink-muted">
@@ -1138,16 +1009,16 @@ export function Page11() {
             4's job: better search still spends everything at answer time. */}
         <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            <strong className="text-ink">This page leaves two loose ends.</strong> The hard
-            boundary: no budget rescues a model without a foothold, because thinking only mines
-            what the weights already hold, and so far the only way to change the weights is
-            buying parameters. And the waste: voting, verifiers, search, and the
-            allocator&rsquo;s knobs all spend their compute at answer time, and the reasoning
-            that compute buys is thrown away the moment the answer is scored, even though a
-            chain that survived the check is a worked solution the model wrote for itself.{" "}
-            <em>Page 12 spends one move on both: keep the reasoning and train on it, teaching
-            the model to reason, so the frontier that stalled at inference time starts to
-            move.</em>
+            <strong className="text-ink">This page leaves two loose ends.</strong> The selection
+            wall: the answer is in the pile, but no rule we can run at answer time reliably grabs
+            it, and past the hardest problems the pile stops holding it at all. And the waste:
+            sampling, voting, and search all spend their compute at answer time and throw away the
+            reasoning they bought, even though a chain that reached the answer is a worked solution
+            the model wrote for itself.{" "}
+            <em>The frontier&rsquo;s answer to both was to stop selecting at inference time and
+            train the reasoning into the weights: page 12 keeps the winning chains and fine-tunes
+            on them, and pages 13 and 14 reward only correct answers until the reasoning emerges on
+            its own.</em>
           </p>
         </div>
       </div>
@@ -1155,21 +1026,27 @@ export function Page11() {
       
       <div className="flex flex-col gap-1 text-xs text-ink-muted">
         <p>
-          <strong className="text-ink">Simulated</strong> — the allocator curves in section 1 are
-          authored illustrations pinned to the cited findings, not digitized data, because there
-          is no per-difficulty accuracy figure in the paper to digitize: Snell et al.
-          report model scale only as a multiple (absolute parameter counts undisclosed), so 14×
-          means 14× the base model&rsquo;s parameter count, and FLOPs per answer are counted in
-          proportion to parameters throughout. The curves are the simplest shapes that obey the
-          reported findings (crossings ordered by scale, saturation at every scale, no budget
-          rescuing the small model on hard prompts), and every on-screen behaviour is pinned in
-          the test suite.
+          <strong className="text-ink">Measured</strong>: section 1 is this deck&rsquo;s own run on
+          Qwen2.5 1.5B, 3B and 7B-Instruct. The hard band is pages 6 to 8&rsquo;s exact 100
+          MATH-500 level 4 to 5 problems, reproduced to the digit before any new generation (gate
+          1), plus a fresh 50-item easy band at levels 1 to 3. One family, one grader, one date, so
+          the crossing&rsquo;s absence is an instance on a 2026 instrument, not a refutation of the
+          cited results, which is why sections 3 and 4 keep them as published.{" "}
+          <a
+            href={`/notebooks/${PAGE11.download.slug}.zip`}
+            className="text-compute underline"
+            download
+          >
+            Download the notebook and re-derive it ({PAGE11.download.sizeLabel})
+          </a>
+          .
         </p>
         <p>
-          <strong className="text-ink">Cited</strong> — section 3 is read off Wu et
-          al.&rsquo;s GSM8K figure by eye (±3 points, two of five model sizes omitted for
-          legibility); section 4 is transcribed exactly from the same paper&rsquo;s MATH500
-          results table.
+          <strong className="text-ink">Cited</strong>: the law panels in section 2 are Snell et
+          al. 2024&rsquo;s findings, reported as scale multiples (absolute parameter counts
+          undisclosed); section 3 is read off Wu et al.&rsquo;s GSM8K figure by eye (plus or minus
+          3 points, two of five model sizes omitted for legibility); section 4 is transcribed from
+          the same paper&rsquo;s MATH500 results table.
         </p>
       </div>
 

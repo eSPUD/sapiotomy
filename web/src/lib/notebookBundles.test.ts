@@ -50,6 +50,8 @@ const PAGES = [
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
     declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"],
     repoNotebookIsTheShippedOne: false },
+  { n: 11, slug: "page-11-training-vs-scale", notebook: "page_11_training_vs_scale.ipynb",
+    declared: "1.7 MB", extras: [], repoNotebookIsTheShippedOne: true },
 ] as const;
 
 const NOTEBOOKS = resolve(WEB, "../notebooks");

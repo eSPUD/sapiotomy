@@ -1,0 +1,642 @@
+{
+  "manifest": {
+    "run_id": "p11-full-e03641c02-h9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
+    "notebook": "page_11_training_vs_scale.ipynb",
+    "notebook_sha256": "b98a8f5cf43e844aa86fb6b3c8b879c3542ab96ac3a9f18749c815d68897258e",
+    "harness": {
+      "version": "1.3",
+      "sha256": "7076c1218c6345ec9202087a98a2bd0c71ae47d6e406a81dc1901a0c7c78d6d8"
+    },
+    "page": 11,
+    "run_mode": "FULL",
+    "timestamp_utc": "2026-08-10T01:26:14+00:00",
+    "notebook_git_sha": "fbaf014875c286b6c3b2fdbe1704a590c0ac6d59",
+    "spec": "docs/page_11_refactor_spec.md",
+    "flops_rule": "2 * params * tokens_generated, measured tokens; prompt prefix omitted on every point; a best-of point adds its judge's pass at the same rule",
+    "sources": {
+      "6": {
+        "run_id": "full-math500_l45-n100-9ab2b579-cap2048-bfloat16-cuda",
+        "traces_sha256": "1d239bb71940746519681594b066efb423d036184159b026f4418ddc492087ad"
+      },
+      "7": {
+        "run_id": "full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
+        "traces_sha256": "4de4dde57541421b712caff08e8eedd663dd6c803584befd9262ffcee6989a24"
+      },
+      "8": {
+        "run_id": "p08-p08-math500_l45-n100-5a00d35f-cap2048-p0.95-cuda",
+        "traces_sha256": "57507d4dea32f478f5b6153e9978e2e97c63c07dedadfc2feab6504a07eb0112"
+      }
+    },
+    "items": {
+      "hard": {
+        "levels": [
+          4,
+          5
+        ],
+        "n": 100,
+        "sha256": "9ab2b579204221a0c701e6c54ec2c041a63500f9d633ba208aebef8606c43155",
+        "same_as_pages_6_7": true
+      },
+      "easy": {
+        "levels": [
+          1,
+          2,
+          3
+        ],
+        "n": 50,
+        "sha256": "03641c022b17a313310e22fbf9d29434d5213ab08da735520f7f3d1843e6b7b0"
+      },
+      "seed": 123
+    },
+    "specialist": {
+      "model": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+      "system_prompt": "Please reason step by step, and put your final answer within \\boxed{}.",
+      "provenance": "Qwen2.5-Math report: continued pretraining on the Qwen Math Corpus v2 (>1T tokens), SFT on rejection-sampled rationales incl. the MATH training split, GRPO with a rule-based correctness verifier in the reward. The attribution is the bundle; no ablation separates it."
+    },
+    "decoding": {
+      "top_p": 0.95,
+      "pool_n": 16,
+      "vote_temperature": 0.3,
+      "chain_cap": 2048,
+      "group_size": 8,
+      "seed_rule": "sha256(SEED, problem_id, config_id, group_index)",
+      "answer_allowance": 32
+    },
+    "estimator": {
+      "n_axis": [
+        1,
+        2,
+        4,
+        8,
+        16
+      ],
+      "n_resamples": 64,
+      "rule": "page 7's: mean over random N-subsets, page 7's seeded draws"
+    },
+    "gates": {
+      "gate1": {
+        "page6": {
+          "reproduced": true,
+          "max_abs_drift": 0.0,
+          "cells": 15
+        },
+        "page7": {
+          "reproduced": true,
+          "max_abs_drift": 0.0,
+          "handoff": {
+            "n_items": 100,
+            "plurality_accuracy": 0.55,
+            "ci_lo": 0.45244427031643447,
+            "ci_hi": 0.6438562489359654,
+            "coverage": 0.78,
+            "single_chain_accuracy": 0.466875,
+            "thrown_away": 0.23,
+            "mean_distinct": 5.11,
+            "mean_entropy": 1.5448285869458096,
+            "tie_rate": 0.1,
+            "no_answer_rate": 0.0,
+            "truncated_rate": 0.0125,
+            "mean_tokens_generated": 9931.16
+          },
+          "curve_points": 10
+        },
+        "page8": {
+          "reproduced": true,
+          "max_abs_drift": 0.0,
+          "config_id": "t0.60-c2048",
+          "verifier": "best-of-N (skywork-prm)"
+        },
+        "all": true
+      },
+      "gate2": {
+        "n": 20,
+        "accuracy": 0.5,
+        "mean_tokens": 755.15,
+        "passed": true,
+        "floor": 0.45,
+        "params": 1543714304
+      }
+    },
+    "grading": {
+      "extract": "reasoning_from_scratch.ch03.extract_final_candidate",
+      "grade": "reasoning_from_scratch.ch03.grade_answer"
+    },
+    "versions": {
+      "torch": "2.10.0+cu128",
+      "transformers": "5.14.1"
+    }
+  },
+  "claims": {
+    "gate1_reproduced": true,
+    "no_crossing_on_hard_band": true,
+    "selection_at_best_ties_target": true,
+    "coverage_clears_target": true,
+    "gate2_ran": true,
+    "gate2_passed": true,
+    "arms_run": true
+  },
+  "family": {
+    "band": "math500_l45",
+    "n_items": 100,
+    "target": {
+      "model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "label": "Qwen2.5-7B",
+      "params": 7000000000,
+      "accuracy": 0.6,
+      "mean_tokens": 656.26,
+      "flops": 9187640000000.0,
+      "source": "page 6, greedy, cap 2048"
+    },
+    "greedy": [
+      {
+        "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "label": "Qwen2.5-1.5B",
+        "params": 1500000000,
+        "accuracy": 0.22,
+        "mean_tokens": 567.33,
+        "flops": 1701990000000.0002,
+        "source": "page 6, greedy, cap 2048"
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct",
+        "label": "Qwen2.5-3B",
+        "params": 3000000000,
+        "accuracy": 0.43,
+        "mean_tokens": 693.2,
+        "flops": 4159200000000.0005,
+        "source": "page 6, greedy, cap 2048"
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-7B-Instruct",
+        "label": "Qwen2.5-7B",
+        "params": 7000000000,
+        "accuracy": 0.6,
+        "mean_tokens": 656.26,
+        "flops": 9187640000000.0,
+        "source": "page 6, greedy, cap 2048"
+      }
+    ],
+    "vote_curve": [
+      {
+        "n": 1,
+        "accuracy": 0.46359375,
+        "coverage": 0.46359375,
+        "mean_tokens": 618.0565625,
+        "flops": 3708339375000.0005,
+        "source": "page 7, T=0.3 pile"
+      },
+      {
+        "n": 2,
+        "accuracy": 0.3709375,
+        "coverage": 0.55796875,
+        "mean_tokens": 1244.46453125,
+        "flops": 7466787187500.0,
+        "source": "page 7, T=0.3 pile"
+      },
+      {
+        "n": 4,
+        "accuracy": 0.4865625,
+        "coverage": 0.63890625,
+        "mean_tokens": 2482.4778125,
+        "flops": 14894866874999.998,
+        "source": "page 7, T=0.3 pile"
+      },
+      {
+        "n": 8,
+        "accuracy": 0.523125,
+        "coverage": 0.70828125,
+        "mean_tokens": 4972.90265625,
+        "flops": 29837415937500.0,
+        "source": "page 7, T=0.3 pile"
+      },
+      {
+        "n": 16,
+        "accuracy": 0.55,
+        "coverage": 0.78,
+        "mean_tokens": 9931.16,
+        "flops": 59586960000000.0,
+        "source": "page 7, T=0.3 pile"
+      }
+    ],
+    "best_of": {
+      "config_id": "t0.60-c2048",
+      "n": 16,
+      "selector": "best-of-N (skywork-prm)",
+      "accuracy": 0.6,
+      "fixed": 21,
+      "broke": 4,
+      "p": 0.0009105205535888672,
+      "baseline_accuracy": 0.43,
+      "majority_accuracy": 0.56,
+      "mean_tokens": 9977.0,
+      "gen_flops": 59862000000000.0,
+      "judge_flops": 29931000000000.0,
+      "flops": 89793000000000.0,
+      "judge_params": 1500000000,
+      "source": "page 8, its own pool"
+    },
+    "flops_rule": "2 * params * tokens_generated, measured tokens; prompt prefix omitted on every point"
+  },
+  "arms": {
+    "easy": [
+      {
+        "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "kind": "greedy",
+        "n": 1,
+        "accuracy": 0.56,
+        "mean_tokens": 223.6,
+        "n_items": 50,
+        "params": 1500000000,
+        "flops": 670800000000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1500000000,
+        "n": 1,
+        "n_items": 50,
+        "accuracy": 0.54,
+        "coverage": 0.54,
+        "tie_rate": 0.0,
+        "single_chain_accuracy": 0.54,
+        "mean_distinct": 0.9909375,
+        "mean_tokens": 220.591875,
+        "truncated_rate": 0.0021875,
+        "n_draws": 3200,
+        "flops": 661775625000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1500000000,
+        "n": 2,
+        "n_items": 50,
+        "accuracy": 0.4521875,
+        "coverage": 0.6246875,
+        "tie_rate": 0.3775,
+        "single_chain_accuracy": 0.5384375,
+        "mean_distinct": 1.375625,
+        "mean_tokens": 443.67625,
+        "truncated_rate": 0.00265625,
+        "n_draws": 3200,
+        "flops": 1331028750000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1500000000,
+        "n": 4,
+        "n_items": 50,
+        "accuracy": 0.5628125,
+        "coverage": 0.6971875,
+        "tie_rate": 0.173125,
+        "single_chain_accuracy": 0.54203125,
+        "mean_distinct": 1.9190625,
+        "mean_tokens": 883.9765625,
+        "truncated_rate": 0.002109375,
+        "n_draws": 3200,
+        "flops": 2651929687500.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1500000000,
+        "n": 8,
+        "n_items": 50,
+        "accuracy": 0.6059375,
+        "coverage": 0.72875,
+        "tie_rate": 0.115,
+        "single_chain_accuracy": 0.5362890625,
+        "mean_distinct": 2.7171875,
+        "mean_tokens": 1759.3125,
+        "truncated_rate": 0.0017578125,
+        "n_draws": 3200,
+        "flops": 5277937500000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1500000000,
+        "n": 16,
+        "n_items": 50,
+        "accuracy": 0.62,
+        "coverage": 0.74,
+        "tie_rate": 0.08,
+        "single_chain_accuracy": 0.53875,
+        "mean_distinct": 3.82,
+        "mean_tokens": 3538.56,
+        "truncated_rate": 0.0025,
+        "n_draws": 3200,
+        "flops": 10615680000000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct",
+        "kind": "greedy",
+        "n": 1,
+        "accuracy": 0.74,
+        "mean_tokens": 302.34,
+        "n_items": 50,
+        "params": 3000000000,
+        "flops": 1814039999999.9998
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 3000000000,
+        "n": 1,
+        "n_items": 50,
+        "accuracy": 0.741875,
+        "coverage": 0.741875,
+        "tie_rate": 0.0,
+        "single_chain_accuracy": 0.741875,
+        "mean_distinct": 1.0,
+        "mean_tokens": 344.068125,
+        "truncated_rate": 0.0075,
+        "n_draws": 3200,
+        "flops": 2064408750000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 3000000000,
+        "n": 2,
+        "n_items": 50,
+        "accuracy": 0.6440625,
+        "coverage": 0.8390625,
+        "tie_rate": 0.3,
+        "single_chain_accuracy": 0.7415625,
+        "mean_distinct": 1.3,
+        "mean_tokens": 675.69,
+        "truncated_rate": 0.005625,
+        "n_draws": 3200,
+        "flops": 4054140000000.0005
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 3000000000,
+        "n": 4,
+        "n_items": 50,
+        "accuracy": 0.768125,
+        "coverage": 0.8796875,
+        "tie_rate": 0.1071875,
+        "single_chain_accuracy": 0.736640625,
+        "mean_distinct": 1.6571875,
+        "mean_tokens": 1348.9321875,
+        "truncated_rate": 0.006015625,
+        "n_draws": 3200,
+        "flops": 8093593125000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 3000000000,
+        "n": 8,
+        "n_items": 50,
+        "accuracy": 0.815625,
+        "coverage": 0.9190625,
+        "tie_rate": 0.05375,
+        "single_chain_accuracy": 0.742265625,
+        "mean_distinct": 2.15125,
+        "mean_tokens": 2711.2240625,
+        "truncated_rate": 0.0067578125,
+        "n_draws": 3200,
+        "flops": 16267344375000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-3B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 3000000000,
+        "n": 16,
+        "n_items": 50,
+        "accuracy": 0.84,
+        "coverage": 0.94,
+        "tie_rate": 0.02,
+        "single_chain_accuracy": 0.74375,
+        "mean_distinct": 2.86,
+        "mean_tokens": 5401.28,
+        "truncated_rate": 0.00625,
+        "n_draws": 3200,
+        "flops": 32407680000000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-7B-Instruct",
+        "kind": "greedy",
+        "n": 1,
+        "accuracy": 0.88,
+        "mean_tokens": 323.24,
+        "n_items": 50,
+        "params": 7000000000,
+        "flops": 4525360000000.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "greedy",
+        "n": 1,
+        "accuracy": 0.8,
+        "mean_tokens": 388.5,
+        "n_items": 50,
+        "params": 1543714304,
+        "flops": 1199466014208.0
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 1,
+        "n_items": 50,
+        "accuracy": 0.83875,
+        "coverage": 0.83875,
+        "tie_rate": 0.0,
+        "single_chain_accuracy": 0.83875,
+        "mean_distinct": 1.0,
+        "mean_tokens": 406.8821875,
+        "truncated_rate": 0.0084375,
+        "n_draws": 3200,
+        "flops": 1256219705773.1199
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 2,
+        "n_items": 50,
+        "accuracy": 0.8025,
+        "coverage": 0.8828125,
+        "tie_rate": 0.116875,
+        "single_chain_accuracy": 0.84265625,
+        "mean_distinct": 1.116875,
+        "mean_tokens": 804.933125,
+        "truncated_rate": 0.0065625,
+        "n_draws": 3200,
+        "flops": 2485173557651.84
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 4,
+        "n_items": 50,
+        "accuracy": 0.8546875,
+        "coverage": 0.915,
+        "tie_rate": 0.02875,
+        "single_chain_accuracy": 0.842734375,
+        "mean_distinct": 1.2553125,
+        "mean_tokens": 1609.5659375,
+        "truncated_rate": 0.006015625,
+        "n_draws": 3200,
+        "flops": 4969419921899.84
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 8,
+        "n_items": 50,
+        "accuracy": 0.8628125,
+        "coverage": 0.929375,
+        "tie_rate": 0.0171875,
+        "single_chain_accuracy": 0.840703125,
+        "mean_distinct": 1.439375,
+        "mean_tokens": 3221.88125,
+        "truncated_rate": 0.0065625,
+        "n_draws": 3200,
+        "flops": 9947328342828.799
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 16,
+        "n_items": 50,
+        "accuracy": 0.86,
+        "coverage": 0.94,
+        "tie_rate": 0.04,
+        "single_chain_accuracy": 0.84125,
+        "mean_distinct": 1.74,
+        "mean_tokens": 6437.26,
+        "truncated_rate": 0.00625,
+        "n_draws": 3200,
+        "flops": 19874580681134.082
+      }
+    ],
+    "hard": [
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "greedy",
+        "n": 1,
+        "accuracy": 0.64,
+        "mean_tokens": 655.84,
+        "n_items": 100,
+        "params": 1543714304,
+        "flops": 2024859178270.7202
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 1,
+        "n_items": 100,
+        "accuracy": 0.62,
+        "coverage": 0.62,
+        "tie_rate": 0.0,
+        "single_chain_accuracy": 0.62,
+        "mean_distinct": 1.0,
+        "mean_tokens": 658.14109375,
+        "truncated_rate": 0.013125,
+        "n_draws": 6400,
+        "flops": 2031963640944.16
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 2,
+        "n_items": 100,
+        "accuracy": 0.55578125,
+        "coverage": 0.676875,
+        "tie_rate": 0.306875,
+        "single_chain_accuracy": 0.616328125,
+        "mean_distinct": 1.306875,
+        "mean_tokens": 1323.6215625,
+        "truncated_rate": 0.014609375,
+        "n_draws": 6400,
+        "flops": 4086587078228.16
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 4,
+        "n_items": 100,
+        "accuracy": 0.61484375,
+        "coverage": 0.73515625,
+        "tie_rate": 0.13296875,
+        "single_chain_accuracy": 0.6203125,
+        "mean_distinct": 1.71234375,
+        "mean_tokens": 2646.0359375,
+        "truncated_rate": 0.0148828125,
+        "n_draws": 6400,
+        "flops": 8169447051233.6
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 8,
+        "n_items": 100,
+        "accuracy": 0.63375,
+        "coverage": 0.780625,
+        "tie_rate": 0.08453125,
+        "single_chain_accuracy": 0.619453125,
+        "mean_distinct": 2.28390625,
+        "mean_tokens": 5285.58828125,
+        "truncated_rate": 0.01484375,
+        "n_draws": 6400,
+        "flops": 16318876469640.8
+      },
+      {
+        "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+        "kind": "vote",
+        "temperature": 0.3,
+        "params": 1543714304,
+        "n": 16,
+        "n_items": 100,
+        "accuracy": 0.65,
+        "coverage": 0.82,
+        "tie_rate": 0.05,
+        "single_chain_accuracy": 0.62,
+        "mean_distinct": 3.05,
+        "mean_tokens": 10570.84,
+        "truncated_rate": 0.014375,
+        "n_draws": 6400,
+        "flops": 32636713826590.72
+      }
+    ]
+  },
+  "branch": {
+    "crossing_on_easy_band": false,
+    "specialist_beats_target": true,
+    "specialist_ties_target": false,
+    "branch": 1
+  }
+}
