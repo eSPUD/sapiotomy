@@ -15,6 +15,13 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText(/two ways to spend the same FLOPs/i)).toBeInTheDocument();
   });
 
+  it("glosses FLOPs where the page first spends the word", () => {
+    render(<Page11 />);
+    expect(
+      screen.getByText(/floating-point\s+operations, the raw count of arithmetic a chip does/i),
+    ).toBeInTheDocument();
+  });
+
   it("opens on medium difficulty with one small-model answer, short of the target", () => {
     render(<Page11 />);
     expect(screen.getByRole("button", { name: /^medium$/i })).toHaveAttribute("aria-pressed", "true");
@@ -85,6 +92,40 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     }
   });
 
+  it("stops the Pythia shading where the other models were not measured", () => {
+    render(<Page11 />);
+    // the 410M is alone below 8 and the 12B alone above 1000, and a leader
+    // needs a rival, so the bands reach neither edge of the 1..4096 axis
+    const bands = screen.getAllByTestId("ownership-band");
+    const last = bands[bands.length - 1];
+    const left = Number(bands[0].getAttribute("x"));
+    const right = Number(last.getAttribute("x")) + Number(last.getAttribute("width"));
+    expect(left).toBeGreaterThan(0);
+    expect(right).toBeLessThan(496); // inner plot width: 560 less the margins
+  });
+
+  it("brackets each Pythia handover in a strip instead of ruling a crossing", () => {
+    render(<Page11 />);
+    const strips = screen.getAllByTestId("handover-strip");
+    expect(strips).toHaveLength(2);
+    // the 2.8B/12B pass is ~0.6 points, inside the ±3 the figure was read to,
+    // for its whole width: the last strip must cover the entire 12B band
+    const band = screen.getAllByTestId("ownership-band")[2];
+    const strip = strips[1];
+    const bandX = Number(band.getAttribute("x"));
+    const stripX = Number(strip.getAttribute("x"));
+    expect(stripX).toBeLessThanOrEqual(bandX);
+    expect(stripX + Number(strip.getAttribute("width"))).toBeGreaterThanOrEqual(
+      bandX + Number(band.getAttribute("width")),
+    );
+    expect(
+      screen.getByText(/the crossing sits somewhere in the strip rather than on a\s+line/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/not the budget at which the 12B takes over/i),
+    ).toBeInTheDocument();
+  });
+
   it("rank-matches the Pythia hues to section 1's family, smallest first", () => {
     render(<Page11 />);
     // Same colour, same rank in both charts: 1x/410M green, 2x/2.8B blue,
@@ -133,6 +174,12 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(
       screen.getByText(/changes what is in the\s+distribution at all/i),
     ).toBeInTheDocument();
+  });
+
+  it("hedges the complexity cliff and says the argument does not rest on it", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/There is contested evidence that this hardens into a cliff/i)).toBeInTheDocument();
+    expect(screen.getByText(/The argument here does not need the cliff/i)).toBeInTheDocument();
   });
 
   it("carries the saturation caveat: no oracle verifier, no 100%", () => {
@@ -195,6 +242,16 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getAllByText("12B").length).toBeGreaterThan(0);
     expect(screen.getByText(/410M model is the\s+compute-optimal pick/i)).toBeInTheDocument();
     expect(screen.getByText(/read off the paper[’']s figure by eye/i)).toBeInTheDocument();
+  });
+
+  it("scales the Pythia family by its real ratios, not the game's multiples", () => {
+    render(<Page11 />);
+    expect(
+      screen.getByText(/the 2\.8B is about\s+7× the 410M and the 12B about 29×/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/the game[’']s 14× dot has no counterpart on this\s+chart/i),
+    ).toBeInTheDocument();
   });
 
   it("leads the REBASE caption with the paper-level half-the-FLOPs finding", () => {

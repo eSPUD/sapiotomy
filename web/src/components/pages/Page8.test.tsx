@@ -70,6 +70,19 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(note.textContent).toMatch(/next page/);
   });
 
+  // Every headline number on the page comes from a reconstruction of the
+  // checkpoint, so the page says so. Driven off the run: a re-run that loads it
+  // as published drops the paragraph, and this test drops with it.
+  it("discloses that the trained verifier did not run as published", () => {
+    render(<Page8 />);
+    const rebuilt = PAGE8.verifierNote?.rebuilt ?? false;
+    const found = screen.queryByText(/It did not run as published/);
+    expect(Boolean(found)).toBe(rebuilt);
+    if (rebuilt) {
+      expect(found!.textContent).toMatch(/every number on this page for it comes from that rebuild/);
+    }
+  });
+
   // Provenance is pills at the figures, not the plate this page used to open
   // on. What survives the move is the claim, not the apparatus: every figure
   // says it is measured, the first one names the model and the problems, and
@@ -77,7 +90,12 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
   // its rows be compared at all.
   it("marks every figure as measured, at the figure", () => {
     render(<Page8 />);
-    expect(screen.getAllByText(/^measured/).length).toBe(3);
+    // Counted over the pills themselves: figure 3's gutter also says "measured
+    // here" under the one solve rate that was, and that is not a figure pill.
+    const pills = Array.from(document.querySelectorAll("li")).filter((li) =>
+      /^measured/.test(li.textContent ?? ""),
+    );
+    expect(pills).toHaveLength(3);
     const first = screen.getByText(`measured ${PAGE8.run.date}`);
     const row = first.closest("ul")!;
     // Page 7's two facts: which model, which problems. Named, not implied.
@@ -114,13 +132,19 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(document.body.textContent).not.toMatch(/logprob|qwen1\.5b|skywork-prm/);
   });
 
-  // The book is never named in the deck (Page5.test.tsx, Page7.test.tsx), so a
-  // chapter of it cannot be either.
-  it("names no chapter of a source the reader cannot see", () => {
+  // The repository is never named in the deck (Page5.test.tsx, Page7.test.tsx),
+  // and neither is a chapter of it. The source itself is now cited, because it
+  // owns a row of the evidence figure and two sentences of that figcaption.
+  it("cites the source whose scorer owns a row, without naming a chapter of it", () => {
     render(<Page8 />);
     expect(document.body.textContent).not.toMatch(/ch0\d/);
     expect(document.body.textContent).not.toContain("reasoning-from-scratch");
     expect(screen.getByText(/heuristic scorer from the source we build on/)).toBeInTheDocument();
+    const source = screen.getByRole("link", { name: /Build a Reasoning Model \(From Scratch\)/ });
+    expect(source).toHaveAttribute("href", "https://mng.bz/lZ5B");
+    // Reachable from the figcaption that spends two sentences on its scorer.
+    const entry = source.closest("p")!;
+    expect(document.querySelector(`a[href='#${entry.id}']`)).not.toBeNull();
   });
 
   it("says what a verifier is where the word first appears", () => {
@@ -147,6 +171,50 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     const figure = caption?.closest("figure");
     const chart = within(figure!).getByRole("img");
     expect(chart.getAttribute("aria-label")).toMatch(/no pair of\s+judges is resolved/);
+  });
+
+  // The solve-rate column is not one measurement: most of it is page 6's greedy
+  // run and one row was measured here. The provenance rides with each number
+  // rather than being flattened into one axis a reader compares straight across.
+  it("says where each judge's solve rate came from", () => {
+    render(<Page8 />);
+    const shown = PAGE8.judges.map((j) => j.solvesSourceLabel).filter(Boolean);
+    for (const label of shown) {
+      expect(screen.getAllByText(label!).length).toBeGreaterThan(0);
+    }
+    // More than one source, or there is nothing for the figure to disclose.
+    expect(new Set(shown).size).toBeGreaterThan(1);
+    const chart = screen.getByLabelText(/Five judges, ordered by what each solves/);
+    expect(chart.getAttribute("aria-label")).toMatch(/not one measurement/);
+  });
+
+  // Two judges out-solve the model whose candidates they grade, and the run
+  // keeps a gate for it. Without this the ladder reads as evidence about
+  // judging alone.
+  it("says which judges out-solve the model they judge", () => {
+    render(<Page8 />);
+    const stronger = PAGE8.judges.filter((j) => j.strongerThanWriter);
+    expect(stronger.length).toBeGreaterThan(0);
+    expect(PAGE8.writerSolves).not.toBeNull();
+    const line = screen.getByText(/solve more of these problems than the model that wrote/);
+    for (const j of stronger) expect(line.textContent).toContain(j.label);
+    expect(line.textContent).toContain(pct(PAGE8.writerSolves!));
+    // And the gate that survives ruling them out.
+    expect(PAGE8.claims.best_of_n_beats_counting_without_a_stronger_generator).toBe(false);
+    expect(line.textContent).toMatch(/still no better than the vote/);
+  });
+
+  // "One chain" is two different numbers on this page, three points apart. Each
+  // is labelled where it is drawn rather than left to look like an effect.
+  it("labels the two one-chain numbers apart", () => {
+    render(<Page8 />);
+    expect(PAGE8.chainAverage).not.toBe(PAGE8.oneChain);
+    expect(
+      screen.getByText(`one chain, on average (${pct(PAGE8.chainAverage)})`),
+    ).toBeInTheDocument();
+    expect(screen.getByText("problems, against one fixed chain")).toBeInTheDocument();
+    const caption = screen.getByText(/Every rule against the same fixed chain/);
+    expect(caption.textContent).toContain(pct(PAGE8.oneChain));
   });
 
   // Page 7 hands over a question. It gets answered in words, not just in a figure.
@@ -181,12 +249,13 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(cobbe).toHaveAttribute("href", "https://arxiv.org/abs/2110.14168");
     const stroebl = screen.getByRole("link", { name: /Inference Scaling fLaws/ });
     expect(stroebl).toHaveAttribute("href", "https://arxiv.org/abs/2411.17501");
+    // Three entries now, and the book among them is not a preprint.
     expect(screen.getAllByText("preprint")).toHaveLength(2);
     // Each source carries an inline superscript marker pointing at its entry.
-    expect(document.querySelector("a[href='#ref-1']")).not.toBeNull();
-    expect(document.querySelector("a[href='#ref-2']")).not.toBeNull();
-    expect(document.getElementById("ref-1")).not.toBeNull();
-    expect(document.getElementById("ref-2")).not.toBeNull();
+    for (const n of [1, 2, 3]) {
+      expect(document.querySelector(`a[href='#ref-${n}']`)).not.toBeNull();
+      expect(document.getElementById(`ref-${n}`)).not.toBeNull();
+    }
   });
 
   it("links the notebook and traces for download", () => {

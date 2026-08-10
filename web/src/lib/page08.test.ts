@@ -40,6 +40,15 @@ describe("the paired counts and the ladder agree", () => {
     }
   });
 
+  // Figure 1's flat line and figure 2's baseline are both called one chain and
+  // are not the same quantity. The module identifies the line as the average and
+  // throws if it ever stops being one, so the page may label them apart.
+  it("keeps the average candidate apart from the paired test's fixed chain", () => {
+    expect(PAGE8.chainAverage).not.toBe(PAGE8.oneChain);
+    const line = PAGE8.curve.lines.find((l) => l.selector === "one chain")!;
+    for (const p of line.points) expect(p.accuracy).toBeCloseTo(PAGE8.chainAverage, 9);
+  });
+
   it("counts fixed and broke over items that exist", () => {
     for (const r of PAGE8.paired.vsOneChain) {
       expect(r.fixed + r.broke).toBeLessThanOrEqual(PAGE8.paired.items);
@@ -96,6 +105,24 @@ describe("the judge ladder", () => {
     const bestSolver = solvers.reduce((a, b) => (b.solves! > a.solves! ? b : a));
     const bestJudge = solvers.reduce((a, b) => (b.mean > a.mean ? b : a));
     expect(bestSolver.name).not.toBe(bestJudge.name);
+  });
+
+  it("carries where every solve rate it draws came from", () => {
+    for (const j of PAGE8.judges) {
+      if (j.solves === null) expect(j.solvesSourceLabel).toBeNull();
+      else expect(j.solvesSourceLabel).toBeTruthy();
+    }
+    // The column mixes two provenances; the figure has to be able to say so.
+    const sources = new Set(PAGE8.judges.map((j) => j.solvesSource));
+    expect(sources.size).toBeGreaterThan(1);
+  });
+
+  it("knows which judges out-solve the model that wrote the candidates", () => {
+    expect(PAGE8.writerSolves).not.toBeNull();
+    for (const j of PAGE8.judges) {
+      if (j.solves === null) continue;
+      expect(j.strongerThanWriter).toBe(j.solves > PAGE8.writerSolves!);
+    }
   });
 
   it("spans every temperature, so no claim rests on one column", () => {

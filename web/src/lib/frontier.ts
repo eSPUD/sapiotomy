@@ -9,6 +9,11 @@ import { createRng } from "./rng";
 // points. `intercept` is the accuracy at 1 relative unit of thinking on the
 // fully-trained run; pulling train-time compute below `maxTrainExp` decades
 // shifts the whole test-time curve down by the decades forgone.
+// The joint surface is AUTHORED: the o1 announcement published two SEPARATE
+// charts with unlabeled relative compute axes, and no source states that the
+// two axes obey one law with a shared slope. Page 13's fidelity note discloses
+// this. Note also that the two exponents enter as a sum, so they substitute
+// exactly (law(2,0) = law(0,2) = 21.0); the page must not claim otherwise.
 export function twoAxisAccuracy(
   testExp: number,
   trainExp: number,

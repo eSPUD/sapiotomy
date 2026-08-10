@@ -70,12 +70,14 @@ describe("Page 5, step 1: what a chain of thought is", () => {
   });
 
   // The page turns on the ask having stopped being necessary, which a reader
-  // cannot feel unless the ask is named first. Quoted off the manifest, so the
-  // string on the page is the string the run actually appended.
-  it("names the classic ask, in the run's own words", () => {
+  // cannot feel unless the ask is named first. The phrase is the one the cited
+  // paper published, because the marker sits on it; the run's own instruction
+  // suffix is a different string and its arm is not on the page.
+  it("names the classic ask in the words the cited paper published", () => {
     render(<Page5 />);
     expect(body()).toContain("The classic way to get one is to ask");
-    expect(body()).toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
+    expect(body()).toContain("Let's think step by step.");
+    expect(body()).not.toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
   });
 
   // Pages 1 to 3's grammar: the marker sits on the claim, and the entry sits in
@@ -270,6 +272,16 @@ describe("Page 5, figure 3: the floor is flat", () => {
     expect(body()).not.toMatch(/emergen/i);
     expect(body()).not.toMatch(/PaLM/i);
   });
+
+  // The cross-model line is the weakest result on the page (p = 0.043, on 25
+  // discordant problems) and it used to be its boldest sentence. It now hedges
+  // in proportion, next to the suppression result it is weaker than.
+  it("hedges the cross-model claim against the headline it is weaker than", () => {
+    render(<Page5 />);
+    expect(body()).toContain("on the thinnest evidence the page has");
+    expect(body()).toContain("p = 0.043");
+    expect(body()).toContain("Take this one as a hint; the flat floor is the finding.");
+  });
 });
 
 // The close was three stat cards quoting one unnamed checkpoint, one of them a
@@ -405,7 +417,14 @@ describe("Page 5: provenance and what the page may claim", () => {
   // while looking at 100 squares.
   it("carries the limits in the margin rather than in a footer", () => {
     render(<Page5 />);
-    expect(body()).toMatch(/traces hit the token cap, which biases the headline conservative/);
+    // The truncation note names the arm the way the rest of the page does and
+    // says which way the bias runs; it used to print the run's condition key
+    // ("bare") and a bare adjective ("biases the headline conservative").
+    const limits = screen.getByText(/Three checkpoints are not a scaling law/).closest("aside")!;
+    expect(limits.textContent).toContain(
+      "of the reasoning traces hit the token cap, so the measured cost of forbidding the working is an undercount, not an overcount",
+    );
+    expect(limits.textContent).not.toMatch(/\bbare\b|forced_blurt/);
     expect(body()).toContain("is one phrasing and another would move the floor");
     expect(body()).toContain("never whether the working was sound");
     expect(body()).not.toContain("reasoning-from-scratch");

@@ -30,9 +30,12 @@
  *   are the payload of the step. That for a model the chain is the thinking
  *   rather than a report of it, which is the only unmeasured claim here and what
  *   makes reasoning something you can put a budget on. And that the classic way
- *   to get one is to ASK, quoting the `zero_shot_cot` suffix off the manifest,
- *   because the whole page turns on that ask having stopped being necessary and
- *   the reader cannot feel that unless the ask is named first. Resist
+ *   to get one is to ASK, quoting Kojima's own trigger ("Let's think step by
+ *   step.") because the marker sits on that phrase, and because the whole page
+ *   turns on that ask having stopped being necessary, which the reader cannot
+ *   feel unless the ask is named first. It used to quote the run's
+ *   `zero_shot_cot` suffix, a different string the paper never published; the
+ *   run's instruction arm is not on the page, so nothing needed that link. Resist
  *   re-narrating page 1 or page 4 here: the lede already has the road, and page 6
  *   cuts the chain off two clicks later, so a forward-pointer is padding.
  *
@@ -177,6 +180,13 @@ const STEP_MS = 700;
  */
 const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4 } as const;
 
+/**
+ * The trigger Kojima et al. published, quoted as they published it, because the
+ * marker beside it sends the reader to that paper. The run's own instruction
+ * suffix is a different string and is not on the page.
+ */
+const ZERO_SHOT_COT_TRIGGER = "Let's think step by step.";
+
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
@@ -194,6 +204,15 @@ function prefersReducedMotion(): boolean {
 
 /** The date the run was made, for the provenance chip. */
 const RUN_DATE = M.timestamp_utc.slice(0, 10);
+
+/**
+ * The run's condition keys in the only two names the page prints. A raw key
+ * ("bare") in a margin note reads as a third arm the reader never met.
+ */
+const CONDITION_NAME: Record<string, string> = {
+  bare: "reasoning",
+  forced_blurt: "non-reasoning",
+};
 
 const chip = "rounded-full border border-grid px-2 py-0.5 text-ink-muted";
 const seg = (active: boolean) =>
@@ -625,7 +644,7 @@ export function Page5() {
             report of the thinking, <strong>it is the thinking</strong>: every step is text the
             model has to write before it can write the next one. The classic way to get one is to
             ask, by appending{" "}
-            <span className="font-code">{M.conditions.zero_shot_cot.trim()}</span> to the question.
+            <span className="font-code">{ZERO_SHOT_COT_TRIGGER}</span> to the question.
             <Cite n={REF.kojima} />
           </p>
         </section>
@@ -962,10 +981,13 @@ export function Page5() {
               A non-reasoning 7B solves{" "}
               <strong className="font-mono">{pct(F3.cross.gagged_large_accuracy)}</strong>. A
               reasoning 1.5B solves{" "}
-              <strong className="font-mono">{pct(F3.cross.ungagged_small_accuracy)}</strong>. The
-              working is worth more than {F3.cross.param_ratio.toFixed(1)} times the parameters ·{" "}
-              {pLabel(F3.cross.p)}, {F3.cross.fixed} problems one way and {F3.cross.broken} the
-              other.
+              <strong className="font-mono">{pct(F3.cross.ungagged_small_accuracy)}</strong>. On
+              these {F2.bare.n} problems the working is worth more than{" "}
+              {F3.cross.param_ratio.toFixed(1)} times the parameters, on the thinnest evidence the
+              page has: {pLabel(F3.cross.p)}, {F3.cross.fixed} problems one way and{" "}
+              {F3.cross.broken} the other, where forbidding the working above cost{" "}
+              {F2.suppression.deltaPts} points at {pLabel(F2.suppression.p)}. Take this one as a
+              hint; the flat floor is the finding.
             </div>
           </section>
           <p className="text-ink-muted">
@@ -979,8 +1001,13 @@ export function Page5() {
             Three checkpoints are not a scaling law, and nothing here is plotted against size.
           </p>
           <p>
-            {pct(PAGE5.truncation.worst.rate)} of the {PAGE5.truncation.worst.condition} traces hit
-            the token cap, which biases the headline {PAGE5.truncation.biases_headline}.
+            {pct(PAGE5.truncation.worst.rate)} of the{" "}
+            {CONDITION_NAME[PAGE5.truncation.worst.condition]} traces hit the token cap, so the
+            measured cost of forbidding the working is{" "}
+            {PAGE5.truncation.biases_headline === "conservative"
+              ? "an undercount, not an overcount"
+              : "an overcount, not an undercount"}
+            .
           </p>
           <p>
             The non-reasoning suffix is one phrasing and another would move the floor. And

@@ -123,6 +123,19 @@ const LAST_GAIN_MOVE = `${LAST_GAIN < 0 ? "down" : "up"} by ${LAST_GAIN_PTS} poi
 /** The same move counted in problems, which is how the page reads a point. */
 const LAST_GAIN_PROBLEMS = LAST_GAIN_PTS === 1 ? "one problem" : `${LAST_GAIN_PTS} problems`;
 
+/**
+ * What the injections cost, as a range rather than as one round number. The
+ * three checkpoints run to 1.6, 1.8 and 2.2 times their unforced length, so
+ * "roughly double" is wrong for two of the three and the sentence quotes the
+ * span it actually measured.
+ */
+const WAIT_TOKEN_MULTIPLES = FW
+  ? FW.curves.map((c) => c.points[c.points.length - 1].mean_tokens / c.points[0].mean_tokens)
+  : [];
+const WAIT_COST_RANGE = FW
+  ? `${Math.min(...WAIT_TOKEN_MULTIPLES).toFixed(1)} to ${Math.max(...WAIT_TOKEN_MULTIPLES).toFixed(1)} times`
+  : "";
+
 /** Cited for the technique it introduced. No number of theirs appears here. */
 const REF = { s1: 1 } as const;
 
@@ -404,9 +417,12 @@ function BudgetCurve({
       <rect x={kneeX} y={0} width={C_IW - kneeX} height={C_IH} className="fill-ink opacity-[0.06]" />
       <line x1={kneeX} x2={kneeX} y1={0} y2={C_IH} className="stroke-ink-muted" strokeWidth={1} />
       <text x={kneeX + 6} y={12} className="fill-ink-muted text-[10px]">
+        {/* Scoped to the checkpoint whose last gain it reads off: inside this
+            slab the 7B still rises a point, so the label may not be phrased as
+            a fact about all three curves. */}
         {lastGain > 0
-          ? `past here, doubling buys ${lastGain.toFixed(0)} point`
-          : "past here, doubling stops paying"}
+          ? `past here, doubling buys the ${shortLabel(F2.primary.label)} ${lastGain.toFixed(0)} point`
+          : `past here, doubling stops paying for the ${shortLabel(F2.primary.label)}`}
       </text>
 
       {[0, 0.2, 0.4, 0.6].map((t) => (
@@ -869,7 +885,8 @@ function WaitLedger() {
               <td className="py-1.5 pl-2 text-correct">{r.paired.fixed}</td>
               <td className="py-1.5 pl-6 text-ink-muted">
                 {pct(r.first.accuracy)} → {pct(r.last.accuracy)} · {pct(r.last.churn)} of answers
-                moved · ×{(r.last.mean_tokens / r.first.mean_tokens).toFixed(1)} the tokens
+                moved · ×{(r.last.mean_tokens / r.first.mean_tokens).toFixed(1)} the tokens ·{" "}
+                {pLabel(r.paired.p)}
               </td>
             </tr>
           ))}
@@ -1354,11 +1371,16 @@ export function Page6() {
           </Note>
           <Note kicker="Try it" tight>
             <p>Step to {F1.flipBudget} tokens and back.</p>
+            {/* The two arms cannot be scored against each other: the capped one
+                was capped, so an overrun of its own cap is arithmetically
+                impossible and reads as a result it is not. Only the request arm
+                measures anything, and the line says what the cap is instead. */}
             <p>
-              A cap, not a request: asked in the prompt for a sentence or two, the model ran past{" "}
-              {F1.inset.nominal_budget} tokens on {pct(F1.inset.soft.over_budget_rate)} of items.
-              Held to the same {F1.inset.nominal_budget} by{" "}
-              <span className="font-code">max_new_tokens</span>, it overran on none.
+              A cap, not a request: asked in the prompt for a sentence or two and left free to run,
+              the model ran past {F1.inset.nominal_budget} tokens on{" "}
+              {pct(F1.inset.soft.over_budget_rate)} of items. Every length on this page is set with{" "}
+              <span className="font-code">max_new_tokens</span> instead, where the number holds
+              because generation stops there.
             </p>
           </Note>
         </div>
@@ -1462,9 +1484,13 @@ export function Page6() {
                 <span className="h-3 w-3 rounded-sm bg-wrong opacity-85" /> never solved (
                 {F3.neverFlipCount})
               </span>
+              {/* The dashed outline is the mark, and it sits on top of whichever
+                  colour the square already has. The gutter holds one solved
+                  square among its six, so the never-solved fill this swatch
+                  used to carry named a colour the gutter does not all share. */}
               <span className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm border border-dashed border-ink bg-wrong opacity-85" />{" "}
-                still running at {TOP}, so its length is a floor ({F3.censoredCount})
+                <span className="h-3 w-3 rounded-sm border border-dashed border-ink" /> dashed and
+                off the axis: still running at {TOP}, so its length is a floor ({F3.censoredCount})
               </span>
               <span className="flex items-center gap-2">
                 <span className="h-3 w-px bg-compute" /> the budget you are holding · drag it
@@ -1503,8 +1529,8 @@ export function Page6() {
             stopped when it had nothing left to say, a median of {F3.medianLengthNever} tokens for
             the ones that never come right, with {TOP - F3.medianLengthNever} still unspent. So{" "}
             <strong className="text-ink">
-              {F3.neverFlipCount - F3.censoredCount} of these problems did not run out of room, they
-              ran out of ideas
+              {F3.neverFlipFinishedCount} of these problems did not run out of room, they ran out of
+              ideas
             </strong>
             . The dial was never what was holding them back.
           </p>
@@ -1593,14 +1619,15 @@ export function Page6() {
                 </div>
               </section>
               <p className="text-sm text-ink-muted">
-                It <strong className="text-ink">redistributes rather than adds</strong>. Roughly
-                double the tokens buys a third of the answers changed and no more of them right:
-                across the three checkpoints it turns{" "}
+                It <strong className="text-ink">redistributes rather than adds</strong>. Spending{" "}
+                {WAIT_COST_RANGE} the tokens buys a third of the answers changed and no more of them
+                right: across the three checkpoints it turns{" "}
                 {FW.curves.reduce((n, c) => n + c.paired[c.paired.length - 1].fixed, 0)} wrong
                 answers right and{" "}
                 {FW.curves.reduce((n, c) => n + c.paired[c.paired.length - 1].broken, 0)} right
-                answers wrong. The
-                model was not holding back; it had already spent what the problem was worth to it.
+                answers wrong. Not one of the three crossings resolves, so the direction is a null
+                and not a finding: what is measured here is that a great deal moved and the totals
+                did not.
               </p>
             </section>
             {/* No margin note here. It said "watch the bars, not the lines", which was
