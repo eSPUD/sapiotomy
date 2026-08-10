@@ -130,18 +130,23 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     // Before the figure that plots its scores, and before step 3's caption.
     const body = document.body.textContent ?? "";
     expect(body.indexOf("trained to score finished solutions")).toBeLessThan(
-      body.indexOf("Being good at the problems"),
+      body.indexOf("being good at solving the problems"),
     );
   });
 
   // The run refuses to call the judge ordering resolved, and this is the page
-  // that quotes a p-value for everything else.
+  // that quotes a p-value for everything else. The caption was rewritten on
+  // 2026-08-09 and now hedges by attributing the ordering to this run rather
+  // than by spelling out the overlap; the figure's own description still says
+  // no pair is resolved, and that is where the assertion moved to.
   it("does not state the judge ranking as resolved", () => {
     render(<Page8 />);
     expect(PAGE8.claims.judge_ranking_resolved).toBe(false);
-    const caption = screen.getByText(/Being good at the problems/).closest("figcaption");
-    expect(caption?.textContent).toMatch(/on this run/);
-    expect(caption?.textContent).toMatch(/no pair of judges here is resolved/);
+    const caption = screen.getByText(/being good at solving the problems/).closest("figcaption");
+    expect(caption?.textContent).toMatch(/This run shows/);
+    const figure = caption?.closest("figure");
+    const chart = within(figure!).getByRole("img");
+    expect(chart.getAttribute("aria-label")).toMatch(/no pair of\s+judges is resolved/);
   });
 
   // Page 7 hands over a question. It gets answered in words, not just in a figure.

@@ -444,87 +444,108 @@ function PairedFigure() {
 
 /* ------------------------------------------------------------------ figure 3 */
 
-const JUDGE_W = 460;
-const JUDGE_H = 300;
-const JUDGE_M = { top: 18, right: 20, bottom: 44, left: 52 };
+const JUDGE_W = 520;
+const JUDGE_H = 246;
+const JUDGE_M = { top: 26, right: 44, bottom: 42, left: 150 };
 
+/**
+ * One row per judge, ordered by what it solves on its own, best solver at the
+ * top. It was a scatter of solve-rate against judge-rate: every label sat
+ * beside its point and ran through the next point's range bar, and five
+ * vertical stalks read as an axis rather than as four temperatures. Rows put
+ * the names in a gutter where nothing can overlap them, lay the range down the
+ * axis it is measured on, and make the caption's claim the reading order: the
+ * ladder descends on the left and does not descend on the right.
+ */
 function JudgeFigure() {
   const innerW = JUDGE_W - JUDGE_M.left - JUDGE_M.right;
   const innerH = JUDGE_H - JUDGE_M.top - JUDGE_M.bottom;
-  const yLo = 0.4;
-  const yHi = 0.85;
-  const x = (v: number) => v * innerW;
-  const y = (v: number) => innerH - ((v - yLo) / (yHi - yLo)) * innerH;
+  const xLo = 0.44;
+  const xHi = 0.8;
+  const x = (v: number) => ((v - xLo) / (xHi - xLo)) * innerW;
+  // Best solver first. `PAGE8.judges` is sorted the other way, with the judge
+  // that solves nothing at the head.
+  const rows = [...PAGE8.judges].reverse();
+  const rowH = innerH / rows.length;
+  const cy = (i: number) => rowH * (i + 0.5);
 
   return (
     <ChartFrame
       width={JUDGE_W}
       height={JUDGE_H}
       margin={JUDGE_M}
-      xLabel="what the judge solves on its own (%)"
-      yLabel="picks a correct candidate (%)"
+      xLabel="picks a correct candidate (%)"
       title={
-        `Each judge's own accuracy against how often it picks a correct candidate, averaged ` +
-        `over four temperatures. The points do not trend. The one judge whose mean sits above ` +
-        `the majority line is the trained verifier, which cannot solve any of these problems ` +
-        `itself. The bars overlap, so no pair of judges is resolved at this sample.`
+        `Five judges, ordered by what each solves on its own with the best solver at the top, ` +
+        `against how often it picks a correct candidate, averaged over four temperatures with ` +
+        `the bar spanning best and worst. The order does not carry: the best solver judges ` +
+        `worst. The one judge whose mean sits past the majority line is the trained verifier, ` +
+        `which scores and never answers, so it is at the foot of the ladder without a solve ` +
+        `rate of its own. The bars overlap, so no pair of judges is resolved at this sample.`
       }
     >
+      {/* The vote across the same four temperatures, as the band a judge has to
+          clear rather than a single number. */}
       <rect
-        x={0}
-        y={y(PAGE8.bar.hi)}
-        width={innerW}
-        height={Math.max(0, y(PAGE8.bar.lo) - y(PAGE8.bar.hi))}
+        x={x(PAGE8.bar.lo)}
+        y={0}
+        width={Math.max(0, x(PAGE8.bar.hi) - x(PAGE8.bar.lo))}
+        height={innerH}
         className="fill-compute"
         opacity={0.08}
       />
       <line
-        x1={0}
-        x2={innerW}
-        y1={y(PAGE8.bar.mean)}
-        y2={y(PAGE8.bar.mean)}
+        x1={x(PAGE8.bar.mean)}
+        x2={x(PAGE8.bar.mean)}
+        y1={0}
+        y2={innerH}
         className="stroke-compute"
         strokeWidth={1.25}
         strokeDasharray="4 3"
       />
-      <text x={innerW - 2} y={y(PAGE8.bar.mean) - 5} textAnchor="end" className="fill-compute text-[10px]">
+      <text x={x(PAGE8.bar.mean)} y={-8} textAnchor="middle" className="fill-compute text-[10px]">
         majority vote, {pct(PAGE8.bar.mean)}
       </text>
-      {[0.4, 0.5, 0.6, 0.7, 0.8].map((g) => (
-        <text key={g} x={-6} y={y(g) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
-          {Math.round(g * 100)}
-        </text>
-      ))}
-      {[0, 0.25, 0.5, 0.75].map((g) => (
+      {[0.5, 0.6, 0.7, 0.8].map((g) => (
         <text key={g} x={x(g)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
           {Math.round(g * 100)}
         </text>
       ))}
-      {PAGE8.judges.map((j) => {
-        const cx = x(j.solves ?? 0);
+      {rows.map((j, i) => {
+        const y = cy(i);
+        // Written out rather than interpolated: Tailwind only ships classes it
+        // can find whole in the source.
+        const tone = j.trained ? "fill-correct" : "fill-ink-muted";
         return (
           <g key={j.name}>
-            <line
-              x1={cx}
-              x2={cx}
-              y1={y(j.hi)}
-              y2={y(j.lo)}
-              className={j.trained ? "stroke-correct" : "stroke-ink-muted"}
-              strokeWidth={1.5}
-              opacity={0.5}
-            />
-            <circle
-              cx={cx}
-              cy={y(j.mean)}
-              r={j.trained ? 6 : 4}
-              className={j.trained ? "fill-correct" : "fill-ink-muted"}
-            />
-            <text
-              x={cx + 9}
-              y={y(j.mean) + 4}
-              className={`text-[10px] ${j.trained ? "fill-correct" : "fill-ink-muted"}`}
-            >
+            {/* A hairline from the name to its range, so the eye does not have
+                to cross 150px of gutter unaided. */}
+            <line x1={0} x2={innerW} y1={y} y2={y} className="stroke-grid" strokeWidth={1} />
+            <text x={-JUDGE_M.left + 4} y={y - 1} className={`text-[11px] ${tone}`}>
               {j.label}
+            </text>
+            {/* The verifier's solve rate is `null` because it was never
+                measured and could not be: it is a value head, so it scores and
+                does not answer. The row says that rather than printing a 0%
+                the run does not have. */}
+            <text x={-JUDGE_M.left + 4} y={y + 11} className="text-[9px] fill-ink-muted">
+              {j.solves === null ? "scores only, never answers" : `solves ${pct(j.solves)} on its own`}
+            </text>
+            <rect
+              x={x(j.lo)}
+              y={y - 3}
+              width={Math.max(0, x(j.hi) - x(j.lo))}
+              height={6}
+              rx={3}
+              className={tone}
+              opacity={0.28}
+            />
+            <circle cx={x(j.mean)} cy={y} r={j.trained ? 5 : 4} className={tone} />
+            {/* The means read as a column outside the plot rather than as a tag
+                on the end of each bar, where they would land on the vote line
+                whenever a judge's best temperature is near it. */}
+            <text x={innerW + 6} y={y + 4} className={`text-[10px] ${tone}`}>
+              {pct(j.mean)}
             </text>
           </g>
         );
@@ -543,6 +564,13 @@ export function Page8() {
   const s = PAGE8.specimen;
   const chain = open === null ? null : s.candidates.find((c) => c.sample_index === open) ?? null;
   const trained = PAGE8.judges.find((j) => j.trained);
+  // The top of the ladder figure 3 orders by, named from the run rather than
+  // typed into the caption: if a re-run changes who solves the most, the
+  // sentence that calls it the best solver changes with it.
+  const bestSolver = PAGE8.judges.reduce<(typeof PAGE8.judges)[number] | undefined>(
+    (best, j) => (j.solves !== null && (!best || j.solves > best.solves!) ? j : best),
+    undefined,
+  );
   // "Qwen/Qwen2.5-3B-Instruct" reads as a file path. What is after the slash is
   // the model; what is before it is the account that hosts the weights.
   const model = PAGE8.run.model.split("/").pop();
@@ -744,28 +772,24 @@ export function Page8() {
             <JudgeFigure />
             <figcaption className="text-sm text-ink-muted">
               Five judges spanning size, subject and training objective, each averaged over four
-              temperatures with the bar spanning its best and worst.{" "}
-              <strong className="text-ink">Being good at the problems is not being good at judging them</strong>
-              : on this run the best solver on the ladder ranked last as a judge, and the only judge
-              whose mean sits above the vote is the{" "}
-              <strong className="text-correct">{trained?.label}</strong>, which cannot solve a
-              single one of these problems, because it was trained to score rather than to answer.{" "}
-              {PAGE8.claims.judge_ranking_resolved ? null : (
-                <>
-                  Read the ordering as a pattern and not a ranking: the bars overlap, no pair of
-                  judges here is resolved at this sample, and that is why this is the one comparison
-                  on the page with no p-value beside it.
-                </>
-              )}
+              temperatures with the bar spanning its best and worst. As you can see from the graph,{" "}
+              <strong className="text-ink">
+                being good at solving the problems is not the same thing as being good at judging
+                them
+              </strong>
+              . This run shows that the best solver on the ladder (the {bestSolver?.label}) ranked
+              last as a judge, and the only judge whose mean sits above the vote is the{" "}
+              <strong className="text-correct">{trained?.label}</strong>, which ironically cannot
+              solve any of these problems on its own.
             </figcaption>
           </figure>
         </section>
         <Note kicker="A verifier, not a PRM">
           <p>
-            The trained one is{" "}
+            The trained verifier is{" "}
             <span className="font-mono text-xs">{PAGE8.verifierNote?.model ?? trained?.name}</span>,
             a process reward model read at the final token only: one number for the whole solution.
-            It is here as a <em>trained verifier</em>. Grading the steps is the next page.
+            Grading the steps is the next page.
           </p>
         </Note>
 
