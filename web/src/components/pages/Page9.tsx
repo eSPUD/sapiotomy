@@ -612,6 +612,30 @@ export function Page9() {
               does that happen? The next beat measures it, and the honest answer is smaller than the
               story wants.
             </div>
+
+            {/* The specimens cannot be typical, and the next beat's numbers are
+                unreadable if the reader assumes they are. Section 10 picks by
+                ROLE, and "a right answer with a false step in it" can only be
+                filled by a chain the checker could read, so the three shown here
+                are drawn from the gradable tail by construction. Stated in the
+                step body rather than the provenance note (house rule, pages
+                3-8): a reader who hand-grades three half-checkable chains and
+                then meets 5.8% has no way to reconcile the two, and the mismatch
+                reads as the page contradicting itself. */}
+            <div className="rounded-lg border border-dashed border-grid bg-surface p-4 text-sm text-ink-muted">
+              <strong className="text-ink">These three are not a sample.</strong> They were picked
+              to fill roles, and a role like &ldquo;right answer, false step&rdquo; can only be
+              filled by a chain the checker could read, so all three come from the gradable end of
+              the pile. Across them the checker judged{" "}
+              <strong className="font-mono text-ink">
+                {PAGE9.specimenReach.stepsCheckable} of {PAGE9.specimenReach.stepsTotal}
+              </strong>{" "}
+              steps ({pct(PAGE9.specimenReach.shareCheckable)}); across all{" "}
+              {PAGE9.run.chains.toLocaleString()} chains it judged{" "}
+              <strong className="font-mono text-ink">{pct(1 - share, 1)}</strong>. Grading three
+              chains by hand here will leave you with a rosier sense of how much of a chain can be
+              checked than the run supports, which is what the next beat has to correct.
+            </div>
           </section>
 
           <div className="flex flex-col gap-6">
@@ -697,7 +721,13 @@ export function Page9() {
                 <strong className="text-ink">{pct(det.problemRate, 1)}</strong> ({det.nProblems} of
                 the {det.nProblemsWithARightChain} problems that produced a right answer). With only{" "}
                 {det.nContaminated} chains carrying a provable break it undercounts either way, and
-                it reads arithmetic alone.{" "}
+                it reads arithmetic alone. Name the denominator too: of those {det.nRightChains}{" "}
+                right chains the checker could read only{" "}
+                <strong className="text-ink">{det.nRightReachable}</strong>, because the rest carry
+                no closed-form numeric claim anywhere, so {det.nRightChains - det.nRightReachable}{" "}
+                of them are silence rather than evidence. Over the chains it did read the rate is{" "}
+                <strong className="text-ink">{pct(det.reachableRate, 2)}</strong>, and that is the
+                honest shape of the undercount.{" "}
                 {det.prm && prm ? (
                   <>
                     {prmName}&apos;s <strong className="text-ink">{pct(det.prm.rate, 1)}</strong> is a

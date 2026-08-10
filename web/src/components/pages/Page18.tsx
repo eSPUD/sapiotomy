@@ -3,7 +3,20 @@
 /**
  * Page 18, "Can We Trust the Thoughts?" — the safety hinge of Act 3. Act 2
  * spent ten pages buying longer visible reasoning; this page asks what the
- * trace is evidence OF. Three steps: (1) a faithfulness probe — plant a hint,
+ * trace is evidence OF.
+ *
+ * It opens on our own measurement, not the literature. Page 9's run graded
+ * 18,772 written steps from 1,580 real chains and could check 1,092 of them;
+ * the other 94.2% are steps a checker cannot compute at all. That is the
+ * deck's own floor for how much of a trace can be verified by reading it, and
+ * starting there means Chen et al. arrive as the SHARPER problem (a step that
+ * is absent) rather than as the page's premise. The distinction is
+ * load-bearing and the copy states it: page 9 measured a limit of our
+ * INSTRUMENT (arithmetic is checkable, method is not); this page is about a
+ * limit of the TRACE (it can omit what moved the answer). A false step and an
+ * absent influence are different claims and must not be blurred.
+ *
+ * Then three steps: (1) a faithfulness probe — plant a hint,
  * watch the answer move and the trace stay quiet, with admission rates pinned
  * to Chen et al. 2025 (Claude 3.7 Sonnet 25%, DeepSeek-R1 39%); (2)
  * monitorability — Baker et al. 2025's monitor reading the CoT catches ~95%
@@ -35,12 +48,17 @@ import { Toggle } from "@/components/Toggle";
 import { FAITHFULNESS_PROBE } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
+/* The deck's first cross-page data import. Page 18's opening number is page
+   9's measurement, so it reads from page 9's validated loader rather than
+   restating a figure that could drift the next time that run is replaced. */
+import { PAGE9, pct } from "@/lib/page09";
 import { cotPressureRecall, cotPressureReward } from "@/lib/frontier";
 import { bernoulli, createRng } from "@/lib/rng";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 18;
 const P = FAITHFULNESS_PROBE;
+const P9 = PAGE9;
 
 /** Page 18's references, numbered in order of first appearance. */
 const REF = { chen: 1, turpin: 2, baker: 3, korbak: 4 } as const;
@@ -130,6 +148,40 @@ export function Page18() {
         <strong className="text-ink">hide</strong> rather than to reform.
       </p>
 
+      {/* The measured lead-in, and the reason this page is not a literature
+          page. Everything below it is other people's numbers; this is ours,
+          and it sets the floor the borrowed numbers then push past. */}
+      <section className="flex max-w-2xl flex-col gap-2 rounded-lg border-l-4 border-correct bg-surface p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          before the literature, our own run
+        </p>
+        <p className="text-ink">
+          Page 9 cut {P9.run.chains.toLocaleString()} real chains from{" "}
+          {P9.run.model.split("/").pop()} into{" "}
+          {P9.graders.stepsTotal.toLocaleString()} written steps and tried to check them one by one.
+          In{" "}
+          <strong className="font-mono text-wrong">
+            {P9.detection.nChainsUnreadable.toLocaleString()} of those chains,{" "}
+            {pct(P9.detection.shareChainsUnreadable, 1)}
+          </strong>
+          , it found nothing it could check at all. Not one step. That is not the checker failing:
+          the median chain of visible reasoning is plans (&ldquo;use the Euclidean
+          algorithm&rdquo;), transitions, and symbolic algebra, and the checker refuses those on
+          sight so that every label it does hand back is a fact you can redo by hand. Step by step
+          across the whole pile, <strong className="font-mono">{pct(P9.graders.shareUnjudged, 1)}</strong>{" "}
+          came back <em>unknown</em>.
+        </p>
+        <p className="text-sm text-ink-muted">
+          Keep the two limits apart, because the rest of this page depends on it. That{" "}
+          {pct(P9.graders.shareUnjudged, 1)} is a limit of{" "}
+          <strong className="text-ink">our instrument</strong>: arithmetic is checkable, algebra and
+          method are not, and a broader grader would shrink it. What follows is a limit of the{" "}
+          <strong className="text-ink">trace itself</strong>, and no grader shrinks it. Page 9 asked
+          whether a step is <em>wrong</em>. This page asks whether the steps are the{" "}
+          <em>reason</em>.
+        </p>
+      </section>
+
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 — the faithfulness probe */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -145,8 +197,9 @@ export function Page18() {
             </div>
 
             <p className="text-sm text-ink">
-              The experiment: ask a question clean, then ask again with a <strong>hint</strong>{" "}
-              slipped into the prompt, here an answer tag the model was never meant to see.
+              No checker can run this one, because there is no false step to catch. The experiment
+              instead: ask a question clean, then ask again with a <strong>hint</strong> slipped
+              into the prompt, here an answer tag the model was never meant to see.
               <Cite n={REF.chen} /> When the hint <em>changes the answer</em>, the model
               demonstrably used it. Faithfulness asks: does the visible trace say so?
               <Cite n={REF.turpin} />

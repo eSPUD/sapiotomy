@@ -126,6 +126,17 @@ interface RawDerived {
      */
     problem_rate: number;
     unit_of_independence: string;
+    /**
+     * The denominator the base rate does not have. `n_right` counts every chain
+     * that reached the right answer, including the ones where the checker had no
+     * closed-form numeric claim to read and was silent BY CONSTRUCTION rather
+     * than because the chain was sound.
+     */
+    n_right_reachable: number;
+    reachable_rate: number;
+    /** Chains carrying no closed-form numeric claim anywhere. The median chain is one. */
+    n_chains_with_no_checkable_step: number;
+    share_chains_with_no_checkable_step: number;
   };
   prm_reliability: {
     auc: number;
@@ -262,6 +273,19 @@ const det = raw.headline.detection_checker;
 if (det.n_contaminated > det.n_right_chains) {
   throw new Page09DataError("more contaminated chains than correct chains");
 }
+/* The reachable population is a subset of the right chains, and every chain the
+   checker convicted is one it could read. A run that violated either would make
+   the conditional rate on the page arithmetic nonsense rather than a tighter
+   reading of the same finding. */
+if (raw.detection.n_right_reachable > det.n_right_chains) {
+  throw new Page09DataError("more readable right chains than right chains");
+}
+if (det.n_contaminated > raw.detection.n_right_reachable) {
+  throw new Page09DataError("more contaminated chains than the checker could read");
+}
+if (raw.detection.n_chains_with_no_checkable_step > raw.headline.n_chains) {
+  throw new Page09DataError("more unreadable chains than chains");
+}
 
 const loc = raw.headline.localisation;
 if (loc.n_localisable > loc.n_wrong) {
@@ -270,6 +294,31 @@ if (loc.n_localisable > loc.n_wrong) {
 if (loc.median_share_sound === null) {
   throw new Page09DataError("no median share-sound, so beat two has nothing to state");
 }
+
+/**
+ * How gradable the three published specimens are against the pile they came
+ * from. This is the one figure on the page NOT taken from the notebook: it is
+ * computed here from the specimens the notebook did publish, because the
+ * comparison is a property of what the page chose to show rather than of the
+ * run.
+ *
+ * It exists because the specimens are not typical and cannot be. Section 10
+ * picks them BY ROLE ("a right answer with a false step in it"), and a role
+ * like that can only be filled by a chain the checker could read, so the
+ * selection guarantees the shown chains are more gradable than the pile. On
+ * the shipped run the specimens are about half checkable and the pile is
+ * 5.8%, and a reader who hand-grades three specimens and then meets the
+ * population figure has no way to reconcile them unless the page says this.
+ */
+const specimenSteps = [lucky, broken, clean].flatMap((sp) => sp.steps);
+if (specimenSteps.length === 0) {
+  throw new Page09DataError("no specimen steps to measure the specimens' reach against");
+}
+const specimenReach = {
+  stepsTotal: specimenSteps.length,
+  stepsCheckable: specimenSteps.filter((s) => s.check !== "unknown").length,
+  shareCheckable: specimenSteps.filter((s) => s.check !== "unknown").length / specimenSteps.length,
+};
 
 /* ------------------------------------------------------------------ exports */
 
@@ -342,6 +391,12 @@ export const PAGE9 = {
   broken: asSpecimen(broken),
   clean: asSpecimen(clean),
 
+  /**
+   * How gradable those three are next to the pile. Derived here, not measured
+   * by the notebook: see the note above `specimenReach`.
+   */
+  specimenReach,
+
   /** Beat one: how often outcome grading rewards a chain with a false step in it. */
   detection: {
     nRightChains: det.n_right_chains,
@@ -355,6 +410,18 @@ export const PAGE9 = {
      * chain rate rather than letting the chain rate stand as "the" rate.
      */
     problemRate: raw.detection.problem_rate,
+    /**
+     * What the checker could actually look at. 479 of the 747 right chains carry
+     * no closed-form numeric claim anywhere, so the published rate divides by a
+     * population it was silent on. Both belong on the page: the unconditional
+     * rate for comparability with the PRM, which scores every chain, and this one
+     * for what the instrument read.
+     */
+    nRightReachable: raw.detection.n_right_reachable,
+    reachableRate: raw.detection.reachable_rate,
+    /** Chains with nothing checkable in them at all, over the whole graded pile. */
+    nChainsUnreadable: raw.detection.n_chains_with_no_checkable_step,
+    shareChainsUnreadable: raw.detection.share_chains_with_no_checkable_step,
     /** The PRM's rate, present only when its measured reliability cleared the gate. */
     prm: raw.headline.detection_prm
       ? {
