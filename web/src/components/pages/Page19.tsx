@@ -24,6 +24,22 @@
  * The close is the loop, so do not let it drift back into a summary: it names
  * page 2's question, splits the verdict, and answers page 1's stake in page
  * 1's own words.
+ *
+ * The tool-use beat carries the deck's one measured object outside Act 2:
+ * `FabricatedToolCard`, a chain from page 11's specialist arm that says it will
+ * use "computational tools", has none, and supplies their output from its own
+ * weights. It is a specimen and never a rate, which the card says on itself.
+ * The failure is ours and the repair is cited, and that asymmetry is deliberate:
+ * a GPU probe that would have shown the repair was scoped and rejected, because
+ * a Python interpreter on MATH-500 demonstrates computation while the half of
+ * page 2 this close cannot settle needs retrieval. Reasons in full, so the
+ * question is not reopened by accident: docs/page_19_tool_use_probe.md §3.
+ *
+ * The beat's copy scopes the claim to what the deck can support. It is not a
+ * calculator story: page 9 measured that and found a provable false arithmetic
+ * step in 0.67% of the chains that reached the right answer. What an interpreter
+ * buys is exhaustion in place of guessing, and it is the first selector in the
+ * story that is not the model asking itself again.
  */
 
 import { useState } from "react";
@@ -33,6 +49,8 @@ import { Slider } from "@/components/Slider";
 import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
+import { SPECIMENS, SPECIMEN_SOURCE, markExcerpt } from "@/lib/specimens";
+import { tidyMath } from "@/lib/traceText";
 import {
   FAMILY_LABELS,
   PRESETS,
@@ -56,6 +74,66 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
+  );
+}
+
+/**
+ * The close's one measured object: a chain that asks for a tool it has not got.
+ *
+ * Everything drawn here is copied from `trace-specimens.json`, which `specimens.ts`
+ * will not load unless the shown span is a verbatim substring of the trace and
+ * `specimens.test.ts` has matched that trace against the published bundle. The
+ * card states its own sample size, because one chain is a specimen and the page
+ * must not be read as measuring a rate.
+ */
+function FabricatedToolCard() {
+  const s = SPECIMENS.fabricatedTool;
+  const runs = markExcerpt(s, tidyMath);
+
+  return (
+    <figure
+      aria-label="A measured chain reaching for a tool it does not have"
+      className="flex flex-col gap-3 rounded-lg border border-wrong/60 bg-canvas p-4"
+    >
+      <figcaption className="flex flex-wrap items-baseline justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          one measured chain, {SPECIMEN_SOURCE.modelLabel}
+        </span>
+        <span className="font-mono text-xs text-ink-muted">
+          MATH-500 {s.subject.toLowerCase()}, level {s.level}
+        </span>
+      </figcaption>
+
+      <p className="text-sm text-ink-muted">{tidyMath(s.question)}</p>
+
+      <p className="whitespace-pre-wrap border-l-2 border-grid pl-3 text-sm leading-relaxed text-ink">
+        <span className="text-ink-muted">… </span>
+        {runs.map((run, i) =>
+          run.mark ? (
+            <mark key={i} className="rounded bg-wrong/20 px-1 font-semibold text-wrong">
+              {run.text}
+            </mark>
+          ) : (
+            <span key={i}>{run.text}</span>
+          ),
+        )}
+      </p>
+
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
+        <span className="text-wrong">
+          it answered <span className="font-mono">{tidyMath(s.answer ?? "")}</span>
+        </span>
+        <span className="text-correct">
+          the answer is <span className="font-mono">{tidyMath(s.groundTruth)}</span>
+        </span>
+      </div>
+
+      <p className="text-xs text-ink-muted">
+        One chain of the 2,550 this model wrote in page 11&apos;s run, chosen for what it shows and
+        not for what it averages. Greedy, no tools available to it. The whole trace is{" "}
+        <span className="font-mono">{s.problemId}</span> in that page&apos;s download.
+      </p>
+    </figure>
   );
 }
 
@@ -432,8 +510,19 @@ export function Page19() {
               </p>
             </div>
             <p>
-              What settles it is the one lever that stops being a monologue. ReAct interleaves
-              thought with action: think a step, call a tool, read what comes back, think again.
+              Before the repair, the failure, and it is ours. Page 11 measured a maths specialist
+              that beats a model four and a half times its size. Here it is nine hundred tokens
+              into a factoring problem, out of ideas, reaching for something it does not have.
+            </p>
+
+            <FabricatedToolCard />
+
+            <p>
+              It names the tool and then supplies the tool&apos;s output from its own weights. Every
+              one of those zeros is invented. Thinking longer cannot repair this, because more
+              thinking is more of the thing that just failed. What settles it is the one lever that
+              stops being a monologue. ReAct interleaves thought with action: think a step, call a
+              tool, read what comes back, think again.
               <Cite n={REF.react} />
             </p>
             <p className="rounded border border-dashed border-grid bg-surface-raised p-2 text-center font-mono text-sm text-ink">
@@ -441,9 +530,15 @@ export function Page19() {
             </p>
             <p>
               So a chain can fetch a fact it never memorized and test a guess against the world
-              instead of against itself. Note what that is and is not. It is not thinking harder;
-              it is looking it up, and the thinking in this story is what decides when to look and
-              what to do with the answer. Pushed to the limit the whole toolbox fuses into an
+              instead of against itself. Be precise about what that buys. It is not a calculator:
+              page 9 put a checker on this deck&apos;s own chains and found a false arithmetic step
+              in well under one percent of the ones that reached the right answer. What the
+              specialist above lacks is not a way to add up. It is a way to stop guessing where it
+              should be exhausting, and an interpreter is the first thing in this story that can
+              settle a question without asking the model again. Note what that is and is not. It is
+              not thinking harder; it is looking it up, and the thinking in this story is what
+              decides when to look and what to do with the answer. Pushed to the limit the whole
+              toolbox fuses into an
               agent: at the 2024 International Olympiad in Informatics, an o1-based system ran
               hand-engineered test-time strategies, thousands of sampled programs, clustered,
               tested and ranked before submitting. Every selection trick in Act 2, aimed at one
@@ -503,6 +598,11 @@ export function Page19() {
       <p className="text-xs text-ink-muted">
         Step 1&apos;s bars are verbatim from the Coconut results table, GPT-2-scale experiments,
         accuracy and thought-token counts. Step 2 is an illustrative composite, not a live model.
+        The chain in the close is a single measured trace, copied unedited from page 11&apos;s run
+        ({SPECIMEN_SOURCE.modelLabel}, greedy, cap {SPECIMEN_SOURCE.chainBudget},{" "}
+        {SPECIMEN_SOURCE.items}) and published in full inside{" "}
+        <span className="font-mono">{SPECIMEN_SOURCE.bundle.split("/").pop()}</span>. It is a
+        specimen of a failure, not a measurement of how often it happens.
       </p>
 
       <PageNav n={PAGE_N} />

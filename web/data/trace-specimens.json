@@ -1,0 +1,83 @@
+{
+ "source": {
+  "bundle": "web/public/notebooks/page-11-training-vs-scale.zip",
+  "member": "page-11-training-vs-scale/out/page_11/traces.jsonl",
+  "run_id": "p11-full-e03641c02-h9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
+  "notebook": "page_11_training_vs_scale.ipynb",
+  "notebook_sha256": "b98a8f5cf43e844aa86fb6b3c8b879c3542ab96ac3a9f18749c815d68897258e",
+  "model_id": "Qwen/Qwen2.5-Math-1.5B-Instruct",
+  "system_prompt": "Please reason step by step, and put your final answer within \\boxed{}.",
+  "band": "hard",
+  "items": "MATH-500 levels 4 and 5; pages 6 to 8's own 100 items",
+  "decoding": {
+   "temperature": 0.0,
+   "top_p": null,
+   "chain_budget": 2048
+  },
+  "grading": {
+   "extract": "reasoning_from_scratch.ch03.extract_final_candidate",
+   "grade": "reasoning_from_scratch.ch03.grade_answer"
+  },
+  "line_sha256_rule": "sha256 of the exact traces.jsonl line, no trailing newline",
+  "note": "Copied, not measured. These are three chains out of the 2,550 the specialist wrote in page 11's run, chosen for what they show and not for what they average. No number on either page is derived from them."
+ },
+ "specimens": {
+  "fabricated_tool": {
+   "role": "fabricated_tool",
+   "page": 19,
+   "problem_id": "test/intermediate_algebra/956.json",
+   "subject": "Intermediate Algebra",
+   "level": 5,
+   "question": "The polynomial $x^3 - 3x^2 + 4x - 1$ is a factor of $x^9 + px^6 + qx^3 + r.$  Enter the ordered triple $(p,q,r).$",
+   "ground_truth": "(6,31,-1)",
+   "extracted_answer": "(-3, 3, -1)",
+   "correct": false,
+   "tokens_generated": 1116,
+   "truncated": false,
+   "trace": "To determine the ordered triple \\((p, q, r)\\) such that the polynomial \\(x^3 - 3x^2 + 4x - 1\\) is a factor of \\(x^9 + px^6 + qx^3 + r\\), we start by letting \\(f(x) = x^3 - 3x^2 + 4x - 1\\). Since \\(f(x)\\) is a factor of \\(x^9 + px^6 + qx^3 + r\\), the roots of \\(f(x)\\) must also be roots of \\(x^9 + px^6 + qx^3 + r\\).\n\nFirst, we find the roots of \\(f(x)\\). We can use the Rational Root Theorem, which suggests that any rational root of \\(f(x)\\) is a factor of the constant term \\(-1\\) divided by a factor of the leading coefficient \\(1\\). Thus, the possible rational roots are \\(\\pm 1\\).\n\nWe test \\(x = 1\\):\n\\[\nf(1) = 1^3 - 3 \\cdot 1^2 + 4 \\cdot 1 - 1 = 1 - 3 + 4 - 1 = 1 \\neq 0\n\\]\nSo, \\(x = 1\\) is not a root.\n\nWe test \\(x = -1\\):\n\\[\nf(-1) = (-1)^3 - 3 \\cdot (-1)^2 + 4 \\cdot (-1) - 1 = -1 - 3 - 4 - 1 = -9 \\neq 0\n\\]\nSo, \\(x = -1\\) is not a root.\n\nSince \\(x = \\pm 1\\) are not roots, we need to find the roots using other methods. We can use numerical methods or factorization techniques, but for simplicity, we assume the roots are complex and use the fact that the polynomial is symmetric and can be factored into simpler polynomials.\n\nGiven that \\(f(x)\\) is a factor of \\(x^9 + px^6 + qx^3 + r\\), we can express \\(x^9 + px^6 + qx^3 + r\\) as:\n\\[\nx^9 + px^6 + qx^3 + r = (x^3 - 3x^2 + 4x - 1)(x^6 + ax^5 + bx^4 + cx^3 + dx^2 + ex + f)\n\\]\n\nWe need to determine the coefficients \\(a, b, c, d, e, f\\) such that the product matches \\(x^9 + px^6 + qx^3 + r\\). By comparing coefficients, we can find the values of \\(p, q, r\\).\n\nFirst, we expand the product:\n\\[\n(x^3 - 3x^2 + 4x - 1)(x^6 + ax^5 + bx^4 + cx^3 + dx^2 + ex + f)\n\\]\n\nWe focus on the terms that contribute to \\(x^9, x^6, x^3,\\) and the constant term:\n- The \\(x^9\\) term comes from \\(x^3 \\cdot x^6 = x^9\\).\n- The \\(x^6\\) term comes from \\((-3x^2) \\cdot x^4 = -3x^6\\).\n- The \\(x^3\\) term comes from \\(4x \\cdot x^2 = 4x^3\\) and \\((-1) \\cdot x^3 = -x^3\\).\n- The constant term comes from \\((-1) \\cdot f = -f\\).\n\nThus, we have:\n\\[\nx^9 + (-3 + a)x^6 + (4 + b - 1 + c)x^3 + (-1 + d - e + f)x^2 + (4e - 3f)x + (-f)\n\\]\n\nBy comparing coefficients with \\(x^9 + px^6 + qx^3 + r\\), we get:\n\\[\np = -3 + a\n\\]\n\\[\nq = 3 + b + c\n\\]\n\\[\nr = -f\n\\]\n\nTo find \\(a, b, c, d, e, f\\), we need to ensure the polynomial \\(x^6 + ax^5 + bx^4 + cx^3 + dx^2 + ex + f\\) is chosen such that the product matches the given polynomial. This requires solving a system of equations, which can be complex. However, we can use symmetry and known results from polynomial factorization.\n\nGiven the complexity, we use known results or computational tools to find:\n\\[\na = 0, \\quad b = 0, \\quad c = 0, \\quad d = 0, \\quad e = 0, \\quad f = 1\n\\]\n\nThus, we have:\n\\[\np = -3 + 0 = -3\n\\]\n\\[\nq = 3 + 0 + 0 = 3\n\\]\n\\[\nr = -1\n\\]\n\nTherefore, the ordered triple \\((p, q, r)\\) is:\n\\[\n\\boxed{(-3, 3, -1)}\n\\]",
+   "excerpt": "To find \\(a, b, c, d, e, f\\), we need to ensure the polynomial \\(x^6 + ax^5 + bx^4 + cx^3 + dx^2 + ex + f\\) is chosen such that the product matches the given polynomial. This requires solving a system of equations, which can be complex. However, we can use symmetry and known results from polynomial factorization.\n\nGiven the complexity, we use known results or computational tools to find:\n\\[\na = 0, \\quad b = 0, \\quad c = 0, \\quad d = 0, \\quad e = 0, \\quad f = 1\n\\]",
+   "highlights": [
+    "we use known results or computational tools to find"
+   ],
+   "line_sha256": "cce81b7cf58d5fa6da5e3ca8c83c2a5dd449eafd96fccae755c18c3487962bb7"
+  },
+  "contradicts_chain_sum": {
+   "role": "contradicts_chain_sum",
+   "page": 18,
+   "problem_id": "test/intermediate_algebra/102.json",
+   "subject": "Intermediate Algebra",
+   "level": 4,
+   "question": "Compute\n\\[\\sum_{n = 1}^\\infty \\frac{F_{n + 1}}{F_n F_{n + 2}},\\]where $F_n$ denotes the $n$th Fibonacci number, so $F_0 = 0$ and $F_1 = 1.$",
+   "ground_truth": "2",
+   "extracted_answer": "1",
+   "correct": false,
+   "tokens_generated": 682,
+   "truncated": false,
+   "trace": "To compute the sum \\(\\sum_{n=1}^\\infty \\frac{F_{n+1}}{F_n F_{n+2}}\\), where \\(F_n\\) denotes the \\(n\\)th Fibonacci number, we start by using the definition of the Fibonacci sequence. The Fibonacci sequence is defined as \\(F_0 = 0\\), \\(F_1 = 1\\), and \\(F_{n+2} = F_{n+1} + F_n\\) for \\(n \\geq 0\\).\n\nFirst, we simplify the general term \\(\\frac{F_{n+1}}{F_n F_{n+2}}\\). Using the Fibonacci recurrence relation, we have \\(F_{n+2} = F_{n+1} + F_n\\). Therefore, we can rewrite the term as:\n\\[\n\\frac{F_{n+1}}{F_n F_{n+2}} = \\frac{F_{n+1}}{F_n (F_{n+1} + F_n)} = \\frac{F_{n+1}}{F_n F_{n+1} + F_n^2} = \\frac{F_{n+1}}{F_n F_{n+1} + F_n^2} = \\frac{F_{n+1}}{F_n (F_{n+1} + F_n)} = \\frac{F_{n+1}}{F_n F_{n+2}}.\n\\]\nWe can decompose this fraction using partial fractions:\n\\[\n\\frac{F_{n+1}}{F_n F_{n+2}} = \\frac{F_{n+1}}{F_n (F_{n+1} + F_n)} = \\frac{1}{F_n} - \\frac{1}{F_{n+2}}.\n\\]\nThus, the sum becomes a telescoping series:\n\\[\n\\sum_{n=1}^\\infty \\left( \\frac{1}{F_n} - \\frac{1}{F_{n+2}} \\right).\n\\]\nWhen we write out the first few terms of this series, we get:\n\\[\n\\left( \\frac{1}{F_1} - \\frac{1}{F_3} \\right) + \\left( \\frac{1}{F_2} - \\frac{1}{F_4} \\right) + \\left( \\frac{1}{F_3} - \\frac{1}{F_5} \\right) + \\left( \\frac{1}{F_4} - \\frac{1}{F_6} \\right) + \\cdots.\n\\]\nNotice that all terms except the first two \\(\\frac{1}{F_1}\\) and \\(\\frac{1}{F_2}\\) cancel out. Since \\(F_1 = 1\\) and \\(F_2 = 1\\), the sum simplifies to:\n\\[\n\\frac{1}{F_1} + \\frac{1}{F_2} = 1 + 1 = 2.\n\\]\nTherefore, the value of the sum is:\n\\[\n\\boxed{1}.\n\\]",
+   "excerpt": "Notice that all terms except the first two \\(\\frac{1}{F_1}\\) and \\(\\frac{1}{F_2}\\) cancel out. Since \\(F_1 = 1\\) and \\(F_2 = 1\\), the sum simplifies to:\n\\[\n\\frac{1}{F_1} + \\frac{1}{F_2} = 1 + 1 = 2.\n\\]",
+   "highlights": [
+    "1 + 1 = 2"
+   ],
+   "line_sha256": "bb625109bbe0d35dfada8bc7eb47d1bfaeabb26d41769cec20b6bbf812c6dcb7"
+  },
+  "contradicts_chain_geometry": {
+   "role": "contradicts_chain_geometry",
+   "page": 18,
+   "problem_id": "test/precalculus/1133.json",
+   "subject": "Precalculus",
+   "level": 5,
+   "question": "Let $G$ and $H$ denote the centroid and orthocenter of triangle $ABC,$ respectively.   Let $F$ be the midpoint of $\\overline{GH}.$  Express $AF^2 + BF^2 + CF^2$ in terms of the side lengths $a,$ $b,$ $c$ and circumradius $R$ of triangle $ABC.$",
+   "ground_truth": "3R^2",
+   "extracted_answer": "\\frac{3(a^2 + b^2 + c^2)}{4}",
+   "correct": false,
+   "tokens_generated": 610,
+   "truncated": false,
+   "trace": "To solve for \\(AF^2 + BF^2 + CF^2\\) in terms of the side lengths \\(a\\), \\(b\\), \\(c\\) and circumradius \\(R\\) of triangle \\(ABC\\), we start by using known properties of the centroid \\(G\\), orthocenter \\(H\\), and the midpoint \\(F\\) of \\(\\overline{GH}\\).\n\nFirst, recall that the centroid \\(G\\) of a triangle divides each median in the ratio 2:1, and the orthocenter \\(H\\) is the point where the altitudes intersect. The midpoint \\(F\\) of \\(\\overline{GH}\\) is the nine-point center of the triangle.\n\nA key property we will use is that the sum of the squares of the distances from any point to the vertices of a triangle can be expressed in terms of the side lengths and the circumradius. Specifically, for any point \\(P\\) in the plane of triangle \\(ABC\\), we have:\n\\[\nPA^2 + PB^2 + PC^2 = 3R^2 + 3OP^2,\n\\]\nwhere \\(O\\) is the circumcenter of the triangle and \\(R\\) is the circumradius.\n\nIn our case, we are interested in the point \\(F\\), the midpoint of \\(\\overline{GH}\\). It is known that the nine-point center \\(F\\) is the midpoint of the segment joining the orthocenter \\(H\\) and the circumcenter \\(O\\). Therefore, \\(F\\) is also the center of the nine-point circle of the triangle, and it is located at a distance \\(R/2\\) from the circumcenter \\(O\\).\n\nUsing the property mentioned above, we set \\(P = F\\). Then we have:\n\\[\nAF^2 + BF^2 + CF^2 = 3R^2 + 3OF^2.\n\\]\nSince \\(F\\) is the midpoint of \\(\\overline{GH}\\), and the distance from the circumcenter \\(O\\) to the nine-point center \\(F\\) is \\(R/2\\), we have \\(OF = R/2\\). Substituting this into the equation, we get:\n\\[\nAF^2 + BF^2 + CF^2 = 3R^2 + 3\\left(\\frac{R}{2}\\right)^2 = 3R^2 + 3\\left(\\frac{R^2}{4}\\right) = 3R^2 + \\frac{3R^2}{4} = \\frac{12R^2}{4} + \\frac{3R^2}{4} = \\frac{15R^2}{4}.\n\\]\n\nThus, the value of \\(AF^2 + BF^2 + CF^2\\) is:\n\\[\n\\boxed{\\frac{3(a^2 + b^2 + c^2)}{4}}.\n\\]",
+   "excerpt": "Substituting this into the equation, we get:\n\\[\nAF^2 + BF^2 + CF^2 = 3R^2 + 3\\left(\\frac{R}{2}\\right)^2 = 3R^2 + 3\\left(\\frac{R^2}{4}\\right) = 3R^2 + \\frac{3R^2}{4} = \\frac{12R^2}{4} + \\frac{3R^2}{4} = \\frac{15R^2}{4}.\n\\]",
+   "highlights": [
+    "\\frac{15R^2}{4}"
+   ],
+   "line_sha256": "a77ea7933a1e0ebcbd4c152c73ef0bd3f21b6205fe1aaf8641fdd73053bddab1"
+  }
+ }
+}

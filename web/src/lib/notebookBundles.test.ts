@@ -59,7 +59,7 @@ const PAGES = [
   { n: 9, slug: "page-09-outcome-vs-process", notebook: "page_09_outcome_vs_process.ipynb",
     declared: null, extras: [], repoNotebookIsTheShippedOne: true },
   { n: 11, slug: "page-11-training-vs-scale", notebook: "page_11_training_vs_scale.ipynb",
-    declared: "1.7 MB", extras: [], repoNotebookIsTheShippedOne: true },
+    declared: "2.8 MB", extras: [], repoNotebookIsTheShippedOne: true },
 ] as const;
 
 const NOTEBOOKS = resolve(WEB, "../notebooks");

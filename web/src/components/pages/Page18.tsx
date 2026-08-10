@@ -26,6 +26,14 @@
  * the open-vs-hidden trace design tension and Korbak et al.'s "fragile
  * opportunity" recommendation.
  *
+ * Step 1 closes on the measured half: two chains from page 11's specialist arm
+ * whose boxed answer is not the value the chain just computed, with no hint
+ * planted and nothing being concealed. They are the page's answer to its own
+ * disclosure below, which is that everything else in step 1 is authored. They
+ * are specimens and never rates; the only rates on this page stay Chen et al.'s.
+ * Their provenance and the reason they landed here rather than on page 19 are in
+ * docs/page_19_tool_use_probe.md §6.
+ *
  * HONESTY (load-bearing): the probe's prompt and its three traces are
  * authored teaching examples; only the admission rates are the paper's. The
  * pressure curves are authored illustrations pinned to the paper's two
@@ -54,6 +62,8 @@ import { curves } from "@/lib/curves";
 import { PAGE9, pct } from "@/lib/page09";
 import { cotPressureRecall, cotPressureReward } from "@/lib/frontier";
 import { bernoulli, createRng } from "@/lib/rng";
+import { SPECIMENS, SPECIMEN_SOURCE, markExcerpt, type Specimen } from "@/lib/specimens";
+import { tidyMath } from "@/lib/traceText";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 18;
@@ -72,6 +82,51 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
+  );
+}
+
+/**
+ * One measured chain whose answer is not the value it just computed.
+ *
+ * The marked span is the chain's own arithmetic, so the card can put it beside
+ * the answer and let the reader do the comparison. Nothing is paraphrased:
+ * `specimens.ts` refuses to load a span that is not verbatim in the trace, and
+ * `specimens.test.ts` matches the trace against the published bundle.
+ */
+function ContradictionCard({ specimen }: { specimen: Specimen }) {
+  const runs = markExcerpt(specimen, tidyMath);
+
+  return (
+    <figure
+      aria-label={`A measured chain whose answer contradicts its own working, ${specimen.problemId}`}
+      className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-canvas p-3"
+    >
+      <figcaption className="font-mono text-xs text-ink-muted">
+        MATH-500 {specimen.subject.toLowerCase()}, level {specimen.level}
+      </figcaption>
+
+      <p className="whitespace-pre-wrap border-l-2 border-grid pl-3 text-sm leading-relaxed text-ink">
+        <span className="text-ink-muted">… </span>
+        {runs.map((run, i) =>
+          run.mark ? (
+            <mark key={i} className="rounded bg-compute/20 px-1 font-semibold text-ink" >
+              {run.text}
+            </mark>
+          ) : (
+            <span key={i}>{run.text}</span>
+          ),
+        )}
+      </p>
+
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
+        <span className="text-wrong">
+          it answered <span className="font-mono">{tidyMath(specimen.answer ?? "")}</span>
+        </span>
+        <span className="text-correct">
+          the answer is <span className="font-mono">{tidyMath(specimen.groundTruth)}</span>
+        </span>
+      </div>
+    </figure>
   );
 }
 
@@ -356,6 +411,37 @@ export function Page18() {
                 </p>
               </div>
             ) : null}
+          </div>
+
+          {/* The measured half of step 1. The probe above is authored and says so;
+              these two chains are not, and they cost nothing to show because page
+              11's run already published them. */}
+          <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4">
+            <p className="text-sm font-semibold text-ink">The probe above is authored. This is not.</p>
+            <p className="text-sm text-ink">
+              Planting a hint is the clean way to ask the question, and answering it needs a control
+              run. Here is the untidy version, out of this deck&apos;s own measurements: two chains
+              from page 11&apos;s run in which the model computes a value and then hands back a
+              different one. No hint, no pressure, nothing planted. The reasoning and the answer
+              simply came apart.
+            </p>
+
+            {[SPECIMENS.contradictsChainSum, SPECIMENS.contradictsChainGeometry].map((s) => (
+              <ContradictionCard key={s.role} specimen={s} />
+            ))}
+
+            <p className="text-sm text-ink">
+              Neither chain is concealing a motive, and that is the part to carry into the next
+              step. Unfaithfulness does not require one. If a trace can disagree with its own answer
+              for free, then reading the trace tells you what the model wrote, which is not the same
+              as what the model did.
+            </p>
+            <p className="text-xs text-ink-muted">
+              Two chains of the 2,550 {SPECIMEN_SOURCE.modelLabel} wrote in page 11&apos;s run,
+              copied unedited and chosen for what they show. Specimens of a failure mode, not a
+              measurement of how often it happens: this page&apos;s only rates are Chen et
+              al.&apos;s.
+            </p>
           </div>
         </section>
         <Note kicker="References">

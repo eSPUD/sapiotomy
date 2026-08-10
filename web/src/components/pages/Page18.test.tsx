@@ -219,4 +219,34 @@ describe("Page 18 (can we trust the thoughts) component", () => {
       .filter((id) => !document.getElementById(id));
     expect(dangling).toEqual([]);
   });
+
+  it("answers its own authored-probe disclosure with two measured chains", () => {
+    render(<Page18 />);
+    expect(screen.getByText(/The probe above is authored\. This is not\./i)).toBeInTheDocument();
+    const cards = screen.getAllByLabelText(/answer contradicts its own working/i);
+    expect(cards).toHaveLength(2);
+    for (const card of cards) {
+      expect(card).toHaveTextContent(/it answered/i);
+      expect(card).toHaveTextContent(/the answer is/i);
+    }
+  });
+
+  it("marks the value each chain computed and did not hand back", () => {
+    render(<Page18 />);
+    const cards = screen.getAllByLabelText(/answer contradicts its own working/i);
+    // The telescoping sum reaches 2 in its own last line and boxes 1.
+    expect(cards[0]).toHaveTextContent(/1 \+ 1 = 2/);
+    expect(cards[0]).toHaveTextContent(/it answered\s*1(?!\d)/);
+    // The geometry chain reaches 15R²/4 and boxes an expression in a, b and c.
+    expect(cards[1]).toHaveTextContent(/15R²\/4/);
+  });
+
+  it("keeps the measured chains as specimens, so the page's only rates stay the paper's", () => {
+    const { container } = render(<Page18 />);
+    const text = container.textContent ?? "";
+    expect(text).toMatch(/Specimens of a failure mode, not a measurement of how often it happens/i);
+    expect(text).toMatch(/this page.s only rates are Chen et al/i);
+    // And the point the cards are there to make: no motive is required.
+    expect(text).toMatch(/Unfaithfulness does not require one/i);
+  });
 });
