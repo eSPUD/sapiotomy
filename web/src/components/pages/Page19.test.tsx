@@ -167,6 +167,46 @@ describe("Page 19 (the frontier) component", () => {
     expect(textContent).not.toMatch(/appending .?Wait.? stretches thinking/i);
   });
 
+  it("shows the measured chain reaching for a tool it does not have", () => {
+    render(<Page19 />);
+    const card = screen.getByLabelText(/reaching for a tool it does not have/i);
+    // The marked sentence is the whole reason the card is on the page.
+    expect(card).toHaveTextContent(/we use known results or computational tools to find/i);
+    // ...and the invented output has to be visible beside it, or the card shows a
+    // model asking for a tool rather than a model faking one.
+    expect(card).toHaveTextContent(/a = 0/);
+    expect(card).toHaveTextContent(/it answered/i);
+    expect(card).toHaveTextContent(/the answer is/i);
+  });
+
+  it("presents that chain as a specimen and never as a rate", () => {
+    const { container } = render(<Page19 />);
+    const card = screen.getByLabelText(/reaching for a tool it does not have/i);
+    expect(card).toHaveTextContent(/one chain of the 2,550/i);
+    expect(card).toHaveTextContent(/chosen for what it shows and not for what it averages/i);
+    const text = container.textContent ?? "";
+    expect(text).toMatch(/specimen of a failure, not a measurement of how often it happens/i);
+    // The page must not turn one trace into a frequency.
+    expect(text).not.toMatch(/\d+% of chains (?:ask|reach|name)/i);
+  });
+
+  it("puts the failure before ReAct, so the citation arrives as its fix", () => {
+    const { container } = render(<Page19 />);
+    const text = container.textContent ?? "";
+    const card = text.indexOf("we use known results or computational tools to find");
+    const react = text.indexOf("ReAct interleaves");
+    expect(card).toBeGreaterThan(-1);
+    expect(react).toBeGreaterThan(card);
+  });
+
+  it("scopes the tool claim away from arithmetic, which page 9 already refuted", () => {
+    render(<Page19 />);
+    expect(screen.getByText(/It is not a calculator/i)).toBeInTheDocument();
+    expect(screen.getByText(/stop guessing where it should be exhausting/i)).toBeInTheDocument();
+    // The reason the reader is given has to be the measured one, not an assertion.
+    expect(screen.getByText(/well under one percent/i)).toBeInTheDocument();
+  });
+
   it("carries no em dash or en dash in rendered copy", () => {
     const { container } = render(<Page19 />);
     const offenders = Array.from(container.querySelectorAll("*"))

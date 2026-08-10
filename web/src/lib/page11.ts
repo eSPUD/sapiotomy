@@ -19,6 +19,29 @@
  * The specialist arm (a math-trained 1.5B) is measured and kept in the file,
  * but this page does not plot it: that comparison is the frontier-reasoners
  * page's, made at matched size with the reasoning distills, not the keystone's.
+ * Pages 18 and 19 do spend three of its chains as specimens; see
+ * `lib/specimens.ts` and docs/page_19_tool_use_probe.md.
+ *
+ * Two things a read of the specialist's traces turned up, recorded here because
+ * nothing on this page moves and they would otherwise go unwritten:
+ *
+ *   1. The specialist's hard-band greedy accuracy is 66%, not the 64% in the
+ *      file. Two of its 36 failures are grader misses on formatting alone:
+ *      `\begin{pmatrix} \frac{1}{5} \\ -\frac{18}{5}\end{pmatrix}` scored wrong
+ *      against `\begin{pmatrix} 1/5 \\ -18/5 \end{pmatrix}`, and
+ *      `(2, 12) \cup (12, 102)` scored wrong against `(2,12) \cup (12,102)` on
+ *      whitespace. All 4,400 traces in the bundle were swept for the same shape
+ *      and these are the only two, both on the specialist because it is the
+ *      model that answers in vectors and intervals often enough to be graded on
+ *      them. No ordering on this page or any other changes, and the derived
+ *      file is left as the run wrote it: it is a faithful record of what the
+ *      grader returned. But `grade_answer` is shared by every measured page, so
+ *      the rate belongs somewhere findable. It is also in PROVENANCE.md.
+ *   2. Under the CoT system prompt this run gave it, the specialist wrote zero
+ *      Python across all 2,550 of its chains, and the harness has no executor.
+ *      So its margin over the general 1.5B here is training and not tool use,
+ *      whatever the model is additionally capable of. Page 19's beat is written
+ *      against that fact rather than around it.
  *
  * The gates are read, not recomputed, the way page 6's and page 8's are: a run
  * that does not pass is a load error here, never a conditional in the
