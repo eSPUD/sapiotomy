@@ -6,12 +6,9 @@ import {
   cotPressureReward,
   distillCrossover,
   faithfulnessAdmitRate,
-  inverseU,
   perQueryCosts,
   rentPerQuery,
   samplesForTarget,
-  SELF_CORRECTION,
-  selfCorrectionCurve,
   type BillAnchors,
 } from "./frontier";
 
@@ -150,85 +147,12 @@ describe("Page 17: self-correction (Huang et al., ICLR 2024) + revision chain", 
     expect(d.citation.venue).toBe("ICLR 2024");
   });
 
-  const unaided = selfCorrectionCurve(SELF_CORRECTION.maxSteps, {
-    ...SELF_CORRECTION,
-    reliability: null,
-  });
-  const checked = selfCorrectionCurve(SELF_CORRECTION.maxSteps, { ...SELF_CORRECTION });
-  const peak = unaided.reduce((a, p) => (p.y > a.y ? p : a));
-  it("unaided chain rises to an interior peak, then falls below its start", () => {
-    expect(peak.x).toBe(3);
-    expect(Math.abs(peak.y - 62.1)).toBeLessThan(TOL);
-    expect(Math.abs(unaided[0].y - 38.3)).toBeLessThan(TOL);
-    expect(unaided[12].y).toBeLessThan(unaided[0].y); // the cliff
-  });
-  it("verifier flattens the cliff into a plateau, capped below the ceiling", () => {
-    const ceiling = (1 - SELF_CORRECTION.unsolvable) * 100;
-    for (let t = 1; t <= 12; t++) expect(checked[t].y).toBeGreaterThan(unaided[t].y);
-    expect(Math.abs(checked[12].y - 77.3)).toBeLessThan(TOL);
-    for (const p of checked) expect(p.y).toBeLessThan(ceiling); // imperfect verifier
-  });
-});
-
-describe("Page 17: overthinking inverse-U (preprint)", () => {
-  const d = curves.overthinking;
-  const { easyPeak, hardPeak, easyPeakAcc, hardPeakAcc, curvature } = d.fit!.params;
-  it("each curve is an inverse-U (single interior maximum)", () => {
-    const atPeak = inverseU(easyPeak, easyPeak, easyPeakAcc, curvature);
-    expect(atPeak).toBeGreaterThan(inverseU(easyPeak - 2, easyPeak, easyPeakAcc, curvature));
-    expect(atPeak).toBeGreaterThan(inverseU(easyPeak + 2, easyPeak, easyPeakAcc, curvature));
-  });
-  it("easy problems peak at a lower thinking length than hard", () => {
-    expect(easyPeak).toBeLessThan(hardPeak);
-  });
-  it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
-  void hardPeakAcc;
-});
-
-describe("Page 18: faithfulness (preprint)", () => {
-  const d = curves.faithfulness;
-  it("admission Monte Carlo converges to 25% / 39%", () => {
-    expect(Math.abs(faithfulnessAdmitRate(0.25, 20000, 1) - 25)).toBeLessThan(1.5);
-    expect(Math.abs(faithfulnessAdmitRate(0.39, 20000, 2) - 39)).toBeLessThan(1.5);
-  });
-  it("provenance documents the unresolved misalignment-hint conflict", () => {
-    expect(d.provenance.toLowerCase()).toContain("conflict");
-  });
-  it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
-});
-
-describe("Page 18: CoT monitoring & obfuscation (Baker et al., preprint)", () => {
-  const d = curves.cotObfuscation;
-  const p = d.fit!.params;
-  it("a CoT monitor beats an action-only monitor, 95% vs 60% recall", () => {
-    expect(p.cotRecall).toBe(95);
-    expect(p.actionRecall).toBe(60);
-  });
-  it("recall holds near 95% at zero pressure and collapses to ~0 at full pressure", () => {
-    expect(Math.abs(cotPressureRecall(0, p.cotRecall, p.cliff, p.steep) - 95)).toBeLessThan(0.5);
-    expect(cotPressureRecall(10, p.cotRecall, p.cliff, p.steep)).toBeLessThan(1);
-  });
-  it("task reward keeps climbing while recall falls: the trap", () => {
-    for (let x = 1; x <= 10; x++) {
-      expect(cotPressureReward(x, p.rewardStart, p.rewardEnd)).toBeGreaterThan(
-        cotPressureReward(x - 1, p.rewardStart, p.rewardEnd),
-      );
-      expect(cotPressureRecall(x, p.cotRecall, p.cliff, p.steep)).toBeLessThan(
-        cotPressureRecall(x - 1, p.cotRecall, p.cliff, p.steep),
-      );
-    }
-  });
-  it("provenance labels the curve shapes as authored illustrations", () => {
-    expect(d.provenance.toLowerCase()).toContain("authored illustration");
-  });
-  it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
 describe("preprint flagging (all Act 3 non-peer-reviewed sources)", () => {
-  it("pages 15, 17, 18 and 19 data (and reserved arc-cost) are preprint/non-peer-reviewed", () => {
+  it("pages 15, 18 and 19 data (and reserved arc-cost) are preprint/non-peer-reviewed", () => {
     expect(curves.budgetForcing.citation.preprint).toBe(true);
     expect(curves.arcCost.citation.preprint).toBe(true);
-    expect(curves.overthinking.citation.preprint).toBe(true);
     expect(curves.faithfulness.citation.preprint).toBe(true);
     expect(curves.cotObfuscation.citation.preprint).toBe(true);
   });

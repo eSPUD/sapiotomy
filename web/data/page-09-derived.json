@@ -1,12 +1,12 @@
 {
   "manifest": {
-    "run_id": "full-9ab2b579",
+    "run_id": "replay-9ab2b579",
     "notebook": "page_09_outcome_vs_process.ipynb",
-    "notebook_sha256": "effd23f6ca5d1c02fc12466557f06515969de74bee07e78721db50452ca84fa5",
+    "notebook_sha256": "02bca6f2879d5c5768d43af371662aa3b908e3bec27300621e72a1d568cc04d6",
     "page": 9,
-    "run_mode": "FULL",
-    "timestamp_utc": "2026-08-09T03:47:24+00:00",
-    "notebook_git_sha": "c5162010e0ae9408b848ddab56f115f7b0e600c8",
+    "run_mode": "REPLAY",
+    "timestamp_utc": "2026-08-10T06:45:47+00:00",
+    "notebook_git_sha": "da309330d69c665054d97b85ad528c8bcff2ed4f",
     "harness": {
       "version": "1.3",
       "sha256": "7076c1218c6345ec9202087a98a2bd0c71ae47d6e406a81dc1901a0c7c78d6d8"
@@ -71,6 +71,35 @@
           "min_separation": 0.2,
           "separates": true
         },
+        "scores": "adopted",
+        "scores_adopted_from": {
+          "run_id": "full-9ab2b579",
+          "run_mode": "FULL",
+          "notebook_sha256": "c42650074e7ea742a213817b0ac6c8dac4bf2802964c86e63942fd063736835c",
+          "timestamp_utc": "2026-08-10T06:25:57+00:00",
+          "fingerprint": "Qwen/Qwen2.5-Math-PRM-7B|0610740060112df12585d00a1c5f4624d2f59051|8bit|12|<extra_0>",
+          "n_chains": 1580,
+          "separation_preflight": {
+            "clean": [
+              0.9524375200271606,
+              0.9949306845664978,
+              0.9964953064918518,
+              0.9996824264526367
+            ],
+            "corrupted": [
+              0.9536920785903931,
+              0.9956380724906921,
+              0.40427365899086,
+              0.008912925608456135
+            ],
+            "margin": 0.5922216475009918,
+            "min_separation": 0.2,
+            "separates": true
+          },
+          "quantisation": "8bit",
+          "revision": "0610740060112df12585d00a1c5f4624d2f59051"
+        },
+        "separation_preflight_is_adopted": true,
         "quantisation": "8bit",
         "quantisation_note": "8-bit was required to fit a 7.6B grader on a 16 GB card; it moves the scores and so is part of what section 6 measured",
         "threshold": 0.7473679780960083,
@@ -227,6 +256,8 @@
     "n_right": 747,
     "n_right_with_false_step": 5,
     "base_rate": 0.006693440428380187,
+    "n_right_reachable": 268,
+    "reachable_rate": 0.018656716417910446,
     "n_wrong": 833,
     "n_problems_with_a_right_chain": 78,
     "n_problems_with_a_contaminated_right_chain": 4,
@@ -236,7 +267,9 @@
     "prm_base_rate": 0.19544846050870146,
     "prm_n_chains": 747,
     "prm_auc": 0.8921726067136345,
-    "prm_threshold": 0.7473679780960083
+    "prm_threshold": 0.7473679780960083,
+    "n_chains_with_no_checkable_step": 1062,
+    "share_chains_with_no_checkable_step": 0.6721518987341772
   },
   "localisation": {
     "n_wrong": 833,

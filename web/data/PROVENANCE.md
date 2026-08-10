@@ -41,12 +41,57 @@ Pages 5 to 9 each ship the run that produced their numbers, as a zip under
 Page 10 ships a bundle that is **not** a run: `page-10-search-arm.zip` is the search arm
 written and packaged unrun, and the page's label promises the notebook rather than a result.
 Its tree is hand-authored and its bars are Yao et al.'s, so nothing on the page rests on it.
-Page 11 ships no bundle, so its measured run (`page-11-derived.json`) is not reader-re-derivable
-the way pages 5 to 9 are, though gate 1 inside it reproduces pages 6, 7 and 8's shipped numbers
-exactly. Page 15 section 3 replays that same file and adds no generation of its own.
+Page 11 ships `page-11-training-vs-scale.zip`, which **is** a run: arm 0's gate-1 re-derivation
+plus the easy-band, specialist and hard-band 1.5B arms it generated, 5,900 chains in
+`traces.jsonl`. Page 15 section 3 replays that same file and generates nothing of its own, so it
+is re-derivable from page 11's download too.
 
 `src/lib/notebookBundles.test.ts` checks the layout, replay mode and manifest of the page
-5 to 8 bundles. Pages 9 and 10 are not covered by it.
+5 to 8 and page 11 bundles. Pages 9 and 10 are not covered by it.
+
+## The specimens on pages 18 and 19
+
+`data/trace-specimens.json` is a third kind of file: not a digitized source, and not a run of
+ours either, but three chains **copied** out of page 11's published `traces.jsonl`. It carries no
+`citation` because there is nothing to cite, and no `manifest` because it measures nothing. Its
+provenance is its `source` block plus a `line_sha256` per chain, and the guarantee is
+`src/lib/specimens.test.ts`, which opens `page-11-training-vs-scale.zip` and asserts each chain is
+byte-identical to the line it names. `src/lib/specimens.ts` additionally refuses to load a quote
+that is not a verbatim substring of its trace, so a span edited for flow fails the build.
+
+All three are `Qwen2.5-Math-1.5B-Instruct` under its model card's CoT system prompt, greedy, cap
+2048, on pages 6 to 8's own hundred MATH-500 L4/5 items. They are specimens and never rates:
+three chains out of 2,550, chosen for what they show. Both pages say so on themselves, and
+neither derives a number from them. Why they were used instead of a fresh tool-use run is in
+`docs/page_19_tool_use_probe.md` §3.
+
+## Grader false negatives in `grade_answer`
+
+Recorded here because `reasoning_from_scratch.ch03.grade_answer` grades every measured page in
+the deck, and the rate is not zero.
+
+A sweep of all 5,900 chains in page 11's bundle found **three** answers scored wrong that are
+mathematically identical to the ground truth, every one a formatting miss:
+
+| model | ground truth | model's answer | difference | where it lands |
+|---|---|---|---|---|
+| Math-1.5B | `\begin{pmatrix} 1/5 \\ -18/5 \end{pmatrix}` | `\begin{pmatrix} \frac{1}{5} \\ -\frac{18}{5}\end{pmatrix}` | `1/5` vs `\frac{1}{5}` | hard-band greedy |
+| Math-1.5B | `(2,12) \cup (12,102)` | `(2, 12) \cup (12, 102)` | whitespace | hard-band greedy |
+| 1.5B-Instruct | `12\pi` | `12 \pi` | whitespace | one sampled draw of 16 |
+
+The first two land on `Qwen2.5-Math-1.5B-Instruct`, which is the model that answers in vectors
+and intervals often enough to be graded on them, and both fall in its hard-band greedy set. The
+effect: the specialist's hard-band greedy accuracy is **66%, not the 64%** its `derived.json`
+records. Page 11 does not plot the specialist in any case.
+
+The third arrived with the 2026-08 rebundle that sampled the 1.5B on the hard band. It is one
+draw of the sixteen on a single item, so it moves a pooled figure by well under a point and no
+greedy point at all. It is worth recording for what it says about the shape of the problem:
+the misses are notation and whitespace, not a property of one model.
+
+**The derived files are not being corrected.** They are a faithful record of what the grader
+returned on the run, and rewriting them would break the bit-exact gate-1 reproduction pages 6, 7
+and 8 are checked against. The correction lives here and in `src/lib/page11.ts`'s header.
 
 ## Known source conflicts to resolve against primary papers
 
@@ -78,6 +123,7 @@ change: `grep -rl "curves\.<key>" src/components/pages/` for the parsed curves, 
 | page-08-derived.json | 8 | **The deck's own run.** Best-of-N against five judges, paired against the vote. Note `manifest.verifiers[4]`: the trained PRM was **rebuilt** on transformers' Qwen2 body plus the checkpoint's value head, because the checkpoint's own modelling code returns NaN under this transformers version, and its solve rate on these items is `null` / unmeasured. Loaded by `src/lib/page08.ts` |
 | page-09-derived.json | 9 | **The deck's own run.** Step-level checking against a process reward model, detection rates, AUC and the selection null. `prm_reliability.threshold_source` records that the PRM's operating point was fitted against the checker's own labels. Loaded by `src/lib/page09.ts` |
 | page-11-derived.json | 11, 15 | **The deck's own run.** Accuracy against measured inference FLOPs for one Qwen2.5 family, re-derived from pages 6/7/8's runs (gate 1 reproduces them exactly) plus a fresh 50-item easy band at MATH-500 levels 1 to 3. Manifest as above; loaded by `src/lib/page11.ts` for page 11's crossing question, and by `src/lib/page15Price.ts` for page 15 section 3, which reads the raw `mean_tokens` underneath the FLOPs price and pairs each model's two difficulty bands. Page 15 re-generates nothing and its readings are pinned in `page15Price.test.ts` |
+| page-17-derived.json | 17 | **The deck's own runs, re-read.** Generates nothing: `page_17_when_reasoning_breaks.ipynb` re-aggregates pages 5 to 9 and asserts it reproduces page 6's fifteen accuracy cells exactly (`gates.B_page_6_reproduced.max_drift` is 0). Carries the budget-rung ledger, the affected-item counts, the specimen traces (which live nowhere else outside page 6's zip) and three controls. **Four `claims` are deliberately `false`**: they are the controls that cut the page's observation down, and the page prints all of them. Loaded by `src/lib/page17.ts` |
 | tot-crosswords.json | 10 | Verbatim Table 3 word-success column (Yao et al. 2023, NeurIPS): 5x5 mini crosswords, GPT-4, 20 puzzles; IO 14%, CoT 15.6%, ToT without backtracking 20%, without pruning 41.5%, full ToT 60% |
 | neural-degeneration.json | 10 | Verbatim Table 1 repetition rates (Holtzman et al. 2020, ICLR): GPT-2 Large, 5,000 WebText continuations, up to 200 tokens |
 | rebase-pareto.json | 11 | Verbatim table values (Wu et al. 2024, Table 1, MATH500 accuracy vs inference FLOPs) |
@@ -90,7 +136,6 @@ change: `grep -rl "curves\.<key>" src/components/pages/` for the parsed curves, 
 | deepseek-pricing.json | 16 | List prices per million tokens at R1's API launch (Jan 2025), DeepSeek API docs: R1 $0.55 in / $2.19 out against o1 $15 / $60, a ~27x reduction on both meters. Also carries `r1RlTrainUSD`, the reported one-time RL-stage cost the calculator uses as its retraining bill |
 | compute-optimal.json | 16, 19 | Verbatim claims (Snell et al. 2024). Both pages state the scope the source gives them: the substitution holds on easy and medium problems |
 | self-correction.json | 17 | Verbatim Table 3 values (Huang et al., ICLR 2024, arXiv:2310.01798): GPT-4/GSM8K 95.5→91.5→89.0 and GPT-3.5/CommonSenseQA 75.8→38.1→41.8 across intrinsic self-correction rounds; the page's pass slider is a separate authored three-state chain (labeled in-app, constants pinned in `act3.test.ts`) |
-| overthinking.json | 17 | Authored inverse-U matching the 2025 overthinking / inverse-scaling preprints (**PP**). Rendered since 2026-08 as the page's easy-vs-hard threshold figure: the two arms are one curve at two peak positions, so the figure asserts the ORDER of the thresholds and not the depth of either fall |
 | faithfulness.json | 18 | Verbatim headline rates (Chen et al./Anthropic 2025, **PP**) |
 | cot-obfuscation.json | 18 | Verbatim recall anchors 95%/60%→~0% (Baker et al./OpenAI 2025, **PP**); pressure/reward curve **shapes authored**, labeled in-app |
 | coconut.json | 19 | Verbatim main-table accuracy + token counts (Hao et al. 2024, COLM 2025), **GPT-2-scale**, which the figure's own title now carries |
