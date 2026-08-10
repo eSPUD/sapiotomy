@@ -5,16 +5,21 @@
  * spent ten pages buying longer visible reasoning; this page asks what the
  * trace is evidence OF.
  *
- * It opens on our own measurement, not the literature. Page 9's run graded
- * 18,772 written steps from 1,580 real chains and could check 1,092 of them;
- * the other 94.2% are steps a checker cannot compute at all. That is the
- * deck's own floor for how much of a trace can be verified by reading it, and
- * starting there means Chen et al. arrive as the SHARPER problem (a step that
+ * It opens on our own measurement, not the literature. Page 9's run cut 1,580
+ * real chains into 18,772 written steps, and in 1,062 of those chains (67.2%)
+ * the arithmetic checker found nothing it could check at all. The chain figure
+ * leads because it is the image and this page is about the trace as an object
+ * of evidence; the step-level 94.2% follows as the measurement behind it, and
+ * a test pins that order. Dropping the step share would invite "so a third of
+ * chains are checkable", which overstates it badly: the reachable third
+ * averages barely two checkable steps each.
+ *
+ * Starting there means Chen et al. arrive as the SHARPER problem (a step that
  * is absent) rather than as the page's premise. The distinction is
  * load-bearing and the copy states it: page 9 measured a limit of our
- * INSTRUMENT (arithmetic is checkable, method is not); this page is about a
- * limit of the TRACE (it can omit what moved the answer). A false step and an
- * absent influence are different claims and must not be blurred.
+ * INSTRUMENT (arithmetic is checkable, algebra and method are not); this page
+ * is about a limit of the TRACE (it can omit what moved the answer). A false
+ * step and an absent influence are different claims and must not be blurred.
  *
  * Then three steps: (1) a faithfulness probe — plant a hint,
  * watch the answer move and the trace stay quiet, with admission rates pinned
