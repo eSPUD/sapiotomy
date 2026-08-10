@@ -26,7 +26,6 @@ import deepseekDistillRaw from "@data/deepseek-r1-distill.json";
 import arcCostRaw from "@data/arc-cost.json";
 import deepseekPricingRaw from "@data/deepseek-pricing.json";
 import selfCorrectionRaw from "@data/self-correction.json";
-import overthinkingRaw from "@data/overthinking.json";
 import faithfulnessRaw from "@data/faithfulness.json";
 import cotObfuscationRaw from "@data/cot-obfuscation.json";
 import coconutRaw from "@data/coconut.json";
@@ -61,7 +60,6 @@ export const curves: Record<string, CurveData> = {
   arcCost: parseCurveData(arcCostRaw, "arc-cost.json"),
   deepseekPricing: parseCurveData(deepseekPricingRaw, "deepseek-pricing.json"),
   selfCorrection: parseCurveData(selfCorrectionRaw, "self-correction.json"),
-  overthinking: parseCurveData(overthinkingRaw, "overthinking.json"),
   faithfulness: parseCurveData(faithfulnessRaw, "faithfulness.json"),
   cotObfuscation: parseCurveData(cotObfuscationRaw, "cot-obfuscation.json"),
   coconut: parseCurveData(coconutRaw, "coconut.json"),

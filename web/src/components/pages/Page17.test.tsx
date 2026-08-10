@@ -1,31 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { curves } from "@/lib/curves";
-import { SELF_CORRECTION, selfCorrectionCurve } from "@/lib/frontier";
+import { PAGE17 } from "@/lib/page17";
 import { Page17 } from "./Page17";
 
 /**
- * Page 17's first test file. It was the only page in 1-19 without one, and the
- * absence was not free: two defects lived here precisely because nothing read
- * this page's text. Both are pinned below.
+ * Page 17's test file. It was the only page in 1-19 without one, and the absence
+ * was not free: two defects lived here precisely because nothing read this
+ * page's text.
  *
- * The first is the reason this file exists at all. Step 1 measures a re-read,
- * which cannot solve anything new; step 2's chain gives every pass a 45%
- * chance of solving something still unsolved. Both are right, and a reader who
- * meets them as one mechanism concludes the page refutes itself with its own
- * slider. What keeps them apart is a sentence in step 2 and the name on the
- * slider, so a sentence and a name are what this file guards.
+ * The original guard was that step 2 must not refute step 1: step 1 measures a
+ * re-read, which cannot solve anything new, and step 2's authored chain gave
+ * every pass a 45% chance of solving something unsolved. That chain is gone.
+ * Step 2 is now a measured run, so the guard changes shape rather than
+ * disappearing: what step 2 must not do is oversell one specimen.
  *
- * The second is duller: the page pointed at 16 for a result that is on 14.
+ * Hence the unusual tests below. Three controls were run to break the
+ * specimen's story, all three partly succeeded, and the page prints all three.
+ * The claims behind them are pinned FALSE on purpose. If a future run flips
+ * one, these fail, and that is correct: it is a finding that needs new copy,
+ * not a green suite.
  */
 
-const P = SELF_CORRECTION;
-const unaided = selfCorrectionCurve(P.maxSteps, { ...P, reliability: null });
-const peak = unaided.reduce((a, p) => (p.y > a.y ? p : a));
-
-const passSlider = () => screen.getByRole("slider", { name: /extra passes/i });
-const setPasses = (n: number) => fireEvent.change(passSlider(), { target: { value: String(n) } });
-const verifierToggle = () => screen.getByRole("switch", { name: /external verifier/i });
+const budgetSlider = () => screen.getByRole("slider", { name: /token budget/i });
+const setBudget = (i: number) =>
+  fireEvent.change(budgetSlider(), { target: { value: String(i) } });
 
 describe("Page 17 (when reasoning breaks) component", () => {
   it("prints Huang et al.'s Table 3 rows verbatim, both getting worse", () => {
@@ -48,69 +47,156 @@ describe("Page 17 (when reasoning breaks) component", () => {
     expect(screen.getByText(/Nothing new enters the system/i)).toBeInTheDocument();
   });
 
-  // ---- the guard that this page's step 2 does not refute its own step 1 ----
+  // ---- step 2: measured, specimen-led, and fenced by its own controls ----
 
-  it("does not call step 2's passes revisions", () => {
+  it("keeps step 1's re-read apart from step 2's fresh working", () => {
     render(<Page17 />);
-    expect(passSlider()).toBeInTheDocument();
-    expect(screen.queryByRole("slider", { name: /revision/i })).not.toBeInTheDocument();
+    const step2 = budgetSlider().closest("section")!;
+    expect(step2.textContent).toMatch(/Step 1 held the model to a re-read/i);
+    expect(step2.textContent).toMatch(/let it write fresh working/i);
+    // The old slider was called "extra passes" and modelled revision. Nothing on the
+    // page may imply step 2 is step 1 run again.
+    expect(screen.queryByRole("slider", { name: /revision|extra passes/i })).toBeNull();
   });
 
-  it("says on screen that a pass makes fresh attempts, which is what solves", () => {
+  it("draws the losses page 6's curve nets out, on every rung", () => {
     render(<Page17 />);
-    const step2 = screen.getByRole("slider", { name: /extra passes/i }).closest("section")!;
-    // The mechanism, not just the word: new working, explicitly not a re-read.
-    expect(step2.textContent).toMatch(/fresh attempt/i);
-    expect(step2.textContent).toMatch(/new working rather than a review of the old answer/i);
-    // ...and the page owns which half of the pass step 1 measured.
-    expect(step2.textContent).toMatch(/the first half is the part step 1 never offered the model/i);
-    expect(step2.textContent).toMatch(new RegExp(`${P.solveProb * 100}% of them`));
+    const fig = screen.getByRole("img", { name: /gained and lost at each doubling/i });
+    expect(fig.getAttribute("aria-label")).toMatch(/Every rung loses answers/i);
+    for (const rung of PAGE17.ledger.primary) expect(rung.lost).toBeGreaterThan(0);
   });
 
-  it("walks the reader up to the sweet spot and off the cliff", () => {
+  it("blames the empty top rung on the axis rather than on the model", () => {
     render(<Page17 />);
-    setPasses(peak.x);
-    expect(screen.getByText(/solving and second-guessing exactly balance/i)).toBeInTheDocument();
-    setPasses(P.maxSteps);
+    // Under greedy decoding a self-terminated chain is not rerun at a larger budget.
+    // Without this the flat top reads as a measured plateau.
+    const step2 = budgetSlider().closest("section")!;
+    expect(step2.textContent).toMatch(/it is the same generation/i);
+    expect(step2.textContent).toMatch(/The axis runs out before the model does/i);
+  });
+
+  it("walks the specimen from a forced commit to its own wrong ending", () => {
+    render(<Page17 />);
+    const first = PAGE17.specimen.rightWhenCutAt[0];
+    setBudget(PAGE17.run.budgets.indexOf(first));
+    expect(screen.getByText(new RegExp(`cut at ${first} tokens`, "i"))).toBeInTheDocument();
+    expect(screen.getByText(/answered.*right/i)).toBeInTheDocument();
+
+    setBudget(PAGE17.run.budgets.length - 1);
+    expect(screen.getByText(/its own ending/i)).toBeInTheDocument();
+    expect(screen.getByText(/answered.*wrong/i)).toBeInTheDocument();
+  });
+
+  it("lights the step that costs it, and says why that step is wrong", () => {
+    render(<Page17 />);
+    setBudget(PAGE17.run.budgets.length - 1);
+    expect(screen.getByText(new RegExp(PAGE17.specimen.zones.why, "i"))).toBeInTheDocument();
+  });
+
+  it("states how much of the chain it folded away", () => {
+    render(<Page17 />);
+    setBudget(PAGE17.run.budgets.length - 1);
+    // An elision that does not say its size lets a cropped chain read as a tidy one.
+    expect(screen.getAllByText(/more characters of working/i).length).toBeGreaterThan(0);
+  });
+
+  it("prints all three controls beside the specimen, not in a footnote", () => {
+    render(<Page17 />);
+    const step2 = budgetSlider().closest("section")!;
+    expect(step2.textContent).toMatch(/Not a truncated proof/i);
+    expect(step2.textContent).toMatch(/Not the model already knowing/i);
+    expect(step2.textContent).toMatch(/Not a strategy/i);
+  });
+
+  it("pins the three controls to claims the run came back false on", () => {
+    // These are the assertions that stop the specimen becoming a strategy the reader
+    // takes away. Each is false in the shipped run and the copy depends on it.
+    expect(PAGE17.controls.concludedWhenCut.cameFromFinishedReasoning).toBe(false);
+    expect(PAGE17.controls.isItARule.stoppingEarlyIsAStrategy).toBe(false);
+    expect(PAGE17.controls.isItARule.cutPointsBeatResampling).toBe(false);
+    render(<Page17 />);
+    expect(screen.getByText(/coverage without page 8's selector/i)).toBeInTheDocument();
+  });
+
+  it("makes its one aggregate claim about capability, not about budgets", () => {
+    render(<Page17 />);
     expect(
-      screen.getByText(new RegExp(`Past the peak \\(${peak.y.toFixed(0)}% at ${peak.x} passes\\)`)),
+      screen.getByText(/the better the model, the less of this it does/i),
+    ).toBeInTheDocument();
+    for (const m of PAGE17.affected.byModel) {
+      expect(screen.getAllByText(String(m.rescued)).length).toBeGreaterThan(0);
+    }
+  });
+
+  // ---- step 3: the verifier step, which is the deck's own measurement ----
+
+  it("draws the temperature sweep, and names the knob that causes the decay", () => {
+    render(<Page17 />);
+    const fig = screen.getByRole("img", { name: /against sampling temperature/i });
+    expect(fig).toBeInTheDocument();
+    // The x axis has to name what it is, because the whole point is that the knob
+    // belongs to page 8's method rather than to the judge.
+    expect(screen.getByText(/the knob that buys candidate diversity/i)).toBeInTheDocument();
+  });
+
+  it("says the sweep holds candidate depth fixed, since reliability decays with N too", () => {
+    render(<Page17 />);
+    const fig = screen.getByRole("img", { name: /against sampling temperature/i });
+    expect(fig.getAttribute("aria-label")).toMatch(
+      new RegExp(`measured over ${PAGE17.reliability.depth} candidates`, "i"),
+    );
+    expect(
+      screen.getByText(/Candidate depth is held at .* throughout/i),
     ).toBeInTheDocument();
   });
 
-  it("charges the verifier's ceiling to both of its errors, not only false positives", () => {
+  it("makes the crossing the claim rather than any one column", () => {
     render(<Page17 />);
-    fireEvent.click(verifierToggle());
-    const verdict = screen.getByText(/bad\s+edits it waves through/i);
-    // frontier.ts scales genuine repairs by the same reliability (fix = fixProb
-    // * reliability), so blaming the whole gap on waved-through edits is half
-    // the model. The copy has to charge the blocked repairs too.
-    expect(verdict.textContent).toMatch(/genuine repairs it blocks/i);
+    expect(screen.getByText(/read it left to right/i)).toBeInTheDocument();
+    expect(screen.getByText(/starts mid-pack/i)).toBeInTheDocument();
+    // The contrast the figure is built on: asked to judge against trained to score.
+    const step3 = screen
+      .getByRole("img", { name: /against sampling temperature/i })
+      .closest("section")!;
+    expect(step3.textContent).toMatch(/a model asked to judge/i);
+    expect(step3.textContent).toMatch(/trained to score/i);
   });
 
-  // ---- step 3: overthinking, which had no figure until it had this one ----
-
-  it("draws the overthinking pair the title promises", () => {
+  it("draws the share of the chain no checker can read, at true width", () => {
     render(<Page17 />);
+    const bar = screen.getByRole("img", { name: /arithmetic checker can adjudicate/i });
+    expect(bar.getAttribute("aria-label")).toMatch(/state nothing it can compute/i);
+    // Where the reward model's numbers were taken is the claim, so the figure has to
+    // say it rather than leave the two facts adjacent and unjoined.
+    expect(bar.getAttribute("aria-label")).toMatch(/was measured inside/i);
+    expect(screen.getByText(/were\s+all measured in here/i)).toBeInTheDocument();
+  });
+
+  it("prices trusting the grader anyway, in the two ways we measured", () => {
+    render(<Page17 />);
+    // The step filter's null, quoted as the one problem it moved rather than as a
+    // percentage, because one in a hundred is the honest unit here.
     expect(
-      screen.getByRole("img", { name: /easy problems against hard ones/i }),
+      screen.getByText(/Filtering\s+page 7's candidates by the soundness of their working/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/overthinking threshold/i)).toBeInTheDocument();
+    expect(screen.getByText(/where the chain is cut into steps/i)).toBeInTheDocument();
   });
 
-  it("puts the easy peak before the hard one, which is the whole claim", () => {
+  it("no longer claims the overthinking threshold it cannot measure", () => {
     render(<Page17 />);
-    const ot = curves.overthinking.fit!.params;
-    expect(ot.easyPeak).toBeLessThan(ot.hardPeak);
-    expect(screen.getByText(`peak at ${ot.easyPeak}`)).toBeInTheDocument();
-    expect(screen.getByText(`peak at ${ot.hardPeak}`)).toBeInTheDocument();
-    expect(screen.getByText(/too long for the easy problems, too short for the hard ones/i))
-      .toBeInTheDocument();
-  });
-
-  it("discloses the figure as an authored shape and says what it does not assert", () => {
-    render(<Page17 />);
-    expect(screen.getByText(/authored shape · direction from the preprints/i)).toBeInTheDocument();
-    expect(screen.getByText(/not the depth of either fall/i)).toBeInTheDocument();
+    // The authored inverse-U asserted that easy problems cross a threshold before hard
+    // ones. Pooled over all three checkpoints the medians are identical, so the claim is
+    // gone from the page rather than softened. See docs/page_17_findings.md section 4.
+    expect(PAGE17.levelNull.easyBreaksSooner).toBe(false);
+    // No figure asserts it and no step is built on it. The only survival is the
+    // footnote, which names it as deleted, and that sentence is required: a claim
+    // withdrawn in silence reads to a returning reader as a claim forgotten.
+    expect(screen.queryByRole("img", { name: /easy problems against hard ones/i })).toBeNull();
+    expect(screen.queryByText(/authored shape/i)).toBeNull();
+    expect(
+      screen.getByText(/A claim this page used to make and no longer does/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/deleted rather than softened/i)).toBeInTheDocument();
   });
 
   // ---- cross-references and the seam ----

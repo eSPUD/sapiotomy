@@ -36,11 +36,11 @@ experience, never a definition.
 | Every page has ≥1 live control; the reader changes a value and sees the consequence | Active reading over passive reading | Victor, *Explorable Explanations* |
 | Page 1 is pure play; difficulty climbs from there to the open frontier on Page 19 | "Start concrete, then climb" | Case |
 | One idea per page; one number spotlighted; extraneous elements removed | Segmenting, signaling, coherence | Mayer, CTML |
-| Several pages ask the reader to **guess before revealing** data (P13's dials, P15's coordinate cases, P17's threshold, P18's monitor) | Predict-Observe-Explain | POE (constructivist) |
+| Several pages ask the reader to **guess before revealing** data (P13's dials, P15's coordinate cases, P17's budget dial, P18's monitor) | Predict-Observe-Explain | POE (constructivist) |
 | Three-Act structure (intuition → toolbox → frontier); "THEREFORE / BUT" arc | Narrative over fact-listing | Case |
 | One shared colour grammar + one chart grammar across all 19 pages | Consistency reduces extraneous load | Cognitive Load Theory (Sweller) |
 | Motion only in response to the reader's action; reduced-motion honoured | Purposeful motion only | 3Blue1Brown; Mayer |
-| Cost (P16), self-correction failure and overthinking (P17), faithfulness (P18) | Confront wrong intuitions head-on | POE; honest uncertainty |
+| Cost (P16), self-correction failure and verifier reliability (P17), faithfulness (P18) | Confront wrong intuitions head-on | POE; honest uncertainty |
 | P19 returns to P2's question rather than surveying open problems | Close the loop you opened | Case |
 
 ## Correctness & reproducibility (the core guardrail)
@@ -57,9 +57,9 @@ Every on-screen number is one of three things, and the page says which:
    each download is the notebook the manifest names and that its `derived.json` hashes
    identically to the file the page plots.
 3. **Authored** for teaching, and labeled as such on the page that draws it: page 11's
-   allocator, page 13's two-axis surface, page 15's benchmark-window simulation, page 17's
-   three-state chain and its overthinking curves, page 18's traces and pressure shapes, and
-   page 19's capstone panel.
+   allocator, page 13's two-axis surface, page 15's benchmark-window simulation, page 18's
+   traces and pressure shapes, and page 19's capstone panel. Page 17's authored chain and
+   overthinking curves were retired in favour of its own measured run.
 
 [`web/data/PROVENANCE.md`](web/data/PROVENANCE.md) records every file, which page imports
 it, and which of the three it is. Its Page column is derived by grep, not by hand.
