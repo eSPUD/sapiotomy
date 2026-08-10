@@ -193,9 +193,12 @@ describe("Page 17 (when reasoning breaks) component", () => {
     // withdrawn in silence reads to a returning reader as a claim forgotten.
     expect(screen.queryByRole("img", { name: /easy problems against hard ones/i })).toBeNull();
     expect(screen.queryByText(/authored shape/i)).toBeNull();
-    expect(
-      screen.getByText(/A claim this page used to make and no longer does/i),
-    ).toBeInTheDocument();
+    // The retraction moved out of the page footer and into the margin note
+    // beside step 2, next to the very axis bound that makes the claim
+    // unsettleable. It must still be stated somewhere a reader will meet it.
+    const retraction = screen.getByText(/retired a claim this page used to make/i).closest("aside")!;
+    expect(retraction.textContent).toMatch(/What this axis cannot show/i);
+    expect(retraction.textContent).toMatch(/easy problems cross an\s+overthinking threshold/);
     expect(screen.getByText(/deleted rather than softened/i)).toBeInTheDocument();
   });
 

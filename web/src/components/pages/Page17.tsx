@@ -801,6 +801,19 @@ export function Page17() {
           <Note kicker="Try it">
             <p>Drag to {PAGE17.axisBound.maxBudget} and read what it commits to.</p>
           </Note>
+          <Note kicker="What this axis cannot show">
+            <p>
+              It cannot show accuracy falling past a peak, only that some prefix beat the whole.
+              Greedy decoding replays the same generation above the model&apos;s own stopping
+              point, so nothing new happens up there.
+            </p>
+            <p>
+              That bound retired a claim this page used to make: that easy problems cross an
+              overthinking threshold before hard ones. Our run puts both medians at the same
+              budget, and this instrument could not settle it at any sample size, so the claim is{" "}
+              <strong className="text-ink">deleted rather than softened</strong>.
+            </p>
+          </Note>
           <Note kicker="References">
             <RefItem n={REF.zeng} href="https://arxiv.org/abs/2502.12215">
               Zeng et al. 2025, <em>Revisiting the Test-Time Scaling of o1-like Models</em> (ACL
@@ -883,6 +896,11 @@ export function Page17() {
               8&apos;s judges re-read at every temperature it sampled, and page 9&apos;s step
               grading re-read as a question about the grader rather than about the chain.
             </p>
+            <p>
+              Reliability is undefined where no candidate is right, so its denominator shrinks
+              with the temperature and this decline is the conservative reading. Candidate depth
+              is held at {REL.depth} throughout, because reliability decays with that too.
+            </p>
           </Note>
         </div>
 
@@ -942,44 +960,6 @@ export function Page17() {
         <em className="text-ink-muted">
           Suppose it isn&apos;t. Next: whether the written chain is the real reason at all.
         </em>
-      </div>
-
-      {/* Only what the notebook cannot state for itself: bounds, borrowed grading, and
-          the claim this page retired. The manifest recap that used to live here is in
-          page-17-derived.json, and the authored constants it disclosed are gone. */}
-      <div className="grid gap-x-8 gap-y-2 text-xs text-ink-muted sm:grid-cols-2">
-        <p>
-          <strong className="text-ink">What is published and what is ours.</strong> Step 1&apos;s
-          two bar panels are Table 3 verbatim<Cite n={REF.huang} /> and are the only borrowed
-          numbers on the page. Everything else is the deck&apos;s own runs, re-read by{" "}
-          <span className="font-mono">page_17_when_reasoning_breaks.ipynb</span>, which generates
-          nothing and re-derives from the bundles pages 5 to 9 already ship.
-        </p>
-        <p>
-          <strong className="text-ink">Two bounds the figures cannot show.</strong> Step 2&apos;s
-          budget axis cannot show accuracy falling past a peak, only that some prefix beat the
-          whole, because greedy decoding replays the same generation above the model&apos;s own
-          stopping point. Step 3&apos;s reliability is undefined where no candidate is right, so
-          its denominator shrinks with the temperature and the decline is a conservative reading.
-          Candidate depth is held at {REL.depth} throughout, because reliability decays with that
-          too.
-        </p>
-        <p>
-          <strong className="text-ink">Grading we did not write.</strong> Every correctness
-          judgement here is the book harness&apos;s answer extraction and equivalence check,
-          inherited unchanged. We take the harness, never the checkpoint or the reported number,
-          and we do not defend the grader beyond that.
-        </p>
-        <p className="sm:col-span-2">
-          <strong className="text-ink">A claim this page used to make and no longer does.</strong>{" "}
-          It asserted, as an authored curve, that easy problems cross an overthinking threshold
-          before hard ones. Pooled over three checkpoints our run puts both medians at the same
-          budget, and the bound above means this instrument could not settle it at any sample
-          size, so the claim is deleted rather than softened. The remaining published anchors are
-          the o1-style length and revision results,<Cite n={REF.zeng} /> the token and
-          strategy-switch counts on hard AIME problems,<Cite n={REF.wang} /> the verifier
-          ceiling,<Cite n={REF.stroebl} /> and the AIME 2025 drops.<Cite n={REF.balachandran} />
-        </p>
       </div>
 
       <PageNav n={PAGE_N} />
