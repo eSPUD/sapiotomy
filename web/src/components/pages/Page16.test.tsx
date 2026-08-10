@@ -13,7 +13,7 @@ describe("Page 16 (the bill comes due) component", () => {
     expect(screen.getByText("75.7%")).toBeInTheDocument();
     expect(screen.getByText("87.5%")).toBeInTheDocument();
     expect(screen.getAllByText(/172× the compute/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/per task measured · \$2–5 plausible floor/)).toBeInTheDocument();
+    expect(screen.getByText(/per task measured · \$2 to \$5 plausible floor/)).toBeInTheDocument();
   });
 
   it("says the dollar figures are estimates and names the stable facts", () => {
@@ -52,8 +52,49 @@ describe("Page 16 (the bill comes due) component", () => {
   it("enough volume makes distillation cheapest, with the crossover stated", () => {
     render(<Page16 />);
     setSlider(/queries you expect/i, 70);
-    expect(screen.getByText(/cheapest here: distill once, then serve/)).toBeInTheDocument();
+    expect(screen.getByText(/cheapest here.*distill once, then serve/)).toBeInTheDocument();
     expect(screen.getAllByText(/1\.5M/).length).toBeGreaterThan(0);
+  });
+
+  it("never recommends distilling without saying the retrain is assumed to land", () => {
+    render(<Page16 />);
+    setSlider(/queries you expect/i, 70);
+    // The rent and sample arms both answer "at this target"; this one cannot,
+    // because nothing cited fixes what a $294k retrain reaches. Printed flat
+    // next to a target the page has just called unreachable, it reads as a
+    // promise that the money buys any accuracy you type in.
+    expect(screen.getByText(/IF the retrain reaches 72%/)).toBeInTheDocument();
+    setSlider(/target accuracy/i, 92);
+    expect(screen.getByText(/IF the retrain reaches 92%/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/92% is past the point where sampling can get there at all/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/the distilled model is assumed to hit whatever target you set/),
+    ).toBeInTheDocument();
+  });
+
+  it("states the serial-sampling assumption its latency claim rests on", () => {
+    render(<Page16 />);
+    // Page 19's panel prints the opposite for the same lever, and both are true
+    // under assumptions neither page used to state.
+    expect(screen.getByText(/as if they were drawn one after/i)).toBeInTheDocument();
+    expect(screen.getByText(/the dollars still climb while the wait does not/i)).toBeInTheDocument();
+  });
+
+  it("hands a live question forward to 17, as page 15 does to this page", () => {
+    render(<Page16 />);
+    expect(
+      screen.getByText(/the side of the dial where spending more makes the answer worse/i),
+    ).toBeInTheDocument();
+  });
+
+  it("carries no em dash or en dash in rendered copy", () => {
+    const { container } = render(<Page16 />);
+    const offenders = Array.from(container.querySelectorAll("*"))
+      .flatMap((el) => [el.textContent ?? "", el.getAttribute("aria-label") ?? ""])
+      .filter((t) => t.includes("—") || t.includes("–"));
+    expect(offenders).toEqual([]);
   });
 
   it("discloses the calculator's authored parameters in the step body", () => {

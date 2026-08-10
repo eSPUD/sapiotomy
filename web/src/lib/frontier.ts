@@ -72,7 +72,19 @@ export function rentPerQuery(target: number, a: BillAnchors): number {
   return c.sample === null ? c.big : Math.min(c.big, c.sample);
 }
 
-/** Total bills after `queries`: keep renting vs distill once then serve. */
+/**
+ * Total bills after `queries`: keep renting vs distill once then serve.
+ *
+ * THE DISTILL ARM ASSUMES THE RETRAIN LANDS ON THE TARGET, and nothing cited
+ * establishes that. Renting and sampling both depend on `target` (sampling
+ * needs more draws as it rises, and stops entirely at the ceiling); the distill
+ * arm is a fixed bill plus one small-model call at any target you ask for. The
+ * arithmetic is left as is because a capability bound for a distilled model is
+ * not in any source this deck carries, so inventing one would be the larger
+ * offence. The assumption is instead named wherever the number is shown:
+ * Page16.tsx's distill card, its verdict banner, its chart label and its
+ * disclosure. If a measured bound ever arrives, gate it here.
+ */
 export function totalBills(
   queries: number,
   target: number,
