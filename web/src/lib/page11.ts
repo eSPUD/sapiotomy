@@ -121,6 +121,9 @@ export interface BestOfPoint {
   flops: number;
   xTarget: number;
 }
+/** The two small models the reader can spend the bill on. */
+export type SmallModel = "1.5B" | "3B";
+
 export interface Band {
   key: "easy" | "hard";
   label: string;
@@ -130,23 +133,43 @@ export interface Band {
   target: GreedyPoint;
   /** greedy points for the whole family, smallest to largest */
   greedy: GreedyPoint[];
-  /** the 3B vote curve, N = 1..16 */
+  /** a vote curve per small model (N = 1..16), both bands carry both */
+  voteByModel: Record<SmallModel, VotePoint[]>;
+  /** the 3B vote curve, kept as the default for the gates */
   voteCurve: VotePoint[];
   /** the strongest realizable selector we own, where we own one (page 8, hard) */
   bestOf: BestOfPoint | null;
-  /** coverage at N=16: how often the answer was in the pile at all */
+  /** coverage at N=16 for the 3B: how often the answer was in the pile at all */
   coverageAt16: number;
-  /** the best any realizable selector returns at N=16 */
+  /** the best any realizable selector returns at N=16 for the 3B */
   selectionAt16: number;
 }
 
 const PRIMARY = "Qwen/Qwen2.5-3B-Instruct";
+const SMALL_1P5B = "Qwen/Qwen2.5-1.5B-Instruct";
 const TARGET = "Qwen/Qwen2.5-7B-Instruct";
 
 const pct = (x: number) => Math.round(x * 1000) / 10;
 
 function greedy(label: string, params: number, accuracy: number, flops: number): GreedyPoint {
   return { label, params, accuracy, flops };
+}
+
+/** Normalize raw vote rows (which carry accuracy, coverage, flops) into the
+ *  page's VotePoint, priced against the band's target. */
+function voteCurveFrom(
+  rows: { n: number; accuracy: number; coverage?: number; flops: number }[],
+  target: GreedyPoint,
+): VotePoint[] {
+  return [...rows]
+    .sort((a, b) => a.n - b.n)
+    .map((p) => ({
+      n: p.n,
+      accuracy: p.accuracy,
+      coverage: p.coverage ?? p.accuracy,
+      flops: p.flops,
+      xTarget: p.flops / target.flops,
+    }));
 }
 
 /* ------- the hard band: pages 6/7/8's own numbers, gate-1 verified -------- */
@@ -158,6 +181,12 @@ const hardTarget: GreedyPoint = greedy(
   RAW.family.target.flops,
 );
 
+const hard3bVote = voteCurveFrom(RAW.family.vote_curve, hardTarget);
+const hard1p5bVote = voteCurveFrom(
+  RAW.arms.hard.filter((p) => p.kind === "vote" && p.model_id === SMALL_1P5B),
+  hardTarget,
+);
+
 const hard: Band = {
   key: "hard",
   label: "hard",
@@ -165,13 +194,8 @@ const hard: Band = {
   nItems: RAW.family.n_items,
   target: hardTarget,
   greedy: RAW.family.greedy.map((g) => greedy(g.label, g.params, g.accuracy, g.flops)),
-  voteCurve: RAW.family.vote_curve.map((p) => ({
-    n: p.n,
-    accuracy: p.accuracy,
-    coverage: p.coverage,
-    flops: p.flops,
-    xTarget: p.flops / hardTarget.flops,
-  })),
+  voteByModel: { "1.5B": hard1p5bVote, "3B": hard3bVote },
+  voteCurve: hard3bVote,
   bestOf: {
     label: RAW.family.best_of.selector,
     accuracy: RAW.family.best_of.accuracy,
@@ -191,13 +215,19 @@ const easyGeneral = RAW.arms.easy.filter(
   (p) => p.model_id === "Qwen/Qwen2.5-1.5B-Instruct" || p.model_id === PRIMARY || p.model_id === TARGET,
 );
 const easyGreedy = easyGeneral.filter((p) => p.kind === "greedy");
-const easyVote3b = easyGeneral
-  .filter((p) => p.kind === "vote" && p.model_id === PRIMARY)
-  .sort((a, b) => a.n - b.n);
 const label = (mid: string) => `Qwen2.5-${mid.split("-")[1]}`;
 const easyTargetRow = easyGreedy.find((p) => p.model_id === TARGET);
 if (!easyTargetRow) throw new Page11DataError("easy band is missing the 7B greedy target");
 const easyTarget = greedy(label(TARGET), easyTargetRow.params, easyTargetRow.accuracy, easyTargetRow.flops);
+
+const easy3bVote = voteCurveFrom(
+  easyGeneral.filter((p) => p.kind === "vote" && p.model_id === PRIMARY),
+  easyTarget,
+);
+const easy1p5bVote = voteCurveFrom(
+  easyGeneral.filter((p) => p.kind === "vote" && p.model_id === SMALL_1P5B),
+  easyTarget,
+);
 
 const easy: Band = {
   key: "easy",
@@ -208,16 +238,11 @@ const easy: Band = {
   greedy: easyGreedy
     .sort((a, b) => a.params - b.params)
     .map((p) => greedy(label(p.model_id), p.params, p.accuracy, p.flops)),
-  voteCurve: easyVote3b.map((p) => ({
-    n: p.n,
-    accuracy: p.accuracy,
-    coverage: p.coverage ?? p.accuracy,
-    flops: p.flops,
-    xTarget: p.flops / easyTarget.flops,
-  })),
+  voteByModel: { "1.5B": easy1p5bVote, "3B": easy3bVote },
+  voteCurve: easy3bVote,
   bestOf: null,
-  coverageAt16: easyVote3b[easyVote3b.length - 1].coverage ?? 0,
-  selectionAt16: easyVote3b[easyVote3b.length - 1].accuracy,
+  coverageAt16: easy3bVote[easy3bVote.length - 1].coverage,
+  selectionAt16: easy3bVote[easy3bVote.length - 1].accuracy,
 };
 
 /* --------------------------------------------------- the load-time gates */
@@ -235,10 +260,12 @@ assert(claims.gate1_reproduced === true, "gate 1 claim is not set");
 assert(gate2.passed === true, "gate 2 did not pass: the run is on a branch this page does not draw");
 
 // B1, the no-crossing claim, checked as an arithmetic property of the points the
-// page plots rather than trusted from the claims block: on neither band may any
-// realizable selector we draw come out ABOVE the big model's greedy answer.
+// page plots rather than trusted from the claims block: on neither band, for
+// neither small model, may any realizable selector we draw come out ABOVE the
+// big model's greedy answer.
 for (const b of [easy, hard] as const) {
-  const best = Math.max(...b.voteCurve.map((p) => p.accuracy), b.bestOf?.accuracy ?? 0);
+  const votes = [...b.voteByModel["1.5B"], ...b.voteByModel["3B"]].map((p) => p.accuracy);
+  const best = Math.max(...votes, b.bestOf?.accuracy ?? 0);
   assert(
     best <= b.target.accuracy + 1e-9,
     `no-crossing violated on the ${b.key} band: a selector reaches ${pct(best)}% over the ${pct(
@@ -267,7 +294,7 @@ export const PAGE11 = {
   sampleStops: hard.voteCurve.map((p) => p.n),
   gate2: { accuracy: gate2.accuracy, floor: gate2.floor, n: gate2.n },
   versions: RAW.manifest.versions,
-  download: { slug: "page-11-training-vs-scale", sizeLabel: "1.7 MB" },
+  download: { slug: "page-11-training-vs-scale", sizeLabel: "2.8 MB" },
   pct,
 } as const;
 

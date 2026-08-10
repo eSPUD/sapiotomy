@@ -51,7 +51,7 @@ const PAGES = [
     declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"],
     repoNotebookIsTheShippedOne: false },
   { n: 11, slug: "page-11-training-vs-scale", notebook: "page_11_training_vs_scale.ipynb",
-    declared: "1.7 MB", extras: [], repoNotebookIsTheShippedOne: true },
+    declared: "2.8 MB", extras: [], repoNotebookIsTheShippedOne: true },
 ] as const;
 
 const NOTEBOOKS = resolve(WEB, "../notebooks");

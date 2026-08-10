@@ -43,7 +43,7 @@ import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { PAGE11, type Band } from "@/lib/page11";
+import { PAGE11, type Band, type SmallModel } from "@/lib/page11";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
@@ -240,7 +240,7 @@ const px = (v: number) => Math.round(v * 100) / 100;
  * the dashed line above it is coverage, the answer that was in the pile and
  * went uncashed.
  */
-function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
+function MeasuredGame({ band, model, nIdx }: { band: Band; model: SmallModel; nIdx: number }) {
   const width = 640;
   const height = 320;
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
@@ -252,7 +252,8 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
   const tgt = band.target;
   const xf = (flops: number) => x(flops / tgt.flops);
 
-  const vote = band.voteCurve;
+  const vote = band.voteByModel[model];
+  const showBestOf = band.bestOf !== null && model === "3B";
   const votePath = vote.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.xTarget)},${y(p.accuracy)}`).join("");
   const covPath = vote.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.xTarget)},${y(p.coverage)}`).join("");
   const marker = vote[nIdx];
@@ -261,11 +262,11 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
   const title =
     `Accuracy against inference FLOPs on ${band.label} problems (${band.levels}), priced in ` +
     `multiples of the ${tgt.label}'s single greedy answer, log x axis. The target is ${tgt.label} ` +
-    `greedy at ${PAGE11.pct(tgt.accuracy)} percent, at one times its own bill. The Qwen2.5-3B vote ` +
+    `greedy at ${PAGE11.pct(tgt.accuracy)} percent, at one times its own bill. The Qwen2.5-${model} vote ` +
     `curve runs from ${PAGE11.pct(vote[0].accuracy)} percent at ${vote[0].n} sample up to ` +
     `${PAGE11.pct(last.accuracy)} percent at ${last.n} samples and ${last.xTarget.toFixed(1)} times ` +
     `the target's bill, and never reaches the target line. The line above it is coverage: the ` +
-    `answer was in the pile ${PAGE11.pct(band.coverageAt16)} percent of the time. Your marker: ` +
+    `answer was in the pile ${PAGE11.pct(last.coverage)} percent of the time. Your marker: ` +
     `${marker.n} samples, ${PAGE11.pct(marker.accuracy)} percent, at ${marker.xTarget.toFixed(1)} times the bill.`;
 
   return (
@@ -324,7 +325,7 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
       {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
       <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="1 3" opacity={0.85} />
       <text x={x(last.xTarget) - 3} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct text-[10px] font-semibold">
-        coverage {PAGE11.pct(band.coverageAt16)}%
+        coverage {PAGE11.pct(last.coverage)}%
       </text>
 
       {/* PATH 2 -- samples: the 3B vote curve */}
@@ -333,8 +334,9 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
         <circle key={p.n} cx={x(p.xTarget)} cy={y(p.accuracy)} r={2.5} className="fill-compute stroke-canvas" strokeWidth={1} />
       ))}
 
-      {/* the strongest realizable selector we own, where we own one (page 8) */}
-      {band.bestOf ? (
+      {/* the strongest realizable selector we own, where we own one (page 8);
+          it is the 3B's verifier, so only shown when the 3B is selected */}
+      {showBestOf && band.bestOf ? (
         <rect
           x={x(band.bestOf.xTarget) - 5}
           y={y(band.bestOf.accuracy) - 5}
@@ -759,12 +761,20 @@ export function Page11() {
   const recordInteraction = useStore((s) => s.recordInteraction);
 
   const [bandKey, setBandKey] = useState<"hard" | "easy">("hard");
+  const [model, setModel] = useState<SmallModel>("3B");
   const [nIdx, setNIdx] = useState(PAGE11.sampleStops.length - 1);
 
   const band = PAGE11.bands[bandKey];
-  const marker = band.voteCurve[nIdx];
-  const vote16 = band.voteCurve[band.voteCurve.length - 1];
+  const vote = band.voteByModel[model];
+  const marker = vote[nIdx];
+  const vote16 = vote[vote.length - 1];
   const gapPts = Math.round((band.target.accuracy - marker.accuracy) * 100);
+  // best-of is the 3B's trained verifier (page 8); it applies only to the 3B.
+  const showBestOf = model === "3B" && band.bestOf !== null;
+  // does the selected model's pile hold the answer more often than the 7B just
+  // gets it? True for the 3B (both bands) and the 1.5B on hard; false for the
+  // 1.5B on easy, where the small model does not even reach the answer reliably.
+  const coversTarget = vote16.coverage > band.target.accuracy + 1e-9;
 
   return (
     <article className="flex flex-col gap-6">
@@ -818,51 +828,76 @@ export function Page11() {
               <strong>it never reaches the black line</strong>, here or several times past it.
             </p>
 
-            <MeasuredGame band={band} nIdx={nIdx} />
+            <MeasuredGame band={band} model={model} nIdx={nIdx} />
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
               <Key shape="line" className="bg-ink-muted" label="a bigger model (scale up the parameters)" />
-              <Key shape="line" className="bg-compute" label="the 3B, thinking harder (more samples + a vote)" />
+              <Key shape="line" className="bg-compute" label={`the ${model}, thinking harder (more samples + a vote)`} />
               <Key shape="line" className="bg-correct" label="coverage: a correct answer was in the pile" />
-              {band.bestOf ? (
+              {showBestOf ? (
                 <Key shape="diamond" className="bg-wrong" label="best-of-16 (a trained verifier)" />
               ) : null}
             </div>
             <p className="text-xs text-ink-muted">
               measured on this deck&rsquo;s instrument: the hard band is pages 6 to 8&rsquo;s own
               100 MATH-500 level 4 to 5 problems, and the run reproduces their shipped numbers
-              exactly before it draws anything new (gate 1). FLOPs are counted 2 × parameters ×
+              exactly before it draws anything new (gate 1). FLOPs are counted 2 &times; parameters &times;
               tokens, from measured token counts.
             </p>
 
             <div className="flex flex-col gap-4 border-t border-dashed border-grid pt-3">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <p className="text-sm text-ink-muted">Problem difficulty</p>
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
-                  {(["easy", "hard"] as const).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      aria-pressed={bandKey === k}
-                      onClick={() => {
-                        setBandKey(k);
-                        recordInteraction(PAGE_N);
-                      }}
-                      className={`rounded border px-3 py-1.5 text-sm capitalize ${
-                        bandKey === k
-                          ? "border-compute bg-compute/15 font-semibold text-ink"
-                          : "border-grid bg-surface-raised text-ink-muted"
-                      }`}
-                    >
-                      {k}
-                    </button>
-                  ))}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <p className="text-sm text-ink-muted">Problem difficulty</p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
+                    {(["easy", "hard"] as const).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        aria-pressed={bandKey === k}
+                        onClick={() => {
+                          setBandKey(k);
+                          recordInteraction(PAGE_N);
+                        }}
+                        className={`rounded border px-3 py-1.5 text-sm capitalize ${
+                          bandKey === k
+                            ? "border-compute bg-compute/15 font-semibold text-ink"
+                            : "border-grid bg-surface-raised text-ink-muted"
+                        }`}
+                      >
+                        {k}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <p className="text-sm text-ink-muted">Which model votes</p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Which model votes">
+                    {(["1.5B", "3B"] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        aria-pressed={model === m}
+                        onClick={() => {
+                          setModel(m);
+                          recordInteraction(PAGE_N);
+                        }}
+                        className={`rounded border px-3 py-1.5 text-sm ${
+                          model === m
+                            ? "border-compute bg-compute/15 font-semibold text-ink"
+                            : "border-grid bg-surface-raised text-ink-muted"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <p className="basis-full text-xs text-ink-muted">
                   {band.label} problems, MATH-500 {band.levels}, n = {band.nItems}
                 </p>
               </div>
               <Slider
-                label="Test-time compute (samples the 3B votes over)"
+                label={`Test-time compute (samples the ${model} votes over)`}
                 min={0}
                 max={PAGE11.sampleStops.length - 1}
                 value={nIdx}
@@ -876,42 +911,61 @@ export function Page11() {
 
             <div className="rounded border-l-4 border-wrong bg-wrong/15 p-3 text-sm" role="status">
               <p className="font-semibold text-wrong">
-                vote@{marker.n}: {PAGE11.pct(marker.accuracy)}%, still {gapPts} point
+                {model} vote@{marker.n}: {PAGE11.pct(marker.accuracy)}%, still {gapPts} point
                 {gapPts === 1 ? "" : "s"} under the {band.target.label}&rsquo;s{" "}
                 {PAGE11.pct(band.target.accuracy)}%
               </p>
               <p className="mt-1 text-ink">
-                and now at <strong>{marker.xTarget.toFixed(1)}×</strong> its bill.{" "}
-                {band.bestOf
+                and now at <strong>{marker.xTarget.toFixed(1)}&times;</strong> its bill.{" "}
+                {showBestOf && band.bestOf
                   ? `Even a trained verifier (page 8) only ties it, at ${PAGE11.pct(band.bestOf.accuracy)}%. `
                   : ""}
                 No sample budget on this band crosses the line.
               </p>
             </div>
 
-            {/* the mechanism (B2): the bottleneck is selection, not coverage */}
+            {/* the mechanism (B2): the bottleneck is selection, not coverage. On the
+                1.5B easy band coverage itself falls below the target, so the copy adapts. */}
             <p className="border-t border-dashed border-grid pt-3 text-sm text-ink">
-              <strong>Why more samples do not cross:</strong> the bottleneck is not the thinking,
-              it is the picking. The dashed green line is{" "}
-              <strong className="text-ink">coverage</strong>: a correct answer is somewhere in the{" "}
-              {vote16.n} sampled chains{" "}
-              <strong className="text-ink">{PAGE11.pct(band.coverageAt16)}%</strong> of the time,
-              above the {band.target.label}&rsquo;s {PAGE11.pct(band.target.accuracy)}%. The chains
-              are not breaking; the reasoning is there. What fails is selection: voting returns that
-              answer only{" "}
-              <strong className="text-ink">{PAGE11.pct(vote16.accuracy)}%</strong> of the time.{" "}
-              <strong>
-                The answer is in the pile, and no rule we can run at answer time reliably grabs it.
-              </strong>
+              <strong>Why more samples do not cross:</strong>{" "}
+              {coversTarget ? (
+                <>
+                  the bottleneck is not the thinking, it is the picking. The dotted green line is{" "}
+                  <strong className="text-ink">coverage</strong>: a correct answer is somewhere in
+                  the {vote16.n} sampled chains{" "}
+                  <strong className="text-ink">{PAGE11.pct(vote16.coverage)}%</strong> of the time,
+                  above the {band.target.label}&rsquo;s {PAGE11.pct(band.target.accuracy)}%. The
+                  chains are not breaking; the reasoning is there. What fails is selection: voting
+                  returns that answer only{" "}
+                  <strong className="text-ink">{PAGE11.pct(vote16.accuracy)}%</strong> of the time.{" "}
+                  <strong>
+                    The answer is in the pile, and no rule we can run at answer time reliably grabs
+                    it.
+                  </strong>
+                </>
+              ) : (
+                <>
+                  for the {model} on easy problems it is not only the picking. Coverage, the dotted
+                  green line, reaches just{" "}
+                  <strong className="text-ink">{PAGE11.pct(vote16.coverage)}%</strong> in the{" "}
+                  {vote16.n} sampled chains, already below the {band.target.label}&rsquo;s{" "}
+                  {PAGE11.pct(band.target.accuracy)}%: the smaller model does not reliably reach the
+                  answer to begin with, and voting cashes only{" "}
+                  <strong className="text-ink">{PAGE11.pct(vote16.accuracy)}%</strong>.{" "}
+                  <strong>Scaling the parameters, not the samples, is what closes that gap.</strong>
+                </>
+              )}
             </p>
           </div>
         </section>
         <Note kicker="Try it">
           <p>
             Push <em>test-time compute</em> to 16 and watch the blue curve stall below the black
-            line, on {vote16.xTarget.toFixed(0)} times the bigger model&rsquo;s bill.
+            line.
           </p>
-          <p>Then switch to the easy band and try to cross there instead.</p>
+          <p>
+            Then switch bands, or to the <strong>1.5B</strong>, and watch it stall lower still.
+          </p>
         </Note>
 
         {/* Step 2 — the law, stated */}

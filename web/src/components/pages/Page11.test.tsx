@@ -56,6 +56,27 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getAllByText(/78%/).length).toBeGreaterThan(0);
   });
 
+  it("lets the reader vote with the 1.5B, which stalls even lower", () => {
+    render(<Page11 />);
+    fireEvent.click(screen.getByRole("button", { name: /^1\.5B$/ }));
+    // hard band, 1.5B vote@16 = 29%, 31 points under the 7B's 60%
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /1\.5B vote@16: 29%, still 31 points under the Qwen2\.5-7B[’']s 60%/,
+    );
+    // the 1.5B is not the 3B, so its (nonexistent) verifier is not claimed
+    expect(screen.getByRole("status")).not.toHaveTextContent(/trained verifier/);
+  });
+
+  it("adapts the mechanism when coverage itself falls short (1.5B on easy)", () => {
+    render(<Page11 />);
+    fireEvent.click(screen.getByRole("button", { name: /^easy$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^1\.5B$/ }));
+    // easy-band 1.5B coverage (74%) is below the 7B's 88%, so it is not only selection
+    expect(
+      screen.getByText(/Scaling the parameters, not the samples, is what closes that gap/i),
+    ).toBeInTheDocument();
+  });
+
   it("prices the game in multiples of the big model's own bill", () => {
     render(<Page11 />);
     expect(screen.getByText(/single greedy\s*answer is the target/i)).toBeInTheDocument();
