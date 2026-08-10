@@ -476,7 +476,7 @@ function PythiaChart() {
       (s) =>
         `Pythia ${s.label}: from ${s.pts[0].y} percent at ${s.pts[0].x} to ${s.pts[s.pts.length - 1].y} percent at ${s.pts[s.pts.length - 1].x} (times ten to the eleven FLOPs)`,
     )
-    .join("; ")}. Only the budgets where more than one model was measured are shaded, into three bands, one per model, marking where that model is the most accurate: the 410M leads at small budgets, flattens near 60 percent, then the 2.8B takes over, and the 12B is ahead at the top of the measured range. Two grey strips mark the handovers, where the curves sit within the ${READ_OFF_TOLERANCE} point read-off tolerance and the crossing is bracketed rather than located; the second strip covers the whole 12B band.`;
+    .join("; ")}. Each model's curve is drawn bold only over the budgets where it is the most accurate: the 410M leads at small budgets, flattens near 60 percent, then the 2.8B takes over, and the 12B is ahead at the top of the measured range. Light dashed brackets mark the handovers, where the two leading curves sit within the ${READ_OFF_TOLERANCE} point read-off tolerance and the crossing is bracketed rather than located; the last bracket spans the whole 12B band.`;
 
   return (
     <ChartFrame
@@ -486,42 +486,25 @@ function PythiaChart() {
       xLabel="inference FLOPs per question (×10¹¹, log scale)"
       yLabel="GSM8K accuracy (%)"
     >
-      {/* the ownership bands: who is the best buy at each budget, drawn only
-          over the budgets where more than one model was measured */}
+      {/* each scale owns a band of the budget: the bold curve segments below
+          carry it, named here, with no background wash */}
       {bands.map((b) => (
-        <g key={`band${b.idx}-${b.x0}`}>
-          <rect
-            data-testid="ownership-band"
-            x={x(b.x0)}
-            y={0}
-            width={px(x(b.x1) - x(b.x0))}
-            height={innerH}
-            className={series[b.idx].band}
-            opacity={0.08}
-          />
-          <text
-            x={px((x(b.x0) + x(b.x1)) / 2)}
-            y={innerH - 8}
-            textAnchor="middle"
-            className={`${series[b.idx].text} text-[11px] font-semibold`}
-          >
-            {series[b.idx].label} leads
-          </text>
-        </g>
+        <text
+          key={`leadlabel${b.idx}-${b.x0}`}
+          data-testid="ownership-band"
+          x={px((x(b.x0) + x(b.x1)) / 2)}
+          y={innerH - 8}
+          textAnchor="middle"
+          className={`${series[b.idx].text} text-[11px] font-semibold`}
+        >
+          {series[b.idx].label} leads
+        </text>
       ))}
-      {/* the handovers: brackets, not rules. Across these the curves are
-          within the by-eye read-off, so the crossing is somewhere in here */}
+      {/* the handovers: a light dashed bracket, not a rule. Inside each the two
+          leading curves are within the by-eye read-off, so the crossing sits
+          somewhere between the pair rather than on a line. */}
       {handovers.map((h) => (
-        <g key={`handover${h.x0}`}>
-          <rect
-            data-testid="handover-strip"
-            x={x(h.x0)}
-            y={0}
-            width={px(x(h.x1) - x(h.x0))}
-            height={innerH}
-            className="fill-ink-muted"
-            opacity={0.12}
-          />
+        <g key={`handover${h.x0}`} data-testid="handover-strip">
           {[h.x0, h.x1].map((edge) => (
             <line
               key={`edge${edge}`}
@@ -532,7 +515,7 @@ function PythiaChart() {
               className="stroke-ink-muted"
               strokeWidth={0.75}
               strokeDasharray="3 3"
-              opacity={0.45}
+              opacity={0.4}
             />
           ))}
         </g>
@@ -568,6 +551,7 @@ function PythiaChart() {
       {bands.map((b, i) => (
         <path
           key={`lead${i}`}
+          data-testid="lead-segment"
           d={path(series[b.idx].pts)}
           fill="none"
           className={series[b.idx].stroke}
@@ -1043,20 +1027,20 @@ export function Page11() {
               <Cite n={REF.wu} /> This is a 2024-era family, and a wide one: the 2.8B is about 7×
               the 410M and the 12B about 29×, so the colours carry rank, not fixed multiples.
               Section 2 allocated by prompt; this allocates by budget. Each curve is drawn bold only
-              where that model is the compute-optimal buy, and the shading covers only the budgets
-              where more than one model was measured.
+              where that model is the compute-optimal buy, over the budgets where more than one
+              model was measured.
             </p>
             <PythiaChart />
             <figcaption className="text-sm text-ink-muted">
               On a small budget the <strong className="text-ink">410M model is the
               compute-optimal pick</strong>: sampling it many times beats sampling a big model a
               few times. Then every curve flattens. Once the 410M saturates near 60%, the 2.8B and
-              then the 12B pull ahead, so each scale owns a band of the budget axis. The grey
-              strips are those handoffs, and they are wide: inside them the leading curves differ
-              by less than the ±3 points this
-              figure was read to, so the crossing sits somewhere in the strip rather than on a
-              line. The second strip covers the whole 12B band, so the order of the handoffs is
-              what this chart shows, not the budget at which the 12B takes over.
+              then the 12B pull ahead, so each scale owns a band of the budget axis, shown by the
+              bold curve segments. The dashed brackets mark those handoffs, and they are wide:
+              inside them the leading curves differ by less than the ±3 points this figure was read
+              to, so the crossing sits somewhere in the bracket rather than on a line. The last
+              bracket spans the whole 12B band, so the order of the handoffs is what this chart
+              shows, not the budget at which the 12B takes over.
             </figcaption>
             <p className="text-xs text-ink-muted">
               read off the paper&rsquo;s figure by eye (±3 points) and replotted as accuracy; two

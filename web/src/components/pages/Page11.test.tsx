@@ -224,48 +224,30 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     ).toBeInTheDocument();
   });
 
-  it("stops the Pythia shading where the other models were not measured", () => {
+  it("draws a bold lead segment for each scale that owns a band", () => {
     render(<Page11 />);
-    // the 410M is alone below 8 and the 12B alone above 1000, and a leader
-    // needs a rival, so the bands reach neither edge of the 1..4096 axis
-    const bands = screen.getAllByTestId("ownership-band");
-    const last = bands[bands.length - 1];
-    const left = Number(bands[0].getAttribute("x"));
-    const right = Number(last.getAttribute("x")) + Number(last.getAttribute("width"));
-    expect(left).toBeGreaterThan(0);
-    expect(right).toBeLessThan(496); // inner plot width: 560 less the margins
+    // ownership is carried by the bold curve segments now, not a background wash
+    expect(screen.getAllByTestId("lead-segment")).toHaveLength(3);
   });
 
-  it("brackets each Pythia handover in a strip instead of ruling a crossing", () => {
+  it("brackets each Pythia handover instead of ruling a crossing", () => {
     render(<Page11 />);
-    const strips = screen.getAllByTestId("handover-strip");
-    expect(strips).toHaveLength(2);
-    // the 2.8B/12B pass is ~0.6 points, inside the ±3 the figure was read to,
-    // for its whole width: the last strip must cover the entire 12B band
-    const band = screen.getAllByTestId("ownership-band")[2];
-    const strip = strips[1];
-    const bandX = Number(band.getAttribute("x"));
-    const stripX = Number(strip.getAttribute("x"));
-    expect(stripX).toBeLessThanOrEqual(bandX);
-    expect(stripX + Number(strip.getAttribute("width"))).toBeGreaterThanOrEqual(
-      bandX + Number(band.getAttribute("width")),
-    );
+    expect(screen.getAllByTestId("handover-strip")).toHaveLength(2);
     expect(
-      screen.getByText(/the crossing sits somewhere in the strip rather than on a\s+line/i),
+      screen.getByText(/the crossing sits somewhere in the bracket rather than on a\s+line/i),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/not the budget at which the 12B takes over/i),
     ).toBeInTheDocument();
   });
 
-  it("rank-matches the Pythia hues to section 1's family, smallest first", () => {
+  it("colours the Pythia lead segments smallest-green to largest-red", () => {
     render(<Page11 />);
-    // Same colour, same rank in both charts: 1x/410M green, 2x/2.8B blue,
-    // 4x/12B red. A different order makes the two figures contradict.
-    const bands = screen.getAllByTestId("ownership-band");
-    expect(bands[0]).toHaveClass("fill-correct-bright");
-    expect(bands[1]).toHaveClass("fill-compute-bright");
-    expect(bands[2]).toHaveClass("fill-wrong-bright");
+    // the bold segments run in budget order, 410M then 2.8B then 12B
+    const leads = screen.getAllByTestId("lead-segment");
+    expect(leads[0]).toHaveClass("stroke-correct-bright");
+    expect(leads[1]).toHaveClass("stroke-compute-bright");
+    expect(leads[2]).toHaveClass("stroke-wrong-bright");
   });
 
   it("scales the Pythia family by its real ratios, not fixed multiples", () => {
