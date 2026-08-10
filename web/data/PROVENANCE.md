@@ -36,10 +36,15 @@ hashes identically to the one the page plots.
 ## Where the reader can re-derive it
 
 Pages 5 to 9 each ship the run that produced their numbers, as a zip under
-`web/public/notebooks/`, in a replay mode that needs no GPU. Pages 10 and 11 have no bundle:
-page 10's search arm ran once, failed its pre-registered gate, and its process-judge condition
-has never run; page 11's notebook has no packaged output. Neither claims a measured result on
-screen.
+`web/public/notebooks/`, in a replay mode that needs no GPU.
+
+Page 10 ships a bundle that is **not** a run: `page-10-search-arm.zip` is the search arm
+written and packaged unrun, and the page's label promises the notebook rather than a result.
+Its tree is hand-authored and its bars are Yao et al.'s, so nothing on the page rests on it.
+Page 11 has no bundle at all, and likewise claims no measured result of its own.
+
+`src/lib/notebookBundles.test.ts` checks the layout, replay mode and manifest of the page
+5 to 8 bundles. Pages 9 and 10 are not covered by it.
 
 ## Known source conflicts to resolve against primary papers
 
