@@ -202,10 +202,11 @@ is why S1 is presented as a specimen of a failure mode and never as a measuremen
    `\begin{pmatrix} \frac{1}{5} \\ -\frac{18}{5}\end{pmatrix}` marked wrong against
    `\begin{pmatrix} 1/5 \\ -18/5 \end{pmatrix}`, and `(2, 12) \cup (12, 102)` marked wrong against
    `(2,12) \cup (12,102)` on whitespace. The specialist's hard-band greedy is 66%, not 64%. All
-   4,400 traces in the bundle were swept for the same shape and these are the only two, both on the
-   specialist, because it is the model that answers in vectors and intervals often enough to be
-   graded on them. No ordering changes, but `grade_answer` is shared by every measured page and the
-   rate belongs in `PROVENANCE.md`.
+   5,900 traces in the bundle were swept for the same shape and turn up a third, `12 \pi` against
+   `12\pi`, on one sampled 1.5B draw of the sixteen on a single hard-band item, which touches a
+   pooled figure by well under a point and no greedy point at all. So the misses are notation and
+   whitespace rather than a property of one model. No ordering changes, but `grade_answer` is
+   shared by every measured page and the rate belongs in `PROVENANCE.md`, where the full table is.
 
 2. **The specialist arm is orphaned data.** It ran on 2026-08-10 and nothing plots it.
    `page11.ts:19` and `Page11.tsx:22` both record the reason: the reasoning-versus-general

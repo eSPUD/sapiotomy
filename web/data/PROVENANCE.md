@@ -42,7 +42,8 @@ Page 10 ships a bundle that is **not** a run: `page-10-search-arm.zip` is the se
 written and packaged unrun, and the page's label promises the notebook rather than a result.
 Its tree is hand-authored and its bars are Yao et al.'s, so nothing on the page rests on it.
 Page 11 ships `page-11-training-vs-scale.zip`, which **is** a run: arm 0's gate-1 re-derivation
-plus the easy-band and specialist arms it generated, 4,400 chains in `traces.jsonl`.
+plus the easy-band, specialist and hard-band 1.5B arms it generated, 5,900 chains in
+`traces.jsonl`.
 
 `src/lib/notebookBundles.test.ts` checks the layout, replay mode and manifest of the page
 5 to 8 and page 11 bundles. Pages 9 and 10 are not covered by it.
@@ -68,18 +69,24 @@ neither derives a number from them. Why they were used instead of a fresh tool-u
 Recorded here because `reasoning_from_scratch.ch03.grade_answer` grades every measured page in
 the deck, and the rate is not zero.
 
-A sweep of all 4,400 chains in page 11's bundle found **two** answers scored wrong that are
-mathematically identical to the ground truth, both formatting misses:
+A sweep of all 5,900 chains in page 11's bundle found **three** answers scored wrong that are
+mathematically identical to the ground truth, every one a formatting miss:
 
-| ground truth | model's answer | difference |
-|---|---|---|
-| `\begin{pmatrix} 1/5 \\ -18/5 \end{pmatrix}` | `\begin{pmatrix} \frac{1}{5} \\ -\frac{18}{5}\end{pmatrix}` | `1/5` vs `\frac{1}{5}` |
-| `(2,12) \cup (12,102)` | `(2, 12) \cup (12, 102)` | whitespace |
+| model | ground truth | model's answer | difference | where it lands |
+|---|---|---|---|---|
+| Math-1.5B | `\begin{pmatrix} 1/5 \\ -18/5 \end{pmatrix}` | `\begin{pmatrix} \frac{1}{5} \\ -\frac{18}{5}\end{pmatrix}` | `1/5` vs `\frac{1}{5}` | hard-band greedy |
+| Math-1.5B | `(2,12) \cup (12,102)` | `(2, 12) \cup (12, 102)` | whitespace | hard-band greedy |
+| 1.5B-Instruct | `12\pi` | `12 \pi` | whitespace | one sampled draw of 16 |
 
-Both land on `Qwen2.5-Math-1.5B-Instruct`, which is the model that answers in vectors and
-intervals often enough to be graded on them. The effect: the specialist's hard-band greedy
-accuracy is **66%, not the 64%** its `derived.json` records. No published ordering changes, and
-page 11 does not plot the specialist in any case.
+The first two land on `Qwen2.5-Math-1.5B-Instruct`, which is the model that answers in vectors
+and intervals often enough to be graded on them, and both fall in its hard-band greedy set. The
+effect: the specialist's hard-band greedy accuracy is **66%, not the 64%** its `derived.json`
+records. Page 11 does not plot the specialist in any case.
+
+The third arrived with the 2026-08 rebundle that sampled the 1.5B on the hard band. It is one
+draw of the sixteen on a single item, so it moves a pooled figure by well under a point and no
+greedy point at all. It is worth recording for what it says about the shape of the problem:
+the misses are notation and whitespace, not a property of one model.
 
 **The derived files are not being corrected.** They are a faithful record of what the grader
 returned on the run, and rewriting them would break the bit-exact gate-1 reproduction pages 6, 7

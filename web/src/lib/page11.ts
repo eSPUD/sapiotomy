@@ -30,13 +30,14 @@
  *      `\begin{pmatrix} \frac{1}{5} \\ -\frac{18}{5}\end{pmatrix}` scored wrong
  *      against `\begin{pmatrix} 1/5 \\ -18/5 \end{pmatrix}`, and
  *      `(2, 12) \cup (12, 102)` scored wrong against `(2,12) \cup (12,102)` on
- *      whitespace. All 4,400 traces in the bundle were swept for the same shape
- *      and these are the only two, both on the specialist because it is the
- *      model that answers in vectors and intervals often enough to be graded on
- *      them. No ordering on this page or any other changes, and the derived
- *      file is left as the run wrote it: it is a faithful record of what the
- *      grader returned. But `grade_answer` is shared by every measured page, so
- *      the rate belongs somewhere findable. It is also in PROVENANCE.md.
+ *      whitespace. All 5,900 traces in the bundle were swept for the same shape
+ *      and turn up a third, `12 \pi` against `12\pi`, on one sampled 1.5B draw
+ *      of the 16 on one hard-band item. That one touches only a pooled figure
+ *      and no greedy point. No ordering anywhere changes, and the derived file
+ *      is left as the run wrote it: it is a faithful record of what the grader
+ *      returned, and gate 1 reproduces it bit-exactly. But `grade_answer` is
+ *      shared by every measured page, so the rate belongs somewhere findable.
+ *      It is also in PROVENANCE.md.
  *   2. Under the CoT system prompt this run gave it, the specialist wrote zero
  *      Python across all 2,550 of its chains, and the harness has no executor.
  *      So its margin over the general 1.5B here is training and not tool use,
