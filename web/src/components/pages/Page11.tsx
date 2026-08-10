@@ -264,7 +264,7 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
     `greedy at ${PAGE11.pct(tgt.accuracy)} percent, at one times its own bill. The Qwen2.5-3B vote ` +
     `curve runs from ${PAGE11.pct(vote[0].accuracy)} percent at ${vote[0].n} sample up to ` +
     `${PAGE11.pct(last.accuracy)} percent at ${last.n} samples and ${last.xTarget.toFixed(1)} times ` +
-    `the target's bill, and never reaches the target line. The dashed line above it is coverage: the ` +
+    `the target's bill, and never reaches the target line. The line above it is coverage: the ` +
     `answer was in the pile ${PAGE11.pct(band.coverageAt16)} percent of the time. Your marker: ` +
     `${marker.n} samples, ${PAGE11.pct(marker.accuracy)} percent, at ${marker.xTarget.toFixed(1)} times the bill.`;
 
@@ -290,15 +290,15 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
         </text>
       ))}
 
-      {/* the parameter ladder: the greedy family, one answer each, tied so the
-          smallest point reads as the bottom of a trend, not a stray dot */}
+      {/* PATH 1 -- parameters: the greedy family, one answer each, as a solid
+          line so it reads as a deliberate path (a bigger model) that reaches the
+          bar at 1x */}
       <path
         d={band.greedy.map((g, i) => `${i === 0 ? "M" : "L"}${xf(g.flops)},${y(g.accuracy)}`).join("")}
         fill="none"
         className="stroke-ink-muted"
-        strokeWidth={1}
-        strokeDasharray="2 2"
-        opacity={0.55}
+        strokeWidth={1.5}
+        opacity={0.85}
       />
       {band.greedy.map((g) => (
         <g key={g.label}>
@@ -309,66 +309,45 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
             className={`${g.label === tgt.label ? "fill-ink" : "fill-ink-muted"} stroke-canvas`}
             strokeWidth={1.5}
           />
-          {g.label !== tgt.label ? (
-            <text x={xf(g.flops)} y={y(g.accuracy) + 15} textAnchor="middle" className="fill-ink-muted text-[9px]">
-              {g.label}
-            </text>
-          ) : null}
+          <text x={xf(g.flops)} y={y(g.accuracy) + 15} textAnchor="middle" className="fill-ink-muted text-[9px]">
+            {g.label.replace("Qwen2.5-", "")}
+          </text>
         </g>
       ))}
 
-      {/* the target line: the big model's one greedy answer. Its label sits at
-          the LEFT, clear of the coverage line and the vote end on the right */}
-      <line x1={0} x2={innerW} y1={y(tgt.accuracy)} y2={y(tgt.accuracy)} className="stroke-ink" strokeWidth={1} strokeDasharray="4 3" />
+      {/* the target: the big model's one greedy answer, the bar to beat */}
+      <line x1={0} x2={innerW} y1={y(tgt.accuracy)} y2={y(tgt.accuracy)} className="stroke-ink" strokeWidth={1.25} strokeDasharray="4 3" />
       <text x={2} y={y(tgt.accuracy) - 6} textAnchor="start" className="fill-ink text-[11px] font-semibold">
-        {tgt.label} greedy · {PAGE11.pct(tgt.accuracy)}%
-      </text>
-      <line x1={x(1)} x2={x(1)} y1={0} y2={innerH} className="stroke-ink-muted" strokeWidth={0.75} strokeDasharray="3 3" opacity={0.6} />
-      <text x={x(1)} y={11} textAnchor="middle" className="fill-ink-muted text-[9px]">
-        the 7B&rsquo;s bill
+        the bar to beat: {tgt.label} greedy, {PAGE11.pct(tgt.accuracy)}%
       </text>
 
       {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
-      <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.9} />
+      <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="1 3" opacity={0.85} />
       <text x={x(last.xTarget) - 3} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct text-[10px] font-semibold">
         coverage {PAGE11.pct(band.coverageAt16)}%
       </text>
 
-      {/* the small model, thinking harder: the 3B vote curve. Labeled mid-curve,
-          away from the crowded right edge */}
+      {/* PATH 2 -- samples: the 3B vote curve */}
       <path d={votePath} fill="none" className="stroke-compute" strokeWidth={2.5} />
       {vote.map((p) => (
         <circle key={p.n} cx={x(p.xTarget)} cy={y(p.accuracy)} r={2.5} className="fill-compute stroke-canvas" strokeWidth={1} />
       ))}
-      {(() => {
-        const lbl = vote[Math.max(0, vote.length - 2)];
-        return (
-          <text x={x(lbl.xTarget)} y={y(lbl.accuracy) + 16} textAnchor="middle" className="fill-compute text-[10px] font-semibold">
-            3B, more samples
-          </text>
-        );
-      })()}
 
       {/* the strongest realizable selector we own, where we own one (page 8) */}
       {band.bestOf ? (
-        <g>
-          <rect
-            x={x(band.bestOf.xTarget) - 4.5}
-            y={y(band.bestOf.accuracy) - 4.5}
-            width={9}
-            height={9}
-            transform={`rotate(45 ${x(band.bestOf.xTarget)} ${y(band.bestOf.accuracy)})`}
-            className="fill-wrong stroke-canvas"
-            strokeWidth={1.25}
-          />
-          <text x={x(band.bestOf.xTarget) + 9} y={y(band.bestOf.accuracy) + 3} textAnchor="start" className="fill-wrong text-[9px]">
-            best-of-16
-          </text>
-        </g>
+        <rect
+          x={x(band.bestOf.xTarget) - 5}
+          y={y(band.bestOf.accuracy) - 5}
+          width={10}
+          height={10}
+          transform={`rotate(45 ${x(band.bestOf.xTarget)} ${y(band.bestOf.accuracy)})`}
+          className="fill-wrong stroke-canvas"
+          strokeWidth={1.25}
+        />
       ) : null}
 
-      {/* the marker: where the sampling slider is standing right now */}
-      <line x1={x(marker.xTarget)} x2={x(marker.xTarget)} y1={0} y2={innerH} className="stroke-compute" strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
+      {/* the marker: where the sampling slider stands now, a short drop to the axis */}
+      <line x1={x(marker.xTarget)} x2={x(marker.xTarget)} y1={y(marker.accuracy)} y2={innerH} className="stroke-compute" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
       <circle cx={x(marker.xTarget)} cy={y(marker.accuracy)} r={6} className="fill-compute stroke-canvas" strokeWidth={2} />
     </ChartFrame>
   );
@@ -840,6 +819,14 @@ export function Page11() {
             </p>
 
             <MeasuredGame band={band} nIdx={nIdx} />
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+              <Key shape="line" className="bg-ink-muted" label="a bigger model (scale up the parameters)" />
+              <Key shape="line" className="bg-compute" label="the 3B, thinking harder (more samples + a vote)" />
+              <Key shape="line" className="bg-correct" label="coverage: a correct answer was in the pile" />
+              {band.bestOf ? (
+                <Key shape="diamond" className="bg-wrong" label="best-of-16 (a trained verifier)" />
+              ) : null}
+            </div>
             <p className="text-xs text-ink-muted">
               measured on this deck&rsquo;s instrument: the hard band is pages 6 to 8&rsquo;s own
               100 MATH-500 level 4 to 5 problems, and the run reproduces their shipped numbers
