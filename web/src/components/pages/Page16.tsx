@@ -50,7 +50,7 @@
 import { ChartFrame } from "@/components/ChartFrame";
 import { PageNav } from "@/components/PageNav";
 import { Quiz } from "@/components/Quiz";
-import { BIGGER_MODEL, ITEM_COUNT, LADDER, QUIZ, pct } from "@/lib/page16";
+import { BANDS, CROSSING, ITEM_COUNT, LADDER, OTHER_AXIS, QUIZ, pct } from "@/lib/page16";
 import { ACTS, getPage } from "@/lib/pages";
 import { PAGE17 } from "@/lib/page17";
 import { useStore } from "@/store/useStore";
@@ -59,41 +59,75 @@ const PAGE_N = 16;
 
 /* ------------------------------------------------------------- the ladder */
 
-const W = 700;
-const ROW = 34;
-// The top margin carries the bigger model's caption. It cannot go under the
-// axis with the tick labels: at 60% its rule lands between the 50 and 75
-// ticks and the caption runs straight through both of them.
-// The left margin has to fit the longest rung label whole ("16 sampled chains,
-// trained verifier picks one" is the widest at 11px). Three of them were being
-// clipped at 232, which reads as a broken chart rather than a long label.
-const M = { top: 26, right: 132, bottom: 34, left: 256 };
+const W = 760;
+const ROW = 28;
+const BAND_H = 26;
+// Top margin carries the column headers; left fits the longest rung label
+// whole; right fits three fixed columns (accuracy, bill, page).
+const M = { top: 30, right: 184, bottom: 36, left: 284 };
 const IW = W - M.left - M.right;
-const H = LADDER.length * ROW + M.top + M.bottom;
+const H = LADDER.length * ROW + BANDS.length * BAND_H + M.top + M.bottom;
 const IH = H - M.top - M.bottom;
 
 const x = (v: number) => v * IW;
 
+/** The three right-hand columns, at fixed offsets so they read as a table. */
+const COL_ACC = IW + 14;
+const COL_BILL = IW + 68;
+const COL_PAGE = IW + 140;
+
+/** Row tops, precomputed once so band headers and rungs cannot drift apart. */
+const LAYOUT = (() => {
+  const rows: { rung: (typeof LADDER)[number]; y: number }[] = [];
+  const headers: { band: (typeof BANDS)[number]; y: number }[] = [];
+  let y = 0;
+  for (const band of BANDS) {
+    headers.push({ band, y });
+    y += BAND_H;
+    for (const rung of LADDER.filter((r) => r.band === band.key)) {
+      rows.push({ rung, y });
+      y += ROW;
+    }
+  }
+  return { rows, headers, height: y };
+})();
+
 /**
- * The toolbox on one axis, floor to ceiling.
+ * The toolbox on one axis, floor to ceiling, in three bands.
  *
- * Bars are the rungs the deck measured; the coverage rung is drawn hollow
- * because it is not a technique, it is what a perfect selector would have
- * reached. The gap between it and the best solid bar is the page's one visual
- * claim, so it is filled rather than left for the reader to measure by eye, and
- * the bigger model's dashed rule crosses everything because that comparison is
- * the point of drawing them together at all.
+ * Bars are the rungs the deck measured; the coverage rung is hollow because it
+ * is not a technique, it is what a perfect selector would have reached, and the
+ * gap between it and the best solid bar is filled rather than left for the
+ * reader to measure by eye.
+ *
+ * Two things here are not decoration. The bill column is why the last band is
+ * worth drawing: two rungs tie at the same accuracy and one of them costs a
+ * seventh of the other, which is page 11's finding read straight off a row.
+ * And page 9's rung carries a baseline tick, because its run is not the others'
+ * and the only honest reading of it is the distance from that tick.
  */
 function Ladder() {
-  const best = Math.max(...LADDER.filter((r) => !r.ceiling).map((r) => r.accuracy));
+  const solid = LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere");
+  const best = Math.max(...solid.map((r) => r.accuracy));
   const ceiling = LADDER.find((r) => r.ceiling);
   return (
     <ChartFrame
-      title={`What each lever scored on the same ${ITEM_COUNT} problems. ${LADDER.map(
-        (r) => `${r.label}: ${pct(r.accuracy)}`,
-      ).join(". ")}. One greedy chain from the ${BIGGER_MODEL.label} reaches ${pct(
-        BIGGER_MODEL.accuracy,
-      )} for a fraction of the bill. The steps get smaller as you go, and a wide gap is left between the best selector and the answers that were generated and not picked.`}
+      title={`What each lever scored on the same ${ITEM_COUNT} problems, in three groups. ${BANDS.map(
+        (b) =>
+          `${b.title}: ${LADDER.filter((r) => r.band === b.key)
+            .map(
+              (r) =>
+                `${r.label}, ${pct(r.accuracy)}${
+                  // Spoken without its baseline, page 9's rung is a bare 58%
+                  // sitting under page 8's 60%, which is the exact misreading
+                  // the tick on the bar exists to prevent for sighted readers.
+                  r.baseline !== undefined
+                    ? `, up from ${pct(r.baseline)} on that run's own vote`
+                    : ""
+                }${r.bill ? `, costing ${r.bill.toFixed(1)} greedy chains` : ""}`,
+            )
+            .join("; ")}`,
+      ).join(". ")}. The steps get smaller as you go, a wide gap is left between the best selector and the answers that were generated and not picked, and the last group ties the best selector's accuracy for a fraction of its bill.`}
       width={W}
       height={H}
       margin={M}
@@ -102,16 +136,26 @@ function Ladder() {
       {[0, 0.25, 0.5, 0.75, 1].map((t) => (
         <g key={t}>
           <line x1={x(t)} x2={x(t)} y1={0} y2={IH} className="stroke-grid" strokeWidth={1} />
-          <text
-            x={x(t)}
-            y={IH + 16}
-            textAnchor="middle"
-            className="fill-ink-muted text-[10px]"
-          >
+          <text x={x(t)} y={IH + 16} textAnchor="middle" className="fill-ink-muted text-[10px]">
             {t * 100}
           </text>
         </g>
       ))}
+
+      {/* Column headers. The bill column needs its unit in the header or the
+          numbers in it are unreadable. */}
+      <text x={COL_ACC} y={-16} className="fill-ink-muted text-[9px] uppercase tracking-wide">
+        score
+      </text>
+      <text x={COL_BILL} y={-16} className="fill-ink-muted text-[9px] uppercase tracking-wide">
+        bill
+      </text>
+      <text x={COL_PAGE} y={-16} className="fill-ink-muted text-[9px] uppercase tracking-wide">
+        from
+      </text>
+      <text x={COL_BILL} y={-5} className="fill-ink-muted text-[8px]">
+        greedy chains
+      </text>
 
       {/* What was generated and never picked: the one gap the page argues about. */}
       {ceiling ? (
@@ -124,19 +168,43 @@ function Ladder() {
         />
       ) : null}
 
-      {LADDER.map((r, i) => {
-        const y = i * ROW + 6;
-        const h = ROW - 14;
+      {/* Where the best selector and the bigger model tie. */}
+      <line
+        x1={x(CROSSING)}
+        x2={x(CROSSING)}
+        y1={0}
+        y2={IH}
+        strokeDasharray="4 3"
+        className="stroke-correct"
+        strokeWidth={1.5}
+      />
+
+      {LAYOUT.headers.map(({ band, y }) => (
+        <text
+          key={band.key}
+          x={-10}
+          y={y + BAND_H - 8}
+          textAnchor="end"
+          className="fill-ink-muted text-[10px] font-semibold uppercase tracking-wide"
+        >
+          {band.title}
+        </text>
+      ))}
+
+      {LAYOUT.rows.map(({ rung: r, y }) => {
+        const h = ROW - 10;
+        const base = r.baseline ?? 0;
         return (
           <g key={r.label}>
             <text
               x={-10}
-              y={y + h - 3}
+              y={y + h - 2}
               textAnchor="end"
               className={`text-[11px] ${r.ceiling ? "fill-ink-muted italic" : "fill-ink"}`}
             >
               {r.label}
             </text>
+
             {r.ceiling ? (
               <rect
                 x={0}
@@ -154,43 +222,63 @@ function Ladder() {
                 y={y}
                 width={x(r.accuracy)}
                 height={h}
-                className={r.accuracy === best ? "fill-compute" : "fill-ink opacity-40"}
+                className={
+                  r.band === "elsewhere"
+                    ? "fill-correct"
+                    : r.accuracy === best
+                      ? "fill-compute"
+                      : "fill-ink opacity-40"
+                }
               />
             )}
+
+            {/* Page 9's run is not the others'. Its rung may only be read as the
+                distance from its own vote, so that vote is drawn on the bar. */}
+            {r.baseline !== undefined ? (
+              <>
+                <line
+                  x1={x(base)}
+                  x2={x(base)}
+                  y1={y - 2}
+                  y2={y + h + 2}
+                  className="stroke-canvas"
+                  strokeWidth={2}
+                />
+                <text
+                  x={x(base) - 4}
+                  y={y + h - 2}
+                  textAnchor="end"
+                  className="fill-canvas text-[10px] font-semibold"
+                >
+                  {pct(base)}
+                </text>
+              </>
+            ) : null}
+
             <text
-              x={x(r.accuracy) + 6}
-              y={y + h - 3}
+              x={COL_ACC}
+              y={y + h - 2}
               className={`text-[11px] font-semibold tabular-nums ${
                 r.ceiling ? "fill-wrong" : "fill-ink"
               }`}
             >
               {pct(r.accuracy)}
             </text>
-            <text x={x(r.accuracy) + 44} y={y + h - 3} className="fill-ink-muted text-[10px]">
+            <text
+              x={COL_BILL}
+              y={y + h - 2}
+              className={`text-[11px] tabular-nums ${
+                r.bill && r.band === "elsewhere" ? "fill-correct font-semibold" : "fill-ink-muted"
+              }`}
+            >
+              {r.bill ? `${r.bill.toFixed(1)}` : ""}
+            </text>
+            <text x={COL_PAGE} y={y + h - 2} className="fill-ink-muted text-[10px]">
               page {r.page}
             </text>
           </g>
         );
       })}
-
-      {/* Page 11's crossing. Drawn across every bar, because that is what it does. */}
-      <line
-        x1={x(BIGGER_MODEL.accuracy)}
-        x2={x(BIGGER_MODEL.accuracy)}
-        y1={-14}
-        y2={IH}
-        strokeDasharray="4 3"
-        className="stroke-correct"
-        strokeWidth={1.5}
-      />
-      <text
-        x={x(BIGGER_MODEL.accuracy) - 6}
-        y={-6}
-        textAnchor="end"
-        className="fill-correct text-[10px] font-semibold"
-      >
-        {BIGGER_MODEL.label}, one greedy chain
-      </text>
     </ChartFrame>
   );
 }
@@ -201,9 +289,13 @@ export function Page16() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
   const ceiling = LADDER.find((r) => r.ceiling)!;
-  const best = LADDER.filter((r) => !r.ceiling).reduce((a, b) =>
+  const best = LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").reduce((a, b) =>
     b.accuracy > a.accuracy ? b : a,
   );
+  // The two rows the closing paragraph reads off the bill column. Both are
+  // asserted present in page16.test.ts: the paragraph is meaningless without them.
+  const bestBill = best.bill ?? 0;
+  const biggerBill = LADDER.find((r) => r.band === "elsewhere")!.bill ?? 0;
 
   return (
     <article className="flex flex-col gap-6">
@@ -215,10 +307,12 @@ export function Page16() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Fifteen pages turned one knob a dozen ways. Here is every lever on one axis, measured on
-        the same problems, and then{" "}
-        <strong className="text-ink">twelve questions</strong> that check whether the mechanisms
-        landed rather than whether the numbers stuck.
+        The past fifteen pages are a small but mighty snapshot of what inference-time scaling is
+        under the hood. Reasoning turned out to be{" "}
+        <strong className="text-ink">one knob that can be turned many different ways</strong>, and
+        that can even be moved from one axis to another. Here is every lever on the first axis,
+        measured on the same problems the pages showed you. Then twelve questions, to see whether
+        the mechanisms landed rather than whether the numbers stuck.
       </p>
 
       <div className="flex flex-col gap-3">
@@ -229,25 +323,70 @@ export function Page16() {
           </span>
         </h2>
         <p className="max-w-2xl text-ink">
-          Each page in Act 2 measured its own lever against its own baseline, so none of them
-          could draw this. Now that all of them are behind you, they go on one axis.
+          Each page measured its own lever against its own baseline, so none of them could draw
+          this. Now that all of them are behind you, they go on one axis, priced in the compute
+          they actually spent.
         </p>
         <Ladder />
-        <div className="grid gap-4 lg:grid-cols-2">
-          <p className="text-sm text-ink-muted">
-            Read it as a set of steps that keep getting smaller. Writing the reasoning at all is
-            worth more than everything after it put together. Sampling sixteen chains is worth
-            nothing until they are allowed to disagree. Voting on the disagreement is worth real
-            points, and putting a trained judge in front of the vote is worth a few more that this
-            run could not separate from noise.
+
+        <p className="max-w-2xl text-sm text-ink-muted">
+          Read it top to bottom as steps that keep getting smaller. Writing the reasoning at all is
+          the largest single move on the chart, and a chain cut off at{" "}
+          {LADDER[1].label.replace(/^one chain, cut off at /, "")} scores exactly what no chain at
+          all scores, which is the cheapest way to see that the tokens are not a description of the
+          computation, they are the computation.
+        </p>
+        <p className="max-w-2xl text-sm text-ink-muted">
+          Then sampling. Sixteen chains buy nothing until they are allowed to disagree; voting on
+          the disagreement buys real points; putting a trained judge in front of the vote buys a
+          few more that this run could not separate from noise. Grading every step of the working
+          rather than the answer, page 9&apos;s lever, moved one problem in {ITEM_COUNT} and is
+          drawn against its own vote for that reason.
+        </p>
+        <p className="max-w-2xl text-sm text-ink-muted">
+          Then the step that never comes. On {pct(ceiling.accuracy)} of these problems at least one
+          of the sixteen chains was right and the best rule we tested kept {pct(best.accuracy)}.
+          The shaded band is the answer sitting in the pile, generated and thrown away.
+        </p>
+        <p className="max-w-2xl text-sm text-ink-muted">
+          Now read the bill column, which is why the last band is on the chart at all. Two rungs
+          tie at {pct(CROSSING)}. Reaching it by sampling sixteen chains and having a trained judge
+          pick costs about {Math.round(bestBill)} greedy chains. Reaching it by using a model twice
+          the size costs about {biggerBill.toFixed(1)}. That is the knob moving from one axis to
+          the other, and it is the single most useful thing on this page.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold text-ink">
+          1b. The other axis, which is not on that chart
+          <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+            published numbers, different problem set
+          </span>
+        </h2>
+        <div className="max-w-2xl rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
+          <p>
+            <strong>{OTHER_AXIS.label}</strong> is our {OTHER_AXIS.ours.label} after someone else
+            fine-tuned it on {OTHER_AXIS.teacher.samplesK}K reasoning traces from{" "}
+            {OTHER_AXIS.teacher.label}. It scores {pct(OTHER_AXIS.math500, 1)} on MATH-500. Our
+            copy of the same base model, greedy, scores {pct(OTHER_AXIS.ours.hard)}. No lever on
+            the chart above comes close to that move.
           </p>
-          <p className="text-sm text-ink-muted">
-            Then the step that never comes. On {pct(ceiling.accuracy)} of these problems at least
-            one of the sixteen chains was right, and the best rule we tested kept{" "}
-            {pct(best.accuracy)}. That shaded band is the answer sitting in the pile, generated and
-            thrown away. And the dashed line is the whole of Act 2 charged against a bigger model:{" "}
-            {BIGGER_MODEL.label} writes one greedy chain, reaches {pct(BIGGER_MODEL.accuracy)}, and
-            costs a fraction of what the sixteen-way vote cost to reach less.
+          <p className="mt-2">
+            It is deliberately <strong>not</strong> a bar up there, because it is not measured on
+            the same thing. That number is the whole of MATH-500, all five difficulty levels; our
+            hundred problems are {OTHER_AXIS.ours.hardLevels} only, the hard end, on our harness.
+            We can size the difference rather than wave at it: the same three checkpoints score{" "}
+            {OTHER_AXIS.bandGapPts.min} to {OTHER_AXIS.bandGapPts.max} points higher on{" "}
+            {OTHER_AXIS.ours.easyLevels} than on {OTHER_AXIS.ours.hardLevels}, with nothing changed
+            but the mix of problems. Our own 1.5B goes from {pct(OTHER_AXIS.ours.hard)} to{" "}
+            {pct(OTHER_AXIS.ours.easy)} that way.
+          </p>
+          <p className="mt-2 text-ink-muted">
+            So a large piece of that gap is the test, and the rest is the distillation, and this
+            deck cannot tell you the split. That is not a footnote about one number. It is what a
+            score is: a reading taken at a setting, and the setting travels with it or the number
+            means nothing.
           </p>
         </div>
       </div>
@@ -272,7 +411,7 @@ export function Page16() {
         <p className="max-w-2xl text-ink">
           Two things are open, and both of them reach backwards over everything above.
         </p>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex max-w-2xl flex-col gap-4">
           <div className="rounded-lg border-l-4 border-wrong bg-wrong/10 p-4 text-sm text-ink">
             <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
               every number is discounted

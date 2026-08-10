@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { BIGGER_MODEL, ITEM_COUNT, LADDER, QUIZ, pct } from "./page16";
+import { BANDS, CROSSING, ITEM_COUNT, LADDER, OTHER_AXIS, QUIZ, pct } from "./page16";
 import { PAGE5 } from "./page05";
+import { PAGE6 } from "./page06";
 import { PAGE7 } from "./page07";
 import { PAGE8 } from "./page08";
+import { PAGE9 } from "./page09";
+import { PAGE11 } from "./page11";
+import { curves } from "./curves";
 import { PAGES } from "./pages";
 
 /**
@@ -21,64 +25,146 @@ import { PAGES } from "./pages";
  */
 
 describe("page 16's ladder", () => {
+  const at = (frag: string) => {
+    const hits = LADDER.filter((r) => r.label.includes(frag));
+    expect(hits, `"${frag}" matches ${hits.length} rungs`).toHaveLength(1);
+    return hits[0];
+  };
+
   it("reads its rungs out of the pages that measured them, never a copy", () => {
-    const at = (frag: string) => LADDER.find((r) => r.label.includes(frag))!;
     expect(at("no chain at all").accuracy).toBe(PAGE5.figure2.blurt.accuracy);
-    expect(at("one chain of thought").accuracy).toBe(PAGE8.oneChain);
-    expect(at("majority vote").accuracy).toBe(
+    expect(at("allowed to finish").accuracy).toBe(
+      PAGE6.figure2.primary.points.find((p) => p.budget === 2048)!.accuracy,
+    );
+    expect(at("temperature zero").accuracy).toBe(
       PAGE7.figure2.cold.points[PAGE7.figure2.cold.points.length - 1].accuracy,
     );
-    expect(at("trained verifier picks one").accuracy).toBe(PAGE8.headline.accuracy);
     expect(at("at least one of the").accuracy).toBe(PAGE8.coverage);
+    expect(at("filtered by step soundness").accuracy).toBe(PAGE9.selection!.filtered);
+    expect(at("one greedy chain").accuracy).toBe(PAGE11.bands.hard.target.accuracy);
   });
 
-  it("keeps the vote and the selector on ONE run, since they are being compared", () => {
-    // Page 7 measures its own vote at 55% and page 8 measures one at 56% on its
-    // own candidates. Both are true; putting them in one chart is not. The
-    // sampled-vote rung and the best-of-N rung must therefore agree about which
-    // run they came from, or the ladder's step between them is an artefact of
-    // mixing two pools.
-    const vote = LADDER.find((r) => r.label.includes("sampled chains, majority vote"))!;
-    const select = LADDER.find((r) => r.label.includes("trained verifier picks one"))!;
-    expect(vote.accuracy).toBe(PAGE8.majority.accuracy);
-    expect(select.accuracy).toBe(PAGE8.headline.accuracy);
-    expect(vote.page).toBe(select.page);
+  it("puts thinking longer on the chart, as the lever it is", () => {
+    // Page 6 is the deck's first inference-time knob and was missing from the
+    // first draft of this chart. Its rungs have to climb, and the shortest one
+    // has to sit level with no chain at all: that coincidence is the argument
+    // that the tokens ARE the computation, so it must not be quietly dropped.
+    const chain = LADDER.filter((r) => r.band === "chain");
+    expect(chain.length).toBeGreaterThanOrEqual(4);
+    const accs = chain.map((r) => r.accuracy);
+    expect([...accs]).toEqual([...accs].sort((a, b) => a - b));
+    expect(at("cut off at 128 tokens").accuracy).toBe(at("no chain at all").accuracy);
   });
 
-  it("is monotone except where the deck's argument says it should not be", () => {
-    // Sixteen identical chains must not beat one chain: that flat step IS page
-    // 7's finding, and a ladder that quietly sorted itself would erase it.
-    const one = LADDER.find((r) => r.label.includes("one chain of thought"))!;
-    const cold = LADDER.find((r) => r.label.includes("temperature zero"))!;
-    expect(cold.accuracy).toBe(one.accuracy);
+  it("takes its vote and its selector from ONE run, since they are compared", () => {
+    // Page 7 measures its vote at 55% and page 8 measures one at 56% on its own
+    // candidates. The ladder quotes page 11, the only run that re-aggregates
+    // pages 6, 7 and 8 into one accounting AND prices them, so the step between
+    // the vote and the selector is a step somebody actually measured.
+    const hard = PAGE11.bands.hard;
+    expect(at("sampled chains, voted").accuracy).toBe(
+      hard.voteCurve[hard.voteCurve.length - 1].accuracy,
+    );
+    expect(at("trained verifier picks one").accuracy).toBe(hard.bestOf!.accuracy);
   });
 
-  it("puts the coverage ceiling above everything that is a technique", () => {
+  it("gives page 9's rung its own baseline, because its pool is not the others'", () => {
+    // Read as a bare number this rung sits below page 8's selector and would
+    // look like a technique that lost. It is not comparable: page 9 filtered a
+    // pool whose own vote is 57%. The only true reading is the step from there.
+    const r = at("filtered by step soundness");
+    expect(r.baseline).toBe(PAGE9.selection!.majority);
+    expect(r.accuracy - r.baseline!).toBeCloseTo(PAGE9.selection!.deltaPts / 100, 5);
+    expect(PAGE9.selection!.helps).toBe(false);
+  });
+
+  it("prices only the rungs page 11 actually measured in FLOPs", () => {
+    // An empty bill cell says "this run did not price itself". Filling it from
+    // token counts would put an estimate in the same column, in the same units,
+    // as a measurement. Four rungs have a price; the rest must not.
+    const priced = LADDER.filter((r) => r.bill !== undefined);
+    expect(priced).toHaveLength(4);
+    for (const r of priced) expect(r.bill!).toBeGreaterThan(0);
+    expect(at("allowed to finish").bill).toBeCloseTo(1, 5);
+  });
+
+  it("carries page 11's finding in the bill column, not just in the prose", () => {
+    // The point of the last band: the same accuracy, reached two ways, at bills
+    // that differ by roughly seven times. If a re-run ever flips this, the
+    // page's closing paragraph is wrong and must be rewritten, not re-rendered.
+    const selector = at("trained verifier picks one");
+    const bigger = at("one greedy chain");
+    expect(bigger.accuracy).toBe(selector.accuracy);
+    expect(bigger.accuracy).toBe(CROSSING);
+    expect(bigger.bill!).toBeLessThan(selector.bill! / 5);
+  });
+
+  it("keeps the coverage ceiling above every technique on the axis", () => {
     const ceiling = LADDER.filter((r) => r.ceiling);
     expect(ceiling).toHaveLength(1);
-    const bestTechnique = Math.max(...LADDER.filter((r) => !r.ceiling).map((r) => r.accuracy));
-    expect(ceiling[0].accuracy).toBeGreaterThan(bestTechnique);
-  });
-
-  it("charges the whole ladder against a bigger model, as page 11 does", () => {
-    const bestTechnique = Math.max(...LADDER.filter((r) => !r.ceiling).map((r) => r.accuracy));
-    // The crossing: one greedy chain from the larger model matches or beats
-    // everything answer-time bought, for a fraction of the bill. If a re-run
-    // ever flips this, the page's closing paragraph is wrong and must be rewritten
-    // rather than left to render a sentence the chart contradicts.
-    expect(BIGGER_MODEL.accuracy).toBeGreaterThanOrEqual(bestTechnique);
-    expect(BIGGER_MODEL.voteCostMultiple).toBeGreaterThan(1);
+    const best = Math.max(
+      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
+    );
+    expect(ceiling[0].accuracy).toBeGreaterThan(best);
   });
 
   it("only puts bars side by side that measured the same problems", () => {
     expect(ITEM_COUNT).toBe(PAGE5.figure2.bare.n);
     expect(ITEM_COUNT).toBe(PAGE8.paired.items);
+    expect(ITEM_COUNT).toBe(PAGE9.run.items);
+    expect(ITEM_COUNT).toBe(PAGE11.bands.hard.nItems);
+  });
+
+  it("sorts every rung into a declared band, and leaves none empty", () => {
+    for (const r of LADDER) {
+      expect(BANDS.some((b) => b.key === r.band), `${r.label} has band ${r.band}`).toBe(true);
+    }
+    for (const b of BANDS) {
+      expect(LADDER.filter((r) => r.band === b.key).length, b.key).toBeGreaterThan(0);
+    }
   });
 
   it("cites a real page for every rung", () => {
-    for (const r of LADDER) {
-      expect(PAGES.some((p) => p.n === r.page)).toBe(true);
-    }
+    for (const r of LADDER) expect(PAGES.some((p) => p.n === r.page)).toBe(true);
+  });
+});
+
+describe("page 16's other axis (quoted, not plotted)", () => {
+  it("quotes the distill number verbatim from the published table", () => {
+    expect(OTHER_AXIS.math500).toBeCloseTo(curves.deepseekDistill.fit!.params.math1p5 / 100, 5);
+    expect(OTHER_AXIS.teacher.math500).toBeCloseTo(
+      curves.deepseekDistill.fit!.params.r1Math / 100,
+      5,
+    );
+  });
+
+  it("is NOT a rung, because it is not measured on this deck's problems", () => {
+    // The published figure is the whole of MATH-500; the axis above is levels 4
+    // and 5 only. Putting it on that axis would be the deck dropping the
+    // coordinates off a score on its own last page.
+    expect(LADDER.some((r) => r.label.includes(OTHER_AXIS.label))).toBe(false);
+    expect(LADDER.some((r) => r.accuracy === OTHER_AXIS.math500)).toBe(false);
+  });
+
+  it("sizes the item-mix difference from the deck's own two bands", () => {
+    // The correction is quoted, not asserted: page 11 ran this family over both
+    // difficulty bands, so the deck can say what the easier mix is worth on its
+    // own. Both ends must be real and the gap must be large enough to matter,
+    // or the caveat is decoration.
+    expect(OTHER_AXIS.bandGapPts.min).toBeGreaterThan(10);
+    expect(OTHER_AXIS.bandGapPts.max).toBeGreaterThanOrEqual(OTHER_AXIS.bandGapPts.min);
+    expect(OTHER_AXIS.ours.easy).toBeGreaterThan(OTHER_AXIS.ours.hard);
+    expect(OTHER_AXIS.ours.hard).toBe(
+      PAGE11.bands.hard.greedy.find((g) => g.label.includes("1.5B"))!.accuracy,
+    );
+    expect(OTHER_AXIS.ours.easy).toBe(
+      PAGE11.bands.easy.greedy.find((g) => g.label.includes("1.5B"))!.accuracy,
+    );
+  });
+
+  it("still beats every lever on the chart, which is why it is quoted at all", () => {
+    const best = Math.max(...LADDER.map((r) => r.accuracy));
+    expect(OTHER_AXIS.math500).toBeGreaterThan(best);
   });
 });
 

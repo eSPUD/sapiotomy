@@ -9,21 +9,36 @@
  * arrangement, plus the checks that the arrangement is honest.
  *
  * THE LADDER (section 1) is one chart of the whole toolbox, and it is only
- * allowed to exist because the rungs are comparable. They are drawn from ONE
- * pool wherever a comparison is being made: page 8's paired run supplies the
- * one-chain baseline, the vote, the selected best-of-N and the coverage
- * ceiling, all over its own 12,800 chains on the same hundred MATH-500 level 4
- * and 5 items. Two rungs come from elsewhere and are labelled as such rather
- * than blended in: the floor is page 5's forced-blurt arm (same items, same
- * family, a different run), and the 7B's greedy line is page 11's (same items,
- * a bigger model). `assertSameItems` below refuses to build the ladder if those
- * runs stop agreeing about how many problems they measured, because the chart's
- * entire claim is that these bars can be read against each other.
+ * allowed to exist because the rungs are comparable. `assertSameItems` refuses
+ * to build it if the six runs that feed it stop agreeing about how many
+ * problems they measured, because the chart's entire claim is that these bars
+ * can be read against each other.
  *
- * Page 7's vote lands at 55% and page 8's at 56% on its own candidates. Both
- * are true and the deck says so on page 8; the ladder quotes page 8's, because
- * mixing two runs inside one comparison is exactly the error the ladder exists
- * to avoid. Do not "fix" the discrepancy by averaging them.
+ * THE SPINE IS PAGE 11'S RE-DERIVATION, not page 8's pool. Page 7 measures its
+ * vote at 55% and page 8 measures one at 56% on candidates it generated itself.
+ * Both are true and page 8 says so. The ladder quotes page 11 because page 11
+ * is the only run that re-aggregates pages 6, 7 and 8 into ONE accounting (its
+ * gate 1 reproduces them bit-exactly) and the only one that also prices them in
+ * FLOPs. Quoting a vote from one run and a selector from another would invent a
+ * step between them that nobody measured. Do not "fix" the 55/56 discrepancy by
+ * averaging: it is two pools, and page 8 owns the paired test between them.
+ *
+ * THE BILL COLUMN IS DELIBERATELY SPARSE. Four rungs carry a FLOPs multiple and
+ * six do not. Page 11 computed inference FLOPs properly; nothing else in the
+ * deck did, and mean tokens are not FLOPs. An empty cell says "this run did not
+ * price itself", which is true. Filling it by scaling token counts would put an
+ * estimate in the same column as a measurement, in the same units, with no way
+ * for a reader to tell them apart. That is the one thing this page must not do.
+ *
+ * PAGE 9'S RUNG CARRIES ITS OWN BASELINE. Its filtering arm ran over a pool
+ * whose vote sits at 57%, so the only true statement is "57 to 58, one problem
+ * in a hundred". Drawn as a bare 58% beside page 8's 60% it would read as a
+ * technique that lost by two points to a comparison nobody ran.
+ *
+ * THE OTHER AXIS is quoted but not plotted. See `OTHER_AXIS` below for why
+ * R1-Distill-Qwen-1.5B's 83.9 on MATH-500 cannot be a bar next to our 1.5B's
+ * 22, and for the deck's own measurement of how much of that gap is the item
+ * mix rather than the distillation.
  *
  * THE CONCEPT CHECK (section 2) is twelve questions, and every one of them is
  * about a MECHANISM rather than a magnitude. A reader who has understood the
@@ -61,32 +76,60 @@ export const pct = (v: number, digits = 0): string => `${(v * 100).toFixed(digit
 
 /* --------------------------------------------------------------- the ladder */
 
+export type BandKey = "chain" | "sample" | "elsewhere";
+
+export interface Band {
+  key: BandKey;
+  /** The question this group of rungs answers. */
+  title: string;
+}
+
+export const BANDS: Band[] = [
+  { key: "chain", title: "what writing the reasoning is worth" },
+  { key: "sample", title: "what sampling and selecting add to it" },
+  { key: "elsewhere", title: "what the same money buys elsewhere" },
+];
+
 export interface Rung {
+  band: BandKey;
   /** What was done to get this score. */
   label: string;
   /** The measured accuracy on 100 MATH-500 level 4 and 5 problems. */
   accuracy: number;
   /** Which page measured it, for the provenance column. */
   page: number;
-  /** Roughly what it cost, in chains generated per problem. */
-  chains: number;
+  /**
+   * The number this rung was measured against, when that is NOT the deck's
+   * 43% greedy chain. Page 9 filtered a pool of its own whose vote sits at
+   * 57%, so its result may only be read as the step from 57 to 58. Drawing it
+   * as a bare 58% next to page 8's 60% would invent a comparison nobody ran.
+   */
+  baseline?: number;
+  /**
+   * Measured inference FLOPs, as a multiple of one greedy chain from the 3B.
+   * Present ONLY on the four rungs page 11 priced: it computed these properly
+   * and the rest of the deck did not, and a token count is not a FLOP count.
+   * A blank cell is honest; an estimated one would not be.
+   */
+  bill?: number;
   /** One clause on what the rung is, not what it scored. */
   note: string;
-  /** A ceiling nothing on the page reached, drawn as a rule rather than a bar. */
+  /** A ceiling nothing reached, drawn hollow because it is not a technique. */
   ceiling?: boolean;
 }
 
 /**
  * The rungs must be talking about the same problem set or the chart is a lie
- * told in a legible font. Page 8's paired comparison, page 5's suppression arm
- * and page 11's hard band are three separate runs over one item set, so the
- * item counts are the thing to check: if a re-run changes one of them, these
- * bars stop being comparable and the page must not draw them.
+ * told in a legible font. Five separate runs put bars on this axis, so the item
+ * counts are the thing to check: if a re-run changes one of them, these bars
+ * stop being comparable and the page must not draw them.
  */
 function assertSameItems(): number {
   const counts: [string, number][] = [
     ["page 5's suppression arm", PAGE5.figure2.bare.n],
+    ["page 6's budget sweep", PAGE6.figure2.primary.points[0].n],
     ["page 8's paired comparison", PAGE8.paired.items],
+    ["page 9's step grading", PAGE9.run.items],
     ["page 11's hard band", PAGE11.bands.hard.nItems],
     ["page 15's re-read", PAGE17.run.items],
   ];
@@ -122,78 +165,200 @@ function required<T>(value: T | null | undefined, what: string): T {
   return value;
 }
 
-const COVERAGE = required(PAGE8.coverage, "page 8's coverage, which is the ladder's ceiling");
+const HARD = PAGE11.bands.hard;
+const EASY = PAGE11.bands.easy;
+const greedyOf = (band: typeof HARD, size: string) => {
+  const row = band.greedy.find((g) => g.label.includes(size));
+  if (!row) {
+    throw new Page16DataError(`page 11's ${band.key} band has no ${size} greedy row for page 16`);
+  }
+  return row;
+};
+
+const GREEDY_3B = greedyOf(HARD, "3B");
+const VOTE_16 = HARD.voteCurve[HARD.voteCurve.length - 1];
 const BEST_OF = required(
-  PAGE11.bands.hard.bestOf,
+  HARD.bestOf,
   "page 11's best-of-N point on the hard band, which prices the selector against a bigger model",
 );
+const COVERAGE = required(PAGE8.coverage, "page 8's coverage, which is the ladder's ceiling");
 
 /**
- * The whole toolbox as one column of bars, floor to ceiling.
+ * The bill column's unit: one greedy chain from the 3B, the model every rung in
+ * the first two bands is running. Page 11 measured these FLOPs; this only
+ * changes their denominator, from its own 7B target to the chain a reader of
+ * this chart is actually looking at.
+ */
+const bill = (flops: number) => flops / GREEDY_3B.flops;
+
+/** Page 6's sweep, looked up by budget: a positional index would silently re-point. */
+const budgetRung = (budget: number) => {
+  const r = PAGE6.figure2.primary.points.find((p) => p.budget === budget);
+  if (!r) {
+    throw new Page16DataError(
+      `page 16's ladder is written about the ${budget}-token rung, which page 6's sweep no longer has`,
+    );
+  }
+  return r;
+};
+
+const TOP_BUDGET = PAGE6.budgets[PAGE6.budgets.length - 1];
+const CUT_SHORT = budgetRung(PAGE6.budgets[0]);
+const CUT_MID = budgetRung(PAGE6.budgets[2]);
+const FINISHED = budgetRung(TOP_BUDGET);
+
+/**
+ * The whole toolbox as one column of bars, floor to ceiling, in three bands.
  *
- * The order is the deck's order, and the shape it makes is the deck's argument:
- * a large step for writing the reasoning at all, a step for sampling and
- * voting, a smaller step for selecting with a trained judge, and then a gap to
- * the coverage line that no selector we tested closed. The 7B's greedy chain
- * sits at the same height as the best selector for a fraction of the bill,
- * which is page 11's crossing restated as one row.
+ * The order is the deck's order and the shape it makes is the deck's argument.
+ * Writing the reasoning at all is the biggest single step on the chart, and
+ * nothing after it comes close. Length is the next: a chain cut at 128 tokens
+ * scores what no chain at all scores, which is the cheapest way to see that the
+ * tokens are the computation. Then sampling, voting and selecting, in steps
+ * that keep shrinking. Then the step that never comes, the coverage line.
+ *
+ * The last band is one row and it is the point of drawing the other nine: the
+ * same 60% the best selector reached for 21.6 greedy chains is reached by a
+ * bigger model for 2.2 of them.
  */
 export const LADDER: Rung[] = [
   {
+    band: "chain",
     label: "no chain at all, forced to answer immediately",
     accuracy: PAGE5.figure2.blurt.accuracy,
     page: 5,
-    chains: 1,
     note: `${PAGE5.figure2.blurt.medianTokens} tokens, median`,
   },
   {
-    label: "one chain of thought, greedy",
-    accuracy: PAGE8.oneChain,
-    page: 8,
-    chains: 1,
-    note: "the baseline every later rung is paired against",
+    band: "chain",
+    label: `one chain, cut off at ${CUT_SHORT.budget} tokens`,
+    accuracy: CUT_SHORT.accuracy,
+    page: 6,
+    note: "the same score as no chain at all: too short to be a computation",
   },
   {
-    label: `${PAGE7.figure2.cold.points[PAGE7.figure2.cold.points.length - 1].n} chains at temperature zero, majority vote`,
+    band: "chain",
+    label: `one chain, cut off at ${CUT_MID.budget} tokens`,
+    accuracy: CUT_MID.accuracy,
+    page: 6,
+    note: "most of the climb happens in here",
+  },
+  {
+    band: "chain",
+    label: "one chain, allowed to finish",
+    accuracy: FINISHED.accuracy,
+    page: 6,
+    bill: bill(GREEDY_3B.flops),
+    note: `${Math.round(FINISHED.mean_tokens)} tokens, mean; the baseline every later rung is paired against`,
+  },
+  {
+    band: "sample",
+    label: `${PAGE7.figure2.cold.points[PAGE7.figure2.cold.points.length - 1].n} chains at temperature zero, voted`,
     accuracy: PAGE7.figure2.cold.points[PAGE7.figure2.cold.points.length - 1].accuracy,
     page: 7,
-    chains: PAGE7.figure2.cold.points[PAGE7.figure2.cold.points.length - 1].n,
     note: "identical copies, so the vote sees one opinion",
   },
   {
-    label: `${PAGE7.handoff.n_chains} sampled chains, majority vote`,
-    accuracy: PAGE8.majority.accuracy,
-    page: 8,
-    chains: PAGE7.handoff.n_chains,
+    band: "sample",
+    label: `${VOTE_16.n} sampled chains, voted`,
+    accuracy: VOTE_16.accuracy,
+    page: 7,
+    bill: bill(VOTE_16.flops),
     note: "diversity is what the vote actually buys",
   },
   {
-    label: `${PAGE7.handoff.n_chains} sampled chains, trained verifier picks one`,
-    accuracy: PAGE8.headline.accuracy,
+    band: "sample",
+    label: `${VOTE_16.n} sampled chains, trained verifier picks one`,
+    accuracy: BEST_OF.accuracy,
     page: 8,
-    chains: PAGE7.handoff.n_chains,
-    note: `${PAGE8.headline.fixed} fixed against ${PAGE8.headline.broke} broken, ${
+    bill: bill(BEST_OF.flops),
+    note: `beats one chain at ${
       PAGE8.headline.p < 0.001 ? "p < 0.001" : `p = ${PAGE8.headline.p.toFixed(3)}`
-    }`,
+    }, and the vote by ${Math.round(
+      (PAGE8.headline.accuracy - PAGE8.majority.accuracy) * 100,
+    )} points at p = ${PAGE8.caveat.p.toFixed(2)}, which is not a difference`,
   },
   {
-    label: `at least one of the ${PAGE7.handoff.n_chains} was right`,
+    band: "sample",
+    label: "sampled chains, filtered by step soundness",
+    accuracy: required(PAGE9.selection, "page 9's selection arm").filtered,
+    baseline: required(PAGE9.selection, "page 9's selection arm").majority,
+    page: 9,
+    note: `page 9's own pool: its vote sits at ${pct(
+      PAGE9.selection!.majority,
+    )} and grading every step moved ${PAGE9.selection!.nChanged} problem in ${ITEMS}`,
+  },
+  {
+    band: "sample",
+    label: `at least one of the ${VOTE_16.n} was right`,
     accuracy: COVERAGE,
     page: 7,
-    chains: PAGE7.handoff.n_chains,
     note: "the ceiling a perfect selector would reach, and nothing did",
     ceiling: true,
   },
+  {
+    band: "elsewhere",
+    label: `${HARD.target.label}, one greedy chain`,
+    accuracy: HARD.target.accuracy,
+    page: 11,
+    bill: bill(HARD.target.flops),
+    note: "the same score as the best selector, for a seventh of its bill",
+  },
 ];
 
-/** Page 11's crossing, drawn as a rule across the ladder rather than as a bar. */
-export const BIGGER_MODEL = {
-  label: PAGE11.bands.hard.target.label,
-  accuracy: PAGE11.bands.hard.target.accuracy,
-  /** What the small model's 16-way vote cost, as a multiple of this one chain. */
-  voteCostMultiple:
-    PAGE11.bands.hard.voteCurve[PAGE11.bands.hard.voteCurve.length - 1].xTarget,
-  selectCostMultiple: BEST_OF.xTarget,
+/** The accuracy two rungs tie at, which is the whole reason the bill column exists. */
+export const CROSSING = HARD.target.accuracy;
+
+/* ------------------------------------------------- the other axis, off-chart */
+
+const DISTILL = curves.deepseekDistill.fit!.params;
+const OUR_1P5B_HARD = greedyOf(HARD, "1.5B");
+const OUR_1P5B_EASY = greedyOf(EASY, "1.5B");
+
+/**
+ * R1-Distill-Qwen-1.5B on MATH-500, and why it is NOT a bar on the chart above.
+ *
+ * It is the most vivid number available to this page: the same 1.5B base our
+ * own runs measure, fine-tuned on R1's reasoning traces, scoring 83.9 where our
+ * copy of it scores 22. That is the train-time axis beating every answer-time
+ * lever on the chart, and the page should say so.
+ *
+ * It is also measured somewhere else. The published figure is the whole of
+ * MATH-500, all five difficulty levels; this deck's hundred items are levels 4
+ * and 5 only, the hard end. Different harness, different decoding, published
+ * rather than run here. Putting it on the same axis would be the deck dropping
+ * the coordinates off a score on its own last page.
+ *
+ * So the size of the coordinate change is quoted from the deck's own instrument
+ * rather than waved at: page 11 ran this family over both bands, and the easier
+ * mix alone is worth `bandGapPts` for the same weights on the same harness.
+ * That is not a correction to subtract, it is the reason the two numbers cannot
+ * be subtracted, and the copy has to say it that way.
+ */
+export const OTHER_AXIS = {
+  label: "R1-Distill-Qwen-1.5B",
+  /** Published, full MATH-500, all five levels. */
+  math500: DISTILL.math1p5 / 100,
+  teacher: { label: "DeepSeek-R1", math500: DISTILL.r1Math / 100, samplesK: DISTILL.samplesK },
+  ours: {
+    label: OUR_1P5B_HARD.label,
+    hard: OUR_1P5B_HARD.accuracy,
+    hardLevels: HARD.levels,
+    easy: OUR_1P5B_EASY.accuracy,
+    easyLevels: EASY.levels,
+  },
+  /**
+   * What moving from this deck's hard band to an easier mix is worth on its own,
+   * measured across the three checkpoints page 11 ran over both bands. Quoted as
+   * a range because it is a range: it shrinks as the model gets better.
+   */
+  bandGapPts: (() => {
+    const gaps = HARD.greedy.map((h) => {
+      const size = h.label.replace("Qwen2.5-", "");
+      return Math.round((greedyOf(EASY, size).accuracy - h.accuracy) * 100);
+    });
+    return { min: Math.min(...gaps), max: Math.max(...gaps) };
+  })(),
 } as const;
 
 /* -------------------------------------------------------- the concept check */
@@ -218,22 +383,8 @@ export interface Question {
 
 const SC = curves.selfCorrection.fit!.params;
 
-/**
- * The two budget rungs question 5 is about, looked up by budget rather than by
- * position in the sweep. The sweep's length is a property of the run, and a
- * re-run that adds a rung would silently re-point a positional index at a
- * different pair of numbers while the question stem went on reading fine.
- */
-const budgetRung = (budget: number) => {
-  const p = PAGE6.figure2.primary.points.find((r) => r.budget === budget);
-  if (!p) {
-    throw new Page16DataError(
-      `page 16's question 5 is written about the ${budget}-token rung, which page 6's sweep no longer has`,
-    );
-  }
-  return p;
-};
-const TOP = budgetRung(PAGE6.budgets[PAGE6.budgets.length - 1]);
+/** Question 5's pair, through the same by-budget lookup the ladder uses. */
+const TOP = FINISHED;
 const KNEE = budgetRung(PAGE6.budgets[PAGE6.budgets.length - 2]);
 
 export const QUESTIONS: Question[] = [
@@ -331,10 +482,10 @@ export const QUESTIONS: Question[] = [
     id: "q7-coverage",
     page: 7,
     concept: "coverage against accuracy",
-    stem: `With sixteen chains sampled hot, the majority vote landed on ${pct(
-      PAGE8.majority.accuracy,
-    )} of problems, while at least one of the sixteen chains was right on ${pct(
-      COVERAGE,
+    stem: `With ${PAGE7.handoff.n_chains} chains sampled hot, the majority vote landed on ${pct(
+      PAGE7.handoff.plurality_accuracy,
+    )} of problems, while at least one of those chains was right on ${pct(
+      PAGE7.handoff.coverage,
     )}. What is that gap?`,
     options: [
       {
@@ -410,14 +561,16 @@ export const QUESTIONS: Question[] = [
     id: "q11-keystone",
     page: 11,
     concept: "answer-time against parameters",
-    stem: `Put on one axis of measured compute: a ${
-      PAGE11.bands.hard.greedy[1].label
-    }'s sixteen-way vote reached ${pct(
-      PAGE11.bands.hard.voteCurve[PAGE11.bands.hard.voteCurve.length - 1].accuracy,
-    )} for about ${BIGGER_MODEL.voteCostMultiple.toFixed(
+    stem: `Priced in measured FLOPs, in units of one greedy chain from the ${
+      GREEDY_3B.label
+    }: its sixteen-way vote reached ${pct(VOTE_16.accuracy)} for about ${Math.round(
+      bill(VOTE_16.flops),
+    )} chains, and a trained verifier picking among those chains reached ${pct(
+      BEST_OF.accuracy,
+    )} for about ${Math.round(bill(BEST_OF.flops))}. One greedy chain from the ${
+      HARD.target.label
+    } reached that same ${pct(HARD.target.accuracy)} for about ${bill(HARD.target.flops).toFixed(
       1,
-    )} times the bill of one greedy chain from the ${BIGGER_MODEL.label}, which reached ${pct(
-      BIGGER_MODEL.accuracy,
     )}. What is the finding?`,
     options: [
       {

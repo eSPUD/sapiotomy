@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { BIGGER_MODEL, LADDER, QUIZ } from "@/lib/page16";
+import { BANDS, CROSSING, LADDER, OTHER_AXIS, QUIZ } from "@/lib/page16";
 import { Page16 } from "./Page16";
 
 /**
@@ -51,16 +51,84 @@ describe("Page 16 (wrap-up) component", () => {
     const fig = screen.getByRole("img", { name: /What each lever scored/i });
     // The chart's one argument: the last step does not happen. If the ceiling
     // ever stops leading, the page's prose is wrong and this must fail.
-    const best = Math.max(...LADDER.filter((r) => !r.ceiling).map((r) => r.accuracy));
+    const best = Math.max(
+      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
+    );
     const ceiling = LADDER.find((r) => r.ceiling)!;
     expect(ceiling.accuracy).toBeGreaterThan(best);
     expect(fig.getAttribute("aria-label")).toMatch(/generated and not picked/i);
   });
 
-  it("charges the whole ladder against the bigger model in the copy, not just the chart", () => {
+  it("groups the rungs into named bands a screen reader can hear", () => {
     render(<Page16 />);
-    expect(screen.getAllByText(new RegExp(BIGGER_MODEL.label)).length).toBeGreaterThan(0);
-    expect(screen.getByText(/costs a fraction of what the sixteen-way vote cost/i)).toBeInTheDocument();
+    const fig = screen.getByRole("img", { name: /What each lever scored/i });
+    for (const b of BANDS) expect(fig.getAttribute("aria-label")).toContain(b.title);
+  });
+
+  it("speaks page 9's baseline, so its rung is not heard as a bare 58%", () => {
+    render(<Page16 />);
+    const fig = screen.getByRole("img", { name: /What each lever scored/i });
+    for (const r of LADDER.filter((x) => x.baseline !== undefined)) {
+      expect(fig.getAttribute("aria-label")).toContain(
+        `up from ${Math.round(r.baseline! * 100)}% on that run's own vote`,
+      );
+    }
+  });
+
+  it("speaks the bill for every priced rung, not just the accuracy", () => {
+    render(<Page16 />);
+    const fig = screen.getByRole("img", { name: /What each lever scored/i });
+    // The bill column is the chart's second axis. A label that omits it hides
+    // page 11's finding from anyone not looking at the picture.
+    for (const r of LADDER.filter((x) => x.bill !== undefined)) {
+      expect(fig.getAttribute("aria-label")).toContain(`costing ${r.bill!.toFixed(1)} greedy chains`);
+    }
+  });
+
+  it("reads page 11's crossing off the bill column in the copy", () => {
+    render(<Page16 />);
+    const bigger = LADDER.find((r) => r.band === "elsewhere")!;
+    const selector = LADDER.find((r) => r.label.includes("trained verifier"))!;
+    expect(bigger.accuracy).toBe(CROSSING);
+    // Scoped to the paragraph: question 11 quotes the same bills, on purpose.
+    const para = screen.getByText(/Now read the bill column/i);
+    expect(para.textContent).toMatch(new RegExp(`about ${Math.round(selector.bill!)} greedy chains`));
+    expect(para.textContent).toMatch(new RegExp(`about ${bigger.bill!.toFixed(1)}`));
+  });
+
+  it("puts thinking longer on the chart", () => {
+    render(<Page16 />);
+    const fig = screen.getByRole("img", { name: /What each lever scored/i });
+    for (const r of LADDER.filter((x) => x.page === 6)) {
+      expect(fig.getAttribute("aria-label")).toContain(r.label);
+    }
+    expect(screen.getByText(/they are the computation/i)).toBeInTheDocument();
+  });
+
+  it("quotes the distilled model but keeps it off the axis, and says why", () => {
+    render(<Page16 />);
+    // The published number is the whole of MATH-500; the chart is levels 4 and 5.
+    // The page must carry the number AND the reason it is not a bar, including
+    // the deck's own measurement of what the easier mix is worth.
+    expect(screen.getByText(new RegExp(OTHER_AXIS.label))).toBeInTheDocument();
+    expect(screen.getByText(/deliberately/i).closest("p")!.textContent).toMatch(
+      /not.*a bar up there/i,
+    );
+    expect(
+      screen.getByText(
+        new RegExp(`${OTHER_AXIS.bandGapPts.min} to ${OTHER_AXIS.bandGapPts.max} points higher`),
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("lays the wrap-up out top to bottom, never two columns of prose", () => {
+    // House rule since page 1: figures may sit side by side, running prose may
+    // not. A reader should never have to track back up and left mid-thought.
+    const { container } = render(<Page16 />);
+    const twoCol = Array.from(container.querySelectorAll("*")).filter((el) =>
+      /(^|\s)(sm:|md:|lg:|xl:)?grid-cols-2(\s|$)/.test(el.className.toString()),
+    );
+    expect(twoCol.map((el) => el.className.toString())).toEqual([]);
   });
 
   // ---- section 2: the concept check ----
