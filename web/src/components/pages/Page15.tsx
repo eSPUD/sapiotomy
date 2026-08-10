@@ -917,7 +917,7 @@ export function Page15() {
           </div>
         </section>
 
-        <Note kicker="References" bottom>
+        <Note kicker="References">
           <RefItem n={REF.minerva} href="https://arxiv.org/abs/2206.14858">
             Lewkowycz et al. 2022, <em>Minerva</em>.
           </RefItem>
