@@ -789,13 +789,28 @@ export function Page11() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
-      <h1 className="text-3xl font-bold text-ink">
-        <span className="font-mono text-ink-muted">{page.n}. </span>
-        {page.title}
-      </h1>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-xs uppercase tracking-wide text-ink-muted">
+            Act {page.act} · {ACTS[page.act].title}
+          </p>
+          <h1 className="text-3xl font-bold text-ink">
+            <span className="font-mono text-ink-muted">{page.n}. </span>
+            {page.title}
+          </h1>
+        </div>
+        <aside className="flex shrink-0 flex-col gap-1 rounded-lg border border-compute/40 bg-compute/5 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-compute">Reproduce it</p>
+          <a
+            href={`/notebooks/${PAGE11.download.slug}.zip`}
+            download
+            className="text-sm font-semibold text-compute underline underline-offset-2 hover:text-compute/80"
+          >
+            Download the notebook and traces
+          </a>
+          <p className="text-xs text-ink-muted">{PAGE11.download.sizeLabel}, REPLAY mode, no GPU</p>
+        </aside>
+      </div>
       <p className="max-w-2xl text-lg text-ink-muted">
         A bigger model and more thinking are{" "}
         <strong className="text-ink">two ways to spend the same FLOPs</strong> (floating-point
@@ -904,30 +919,13 @@ export function Page11() {
             </p>
           </div>
         </section>
-        <div className="flex flex-col gap-4 lg:pt-9">
-          <aside className="flex flex-col gap-1.5 rounded-lg border border-compute/40 bg-compute/5 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-compute">Reproduce it</p>
-            <a
-              href={`/notebooks/${PAGE11.download.slug}.zip`}
-              download
-              className="text-sm font-semibold text-compute underline underline-offset-2 hover:text-compute/80"
-            >
-              Download the notebook and traces
-            </a>
-            <p className="text-xs text-ink-muted">
-              every number in this figure, re-derivable offline in REPLAY mode (
-              {PAGE11.download.sizeLabel}, no GPU)
-            </p>
-          </aside>
-          <aside className="flex flex-col gap-2 text-sm text-ink-muted">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Try it</p>
-            <p>
-              Push <em>test-time compute</em> to 16 and watch the blue curve stall below the black
-              line, on {vote16.xTarget.toFixed(0)} times the bigger model&rsquo;s bill.
-            </p>
-            <p>Then switch to the easy band and try to cross there instead.</p>
-          </aside>
-        </div>
+        <Note kicker="Try it">
+          <p>
+            Push <em>test-time compute</em> to 16 and watch the blue curve stall below the black
+            line, on {vote16.xTarget.toFixed(0)} times the bigger model&rsquo;s bill.
+          </p>
+          <p>Then switch to the easy band and try to cross there instead.</p>
+        </Note>
 
         {/* Step 2 — the law, stated */}
         <section className="flex min-w-0 flex-col gap-3">
