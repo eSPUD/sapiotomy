@@ -9,6 +9,13 @@
  * golden rule: every benchmark carries a citation and a provenance string,
  * every score carries a source, and a malformed file fails the build and the
  * tests, never ships silently.
+ *
+ * Since the page-15 revision this loader draws nothing. It is kept as the
+ * audit trail, not as UI: page 15 still renders GPT-4o's 12 on AIME and o3's
+ * 25.2-vs-10 on FrontierMath, and data/benchmark-scoreboard.json is the record
+ * of where those came from. scoreboard.test.ts is the part that earns its
+ * keep, cross-checking the GSM8K entries against wei-cot-scaling.json so two
+ * files quoting one source cannot drift. Do not delete either as dead code.
  */
 import benchmarkScoreboardRaw from "@data/benchmark-scoreboard.json";
 import { DataValidationError, validateCitation, type Citation } from "./data";

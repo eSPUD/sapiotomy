@@ -198,19 +198,3 @@ export function cotPressureRecall(
 ): number {
   return baseRecall / (1 + Math.exp(steep * (pressure - cliff)));
 }
-
-// --- Page 20: Tower of Hanoi token explosion -------------------------------
-export function hanoiMoves(n: number): number {
-  return Math.pow(2, n) - 1;
-}
-export function hanoiTokens(n: number, tokensPerMove: number): number {
-  return hanoiMoves(n) * tokensPerMove;
-}
-/** Under ENUMERATION scoring, the model "fails" once its output exceeds budget. */
-export function enumerationSolved(n: number, tokensPerMove: number, tokenBudget: number): boolean {
-  return hanoiTokens(n, tokensPerMove) <= tokenBudget;
-}
-/** Under ALGORITHM scoring, the model can state the (correct) recursive rule. */
-export function algorithmSolved(): boolean {
-  return true;
-}
