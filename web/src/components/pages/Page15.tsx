@@ -248,10 +248,15 @@ export function Page15() {
   const pick = picks[caseKey];
   const revealed = pick !== undefined;
 
+  /* "and nothing else" would be an assertion about every coordinate the two
+     reports did not print. For the GPT-4o pair in particular, nobody here has
+     opened the R1 paper's eval appendix to confirm DeepSeek scored the same
+     15-problem AIME 2024 set OpenAI did, and if it did not, the taught answer
+     is wrong. "as far as either report says" is what the page can support. */
   const movedText =
     current.moved.length === COORDS.length
       ? "all four coordinates at once"
-      : `${coordLabel(current.moved[0])}, and nothing else`;
+      : `${coordLabel(current.moved[0])}, as far as either report says`;
   const verdictPrefix =
     pick === undefined || pick === "shown"
       ? ""
@@ -283,8 +288,9 @@ export function Page15() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Pages 13 and 14 argued in benchmark scores, and pages 16 to 20 will ask you to judge fights
-        that are fought in them. So learn what a score is first.{" "}
+        Pages 13 and 14 argued in benchmark scores, and the four pages left will spend them: 16
+        bills you for them, 17 shows you where they came from, and the last two ask what a score
+        was ever evidence of. So learn what a score is first.{" "}
         <strong className="text-ink">A score is not a property of a model.</strong> It is a point
         with <strong className="text-ink">four coordinates</strong>: which model variant, which
         version of the test, whose harness scored it, and how much thinking was bought. A headline
@@ -344,8 +350,13 @@ export function Page15() {
 
             <div className="flex flex-col gap-2">
               <p className="text-sm text-ink">
-                Both headlines are lifted from the cited reports, and both are true.{" "}
-                <strong>Which coordinate moved?</strong>
+                Both headlines are true, and both are badged{" "}
+                <span className="rounded border border-grid px-1 py-0.5 text-xs font-semibold">
+                  quote-true
+                </span>
+                , which on this page means every number in them is lifted verbatim from the cited
+                report. The sentence around the number is ours, written the way a headline would
+                carry it. <strong>Which coordinate moved?</strong>
               </p>
               <div className="flex flex-wrap gap-2" role="group" aria-label="Which coordinate moved?">
                 {COORDS.map((c) => (
@@ -454,9 +465,19 @@ export function Page15() {
               one&apos;s verdict: below its window every model fails (no signal), inside it the
               same five models spread out (signal), past it everyone passes (no signal again).
             </p>
+            <p className="text-sm text-ink-muted">
+              {/* 15.5: the axis had no referent at all, and "where are we today?"
+                  is the first thing a reader asks a capability slider. Any dated
+                  answer rots inside a year, so the anchor is ordinal and reads
+                  off the rows themselves. */}
+              Do not look for today&apos;s position on this axis; there is no honest one to mark,
+              and any number written here would be wrong within a year. Read it as an ordering
+              instead. <strong className="text-ink">Today is always wherever the newest test
+              still has a spread</strong>, and the tests above it have already gone blind.
+            </p>
 
             <Slider
-              label="frontier capability (illustrative units)"
+              label="frontier capability (ordinal, not calibrated to any date)"
               min={0}
               max={12}
               step={0.25}
@@ -550,6 +571,15 @@ export function Page15() {
               so <strong className="text-ink">the moving goalposts are the system working</strong>:
               retiring a blind test is the honest move.
             </figcaption>
+            <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
+              There is a second way a test loses its window, and it does not need the frontier to
+              move at all. A benchmark published before the models trained is a benchmark the
+              models may have read.{" "}
+              <strong>Page 17 puts a number on that</strong>: on AIME 2025, released after these
+              models trained, reasoning models scored well below their averages on the older
+              years. A test can be inside its window on this figure and still be measuring
+              familiarity.
+            </p>
           </figure>
         </section>
 
@@ -637,8 +667,9 @@ export function Page15() {
       </div>
 
       <p className="text-xs text-ink-muted">
-        every real number on this page is transcribed verbatim from the cited report — announcement
-        figures (o3, FrontierMath) are vendor-reported and not peer-reviewed; the coordinate rows
+        every real number on this page is transcribed verbatim from the cited report, and the
+        headline sentence carrying it is written for this page · announcement figures (o3,
+        FrontierMath) are vendor-reported and not peer-reviewed; the coordinate rows
         paraphrase the same reports&apos; own disclosed settings, and the case numbers are pinned in
         the test suite · section 2 is an authored simulation (no real benchmark&apos;s numbers),
         its shape pinned in the test suite · ARC-AGI is missing on purpose: its story is the price
