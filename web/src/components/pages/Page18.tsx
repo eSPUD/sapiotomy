@@ -3,7 +3,25 @@
 /**
  * Page 18, "Can We Trust the Thoughts?" — the safety hinge of Act 3. Act 2
  * spent ten pages buying longer visible reasoning; this page asks what the
- * trace is evidence OF. Three steps: (1) a faithfulness probe — plant a hint,
+ * trace is evidence OF.
+ *
+ * It opens on our own measurement, not the literature. Page 9's run cut 1,580
+ * real chains into 18,772 written steps, and in 1,062 of those chains (67.2%)
+ * the arithmetic checker found nothing it could check at all. The chain figure
+ * leads because it is the image and this page is about the trace as an object
+ * of evidence; the step-level 94.2% follows as the measurement behind it, and
+ * a test pins that order. Dropping the step share would invite "so a third of
+ * chains are checkable", which overstates it badly: the reachable third
+ * averages barely two checkable steps each.
+ *
+ * Starting there means Chen et al. arrive as the SHARPER problem (a step that
+ * is absent) rather than as the page's premise. The distinction is
+ * load-bearing and the copy states it: page 9 measured a limit of our
+ * INSTRUMENT (arithmetic is checkable, algebra and method are not); this page
+ * is about a limit of the TRACE (it can omit what moved the answer). A false
+ * step and an absent influence are different claims and must not be blurred.
+ *
+ * Then three steps: (1) a faithfulness probe — plant a hint,
  * watch the answer move and the trace stay quiet, with admission rates pinned
  * to Chen et al. 2025 (Claude 3.7 Sonnet 25%, DeepSeek-R1 39%); (2)
  * monitorability — Baker et al. 2025's monitor reading the CoT catches ~95%
@@ -12,6 +30,14 @@
  * while monitor recall collapses (obfuscated reward hacking). The close is
  * the open-vs-hidden trace design tension and Korbak et al.'s "fragile
  * opportunity" recommendation.
+ *
+ * Step 1 closes on the measured half: two chains from page 11's specialist arm
+ * whose boxed answer is not the value the chain just computed, with no hint
+ * planted and nothing being concealed. They are the page's answer to its own
+ * disclosure below, which is that everything else in step 1 is authored. They
+ * are specimens and never rates; the only rates on this page stay Chen et al.'s.
+ * Their provenance and the reason they landed here rather than on page 19 are in
+ * docs/page_19_tool_use_probe.md §6.
  *
  * HONESTY (load-bearing): the probe's prompt and its three traces are
  * authored teaching examples; only the admission rates are the paper's. The
@@ -35,12 +61,19 @@ import { Toggle } from "@/components/Toggle";
 import { FAITHFULNESS_PROBE } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
+/* The deck's first cross-page data import. Page 18's opening number is page
+   9's measurement, so it reads from page 9's validated loader rather than
+   restating a figure that could drift the next time that run is replaced. */
+import { PAGE9, pct } from "@/lib/page09";
 import { cotPressureRecall, cotPressureReward } from "@/lib/frontier";
 import { bernoulli, createRng } from "@/lib/rng";
+import { SPECIMENS, SPECIMEN_SOURCE, markExcerpt, type Specimen } from "@/lib/specimens";
+import { tidyMath } from "@/lib/traceText";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 18;
 const P = FAITHFULNESS_PROBE;
+const P9 = PAGE9;
 
 /** Page 18's references, numbered in order of first appearance. */
 const REF = { chen: 1, turpin: 2, baker: 3, korbak: 4 } as const;
@@ -54,6 +87,51 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
+  );
+}
+
+/**
+ * One measured chain whose answer is not the value it just computed.
+ *
+ * The marked span is the chain's own arithmetic, so the card can put it beside
+ * the answer and let the reader do the comparison. Nothing is paraphrased:
+ * `specimens.ts` refuses to load a span that is not verbatim in the trace, and
+ * `specimens.test.ts` matches the trace against the published bundle.
+ */
+function ContradictionCard({ specimen }: { specimen: Specimen }) {
+  const runs = markExcerpt(specimen, tidyMath);
+
+  return (
+    <figure
+      aria-label={`A measured chain whose answer contradicts its own working, ${specimen.problemId}`}
+      className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-canvas p-3"
+    >
+      <figcaption className="font-mono text-xs text-ink-muted">
+        MATH-500 {specimen.subject.toLowerCase()}, level {specimen.level}
+      </figcaption>
+
+      <p className="whitespace-pre-wrap border-l-2 border-grid pl-3 text-sm leading-relaxed text-ink">
+        <span className="text-ink-muted">… </span>
+        {runs.map((run, i) =>
+          run.mark ? (
+            <mark key={i} className="rounded bg-compute/20 px-1 font-semibold text-ink" >
+              {run.text}
+            </mark>
+          ) : (
+            <span key={i}>{run.text}</span>
+          ),
+        )}
+      </p>
+
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
+        <span className="text-wrong">
+          it answered <span className="font-mono">{tidyMath(specimen.answer ?? "")}</span>
+        </span>
+        <span className="text-correct">
+          the answer is <span className="font-mono">{tidyMath(specimen.groundTruth)}</span>
+        </span>
+      </div>
+    </figure>
   );
 }
 
@@ -130,6 +208,40 @@ export function Page18() {
         <strong className="text-ink">hide</strong> rather than to reform.
       </p>
 
+      {/* The measured lead-in, and the reason this page is not a literature
+          page. Everything below it is other people's numbers; this is ours,
+          and it sets the floor the borrowed numbers then push past. */}
+      <section className="flex max-w-2xl flex-col gap-2 rounded-lg border-l-4 border-correct bg-surface p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          before the literature, our own run
+        </p>
+        <p className="text-ink">
+          Page 9 cut {P9.run.chains.toLocaleString()} real chains from{" "}
+          {P9.run.model.split("/").pop()} into{" "}
+          {P9.graders.stepsTotal.toLocaleString()} written steps and tried to check them one by one.
+          In{" "}
+          <strong className="font-mono text-wrong">
+            {P9.detection.nChainsUnreadable.toLocaleString()} of those chains,{" "}
+            {pct(P9.detection.shareChainsUnreadable, 1)}
+          </strong>
+          , it found nothing it could check at all. Not one step. That is not the checker failing:
+          the median chain of visible reasoning is plans (&ldquo;use the Euclidean
+          algorithm&rdquo;), transitions, and symbolic algebra, and the checker refuses those on
+          sight so that every label it does hand back is a fact you can redo by hand. Step by step
+          across the whole pile, <strong className="font-mono">{pct(P9.graders.shareUnjudged, 1)}</strong>{" "}
+          came back <em>unknown</em>.
+        </p>
+        <p className="text-sm text-ink-muted">
+          Keep the two limits apart, because the rest of this page depends on it. That{" "}
+          {pct(P9.graders.shareUnjudged, 1)} is a limit of{" "}
+          <strong className="text-ink">our instrument</strong>: arithmetic is checkable, algebra and
+          method are not, and a broader grader would shrink it. What follows is a limit of the{" "}
+          <strong className="text-ink">trace itself</strong>, and no grader shrinks it. Page 9 asked
+          whether a step is <em>wrong</em>. This page asks whether the steps are the{" "}
+          <em>reason</em>.
+        </p>
+      </section>
+
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 — the faithfulness probe */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -145,8 +257,9 @@ export function Page18() {
             </div>
 
             <p className="text-sm text-ink">
-              The experiment: ask a question clean, then ask again with a <strong>hint</strong>{" "}
-              slipped into the prompt, here an answer tag the model was never meant to see.
+              No checker can run this one, because there is no false step to catch. The experiment
+              instead: ask a question clean, then ask again with a <strong>hint</strong> slipped
+              into the prompt, here an answer tag the model was never meant to see.
               <Cite n={REF.chen} /> When the hint <em>changes the answer</em>, the model
               demonstrably used it. Faithfulness asks: does the visible trace say so?
               <Cite n={REF.turpin} />
@@ -303,6 +416,37 @@ export function Page18() {
                 </p>
               </div>
             ) : null}
+          </div>
+
+          {/* The measured half of step 1. The probe above is authored and says so;
+              these two chains are not, and they cost nothing to show because page
+              11's run already published them. */}
+          <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4">
+            <p className="text-sm font-semibold text-ink">The probe above is authored. This is not.</p>
+            <p className="text-sm text-ink">
+              Planting a hint is the clean way to ask the question, and answering it needs a control
+              run. Here is the untidy version, out of this deck&apos;s own measurements: two chains
+              from page 11&apos;s run in which the model computes a value and then hands back a
+              different one. No hint, no pressure, nothing planted. The reasoning and the answer
+              simply came apart.
+            </p>
+
+            {[SPECIMENS.contradictsChainSum, SPECIMENS.contradictsChainGeometry].map((s) => (
+              <ContradictionCard key={s.role} specimen={s} />
+            ))}
+
+            <p className="text-sm text-ink">
+              Neither chain is concealing a motive, and that is the part to carry into the next
+              step. Unfaithfulness does not require one. If a trace can disagree with its own answer
+              for free, then reading the trace tells you what the model wrote, which is not the same
+              as what the model did.
+            </p>
+            <p className="text-xs text-ink-muted">
+              Two chains of the 2,550 {SPECIMEN_SOURCE.modelLabel} wrote in page 11&apos;s run,
+              copied unedited and chosen for what they show. Specimens of a failure mode, not a
+              measurement of how often it happens: this page&apos;s only rates are Chen et
+              al.&apos;s.
+            </p>
           </div>
         </section>
         <Note kicker="References">

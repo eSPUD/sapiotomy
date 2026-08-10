@@ -50,8 +50,16 @@ const PAGES = [
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
     declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"],
     repoNotebookIsTheShippedOne: false },
+  // Page 9 was absent from this list until 2026-08-09, and it had drifted in the two
+  // ways the list exists to catch: it unpacked flat instead of into a folder, and its
+  // manifest named a notebook sha that existed in no obtainable copy. Both are fixed
+  // by publishing in two stages (FULL computes the PRM scores, REPLAY re-derives every
+  // aggregate from them and writes the artifacts), which is only possible now that
+  // REPLAY can adopt this page's own scores instead of needing a GPU for them.
+  { n: 9, slug: "page-09-outcome-vs-process", notebook: "page_09_outcome_vs_process.ipynb",
+    declared: null, extras: [], repoNotebookIsTheShippedOne: true },
   { n: 11, slug: "page-11-training-vs-scale", notebook: "page_11_training_vs_scale.ipynb",
-    declared: "1.7 MB", extras: [], repoNotebookIsTheShippedOne: true },
+    declared: "2.8 MB", extras: [], repoNotebookIsTheShippedOne: true },
 ] as const;
 
 const NOTEBOOKS = resolve(WEB, "../notebooks");

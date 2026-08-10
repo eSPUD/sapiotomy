@@ -43,7 +43,7 @@ import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { PAGE11, type Band } from "@/lib/page11";
+import { PAGE11, type Band, type SmallModel } from "@/lib/page11";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { useStore } from "@/store/useStore";
@@ -240,7 +240,7 @@ const px = (v: number) => Math.round(v * 100) / 100;
  * the dashed line above it is coverage, the answer that was in the pile and
  * went uncashed.
  */
-function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
+function MeasuredGame({ band, model, nIdx }: { band: Band; model: SmallModel; nIdx: number }) {
   const width = 640;
   const height = 320;
   const innerW = width - CHART_MARGIN.left - CHART_MARGIN.right;
@@ -252,20 +252,32 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
   const tgt = band.target;
   const xf = (flops: number) => x(flops / tgt.flops);
 
-  const vote = band.voteCurve;
+  const vote = band.voteByModel[model];
+  const showBestOf = band.bestOf !== null && model === "3B";
   const votePath = vote.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.xTarget)},${y(p.accuracy)}`).join("");
   const covPath = vote.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.xTarget)},${y(p.coverage)}`).join("");
+  // the coverage-selection gap: the closed region between what voting returns
+  // (the vote curve, below) and what was reachable (coverage, above). Shading it
+  // is what makes coverage legible: it is the answers found and thrown away.
+  const gapArea =
+    "M" +
+    vote.map((p) => `${x(p.xTarget)},${y(p.accuracy)}`).join("L") +
+    "L" +
+    [...vote].reverse().map((p) => `${x(p.xTarget)},${y(p.coverage)}`).join("L") +
+    "Z";
+  // label the gap at a central point, clear of the crowded right edge
+  const gap = vote[Math.floor((vote.length - 1) / 2)];
   const marker = vote[nIdx];
   const last = vote[vote.length - 1];
 
   const title =
     `Accuracy against inference FLOPs on ${band.label} problems (${band.levels}), priced in ` +
     `multiples of the ${tgt.label}'s single greedy answer, log x axis. The target is ${tgt.label} ` +
-    `greedy at ${PAGE11.pct(tgt.accuracy)} percent, at one times its own bill. The Qwen2.5-3B vote ` +
+    `greedy at ${PAGE11.pct(tgt.accuracy)} percent, at one times its own bill. The Qwen2.5-${model} vote ` +
     `curve runs from ${PAGE11.pct(vote[0].accuracy)} percent at ${vote[0].n} sample up to ` +
     `${PAGE11.pct(last.accuracy)} percent at ${last.n} samples and ${last.xTarget.toFixed(1)} times ` +
-    `the target's bill, and never reaches the target line. The dashed line above it is coverage: the ` +
-    `answer was in the pile ${PAGE11.pct(band.coverageAt16)} percent of the time. Your marker: ` +
+    `the target's bill, and never reaches the target line. The line above it is coverage: the ` +
+    `answer was in the pile ${PAGE11.pct(last.coverage)} percent of the time. Your marker: ` +
     `${marker.n} samples, ${PAGE11.pct(marker.accuracy)} percent, at ${marker.xTarget.toFixed(1)} times the bill.`;
 
   return (
@@ -290,32 +302,16 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
         </text>
       ))}
 
-      {/* the target: the big model's one greedy answer, and the bill it costs */}
-      <line x1={0} x2={innerW} y1={y(tgt.accuracy)} y2={y(tgt.accuracy)} className="stroke-ink" strokeWidth={1} strokeDasharray="4 3" />
-      <text x={innerW - 2} y={y(tgt.accuracy) - 5} textAnchor="end" className="fill-ink text-[11px] font-semibold">
-        {tgt.label}, one answer · {PAGE11.pct(tgt.accuracy)}%
-      </text>
-      <line x1={x(1)} x2={x(1)} y1={0} y2={innerH} className="stroke-ink-muted" strokeWidth={0.75} strokeDasharray="3 3" opacity={0.6} />
-      <text x={x(1)} y={11} textAnchor="middle" className="fill-ink-muted text-[9px]">
-        its bill
-      </text>
-
-      {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
-      <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.9} />
-      <text x={x(last.xTarget) - 2} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct text-[10px]">
-        coverage {PAGE11.pct(band.coverageAt16)}%
-      </text>
-
-      {/* the small model, thinking harder: the 3B vote curve */}
-      <path d={votePath} fill="none" className="stroke-compute" strokeWidth={2.5} />
-      {vote.map((p) => (
-        <circle key={p.n} cx={x(p.xTarget)} cy={y(p.accuracy)} r={2.5} className="fill-compute stroke-canvas" strokeWidth={1} />
-      ))}
-      <text x={x(last.xTarget) + 5} y={y(last.accuracy) + 4} className="fill-compute text-[10px] font-semibold">
-        3B, vote@{last.n}
-      </text>
-
-      {/* the greedy family: where each size lands with one answer */}
+      {/* PATH 1 -- parameters: the greedy family, one answer each, as a solid
+          line so it reads as a deliberate path (a bigger model) that reaches the
+          bar at 1x */}
+      <path
+        d={band.greedy.map((g, i) => `${i === 0 ? "M" : "L"}${xf(g.flops)},${y(g.accuracy)}`).join("")}
+        fill="none"
+        className="stroke-ink-muted"
+        strokeWidth={1.5}
+        opacity={0.85}
+      />
       {band.greedy.map((g) => (
         <g key={g.label}>
           <circle
@@ -325,34 +321,58 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
             className={`${g.label === tgt.label ? "fill-ink" : "fill-ink-muted"} stroke-canvas`}
             strokeWidth={1.5}
           />
-          {g.label !== tgt.label ? (
-            <text x={xf(g.flops)} y={y(g.accuracy) + 14} textAnchor="middle" className="fill-ink-muted text-[9px]">
-              {g.label}
-            </text>
-          ) : null}
+          <text x={xf(g.flops)} y={y(g.accuracy) + 15} textAnchor="middle" className="fill-ink-muted text-[9px]">
+            {g.label.replace("Qwen2.5-", "")}
+          </text>
         </g>
       ))}
 
-      {/* the strongest realizable selector we own, where we own one (page 8) */}
-      {band.bestOf ? (
-        <g>
-          <rect
-            x={x(band.bestOf.xTarget) - 4.5}
-            y={y(band.bestOf.accuracy) - 4.5}
-            width={9}
-            height={9}
-            transform={`rotate(45 ${x(band.bestOf.xTarget)} ${y(band.bestOf.accuracy)})`}
-            className="fill-wrong stroke-canvas"
-            strokeWidth={1.25}
-          />
-          <text x={x(band.bestOf.xTarget)} y={y(band.bestOf.accuracy) - 9} textAnchor="middle" className="fill-wrong text-[9px]">
-            best-of-16
-          </text>
-        </g>
+      {/* the target: the big model's one greedy answer, the bar to beat */}
+      <line x1={0} x2={innerW} y1={y(tgt.accuracy)} y2={y(tgt.accuracy)} className="stroke-ink" strokeWidth={1.25} strokeDasharray="4 3" />
+      <text x={2} y={y(tgt.accuracy) - 6} textAnchor="start" className="fill-ink text-[11px] font-semibold">
+        the bar to beat: {tgt.label} greedy, {PAGE11.pct(tgt.accuracy)}%
+      </text>
+
+      {/* the coverage-selection gap, shaded: answers found (top) and thrown away
+          by the vote (bottom). This is what coverage is for. */}
+      <path d={gapArea} className="fill-correct" opacity={0.14} stroke="none" />
+      <text
+        x={x(gap.xTarget)}
+        y={px((y(gap.accuracy) + y(gap.coverage)) / 2)}
+        textAnchor="middle"
+        className="fill-correct text-[9px] font-semibold"
+      >
+        found, not selected
+      </text>
+
+      {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
+      <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="1 3" opacity={0.85} />
+      <text x={x(last.xTarget) - 3} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct text-[10px] font-semibold">
+        coverage {PAGE11.pct(last.coverage)}%
+      </text>
+
+      {/* PATH 2 -- samples: the 3B vote curve */}
+      <path d={votePath} fill="none" className="stroke-compute" strokeWidth={2.5} />
+      {vote.map((p) => (
+        <circle key={p.n} cx={x(p.xTarget)} cy={y(p.accuracy)} r={2.5} className="fill-compute stroke-canvas" strokeWidth={1} />
+      ))}
+
+      {/* the strongest realizable selector we own, where we own one (page 8);
+          it is the 3B's verifier, so only shown when the 3B is selected */}
+      {showBestOf && band.bestOf ? (
+        <rect
+          x={x(band.bestOf.xTarget) - 5}
+          y={y(band.bestOf.accuracy) - 5}
+          width={10}
+          height={10}
+          transform={`rotate(45 ${x(band.bestOf.xTarget)} ${y(band.bestOf.accuracy)})`}
+          className="fill-wrong stroke-canvas"
+          strokeWidth={1.25}
+        />
       ) : null}
 
-      {/* the marker: where the sampling slider is standing right now */}
-      <line x1={x(marker.xTarget)} x2={x(marker.xTarget)} y1={0} y2={innerH} className="stroke-compute" strokeWidth={1} strokeDasharray="3 3" opacity={0.5} />
+      {/* the marker: where the sampling slider stands now, a short drop to the axis */}
+      <line x1={x(marker.xTarget)} x2={x(marker.xTarget)} y1={y(marker.accuracy)} y2={innerH} className="stroke-compute" strokeWidth={1} strokeDasharray="3 3" opacity={0.4} />
       <circle cx={x(marker.xTarget)} cy={y(marker.accuracy)} r={6} className="fill-compute stroke-canvas" strokeWidth={2} />
     </ChartFrame>
   );
@@ -479,7 +499,7 @@ function PythiaChart() {
       (s) =>
         `Pythia ${s.label}: from ${s.pts[0].y} percent at ${s.pts[0].x} to ${s.pts[s.pts.length - 1].y} percent at ${s.pts[s.pts.length - 1].x} (times ten to the eleven FLOPs)`,
     )
-    .join("; ")}. Only the budgets where more than one model was measured are shaded, into three bands, one per model, marking where that model is the most accurate: the 410M leads at small budgets, flattens near 60 percent, then the 2.8B takes over, and the 12B is ahead at the top of the measured range. Two grey strips mark the handovers, where the curves sit within the ${READ_OFF_TOLERANCE} point read-off tolerance and the crossing is bracketed rather than located; the second strip covers the whole 12B band.`;
+    .join("; ")}. Each model's curve is drawn bold only over the budgets where it is the most accurate: the 410M leads at small budgets, flattens near 60 percent, then the 2.8B takes over, and the 12B is ahead at the top of the measured range. Light dashed brackets mark the handovers, where the two leading curves sit within the ${READ_OFF_TOLERANCE} point read-off tolerance and the crossing is bracketed rather than located; the last bracket spans the whole 12B band.`;
 
   return (
     <ChartFrame
@@ -489,42 +509,25 @@ function PythiaChart() {
       xLabel="inference FLOPs per question (×10¹¹, log scale)"
       yLabel="GSM8K accuracy (%)"
     >
-      {/* the ownership bands: who is the best buy at each budget, drawn only
-          over the budgets where more than one model was measured */}
+      {/* each scale owns a band of the budget: the bold curve segments below
+          carry it, named here, with no background wash */}
       {bands.map((b) => (
-        <g key={`band${b.idx}-${b.x0}`}>
-          <rect
-            data-testid="ownership-band"
-            x={x(b.x0)}
-            y={0}
-            width={px(x(b.x1) - x(b.x0))}
-            height={innerH}
-            className={series[b.idx].band}
-            opacity={0.08}
-          />
-          <text
-            x={px((x(b.x0) + x(b.x1)) / 2)}
-            y={innerH - 8}
-            textAnchor="middle"
-            className={`${series[b.idx].text} text-[11px] font-semibold`}
-          >
-            {series[b.idx].label} leads
-          </text>
-        </g>
+        <text
+          key={`leadlabel${b.idx}-${b.x0}`}
+          data-testid="ownership-band"
+          x={px((x(b.x0) + x(b.x1)) / 2)}
+          y={innerH - 8}
+          textAnchor="middle"
+          className={`${series[b.idx].text} text-[11px] font-semibold`}
+        >
+          {series[b.idx].label} leads
+        </text>
       ))}
-      {/* the handovers: brackets, not rules. Across these the curves are
-          within the by-eye read-off, so the crossing is somewhere in here */}
+      {/* the handovers: a light dashed bracket, not a rule. Inside each the two
+          leading curves are within the by-eye read-off, so the crossing sits
+          somewhere between the pair rather than on a line. */}
       {handovers.map((h) => (
-        <g key={`handover${h.x0}`}>
-          <rect
-            data-testid="handover-strip"
-            x={x(h.x0)}
-            y={0}
-            width={px(x(h.x1) - x(h.x0))}
-            height={innerH}
-            className="fill-ink-muted"
-            opacity={0.12}
-          />
+        <g key={`handover${h.x0}`} data-testid="handover-strip">
           {[h.x0, h.x1].map((edge) => (
             <line
               key={`edge${edge}`}
@@ -535,7 +538,7 @@ function PythiaChart() {
               className="stroke-ink-muted"
               strokeWidth={0.75}
               strokeDasharray="3 3"
-              opacity={0.45}
+              opacity={0.4}
             />
           ))}
         </g>
@@ -571,6 +574,7 @@ function PythiaChart() {
       {bands.map((b, i) => (
         <path
           key={`lead${i}`}
+          data-testid="lead-segment"
           d={path(series[b.idx].pts)}
           fill="none"
           className={series[b.idx].stroke}
@@ -764,22 +768,45 @@ export function Page11() {
   const recordInteraction = useStore((s) => s.recordInteraction);
 
   const [bandKey, setBandKey] = useState<"hard" | "easy">("hard");
+  const [model, setModel] = useState<SmallModel>("3B");
   const [nIdx, setNIdx] = useState(PAGE11.sampleStops.length - 1);
 
   const band = PAGE11.bands[bandKey];
-  const marker = band.voteCurve[nIdx];
-  const vote16 = band.voteCurve[band.voteCurve.length - 1];
+  const vote = band.voteByModel[model];
+  const marker = vote[nIdx];
+  const vote16 = vote[vote.length - 1];
   const gapPts = Math.round((band.target.accuracy - marker.accuracy) * 100);
+  // best-of is the 3B's trained verifier (page 8); it applies only to the 3B.
+  const showBestOf = model === "3B" && band.bestOf !== null;
+  // does the selected model's pile hold the answer more often than the 7B just
+  // gets it? True for the 3B (both bands) and the 1.5B on hard; false for the
+  // 1.5B on easy, where the small model does not even reach the answer reliably.
+  const coversTarget = vote16.coverage > band.target.accuracy + 1e-9;
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
-      <h1 className="text-3xl font-bold text-ink">
-        <span className="font-mono text-ink-muted">{page.n}. </span>
-        {page.title}
-      </h1>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-xs uppercase tracking-wide text-ink-muted">
+            Act {page.act} · {ACTS[page.act].title}
+          </p>
+          <h1 className="text-3xl font-bold text-ink">
+            <span className="font-mono text-ink-muted">{page.n}. </span>
+            {page.title}
+          </h1>
+        </div>
+        <aside className="flex shrink-0 flex-col gap-1 rounded-lg border border-compute/40 bg-compute/5 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-compute">Reproduce it</p>
+          <a
+            href={`/notebooks/${PAGE11.download.slug}.zip`}
+            download
+            className="text-sm font-semibold text-compute underline underline-offset-2 hover:text-compute/80"
+          >
+            Download the notebook and traces
+          </a>
+          <p className="text-xs text-ink-muted">{PAGE11.download.sizeLabel}, REPLAY mode, no GPU</p>
+        </aside>
+      </div>
       <p className="max-w-2xl text-lg text-ink-muted">
         A bigger model and more thinking are{" "}
         <strong className="text-ink">two ways to spend the same FLOPs</strong> (floating-point
@@ -808,43 +835,76 @@ export function Page11() {
               <strong>it never reaches the black line</strong>, here or several times past it.
             </p>
 
-            <MeasuredGame band={band} nIdx={nIdx} />
+            <MeasuredGame band={band} model={model} nIdx={nIdx} />
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+              <Key shape="line" className="bg-ink-muted" label="a bigger model (scale up the parameters)" />
+              <Key shape="line" className="bg-compute" label={`the ${model}, thinking harder (more samples + a vote)`} />
+              <Key shape="line" className="bg-correct" label="coverage: the answer was in the pile (the shaded gap is what the vote throws away)" />
+              {showBestOf ? (
+                <Key shape="diamond" className="bg-wrong" label="best-of-16 (a trained verifier)" />
+              ) : null}
+            </div>
             <p className="text-xs text-ink-muted">
               measured on this deck&rsquo;s instrument: the hard band is pages 6 to 8&rsquo;s own
               100 MATH-500 level 4 to 5 problems, and the run reproduces their shipped numbers
-              exactly before it draws anything new (gate 1). FLOPs are counted 2 × parameters ×
+              exactly before it draws anything new (gate 1). FLOPs are counted 2 &times; parameters &times;
               tokens, from measured token counts.
             </p>
 
             <div className="flex flex-col gap-4 border-t border-dashed border-grid pt-3">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <p className="text-sm text-ink-muted">Problem difficulty</p>
-                <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
-                  {(["easy", "hard"] as const).map((k) => (
-                    <button
-                      key={k}
-                      type="button"
-                      aria-pressed={bandKey === k}
-                      onClick={() => {
-                        setBandKey(k);
-                        recordInteraction(PAGE_N);
-                      }}
-                      className={`rounded border px-3 py-1.5 text-sm capitalize ${
-                        bandKey === k
-                          ? "border-compute bg-compute/15 font-semibold text-ink"
-                          : "border-grid bg-surface-raised text-ink-muted"
-                      }`}
-                    >
-                      {k}
-                    </button>
-                  ))}
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <p className="text-sm text-ink-muted">Problem difficulty</p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Problem difficulty">
+                    {(["easy", "hard"] as const).map((k) => (
+                      <button
+                        key={k}
+                        type="button"
+                        aria-pressed={bandKey === k}
+                        onClick={() => {
+                          setBandKey(k);
+                          recordInteraction(PAGE_N);
+                        }}
+                        className={`rounded border px-3 py-1.5 text-sm capitalize ${
+                          bandKey === k
+                            ? "border-compute bg-compute/15 font-semibold text-ink"
+                            : "border-grid bg-surface-raised text-ink-muted"
+                        }`}
+                      >
+                        {k}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <p className="text-sm text-ink-muted">Which model votes</p>
+                  <div className="flex flex-wrap gap-2" role="group" aria-label="Which model votes">
+                    {(["1.5B", "3B"] as const).map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        aria-pressed={model === m}
+                        onClick={() => {
+                          setModel(m);
+                          recordInteraction(PAGE_N);
+                        }}
+                        className={`rounded border px-3 py-1.5 text-sm ${
+                          model === m
+                            ? "border-compute bg-compute/15 font-semibold text-ink"
+                            : "border-grid bg-surface-raised text-ink-muted"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <p className="basis-full text-xs text-ink-muted">
                   {band.label} problems, MATH-500 {band.levels}, n = {band.nItems}
                 </p>
               </div>
               <Slider
-                label="Test-time compute (samples the 3B votes over)"
+                label={`Test-time compute (samples the ${model} votes over)`}
                 min={0}
                 max={PAGE11.sampleStops.length - 1}
                 value={nIdx}
@@ -858,42 +918,61 @@ export function Page11() {
 
             <div className="rounded border-l-4 border-wrong bg-wrong/15 p-3 text-sm" role="status">
               <p className="font-semibold text-wrong">
-                vote@{marker.n}: {PAGE11.pct(marker.accuracy)}%, still {gapPts} point
+                {model} vote@{marker.n}: {PAGE11.pct(marker.accuracy)}%, still {gapPts} point
                 {gapPts === 1 ? "" : "s"} under the {band.target.label}&rsquo;s{" "}
                 {PAGE11.pct(band.target.accuracy)}%
               </p>
               <p className="mt-1 text-ink">
-                and now at <strong>{marker.xTarget.toFixed(1)}×</strong> its bill.{" "}
-                {band.bestOf
+                and now at <strong>{marker.xTarget.toFixed(1)}&times;</strong> its bill.{" "}
+                {showBestOf && band.bestOf
                   ? `Even a trained verifier (page 8) only ties it, at ${PAGE11.pct(band.bestOf.accuracy)}%. `
                   : ""}
                 No sample budget on this band crosses the line.
               </p>
             </div>
 
-            {/* the mechanism (B2): the bottleneck is selection, not coverage */}
+            {/* the mechanism (B2): the bottleneck is selection, not coverage. On the
+                1.5B easy band coverage itself falls below the target, so the copy adapts. */}
             <p className="border-t border-dashed border-grid pt-3 text-sm text-ink">
-              <strong>Why more samples do not cross:</strong> the bottleneck is not the thinking,
-              it is the picking. The dashed green line is{" "}
-              <strong className="text-ink">coverage</strong>: a correct answer is somewhere in the{" "}
-              {vote16.n} sampled chains{" "}
-              <strong className="text-ink">{PAGE11.pct(band.coverageAt16)}%</strong> of the time,
-              above the {band.target.label}&rsquo;s {PAGE11.pct(band.target.accuracy)}%. The chains
-              are not breaking; the reasoning is there. What fails is selection: voting returns that
-              answer only{" "}
-              <strong className="text-ink">{PAGE11.pct(vote16.accuracy)}%</strong> of the time.{" "}
-              <strong>
-                The answer is in the pile, and no rule we can run at answer time reliably grabs it.
-              </strong>
+              <strong>Why more samples do not cross:</strong>{" "}
+              {coversTarget ? (
+                <>
+                  the bottleneck is not the thinking, it is the picking. The dotted green line is{" "}
+                  <strong className="text-ink">coverage</strong>: a correct answer is somewhere in
+                  the {vote16.n} sampled chains{" "}
+                  <strong className="text-ink">{PAGE11.pct(vote16.coverage)}%</strong> of the time,
+                  above the {band.target.label}&rsquo;s {PAGE11.pct(band.target.accuracy)}%. The
+                  chains are not breaking; the reasoning is there. What fails is selection: voting
+                  returns that answer only{" "}
+                  <strong className="text-ink">{PAGE11.pct(vote16.accuracy)}%</strong> of the time.{" "}
+                  <strong>
+                    The answer is in the pile, and no rule we can run at answer time reliably grabs
+                    it.
+                  </strong>
+                </>
+              ) : (
+                <>
+                  for the {model} on easy problems it is not only the picking. Coverage, the dotted
+                  green line, reaches just{" "}
+                  <strong className="text-ink">{PAGE11.pct(vote16.coverage)}%</strong> in the{" "}
+                  {vote16.n} sampled chains, already below the {band.target.label}&rsquo;s{" "}
+                  {PAGE11.pct(band.target.accuracy)}%: the smaller model does not reliably reach the
+                  answer to begin with, and voting cashes only{" "}
+                  <strong className="text-ink">{PAGE11.pct(vote16.accuracy)}%</strong>.{" "}
+                  <strong>Scaling the parameters, not the samples, is what closes that gap.</strong>
+                </>
+              )}
             </p>
           </div>
         </section>
         <Note kicker="Try it">
           <p>
             Push <em>test-time compute</em> to 16 and watch the blue curve stall below the black
-            line, on {vote16.xTarget.toFixed(0)} times the bigger model&rsquo;s bill.
+            line.
           </p>
-          <p>Then switch to the easy band and try to cross there instead.</p>
+          <p>
+            Then switch bands, or to the <strong>1.5B</strong>, and watch it stall lower still.
+          </p>
         </Note>
 
         {/* Step 2 — the law, stated */}
@@ -901,11 +980,13 @@ export function Page11() {
           <h2 className="text-xl font-semibold text-ink">2. The published law, and its fine print</h2>
           <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-sm text-ink">
-              That was our own instrument, in 2026. The law that predicted a crossing is older:
-              Snell et al. 2024 measured it on models from before the reasoning-training recipes,
-              and found that guessing how hard a prompt is first, then choosing the strategy and
-              budget to match, can beat a bigger model at a matched bill. They call it
-              compute-optimal.
+              That was our own instrument, in 2026, and the result should surprise you: the
+              published record says a small model that thinks <em>can</em> out-buy a bigger one.
+              The rest of this page is that record, and the gap between it and what we measured.
+              Start with the law itself. Snell et al. 2024, on models from before the
+              reasoning-training recipes, found that guessing how hard a prompt is first, then
+              choosing the strategy and budget to match, can beat a bigger model at a matched bill.
+              They call it compute-optimal.
               <Cite n={REF.snell} /> Three numbers carry it:
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -961,28 +1042,28 @@ export function Page11() {
           <h2 className="text-xl font-semibold text-ink">3. Each scale owns a band of the budget</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Section 1&rsquo;s chart, measured. Same axes, and the same colour order smallest to
-              largest: three real models (
-              <strong className="text-ink">Pythia 410M, 2.8B, and 12B</strong>) on a growing GSM8K
-              sample budget under weighted majority voting.
-              <Cite n={REF.wu} /> The real family is wider than the game&rsquo;s: the 2.8B is about
-              7× the 410M and the 12B about 29×, so the colours carry rank here, not the
-              game&rsquo;s multiples, and the game&rsquo;s 14× dot has no counterpart on this
-              chart. Section 2 allocated by prompt; this allocates by budget. Each curve is drawn
-              bold only where that model is the compute-optimal buy, and the shading covers only
-              the budgets where more than one model was measured.
+              The law is not only Snell&rsquo;s claim; Wu et al. 2024 measured it. Three real
+              models (<strong className="text-ink">Pythia 410M, 2.8B, and 12B</strong>) on a growing
+              GSM8K sample budget under weighted majority voting: sampling the small one many times
+              beats sampling a big one a few times, and the crossings the law predicts show up in
+              the data.
+              <Cite n={REF.wu} /> This is a 2024-era family, and a wide one: the 2.8B is about 7×
+              the 410M and the 12B about 29×, so the colours carry rank, not fixed multiples.
+              Section 2 allocated by prompt; this allocates by budget. Each curve is drawn bold only
+              where that model is the compute-optimal buy, over the budgets where more than one
+              model was measured.
             </p>
             <PythiaChart />
             <figcaption className="text-sm text-ink-muted">
               On a small budget the <strong className="text-ink">410M model is the
               compute-optimal pick</strong>: sampling it many times beats sampling a big model a
               few times. Then every curve flattens. Once the 410M saturates near 60%, the 2.8B and
-              then the 12B pull ahead, so each scale owns a band of the budget axis, the same
-              handoff you steered through in section 1. The grey strips are those handoffs, and
-              they are wide: inside them the leading curves differ by less than the ±3 points this
-              figure was read to, so the crossing sits somewhere in the strip rather than on a
-              line. The second strip covers the whole 12B band, so the order of the handoffs is
-              what this chart shows, not the budget at which the 12B takes over.
+              then the 12B pull ahead, so each scale owns a band of the budget axis, shown by the
+              bold curve segments. The dashed brackets mark those handoffs, and they are wide:
+              inside them the leading curves differ by less than the ±3 points this figure was read
+              to, so the crossing sits somewhere in the bracket rather than on a line. The last
+              bracket spans the whole 12B band, so the order of the handoffs is what this chart
+              shows, not the budget at which the 12B takes over.
             </figcaption>
             <p className="text-xs text-ink-muted">
               read off the paper&rsquo;s figure by eye (±3 points) and replotted as accuracy; two
@@ -1042,7 +1123,10 @@ export function Page11() {
             4's job: better search still spends everything at answer time. */}
         <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            <strong className="text-ink">This page leaves two loose ends.</strong> The selection
+            <strong className="text-ink">So why did the crossing not appear for us?</strong> The
+            record above is real, but the law lives in a narrow window, where the model reaches the
+            answer sometimes but not reliably, and on a 2026 post-trained model that window has
+            shrunk toward the hardest problems. That leaves two loose ends. The selection
             wall: the answer is in the pile, but no rule we can run at answer time reliably grabs
             it, and past the hardest problems the pile stops holding it at all. And the waste:
             sampling, voting, and search all spend their compute at answer time and throw away the
@@ -1064,15 +1148,8 @@ export function Page11() {
           MATH-500 level 4 to 5 problems, reproduced to the digit before any new generation (gate
           1), plus a fresh 50-item easy band at levels 1 to 3. One family, one grader, one date, so
           the crossing&rsquo;s absence is an instance on a 2026 instrument, not a refutation of the
-          cited results, which is why sections 3 and 4 keep them as published.{" "}
-          <a
-            href={`/notebooks/${PAGE11.download.slug}.zip`}
-            className="text-compute underline"
-            download
-          >
-            Download the notebook and re-derive it ({PAGE11.download.sizeLabel})
-          </a>
-          .
+          cited results, which is why sections 3 and 4 keep them as published. The notebook that
+          produced this section is linked at the top of the page.
         </p>
         <p>
           <strong className="text-ink">Cited</strong>: the law panels in section 2 are Snell et

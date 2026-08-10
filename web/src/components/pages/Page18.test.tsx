@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { bernoulli, createRng } from "@/lib/rng";
+import { PAGE9, pct } from "@/lib/page09";
 import { Page18 } from "./Page18";
 
 const plantHint = () => fireEvent.click(screen.getByRole("switch", { name: /plant the hint/i }));
@@ -12,6 +13,70 @@ const draws = (seed: number, p: number, runs: number) => {
 };
 
 describe("Page 18 (can we trust the thoughts) component", () => {
+  it("opens on our own measurement, not the literature", () => {
+    // Page 18 was the deck's one page built entirely on other people's
+    // numbers. The lead is now page 9's run, so the borrowed numbers arrive
+    // as the escalation rather than the premise.
+    render(<Page18 />);
+    const lead = screen.getByText(/before the literature, our own run/i).closest("section")!;
+    expect(lead.textContent).toMatch(/Page 9/);
+    expect(lead.textContent).toMatch(PAGE9.run.model.split("/").pop()!);
+  });
+
+  it("takes every figure from page 9's loader, not a literal", () => {
+    // The numbers must move if page 9's run is replaced. Hardcoding them is the
+    // failure mode this asserts against.
+    render(<Page18 />);
+    const lead = screen.getByText(/before the literature, our own run/i).closest("section")!;
+    expect(lead.textContent).toContain(PAGE9.graders.stepsTotal.toLocaleString());
+    expect(lead.textContent).toContain(PAGE9.detection.nChainsUnreadable.toLocaleString());
+    expect(lead.textContent).toContain(pct(PAGE9.detection.shareChainsUnreadable, 1));
+    expect(lead.textContent).toContain(pct(PAGE9.graders.shareUnjudged, 1));
+    // Sanity: the shipped run's floors, so a silently emptied loader fails here.
+    expect(PAGE9.detection.shareChainsUnreadable).toBeGreaterThan(0.5);
+    expect(PAGE9.graders.shareUnjudged).toBeGreaterThan(0.9);
+  });
+
+  it("leads on whole chains and keeps the step-level share behind it", () => {
+    // The chain figure is the image ("two traces in three offer nothing to
+    // check") and the step figure is the measurement. Dropping the step share
+    // would invite "so a third of chains are checkable", which badly overstates
+    // it: the reachable third averages barely two checkable steps each.
+    render(<Page18 />);
+    const lead = screen.getByText(/before the literature, our own run/i).closest("section")!;
+    const chains = lead.textContent!.indexOf(pct(PAGE9.detection.shareChainsUnreadable, 1));
+    const steps = lead.textContent!.indexOf(pct(PAGE9.graders.shareUnjudged, 1));
+    expect(chains).toBeGreaterThan(-1);
+    expect(steps).toBeGreaterThan(chains);
+  });
+
+  it("says what unknown actually means, which is the first thing a reader asks", () => {
+    // "steps a checker cannot compute" reads as "our tool failed". It is not
+    // that: 'unknown' is the label for a step with no arithmetic claim in it.
+    render(<Page18 />);
+    const lead = screen.getByText(/before the literature, our own run/i).closest("section")!;
+    expect(lead.textContent).toMatch(/not the checker failing/i);
+    expect(lead.textContent).toMatch(/nothing it could check at all/i);
+    expect(lead.textContent).toMatch(/symbolic algebra/i);
+  });
+
+  it("keeps the instrument's limit and the trace's limit apart", () => {
+    // The whole point of leading on page 9 collapses if a reader files
+    // "unknown steps" and "unfaithful trace" as the same finding. One is
+    // a grader that cannot compute; the other is a trace that omits.
+    render(<Page18 />);
+    const lead = screen.getByText(/before the literature, our own run/i).closest("section")!;
+    expect(lead.textContent).toMatch(/limit of our instrument/i);
+    expect(lead.textContent).toMatch(/limit of the trace itself/i);
+    expect(lead.textContent).toMatch(/whether a step is wrong/i);
+    expect(lead.textContent).toMatch(/whether the steps are the reason/i);
+  });
+
+  it("says why the probe below needs a different method than page 9's checker", () => {
+    render(<Page18 />);
+    expect(screen.getByText(/no checker can run this one/i)).toBeInTheDocument();
+  });
+
   it("opens on the clean run: right answer, nothing for the monitor to flag", () => {
     render(<Page18 />);
     expect(screen.getByText(/✓ B, Earth/)).toBeInTheDocument();
@@ -153,5 +218,35 @@ describe("Page 18 (can we trust the thoughts) component", () => {
       .map((a) => a.getAttribute("href")!.slice(1))
       .filter((id) => !document.getElementById(id));
     expect(dangling).toEqual([]);
+  });
+
+  it("answers its own authored-probe disclosure with two measured chains", () => {
+    render(<Page18 />);
+    expect(screen.getByText(/The probe above is authored\. This is not\./i)).toBeInTheDocument();
+    const cards = screen.getAllByLabelText(/answer contradicts its own working/i);
+    expect(cards).toHaveLength(2);
+    for (const card of cards) {
+      expect(card).toHaveTextContent(/it answered/i);
+      expect(card).toHaveTextContent(/the answer is/i);
+    }
+  });
+
+  it("marks the value each chain computed and did not hand back", () => {
+    render(<Page18 />);
+    const cards = screen.getAllByLabelText(/answer contradicts its own working/i);
+    // The telescoping sum reaches 2 in its own last line and boxes 1.
+    expect(cards[0]).toHaveTextContent(/1 \+ 1 = 2/);
+    expect(cards[0]).toHaveTextContent(/it answered\s*1(?!\d)/);
+    // The geometry chain reaches 15R²/4 and boxes an expression in a, b and c.
+    expect(cards[1]).toHaveTextContent(/15R²\/4/);
+  });
+
+  it("keeps the measured chains as specimens, so the page's only rates stay the paper's", () => {
+    const { container } = render(<Page18 />);
+    const text = container.textContent ?? "";
+    expect(text).toMatch(/Specimens of a failure mode, not a measurement of how often it happens/i);
+    expect(text).toMatch(/this page.s only rates are Chen et al/i);
+    // And the point the cards are there to make: no motive is required.
+    expect(text).toMatch(/Unfaithfulness does not require one/i);
   });
 });

@@ -41,10 +41,56 @@ Pages 5 to 9 each ship the run that produced their numbers, as a zip under
 Page 10 ships a bundle that is **not** a run: `page-10-search-arm.zip` is the search arm
 written and packaged unrun, and the page's label promises the notebook rather than a result.
 Its tree is hand-authored and its bars are Yao et al.'s, so nothing on the page rests on it.
-Page 11 has no bundle at all, and likewise claims no measured result of its own.
+Page 11 ships `page-11-training-vs-scale.zip`, which **is** a run: arm 0's gate-1 re-derivation
+plus the easy-band, specialist and hard-band 1.5B arms it generated, 5,900 chains in
+`traces.jsonl`.
 
 `src/lib/notebookBundles.test.ts` checks the layout, replay mode and manifest of the page
-5 to 8 bundles. Pages 9 and 10 are not covered by it.
+5 to 8 and page 11 bundles. Pages 9 and 10 are not covered by it.
+
+## The specimens on pages 18 and 19
+
+`data/trace-specimens.json` is a third kind of file: not a digitized source, and not a run of
+ours either, but three chains **copied** out of page 11's published `traces.jsonl`. It carries no
+`citation` because there is nothing to cite, and no `manifest` because it measures nothing. Its
+provenance is its `source` block plus a `line_sha256` per chain, and the guarantee is
+`src/lib/specimens.test.ts`, which opens `page-11-training-vs-scale.zip` and asserts each chain is
+byte-identical to the line it names. `src/lib/specimens.ts` additionally refuses to load a quote
+that is not a verbatim substring of its trace, so a span edited for flow fails the build.
+
+All three are `Qwen2.5-Math-1.5B-Instruct` under its model card's CoT system prompt, greedy, cap
+2048, on pages 6 to 8's own hundred MATH-500 L4/5 items. They are specimens and never rates:
+three chains out of 2,550, chosen for what they show. Both pages say so on themselves, and
+neither derives a number from them. Why they were used instead of a fresh tool-use run is in
+`docs/page_19_tool_use_probe.md` §3.
+
+## Grader false negatives in `grade_answer`
+
+Recorded here because `reasoning_from_scratch.ch03.grade_answer` grades every measured page in
+the deck, and the rate is not zero.
+
+A sweep of all 5,900 chains in page 11's bundle found **three** answers scored wrong that are
+mathematically identical to the ground truth, every one a formatting miss:
+
+| model | ground truth | model's answer | difference | where it lands |
+|---|---|---|---|---|
+| Math-1.5B | `\begin{pmatrix} 1/5 \\ -18/5 \end{pmatrix}` | `\begin{pmatrix} \frac{1}{5} \\ -\frac{18}{5}\end{pmatrix}` | `1/5` vs `\frac{1}{5}` | hard-band greedy |
+| Math-1.5B | `(2,12) \cup (12,102)` | `(2, 12) \cup (12, 102)` | whitespace | hard-band greedy |
+| 1.5B-Instruct | `12\pi` | `12 \pi` | whitespace | one sampled draw of 16 |
+
+The first two land on `Qwen2.5-Math-1.5B-Instruct`, which is the model that answers in vectors
+and intervals often enough to be graded on them, and both fall in its hard-band greedy set. The
+effect: the specialist's hard-band greedy accuracy is **66%, not the 64%** its `derived.json`
+records. Page 11 does not plot the specialist in any case.
+
+The third arrived with the 2026-08 rebundle that sampled the 1.5B on the hard band. It is one
+draw of the sixteen on a single item, so it moves a pooled figure by well under a point and no
+greedy point at all. It is worth recording for what it says about the shape of the problem:
+the misses are notation and whitespace, not a property of one model.
+
+**The derived files are not being corrected.** They are a faithful record of what the grader
+returned on the run, and rewriting them would break the bit-exact gate-1 reproduction pages 6, 7
+and 8 are checked against. The correction lives here and in `src/lib/page11.ts`'s header.
 
 ## Known source conflicts to resolve against primary papers
 
