@@ -144,4 +144,14 @@ describe("Page 18 (can we trust the thoughts) component", () => {
     expect(note.textContent).toMatch(/Chen et al\. 2025/);
     expect(note.textContent).not.toMatch(/arXiv|25%|39%/);
   });
+
+  it("gives every numbered cite on the page a reference entry", () => {
+    render(<Page18 />);
+    // Cite renders an anchor to #ref-N and RefItem carries that id, so a cite
+    // with no entry is a link that jumps nowhere.
+    const dangling = Array.from(document.querySelectorAll('a[href^="#ref-"]'))
+      .map((a) => a.getAttribute("href")!.slice(1))
+      .filter((id) => !document.getElementById(id));
+    expect(dangling).toEqual([]);
+  });
 });

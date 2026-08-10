@@ -95,10 +95,22 @@ describe("Page 19 (the frontier) component", () => {
   it("keeps every reference note to a bare cite, as pages 3-8 do", () => {
     render(<Page19 />);
     const notes = screen.getAllByText("References").map((k) => k.closest("aside")!);
-    expect(notes.length).toBe(2);
+    expect(notes.length).toBe(3);
     for (const note of notes) {
       expect(note.textContent).not.toMatch(/arXiv|ICLR|COLM|NeurIPS|EMNLP|Table/);
     }
+  });
+
+  it("gives every numbered cite on the page a reference entry", () => {
+    render(<Page19 />);
+    // Cutting the "budgets that flex" step took Snell's reference note with it
+    // and left the capstone's adaptive cite pointing at nothing.
+    // Cite renders an anchor to #ref-N and RefItem carries that id, so a cite
+    // with no entry is a link that jumps nowhere.
+    const dangling = Array.from(document.querySelectorAll('a[href^="#ref-"]'))
+      .map((a) => a.getAttribute("href")!.slice(1))
+      .filter((id) => !document.getElementById(id));
+    expect(dangling).toEqual([]);
   });
 
   it("discloses that the capstone panel is a composite, not a live model", () => {

@@ -119,4 +119,14 @@ describe("Page 16 (the bill comes due) component", () => {
     expect(container.querySelector('a[href*="api-docs.deepseek.com"]')).toBeTruthy();
     expect(container.querySelectorAll('a[href*="arxiv.org"]').length).toBeGreaterThanOrEqual(4);
   });
+
+  it("gives every numbered cite on the page a reference entry", () => {
+    render(<Page16 />);
+    // Cite renders an anchor to #ref-N and RefItem carries that id, so a cite
+    // with no entry is a link that jumps nowhere.
+    const dangling = Array.from(document.querySelectorAll('a[href^="#ref-"]'))
+      .map((a) => a.getAttribute("href")!.slice(1))
+      .filter((id) => !document.getElementById(id));
+    expect(dangling).toEqual([]);
+  });
 });

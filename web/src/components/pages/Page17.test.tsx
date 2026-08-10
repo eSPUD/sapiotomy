@@ -147,4 +147,14 @@ describe("Page 17 (when reasoning breaks) component", () => {
       .filter((t) => t.includes("—") || t.includes("–"));
     expect(offenders).toEqual([]);
   });
+
+  it("gives every numbered cite on the page a reference entry", () => {
+    render(<Page17 />);
+    // Cite renders an anchor to #ref-N and RefItem carries that id, so a cite
+    // with no entry is a link that jumps nowhere.
+    const dangling = Array.from(document.querySelectorAll('a[href^="#ref-"]'))
+      .map((a) => a.getAttribute("href")!.slice(1))
+      .filter((id) => !document.getElementById(id));
+    expect(dangling).toEqual([]);
+  });
 });

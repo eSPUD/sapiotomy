@@ -381,16 +381,23 @@ export function Page19() {
           </div>
         </section>
 
-        <Note kicker="Try it">
-          <p>Turn N up: the bill climbs, the latency does not, because the samples run at once.</p>
-          <p>
-            Then switch the medium to latent: the bill and the latency collapse, and so does the
-            transcript.
-          </p>
-          <p>
-            Then look for a setting where nothing is given up. There isn&apos;t one.
-          </p>
-        </Note>
+        <div className="flex flex-col gap-6">
+          <Note kicker="Try it">
+            <p>Turn N up: the bill climbs, the latency does not, because the samples run at once.</p>
+            <p>
+              Then switch the medium to latent: the bill and the latency collapse, and so does the
+              transcript.
+            </p>
+            <p>
+              Then look for a setting where nothing is given up. There isn&apos;t one.
+            </p>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
+              Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
+            </RefItem>
+          </Note>
+        </div>
 
         {/* The close: page 2's question, answered in halves */}
         <section className="flex min-w-0 flex-col gap-3">
