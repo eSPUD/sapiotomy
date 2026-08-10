@@ -2,14 +2,14 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Act 3 (pages 15–19)", () => {
-  test("Page 15: the FrontierMath case reveals its coordinates on a guess", async ({ page }) => {
+  test("Page 15: the FrontierMath case reveals its conditions on a guess", async ({ page }) => {
     await page.goto("/p/15");
     // Opens on the o1 case with both quote-true headlines.
     await expect(page.getByText(/o1 scores 74\.4% on AIME 2024/)).toBeVisible();
     await page.getByRole("button", { name: "o3 on FrontierMath" }).click();
     await expect(page.getByText(/o3 scores 25\.2% on FrontierMath/)).toBeVisible();
     await page.getByRole("button", { name: "whose harness scored it" }).click();
-    await expect(page.getByText("all four coordinates at once")).toBeVisible();
+    await expect(page.getByText("all four conditions at once")).toBeVisible();
     await expect(page.getByText(/180-problem 2024-11 version/)).toBeVisible();
     await expect(page.getByText(/290-problem 2025-02 set/)).toBeVisible();
   });

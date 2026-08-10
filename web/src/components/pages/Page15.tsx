@@ -6,9 +6,9 @@
  * makes or weighs ("o1 reasons", "R1 matches it", "the collapse is an
  * artifact") arrives as a benchmark score, so before weighing any of them the
  * reader needs the one intuition headlines strip away: a score is not a
- * property of a model. It is a point with four coordinates (model variant,
+ * property of a model. It is a number plus the conditions it was taken under (model variant,
  * version of the test, harness, thinking budget), and the headline keeps the
- * number while dropping the coordinates.
+ * number while dropping the conditions.
  *
  * THE SPINE (2026-08-09 rework, docs/page_15_visxai_rework.md). The page used to
  * be three lessons that shared a subject: a checklist, a mechanism, a history.
@@ -22,7 +22,7 @@
  *   1. The courtroom of headlines. Three real cases, each a pair of
  *      quote-true headlines about the same model on the same test that
  *      disagree wildly (o1's 74.4 vs 93 on AIME, GPT-4o's 12 vs 9.3 on AIME,
- *      o3's 25.2 vs 10 on FrontierMath). The reader guesses which coordinate
+ *      o3's 25.2 vs 10 on FrontierMath). The reader guesses which condition
  *      moved, then reveals the two receipts with the moved rows flagged.
  *      Page 13 already teaches WHERE o1's three numbers come from (its
  *      waterfall: chain, vote, re-ranker); this page teaches what their
@@ -44,7 +44,7 @@
  *      swept two MATH-500 difficulty bands on one family under identical
  *      settings (greedy, cap 2048, one grader, one seed), and nothing draws the
  *      token counts underneath its FLOPs price. Pairing each model's two greedy
- *      points moves exactly one coordinate, which problems were asked, and
+ *      points moves exactly one condition, which problems were asked, and
  *      every model in the family pays roughly twice the tokens for 28 to 34
  *      points less accuracy. That is the price of one harder rung, and a
  *      benchmark ladder is the same move repeated.
@@ -60,7 +60,7 @@
  *      the metric's name (Minerva's MATH headline was maj1@64 = 50.3, with
  *      pass@1 = 33.6 in the same table); reasoning models moved it inside
  *      the product and the metric's name stopped carrying it. Close: put the
- *      coordinates back, and note the one coordinate with a meter (the
+ *      conditions back, and note the one condition with a meter (the
  *      handoff to page 16's bill).
  *
  * This replaces the earlier score-dashboard revision of this page (a
@@ -75,7 +75,7 @@
  * Data: o1 trio and GPT-4o baseline from data/o1-scaling.json fit params,
  * the same source page 13 prints, so the two pages cannot drift; the other
  * case numbers mirror data/benchmark-scoreboard.json. All numbers verbatim
- * from the cited reports and pinned in the test suite; the coordinate rows
+ * from the cited reports and pinned in the test suite; the condition rows
  * paraphrase the same reports' own disclosed settings.
  *
  * ARC-AGI is deliberately absent: its story is the price tag, and page 16
@@ -104,7 +104,17 @@ const PAGE_N = 15;
 const P = curves.o1Scaling.fit!.params;
 
 /** Page 15's references, numbered in order of first appearance. */
-const REF = { openai: 1, deepseek: 2, frontiermath: 3, epoch: 4, gsm8k: 5, math: 6, gpqa: 7, minerva: 8 } as const;
+const REF = {
+  openai: 1,
+  deepseek: 2,
+  frontiermath: 3,
+  epoch: 4,
+  gsm8k: 5,
+  math: 6,
+  gpqa: 7,
+  snell: 8,
+  minerva: 9,
+} as const;
 
 /** What each window state means for the reader, spelled out. */
 const STATE_CHIP = {
@@ -114,9 +124,23 @@ const STATE_CHIP = {
 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+function Note({
+  kicker,
+  bottom = false,
+  children,
+}: {
+  kicker: string;
+  /** Sit at the foot of the sidenote column instead of the top of the row. The
+   *  house position for a References note beside a final step (page 2's). */
+  bottom?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside
+      className={`flex flex-col gap-2 text-sm text-ink-muted ${
+        bottom ? "lg:mt-auto lg:self-end" : "lg:pt-9"
+      }`}
+    >
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -254,10 +278,10 @@ const CASES: HeadlineCase[] = [
     },
     lesson: (
       <>
-        The dispute that ran through the AI press for a spring, resolved by coordinates: every one
+        The dispute that ran through the AI press for a spring, resolved by conditions: every one
         of them moved at once, and the test&apos;s funder was the scorer.
         <Cite n={REF.frontiermath} />
-        <Cite n={REF.epoch} /> Neither number is a lie. Without its coordinates, neither is a
+        <Cite n={REF.epoch} /> Neither number is a lie. Without its conditions, neither is a
         measurement.
       </>
     ),
@@ -401,14 +425,14 @@ export function Page15() {
   const pick = picks[caseKey];
   const revealed = pick !== undefined;
 
-  /* "and nothing else" would be an assertion about every coordinate the two
+  /* "and nothing else" would be an assertion about every condition the two
      reports did not print. For the GPT-4o pair in particular, nobody here has
      opened the R1 paper's eval appendix to confirm DeepSeek scored the same
      15-problem AIME 2024 set OpenAI did, and if it did not, the taught answer
      is wrong. "as far as either report says" is what the page can support. */
   const movedText =
     current.moved.length === COORDS.length
-      ? "all four coordinates at once"
+      ? "all four conditions at once"
       : `${coordLabel(current.moved[0])}, as far as either report says`;
   const verdictPrefix =
     pick === undefined || pick === "shown"
@@ -441,17 +465,10 @@ export function Page15() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Pages 13 and 14 argued in benchmark scores, and the four pages left will spend them: 16
-        bills you for them, 17 shows you where more thinking backfires, and the last two ask what
-        a score was ever evidence of. So learn what a score is first.{" "}
-        <strong className="text-ink">A score is not a property of a model.</strong> It is a point
-        with <strong className="text-ink">four coordinates</strong>: which model variant, which
-        version of the test, whose harness scored it, and how much thinking was bought. A headline
-        keeps the number and drops the coordinates. This page is where you learn to put them back,
-        and then to ask the harder question underneath them:{" "}
-        <strong className="text-ink">whether the test could see anything at all</strong>. A
-        benchmark is an instrument with a window, it shuts three ways, and holding it open gets
-        more expensive every year.
+        The same model, the same test, the same month. 74.4% vs 93%, and both are true. What
+        gives?{" "}
+        <strong className="text-ink">A score is not a property of a model</strong>; it is a number
+        plus the conditions it was taken under, and headlines like to print the number alone.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -513,9 +530,9 @@ export function Page15() {
                 </span>
                 , which on this page means every number in them is lifted verbatim from the cited
                 report. The sentence around the number is ours, written the way a headline would
-                carry it. <strong>Which coordinate moved?</strong>
+                carry it. <strong>Which condition moved?</strong>
               </p>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Which coordinate moved?">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Which condition moved?">
                 {COORDS.map((c) => (
                   <button
                     key={c.key}
@@ -555,7 +572,7 @@ export function Page15() {
                       <thead>
                         <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
                           <th scope="col" className="py-1.5 pr-3 font-semibold">
-                            coordinate
+                            condition
                           </th>
                           <th scope="col" className="py-1.5 pr-3 font-semibold">
                             the {current.a.tag} headline
@@ -593,10 +610,10 @@ export function Page15() {
                     </table>
                   </div>
                   <p className="text-sm text-ink">{current.lesson}</p>
-                  <p className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
-                    Keep an eye on the second coordinate. A different version of a test is not
-                    just a different problem count: a version published after a model trained is
-                    a different instrument, and section 2 is about what that does.
+                  <p className="rounded-lg border-l-4 border-compute bg-compute/10 p-3 text-sm text-ink">
+                    <strong>Watch the second condition.</strong> A different version of a test is
+                    not just a different set of questions. A version published after a model
+                    trained is a different test entirely, and section 2 is about what that does.
                   </p>
                 </>
               ) : null}
@@ -604,13 +621,29 @@ export function Page15() {
           </div>
         </section>
 
-        <Note kicker="The rule">
-          <p>Guess before you reveal.</p>
-          <p>
-            All six headlines on this page are quote-true. That is the problem: a number with its
-            coordinates filed off can say almost anything.
-          </p>
-        </Note>
+        <div className="flex flex-col gap-6 lg:gap-0">
+          <Note kicker="The rule">
+            <p>Guess before you reveal.</p>
+            <p>
+              All six headlines on this page are quote-true. That is the problem: a number with
+              its conditions filed off can say almost anything.
+            </p>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.openai} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
+              OpenAI 2024, the o1 and o3 announcements.
+            </RefItem>
+            <RefItem n={REF.deepseek} href="https://arxiv.org/abs/2501.12948">
+              DeepSeek-AI 2025.
+            </RefItem>
+            <RefItem n={REF.frontiermath} href="https://arxiv.org/abs/2411.04872" preprint>
+              Glazer et al. 2024, <em>FrontierMath</em>.
+            </RefItem>
+            <RefItem n={REF.epoch}>
+              Epoch AI and TechCrunch 2025, on the FrontierMath dispute.
+            </RefItem>
+          </Note>
+        </div>
 
         {/* Step 2 — why tests die (authored simulation) */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -622,26 +655,26 @@ export function Page15() {
           </h2>
           <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink">
-              A benchmark is a measuring instrument, and an instrument has a{" "}
-              <strong>window</strong>. Slide the frontier past four stylized tests and read each
-              one&apos;s verdict: below its window every model fails (no signal), inside it the
-              same five models spread out (signal), past it everyone passes (no signal again).
+              A test is only useful while it can tell the models apart. Too hard and everyone
+              fails it, too easy and everyone passes it, and either way the scoreboard stops
+              telling you anything. Drag the slider to make the models better, and watch four
+              tests go from too hard, to useful, to too easy.
             </p>
             <p className="text-sm text-ink">
-              A window shuts three ways. Two of them are on this slider:{" "}
-              <strong>the floor</strong>, where nothing scores, and <strong>the ceiling</strong>,
-              where everything does. The third does not live on this axis at all, and the slider
-              cannot show it. It is underneath the figure.
+              There are <strong>three ways</strong> a test stops being useful, and two of them are
+              on this slider: everyone fails, or everyone passes. The third has nothing to do with
+              how good the models are, so no amount of dragging will show it. That one is below
+              the figure.
             </p>
             <p className="text-sm text-ink-muted">
               {/* 15.5: the axis had no referent at all, and "where are we today?"
                   is the first thing a reader asks a capability slider. Any dated
                   answer rots inside a year, so the anchor is ordinal and reads
                   off the rows themselves. */}
-              Do not look for today&apos;s position on this axis; there is no honest one to mark,
-              and any number written here would be wrong within a year. Read it as an ordering
-              instead. <strong className="text-ink">Today is always wherever the newest test
-              still has a spread</strong>, and the tests above it have already gone blind.
+              Do not look for today&apos;s position on this slider. There is no honest place to
+              mark it, and any mark would be wrong within a year. Read it as an order instead:{" "}
+              <strong className="text-ink">today is always wherever the newest test still
+              works</strong>, and everything above it has already been passed.
             </p>
 
             <Slider
@@ -713,53 +746,66 @@ export function Page15() {
             <p aria-live="polite" className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
               {allBlind ? (
                 <>
-                  <strong>Every test here has gone blind.</strong> The scoreboard now reads
-                  100 across the board and says nothing. The only fix is a harder test:{" "}
-                  <strong>moving the goalposts is the system working.</strong>
+                  <strong>Every test here is now too easy.</strong> The scoreboard reads 100
+                  across the board and tells you nothing. The only fix is a harder test, which is
+                  why <strong>moving the goalposts is the system working.</strong>
                 </>
               ) : (
                 <>
-                  Tests that can currently see the frontier: <strong>{readable} of {rows.length}</strong>.
-                  A score only means something while its test is in the window.
+                  Tests still telling these models apart:{" "}
+                  <strong>{readable} of {rows.length}</strong>. A score only means something while
+                  its test is one of those.
                 </>
               )}
             </p>
 
             <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
-              The tests above are stylized; difficulties and spreads are authored for teaching. The
-              structure is the history, though: GSM8K, MATH&apos;s gold-medalist line, GPQA&apos;s
-              PhD bar and AIME 2024 each rode this arc from floor to ceiling, each ceiling arriving
-              faster than the last, GSM8K&apos;s before the first commercial reasoning model
-              shipped.
+              The four tests above are invented, and their difficulties are chosen to teach. What
+              is not invented is the pattern. Grade-school word problems, competition maths, and a
+              set of questions written to be hard for PhDs have all made this trip, from nobody
+              can pass it to everybody can, and each one made it faster than the test before.
               <Cite n={REF.gsm8k} />
               <Cite n={REF.math} />
-              <Cite n={REF.gpqa} /> And new tests are born at the floor on purpose: FrontierMath
-              opened with every frontier model under 2%.
-              <Cite n={REF.frontiermath} /> A test at either edge of its window measures nothing,
-              so <strong className="text-ink">the moving goalposts are the system working</strong>:
-              retiring a blind test is the honest move.
+              <Cite n={REF.gpqa} /> New tests are built to be nearly impossible on purpose:
+              FrontierMath launched with every model on earth scoring under 2%.
+              <Cite n={REF.frontiermath} />
             </figcaption>
-            <p className="rounded border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              <strong>The third closer: familiarity.</strong> A benchmark published before the
-              models trained is a benchmark the models may have read, and no amount of sliding
-              the frontier reveals it. A test can sit dead centre in its window on this figure
-              and still be scoring recall rather than reasoning. Page 17 puts a number on it: on
-              AIME 2025, released after these models trained, reasoning models scored well below
-              their averages on the older years. And this one reaches us too. The hundred problems
-              underneath Act 2, and underneath the next section, come from a test set published in
-              2021, which is inside the training data of every model in this deck. We cannot say by
-              how much that flatters our own numbers either.
-            </p>
           </figure>
+
+          <p className="text-ink">
+            <strong className="text-ink">The third way is different.</strong> A test written
+            before a model was trained is a test the model may already have read. Nothing on that
+            slider will reveal it: a test can look perfectly useful up there and still be
+            rewarding memory instead of reasoning. Page 17 puts a number on it, on an exam
+            released after these models finished training.
+          </p>
+          <p className="text-ink">
+            And it reaches us. The hundred problems under Act 2, and under the next section, come
+            from a set published in 2021, which is inside the training data of every model in this
+            deck. We cannot tell you how much that flatters our own numbers either.
+          </p>
         </section>
 
-        <Note kicker="How to read">
-          <p>Slide the frontier; watch which tests can still see it.</p>
-          <p>
-            A benchmark measures only while the frontier is inside its window. Death by ceiling is
-            success, and it says nothing about where any real test sits the day you read this.
-          </p>
-        </Note>
+        <div className="flex flex-col gap-6 lg:gap-0">
+          <Note kicker="How to read">
+            <p>Drag the slider; watch which tests still tell the models apart.</p>
+            <p>
+              A test going out of use because everyone passes it is a success, not a scandal. The
+              four here are invented, and say nothing about where any real test sits today.
+            </p>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.gsm8k} href="https://arxiv.org/abs/2110.14168">
+              Cobbe et al. 2021, <em>GSM8K</em>.
+            </RefItem>
+            <RefItem n={REF.math} href="https://arxiv.org/abs/2103.03874">
+              Hendrycks et al. 2021, <em>MATH</em>.
+            </RefItem>
+            <RefItem n={REF.gpqa} href="https://arxiv.org/abs/2311.12022">
+              Rein et al. 2023, <em>GPQA</em>.
+            </RefItem>
+          </Note>
+        </div>
 
         {/* Step 3 — what the window costs (measured, page 11's run) */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -771,10 +817,12 @@ export function Page15() {
           </h2>
           <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink">
-              Every rung of the ladder costs more thinking than the last, and that is the part a
-              scoreboard never prints. Here is one rung, measured: the same three models asked the
-              easy half of MATH-500, then the hard half, with{" "}
-              <strong>only the problems changed</strong>.
+              A harder question does not just get answered wrong more often.{" "}
+              <strong>It gets answered at greater length</strong>: more thinking spent, less
+              accuracy returned. It is why the right amount of thinking to buy depends on the
+              question you are buying it for.
+              <Cite n={REF.snell} /> Here is one step of that, measured: the same three models
+              asked the easy half of MATH-500, then the hard half, with only the problems changed.
             </p>
 
             <PriceChart />
@@ -800,61 +848,62 @@ export function Page15() {
             </p>
 
             <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
-              Why two halves of one test, rather than MATH-500 then AIME then something at the
-              frontier? Because those differ in prompt, grader and answer format all at once, and
-              section 1 is about what happens to a number carried across that gap.{" "}
-              <strong className="text-ink">One rung measured honestly beats a ladder nobody can
-              read.</strong> Page 11&apos;s measured run, replayed here rather than generated
-              again: greedy, cap 2,048 tokens, one grader, one family.
+              Act 2 sold you this trade running the other way: spend more tokens, buy more
+              accuracy. The arrows are what happens when the question gets harder instead. The
+              model spends the tokens anyway and does not get the accuracy, so{" "}
+              <strong className="text-ink">difficulty charges you twice</strong>, once in what an
+              attempt costs and once in what it fails to buy. Page 11&apos;s measured run,
+              replayed here rather than generated again: greedy, cap 2,048 tokens, one grader,
+              one family.
             </figcaption>
           </figure>
         </section>
 
-        <Note kicker="The move">
-          <p>Follow one arrow from its hollow tail to its head.</p>
-          <p>
-            Right is more thinking bought; down is less accuracy returned. Three models, three
-            arrows, one direction.
-          </p>
-        </Note>
+        <div className="flex flex-col gap-6 lg:gap-0">
+          <Note kicker="The move">
+            <p>Follow one arrow from its hollow tail to its head.</p>
+            <p>
+              Right is more thinking bought; down is less accuracy returned. Three models, three
+              arrows, one direction.
+            </p>
+          </Note>
+          <Note kicker="Limits">
+            <p>
+              This is one step in difficulty, not a whole ladder; reading the frontier off it is
+              extrapolation. The two halves were run separately rather than in one execution, and
+              the easy half has {PAGE15_PRICE.bands.easy.n} problems against the hard half&apos;s{" "}
+              {PAGE15_PRICE.bands.hard.n}. A fourth model in the run, a maths specialist, was
+              measured on the easy half only and is left out rather than drawn with a hole.
+            </p>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
+              Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>, ICLR 2025: the
+              compute worth spending depends on the question&apos;s difficulty.
+            </RefItem>
+          </Note>
+        </div>
 
         {/* Step 4 — the knob was never new */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">4. Put the coordinates back</h2>
-          <p className="text-ink-muted">
-            The thinking-budget coordinate is not new; what changed is where it hides.
+          <h2 className="text-xl font-semibold text-ink">4. Put the conditions back</h2>
+          <p className="text-ink">
+            <strong className="text-ink">The thinking budget used to travel with the score.</strong>{" "}
+            In 2022 it was written into the metric&apos;s own name. Minerva&apos;s celebrated MATH
+            result was <code className="rounded bg-surface-raised px-1 text-[13px]">maj1@64 = 50.3%</code>,
+            and the name says what it is: a majority vote over 64 tries. The single-try{" "}
+            <code className="rounded bg-surface-raised px-1 text-[13px]">pass@1 = 33.6%</code> sat
+            in the same table, sixteen points below.
+            <Cite n={REF.minerva} /> You could not quote the good number without also quoting how
+            much thinking bought it.
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-lg border-l-4 border-grid bg-surface p-4 text-sm text-ink">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                2022: the knob in the metric&apos;s name
-              </p>
-              <p className="mt-2">
-                Minerva&apos;s celebrated MATH score was written{" "}
-                <code className="rounded bg-surface-raised px-1 font-mono text-[13px]">
-                  maj1@64 = 50.3%
-                </code>
-                : majority vote over 64 samples, says the name. The single-try{" "}
-                <code className="rounded bg-surface-raised px-1 font-mono text-[13px]">
-                  pass@1 = 33.6%
-                </code>{" "}
-                sat in the same table.
-                <Cite n={REF.minerva} /> The number and its budget traveled together.
-              </p>
-            </div>
-            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-sm text-ink">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                2024 on: the knob in the product
-              </p>
-              <p className="mt-2">
-                Reasoning models moved the budget inside: an effort setting, a token allowance, a
-                hidden chain.
-                <Cite n={REF.openai} /> The metric&apos;s name stopped carrying it, so the setting
-                lives in the fine print. Fine print rarely survives retelling; the number alone
-                always does.
-              </p>
-            </div>
-          </div>
+          <p className="text-ink">
+            <strong className="text-ink">Reasoning models moved it inside the product.</strong> An
+            effort setting, a token allowance, a hidden chain.
+            <Cite n={REF.openai} /> The metric&apos;s name stopped carrying any of it, so the
+            setting moved into the fine print, and fine print rarely survives being retold. The
+            number alone always does.
+          </p>
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             So a score is a reading, not a property. When the next one lands, ask five questions.
             Four of them locate the reading: which model variant, which version of the test, whose
@@ -868,51 +917,12 @@ export function Page15() {
           </div>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.openai} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
-            OpenAI 2024, the o1 and o3 announcements.
-          </RefItem>
-          <RefItem n={REF.deepseek} href="https://arxiv.org/abs/2501.12948">
-            DeepSeek-AI 2025.
-          </RefItem>
-          <RefItem n={REF.frontiermath} href="https://arxiv.org/abs/2411.04872" preprint>
-            Glazer et al. 2024, <em>FrontierMath</em>.
-          </RefItem>
-          <RefItem n={REF.epoch}>
-            Epoch AI and TechCrunch 2025, on the FrontierMath dispute.
-          </RefItem>
-          <RefItem n={REF.gsm8k} href="https://arxiv.org/abs/2110.14168">
-            Cobbe et al. 2021, <em>GSM8K</em>.
-          </RefItem>
-          <RefItem n={REF.math} href="https://arxiv.org/abs/2103.03874">
-            Hendrycks et al. 2021, <em>MATH</em>.
-          </RefItem>
-          <RefItem n={REF.gpqa} href="https://arxiv.org/abs/2311.12022">
-            Rein et al. 2023, <em>GPQA</em>.
-          </RefItem>
+        <Note kicker="References" bottom>
           <RefItem n={REF.minerva} href="https://arxiv.org/abs/2206.14858">
             Lewkowycz et al. 2022, <em>Minerva</em>.
           </RefItem>
         </Note>
       </div>
-
-      <p className="text-xs text-ink-muted">
-        every published number on this page is transcribed verbatim from the cited report, and the
-        headline sentence carrying it is written for this page · announcement figures (o3,
-        FrontierMath) are vendor-reported and not peer-reviewed; the coordinate rows
-        paraphrase the same reports&apos; own disclosed settings, and the case numbers are pinned in
-        the test suite · section 2 is an authored simulation (no real benchmark&apos;s numbers),
-        its shape pinned in the test suite · section 3 is measured by us and replayed from page
-        11&apos;s committed run rather than generated again, its readings pinned in the test
-        suite: {PAGE15_PRICE.bands.easy.n} items at {PAGE15_PRICE.bands.easy.levels} against{" "}
-        {PAGE15_PRICE.bands.hard.n} at {PAGE15_PRICE.bands.hard.levels}, so the two bands are two
-        runs on one instrument rather than one execution, and their item counts differ; page 11
-        prices these same runs in FLOPs, and this is the raw meter reading underneath that price;
-        a math-specialist 1.5B in the run was measured on the easy band only and is left out
-        rather than drawn with a hole; reading a whole benchmark ladder off two rungs is
-        extrapolation · ARC-AGI is missing on purpose: its story is the price tag, and page 16
-        tells it with a dollar axis
-      </p>
 
       <PageNav n={PAGE_N} />
     </article>
