@@ -1,10 +1,10 @@
 /**
- * The 19-page route map for *The Story of Inference-Time Scaling*.
+ * The 16-page route map for *The Story of Inference-Time Scaling*.
  *
  * Three Acts (Nicky Case's "this happens, THEREFORE that, BUT that…"):
  *   Act 1 — Building Intuition (pages 1–4)
  *   Act 2 — The Toolbox       (pages 5–11)
- *   Act 3 — Frontier & Caveats(pages 12–19)
+ *   Act 3 — Frontier & Caveats(pages 12–16)
  *
  * The seam is 11|12, set by review 2026-07-30 against the act definitions the
  * author states: Act 2 is "thinking longer, the searching algorithms, more
@@ -18,12 +18,19 @@
  * 5–12/13–19 (shipped, put STaR in the toolbox) and 5–10/11–19 (planning/
  * act3_plan.md, which weights page 11's two-axis setup for page 13 over its
  * own adaptive-allocation content and opens Act 3 on a page with no frontier
- * model on it).
+ * model on it). Both are recorded in the old 19-page numbering.
  *
- * The deck ends at 19. Two pages were cut on 2026-07-30: 20 ("You Be the
+ * The deck ends at 16. Six pages have been cut. On 2026-07-30, 20 ("You Be the
  * Judge", the Illusion-of-Thinking debate) and 21 ("The Grand Sandbox + Your
- * Toolkit"). Do not renumber the survivors to fill the gap; the 1-19 numbering
- * is what every cross-page reference in the deck is written against.
+ * Toolkit"); both sat off the end, so no survivor moved. On 2026-08-10, four
+ * more: 15 ("The Scoreboard"), 16 ("The Bill Comes Due"), 18 ("Can We Trust the
+ * Thoughts?") and 19 ("The Frontier"). That cut took a bite out of the middle of
+ * Act 3, so its one survivor did move: old 17 ("When Reasoning Breaks") is now
+ * 15. Page 16 ("Wrap-Up") was written the same day to close the deck the cut
+ * had left ending on a caveat: it is the only page that draws every lever on
+ * one axis, plus a twelve-question concept check. Every cross-page reference in
+ * the app is written against the 1-16 numbering. docs/ and planning/ predate
+ * the cut and still speak in the old numbers.
  *
  * Titles/concepts are drawn from InferenceTimeScaling_Explainable.md §C.
  * Routes are stubs in M0; each page is built in a later milestone.
@@ -43,7 +50,7 @@ export interface PageMeta {
 export const ACTS: Record<Act, { title: string; range: string }> = {
   1: { title: "Building Intuition", range: "Pages 1–4" },
   2: { title: "The Toolbox", range: "Pages 5–11" },
-  3: { title: "Frontier & Caveats", range: "Pages 12–19" },
+  3: { title: "Frontier & Caveats", range: "Pages 12–16" },
 };
 
 export const PAGES: PageMeta[] = [
@@ -61,11 +68,8 @@ export const PAGES: PageMeta[] = [
   { n: 12, slug: "star-self-improvement", title: "Teaching Models to Reason: STaR and Self-Improvement", act: 3, concept: "Generate rationales, keep only the ones that reach the right answer, fine-tune on them, repeat: the model becomes its own teacher — for exactly as long as an external check filters what it studies.", milestone: "M4" },
   { n: 13, slug: "frontier-reasoners-o1", title: "Frontier Reasoners I: o1, o3, and the Two-Axis Scaling Curve", act: 3, concept: "The first commercial model trained by RL to reason in a long private chain: accuracy climbs log-linearly with train-time RL compute and with test-time thinking, and the chain itself is hidden.", milestone: "M5" },
   { n: 14, slug: "frontier-reasoners-deepseek-r1", title: "Frontier Reasoners II: DeepSeek-R1, GRPO, and the “Aha Moment”", act: 3, concept: "Open weights answer the black box: reward only verifiable right answers (GRPO) and the pausing and self-correcting emerge on their own — then get distilled into models 1.5B–70B.", milestone: "M4" },
-  { n: 15, slug: "the-scoreboard", title: "The Scoreboard: Benchmarks That Track Reasoning", act: 3, concept: "A score is not a property of a model: it is a point with four coordinates (model variant, test version, harness, thinking budget), and the headline drops the coordinates. And a benchmark is an instrument with a window: born at the floor, dead at the ceiling, which is why the goalposts must keep moving.", milestone: "M5" },
-  { n: 16, slug: "bill-comes-due", title: "The Bill Comes Due: Economics and Diminishing Returns", act: 3, concept: "Thinking longer is metered: when does spending compute at answer time beat retraining, and where does it become uneconomical?", milestone: "M5" },
-  { n: 17, slug: "when-reasoning-breaks", title: "When Reasoning Breaks: Self-Correction, Verifier Reliability, Overthinking", act: 3, concept: "More thinking can make things worse: unaided self-correction degrades answers, longer reasoning can subtract, and the verifiers doing the rescuing are fallible themselves.", milestone: "M5" },
-  { n: 18, slug: "trust-the-thoughts", title: "Can We Trust the Thoughts? Faithfulness, Monitorability, and Safety", act: 3, concept: "The visible chain of thought may not be the real reason for the answer, and optimizing the trace teaches models to hide misbehavior instead of dropping it.", milestone: "M5" },
-  { n: 19, slug: "the-frontier", title: "The Frontier: Latent Reasoning, Adaptive Compute, and Agents", act: 3, concept: "Beyond token-by-token thought: silent latent reasoning, budgets that flex with difficulty, and reasoning that acts — plus what each costs in readability.", milestone: "M5" },
+  { n: 15, slug: "when-reasoning-breaks", title: "When Reasoning Breaks: Self-Correction, Verifier Reliability, Overthinking", act: 3, concept: "More thinking can make things worse: unaided self-correction degrades answers, longer reasoning can subtract, and the verifiers doing the rescuing are fallible themselves.", milestone: "M5" },
+  { n: 16, slug: "wrap-up", title: "Wrap-Up: What You Now Know", act: 3, concept: "Every lever in the deck on one axis for the first time, measured on the same hundred problems, and twelve questions that check the mechanisms rather than the magnitudes.", milestone: "M5" },
 ];
 
 export function getPage(n: number): PageMeta | undefined {

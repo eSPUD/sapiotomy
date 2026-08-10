@@ -1,5 +1,10 @@
 /**
- * Three measured chains, shared by pages 18 and 19.
+ * Three measured chains. RETAINED UNRENDERED: they were shared by pages 18 and
+ * 19, both cut on 2026-08-10, and nothing draws them now. The module and its
+ * tests are kept because the chains are lifted verbatim out of a run and the
+ * import-time substring checks below are what make that quotation trustworthy;
+ * PROVENANCE.md records that they are unrendered. Page numbers in this header
+ * are the pre-cut ones.
  *
  * They are the deck's first use of the specialist arm page 11 measured and
  * deliberately does not plot (`page11.ts:19`). All three are

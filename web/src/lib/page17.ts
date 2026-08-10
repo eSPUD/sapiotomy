@@ -1,5 +1,11 @@
 /**
- * Page 17's measured material, loaded from committed `derived.json` files.
+ * Page 15's measured material, loaded from committed `derived.json` files.
+ *
+ * The page was 17 until the 2026-08-10 cut. This module, `page-17-derived.json`
+ * and `page_17_when_reasoning_breaks.ipynb` keep the 17: they name one notebook
+ * run, not a route, and renaming them would break the pairing PROVENANCE.md
+ * records. "Page 17" below therefore means the run, and the gate messages it
+ * raises say 17 for the same reason.
  *
  * The boundary (notebooks/README.md): the notebook writes logs, the page reads
  * them. Nothing here recomputes a claim. `web/data/page-17-derived.json` is a

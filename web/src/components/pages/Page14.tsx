@@ -39,8 +39,10 @@
  * argument is structural, not a measurement: in R1-Zero the chain IS the
  * sampled object that training pushed on, so there was never a separate step
  * in which a description could be written beside the real work. Deliberately
- * not reached for: page 18's faithfulness question (whether the chain is an
- * HONEST account is a different claim from whether it is load-bearing).
+ * not reached for: the faithfulness question (whether the chain is an HONEST
+ * account is a different claim from whether it is load-bearing). Old page 18
+ * owned it and was cut on 2026-08-10; page 15 now raises it as the deck's
+ * closing question and this page still does not answer it here.
  *
  * Act 2 callbacks are held to two, and both carry an argument: page 7 at
  * GRPO's line 2, page 10 at the aha loop. Page 13's header records the review
@@ -120,9 +122,9 @@
  * a dot lands right of a rule, page 11's law has been compressed into
  * weights anyone can download. R1's own scoreboard is
  * deliberately NOT tabled here — one number places the teacher, the rest is
- * deferred to page 15, which is the page's closing handoff: two pages of
- * frontier claims all arrived as benchmark scores, read at face value so
- * far; whether they should be is The Scoreboard's job.
+ * beside the point. The closing handoff used to defer that reckoning to a
+ * scoreboard page; that page was cut on 2026-08-10, so the handoff now points
+ * at what page 15 actually does next, which is the wrong side of the dial.
  *
  * Footer keeps the deck-wide two-label provenance pattern: Simulated (the
  * interpolated curve, the schematic skeleton, the illustrative aha
@@ -1170,9 +1172,11 @@ export function Page14() {
 
             <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
               Two pages of frontier claims, and every one of them arrived as a benchmark score:
-              71.0% on AIME, level with o1-0912, a 14B crossing o1-mini&apos;s line. So far those
-              numbers have been read at face value.{" "}
-              <em className="text-ink-muted">Whether you should is the next page.</em>
+              71.0% on AIME, level with o1-0912, a 14B crossing o1-mini&apos;s line. Every one of
+              them is also a number for thinking longer.{" "}
+              <em className="text-ink-muted">
+                Next: the side of that dial where thinking longer makes the answer worse.
+              </em>
             </div>
           </div>
         </section>

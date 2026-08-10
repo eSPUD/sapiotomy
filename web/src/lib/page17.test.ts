@@ -1,5 +1,6 @@
 /**
- * The cross-language check for page 17.
+ * The cross-language check for page 15 (page 17 until the 2026-08-10 cut; the
+ * run keeps the old number, see `page17.ts`).
  *
  * `page17.ts` throws on load if the committed run fails a blocking claim, so the
  * import itself is the first assertion: these tests only run at all because

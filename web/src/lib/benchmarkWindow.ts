@@ -1,6 +1,6 @@
 /**
- * Page 15's "why tests die" simulation: a benchmark as a measuring
- * instrument with a window.
+ * The "why tests die" simulation: a benchmark as a measuring instrument with a
+ * window. RETAINED UNRENDERED: old page 15 drew it and was cut on 2026-08-10.
  *
  * AUTHORED / ILLUSTRATIVE (page 18's discipline): difficulties, model
  * offsets and the logistic width are hand-picked teaching values, not

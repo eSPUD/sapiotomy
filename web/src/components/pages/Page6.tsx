@@ -60,7 +60,7 @@
  *   · the 3B's last doubling scores -1 point, one problem out of 100. The chart
  *     draws the measured points, so the wobble is visible and un-smoothed, and
  *     the prose does not dress a single problem as the overthinking result.
- *     Page 17 owns that finding; this page owns the flattening.
+ *     Page 15 owns that finding; this page owns the flattening.
  *   · the inset measures RELIABILITY, not overshoot. Asking for brevity held
  *     the mean under the line and missed it on a quarter of items; the cap
  *     missed on none. Do not caption it as "the soft request overspends" — that

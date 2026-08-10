@@ -1,5 +1,8 @@
 /**
- * The benchmark scoreboard (page 15): published headline scores for the
+ * The benchmark scoreboard. RETAINED UNRENDERED: the page it fed (old page 15,
+ * "The Scoreboard") was cut on 2026-08-10. The validated loader and its tests
+ * stay so the published scores and their caveats cannot drift; PROVENANCE.md
+ * records that nothing draws them. Published headline scores for the
  * benchmarks used to justify reasoning claims, one timeline per benchmark.
  *
  * The CurveData schema (lib/data.ts) holds one anonymous x/y series; a

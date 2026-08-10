@@ -283,7 +283,10 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(follows(lastQuestion, closer)).toBe(true);
   });
 
-  it("cut the safety essay: that thread is page 18's, not page 13's", () => {
+  // The essay was cut because it was off this page's subject, and separately
+  // because old page 18 argued it at length. That page went on 2026-08-10; the
+  // first reason stands alone, so the guard stays.
+  it("cut the safety essay: that thread was never page 13's", () => {
     render(<Page13 />);
     expect(screen.queryByText(/The case for hiding:/)).not.toBeInTheDocument();
     expect(screen.queryByText(/must be left untrained/)).not.toBeInTheDocument();

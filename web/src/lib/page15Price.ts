@@ -1,6 +1,7 @@
 /**
- * Page 15 section 3, "what the window costs": the price of a harder rung, in
- * tokens, measured.
+ * Old page 15 section 3, "what the window costs": the price of a harder rung, in
+ * tokens, measured. RETAINED UNRENDERED after the 2026-08-10 cut; it reads a
+ * file page 11 still draws, so the readings stay pinned rather than deleted.
  *
  * No new generation. Every number here is read out of
  * `web/data/page-11-derived.json`, the same committed file page 11 draws, and

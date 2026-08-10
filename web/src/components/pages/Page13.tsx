@@ -95,23 +95,31 @@
  * re-ranking is an alternative to the 64-way vote, not a storey on top of it,
  * and the increments between them are nowhere in the source. The rows are
  * therefore drawn from a common zero and print absolute scores only, with the
- * three o1 readings grouped under their own heading; page 15's first courtroom
- * case needs the 74.4-to-93 gap to read as one model measured three ways. The
+ * three o1 readings grouped under their own heading, so the 74.4-to-93 gap
+ * reads as one model measured three ways. (That grouping was also what the
+ * scoreboard page's first courtroom case ran on; the page was cut 2026-08-10
+ * and the grouping is right on its own terms, so it stays.) The
  * knob answer is El-Kishky's own ablation, compressed to
  * one paragraph in the deck's vocabulary — o1-ioi is the toolbox bolted on
  * by hand at the frontier, an early o3 is the knobs turned further, and the
  * knobs won — with the paper's conclusion as the one verbatim anchor. No
  * benchmark numbers anywhere: the medals, percentiles, and the AIME pair
- * were reviewed out as retelling; scores live on page 15 (The Scoreboard).
+ * were reviewed out as retelling. They used to live on page 15 (The
+ * Scoreboard); that page was cut on 2026-08-10, so the deck no longer teaches
+ * how to read a benchmark score anywhere. Page 15's contamination callout is
+ * all that is left of it. Do not answer that by importing the medals back
+ * here: they were retelling before the cut and they still are.
  * o3-preview.json is no longer read here (its reference dropped off the
  * page).
  *
  * Section 4 is the page's epistemic close, restructured after review: it used
  * to be a safety essay (the case for hiding, the monitor's deception rate, the
  * price of an unauditable chain) that related to inference-time scaling
- * through exactly one ledger cell, and duplicated page 18's charter besides —
- * page 18 section 3 ("Why not train the thoughts to be good?") makes the
- * don't-train-the-chain argument at length. What page 13 owes the reader here
+ * through exactly one ledger cell, and duplicated the faithfulness page's
+ * charter besides — old page 18 section 3 ("Why not train the thoughts to be
+ * good?") made the don't-train-the-chain argument at length. That page was cut
+ * on 2026-08-10, but the first reason stands on its own: the essay was off this
+ * page's subject then and still is. What page 13 owes the reader here
  * is instead what a CLOSED model cannot be asked, so the ledger is gone and
  * the section is four questions. Every one is aimed at the thinking dial
  * rather than at o1's opacity in general (review: an earlier set asked about
@@ -132,7 +140,8 @@
  * and the handoff promises exactly those.
  * Plain numbered prose, no card — house rule for a section of short ideas. Deliberately absent: any back-reference chain through
  * Act 2's pages (review: "lets not cite everything like page 6, page 7…"), the
- * 0.17% deception stat (a system-card number, page 18's to spend), and the
+ * 0.17% deception stat (a system-card number, and the faithfulness page that
+ * was going to spend it was cut; it does not come back here), and the
  * safety argument itself. Every cell still carries words (review: an em-dash
  * cell reads as a rendering bug); the sealed column carries tone so the
  * nothing-to-everything gradient is scannable.

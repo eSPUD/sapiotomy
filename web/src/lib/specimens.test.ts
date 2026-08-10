@@ -1,6 +1,11 @@
 /**
  * The specimens, checked against the bundle they claim to come from.
  *
+ * RETAINED UNRENDERED: both pages that showed them (old 18 and 19) were cut on
+ * 2026-08-10. The check below is kept because it is the record of where the
+ * chains came from, and that record is worth more green than the pages were.
+ * "Both pages" below means those two.
+ *
  * `specimens.ts` proves the excerpt is a substring of the trace, which stops a
  * quote being edited for flow. It cannot prove the *trace* is real: a plausible
  * chain typed straight into `trace-specimens.json` would satisfy every check in

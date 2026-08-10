@@ -1,235 +1,209 @@
 "use client";
 
 /**
- * Page 16, "The Bill Comes Due" — Act 3 turns from what thinking longer buys to
- * what it costs. Three steps, each one economic fact:
+ * Page 16, "Wrap-Up: What You Now Know". The deck's last page, added the same
+ * day pages 15, 16, 18 and 19 were cut and page 17 became 15.
  *
- * Step 1 anchors the bill: o3's two ARC-AGI-Pub configs (6 vs 1024 samples per
- * task, 172x the compute) bought 75.7% -> 87.5% for ~$20 -> ~$3,460 per task
- * (per-task dollars as compiled by Bender et al. from ARC Prize's estimates).
- * Dollar figures are estimate-dependent — OpenAI never published o3 pricing and
- * ARC Prize later revised its numbers upward — so the copy leans on the stable
- * facts: token counts and the 172x multiplier. Humans sit at ~$17/task
- * measured, $2–5 plausible floor.
+ * The trap a closing page falls into is retelling. Fifteen pages summarised in
+ * order is a page nobody reads and nobody needs, because a reader who wants the
+ * summary has the contents list. So this page does two things the deck could
+ * not do earlier and could not do anywhere else.
  *
- * Step 2 is the counter-current: DeepSeek-R1 launched at ~27x below o1's list
- * price. But cheaper tokens move the bill down, not the curve's shape —
- * coverage is log-linear in samples (Brown et al.) and an imperfect verifier
- * caps the ceiling (Stroebl et al.). Exponential spend, linear gains, hard cap.
+ * SECTION 1 IS THE ONE CHART THE DECK COULD NEVER DRAW. Every lever in Act 2
+ * was measured on the same hundred MATH-500 level 4 and 5 problems, and each
+ * page drew its own lever against its own baseline. Only now, with all of them
+ * behind the reader, can they go on one axis: no chain at all, one chain,
+ * sixteen identical chains, sixteen sampled chains voted, sixteen chains with a
+ * trained judge picking, and then the coverage line above all of them. The
+ * shape is the argument. The steps get smaller, and the last one does not
+ * happen: there is a wide gap between what the generator found and what any
+ * selector kept. A dashed rule marks where a model twice the size lands with
+ * one greedy chain, which is page 11's crossing said in one line.
  *
- * Step 3 is the interactive: a cost-accuracy dial. Pick a target accuracy and
- * a lifetime query volume; the page prices three ways to serve it — rent the
- * big model, sample the small one N times (N from the log-linear law), or pay
- * a one-time retraining/distillation bill and serve cheap forever — and plots
- * rent-vs-own with the amortization crossover. The arithmetic (lib/frontier.ts)
- * is pure and pinned in act3.test.ts. Anchors are disclosed in the step body:
- * list prices are real (o1/R1), the retraining bill is DeepSeek's reported
- * $294k RL-stage figure, the small model's climb (+12 pts per 10x samples from
- * 60%, ceiling 90%) is authored — Brown-shaped, Stroebl-capped — because no
- * published result fixes those numbers for a generic workload. Snell et al.'s
- * regime (small model + inference compute stands in for a 14x larger one on
- * easy/medium problems) is where the "sample" verdict comes from.
+ * The comparability is load-bearing and is enforced in `lib/page16.ts` rather
+ * than promised here: the rungs come from one pool wherever a comparison is
+ * being made, the two that do not are labelled with the page that measured
+ * them, and the module refuses to build the ladder at all if those runs stop
+ * agreeing about how many problems they saw.
  *
- * Layout follows pages 3 to 10: full-width intro, numbered steps in the
- * reading column, margin notes carry the numbered cites (Cite/RefItem, with
- * venues, ids and links in the note itself), caveats live in step bodies, one
- * short provenance footnote, one handoff.
+ * SECTION 2 IS THE CONCEPT CHECK. Twelve questions, one per page, every one
+ * about a mechanism rather than a magnitude: which failure a second pass can
+ * reach, why a vote needs disagreement, why coverage is not accuracy, what a
+ * run is entitled to claim at p = 0.45. The numbers in the stems are
+ * interpolated from the measured modules, so a re-run cannot leave a question
+ * quoting a figure the deck no longer draws. Each question resolves as it is
+ * answered and says which page it came from, so a miss is a pointer rather than
+ * a mark.
+ *
+ * SECTION 3 IS WHAT THE DECK DID NOT SETTLE, and it is deliberately last. Two
+ * items, both of them live: every accuracy number here is discounted by
+ * contamination we cannot size, and page 15's closing question about whether
+ * the chain is the real reason is not answered anywhere in these sixteen pages.
+ * The deck used to have a page for the second one; it was cut, and the honest
+ * move is to say the question is open rather than to quietly stop raising it.
+ *
+ * NO NEW DATA. This page loads nothing of its own. If a number here disagrees
+ * with the page it came from, the deck is contradicting itself in front of the
+ * reader on its last page, which is why nothing below is retyped by hand.
  */
 
-import { useMemo, useState } from "react";
-import { Cite, RefItem } from "@/components/Cite";
-import { LineChart } from "@/components/LineChart";
+import { ChartFrame } from "@/components/ChartFrame";
 import { PageNav } from "@/components/PageNav";
-import { Slider } from "@/components/Slider";
+import { Quiz } from "@/components/Quiz";
+import { BIGGER_MODEL, ITEM_COUNT, LADDER, QUIZ, pct } from "@/lib/page16";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves } from "@/lib/curves";
-import {
-  cheapestStrategy,
-  distillCrossover,
-  perQueryCosts,
-  samplesForTarget,
-  totalBills,
-  type BillAnchors,
-} from "@/lib/frontier";
+import { PAGE17 } from "@/lib/page17";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 16;
 
-/** Page 16's references, numbered in order of first appearance. */
-const REF = { arcPrize: 1, bender: 2, pricing: 3, brown: 4, stroebl: 5, snell: 6, r1: 7 } as const;
+/* ------------------------------------------------------------- the ladder */
 
-/** Reasoning tokens one hard query is priced at (disclosed assumption). */
-const TOK_PER_QUERY = 10_000;
+const W = 700;
+const ROW = 34;
+// The top margin carries the bigger model's caption. It cannot go under the
+// axis with the tick labels: at 60% its rule lands between the 50 and 75
+// ticks and the caption runs straight through both of them.
+// The left margin has to fit the longest rung label whole ("16 sampled chains,
+// trained verifier picks one" is the widest at 11px). Three of them were being
+// clipped at 232, which reads as a broken chart rather than a long label.
+const M = { top: 26, right: 132, bottom: 34, left: 256 };
+const IW = W - M.left - M.right;
+const H = LADDER.length * ROW + M.top + M.bottom;
+const IH = H - M.top - M.bottom;
 
-/** Query-volume slider runs on log10(q) x 10, so arrows step ~1.26x. */
-const VOL_MIN = 20; // 10^2
-const VOL_MAX = 70; // 10^7
-const CHART_QS = Array.from({ length: 26 }, (_, i) => Math.pow(10, 2 + i * 0.2));
+const x = (v: number) => v * IW;
 
-const fmtQ = (q: number) =>
-  q >= 1e6
-    ? `${+(q / 1e6).toPrecision(2)}M`
-    : q >= 1e3
-      ? `${+(q / 1e3).toPrecision(2)}k`
-      : `${Math.round(q)}`;
-
-const fmtUSD = (v: number) =>
-  v >= 1e6
-    ? `$${+(v / 1e6).toPrecision(3)}M`
-    : v >= 1e3
-      ? `$${+(v / 1e3).toPrecision(3)}k`
-      : `$${v.toFixed(0)}`;
-
-const fmtPerQ = (v: number) => `$${v >= 0.095 ? v.toFixed(2) : v.toFixed(3)}`;
-
-/** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+/**
+ * The toolbox on one axis, floor to ceiling.
+ *
+ * Bars are the rungs the deck measured; the coverage rung is drawn hollow
+ * because it is not a technique, it is what a perfect selector would have
+ * reached. The gap between it and the best solid bar is the page's one visual
+ * claim, so it is filled rather than left for the reader to measure by eye, and
+ * the bigger model's dashed rule crosses everything because that comparison is
+ * the point of drawing them together at all.
+ */
+function Ladder() {
+  const best = Math.max(...LADDER.filter((r) => !r.ceiling).map((r) => r.accuracy));
+  const ceiling = LADDER.find((r) => r.ceiling);
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
-      {children}
-    </aside>
-  );
-}
+    <ChartFrame
+      title={`What each lever scored on the same ${ITEM_COUNT} problems. ${LADDER.map(
+        (r) => `${r.label}: ${pct(r.accuracy)}`,
+      ).join(". ")}. One greedy chain from the ${BIGGER_MODEL.label} reaches ${pct(
+        BIGGER_MODEL.accuracy,
+      )} for a fraction of the bill. The steps get smaller as you go, and a wide gap is left between the best selector and the answers that were generated and not picked.`}
+      width={W}
+      height={H}
+      margin={M}
+      xLabel={`accuracy on ${ITEM_COUNT} MATH-500 level 4 and 5 problems`}
+    >
+      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+        <g key={t}>
+          <line x1={x(t)} x2={x(t)} y1={0} y2={IH} className="stroke-grid" strokeWidth={1} />
+          <text
+            x={x(t)}
+            y={IH + 16}
+            textAnchor="middle"
+            className="fill-ink-muted text-[10px]"
+          >
+            {t * 100}
+          </text>
+        </g>
+      ))}
 
-/** Dollars-per-task on a $1–$10,000 log strip: human anchors below, o3 above. */
-function CostStrip({
-  floorLow,
-  floorHigh,
-  measured,
-  low,
-  high,
-}: {
-  floorLow: number;
-  floorHigh: number;
-  measured: number;
-  low: number;
-  high: number;
-}) {
-  const pct = (v: number) => (Math.log10(v) / 4) * 100;
-  return (
-    <div>
-      <div
-        role="img"
-        aria-label={`Estimated dollars per task on a log scale from $1 to $10,000: the human cost-efficiency floor is $${floorLow} to $${floorHigh}, measured human solvers about $${measured}, o3's low-compute configuration about $${low}, o3's high-compute configuration about $${high.toLocaleString()}.`}
-        className="relative h-16"
+      {/* What was generated and never picked: the one gap the page argues about. */}
+      {ceiling ? (
+        <rect
+          x={x(best)}
+          y={0}
+          width={x(ceiling.accuracy) - x(best)}
+          height={IH}
+          className="fill-wrong opacity-[0.08]"
+        />
+      ) : null}
+
+      {LADDER.map((r, i) => {
+        const y = i * ROW + 6;
+        const h = ROW - 14;
+        return (
+          <g key={r.label}>
+            <text
+              x={-10}
+              y={y + h - 3}
+              textAnchor="end"
+              className={`text-[11px] ${r.ceiling ? "fill-ink-muted italic" : "fill-ink"}`}
+            >
+              {r.label}
+            </text>
+            {r.ceiling ? (
+              <rect
+                x={0}
+                y={y}
+                width={x(r.accuracy)}
+                height={h}
+                fill="none"
+                strokeDasharray="3 2"
+                className="stroke-wrong"
+                strokeWidth={1.5}
+              />
+            ) : (
+              <rect
+                x={0}
+                y={y}
+                width={x(r.accuracy)}
+                height={h}
+                className={r.accuracy === best ? "fill-compute" : "fill-ink opacity-40"}
+              />
+            )}
+            <text
+              x={x(r.accuracy) + 6}
+              y={y + h - 3}
+              className={`text-[11px] font-semibold tabular-nums ${
+                r.ceiling ? "fill-wrong" : "fill-ink"
+              }`}
+            >
+              {pct(r.accuracy)}
+            </text>
+            <text x={x(r.accuracy) + 44} y={y + h - 3} className="fill-ink-muted text-[10px]">
+              page {r.page}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Page 11's crossing. Drawn across every bar, because that is what it does. */}
+      <line
+        x1={x(BIGGER_MODEL.accuracy)}
+        x2={x(BIGGER_MODEL.accuracy)}
+        y1={-14}
+        y2={IH}
+        strokeDasharray="4 3"
+        className="stroke-correct"
+        strokeWidth={1.5}
+      />
+      <text
+        x={x(BIGGER_MODEL.accuracy) - 6}
+        y={-6}
+        textAnchor="end"
+        className="fill-correct text-[10px] font-semibold"
       >
-        <p className="absolute top-0 text-[11px] text-ink" style={{ left: `${pct(low)}%` }}>
-          <span className="text-compute">●</span> o3 low · ~${low}
-        </p>
-        <p
-          className="absolute top-0 -translate-x-full whitespace-nowrap text-[11px] text-ink"
-          style={{ left: `${pct(high)}%` }}
-        >
-          <span className="text-wrong">●</span> o3 high · ~${high.toLocaleString()}
-        </p>
-        <div className="absolute inset-x-0 top-6 h-3 rounded-sm border border-grid bg-canvas">
-          <div
-            className="absolute inset-y-0 rounded-sm bg-correct/30"
-            style={{ left: `${pct(floorLow)}%`, width: `${pct(floorHigh) - pct(floorLow)}%` }}
-          />
-          <div className="absolute inset-y-0 w-px bg-correct" style={{ left: `${pct(measured)}%` }} />
-          <div
-            className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-compute"
-            style={{ left: `${pct(low)}%` }}
-          />
-          <div
-            className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-wrong"
-            style={{ left: `${pct(high)}%` }}
-          />
-        </div>
-        <p
-          className="absolute bottom-0 whitespace-nowrap text-[11px] text-ink-muted"
-          style={{ left: `${pct(floorLow)}%` }}
-        >
-          humans: ${floorLow} to ${floorHigh} floor · ${measured} measured
-        </p>
-      </div>
-      <p className="text-[11px] text-ink-muted">estimated $ per task · log scale, $1 to $10,000</p>
-    </div>
+        {BIGGER_MODEL.label}, one greedy chain
+      </text>
+    </ChartFrame>
   );
 }
+
+/* -------------------------------------------------------------------- page */
 
 export function Page16() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-
-  const arc = curves.arcCost;
-  const a = arc.fit!.params;
-  const pricing = curves.deepseekPricing;
-  const pd = pricing.fit!.params;
-  const snell = curves.computeOptimal;
-
-  // Per-query dollars from the cited list prices; climb/ceiling authored
-  // (Brown-shaped, Stroebl-capped) and disclosed in the step body.
-  const ANCHORS: BillAnchors = useMemo(
-    () => ({
-      bigPerQuery: (TOK_PER_QUERY / 1e6) * pd.o1OutputPerM, // $0.60
-      smallPerSample: (TOK_PER_QUERY / 1e6) * pd.r1OutputPerM, // $0.022
-      distillUSD: pd.r1RlTrainUSD, // $294k, reported
-      baseAcc: 60,
-      slopePerDecade: 12,
-      ceiling: 90,
-    }),
-    [pd],
+  const ceiling = LADDER.find((r) => r.ceiling)!;
+  const best = LADDER.filter((r) => !r.ceiling).reduce((a, b) =>
+    b.accuracy > a.accuracy ? b : a,
   );
-
-  const [target, setTarget] = useState(72);
-  const [vol, setVol] = useState(50); // 10^5 queries
-
-  const queries = Math.pow(10, vol / 10);
-  const n = samplesForTarget(target, ANCHORS);
-  const cost = perQueryCosts(target, ANCHORS);
-  const bills = totalBills(queries, target, ANCHORS);
-  const crossover = distillCrossover(target, ANCHORS);
-  const verdict = cheapestStrategy(queries, target, ANCHORS);
-
-  const rentPts = useMemo(
-    () =>
-      CHART_QS.map((q) => ({
-        x: q,
-        y: totalBills(q, target, ANCHORS).rent,
-      })),
-    [target, ANCHORS],
-  );
-  const ownPts = useMemo(
-    () => CHART_QS.map((q) => ({ x: q, y: ANCHORS.distillUSD + ANCHORS.smallPerSample * q })),
-    [ANCHORS],
-  );
-  const crossoverDot =
-    crossover !== null && crossover >= 100 && crossover <= 1e7
-      ? [
-          {
-            x: crossover,
-            y: ANCHORS.distillUSD + ANCHORS.smallPerSample * crossover,
-            label: `pays off at ${fmtQ(crossover)}`,
-          },
-        ]
-      : undefined;
-
-  const gapPts = (a.o3HighAcc - a.o3LowAcc).toFixed(1);
-
-  const verdictText: Record<typeof verdict, { head: string; body: string }> = {
-    sample: {
-      head: "✓ cheapest here: sample the small model",
-      body: `${n} sample${n === 1 ? "" : "s"} per query at ${fmtPerQ(cost.sample ?? 0)} still undercuts one big-model call at ${fmtPerQ(cost.big)}: the regime where inference compute substitutes for size.`,
-    },
-    big: {
-      head: "✓ cheapest here: one big-model call",
-      body:
-        cost.sample === null
-          ? `at a ${target}% target the small model cannot get there by sampling at all, and the volume is too low for a retraining bill to pay off.`
-          : `hitting ${target}% would take ${n} samples (${fmtPerQ(cost.sample)}/query): the log-linear tax has eaten the whole ${pd.outputRatio}× price gap.`,
-    },
-    distill: {
-      // The conditional is not hedging: the rent and sample arms both answer
-      // "at this target", and this one cannot. Printed unconditionally next to
-      // a target the page has just called unreachable, it reads as a promise
-      // that $294k buys any accuracy you type in.
-      head: `✓ cheapest here, IF the retrain reaches ${target}%: distill once, then serve`,
-      body: `${fmtUSD(ANCHORS.distillUSD)} up front beats renting by ${fmtUSD(bills.rent - bills.distill)} over ${fmtQ(queries)} queries: per-query cost is paid forever, a training bill only once. Whether a retrain at this price lands on ${target}% is the one thing on this page nothing cited establishes${cost.sample === null ? `, and ${target}% is past the point where sampling can get there at all` : ""}.`,
-    },
-  };
 
   return (
     <article className="flex flex-col gap-6">
@@ -240,361 +214,101 @@ export function Page16() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-
       <p className="max-w-2xl text-lg text-ink-muted">
-        Every trick in the toolbox spends the same currency: reasoning tokens, metered in dollars
-        and seconds. Nobody in this story has yet been handed the bill. This page reads it: what one
-        hard benchmark actually cost, what happened when token prices collapsed by{" "}
-        {Math.round(pd.outputRatio)}×, and{" "}
-        <strong className="text-ink">
-          how much accuracy a given budget can still buy before you are better off retraining
-        </strong>
-        .
+        Fifteen pages turned one knob a dozen ways. Here is every lever on one axis, measured on
+        the same problems, and then{" "}
+        <strong className="text-ink">twelve questions</strong> that check whether the mechanisms
+        landed rather than whether the numbers stuck.
       </p>
 
-      <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the anchor */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            1. What one hard benchmark cost
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              reported estimates · not peer-reviewed
-            </span>
-          </h2>
-          <figure
-            aria-label="The o3 ARC-AGI bill: two configurations of the same model"
-            className="m-0 flex flex-col gap-4 rounded-lg border-l-4 border-wrong bg-surface p-4"
-          >
-            <p className="text-sm text-ink">
-              December 2024: OpenAI&apos;s o3 attacks ARC-AGI, a benchmark of visual puzzles a
-              person solves in minutes. Same model, two budgets, and the only difference is how many
-              reasoning chains it samples per task.
-              <Cite n={REF.arcPrize} />
-            </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  o3 low · {a.o3LowSamples} samples/task
-                </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-ink">{a.o3LowAcc}%</p>
-                <p className="text-xs text-ink-muted">≈ ${a.o3LowCost} per task</p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  o3 high · {a.o3HighSamples} samples/task
-                </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-wrong">
-                  {a.o3HighAcc}%
-                </p>
-                <p className="text-xs text-ink-muted">
-                  ≈ ${a.o3HighCost.toLocaleString()} per task · {a.computeFactor}× the compute
-                </p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">human solvers</p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-correct">
-                  ~${a.humanMeasuredCost}
-                </p>
-                <p className="text-xs text-ink-muted">
-                  per task measured · ${a.humanFloorLow} to ${a.humanCost} plausible floor
-                </p>
-              </div>
-            </div>
-            <CostStrip
-              floorLow={a.humanFloorLow}
-              floorHigh={a.humanCost}
-              measured={a.humanMeasuredCost}
-              low={a.o3LowCost}
-              high={a.o3HighCost}
-            />
-            <figcaption className="text-sm text-ink">
-              Read it as a price list: the first {a.o3LowAcc}% cost about ${a.o3LowCost} a task; the
-              last <strong>{gapPts} points cost {a.computeFactor}× the compute</strong>. ARC
-              Prize&apos;s own framing: the low config fits the contest&apos;s $10k budget, the high
-              config is &ldquo;quite expensive.&rdquo;
-              <Cite n={REF.arcPrize} /> That is diminishing returns as an invoice.
-            </figcaption>
-            <p className="text-xs text-ink-muted">
-              The dollar signs are the soft part: OpenAI never published o3 pricing, and ARC Prize
-              later revised its estimates upward, toward ~$30,000 per high-compute task. The sample
-              counts and the {a.computeFactor}× multiplier are the stable facts; every $ figure here
-              is estimate-dependent.
-              <Cite n={REF.bender} />
-            </p>
-          </figure>
-        </section>
-        <Note kicker="References">
-          <RefItem n={REF.arcPrize} href="https://arcprize.org/blog/oai-o3-pub-breakthrough" preprint>
-            ARC Prize Foundation 2024, <em>o3 Breakthrough on ARC-AGI-Pub</em>.
-          </RefItem>
-          <RefItem n={REF.bender} href="https://arxiv.org/abs/2501.07458" preprint>
-            Bender et al. 2025, <em>OpenAI&apos;s o3 Is Not AGI</em>.
-          </RefItem>
-        </Note>
-
-        {/* Step 2 — prices fall, the shape stays */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. Prices collapse; the shape doesn&apos;t
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              list prices · cited shape
-            </span>
-          </h2>
-          <figure
-            aria-label="Reasoning-token list prices: o1 versus DeepSeek-R1"
-            className="m-0 flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
-          >
-            <p className="text-sm text-ink">
-              A month after that bill, DeepSeek-R1 put a comparable reasoner on the market at{" "}
-              <strong>
-                ~{pd.outputRatio}× (≈96%) below o1&apos;s list price
-              </strong>
-              .<Cite n={REF.pricing} /> The meter that step 1 ran on can drop by an order of
-              magnitude in a season.
-            </p>
-            <div
-              className="flex flex-col gap-2"
-              role="img"
-              aria-label={`Output price per million reasoning tokens: OpenAI o1 $${pd.o1OutputPerM}, DeepSeek-R1 $${pd.r1OutputPerM}, about ${pd.outputRatio} times cheaper. Input prices: $${pd.o1InputPerM} versus $${pd.r1InputMissPerM} per million.`}
-            >
-              {[
-                { label: "OpenAI o1", value: pd.o1OutputPerM, tone: "bg-wrong" },
-                { label: "DeepSeek-R1", value: pd.r1OutputPerM, tone: "bg-correct" },
-              ].map((b) => (
-                <div key={b.label} className="flex items-center gap-2 text-sm">
-                  <span className="w-28 shrink-0 text-ink-muted">{b.label}</span>
-                  <div className="h-5 flex-1 rounded bg-surface-raised">
-                    <div
-                      className={`h-5 rounded ${b.tone}`}
-                      style={{ width: `${(b.value / pd.o1OutputPerM) * 100}%` }}
-                    />
-                  </div>
-                  <span className="w-20 shrink-0 text-right font-mono tabular-nums text-ink">
-                    ${b.value}/M
-                  </span>
-                </div>
-              ))}
-              <p className="text-xs text-ink-muted">
-                $ per million output (reasoning) tokens · inputs: ${pd.o1InputPerM} vs $
-                {pd.r1InputMissPerM} per million, the same ~27× gap
-              </p>
-            </div>
-            <figcaption className="text-sm text-ink">
-              But a price cut moves the bill <em>down</em>, not the curve&apos;s <em>shape</em>.
-              Coverage still grows log-linearly, ten times the samples per fixed gain,
-              <Cite n={REF.brown} /> and an imperfect verifier still caps what any amount of
-              sampling can reach.
-              <Cite n={REF.stroebl} /> What that leaves you able to buy is the next dial&apos;s
-              question.
-            </figcaption>
-          </figure>
-        </section>
-        <Note kicker="References">
-          <RefItem n={REF.pricing} href="https://api-docs.deepseek.com/quick_start/pricing" preprint>DeepSeek API pricing, January 2025.</RefItem>
-          <RefItem n={REF.brown} href="https://arxiv.org/abs/2407.21787" preprint>
-            Brown et al. 2024, <em>Large Language Monkeys</em>.
-          </RefItem>
-          <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
-            Stroebl et al. 2024, <em>Inference Scaling fLaws</em>.
-          </RefItem>
-        </Note>
-
-        {/* Step 3 — the cost-accuracy dial */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            3. Rent, sample, or retrain?
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              illustrative calculator from cited anchors
-            </span>
-          </h2>
-          <section
-            aria-label="The cost-accuracy dial: rent a big model, sample a small one, or distill"
-            className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
-          >
-            <p className="text-sm text-ink">
-              You run a product that gets a stream of hard queries. Three ways to serve every one at
-              your target accuracy: <strong>rent</strong> a frontier model (one call each),{" "}
-              <strong>sample</strong> a {pd.outputRatio}×-cheaper small model N times and pick the
-              best, or <strong>retrain</strong>, paying one distillation bill so the small model does
-              it in a single call, then serve at its rate forever.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Slider
-                label="Target accuracy on hard queries"
-                min={62}
-                max={92}
-                value={target}
-                suffix="%"
-                onChange={(v) => {
-                  setTarget(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-              <Slider
-                label="Queries you expect to serve"
-                min={VOL_MIN}
-                max={VOL_MAX}
-                value={vol}
-                format={(v) => fmtQ(Math.pow(10, v / 10))}
-                suffix=" queries"
-                onChange={(v) => {
-                  setVol(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">rent big · 1 call</p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-                  {fmtPerQ(cost.big)}
-                </p>
-                <p className="text-xs text-ink-muted">per query, at o1&apos;s rate</p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  rent small · ×{cost.sample === null ? "?" : n}
-                </p>
-                <p
-                  className={`font-mono text-2xl font-bold tabular-nums ${cost.sample === null ? "text-wrong" : "text-compute"}`}
-                >
-                  {cost.sample === null ? "n/a" : fmtPerQ(cost.sample)}
-                </p>
-                <p className="text-xs text-ink-muted">
-                  {cost.sample === null
-                    ? `no number of samples reaches ${target}%`
-                    : `per query, ${n} sample${n === 1 ? "" : "s"} at R1's rate`}
-                </p>
-              </div>
-              <div className="rounded-lg border border-grid bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
-                  distill first ({fmtUSD(ANCHORS.distillUSD)})
-                </p>
-                <p className="font-mono text-2xl font-bold tabular-nums text-correct">
-                  {fmtPerQ(cost.distilled)}
-                </p>
-                <p className="text-xs text-ink-muted">
-                  per query after the one-time bill, assuming the retrained model reaches {target}%
-                </p>
-              </div>
-            </div>
-
-            {cost.sample === null ? (
-              <p className="rounded border-l-4 border-wrong bg-wrong/10 p-3 text-sm text-ink">
-                {target}% sits past the verifier&apos;s ceiling ({ANCHORS.ceiling}%): the selector
-                cannot tell the best sample from a plausible wrong one often enough, so resampling
-                stops helping no matter the budget. The choice collapses to the big model now, or a
-                better small model later.
-              </p>
-            ) : null}
-
-            <p
-              role="status"
-              className={`rounded border-l-4 p-3 text-sm ${
-                verdict === "distill"
-                  ? "border-correct bg-correct/15"
-                  : verdict === "sample"
-                    ? "border-compute bg-compute/15"
-                    : "border-grid bg-surface-raised"
-              }`}
-            >
-              <span className="font-semibold text-ink">{verdictText[verdict].head}</span>
-              <span className="block text-ink-muted">{verdictText[verdict].body}</span>
-            </p>
-
-            <LineChart
-              title={`Total dollars against queries served, both axes log. Keep renting at the cheapest per-query rate for a ${target} percent target, versus paying the one-time retraining bill and serving at the small model's rate. ${
-                crossover === null
-                  ? "At this target the small model already answers in one sample, so retraining never undercuts renting."
-                  : `The lines cross at about ${fmtQ(crossover)} queries, where the training bill has amortized.`
-              }`}
-              points={ownPts}
-              secondary={{ points: rentPts, label: "keep renting" }}
-              primaryLabel="distill once, then serve (assumed to reach the target)"
-              logX
-              logY
-              xDomain={[100, 1e7]}
-              yDomain={[1, Math.max(rentPts[rentPts.length - 1].y, ownPts[ownPts.length - 1].y) * 3]}
-              xTicks={[100, 1e3, 1e4, 1e5, 1e6, 1e7]}
-              xTickFormat={fmtQ}
-              yTickFormat={(v) => fmtUSD(v)}
-              markerX={queries}
-              dots={crossoverDot}
-              xLabel="queries served (log)"
-              yLabel="total $ (log)"
-              width={640}
-              height={300}
-            />
-            <figcaption className="text-sm text-ink-muted">
-              Two regimes fall out of the arithmetic. At moderate targets and volumes,{" "}
-              <strong className="text-ink">answer-time compute wins</strong>: a small model plus
-              sampling stands in for a far larger one, and Snell et al. measure the substitution
-              holding up against a {snell.fit!.params.largerModelFactor}× larger model on easy and
-              medium problems.
-              <Cite n={REF.snell} /> Push the target up and the log-linear tax compounds ~10× per{" "}
-              {ANCHORS.slopePerDecade} points until the big model is cheaper anyway; push the{" "}
-              <em>volume</em> up and <strong className="text-ink">retraining wins</strong>, because
-              a per-query price is paid forever and a training bill only once
-              {crossover !== null ? (
-                <>, and here it pays off past ≈{fmtQ(crossover)} queries</>
-              ) : (
-                <>, though at this target one sample already suffices, so there is nothing to
-                  amortize</>
-              )}
-              . One assumption sits under the seconds as well as the dollars: this invoice bills
-              the {n === 1 ? "sample" : `${n} samples`} for a query as if they were drawn one after
-              another, so latency rises with the bill. Draw them at once on separate machines, as
-              page 19&apos;s panel assumes, and the dollars still climb while the wait does not.
-            </figcaption>
-            <p className="text-xs text-ink-muted">
-              Illustrative calculator, not a quote: queries are priced at{" "}
-              {TOK_PER_QUERY.toLocaleString()} reasoning tokens each at the cited o1 / R1 list
-              rates; the retraining bill is DeepSeek&apos;s reported{" "}
-              {fmtUSD(pd.r1RlTrainUSD)} RL-stage cost for R1 (base model excluded);
-              <Cite n={REF.r1} /> the
-              small model&apos;s climb (+{ANCHORS.slopePerDecade} points per 10× samples from{" "}
-              {ANCHORS.baseAcc}%, ceiling {ANCHORS.ceiling}%) is authored, the log-linear shape is
-              Brown et al.&apos;s and the ceiling is Stroebl et al.&apos;s. The strongest unbacked
-              assumption on this page is the green line itself:{" "}
-              <strong className="text-ink">
-                the distilled model is assumed to hit whatever target you set
-              </strong>
-              , at a flat {fmtUSD(ANCHORS.distillUSD)}. Renting and sampling both get harder as the
-              target rises; that arm does not, because no source here fixes what a retrain at this
-              price can reach. Read it as the bill for a plan, not as evidence the plan works.
-            </p>
-          </section>
-        </section>
-        <Note kicker="Try it">
-          {/* One imperative, and no interpretation: the verdict banner above is
-              already live, and printing the answer here means the dial confirms
-              instead of revealing. */}
-          <p>Hold the volume at 100k and walk the target from 65% to 92%.</p>
-        </Note>
-        <div aria-hidden="true" />
-        <Note kicker="References">
-          <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
-            Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
-          </RefItem>
-          <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">DeepSeek-R1 2025 (the retraining bill).</RefItem>
-        </Note>
+      <div className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold text-ink">
+          1. The whole toolbox, on one axis
+          <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+            our runs · {ITEM_COUNT} problems · pages 5 to 11
+          </span>
+        </h2>
+        <p className="max-w-2xl text-ink">
+          Each page in Act 2 measured its own lever against its own baseline, so none of them
+          could draw this. Now that all of them are behind you, they go on one axis.
+        </p>
+        <Ladder />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <p className="text-sm text-ink-muted">
+            Read it as a set of steps that keep getting smaller. Writing the reasoning at all is
+            worth more than everything after it put together. Sampling sixteen chains is worth
+            nothing until they are allowed to disagree. Voting on the disagreement is worth real
+            points, and putting a trained judge in front of the vote is worth a few more that this
+            run could not separate from noise.
+          </p>
+          <p className="text-sm text-ink-muted">
+            Then the step that never comes. On {pct(ceiling.accuracy)} of these problems at least
+            one of the sixteen chains was right, and the best rule we tested kept{" "}
+            {pct(best.accuracy)}. That shaded band is the answer sitting in the pile, generated and
+            thrown away. And the dashed line is the whole of Act 2 charged against a bigger model:{" "}
+            {BIGGER_MODEL.label} writes one greedy chain, reaches {pct(BIGGER_MODEL.accuracy)}, and
+            costs a fraction of what the sixteen-way vote cost to reach less.
+          </p>
+        </div>
       </div>
 
-      {/* Handoff to 17 */}
+      <div className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold text-ink">
+          2. Twelve questions
+          <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+            concepts, not numbers
+          </span>
+        </h2>
+        <p className="max-w-2xl text-ink">
+          One per page, in the deck&apos;s order. Each answers itself as soon as you pick, and says
+          which page it came from. Nothing here needs a number memorised: where a figure appears it
+          is the setting the question is asked in, not the thing being asked.
+        </p>
+        <Quiz questions={QUIZ} onAnswer={() => recordInteraction(PAGE_N)} />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold text-ink">3. What this deck did not settle</h2>
+        <p className="max-w-2xl text-ink">
+          Two things are open, and both of them reach backwards over everything above.
+        </p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border-l-4 border-wrong bg-wrong/10 p-4 text-sm text-ink">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              every number is discounted
+            </p>
+            <p className="mt-2">
+              A benchmark is published text and published text is what the next model trains on, so
+              a score can be reciting the test rather than reasoning through it. On problems
+              released after these models trained, reasoning models scored 7 to 30 points below
+              their older-year averages. That discounts the ladder above and the frontier scores of
+              Act 3 alike, and it does not tell you by how much.{" "}
+              <span className="text-ink-muted">Page 15 sizes it.</span>
+            </p>
+          </div>
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-sm text-ink">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              and the chain may not be the reason
+            </p>
+            <p className="mt-2">
+              Every lever above reads the chain and takes it for what it says it is: the working
+              that produced the answer. Whether that is true is a separate question, and this deck
+              does not answer it. It is worth knowing that{" "}
+              {pct(PAGE17.readable.shareUnjudged, 0)} of the steps in real chains state nothing a
+              checker can compute, so for most of the text there is nothing to hold it to from the
+              inside.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        Every line on that invoice priced the same thing: more thinking, and what it buys. The
-        arithmetic assumed the buying works, which it has on every page so far.{" "}
-        <em className="text-ink-muted">
-          It does not always. Next: the side of the dial where spending more makes the answer worse.
-        </em>
+        The one sentence to leave with: a model can get dramatically better answers by thinking
+        longer at answer time, the gains are real and measured and each one has a price and a
+        ceiling, and every one of them is paid in text that nobody has yet shown is the reason for
+        the answer.{" "}
+        <em className="text-ink-muted">That is where the field is, and where you now are.</em>
       </div>
-
-      <p className="text-xs text-ink-muted">
-        every dollar figure on this page is a reported estimate or a list price, presented as
-        reported · the step-3 calculator is derived arithmetic over those cited anchors plus the
-        disclosed authored parameters, and is pinned in the test suite
-      </p>
 
       <PageNav n={PAGE_N} />
     </article>

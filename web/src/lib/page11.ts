@@ -41,8 +41,10 @@
  *   2. Under the CoT system prompt this run gave it, the specialist wrote zero
  *      Python across all 2,550 of its chains, and the harness has no executor.
  *      So its margin over the general 1.5B here is training and not tool use,
- *      whatever the model is additionally capable of. Page 19's beat is written
- *      against that fact rather than around it.
+ *      whatever the model is additionally capable of. Old page 19's tool-use
+ *      beat was written against that fact rather than around it; that page was
+ *      cut on 2026-08-10, and the fact is kept here because it is a caveat on
+ *      this page's own margin, not on the cut page's.
  *
  * The gates are read, not recomputed, the way page 6's and page 8's are: a run
  * that does not pass is a load error here, never a conditional in the

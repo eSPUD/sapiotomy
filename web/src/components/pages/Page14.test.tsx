@@ -229,14 +229,18 @@ describe("Page 14 (DeepSeek-R1, GRPO, and the aha moment)", () => {
     expect(label).toMatch(/Llama-70B sits left of Qwen-32B/);
   });
 
-  it("defers the scoreboard and hands off to page 15", () => {
+  it("drops the scoreboard tiles and hands off to page 15", () => {
     render(<Page14 />);
-    // The four headline stat tiles are gone: one number places the teacher,
-    // the rest waits for The Scoreboard, and the cold start is a caption clause.
+    // The four headline stat tiles are gone: one number places the teacher and
+    // the rest is beside the point, and the cold start is a caption clause.
     expect(screen.queryByText("GPQA Diamond")).not.toBeInTheDocument();
     expect(screen.getByText(/adds a small cold start of curated traces/)).toBeInTheDocument();
     expect(screen.getByText(/a lifted curve fits in weights you can download/)).toBeInTheDocument();
-    expect(screen.getByText(/Whether you should is the next page/)).toBeInTheDocument();
+    // The handoff aimed at The Scoreboard until that page was cut on
+    // 2026-08-10. Page 15 is now "When Reasoning Breaks", so it aims there.
+    expect(
+      screen.getByText(/the side of that dial where thinking longer makes the answer worse/),
+    ).toBeInTheDocument();
   });
 
   it("tags the page Act 3 and closes with the two-label provenance footer", () => {

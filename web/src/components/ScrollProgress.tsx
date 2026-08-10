@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PAGES, pageHref } from "@/lib/pages";
 
-const TOTAL = PAGES.length; // 20 chapters
+const TOTAL = PAGES.length; // 16 chapters since the 2026-08-10 cut and wrap-up
 
 /**
  * Whole-app reading progress + quick navigation, at the bottom of the header.

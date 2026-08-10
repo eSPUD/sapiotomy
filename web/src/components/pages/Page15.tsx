@@ -1,412 +1,520 @@
 "use client";
 
 /**
- * Page 15, "The Scoreboard: Benchmarks That Track Reasoning" — where Act 3
- * turns from the frontier pair (13-14) to the caveats. Every claim this act
- * makes or weighs ("o1 reasons", "R1 matches it", "the collapse is an
- * artifact") arrives as a benchmark score, so before weighing any of them the
- * reader needs the one intuition headlines strip away: a score is not a
- * property of a model. It is a number plus the conditions it was taken under (model variant,
- * version of the test, harness, thinking budget), and the headline keeps the
- * number while dropping the conditions.
+ * Page 15, "When Reasoning Breaks". Act 3's candour page: the compute knob has
+ * a wrong side. Three failure modes, in the order the title names them. It
+ * briefly closed the deck after the 2026-08-10 cut and no longer does; page 16
+ * wraps up, and this page hands its open question forward rather than ending on
+ * it.
  *
- * THE SPINE (2026-08-09 rework, docs/page_15_visxai_rework.md). The page used to
- * be three lessons that shared a subject: a checklist, a mechanism, a history.
- * It is now one idea with three consequences. A benchmark is an instrument with
- * a window, the window closes three ways (floor, ceiling, familiarity), and
- * keeping it open costs more every time. Section 2 shows the two closers that
- * live on the capability axis and names the third, which does not; section 3
- * prices the climb.
+ * This was page 17 until the scoreboard, economics, faithfulness and frontier
+ * pages came out. Its instrument did not move with it, so `lib/page17.ts`,
+ * `data/page-17-derived.json` and `page_17_when_reasoning_breaks.ipynb` keep
+ * their old names: those are provenance identifiers for one notebook run, not
+ * route numbers. PROVENANCE.md records the pairing.
  *
- * Four moves, one per section:
- *   1. The courtroom of headlines. Three real cases, each a pair of
- *      quote-true headlines about the same model on the same test that
- *      disagree wildly (o1's 74.4 vs 93 on AIME, GPT-4o's 12 vs 9.3 on AIME,
- *      o3's 25.2 vs 10 on FrontierMath). The reader guesses which condition
- *      moved, then reveals the two receipts with the moved rows flagged.
- *      Page 13 already teaches WHERE o1's three numbers come from (its
- *      waterfall: chain, vote, re-ranker); this page teaches what their
- *      coexistence does to the word "score". No overlap in lesson.
- *   2. Why tests die. An AUTHORED, illustrative simulation (lib/
- *      benchmarkWindow.ts): a benchmark is an instrument with a window. One
- *      slider moves an abstract frontier past four stylized tests; each
- *      reads floor (everyone fails, no signal) → window (scores spread,
- *      signal) → ceiling (everyone passes, no signal). The treadmill EMERGES
- *      from the mechanics instead of being reported as a status board. This
- *      replaced the earlier lifespan-bars figure, which carried a "still
- *      standing" state that rotted the moment the leaderboard moved (it
- *      claimed FrontierMath stood, which stopped being true); the simulation
- *      makes no claim about where any real benchmark sits today, so it
- *      cannot expire. Real history lives in the caption as immutable facts
- *      (each past ceiling arrived faster than the last; FrontierMath opened
- *      under 2% by design).
- *   3. What the window costs. MEASURED, and no new generation: page 11's run
- *      swept two MATH-500 difficulty bands on one family under identical
- *      settings (greedy, cap 2048, one grader, one seed), and nothing draws the
- *      token counts underneath its FLOPs price. Pairing each model's two greedy
- *      points moves exactly one condition, which problems were asked, and
- *      every model in the family pays roughly twice the tokens for 28 to 34
- *      points less accuracy. That is the price of one harder rung, and a
- *      benchmark ladder is the same move repeated.
+ * Step 1 is verbatim published data (Huang et al., ICLR 2024, Table 3): asked
+ * to re-check its own reasoning with no new information, a model gets WORSE.
  *
- *      Why not the cross-benchmark ladder (MATH-500 to AIME to FrontierMath)
- *      the reader might expect: it moves the prompt, the grader, the answer
- *      format and the item count at once, which is exactly what section 1
- *      spends its length teaching the reader to refuse. The page would break
- *      its own rule two sections after teaching it. lib/page15Price.ts carries
- *      the argument in full, plus why this is not a reprint of page 11.
+ * Steps 2 and 3 were an authored Markov chain and an authored inverse-U until
+ * `page_17_when_reasoning_breaks.ipynb` re-read pages 5 to 9. Both are now the
+ * deck's own runs (lib/page17.ts), and what replaced them is smaller than what
+ * they claimed, which is the point of the page.
  *
- *   4. The knob was never new. In 2022 the compute setting traveled inside
- *      the metric's name (Minerva's MATH headline was maj1@64 = 50.3, with
- *      pass@1 = 33.6 in the same table); reasoning models moved it inside
- *      the product and the metric's name stopped carrying it. Close: put the
- *      conditions back, and note the one condition with a meter (the
- *      handoff to page 16's bill).
+ * Step 2 is page 6's budget sweep with the losses drawn back in. Its centre is
+ * ONE problem: right when cut off and made to commit, wrong when allowed to
+ * finish, and its mistake is an unjustified symmetry assumption a reader can
+ * check. THE SPECIMEN MUST NOT TRAVEL WITHOUT ITS THREE CONTROLS, which are on
+ * screen beside it and are the reason the beat is honest. The cut chain had not
+ * derived anything (0 of 25 rescues had concluded); the model did not simply
+ * know the answer (page 5's blurt arm gets 6 of 16); and stopping early is not
+ * a strategy, because a fixed cut is worse than finishing and the best cut buys
+ * no more coverage per token than plain resampling. Without those three a
+ * reader leaves with a technique that does not exist. The figure earns them:
+ * at the middle cuts the bad assumption is already written and the forced
+ * commit ignores it, which is control 1 drawn rather than asserted.
  *
- * This replaces the earlier score-dashboard revision of this page (a
- * compiled timeline of published dots). That figure was original as a
- * compilation but was a transcription, not an abstraction: its only
- * interaction was reading receipts, which the literature itself already
- * offers. Rationale and the verification behind the reframe:
- * docs/page_15_coordinates_revision.md. benchmark-scoreboard.json no longer
- * feeds this page (it fed the dashboard and the retired lifespan bars); it
- * stays in data/ with its tests for provenance and possible reuse.
+ * The old step 3 asserted that easy problems cross an overthinking threshold
+ * before hard ones. Pooled over three checkpoints our own run puts both medians
+ * at the same budget, and the budget axis cannot carry the claim anyway: under
+ * greedy decoding a chain that has stopped itself is not rerun at a larger
+ * budget. The claim is deleted rather than softened; docs/page_17_findings.md
+ * section 4 is why, and the loader keeps it reachable as a stated null.
  *
- * Data: o1 trio and GPT-4o baseline from data/o1-scaling.json fit params,
- * the same source page 13 prints, so the two pages cannot drift; the other
- * case numbers mirror data/benchmark-scoreboard.json. All numbers verbatim
- * from the cited reports and pinned in the test suite; the condition rows
- * paraphrase the same reports' own disclosed settings.
+ * Step 3 is now the verifier, measured twice. Reliability falls with the very
+ * temperature that makes best-of-N worth running, and only the judge trained to
+ * score stays flat, so the figure is a crossing and must be read left to right.
+ * Then the quieter coordinate: 94.2% of the steps in 1,580 real chains state
+ * nothing a checker can compute, and the reward model's quality figures were
+ * taken inside the other 5.8%.
  *
- * ARC-AGI is deliberately absent: its story is the price tag, and page 16
- * tells it with a dollar axis.
+ * Step 4 is the balance: what still works, and the contamination caveat, which
+ * discounts every accuracy number in Acts 2 and 3 and is therefore a callout
+ * rather than a trailing muted line.
  */
 
-import { useState } from "react";
-import { scaleLinear } from "d3";
+import { useMemo, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
-import { PAGE15_PRICE } from "@/lib/page15Price";
-import {
-  CEILING_PCT,
-  FLOOR_PCT,
-  populationScores,
-  windowState,
-  WINDOW_TESTS,
-} from "@/lib/benchmarkWindow";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
+import { PAGE17, pct, tidyMath } from "@/lib/page17";
+import { pLabel, WAIT_TABLE } from "@/lib/page06";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 15;
-const P = curves.o1Scaling.fit!.params;
 
 /** Page 15's references, numbered in order of first appearance. */
-const REF = {
-  openai: 1,
-  deepseek: 2,
-  frontiermath: 3,
-  epoch: 4,
-  gsm8k: 5,
-  math: 6,
-  gpqa: 7,
-  snell: 8,
-  minerva: 9,
-} as const;
-
-/** What each window state means for the reader, spelled out. */
-const STATE_CHIP = {
-  floor: "no signal: everyone fails",
-  window: "signal: it separates the models",
-  ceiling: "no signal: everyone passes",
-} as const;
+const REF = { huang: 1, zeng: 2, wang: 3, stroebl: 4, balachandran: 5 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
-function Note({
-  kicker,
-  bottom = false,
-  children,
-}: {
-  kicker: string;
-  /** Sit at the foot of the sidenote column instead of the top of the row. The
-   *  house position for a References note beside a final step (page 2's). */
-  bottom?: boolean;
-  children: React.ReactNode;
-}) {
+function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
-    <aside
-      className={`flex flex-col gap-2 text-sm text-ink-muted ${
-        bottom ? "lg:mt-auto lg:self-end" : "lg:pt-9"
-      }`}
-    >
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
 }
 
-/* ----------------------------- the cases ------------------------------- */
-
-type CoordKey = "model" | "test" | "harness" | "budget";
-
-const COORDS: { key: CoordKey; label: string }[] = [
-  { key: "model", label: "the model variant" },
-  { key: "test", label: "the version of the test" },
-  { key: "harness", label: "whose harness scored it" },
-  { key: "budget", label: "the thinking budget" },
-];
-
-const coordLabel = (k: CoordKey) => COORDS.find((c) => c.key === k)!.label;
-
-interface HeadlineSide {
-  /** Short column tag for the receipt table. */
-  tag: string;
-  /** The quote-true headline, rendered in quotation marks. */
-  quote: string;
-  when: string;
-  coords: Record<CoordKey, string>;
+/** One model × benchmark panel of the Huang et al. Table 3 bars. */
+function SelfCorrectPanel({
+  heading,
+  rows,
+}: {
+  heading: string;
+  rows: { label: string; value: number; broke: boolean }[];
+}) {
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-3"
+      role="img"
+      aria-label={`${heading}: ${rows.map((r) => `${r.label} ${r.value} percent`).join(", ")}`}
+    >
+      <p className="text-sm font-semibold text-ink">{heading}</p>
+      {rows.map((r) => (
+        <div key={r.label} className="flex items-center gap-2 text-sm">
+          <span className="w-28 shrink-0 text-ink-muted">{r.label}</span>
+          <div className="h-5 flex-1 rounded bg-surface">
+            <div
+              className={`h-5 rounded ${r.broke ? "bg-wrong" : "bg-correct"}`}
+              style={{ width: `${r.value}%` }}
+            />
+          </div>
+          <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">
+            {r.value.toFixed(1)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-interface HeadlineCase {
-  key: string;
-  picker: string;
-  moved: CoordKey[];
-  a: HeadlineSide;
-  b: HeadlineSide;
-  lesson: React.ReactNode;
-}
+/* ------------------------------------------------------------------ step 2a */
 
-const CASES: HeadlineCase[] = [
-  {
-    key: "o1",
-    picker: "o1 on AIME 2024",
-    moved: ["budget"],
-    a: {
-      tag: `${P.o1Pass1}%`,
-      quote: `o1 scores ${P.o1Pass1}% on AIME 2024`,
-      when: "Sep 2024",
-      coords: {
-        model: "o1",
-        test: "AIME 2024, all 15 problems",
-        harness: "OpenAI's own evaluation",
-        budget: "one chain per problem (pass@1)",
-      },
-    },
-    b: {
-      tag: `${P.o1Rerank1000}%`,
-      quote: `o1 scores ${P.o1Rerank1000}% on AIME 2024`,
-      when: "Sep 2024",
-      coords: {
-        model: "o1",
-        test: "AIME 2024, all 15 problems",
-        harness: "OpenAI's own evaluation",
-        budget: "1,000 chains per problem, a learned judge picks one (page 8's re-ranker)",
-      },
-    },
-    lesson: (
-      <>
-        Both numbers sit in a single sentence of the o1 announcement, with {P.o1Cons64}% (page
-        7&apos;s vote across 64 chains) between them.
-        <Cite n={REF.openai} /> Page 13 built this stack lever by lever; the headline erases which
-        lever was on. {(P.o1Rerank1000 - P.o1Pass1).toFixed(1)} points of AIME live in the sampling
-        dial alone.
-      </>
-    ),
-  },
-  {
-    key: "gpt4o",
-    picker: "GPT-4o on AIME 2024",
-    moved: ["harness"],
-    a: {
-      tag: `${P.gpt4oAime}%`,
-      quote: `GPT-4o scores ${P.gpt4oAime}% on AIME 2024`,
-      when: "Sep 2024",
-      coords: {
-        model: "GPT-4o",
-        test: "AIME 2024, all 15 problems",
-        harness: "OpenAI's harness, in the o1 announcement",
-        budget: "one answer per problem (pass@1)",
-      },
-    },
-    b: {
-      tag: "9.3%",
-      quote: "GPT-4o scores 9.3% on AIME 2024",
-      when: "Jan 2025",
-      coords: {
-        model: "GPT-4o",
-        test: "AIME 2024, all 15 problems",
-        harness: "DeepSeek's harness, in the R1 paper",
-        budget: "one answer per problem (pass@1)",
-      },
-    },
-    lesson: (
-      <>
-        Nobody misreported, and the model never changed: prompt format, answer extraction and
-        sampling defaults moved the score by nearly a quarter of itself.
-        <Cite n={REF.openai} />
-        <Cite n={REF.deepseek} /> Compare scores only inside one report.
-      </>
-    ),
-  },
-  {
-    key: "o3",
-    picker: "o3 on FrontierMath",
-    moved: ["model", "test", "harness", "budget"],
-    a: {
-      tag: "25.2%",
-      quote: "o3 scores 25.2% on FrontierMath",
-      when: "Dec 2024",
-      coords: {
-        model: "o3, internal pre-release build",
-        test: "the 180-problem 2024-11 version",
-        harness: "OpenAI, run internally; OpenAI had funded the benchmark, disclosed late",
-        budget: "“aggressive test-time compute” (OpenAI's phrase)",
-      },
-    },
-    b: {
-      tag: "10%",
-      quote: "o3 scores 10% on FrontierMath",
-      when: "Apr 2025",
-      coords: {
-        model: "o3 as released in the product",
-        test: "the 290-problem 2025-02 set",
-        harness: "Epoch AI, independent",
-        budget: "product compute settings",
-      },
-    },
-    lesson: (
-      <>
-        The dispute that ran through the AI press for a spring, resolved by conditions: every one
-        of them moved at once, and the test&apos;s funder was the scorer.
-        <Cite n={REF.frontiermath} />
-        <Cite n={REF.epoch} /> Neither number is a lie. Without its conditions, neither is a
-        measurement.
-      </>
-    ),
-  },
-];
+const L_W = 640;
+const L_H = 210;
+const L_M = { top: 18, right: 16, bottom: 40, left: 56 };
+const L_IW = L_W - L_M.left - L_M.right;
+const L_IH = L_H - L_M.top - L_M.bottom;
 
-/* --------------------------- the price of a rung ------------------------- */
-
-const CHART = { w: 720, h: 400 };
-const PRICE_MARGIN = { top: 30, right: 28, bottom: 46, left: 54 };
+const LEDGER = PAGE17.ledger.primary;
+const L_MAX = Math.max(...LEDGER.map((r) => Math.max(r.gained, r.lost)));
+const L_ZERO = (L_IH * L_MAX) / (L_MAX + Math.max(...LEDGER.map((r) => r.lost)) * 1.6);
 
 /**
- * One arrow per model, tail at its easy-band reading and head at its hard-band
- * reading. The geometry is the claim: right means more tokens, down means less
- * accuracy, and all three arrows are near parallel, so the reader sees "every
- * model does the same thing" before reading a single number.
+ * What page 6's curve is the difference of. Gains rise from the baseline, losses
+ * hang below it, so the thing the reader is meant to notice is that no rung is
+ * clean: there is a red stub under every one of them, including the two that
+ * look like unambiguous wins.
+ *
+ * The last rung is drawn like the others and captioned differently, because its
+ * emptiness is a fact about the axis rather than about the model.
  */
-function PriceChart() {
-  const { pairs, bands } = PAGE15_PRICE;
-  const innerW = CHART.w - PRICE_MARGIN.left - PRICE_MARGIN.right;
-  const innerH = CHART.h - PRICE_MARGIN.top - PRICE_MARGIN.bottom;
+function RungLedger({ active }: { active: number }) {
+  const band = L_IW / LEDGER.length;
+  const activeRung = active > 0 ? LEDGER[active - 1] : null;
+  return (
+    <ChartFrame
+      title={`Answers gained and lost at each doubling of the token budget, on ${PAGE17.run.items} problems at ${PAGE17.run.primaryLabel}. ${LEDGER.map(
+        (r) => `${r.from_budget} to ${r.to_budget} tokens: ${r.gained} gained, ${r.lost} lost`,
+      ).join(". ")}. Every rung loses answers.`}
+      width={L_W}
+      height={L_H}
+      margin={L_M}
+      yLabel="answers"
+    >
+      <line x1={0} x2={L_IW} y1={L_ZERO} y2={L_ZERO} className="stroke-ink-muted" strokeWidth={1} />
+      {LEDGER.map((r, i) => {
+        const cx = i * band + band / 2;
+        const up = (r.gained / L_MAX) * (L_ZERO - 6);
+        const down = (r.lost / L_MAX) * (L_IH - L_ZERO - 14);
+        const on = activeRung === r;
+        return (
+          <g key={r.to_budget} opacity={activeRung === null || on ? 1 : 0.45}>
+            <rect
+              x={cx - 26}
+              y={L_ZERO - up}
+              width={52}
+              height={up}
+              className="fill-correct"
+              opacity={on ? 1 : 0.75}
+            />
+            <rect
+              x={cx - 26}
+              y={L_ZERO}
+              width={52}
+              height={down}
+              className="fill-wrong"
+              opacity={on ? 1 : 0.75}
+            />
+            {r.gained > 0 ? (
+              <text
+                x={cx}
+                y={L_ZERO - up - 5}
+                textAnchor="middle"
+                className="fill-ink text-[11px] font-semibold"
+              >
+                +{r.gained}
+              </text>
+            ) : (
+              <text x={cx} y={L_ZERO - 6} textAnchor="middle" className="fill-ink-muted text-[11px]">
+                nothing gained
+              </text>
+            )}
+            <text
+              x={cx}
+              y={L_ZERO + down + 12}
+              textAnchor="middle"
+              className="fill-wrong text-[11px] font-semibold"
+            >
+              &minus;{r.lost}
+            </text>
+            <text
+              x={cx}
+              y={L_IH + 16}
+              textAnchor="middle"
+              className={`text-[10px] ${on ? "fill-ink font-semibold" : "fill-ink-muted"}`}
+            >
+              {r.from_budget} to {r.to_budget}
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
+  );
+}
 
-  const tokens = pairs.flatMap((p) => [p.easy.meanTokens, p.hard.meanTokens]);
-  const accs = pairs.flatMap((p) => [p.easy.accuracy, p.hard.accuracy]);
-  const x = scaleLinear()
-    .domain([Math.min(...tokens) - 60, Math.max(...tokens) + 60])
-    .range([0, innerW]);
-  const y = scaleLinear()
-    .domain([Math.max(0, Math.min(...accs) - 0.1), Math.min(1, Math.max(...accs) + 0.08)])
-    .range([innerH, 0]);
+/* ------------------------------------------------------------------ step 2b */
 
-  const xTicks = x.ticks(6);
-  const yTicks = y.ticks(5);
-  const meanEasyX = pairs.reduce((s, p) => s + p.easy.meanTokens, 0) / pairs.length;
-  const meanHardX = pairs.reduce((s, p) => s + p.hard.meanTokens, 0) / pairs.length;
+type Seg = { text: string; tone: "plain" | "wrong" | "commit" } | { elided: number };
+
+/**
+ * Fold a chain down to what is worth reading: a head, the spans that carry the
+ * argument, and an honest count of the characters dropped between them. The
+ * elision has to state its size, or a reader cannot tell a tidy chain from a
+ * cropped one.
+ */
+function fold(
+  trace: string,
+  marks: { span: [number, number]; tone: "wrong" | "commit" }[],
+  head = 200,
+  pad = 96,
+): Seg[] {
+  // Snap a cut to the nearest space, or the fold lands mid-word and the elision reads
+  // as a rendering fault rather than as an omission.
+  const snap = (i: number, dir: 1 | -1): number => {
+    for (let k = 0; k < 40; k++) {
+      const j = i + dir * k;
+      if (j <= 0) return 0;
+      if (j >= trace.length) return trace.length;
+      if (/\s/.test(trace[j])) return j;
+    }
+    return i;
+  };
+  const keep: [number, number][] = [[0, snap(Math.min(head, trace.length), -1)]];
+  for (const m of marks) {
+    keep.push([
+      snap(Math.max(0, m.span[0] - pad), -1),
+      snap(Math.min(trace.length, m.span[1] + pad), 1),
+    ]);
+  }
+  keep.sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const r of keep) {
+    const last = merged[merged.length - 1];
+    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+    else merged.push([...r] as [number, number]);
+  }
+
+  const out: Seg[] = [];
+  let cursor = 0;
+  for (const [s, e] of merged) {
+    if (s > cursor) out.push({ elided: s - cursor });
+    // Split this kept range around whichever marks fall inside it.
+    let at = s;
+    for (const m of marks.filter((m) => m.span[0] >= s && m.span[0] < e).sort((a, b) => a.span[0] - b.span[0])) {
+      if (m.span[0] > at) out.push({ text: trace.slice(at, m.span[0]), tone: "plain" });
+      out.push({ text: trace.slice(m.span[0], Math.min(m.span[1], e)), tone: m.tone });
+      at = Math.min(m.span[1], e);
+    }
+    if (at < e) out.push({ text: trace.slice(at, e), tone: "plain" });
+    cursor = e;
+  }
+  if (cursor < trace.length) out.push({ elided: trace.length - cursor });
+  return out;
+}
+
+const SP = PAGE17.specimen;
+
+/**
+ * One problem, one chain, the budget on a dial.
+ *
+ * The reveal the figure is built for is not "short is better". It is that the
+ * bad assumption is ALREADY on screen at 256 and 512 tokens and the model
+ * commits to the right answer anyway, then commits to the assumption's result
+ * once allowed to finish. That is control 1 drawn rather than asserted: the
+ * answer is coming from the commit, not from the working above it.
+ */
+function SpecimenChain({ budgetIndex }: { budgetIndex: number }) {
+  const row = SP.byBudget[budgetIndex];
+  const isEnd = !row.truncated;
+  const written = SP.zones.assumption[1] <= row.trace.length;
+  const segs = useMemo(() => {
+    const marks: { span: [number, number]; tone: "wrong" | "commit" }[] = [];
+    // The assumption is lit wherever it has been written, which at the middle cuts
+    // means it is on screen AND ignored by the commit below it. That is control 1
+    // drawn rather than asserted.
+    if (SP.zones.assumption[1] <= row.trace.length) {
+      marks.push({ span: SP.zones.assumption, tone: "wrong" });
+    }
+    if (!row.truncated) {
+      marks.push({ span: SP.zones.conclusion, tone: "wrong" });
+    } else if (row.commit !== null) {
+      marks.push({ span: [row.commit, row.trace.length], tone: "commit" });
+    }
+    return fold(row.trace, marks);
+  }, [row.trace, row.truncated, row.commit]);
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          {isEnd
+            ? `its own ending, ${row.own_tokens} tokens`
+            : `cut at ${row.budget} tokens, then made to commit`}
+        </p>
+        <p className={`text-sm font-semibold ${row.correct ? "text-correct" : "text-wrong"}`}>
+          answered <span className="font-mono">{tidyMath(row.extracted_answer ?? "")}</span>,{" "}
+          {row.correct ? "right" : "wrong"}
+        </p>
+      </div>
+      <p className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-ink-muted">
+        {segs.map((s, i) =>
+          "elided" in s ? (
+            <span key={i} className="mx-1 rounded bg-surface px-1 text-[10px] not-italic text-ink-muted">
+              [{s.elided.toLocaleString()} more characters of working]
+            </span>
+          ) : (
+            <span
+              key={i}
+              className={
+                s.tone === "wrong"
+                  ? "rounded bg-wrong/20 px-0.5 text-ink"
+                  : s.tone === "commit"
+                    ? "rounded bg-correct/20 px-0.5 text-ink"
+                    : undefined
+              }
+            >
+              {tidyMath(s.text)}
+            </span>
+          ),
+        )}
+      </p>
+      {written ? (
+        <p className="text-xs text-ink-muted">
+          Lit in red: {SP.zones.why}.
+          {!isEnd
+            ? " It is already written, and the forced commit below ignores it."
+            : " The box at the end is what it carries the assumption to."}
+        </p>
+      ) : (
+        <p className="text-xs text-ink-muted">
+          Cut before it makes its mistake. The assumption that costs it has not been written yet.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ step 3a */
+
+const R_W = 700;
+const R_H = 300;
+const R_M = { top: 24, right: 196, bottom: 46, left: 52 };
+const R_IW = R_W - R_M.left - R_M.right;
+const R_IH = R_H - R_M.top - R_M.bottom;
+
+const REL = PAGE17.reliability;
+const T_MIN = REL.temperatures[0];
+const T_MAX = REL.temperatures[REL.temperatures.length - 1];
+const rx = (t: number) => ((t - T_MIN) / (T_MAX - T_MIN)) * R_IW;
+const ry = (r: number) => R_IH - r * R_IH;
+
+/**
+ * Push overlapping right-hand labels apart. Three selectors land within a point
+ * of each other at the hottest column, and stacked-on-top-of-each-other labels
+ * would read as a rendering fault rather than as a tie.
+ */
+function dodge(ys: number[], gap = 13): number[] {
+  const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
+  for (let i = 1; i < order.length; i++) {
+    if (order[i].y - order[i - 1].y < gap) order[i].y = order[i - 1].y + gap;
+  }
+  const out = new Array<number>(ys.length);
+  for (const o of order) out[o.i] = o.y;
+  return out;
+}
+
+/**
+ * Reliability against the temperature that buys candidate diversity, every line
+ * measured at one candidate depth so temperature is the only thing moving.
+ *
+ * The claim is a CROSSING and not a column: at the coldest setting the trained
+ * reward model is mid-pack, and by the hottest it leads every model-as-judge by
+ * a wide margin, because it is the only line that does not decay. So the figure
+ * is built to be read left to right. The widening wedge between the trained line
+ * and the best model-judge is drawn as area, which is the comparison the reader
+ * would otherwise have to do four times by eye, and the full 0 to 100 axis is
+ * kept rather than zoomed because "no judge here is anywhere near perfect" is
+ * also page 17's point.
+ */
+function ReliabilitySweep() {
+  const trained = REL.trained;
+  const others = REL.lines.filter((l) => !l.trained);
+  // The wedge's lower edge: the best model-judge at each temperature, which is
+  // the fairest thing to charge the trained line against.
+  const bestOther = REL.temperatures.map((t, i) =>
+    Math.max(...others.map((o) => o.points[i].reliability)),
+  );
+  const labelYs = dodge(REL.lines.map((l) => ry(l.points[l.points.length - 1].reliability)));
 
   return (
     <ChartFrame
-      width={CHART.w}
-      height={CHART.h}
-      margin={PRICE_MARGIN}
-      xLabel="mean tokens generated per problem (the meter reading)"
-      yLabel="accuracy"
-      title={
-        `Accuracy against tokens spent per problem, for three models on two MATH-500 ` +
-        `difficulty bands. Every model moves right and down going from the easy band to ` +
-        `the hard band: ${pairs
-          .map(
-            (p) =>
-              `${p.label} spends ${Math.round(p.easy.meanTokens)} tokens at ${Math.round(
-                p.easy.accuracy * 100,
-              )}% on the easy band and ${Math.round(p.hard.meanTokens)} tokens at ${Math.round(
-                p.hard.accuracy * 100,
-              )}% on the hard band`,
-          )
-          .join("; ")}.`
-      }
+      title={`Reliability of five ways of picking an answer, against sampling temperature, all measured over ${REL.depth} candidates. ${REL.lines
+        .map(
+          (l) =>
+            `${l.label}: ${l.points.map((p) => `${pct(p.reliability)} at temperature ${p.temperature}`).join(", ")}`,
+        )
+        .join(". ")}. Every judge that is a model asked to judge decays; the trained reward model does not.`}
+      width={R_W}
+      height={R_H}
+      margin={R_M}
+      xLabel="sampling temperature, the knob that buys candidate diversity"
+      yLabel="reliability (%)"
     >
-      <defs>
-        <marker
-          id="p15-arrow"
-          viewBox="0 0 10 10"
-          refX={8}
-          refY={5}
-          markerWidth={7}
-          markerHeight={7}
-          orient="auto-start-reverse"
-        >
-          <path d="M 0 0 L 10 5 L 0 10 z" className="fill-compute" />
-        </marker>
-      </defs>
-
-      {yTicks.map((t) => (
-        <g key={`y${t}`}>
-          <line x1={0} x2={innerW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-8} y={y(t)} dy={4} textAnchor="end" className="fill-ink-muted text-[11px]">
-            {Math.round(t * 100)}%
+      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={R_IW} y1={ry(t)} y2={ry(t)} className="stroke-grid" strokeWidth={1} />
+          <text x={-8} y={ry(t) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t * 100}
           </text>
         </g>
       ))}
-      {xTicks.map((t) => (
+
+      {/* The gap the trained model opens up, as area rather than as four subtractions.
+          It is a sliver at the cold end and a wedge at the hot end, and it inverts at
+          the left because the vote is genuinely ahead there. That inversion is the
+          crossing, so it is drawn rather than tidied away. */}
+      <polygon
+        className="fill-compute opacity-[0.16]"
+        points={[
+          ...REL.temperatures.map((t, i) => `${rx(t)},${ry(trained.points[i].reliability)}`),
+          ...REL.temperatures.map((t, i) => `${rx(t)},${ry(bestOther[i])}`).reverse(),
+        ].join(" ")}
+      />
+
+      {/* The wedge alone is a shape; this gives it a number, at the column where the
+          page's sentence is read. */}
+      <g>
+        <line
+          x1={rx(T_MAX) - 16}
+          x2={rx(T_MAX) - 16}
+          y1={ry(trained.points[trained.points.length - 1].reliability)}
+          y2={ry(bestOther[bestOther.length - 1])}
+          className="stroke-compute"
+          strokeWidth={1.5}
+        />
         <text
-          key={`x${t}`}
-          x={x(t)}
-          y={innerH + 16}
+          x={rx(T_MAX) - 22}
+          y={
+            (ry(trained.points[trained.points.length - 1].reliability) +
+              ry(bestOther[bestOther.length - 1])) /
+            2
+          }
+          textAnchor="end"
+          className="fill-compute text-[10px] font-semibold"
+        >
+          {(
+            (trained.points[trained.points.length - 1].reliability -
+              bestOther[bestOther.length - 1]) *
+            100
+          ).toFixed(0)}{" "}
+          points clear
+        </text>
+      </g>
+
+      {REL.temperatures.map((t) => (
+        <text
+          key={t}
+          x={rx(t)}
+          y={R_IH + 16}
           textAnchor="middle"
           className="fill-ink-muted text-[11px]"
         >
-          {t}
+          {t.toFixed(1)}
         </text>
       ))}
 
-      {/* Which end of the plot is which band, said on the plot itself. */}
-      <text x={x(meanEasyX)} y={-10} textAnchor="middle" className="fill-ink-muted text-[11px]">
-        MATH-500 {bands.easy.levels}
-      </text>
-      <text x={x(meanHardX)} y={-10} textAnchor="middle" className="fill-ink-muted text-[11px]">
-        MATH-500 {bands.hard.levels}
-      </text>
-
-      {pairs.map((p) => (
-        <g key={p.label}>
-          <line
-            x1={x(p.easy.meanTokens)}
-            y1={y(p.easy.accuracy)}
-            x2={x(p.hard.meanTokens)}
-            y2={y(p.hard.accuracy)}
-            className="stroke-compute"
-            strokeWidth={2}
-            markerEnd="url(#p15-arrow)"
+      {REL.lines.map((line) => (
+        <g key={line.selector}>
+          <polyline
+            fill="none"
+            className={line.trained ? "stroke-compute" : "stroke-ink-muted"}
+            strokeWidth={line.trained ? 2.5 : 1.25}
+            strokeOpacity={line.trained ? 1 : 0.75}
+            points={line.points.map((p) => `${rx(p.temperature)},${ry(p.reliability)}`).join(" ")}
           />
-          <circle
-            cx={x(p.easy.meanTokens)}
-            cy={y(p.easy.accuracy)}
-            r={5}
-            className="fill-canvas stroke-compute"
-            strokeWidth={2}
+          {line.points.map((p) => (
+            <circle
+              key={p.temperature}
+              cx={rx(p.temperature)}
+              cy={ry(p.reliability)}
+              r={line.trained ? 3.5 : 2}
+              className={line.trained ? "fill-compute" : "fill-ink-muted"}
+            />
+          ))}
+        </g>
+      ))}
+
+      {REL.lines.map((line, i) => (
+        <g key={`label-${line.selector}`}>
+          <line
+            x1={R_IW}
+            x2={R_IW + 8}
+            y1={ry(line.points[line.points.length - 1].reliability)}
+            y2={labelYs[i]}
+            className={line.trained ? "stroke-compute" : "stroke-grid"}
+            strokeWidth={1}
           />
           <text
-            x={x(p.easy.meanTokens)}
-            y={y(p.easy.accuracy) - 12}
-            textAnchor="middle"
-            className="fill-ink text-[12px] font-semibold"
+            x={R_IW + 12}
+            y={labelYs[i] + 3}
+            className={`text-[10px] ${line.trained ? "fill-compute font-semibold" : "fill-ink-muted"}`}
           >
-            {p.label}
+            {line.label}
           </text>
         </g>
       ))}
@@ -414,46 +522,72 @@ function PriceChart() {
   );
 }
 
+/* ------------------------------------------------------------------ step 3b */
+
+const S_W = 640;
+const S_H = 168;
+const S_M = { top: 40, right: 16, bottom: 44, left: 16 };
+const S_IW = S_W - S_M.left - S_M.right;
+
+/**
+ * Where the process grader's quality figures were taken. One bar, every step of
+ * 1,580 real chains, split at what an arithmetic checker can adjudicate.
+ *
+ * The figure exists because the sliver has to be seen at true width to land: a
+ * table row reading "5.8%" is a number, and a strip this thin next to the rest
+ * of the bar is an argument. The reward model's AUC is drawn INSIDE the sliver
+ * rather than beside the bar, because where it was measured is the whole claim.
+ */
+function ReadableSliver() {
+  const readable = PAGE17.readable;
+  const share = 1 - readable.shareUnjudged;
+  const w = Math.max(share * S_IW, 3);
+  const prm = readable.prm;
+  return (
+    <ChartFrame
+      title={`Of ${readable.stepsTotal.toLocaleString()} steps across 1,580 chains, an arithmetic checker can adjudicate ${readable.stepsJudged.toLocaleString()}, or ${pct(share, 1)}. The remaining ${pct(readable.shareUnjudged, 1)} state nothing it can compute.${prm ? ` The process reward model's AUC of ${prm.auc.toFixed(2)} was measured inside that ${pct(share, 1)}.` : ""}`}
+      width={S_W}
+      height={S_H}
+      margin={S_M}
+    >
+      <rect x={0} y={0} width={S_IW} height={44} className="fill-ink opacity-[0.07]" />
+      <rect x={0} y={0} width={w} height={44} className="fill-correct" />
+
+      {/* The leader has to come from outside: nothing legible fits in the sliver. */}
+      <line x1={w / 2} x2={w / 2} y1={-14} y2={0} className="stroke-correct" strokeWidth={1} />
+      <text x={w / 2 - 2} y={-20} className="fill-ink text-[11px] font-semibold">
+        {pct(share, 1)} checkable
+      </text>
+      <text x={S_IW - 4} y={26} textAnchor="end" className="fill-ink text-[12px] font-semibold">
+        {pct(readable.shareUnjudged, 1)} prose: nothing a checker can compute
+      </text>
+
+      {prm ? (
+        <>
+          <path
+            d={`M0,58 L0,66 L${w},66 L${w},58`}
+            fill="none"
+            className="stroke-ink-muted"
+            strokeWidth={1}
+          />
+          <text x={0} y={82} className="fill-ink-muted text-[11px]">
+            the reward model&apos;s AUC of {prm.auc.toFixed(2)}, its recall of{" "}
+            {pct(prm.recallOnFalse, 0)} and its specificity of {pct(prm.specificityOnTrue, 0)} were
+            all measured in here
+          </text>
+        </>
+      ) : null}
+    </ChartFrame>
+  );
+}
+
 export function Page15() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
+  const huang = curves.selfCorrection;
+  const h = huang.fit!.params;
 
-  const [caseKey, setCaseKey] = useState(CASES[0].key);
-  /* One guess per case, so revisiting a case keeps its reveal. */
-  const [picks, setPicks] = useState<Record<string, CoordKey | "shown">>({});
-  const current = CASES.find((c) => c.key === caseKey)!;
-  const pick = picks[caseKey];
-  const revealed = pick !== undefined;
-
-  /* "and nothing else" would be an assertion about every condition the two
-     reports did not print. For the GPT-4o pair in particular, nobody here has
-     opened the R1 paper's eval appendix to confirm DeepSeek scored the same
-     15-problem AIME 2024 set OpenAI did, and if it did not, the taught answer
-     is wrong. "as far as either report says" is what the page can support. */
-  const movedText =
-    current.moved.length === COORDS.length
-      ? "all four conditions at once"
-      : `${coordLabel(current.moved[0])}, as far as either report says`;
-  const verdictPrefix =
-    pick === undefined || pick === "shown"
-      ? ""
-      : current.moved.includes(pick)
-        ? "Good guess. "
-        : `Not quite: ${coordLabel(pick)} is the same in both headlines. `;
-
-  const guess = (k: CoordKey | "shown") => {
-    setPicks((p) => ({ ...p, [caseKey]: k }));
-    recordInteraction(PAGE_N);
-  };
-
-  /* Section 2: the frontier's position in illustrative units, default mid-ladder. */
-  const [capability, setCapability] = useState(4.5);
-  const rows = WINDOW_TESTS.map((t) => {
-    const scores = populationScores(capability, t.difficulty);
-    return { ...t, scores, state: windowState(scores) };
-  });
-  const readable = rows.filter((r) => r.state === "window").length;
-  const allBlind = rows.every((r) => r.state === "ceiling");
+  const [budgetIndex, setBudgetIndex] = useState(0);
 
   return (
     <article className="flex flex-col gap-6">
@@ -465,463 +599,381 @@ export function Page15() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        The same model, the same test, the same month. 74.4% vs 93%, and both are true. What
-        gives?{" "}
-        <strong className="text-ink">A score is not a property of a model</strong>; it is a number
-        plus the conditions it was taken under, and headlines like to print the number alone.
+        For fourteen pages the dial has mostly pointed one way: more samples, deeper search, longer
+        chains, more accuracy. This page is the fine print. Left alone, models{" "}
+        <strong className="text-ink">cannot reliably fix their own mistakes</strong>, thinking
+        longer can <strong className="text-ink">subtract</strong> accuracy, and the verifiers doing
+        the rescuing are fallible themselves.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the courtroom of headlines */}
+        {/* Step 1 — intrinsic self-correction fails */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. Two true headlines, one model
+            1. Marking its own homework
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              published numbers · no simulation
+              verbatim published numbers
             </span>
           </h2>
-
-          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Pick a case">
-              {CASES.map((c) => (
-                <button
-                  key={c.key}
-                  type="button"
-                  aria-pressed={caseKey === c.key}
-                  onClick={() => {
-                    setCaseKey(c.key);
-                    recordInteraction(PAGE_N);
-                  }}
-                  className={`rounded px-3 py-1.5 text-sm ${
-                    caseKey === c.key
-                      ? "bg-compute text-canvas"
-                      : "border border-grid bg-surface-raised text-ink-muted"
-                  }`}
-                >
-                  {c.picker}
-                </button>
-              ))}
-            </div>
-
+          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-sm text-ink">
+              The obvious fix for a wrong answer is to ask the model to look it over and correct any
+              mistakes: no hints, no tools, just re-reading. Measured across two rounds of exactly
+              that, accuracy goes <strong>down</strong>:
+            </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {[current.a, current.b].map((side) => (
-                <figure
-                  key={side.tag}
-                  className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4"
-                >
-                  <blockquote className="m-0 text-lg font-semibold leading-snug text-ink">
-                    &ldquo;{side.quote}&rdquo;
-                  </blockquote>
-                  <figcaption className="flex items-center gap-2 text-xs text-ink-muted">
-                    <span className="rounded border border-grid px-1.5 py-0.5 font-semibold">
-                      quote-true
-                    </span>
-                    {side.when}
-                  </figcaption>
-                </figure>
-              ))}
+              <SelfCorrectPanel
+                heading="GPT-4 · GSM8K"
+                rows={[
+                  { label: "first answer", value: h.gpt4Gsm8k0, broke: false },
+                  { label: "after 1 round", value: h.gpt4Gsm8k1, broke: true },
+                  { label: "after 2 rounds", value: h.gpt4Gsm8k2, broke: true },
+                ]}
+              />
+              <SelfCorrectPanel
+                heading="GPT-3.5 · CommonSenseQA"
+                rows={[
+                  { label: "first answer", value: h.gpt35Csqa0, broke: false },
+                  { label: "after 1 round", value: h.gpt35Csqa1, broke: true },
+                  { label: "after 2 rounds", value: h.gpt35Csqa2, broke: true },
+                ]}
+              />
             </div>
-
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-ink">
-                Both headlines are true, and both are badged{" "}
-                <span className="rounded border border-grid px-1 py-0.5 text-xs font-semibold">
-                  quote-true
-                </span>
-                , which on this page means every number in them is lifted verbatim from the cited
-                report. The sentence around the number is ours, written the way a headline would
-                carry it. <strong>Which condition moved?</strong>
-              </p>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Which condition moved?">
-                {COORDS.map((c) => (
-                  <button
-                    key={c.key}
-                    type="button"
-                    disabled={revealed}
-                    onClick={() => guess(c.key)}
-                    className={`rounded border px-3 py-1.5 text-sm disabled:opacity-60 ${
-                      revealed && current.moved.includes(c.key)
-                        ? "border-compute bg-compute/15 font-semibold text-ink"
-                        : "border-grid bg-surface-raised text-ink-muted"
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                ))}
-                {!revealed ? (
-                  <button
-                    type="button"
-                    onClick={() => guess("shown")}
-                    className="rounded px-3 py-1.5 text-sm text-ink-muted underline decoration-dotted"
-                  >
-                    just show me
-                  </button>
-                ) : null}
-              </div>
-            </div>
-
-            <div aria-live="polite" className="flex flex-col gap-3">
-              {revealed ? (
-                <>
-                  <p className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-                    {verdictPrefix}
-                    What moved: <strong>{movedText}</strong>.
-                  </p>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-sm">
-                      <thead>
-                        <tr className="text-left text-xs uppercase tracking-wide text-ink-muted">
-                          <th scope="col" className="py-1.5 pr-3 font-semibold">
-                            condition
-                          </th>
-                          <th scope="col" className="py-1.5 pr-3 font-semibold">
-                            the {current.a.tag} headline
-                          </th>
-                          <th scope="col" className="py-1.5 font-semibold">
-                            the {current.b.tag} headline
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {COORDS.map((c) => {
-                          const moved = current.moved.includes(c.key);
-                          return (
-                            <tr
-                              key={c.key}
-                              className={`border-t border-grid align-top ${moved ? "bg-compute/10" : ""}`}
-                            >
-                              <th
-                                scope="row"
-                                className={`py-2 pr-3 text-left font-medium ${moved ? "text-ink" : "text-ink-muted"}`}
-                              >
-                                {moved ? "≠ " : ""}
-                                {c.label}
-                              </th>
-                              <td className={`py-2 pr-3 ${moved ? "text-ink" : "text-ink-muted"}`}>
-                                {current.a.coords[c.key]}
-                              </td>
-                              <td className={`py-2 ${moved ? "text-ink" : "text-ink-muted"}`}>
-                                {current.b.coords[c.key]}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <p className="text-sm text-ink">{current.lesson}</p>
-                  <p className="rounded-lg border-l-4 border-compute bg-compute/10 p-3 text-sm text-ink">
-                    <strong>Watch the second condition.</strong> A different version of a test is
-                    not just a different set of questions. A version published after a model
-                    trained is a different test entirely, and section 2 is about what that does.
-                  </p>
-                </>
-              ) : null}
-            </div>
-          </div>
-        </section>
-
-        <div className="flex flex-col gap-6 lg:gap-0">
-          <Note kicker="The rule">
-            <p>Guess before you reveal.</p>
-            <p>
-              All six headlines on this page are quote-true. That is the problem: a number with
-              its conditions filed off can say almost anything.
-            </p>
-          </Note>
-          <Note kicker="References">
-            <RefItem n={REF.openai} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
-              OpenAI 2024, the o1 and o3 announcements.
-            </RefItem>
-            <RefItem n={REF.deepseek} href="https://arxiv.org/abs/2501.12948">
-              DeepSeek-AI 2025.
-            </RefItem>
-            <RefItem n={REF.frontiermath} href="https://arxiv.org/abs/2411.04872" preprint>
-              Glazer et al. 2024, <em>FrontierMath</em>.
-            </RefItem>
-            <RefItem n={REF.epoch}>
-              Epoch AI and TechCrunch 2025, on the FrontierMath dispute.
-            </RefItem>
-          </Note>
-        </div>
-
-        {/* Step 2 — why tests die (authored simulation) */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. Why tests die
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              authored simulation · no real benchmark&apos;s numbers
-            </span>
-          </h2>
-          <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-sm text-ink">
-              A test is only useful while it can tell the models apart. Too hard and everyone
-              fails it, too easy and everyone passes it, and either way the scoreboard stops
-              telling you anything. Drag the slider to make the models better, and watch four
-              tests go from too hard, to useful, to too easy.
-            </p>
-            <p className="text-sm text-ink">
-              There are <strong>three ways</strong> a test stops being useful, and two of them are
-              on this slider: everyone fails, or everyone passes. The third has nothing to do with
-              how good the models are, so no amount of dragging will show it. That one is below
-              the figure.
-            </p>
             <p className="text-sm text-ink-muted">
-              {/* 15.5: the axis had no referent at all, and "where are we today?"
-                  is the first thing a reader asks a capability slider. Any dated
-                  answer rots inside a year, so the anchor is ordinal and reads
-                  off the rows themselves. */}
-              Do not look for today&apos;s position on this slider. There is no honest place to
-              mark it, and any mark would be wrong within a year. Read it as an order instead:{" "}
-              <strong className="text-ink">today is always wherever the newest test still
-              works</strong>, and everything above it has already been passed.
+              The reason is structural: the same weights that produced the error are asked to find
+              it, so the review mostly re-approves the answer, and when the model does change
+              something, it flips correct answers to wrong{" "}
+              <em>more often than the reverse</em>.
+              <Cite n={REF.huang} /> Nothing new enters the system; &ldquo;are you
+              sure?&rdquo; just adds noise, and on CommonSenseQA one round of it cost GPT-3.5 half
+              its score.
             </p>
-
-            <Slider
-              label="frontier capability (ordinal, not calibrated to any date)"
-              min={0}
-              max={12}
-              step={0.25}
-              value={capability}
-              format={(v) => v.toFixed(2).replace(/\.?0+$/, "")}
-              onChange={(v) => {
-                setCapability(v);
-                recordInteraction(PAGE_N);
-              }}
-            />
-
-            <div className="flex flex-col gap-3">
-              {rows.map((r) => {
-                const inWindow = r.state === "window";
-                const lo = Math.round(Math.min(...r.scores));
-                const hi = Math.round(Math.max(...r.scores));
-                return (
-                  <div key={r.key} className="flex flex-col gap-1">
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                      <span className={inWindow ? "font-medium text-ink" : "text-ink-muted"}>
-                        {r.label}
-                      </span>
-                      <span
-                        className={`rounded border px-1.5 py-0.5 text-xs ${
-                          inWindow
-                            ? "border-compute bg-compute/15 font-semibold text-ink"
-                            : "border-grid text-ink-muted"
-                        }`}
-                      >
-                        {STATE_CHIP[r.state]}
-                      </span>
-                    </div>
-                    <div
-                      role="img"
-                      aria-label={`${r.label}: ${STATE_CHIP[r.state]}; the five models score between ${lo}% and ${hi}%.`}
-                      className="relative h-5 rounded-sm border border-grid bg-canvas"
-                    >
-                      {/* the two no-signal edges */}
-                      <div
-                        aria-hidden="true"
-                        className="absolute inset-y-0 border-r border-dashed border-grid"
-                        style={{ left: `${FLOOR_PCT}%` }}
-                      />
-                      <div
-                        aria-hidden="true"
-                        className="absolute inset-y-0 border-l border-dashed border-grid"
-                        style={{ left: `${CEILING_PCT}%` }}
-                      />
-                      {r.scores.map((s, i) => (
-                        <div
-                          key={i}
-                          aria-hidden="true"
-                          className={`absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${
-                            inWindow ? "bg-compute" : "bg-grid"
-                          }`}
-                          style={{ left: `${s}%` }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <p aria-live="polite" className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              {allBlind ? (
-                <>
-                  <strong>Every test here is now too easy.</strong> The scoreboard reads 100
-                  across the board and tells you nothing. The only fix is a harder test, which is
-                  why <strong>moving the goalposts is the system working.</strong>
-                </>
-              ) : (
-                <>
-                  Tests still telling these models apart:{" "}
-                  <strong>{readable} of {rows.length}</strong>. A score only means something while
-                  its test is one of those.
-                </>
-              )}
+            <p className="border-t border-dashed border-grid pt-3 text-sm text-ink-muted">
+              We ran the gentler version. Page 6 refused to let its models stop, appending{" "}
+              <span className="font-mono text-ink">Wait</span> and making them carry on: a
+              reconsideration rather than a re-read. It moved {pct(WAIT_TABLE!.churn)} of the
+              answers and cost {WAIT_TABLE!.tokenMultiple.toFixed(1)}× the tokens, turning{" "}
+              {WAIT_TABLE!.table.afterOnly} wrong answers right against{" "}
+              {WAIT_TABLE!.table.beforeOnly} right ones wrong.{" "}
+              <strong className="text-ink">No checkpoint resolves its crossing</strong> ({pLabel(WAIT_TABLE!.p)}),
+              so ours is a null rather than a confirmation. The paper says review makes it worse;
+              we measured that the gentler form mostly churns. Both rule out asking again.
             </p>
-
-            <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
-              The four tests above are invented, and their difficulties are chosen to teach. What
-              is not invented is the pattern. Grade-school word problems, competition maths, and a
-              set of questions written to be hard for PhDs have all made this trip, from nobody
-              can pass it to everybody can, and each one made it faster than the test before.
-              <Cite n={REF.gsm8k} />
-              <Cite n={REF.math} />
-              <Cite n={REF.gpqa} /> New tests are built to be nearly impossible on purpose:
-              FrontierMath launched with every model on earth scoring under 2%.
-              <Cite n={REF.frontiermath} />
-            </figcaption>
-          </figure>
-
-          <p className="text-ink">
-            <strong className="text-ink">The third way is different.</strong> A test written
-            before a model was trained is a test the model may already have read. Nothing on that
-            slider will reveal it: a test can look perfectly useful up there and still be
-            rewarding memory instead of reasoning. Page 17 puts a number on it, on an exam
-            released after these models finished training.
-          </p>
-          <p className="text-ink">
-            And it reaches us. The hundred problems under Act 2, and under the next section, come
-            from a set published in 2021, which is inside the training data of every model in this
-            deck. We cannot tell you how much that flatters our own numbers either.
-          </p>
-        </section>
-
-        <div className="flex flex-col gap-6 lg:gap-0">
-          <Note kicker="How to read">
-            <p>Drag the slider; watch which tests still tell the models apart.</p>
-            <p>
-              A test going out of use because everyone passes it is a success, not a scandal. The
-              four here are invented, and say nothing about where any real test sits today.
-            </p>
-          </Note>
-          <Note kicker="References">
-            <RefItem n={REF.gsm8k} href="https://arxiv.org/abs/2110.14168">
-              Cobbe et al. 2021, <em>GSM8K</em>.
-            </RefItem>
-            <RefItem n={REF.math} href="https://arxiv.org/abs/2103.03874">
-              Hendrycks et al. 2021, <em>MATH</em>.
-            </RefItem>
-            <RefItem n={REF.gpqa} href="https://arxiv.org/abs/2311.12022">
-              Rein et al. 2023, <em>GPQA</em>.
-            </RefItem>
-          </Note>
-        </div>
-
-        {/* Step 3 — what the window costs (measured, page 11's run) */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            3. What the window costs
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              measured · our own run · no new generation
-            </span>
-          </h2>
-          <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-sm text-ink">
-              A harder question does not just get answered wrong more often.{" "}
-              <strong>It gets answered at greater length</strong>: more thinking spent, less
-              accuracy returned. It is why the right amount of thinking to buy depends on the
-              question you are buying it for.
-              <Cite n={REF.snell} /> Here is one step of that, measured: the same three models
-              asked the easy half of MATH-500, then the hard half, with only the problems changed.
-            </p>
-
-            <PriceChart />
-
-            <div className="flex flex-col gap-1 border-t border-dashed border-grid pt-2">
-              {PAGE15_PRICE.pairs.map((p) => (
-                <p key={p.label} className="text-sm text-ink-muted">
-                  <strong className="text-ink">{p.label}</strong> pays{" "}
-                  <strong className="text-ink">{p.tokenRatio.toFixed(1)}x</strong> the tokens on
-                  the hard band and scores{" "}
-                  <strong className="text-ink">{Math.round(p.accuracyDropPts)} points</strong>{" "}
-                  lower.
-                </p>
-              ))}
-            </div>
-
-            <p className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm text-ink">
-              Every model in the family does the same thing: <strong>roughly twice the thinking
-              for roughly thirty points less accuracy</strong>. That is the toll for one rung. A
-              benchmark ladder is this move repeated for a decade, which is why the tests that can
-              still see the frontier are the expensive ones, and why the meter on the next page
-              runs faster every year.
-            </p>
-
-            <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
-              Act 2 sold you this trade running the other way: spend more tokens, buy more
-              accuracy. The arrows are what happens when the question gets harder instead. The
-              model spends the tokens anyway and does not get the accuracy, so{" "}
-              <strong className="text-ink">difficulty charges you twice</strong>, once in what an
-              attempt costs and once in what it fails to buy. Page 11&apos;s measured run,
-              replayed here rather than generated again: greedy, cap 2,048 tokens, one grader,
-              one family.
-            </figcaption>
-          </figure>
-        </section>
-
-        <div className="flex flex-col gap-6 lg:gap-0">
-          <Note kicker="The move">
-            <p>Follow one arrow from its hollow tail to its head.</p>
-            <p>
-              Right is more thinking bought; down is less accuracy returned. Three models, three
-              arrows, one direction.
-            </p>
-          </Note>
-          <Note kicker="Limits">
-            <p>
-              This is one step in difficulty, not a whole ladder; reading the frontier off it is
-              extrapolation. The two halves were run separately rather than in one execution, and
-              the easy half has {PAGE15_PRICE.bands.easy.n} problems against the hard half&apos;s{" "}
-              {PAGE15_PRICE.bands.hard.n}. A fourth model in the run, a maths specialist, was
-              measured on the easy half only and is left out rather than drawn with a hole.
-            </p>
-          </Note>
-          <Note kicker="References">
-            <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
-              Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>, ICLR 2025: the
-              compute worth spending depends on the question&apos;s difficulty.
-            </RefItem>
-          </Note>
-        </div>
-
-        {/* Step 4 — the knob was never new */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">4. Put the conditions back</h2>
-          <p className="text-ink">
-            <strong className="text-ink">The thinking budget used to travel with the score.</strong>{" "}
-            In 2022 it was written into the metric&apos;s own name. Minerva&apos;s celebrated MATH
-            result was <code className="rounded bg-surface-raised px-1 text-[13px]">maj1@64 = 50.3%</code>,
-            and the name says what it is: a majority vote over 64 tries. The single-try{" "}
-            <code className="rounded bg-surface-raised px-1 text-[13px]">pass@1 = 33.6%</code> sat
-            in the same table, sixteen points below.
-            <Cite n={REF.minerva} /> You could not quote the good number without also quoting how
-            much thinking bought it.
-          </p>
-          <p className="text-ink">
-            <strong className="text-ink">Reasoning models moved it inside the product.</strong> An
-            effort setting, a token allowance, a hidden chain.
-            <Cite n={REF.openai} /> The metric&apos;s name stopped carrying any of it, so the
-            setting moved into the fine print, and fine print rarely survives being retold. The
-            number alone always does.
-          </p>
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            So a score is a reading, not a property. When the next one lands, ask five questions.
-            Four of them locate the reading: which model variant, which version of the test, whose
-            harness, how much thinking. The fifth asks whether the instrument could see anything
-            at all: was this test published before the model trained?{" "}
-            <em className="text-ink-muted">
-              Only one of the five has a meter running, and section 3 just watched it climb: a
-              harder rung cost every model in our family about twice the thinking. Next: the bill.
-              Turn the page.
-            </em>
           </div>
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.minerva} href="https://arxiv.org/abs/2206.14858">
-            Lewkowycz et al. 2022, <em>Minerva</em>.
+          <RefItem n={REF.huang} href="https://arxiv.org/abs/2310.01798">
+            Huang et al. 2024, <em>Large Language Models Cannot Self-Correct Reasoning Yet</em>{" "}
+            (ICLR 2024), Table 3. &ldquo;Round&rdquo; = the model is shown its own answer and asked
+            to review and revise it, with no external feedback.
           </RefItem>
         </Note>
+
+        {/* Step 2 — what the climbing curve netted out */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            2. What the climbing curve netted out
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              our run · {PAGE17.run.items} problems · {PAGE17.run.primaryLabel} · greedy
+            </span>
+          </h2>
+          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
+            <p className="text-sm text-ink">
+              Step 1 held the model to a re-read, which is why nothing new could be solved. Loosen
+              that: give it more room to think and let it write fresh working. Page 6 did exactly
+              this and its accuracy curve climbs. That curve is a <strong>net</strong>. Here are the two numbers it is the difference of.
+            </p>
+
+            <div className="flex flex-col gap-3">
+              <Slider
+                label="Token budget"
+                min={0}
+                max={PAGE17.run.budgets.length - 1}
+                value={budgetIndex}
+                format={(i) => `${PAGE17.run.budgets[i]} tokens`}
+                onChange={(v) => {
+                  setBudgetIndex(v);
+                  recordInteraction(PAGE_N);
+                }}
+              />
+              <RungLedger active={budgetIndex} />
+              <p className="text-sm text-ink-muted">
+                Every rung loses answers as well as gaining them, and those losses were never
+                drawn until now. The top rung gains{" "}
+                <strong className="text-ink">nothing</strong>, and not because thinking longer
+                stopped working: under greedy decoding a chain that has already stopped itself is
+                not run again at a larger budget, it is the same generation.{" "}
+                {pct(PAGE17.axisBound.shareSelfTerminated, 0)} of these end themselves before{" "}
+                {PAGE17.axisBound.maxBudget} tokens. The axis runs out before the model does.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-dashed border-grid pt-4">
+              <p className="text-sm text-ink">
+                So look at one of the losses. Drag the budget and watch a single problem:{" "}
+                <span className="font-mono text-xs text-ink-muted">{PAGE17.specimen.shortId}</span>,
+                minimise <em>(x+y)(y+z)</em> given <em>xyz(x+y+z) = 1</em>. The answer is{" "}
+                {PAGE17.specimen.groundTruth}.
+              </p>
+              <SpecimenChain budgetIndex={budgetIndex} />
+              <p className="text-sm text-ink-muted">
+                Cut at {PAGE17.specimen.rightWhenCutAt.join(", ")} tokens and forced to commit, it
+                answers {PAGE17.specimen.groundTruth} three times over. Allowed to run to its own{" "}
+                {PAGE17.specimen.naturalLength}-token ending, it answers{" "}
+                <span className="font-mono text-xs">{tidyMath(PAGE17.specimen.wrongAnswer ?? "")}</span>. The
+                step that costs it is lit, and every line after it is correct arithmetic carrying a
+                wrong assumption to a confident finish. It breaks on{" "}
+                {PAGE17.specimen.alsoRegressesOn.join(" and ")} too.
+              </p>
+            </div>
+
+            {/* The three controls. Each was run to break the specimen's story and each partly
+                succeeded, so none of them is optional and none is a footnote. */}
+            <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                three things this is not
+              </p>
+              <p className="text-sm text-ink">
+                <strong>Not a truncated proof.</strong> Of all{" "}
+                {PAGE17.controls.concludedWhenCut.cases} rescues like this in the run,{" "}
+                {PAGE17.controls.concludedWhenCut.withAConclusion} had concluded anything when cut,
+                against {pct(PAGE17.controls.concludedWhenCut.boxedWhenFinished, 0)} of chains
+                allowed to finish. The answer came from the commit, which is why the figure shows
+                the model writing its bad assumption and then ignoring it.
+              </p>
+              <p className="text-sm text-ink">
+                <strong>Not the model already knowing.</strong> Page 5&apos;s zero-token blurt arm
+                gets {PAGE17.controls.blurtArm.blurtRight} of these{" "}
+                {PAGE17.controls.blurtArm.items} items. Partial working plus a commit does
+                something neither end of that does alone.
+              </p>
+              <p className="text-sm text-ink">
+                <strong>Not a strategy.</strong> Stopping every problem at{" "}
+                {PAGE17.controls.isItARule.fixedCut} tokens scores{" "}
+                {pct(PAGE17.controls.isItARule.fixedCutAccuracy, 0)} against{" "}
+                {pct(PAGE17.controls.isItARule.natural, 0)} for finishing, and the best cut per
+                problem reaches {pct(PAGE17.controls.isItARule.oracle, 0)} for about{" "}
+                {Math.round(PAGE17.controls.isItARule.oracleTokenCost)} tokens where plain
+                resampling reaches {pct(PAGE17.controls.isItARule.samplingCoverage, 0)} at the same
+                cost. This is page 7&apos;s coverage without page 8&apos;s selector: a better
+                answer is in the pile and nothing we tested finds it.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="flex flex-col justify-center rounded-lg border border-grid bg-surface-raised p-4">
+                <p className="text-sm text-ink-muted">
+                  Problems the model talks itself out of, per {PAGE17.run.items}:
+                </p>
+                <div className="mt-2 flex items-end gap-4">
+                  {PAGE17.affected.byModel.map((m) => (
+                    <div key={m.model} className="flex flex-col items-center gap-1">
+                      <span className="font-mono text-2xl font-bold tabular-nums text-wrong">
+                        {m.rescued}
+                      </span>
+                      <span className="text-xs text-ink-muted">
+                        {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-sm text-ink-muted">
+                  The one aggregate claim here, and it is about capability rather than budgets: the
+                  better the model, the less of this it does.
+                </p>
+              </div>
+              <div className="flex flex-col justify-center rounded-lg border border-grid bg-surface-raised p-4">
+                <p className="text-sm text-ink-muted">
+                  If you had to guess right from wrong by length alone:
+                </p>
+                <p className="font-mono text-3xl font-bold tabular-nums text-compute">
+                  {PAGE17.length.auc.toFixed(2)}
+                </p>
+                <p className="mt-1 text-sm text-ink-muted">
+                  Over page 8&apos;s whole pile, a correct candidate is the longer one about a
+                  quarter of the time. Inverted, preferring the{" "}
+                  <strong className="text-ink">shorter</strong> chain scores{" "}
+                  {PAGE17.length.inverted.toFixed(2)}, beating {PAGE17.length.beats.length} of the
+                  models that page asked to judge, at no cost. Wrong answers elsewhere burn ~225%
+                  more tokens amid ~4× more strategy switches: thrashing, not depth.
+                  <Cite n={REF.zeng} />
+                  <Cite n={REF.wang} />
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-6">
+          <Note kicker="Try it">
+            <p>Drag to {PAGE17.axisBound.maxBudget} and read what it commits to.</p>
+          </Note>
+          <Note kicker="What this axis cannot show">
+            <p>
+              It cannot show accuracy falling past a peak, only that some prefix beat the whole.
+              Greedy decoding replays the same generation above the model&apos;s own stopping
+              point, so nothing new happens up there.
+            </p>
+            <p>
+              That bound retired a claim this page used to make: that easy problems cross an
+              overthinking threshold before hard ones. Our run puts both medians at the same
+              budget, and this instrument could not settle it at any sample size, so the claim is{" "}
+              <strong className="text-ink">deleted rather than softened</strong>.
+            </p>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.zeng} href="https://arxiv.org/abs/2502.12215">
+              Zeng et al. 2025, <em>Revisiting the Test-Time Scaling of o1-like Models</em> (ACL
+              2025).
+            </RefItem>
+            <RefItem n={REF.wang} href="https://arxiv.org/abs/2501.18585" preprint>
+              Wang et al. 2025, <em>Thoughts Are All Over the Place</em>.
+            </RefItem>
+            <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
+              Stroebl et al. 2024, <em>Inference Scaling fLaws</em>: the verifier ceiling, from
+              page 8.
+            </RefItem>
+          </Note>
+        </div>
+
+        {/* Step 3 — the verifier's reliability is a coordinate, not a property */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            3. A verifier&apos;s reliability is a coordinate, not a property
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              our runs · the same {PAGE17.run.items} problems · pages 8 and 9
+            </span>
+          </h2>
+          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            <p className="text-sm text-ink">
+              Step 2 leaned on a judge, and page 8 sold one: selection beats voting, up to the
+              ceiling its reliability sets. That sentence quotes reliability as though it were a
+              property of the judge. It is not. It is a reading taken at a setting, and the setting
+              is a knob page 8 turned two pages ago.
+            </p>
+            <ReliabilitySweep />
+            <p className="text-sm text-ink-muted">
+              Temperature is where the candidates come from, and it is also what blinds the judge.
+              Every judge here that is <strong className="text-ink">a model asked to judge</strong>{" "}
+              decays as the pool gets noisier, one unexamined chain worst at{" "}
+              {REL.steepest.fallPts.toFixed(0)} points. The only flat line is the one{" "}
+              <strong className="text-ink">trained to score</strong>: it starts mid-pack and ends
+              well clear, without having improved at all. Read it left to right, because the coldest
+              column tells a different story. With an imperfect verifier more resampling eventually
+              lowers true accuracy anyway, so a plateau is the best any of these buys.
+              <Cite n={REF.stroebl} />
+            </p>
+
+            <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-4">
+              <p className="text-sm text-ink">
+                And there is a second coordinate, quieter and worse: how much of the chain the
+                grader can read at all.
+              </p>
+              <ReadableSliver />
+              <p className="text-sm text-ink-muted">
+                Page 9 graded {PAGE17.readable.stepsTotal.toLocaleString()} steps of real working
+                twice, and an arithmetic checker can adjudicate{" "}
+                {PAGE17.readable.stepsJudged.toLocaleString()} of them. The rest are prose:{" "}
+                <em>by symmetry</em>, <em>consider the cases</em>. The reward model scores every
+                step and is silent on none, but the numbers that make it trustworthy were measured
+                against the checker, so they were measured inside the sliver. Page 9&apos;s run
+                file says so: an optimistic estimate of its reliability on the prose steps it is
+                trusted with.
+              </p>
+              <p className="text-sm text-ink-muted">
+                Two prices for trusting it anyway. Filtering page 7&apos;s candidates by the
+                soundness of their working moved a majority vote from{" "}
+                {pct(PAGE17.readable.selection?.majority ?? 0)} to{" "}
+                {pct(PAGE17.readable.selection?.filtered ?? 0)}, changing{" "}
+                {PAGE17.readable.selection?.nChanged ?? 0} problem in {PAGE17.run.items}. And how
+                much of a wrong chain counts as sound swings by the spread page 9 draws, on nothing
+                but where the chain is cut into steps.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-6">
+          <Note kicker="Try it">
+            <p>Follow one judge left to right, then find the line that never moves.</p>
+          </Note>
+          <Note kicker="Where this comes from">
+            <p>
+              Both figures are the deck&apos;s own runs, drawn here for the first time: page
+              8&apos;s judges re-read at every temperature it sampled, and page 9&apos;s step
+              grading re-read as a question about the grader rather than about the chain.
+            </p>
+            <p>
+              Reliability is undefined where no candidate is right, so its denominator shrinks
+              with the temperature and this decline is the conservative reading. Candidate depth
+              is held at {REL.depth} throughout, because reliability decays with that too.
+            </p>
+          </Note>
+        </div>
+
+        {/* Step 4 — what still works */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">4. What still works</h2>
+          <p className="text-ink">
+            <strong className="text-ink">Feedback from outside the model.</strong> Self-correction
+            fails <em>unaided</em>; give the reviser real information, a failing unit test, a
+            calculator, a proof checker, and revision has something to push against. Step 3 is why
+            that is not a platitude: on {pct(PAGE17.readable.shareUnjudged, 0)} of the chain there
+            is nothing to check against from inside.
+          </p>
+          <p className="text-ink">
+            <strong className="text-ink">
+              Verifiers, where answers are checkable, and trained ones by preference.
+            </strong>{" "}
+            Selection with a judge (page 8) still beats blind voting, up to the ceiling its
+            reliability sets. Step 3 adds which judge: the trained scorer held across the whole
+            sweep while every model asked to judge lost ground.
+          </p>
+          <p className="text-ink">
+            <strong className="text-ink">Training, not prompting.</strong> The mid-chain
+            &ldquo;wait, let me re-check&rdquo; that RL taught DeepSeek-R1 (page 14) was learned
+            against verified rewards, not requested politely at inference time.
+          </p>
+          <div className="rounded-lg border-l-4 border-wrong bg-wrong/10 p-4 text-sm text-ink">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              And one caveat that reaches backwards
+            </p>
+            <p className="mt-2">
+              <strong>Every accuracy number in this story was measured on problems the model may
+              already have seen.</strong> A benchmark is published text, and published text is what
+              the next model trains on, so a score can be reciting the test rather than reasoning
+              through it. Here is the size of it: on AIME 2025, released after these models trained, reasoning
+              models scored 7 to 30 points below their 1983 to 2024 averages, and a conventional
+              model fell from 40% to 1%.
+              <Cite n={REF.balachandran} /> That discounts the levers of Act 2 and the frontier
+              scores of Act 3 alike; it does not tell you by how much, which is the uncomfortable
+              part.
+            </p>
+          </div>
+        </section>
+
+        <Note kicker="References">
+          <RefItem n={REF.balachandran} href="https://arxiv.org/abs/2504.00294" preprint>
+            Balachandran et al. 2025, <em>Inference-Time Scaling for Complex Tasks: Where We Stand
+            and What Lies Ahead</em>.
+          </RefItem>
+        </Note>
+      </div>
+
+      {/* Handoff to 16. This used to hand off to a faithfulness page, cut on
+          2026-08-10, and then briefly closed the deck. Page 16 now does the
+          closing, so the assumption the cut page was going to attack is handed
+          forward as the open question rather than delivered as a last word. */}
+      <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+        Notice what every repair on this page assumed. The verifier reads the chain, the reviser
+        reads the chain, and the reader reads the chain, and all three take it for what it says it
+        is: the working that produced the answer.{" "}
+        <em className="text-ink-muted">
+          Hold that. Next: every lever in this story on one axis, twelve questions, and the two
+          things the deck never settled.
+        </em>
       </div>
 
       <PageNav n={PAGE_N} />

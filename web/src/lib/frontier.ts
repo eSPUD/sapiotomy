@@ -1,5 +1,11 @@
 /**
  * Simulations for Act 3 (frontier & caveats). Pure + seeded.
+ *
+ * Only the page 13 block below is still drawn. The economics (old page 16) and
+ * faithfulness (old page 18) blocks are RETAINED UNRENDERED after the
+ * 2026-08-10 cut: they stay validated by frontier.test.ts and act3.test.ts so
+ * the arithmetic does not rot, and PROVENANCE.md records that nothing renders
+ * them. Section headings keep the pre-cut page numbers.
  */
 import { createRng } from "./rng";
 
@@ -88,7 +94,9 @@ export function rentPerQuery(target: number, a: BillAnchors): number {
  * not in any source this deck carries, so inventing one would be the larger
  * offence. The assumption is instead named wherever the number is shown:
  * Page16.tsx's distill card, its verdict banner, its chart label and its
- * disclosure. If a measured bound ever arrives, gate it here.
+ * disclosure, all of which went with the page on 2026-08-10. Nothing names the
+ * assumption on screen any more, so if this arm is ever drawn again the naming
+ * has to come back with it. If a measured bound ever arrives, gate it here.
  */
 export function totalBills(
   queries: number,

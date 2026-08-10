@@ -10,17 +10,17 @@
 The first interactive explorable that lets a reader **manipulate the test-time-compute
 knobs themselves** — think longer, sample wider, search deeper, verify, force more
 thinking — and *watch accuracy respond*, including watching it **plateau, cliff, and
-backfire**. Nineteen pages take a reader from "a model can only blurt an answer" to the
-open frontier, and close by returning to the question the reader was asked on page 2 and
-answering it in halves: inference-time compute settles the misread question completely
-and cannot settle the stale fact at all.
+backfire**. Sixteen pages take a reader from "a model can only blurt an answer" to the
+levers' own failure modes, and then close by putting every lever on one axis for the first
+time, next to a twelve-question concept check and the two things the deck does not settle.
 
 Two things here are unusual for an explainable. First, **pages 5 to 9 are not digitized
 from papers; they are measured**. Each replays a run over the same 100 MATH-500 level-4
 and level-5 items with the same grader, and each ships that run as a download that
 re-derives the page's own figures on no GPU. Second, the deck **prices and breaks its own
-thesis before it ends**: page 16 bills every lever, page 17 shows where more compute
-subtracts, page 18 shows the trace cannot be trusted on its own. The contribution is
+thesis before it ends**: page 15 is a candour page that shows where more compute subtracts,
+on the deck's own runs, and prints the three controls that cut its own headline observation
+down to size. The contribution is
 *pedagogical*: novelty and quality of *explanation*, not of method.
 
 ## Audience
@@ -34,14 +34,16 @@ experience, never a definition.
 | Design decision | Principle | Source |
 |---|---|---|
 | Every page has ≥1 live control; the reader changes a value and sees the consequence | Active reading over passive reading | Victor, *Explorable Explanations* |
-| Page 1 is pure play; difficulty climbs from there to the open frontier on Page 19 | "Start concrete, then climb" | Case |
+| Page 1 is pure play; difficulty climbs from there to the levers' failure modes on Page 15, then the reader is checked on Page 16 | "Start concrete, then climb" | Case |
 | One idea per page; one number spotlighted; extraneous elements removed | Segmenting, signaling, coherence | Mayer, CTML |
-| Several pages ask the reader to **guess before revealing** data (P13's dials, P15's coordinate cases, P17's budget dial, P18's monitor) | Predict-Observe-Explain | POE (constructivist) |
+| Several pages ask the reader to **guess before revealing** data (P7's prediction lock, P13's dials, P15's budget dial) | Predict-Observe-Explain | POE (constructivist) |
 | Three-Act structure (intuition → toolbox → frontier); "THEREFORE / BUT" arc | Narrative over fact-listing | Case |
-| One shared colour grammar + one chart grammar across all 19 pages | Consistency reduces extraneous load | Cognitive Load Theory (Sweller) |
+| One shared colour grammar + one chart grammar across all 16 pages | Consistency reduces extraneous load | Cognitive Load Theory (Sweller) |
 | Motion only in response to the reader's action; reduced-motion honoured | Purposeful motion only | 3Blue1Brown; Mayer |
-| Cost (P16), self-correction failure and verifier reliability (P17), faithfulness (P18) | Confront wrong intuitions head-on | POE; honest uncertainty |
-| P19 returns to P2's question rather than surveying open problems | Close the loop you opened | Case |
+| Self-correction failure, budget rungs that lose answers, verifier reliability (all P15) | Confront wrong intuitions head-on | POE; honest uncertainty |
+| P15 ends on the assumption the whole deck rested on (that the chain is the working), and P16 hands it back as one of two open items rather than resolving it | Leave a question, not a summary | Case |
+| P16 grades twelve concept questions as they are answered, each naming the page it came from, instead of a summary the reader skims | Retrieval practice beats re-reading; feedback at the moment of the error | Roediger & Karpicke; Mayer |
+| P16's ladder is the only chart that puts every lever on one axis, and it is withheld until every lever has been met | Contrast requires a shared frame the reader has earned | Mayer, CTML |
 
 ## Correctness & reproducibility (the core guardrail)
 
@@ -57,21 +59,23 @@ Every on-screen number is one of three things, and the page says which:
    each download is the notebook the manifest names and that its `derived.json` hashes
    identically to the file the page plots.
 3. **Authored** for teaching, and labeled as such on the page that draws it: page 11's
-   allocator, page 13's two-axis surface, page 15's benchmark-window simulation, page 18's
-   traces and pressure shapes, and page 19's capstone panel. Page 17's authored chain and
-   overthinking curves were retired in favour of its own measured run.
+   allocator and page 13's two-axis surface. Page 15's authored chain and overthinking
+   curves were retired in favour of its own measured run. Page 16 authors nothing and
+   loads nothing: every number on it is read back out of the module that measured it, so
+   the wrap-up cannot drift from the pages it is wrapping up.
 
 [`web/data/PROVENANCE.md`](web/data/PROVENANCE.md) records every file, which page imports
 it, and which of the three it is. Its Page column is derived by grep, not by hand.
 
-- **Preprints and estimates are visibly flagged** in-app (Pages 14, 16, 17, 18, 19).
-- Where the two source documents disagreed (Page 18 misalignment-hint figures), the app
-  shows only the well-agreed headline numbers and logs the unresolved conflict in
-  `PROVENANCE.md` — it never silently picks one.
-- Two claims are known-unverified against their primary papers and are hedged on the page
-  rather than asserted: whether DeepSeek's AIME 2024 evaluation used the same 15-problem
-  set OpenAI's did (Page 15), and whether the RL-trained IOI successors matched or exceeded
-  the hand-engineered pipeline (Page 19).
+- **Preprints and estimates are visibly flagged** in-app (Pages 14 and 15).
+- Where the two source documents disagreed, the app showed only the well-agreed headline
+  numbers and logged the unresolved conflict in `PROVENANCE.md` rather than silently
+  picking one. The one live instance (misalignment-hint figures) sat on a page cut on
+  2026-08-10; the conflict is still logged, unresolved and now undisplayed.
+- The two claims that were known-unverified against their primary papers (DeepSeek's AIME
+  2024 problem set, and whether the RL-trained IOI successors beat the hand-engineered
+  pipeline) were both hedged on pages cut on 2026-08-10, and are no longer asserted
+  anywhere in the deck.
 
 ## Limitations & ethics
 
@@ -80,12 +84,18 @@ it, and which of the three it is. Its Page column is derived by grep, not by han
   cost. Optional live in-browser inference (Pages 3 and 14) is feature-flagged OFF by
   default and always falls back to the pre-computed trace. Page 6 runs no inference in the
   browser at all: its numbers come from the measured run it ships.
-- The deck **ends at page 19**. Pages 20 (an Illusion-of-Thinking jury) and 21 (a grand
-  sandbox plus a takeaway toolkit) were cut on 2026-07-30. The survivors were deliberately
-  not renumbered, because every cross-page reference in the deck is written against 1 to
-  19. Page 19's close now carries what the toolkit was for.
+- The deck **ends at page 16**. Pages 20 (an Illusion-of-Thinking jury) and 21 (a grand
+  sandbox plus a takeaway toolkit) were cut on 2026-07-30, off the end, so nothing was
+  renumbered. On 2026-08-10 four more went: 15 (The Scoreboard), 16 (The Bill Comes Due),
+  18 (Can We Trust the Thoughts?) and 19 (The Frontier). That cut hit the middle of Act 3,
+  so its one survivor moved: old page 17 (When Reasoning Breaks) is now page 15 and closes
+  the deck, and page 16 (Wrap-Up) was written the same day to close it. **One thing the
+  deck used to do, it no longer does**: it does not teach how to read a benchmark score.
+  It also no longer returns at the end to the question the reader was asked on page 2;
+  page 16 closes on the two open items instead, which is a weaker loop and is stated as
+  such rather than papered over.
 - **Accuracy numbers across Acts 2 and 3 are discounted by benchmark contamination**, and
-  the deck says so on page 17 rather than in a footnote: on AIME 2025, released after these
+  the deck says so on pages 15 and 16 rather than in a footnote: on AIME 2025, released after these
   models trained, reasoning models scored 7 to 30 points below their averages on older
   years. Nothing here can say by how much any individual number is inflated.
 
@@ -100,8 +110,8 @@ unit (Vitest) + E2E/accessibility (Playwright + axe) run in CI on every push.
 These require a person / accounts and cannot be automated from here:
 
 - [ ] Deploy to Vercel and paste the production URL above (`VERCEL_DEPLOY.md`).
-- [ ] Capture a **teaser image** + short **video/GIF** (e.g. Page 18's pressure dial, where
-      reward rises while the monitor goes silent, or Page 17's cliff) — see
+- [ ] Capture a **teaser image** + short **video/GIF** (e.g. Page 15's budget dial, where one
+      problem is answered right when cut off and wrong when allowed to finish) — see
       `web/docs/MEDIA.md`.
 - [ ] Run the **formative user study** (5–8 undergrads) per `web/docs/USER_TESTING.md`;
       summarise the pre/post learning gain here.

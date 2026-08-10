@@ -1,275 +1,249 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
+import { curves } from "@/lib/curves";
+import { PAGE17 } from "@/lib/page17";
 import { Page15 } from "./Page15";
 
-const pickCase = (name: RegExp) => fireEvent.click(screen.getByRole("button", { name }));
+/**
+ * Page 15's test file (this page was 17 until the 2026-08-10 cut; its data
+ * loader keeps the old name). It was the only page in the deck without one, and
+ * the absence was not free: two defects lived here precisely because nothing
+ * read this page's text.
+ *
+ * The original guard was that step 2 must not refute step 1: step 1 measures a
+ * re-read, which cannot solve anything new, and step 2's authored chain gave
+ * every pass a 45% chance of solving something unsolved. That chain is gone.
+ * Step 2 is now a measured run, so the guard changes shape rather than
+ * disappearing: what step 2 must not do is oversell one specimen.
+ *
+ * Hence the unusual tests below. Three controls were run to break the
+ * specimen's story, all three partly succeeded, and the page prints all three.
+ * The claims behind them are pinned FALSE on purpose. If a future run flips
+ * one, these fail, and that is correct: it is a finding that needs new copy,
+ * not a green suite.
+ */
 
-describe("Page 15 (the scoreboard) component", () => {
-  it("opens on the house two-sentence intro, concrete before abstract", () => {
+const budgetSlider = () => screen.getByRole("slider", { name: /token budget/i });
+const setBudget = (i: number) =>
+  fireEvent.change(budgetSlider(), { target: { value: String(i) } });
+
+describe("Page 15 (when reasoning breaks) component", () => {
+  it("prints Huang et al.'s Table 3 rows verbatim, both getting worse", () => {
     render(<Page15 />);
-    expect(screen.getByRole("heading", { level: 1 }).textContent).toMatch(
-      /The Scoreboard: Benchmarks That Track Reasoning/,
-    );
-    const intro = screen.getByText(/not a property of a model/).closest("p")!;
-    expect(intro.textContent).toMatch(/74\.4% vs 93%, and both are true/);
-    expect(intro.textContent).toMatch(/the conditions it was taken under/);
-    // No table of contents for the rest of the deck: no other page does that,
-    // and the handoff belongs in the closing transition block.
-    expect(intro.textContent).not.toMatch(/page 1[6-9]|the last two/i);
-    expect(intro.textContent!.split(/\s+/).length).toBeLessThan(60);
+    const h = curves.selfCorrection.fit!.params;
+    for (const v of [
+      h.gpt4Gsm8k0, h.gpt4Gsm8k1, h.gpt4Gsm8k2,
+      h.gpt35Csqa0, h.gpt35Csqa1, h.gpt35Csqa2,
+    ]) {
+      expect(screen.getAllByText(v.toFixed(1)).length).toBeGreaterThan(0);
+    }
+    // Round 1 is below round 0 on both panels: that IS the finding.
+    expect(h.gpt4Gsm8k1).toBeLessThan(h.gpt4Gsm8k0);
+    expect(h.gpt35Csqa1).toBeLessThan(h.gpt35Csqa0);
   });
 
-  it("opens on the o1 case: two quote-true headlines, page 13's numbers", () => {
+  it("scopes step 1 to a re-read with nothing new entering the system", () => {
     render(<Page15 />);
-    expect(screen.getByRole("button", { name: "o1 on AIME 2024" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    expect(screen.getByText(/“o1 scores 74\.4% on AIME 2024”/)).toBeInTheDocument();
-    expect(screen.getByText(/“o1 scores 93% on AIME 2024”/)).toBeInTheDocument();
-    // Two badges on the headlines, plus the inline gloss that defines the term.
-    expect(screen.getAllByText("quote-true")).toHaveLength(3);
-    // Receipts stay hidden until the reader guesses or opts out.
-    expect(screen.queryByText(/What moved:/)).not.toBeInTheDocument();
+    expect(screen.getByText(/no hints, no tools, just re-reading/i)).toBeInTheDocument();
+    expect(screen.getByText(/Nothing new enters the system/i)).toBeInTheDocument();
   });
 
-  it("a right guess on the o1 case reveals the budget row and the lesson", () => {
+  // ---- step 2: measured, specimen-led, and fenced by its own controls ----
+
+  it("keeps step 1's re-read apart from step 2's fresh working", () => {
     render(<Page15 />);
-    fireEvent.click(screen.getByRole("button", { name: "the thinking budget" }));
-    expect(screen.getByText(/Good guess\./)).toBeInTheDocument();
-    expect(screen.getByText("the thinking budget, as far as either report says")).toBeInTheDocument();
-    expect(screen.getByText(/1,000 chains per problem/)).toBeInTheDocument();
-    expect(screen.getByText(/18\.6 points of AIME live in the sampling dial alone/)).toBeInTheDocument();
+    const step2 = budgetSlider().closest("section")!;
+    expect(step2.textContent).toMatch(/Step 1 held the model to a re-read/i);
+    expect(step2.textContent).toMatch(/let it write fresh working/i);
+    // The old slider was called "extra passes" and modelled revision. Nothing on the
+    // page may imply step 2 is step 1 run again.
+    expect(screen.queryByRole("slider", { name: /revision|extra passes/i })).toBeNull();
   });
 
-  it("a wrong guess is corrected without blocking the reveal", () => {
+  it("draws the losses page 6's curve nets out, on every rung", () => {
     render(<Page15 />);
-    fireEvent.click(screen.getByRole("button", { name: "the model variant" }));
+    const fig = screen.getByRole("img", { name: /gained and lost at each doubling/i });
+    expect(fig.getAttribute("aria-label")).toMatch(/Every rung loses answers/i);
+    for (const rung of PAGE17.ledger.primary) expect(rung.lost).toBeGreaterThan(0);
+  });
+
+  it("blames the empty top rung on the axis rather than on the model", () => {
+    render(<Page15 />);
+    // Under greedy decoding a self-terminated chain is not rerun at a larger budget.
+    // Without this the flat top reads as a measured plateau.
+    const step2 = budgetSlider().closest("section")!;
+    expect(step2.textContent).toMatch(/it is the same generation/i);
+    expect(step2.textContent).toMatch(/The axis runs out before the model does/i);
+  });
+
+  it("walks the specimen from a forced commit to its own wrong ending", () => {
+    render(<Page15 />);
+    const first = PAGE17.specimen.rightWhenCutAt[0];
+    setBudget(PAGE17.run.budgets.indexOf(first));
+    expect(screen.getByText(new RegExp(`cut at ${first} tokens`, "i"))).toBeInTheDocument();
+    expect(screen.getByText(/answered.*right/i)).toBeInTheDocument();
+
+    setBudget(PAGE17.run.budgets.length - 1);
+    expect(screen.getByText(/its own ending/i)).toBeInTheDocument();
+    expect(screen.getByText(/answered.*wrong/i)).toBeInTheDocument();
+  });
+
+  it("lights the step that costs it, and says why that step is wrong", () => {
+    render(<Page15 />);
+    setBudget(PAGE17.run.budgets.length - 1);
+    expect(screen.getByText(new RegExp(PAGE17.specimen.zones.why, "i"))).toBeInTheDocument();
+  });
+
+  it("states how much of the chain it folded away", () => {
+    render(<Page15 />);
+    setBudget(PAGE17.run.budgets.length - 1);
+    // An elision that does not say its size lets a cropped chain read as a tidy one.
+    expect(screen.getAllByText(/more characters of working/i).length).toBeGreaterThan(0);
+  });
+
+  it("prints all three controls beside the specimen, not in a footnote", () => {
+    render(<Page15 />);
+    const step2 = budgetSlider().closest("section")!;
+    expect(step2.textContent).toMatch(/Not a truncated proof/i);
+    expect(step2.textContent).toMatch(/Not the model already knowing/i);
+    expect(step2.textContent).toMatch(/Not a strategy/i);
+  });
+
+  it("pins the three controls to claims the run came back false on", () => {
+    // These are the assertions that stop the specimen becoming a strategy the reader
+    // takes away. Each is false in the shipped run and the copy depends on it.
+    expect(PAGE17.controls.concludedWhenCut.cameFromFinishedReasoning).toBe(false);
+    expect(PAGE17.controls.isItARule.stoppingEarlyIsAStrategy).toBe(false);
+    expect(PAGE17.controls.isItARule.cutPointsBeatResampling).toBe(false);
+    render(<Page15 />);
+    expect(screen.getByText(/coverage without page 8's selector/i)).toBeInTheDocument();
+  });
+
+  it("makes its one aggregate claim about capability, not about budgets", () => {
+    render(<Page15 />);
     expect(
-      screen.getByText(/Not quite: the model variant is the same in both headlines/),
+      screen.getByText(/the better the model, the less of this it does/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("the thinking budget, as far as either report says")).toBeInTheDocument();
-  });
-
-  it("the GPT-4o case pins the harness gap: 12 vs 9.3 on the same model", () => {
-    render(<Page15 />);
-    pickCase(/^GPT-4o on AIME 2024$/);
-    expect(screen.getByText(/“GPT-4o scores 12% on AIME 2024”/)).toBeInTheDocument();
-    expect(screen.getByText(/“GPT-4o scores 9\.3% on AIME 2024”/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "just show me" }));
-    expect(screen.getByText("whose harness scored it, as far as either report says")).toBeInTheDocument();
-    expect(screen.getByText(/Compare scores only inside one report/)).toBeInTheDocument();
-  });
-
-  it("the FrontierMath case reveals that every condition moved at once", () => {
-    render(<Page15 />);
-    pickCase(/^o3 on FrontierMath$/);
-    expect(screen.getByText(/“o3 scores 25\.2% on FrontierMath”/)).toBeInTheDocument();
-    expect(screen.getByText(/“o3 scores 10% on FrontierMath”/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "whose harness scored it" }));
-    expect(screen.getByText("all four conditions at once")).toBeInTheDocument();
-    expect(screen.getByText(/180-problem 2024-11 version/)).toBeInTheDocument();
-    expect(screen.getByText(/290-problem 2025-02 set/)).toBeInTheDocument();
-    expect(screen.getByText(/funded the benchmark, disclosed late/)).toBeInTheDocument();
-  });
-
-  it("each case keeps its own reveal when the reader switches back", () => {
-    render(<Page15 />);
-    fireEvent.click(screen.getByRole("button", { name: "the thinking budget" }));
-    pickCase(/^o3 on FrontierMath$/);
-    expect(screen.queryByText(/What moved:/)).not.toBeInTheDocument();
-    pickCase(/^o1 on AIME 2024$/);
-    expect(screen.getByText("the thinking budget, as far as either report says")).toBeInTheDocument();
-  });
-
-  it("the window simulation opens mid-ladder: one ceiling, two windows, one floor", () => {
-    render(<Page15 />);
-    expect(screen.getAllByText("no signal: everyone passes")).toHaveLength(1);
-    expect(screen.getAllByText("signal: it separates the models")).toHaveLength(2);
-    expect(screen.getAllByText("no signal: everyone fails")).toHaveLength(1);
-    expect(screen.getByText(/Tests still telling these models apart/)).toBeInTheDocument();
-    expect(screen.getByText("2 of 4")).toBeInTheDocument();
-  });
-
-  it("maxing the frontier blinds every test and calls for new goalposts", () => {
-    render(<Page15 />);
-    fireEvent.change(screen.getByRole("slider", { name: /frontier capability/ }), {
-      target: { value: "12" },
-    });
-    expect(screen.getAllByText("no signal: everyone passes")).toHaveLength(4);
-    expect(screen.getByText(/Every test here is now too easy/)).toBeInTheDocument();
-    expect(screen.getByText(/moving the goalposts is the system working/)).toBeInTheDocument();
-  });
-
-  it("the figure makes no live status claims and discloses its authored shape", () => {
-    render(<Page15 />);
-    expect(screen.queryByText(/still standing/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/^standing/)).not.toBeInTheDocument();
-    expect(screen.getByText(/The four tests above are invented/)).toBeInTheDocument();
-    // History appears only as immutable facts, FrontierMath only as its launch state.
-    expect(screen.getByText(/FrontierMath launched with every model on earth scoring under 2%/)).toBeInTheDocument();
-    expect(screen.getByText(/each one made it faster than the test before/)).toBeInTheDocument();
-  });
-
-  it("pins Minerva's named-knob exhibit: maj1@64 vs pass@1", () => {
-    render(<Page15 />);
-    expect(screen.getByText(/maj1@64 = 50\.3%/)).toBeInTheDocument();
-    expect(screen.getByText(/pass@1 = 33\.6%/)).toBeInTheDocument();
-  });
-
-  it("hands off to page 16's bill through the one metered coordinate", () => {
-    render(<Page15 />);
-    // The close is now five questions, not four: the fifth asks whether the
-    // instrument could see at all, and the handoff runs through section 3's
-    // measurement rather than through an assertion about billing.
-    expect(screen.getByText(/ask five questions/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/was this test published before the model trained/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/section 3 just watched it climb/)).toBeInTheDocument();
-    expect(screen.getByText(/Next: the bill/)).toBeInTheDocument();
-  });
-
-  it("defers ARC-AGI to the cost page instead of double-teaching it", () => {
-    render(<Page15 />);
-    // Its story is the price tag and page 16 tells it with a dollar axis, so
-    // it appears nowhere here, not even as a case button.
-    expect(screen.queryByRole("button", { name: /ARC/ })).not.toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/ARC-AGI/);
-  });
-
-  it("puts references beside the step that uses them, as pages 2-5 do", () => {
-    render(<Page15 />);
-    const notes = screen.getAllByText("References").map((h) => h.closest("aside")!);
-    // One block per section that cites anything, not one pile at the foot.
-    expect(notes.length).toBeGreaterThanOrEqual(4);
-    const [first, second, third, last] = notes;
-    expect(first.textContent).toMatch(/OpenAI 2024/);
-    expect(second.textContent).toMatch(/Cobbe et al\. 2021/);
-    expect(third.textContent).toMatch(/Snell et al\. 2024/);
-    expect(last.textContent).toMatch(/Lewkowycz et al\. 2022/);
-    for (const n of notes) expect(n.textContent).not.toMatch(/Table 3/);
-  });
-
-  it("links a citation stub for every source used", () => {
-    render(<Page15 />);
-    const links = screen.getAllByRole("link").map((a) => a.getAttribute("href"));
-    expect(links).toContain("https://openai.com/index/learning-to-reason-with-llms/");
-    expect(links).toContain("https://arxiv.org/abs/2501.12948"); // DeepSeek-R1
-    expect(links).toContain("https://arxiv.org/abs/2411.04872"); // FrontierMath
-    expect(links).toContain("https://arxiv.org/abs/2110.14168"); // GSM8K
-    expect(links).toContain("https://arxiv.org/abs/2103.03874"); // MATH
-    expect(links).toContain("https://arxiv.org/abs/2311.12022"); // GPQA
-    expect(links).toContain("https://arxiv.org/abs/2206.14858"); // Minerva
-  });
-
-  it("flags the non-peer-reviewed sources with the deck's preprint badge", () => {
-    render(<Page15 />);
-    // The footnote that said this in prose is gone; RefItem's badge carries it
-    // now, on the o1/o3 announcements and on FrontierMath.
-    const badges = screen.getAllByText(/preprint/i);
-    expect(badges.length).toBeGreaterThanOrEqual(2);
-  });
-
-  it("claims only the numbers as the reports', not the headline sentences", () => {
-    render(<Page15 />);
-    // Every headline is a template string this page composes, so "both
-    // headlines are lifted from the cited reports" sent a reader looking for
-    // six sentences that were never published. The page footnote always had
-    // the right scope; the body now matches it and defines the badge.
-    expect(document.body.textContent).not.toMatch(/headlines are lifted from the cited reports/i);
-    expect(
-      screen.getByText(/every number in them is lifted verbatim from the cited/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/The sentence around the number is ours/i)).toBeInTheDocument();
-  });
-
-  it("points at the pages that actually spend the scoreboard, none past 19", () => {
-    render(<Page15 />);
-    // Read "pages 16 to 20" and a reader hits The End at 19 and assumes the
-    // deck failed to load; 18 and 19 also stage no fight to judge.
-    expect(document.body.textContent).not.toMatch(/pages 16 to 20/i);
-    expect(document.body.textContent).not.toMatch(/page 2[01]/i);
-    // The only forward pointer left is the closing transition to page 16.
-    expect(screen.getByText(/Next: the bill/)).toBeInTheDocument();
-  });
-
-  it("gives the capability axis an anchor that cannot rot", () => {
-    render(<Page15 />);
-    expect(screen.getByRole("slider", { name: /ordinal, not calibrated to any date/i }))
-      .toBeInTheDocument();
-    expect(screen.getByText(/Today is always wherever the newest test/i)).toBeInTheDocument();
-  });
-
-  it("names the third way a test dies and applies it to our own run", () => {
-    render(<Page15 />);
-    // Two of the three are on the slider; this one is not, which is why it sits
-    // outside the figure card rather than inside it.
-    expect(screen.getByText(/three ways/i)).toBeInTheDocument();
-    const closer = screen.getByText(/The third way is different/i).closest("p")!;
-    expect(closer.textContent).toMatch(/rewarding memory instead of reasoning/);
-    expect(closer.textContent).toMatch(/Page 17 puts a number on it/);
-    // It has to reach our own instrument or the page exempts itself from the
-    // thing it just taught: MATH-500's problems are from 2021.
-    const ours = screen.getByText(/And it reaches us/).closest("p")!;
-    expect(ours.textContent).toMatch(/published in 2021/);
-    expect(ours.textContent).toMatch(/flatters our own numbers/);
-  });
-
-  it("prices one rung with the measured run, every model in the same direction", () => {
-    render(<Page15 />);
-    expect(screen.getByRole("heading", { name: /What the window costs/ })).toBeInTheDocument();
-    expect(screen.getByText(/measured · our own run · no new generation/)).toBeInTheDocument();
-    // The three readouts, pinned to lib/page15Price.ts's derivation.
-    for (const [label, ratio, drop] of [
-      ["Qwen2.5-1.5B", "2.5x", "34 points"],
-      ["Qwen2.5-3B", "2.3x", "31 points"],
-      ["Qwen2.5-7B", "2.0x", "28 points"],
-    ] as const) {
-      // The label also appears as an SVG <text> on the chart, which has no <p>
-      // ancestor; the readout strip below the figure is the one with prose.
-      const row = screen
-        .getAllByText(label)
-        .map((el) => el.closest("p"))
-        .find((p): p is HTMLParagraphElement => p !== null);
-      expect(row, `no readout row for ${label}`).toBeDefined();
-      expect(row!.textContent).toMatch(ratio);
-      expect(row!.textContent).toMatch(drop);
+    for (const m of PAGE17.affected.byModel) {
+      expect(screen.getAllByText(String(m.rescued)).length).toBeGreaterThan(0);
     }
   });
 
-  it("reads the figure back as inference-time scaling, not as our methodology", () => {
+  // ---- step 3: the verifier step, which is the deck's own measurement ----
+
+  it("draws the temperature sweep, and names the knob that causes the decay", () => {
     render(<Page15 />);
-    // Section 1 teaches that a number compared across reports is meaningless.
-    // A cross-benchmark token ladder would break that rule two sections later.
-    // This has to read as the page applying its own lesson, not as a methods
-    // defence, so it is one caption sentence and not a paragraph.
-    const cap = screen.getByText(/Act 2 sold you this trade running the other way/).closest("figcaption")!;
-    expect(cap.textContent).toMatch(/difficulty charges you twice/);
-    expect(cap.textContent).toMatch(/replayed here rather than generated/);
+    const fig = screen.getByRole("img", { name: /against sampling temperature/i });
+    expect(fig).toBeInTheDocument();
+    // The x axis has to name what it is, because the whole point is that the knob
+    // belongs to page 8's method rather than to the judge.
+    expect(screen.getByText(/the knob that buys candidate diversity/i)).toBeInTheDocument();
   });
 
-  it("carries the measured section's limits as a sidenote, with no page footnote", () => {
+  it("says the sweep holds candidate depth fixed, since reliability decays with N too", () => {
     render(<Page15 />);
-    // The footnote is gone: everything the downloadable notebook already
-    // states went with it. What a download cannot state is the reading limit,
-    // so that survives as a Limits sidenote beside the figure.
-    const limits = screen.getByText("Limits").closest("aside")!;
-    expect(limits.textContent).toMatch(/not a whole ladder/);
-    expect(limits.textContent).toMatch(/extrapolation/);
-    expect(limits.textContent).toMatch(/run separately rather than in one execution/);
-    expect(limits.textContent).toMatch(/50 problems against the hard half's 100/);
-    expect(limits.textContent).toMatch(/left out rather than drawn with a hole/);
+    const fig = screen.getByRole("img", { name: /against sampling temperature/i });
+    expect(fig.getAttribute("aria-label")).toMatch(
+      new RegExp(`measured over ${PAGE17.reliability.depth} candidates`, "i"),
+    );
+    expect(
+      screen.getByText(/Candidate depth is held at .* throughout/i),
+    ).toBeInTheDocument();
   });
 
-  it("gives the price chart a label that carries the claim without the pixels", () => {
+  it("makes the crossing the claim rather than any one column", () => {
     render(<Page15 />);
-    const chart = screen.getByRole("img", { name: /Accuracy against tokens spent per problem/ });
-    expect(chart.getAttribute("aria-label")).toMatch(/moves right and down/);
-    expect(chart.getAttribute("aria-label")).toMatch(/Qwen2\.5-7B spends 323 tokens at 88%/);
+    expect(screen.getByText(/read it left to right/i)).toBeInTheDocument();
+    expect(screen.getByText(/starts mid-pack/i)).toBeInTheDocument();
+    // The contrast the figure is built on: asked to judge against trained to score.
+    const step3 = screen
+      .getByRole("img", { name: /against sampling temperature/i })
+      .closest("section")!;
+    expect(step3.textContent).toMatch(/a model asked to judge/i);
+    expect(step3.textContent).toMatch(/trained to score/i);
+  });
+
+  it("draws the share of the chain no checker can read, at true width", () => {
+    render(<Page15 />);
+    const bar = screen.getByRole("img", { name: /arithmetic checker can adjudicate/i });
+    expect(bar.getAttribute("aria-label")).toMatch(/state nothing it can compute/i);
+    // Where the reward model's numbers were taken is the claim, so the figure has to
+    // say it rather than leave the two facts adjacent and unjoined.
+    expect(bar.getAttribute("aria-label")).toMatch(/was measured inside/i);
+    expect(screen.getByText(/were\s+all measured in here/i)).toBeInTheDocument();
+  });
+
+  it("prices trusting the grader anyway, in the two ways we measured", () => {
+    render(<Page15 />);
+    // The step filter's null, quoted as the one problem it moved rather than as a
+    // percentage, because one in a hundred is the honest unit here.
+    expect(
+      screen.getByText(/Filtering\s+page 7's candidates by the soundness of their working/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/where the chain is cut into steps/i)).toBeInTheDocument();
+  });
+
+  it("no longer claims the overthinking threshold it cannot measure", () => {
+    render(<Page15 />);
+    // The authored inverse-U asserted that easy problems cross a threshold before hard
+    // ones. Pooled over all three checkpoints the medians are identical, so the claim is
+    // gone from the page rather than softened. See docs/page_17_findings.md section 4.
+    expect(PAGE17.levelNull.easyBreaksSooner).toBe(false);
+    // No figure asserts it and no step is built on it. The only survival is the
+    // footnote, which names it as deleted, and that sentence is required: a claim
+    // withdrawn in silence reads to a returning reader as a claim forgotten.
+    expect(screen.queryByRole("img", { name: /easy problems against hard ones/i })).toBeNull();
+    expect(screen.queryByText(/authored shape/i)).toBeNull();
+    // The retraction moved out of the page footer and into the margin note
+    // beside step 2, next to the very axis bound that makes the claim
+    // unsettleable. It must still be stated somewhere a reader will meet it.
+    const retraction = screen.getByText(/retired a claim this page used to make/i).closest("aside")!;
+    expect(retraction.textContent).toMatch(/What this axis cannot show/i);
+    expect(retraction.textContent).toMatch(/easy problems cross an\s+overthinking threshold/);
+    expect(screen.getByText(/deleted rather than softened/i)).toBeInTheDocument();
+  });
+
+  // ---- cross-references and the seam ----
+
+  it("sends the reader to page 14 for R1's learned re-check", () => {
+    render(<Page15 />);
+    const claim = screen.getByText(/RL taught DeepSeek-R1/i);
+    expect(claim.textContent).toMatch(/\(page 14\)/);
+    // Every page this one points at must still exist. 15 is the last.
+    for (const m of (claim.textContent ?? "").matchAll(/page (\d+)/gi)) {
+      expect(Number(m[1])).toBeLessThanOrEqual(15);
+    }
+  });
+
+  it("promotes the contamination caveat out of a trailing muted line", () => {
+    render(<Page15 />);
+    expect(screen.getByText(/one caveat that reaches backwards/i)).toBeInTheDocument();
+    // Bolded, and scoped to the whole story rather than to this page's demo.
+    const lead = screen.getByText(/measured on problems the model may/i);
+    expect(lead.tagName).toBe("STRONG");
+    const caveat = lead.closest("p")!;
+    expect(caveat.textContent).toMatch(/Act\s*2 and the frontier scores of Act 3/);
+    // The scoreboard page taught familiarity as the third way a test stops
+    // working, and it was cut on 2026-08-10. The caveat used to back-reference
+    // it; with nowhere to point, it now states the mechanism itself in one
+    // clause before spending the size of it. It must do both.
+    expect(caveat.textContent).toMatch(/published text is what the next model trains on/);
+    expect(caveat.textContent).not.toMatch(/Page 15 called this/);
+  });
+
+  it("hands the chain-is-the-reason question forward instead of ending on a reference note", () => {
+    render(<Page15 />);
+    // This aimed at page 18 (faithfulness) until that page was cut, then briefly
+    // closed the deck. Page 16 closes now, so this is a handoff again, and the
+    // thing handed forward is the assumption the whole page rested on.
+    const close = screen.getByText(/every lever in this story on one axis/i);
+    expect(close.closest("div")!.textContent).toMatch(/all three take it for what it says it is/i);
   });
 
   it("carries no em dash or en dash in rendered copy", () => {
+    // House rule, swept and enforced on pages 5-9, 13 and 14: visible copy uses
+    // commas, colons or semicolons, and ranges are spelled out ("7 to 30
+    // points"). Covers aria-labels and chart titles, which screen readers speak.
     const { container } = render(<Page15 />);
     const offenders = Array.from(container.querySelectorAll("*"))
       .flatMap((el) => [el.textContent ?? "", el.getAttribute("aria-label") ?? ""])

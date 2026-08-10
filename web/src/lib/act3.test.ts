@@ -14,9 +14,15 @@ import {
 
 const TOL = 1.0;
 
-// Page 19's "budgets that flex" step was cut: it reprinted this result, which
-// page 6 measures on the deck's own harness. The file is kept and validated,
-// but nothing renders it; PROVENANCE.md records that.
+// Act 3 lost four pages on 2026-08-10 (old 15, 16, 18 and 19). Every describe
+// below whose title names one of them is RETAINED UNRENDERED: the data and the
+// arithmetic stay validated so they cannot rot, but nothing draws them.
+// PROVENANCE.md records which files that covers. Titles keep the old numbers,
+// which is what makes the pairing findable.
+
+// Old page 19's "budgets that flex" step was cut as a recap: it reprinted this
+// result, which page 6 measures on the deck's own harness. The page itself went
+// on 2026-08-10.
 describe("budget forcing (Muennighoff et al., preprint), retained unrendered", () => {
   const d = curves.budgetForcing;
   it("advances 50% -> 57% across 'Wait' presses", () => {
@@ -30,7 +36,7 @@ describe("budget forcing (Muennighoff et al., preprint), retained unrendered", (
   it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 16: DeepSeek-R1 RL training (Nature)", () => {
+describe("Page 14: DeepSeek-R1 RL training (Nature)", () => {
   const d = curves.deepseekTraining;
   it("pass@1 rises 15.6% -> 71.0%, cons@64 = 86.7%", () => {
     expect(Math.abs(interpolate(d, 0) - 15.6)).toBeLessThan(TOL);
@@ -47,7 +53,7 @@ describe("Page 16: DeepSeek-R1 RL training (Nature)", () => {
   });
 });
 
-describe("Page 16: ARC-AGI cost anchors (reported estimates, not peer-reviewed)", () => {
+describe("Old page 16: ARC-AGI cost anchors, retained unrendered", () => {
   const d = curves.arcCost;
   it("matches o3 low/high, o1, human anchors", () => {
     const p = d.fit!.params;
@@ -72,7 +78,7 @@ describe("Page 16: ARC-AGI cost anchors (reported estimates, not peer-reviewed)"
   it("is flagged as non-peer-reviewed", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 16: DeepSeek-R1 vs o1 price anchors", () => {
+describe("Old page 16: DeepSeek-R1 vs o1 price anchors, retained unrendered", () => {
   const d = curves.deepseekPricing;
   it("matches the launch list prices and the ~27x ratio", () => {
     const p = d.fit!.params;
@@ -87,7 +93,7 @@ describe("Page 16: DeepSeek-R1 vs o1 price anchors", () => {
     expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 16: the cost-accuracy dial (rent vs sample vs retrain)", () => {
+describe("Old page 16: the cost-accuracy dial, retained unrendered", () => {
   // The page's anchors: o1/R1 list rates at 10k reasoning tokens per query,
   // DeepSeek's reported $294k RL bill, authored Brown-shaped climb.
   const A: BillAnchors = {
@@ -129,7 +135,7 @@ describe("Page 16: the cost-accuracy dial (rent vs sample vs retrain)", () => {
   });
 });
 
-describe("Page 17: self-correction (Huang et al., ICLR 2024) + revision chain", () => {
+describe("Page 15: self-correction (Huang et al., ICLR 2024) + revision chain", () => {
   const d = curves.selfCorrection;
   it("GPT-4 on GSM8K declines 95.5 -> 91.5 -> 89.0 across rounds (verbatim)", () => {
     expect(interpolate(d, 0)).toBe(95.5);

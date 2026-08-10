@@ -24,7 +24,9 @@
  *    the plateau moves up (the paper's 68.8% → 72.5%).
  *  - filter OFF → every rationale trains, right or wrong. Wrong rationales
  *    push skill DOWN, which makes the next generation worse, which makes the
- *    next training set worse: the collapse Page 16 returns to.
+ *    next training set worse: model collapse. (The economics page returned to
+ *    it; that page was cut on 2026-08-10, so page 12 is now the only place the
+ *    deck draws this.)
  *
  * Illustrative mechanism, not a digitized curve — the published numbers live
  * in data/star-cqa.json and are only ever quoted verbatim.

@@ -1,5 +1,6 @@
 /**
- * Composite model for the Page-19 capstone "build a reasoner" panel: compose
+ * Composite model for old page 19's capstone "build a reasoner" panel. RETAINED
+ * UNRENDERED: that page was cut on 2026-08-10. It used to compose
  * the story's techniques and read off accuracy, cost, latency and
  * monitorability over a three-family problem suite. Pure and deterministic,
  * so it is unit-testable (reasoner.test.ts).

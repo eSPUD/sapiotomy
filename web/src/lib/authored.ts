@@ -652,7 +652,8 @@ export const NEXT_WORD_SPEC = {
 } as const;
 
 /**
- * Page 18: the faithfulness probe. Authored, ILLUSTRATIVE traces in the shape
+ * Old page 18: the faithfulness probe. RETAINED UNRENDERED after the 2026-08-10
+ * cut; the page it fed is gone. Authored, ILLUSTRATIVE traces in the shape
  * of Chen et al. 2025's hint experiments (metadata hint type): the same
  * question asked clean and with a planted answer tag. Only the ADMISSION
  * RATES on the page are the paper's (data/faithfulness.json); these three

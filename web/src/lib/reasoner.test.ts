@@ -11,7 +11,7 @@ const COT: ReasonerConfig = {
   adaptive: false,
 };
 
-describe("Page 19: build-a-reasoner composite", () => {
+describe("Old page 19: build-a-reasoner composite, retained unrendered", () => {
   it("chain of thought lifts every family, most of all math", () => {
     const off = reasonerOutcome({ ...COT, cot: false });
     const on = reasonerOutcome(COT);

@@ -1,3 +1,9 @@
+/**
+ * RETAINED UNRENDERED: old page 15 (The Scoreboard) was cut on 2026-08-10 and
+ * nothing draws `scoreboard.ts` now. Kept because it cross-checks
+ * `benchmark-scoreboard.json` against `wei-cot-scaling.json`, so two files
+ * quoting one source cannot drift apart unnoticed.
+ */
 import { describe, expect, it } from "vitest";
 import { DataValidationError } from "./data";
 import { curves } from "./curves";
@@ -11,7 +17,7 @@ const score = (key: string, model: RegExp) => {
 };
 
 describe("Page 15: benchmark scoreboard data (published headline scores)", () => {
-  it("carries all six benchmarks of the tour, and not ARC-AGI (page 17's story)", () => {
+  it("carries all six benchmarks of the tour, and not ARC-AGI (old page 16's story)", () => {
     expect(SCOREBOARD.benchmarks.map((b) => b.key)).toEqual([
       "gsm8k",
       "math",

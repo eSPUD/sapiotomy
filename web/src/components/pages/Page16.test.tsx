@@ -1,132 +1,167 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { BIGGER_MODEL, LADDER, QUIZ } from "@/lib/page16";
 import { Page16 } from "./Page16";
 
-const setSlider = (name: RegExp, value: number) =>
-  fireEvent.change(screen.getByRole("slider", { name }), {
-    target: { value: String(value) },
+/**
+ * Page 16's test file. The page renders no simulation of its own, so what is
+ * worth testing is not arithmetic, it is the two things a wrap-up page can get
+ * wrong in ways nothing else would catch.
+ *
+ * FIRST, THE LADDER MUST NOT FLATTER THE DECK. Its whole job is to show the
+ * steps getting smaller and then not arriving: the coverage line has to stay
+ * above the best technique, and the bigger model's rule has to stay level with
+ * or above everything answer-time bought. Those are the two comparisons a
+ * cheerful edit would quietly soften, so they are asserted against the data
+ * rather than against the copy.
+ *
+ * SECOND, THE QUIZ MUST NOT GIVE ITSELF AWAY. Before a question is answered
+ * nothing on screen may distinguish the right option from the other three, and
+ * after it is answered the reader may not go back and re-pick until the tick
+ * appears. Both are easy to break with a styling change and neither shows up in
+ * a screenshot, so they are pinned here.
+ */
+
+// Anchored: an unanchored /1 of 12/ also matches "11 of 12" and "12 of 12".
+const q1 = () => screen.getByRole("group", { name: /^1 of 12/ });
+const optionsIn = (fieldset: HTMLElement) => within(fieldset).getAllByRole("radio");
+
+describe("Page 16 (wrap-up) component", () => {
+  it("tags itself Act 3 and closes the deck", () => {
+    render(<Page16 />);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Wrap-Up");
+    expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
+    // Last page: PageNav offers no next link and says so.
+    expect(screen.queryByRole("link", { name: /^Page 17 →/ })).toBeNull();
+    expect(screen.getByText("The End")).toBeInTheDocument();
   });
 
-describe("Page 16 (the bill comes due) component", () => {
-  it("anchors the o3 bill: both configs, the 172x multiplier, human floor", () => {
+  // ---- section 1: the ladder ----
+
+  it("draws every lever on one axis, and says which page measured each", () => {
     render(<Page16 />);
-    expect(screen.getByText("75.7%")).toBeInTheDocument();
-    expect(screen.getByText("87.5%")).toBeInTheDocument();
-    expect(screen.getAllByText(/172× the compute/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/per task measured · \$2 to \$5 plausible floor/)).toBeInTheDocument();
+    const fig = screen.getByRole("img", { name: /What each lever scored on the same/i });
+    for (const r of LADDER) {
+      expect(fig.getAttribute("aria-label")).toContain(r.label);
+    }
   });
 
-  it("says the dollar figures are estimates and names the stable facts", () => {
+  it("keeps the coverage ceiling above the best technique, in the label a reader hears", () => {
     render(<Page16 />);
-    expect(screen.getByText(/estimate-dependent/)).toBeInTheDocument();
-    expect(screen.getByText(/OpenAI never published o3 pricing/)).toBeInTheDocument();
+    const fig = screen.getByRole("img", { name: /What each lever scored/i });
+    // The chart's one argument: the last step does not happen. If the ceiling
+    // ever stops leading, the page's prose is wrong and this must fail.
+    const best = Math.max(...LADDER.filter((r) => !r.ceiling).map((r) => r.accuracy));
+    const ceiling = LADDER.find((r) => r.ceiling)!;
+    expect(ceiling.accuracy).toBeGreaterThan(best);
+    expect(fig.getAttribute("aria-label")).toMatch(/generated and not picked/i);
   });
 
-  it("shows the ~27x price collapse from o1 to R1", () => {
+  it("charges the whole ladder against the bigger model in the copy, not just the chart", () => {
     render(<Page16 />);
-    expect(screen.getAllByText(/27\.4×/).length).toBeGreaterThan(0);
-    expect(screen.getByText("$60/M")).toBeInTheDocument();
-    expect(screen.getByText("$2.19/M")).toBeInTheDocument();
+    expect(screen.getAllByText(new RegExp(BIGGER_MODEL.label)).length).toBeGreaterThan(0);
+    expect(screen.getByText(/costs a fraction of what the sixteen-way vote cost/i)).toBeInTheDocument();
   });
 
-  it("opens in the sampling regime: small model x10 undercuts the big call", () => {
+  // ---- section 2: the concept check ----
+
+  it("asks twelve questions, each naming the page it came from", () => {
     render(<Page16 />);
-    expect(screen.getByText(/cheapest here: sample the small model/)).toBeInTheDocument();
-    expect(screen.getByText(/10 samples per query/)).toBeInTheDocument();
+    expect(screen.getAllByRole("group", { name: /of 12/ })).toHaveLength(12);
+    for (const q of QUIZ) {
+      expect(screen.getAllByText(new RegExp(`page ${q.page} · ${q.concept}`)).length).toBeGreaterThan(0);
+    }
   });
 
-  it("raising the target past parity hands the win to the big model", () => {
+  it("gives nothing away before an answer is picked", () => {
     render(<Page16 />);
-    setSlider(/target accuracy/i, 84);
-    expect(screen.getByText(/cheapest here: one big-model call/)).toBeInTheDocument();
-    expect(screen.getByText(/log-linear tax has eaten the whole 27\.4× price gap/)).toBeInTheDocument();
+    // No verdict text anywhere, and every option still selectable. A reader who
+    // can spot the key from the markup is not being tested on anything.
+    expect(screen.queryByText(/^Right\./)).toBeNull();
+    expect(screen.queryByText(/^Not quite\./)).toBeNull();
+    expect(screen.queryAllByText("correct")).toHaveLength(0);
+    for (const r of optionsIn(q1())) expect(r).not.toBeDisabled();
   });
 
-  it("a target past the verifier ceiling shuts sampling off entirely", () => {
+  it("marks a right answer right, and says why", () => {
     render(<Page16 />);
-    setSlider(/target accuracy/i, 92);
-    expect(screen.getByText(/no number of samples reaches 92%/)).toBeInTheDocument();
-    expect(screen.getByText(/sits past the verifier's ceiling \(90%\)/)).toBeInTheDocument();
+    const first = QUIZ[0];
+    const keyIndex = first.options.findIndex((o) => o.correct);
+    fireEvent.click(optionsIn(q1())[keyIndex]);
+    expect(within(q1()).getByText(/^Right\./)).toBeInTheDocument();
+    expect(within(q1()).getByText(first.why)).toBeInTheDocument();
   });
 
-  it("enough volume makes distillation cheapest, with the crossover stated", () => {
+  it("marks a wrong answer wrong, and still shows which one was right", () => {
     render(<Page16 />);
-    setSlider(/queries you expect/i, 70);
-    expect(screen.getByText(/cheapest here.*distill once, then serve/)).toBeInTheDocument();
-    expect(screen.getAllByText(/1\.5M/).length).toBeGreaterThan(0);
+    const first = QUIZ[0];
+    const wrongIndex = first.options.findIndex((o) => !o.correct);
+    fireEvent.click(optionsIn(q1())[wrongIndex]);
+    expect(within(q1()).getByText(/^Not quite\./)).toBeInTheDocument();
+    // The explanation is not a punishment: it appears whichever option was picked.
+    expect(within(q1()).getByText(first.why)).toBeInTheDocument();
+    expect(within(q1()).getByText("correct")).toBeInTheDocument();
+    expect(within(q1()).getByText("your answer")).toBeInTheDocument();
   });
 
-  it("never recommends distilling without saying the retrain is assumed to land", () => {
+  it("does not let a wrong answer be taken back and re-picked", () => {
     render(<Page16 />);
-    setSlider(/queries you expect/i, 70);
-    // The rent and sample arms both answer "at this target"; this one cannot,
-    // because nothing cited fixes what a $294k retrain reaches. Printed flat
-    // next to a target the page has just called unreachable, it reads as a
-    // promise that the money buys any accuracy you type in.
-    expect(screen.getByText(/IF the retrain reaches 72%/)).toBeInTheDocument();
-    setSlider(/target accuracy/i, 92);
-    expect(screen.getByText(/IF the retrain reaches 92%/)).toBeInTheDocument();
+    const first = QUIZ[0];
+    const wrongIndex = first.options.findIndex((o) => !o.correct);
+    const keyIndex = first.options.findIndex((o) => o.correct);
+    fireEvent.click(optionsIn(q1())[wrongIndex]);
+    for (const r of optionsIn(q1())) expect(r).toBeDisabled();
+    // Clicking the key afterwards must not turn the verdict green: the point of
+    // a concept check is finding out what you knew, not what you can converge on.
+    fireEvent.click(optionsIn(q1())[keyIndex]);
+    expect(within(q1()).getByText(/^Not quite\./)).toBeInTheDocument();
+  });
+
+  it("keeps a running tally, and offers a way to start over", () => {
+    render(<Page16 />);
+    expect(screen.getByText(/right of 0 answered, 12 in all/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /start over/i })).toBeNull();
+
+    const keyIndex = QUIZ[0].options.findIndex((o) => o.correct);
+    fireEvent.click(optionsIn(q1())[keyIndex]);
+    expect(screen.getByText(/right of 1 answered, 12 in all/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /start over/i }));
+    expect(screen.getByText(/right of 0 answered, 12 in all/)).toBeInTheDocument();
+    for (const r of optionsIn(q1())) expect(r).not.toBeDisabled();
+  });
+
+  it("scores the whole set once every question is answered", () => {
+    render(<Page16 />);
+    for (const [i, q] of QUIZ.entries()) {
+      const group = screen.getByRole("group", { name: new RegExp(`^${i + 1} of 12`) });
+      fireEvent.click(optionsIn(group)[q.options.findIndex((o) => o.correct)]);
+    }
+    expect(screen.getByText(/Every one\./)).toBeInTheDocument();
+    expect(screen.getByText(/12 of 12\./)).toBeInTheDocument();
+  });
+
+  // ---- section 3: the honest close ----
+
+  it("ends on what the deck did not settle, not on a summary", () => {
+    render(<Page16 />);
+    expect(screen.getByText(/What this deck did not settle/i)).toBeInTheDocument();
+    // Both open items, and the second is the question page 15 hands forward.
+    expect(screen.getByText(/every number is discounted/i)).toBeInTheDocument();
+    expect(screen.getByText(/and the chain may not be the reason/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/92% is past the point where sampling can get there at all/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/the distilled model is assumed to hit whatever target you set/),
-    ).toBeInTheDocument();
-  });
-
-  it("states the serial-sampling assumption its latency claim rests on", () => {
-    render(<Page16 />);
-    // Page 19's panel prints the opposite for the same lever, and both are true
-    // under assumptions neither page used to state.
-    expect(screen.getByText(/as if they were drawn one after/i)).toBeInTheDocument();
-    expect(screen.getByText(/the dollars still climb while the wait does not/i)).toBeInTheDocument();
-  });
-
-  it("hands a live question forward to 17, as page 15 does to this page", () => {
-    render(<Page16 />);
-    expect(
-      screen.getByText(/the side of the dial where spending more makes the answer worse/i),
+      screen.getByText(/nobody has yet shown is the reason for the answer/i),
     ).toBeInTheDocument();
   });
 
   it("carries no em dash or en dash in rendered copy", () => {
+    // House rule, swept and enforced across the deck: visible copy uses commas,
+    // colons or semicolons, and ranges are spelled out ("7 to 30 points").
+    // Covers aria-labels and chart titles, which screen readers speak.
     const { container } = render(<Page16 />);
     const offenders = Array.from(container.querySelectorAll("*"))
       .flatMap((el) => [el.textContent ?? "", el.getAttribute("aria-label") ?? ""])
       .filter((t) => t.includes("—") || t.includes("–"));
     expect(offenders).toEqual([]);
-  });
-
-  it("discloses the calculator's authored parameters in the step body", () => {
-    render(<Page16 />);
-    expect(screen.getByText(/Illustrative calculator, not a quote/)).toBeInTheDocument();
-    expect(screen.getByText(/reported \$294k RL-stage cost/)).toBeInTheDocument();
-  });
-
-  it("keeps margin notes to bare cites, as pages 3-10 do", () => {
-    const { container } = render(<Page16 />);
-    const asides = container.querySelectorAll("aside");
-    expect(asides.length).toBe(4);
-    for (const aside of asides) {
-      expect(aside.textContent).not.toMatch(/arXiv|ICLR|NeurIPS|Nature|http/);
-    }
-    expect(screen.getAllByText(/Bender et al\. 2025/).length).toBeGreaterThan(0);
-  });
-
-  it("carries linked citation stubs at the bottom", () => {
-    const { container } = render(<Page16 />);
-    expect(container.querySelector('a[href*="arcprize.org"]')).toBeTruthy();
-    expect(container.querySelector('a[href*="api-docs.deepseek.com"]')).toBeTruthy();
-    expect(container.querySelectorAll('a[href*="arxiv.org"]').length).toBeGreaterThanOrEqual(4);
-  });
-
-  it("gives every numbered cite on the page a reference entry", () => {
-    render(<Page16 />);
-    // Cite renders an anchor to #ref-N and RefItem carries that id, so a cite
-    // with no entry is a link that jumps nowhere.
-    const dangling = Array.from(document.querySelectorAll('a[href^="#ref-"]'))
-      .map((a) => a.getAttribute("href")!.slice(1))
-      .filter((id) => !document.getElementById(id));
-    expect(dangling).toEqual([]);
   });
 });
