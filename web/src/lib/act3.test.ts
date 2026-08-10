@@ -17,7 +17,10 @@ import {
 
 const TOL = 1.0;
 
-describe("Page 19: budget forcing (Muennighoff et al., preprint)", () => {
+// Page 19's "budgets that flex" step was cut: it reprinted this result, which
+// page 6 measures on the deck's own harness. The file is kept and validated,
+// but nothing renders it; PROVENANCE.md records that.
+describe("budget forcing (Muennighoff et al., preprint), retained unrendered", () => {
   const d = curves.budgetForcing;
   it("advances 50% -> 57% across 'Wait' presses", () => {
     expect(Math.abs(interpolate(d, 0) - 50)).toBeLessThan(TOL);

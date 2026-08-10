@@ -2,13 +2,28 @@
 
 /**
  * Page 19, "The Frontier: Latent Reasoning, Adaptive Compute, and Agents".
- * The close of the story. Every technique so far thought out loud, one token
- * at a time, on a fixed budget. Step 1 shows thinking without words (Coconut,
- * data/coconut.json, verbatim table numbers) and the monitorability price of
- * silence. Steps 2 and 3 are compact: budgets that flex with difficulty
- * (Snell et al., s1) and reasoning fused with action (ReAct, o1 at the IOI).
- * Step 4 is the capstone: lib/reasoner.ts composes every technique in the app
- * into one panel with accuracy, cost, latency and monitorability readouts.
+ * The close of the story, and the page that has to pay page 2's debt.
+ *
+ * Step 1 shows thinking without words (Coconut, data/coconut.json, verbatim
+ * table numbers) and the monitorability price of silence. Step 2 is the
+ * capstone: lib/reasoner.ts composes every technique in the app into one panel
+ * with accuracy, cost, latency and monitorability readouts, and no lever in it
+ * is free. The close puts page 2's own question back in front of the reader
+ * and answers it in halves.
+ *
+ * Two sections were cut here and the reasons are worth keeping. A "budgets
+ * that flex" step re-taught page 11's difficulty-aware allocation and page 6's
+ * budget forcing, reprinting both of their numbers, and opened by asserting
+ * that "Act 2 spent the same budget on every question", which is the opposite
+ * of what page 11 does. The adaptive idea now lives where the reader can
+ * operate it, as a lever in the capstone with a cost. A "thinking that acts"
+ * step was two prose paragraphs; it moved into the close, where the tool-use
+ * beat stops being a survey item and becomes the answer to the half of page
+ * 2's failure that no amount of thinking can reach.
+ *
+ * The close is the loop, so do not let it drift back into a summary: it names
+ * page 2's question, splits the verdict, and answers page 1's stake in page
+ * 1's own words.
  */
 
 import { useState } from "react";
@@ -16,7 +31,6 @@ import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { Toggle } from "@/components/Toggle";
-import type { Citation } from "@/lib/data";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import {
@@ -33,14 +47,7 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 19;
 
 /** Page 19's references, numbered in order of first appearance. */
-const REF = { coconut: 1, codi: 2, pause: 3, snell: 4, s1: 5, react: 6, ioi: 7 } as const;
-
-const REACT_CITATION: Citation = {
-  ref: "Yao et al. 2023",
-  url: "https://arxiv.org/abs/2210.03629",
-  venue: "ICLR 2023",
-  preprint: false,
-};
+const REF = { coconut: 1, codi: 2, pause: 3, snell: 4, react: 5, ioi: 6 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -99,7 +106,6 @@ export function Page19() {
   const coco = curves.coconut;
   const cc = coco.fit!.params;
   const snell = curves.computeOptimal;
-  const s1 = curves.budgetForcing;
 
   const [cfg, setCfg] = useState<ReasonerConfig>(() => ({
     ...PRESETS.find((p) => p.key === "cot")!.config,
@@ -124,7 +130,7 @@ export function Page19() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Every technique in this story thinks the same way: one word after another, out loud, on a
-        meter. That was the point — you could read every thought and count every token. The
+        meter. That was the point: you could read every thought and count every token. The
         frontier is pulling on all three walls at once:{" "}
         <strong className="text-ink">thoughts that never become words</strong>, budgets that{" "}
         <strong className="text-ink">flex with the problem</strong>, and reasoning that{" "}
@@ -138,25 +144,31 @@ export function Page19() {
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-ink">
               A chain of thought must commit to one word at every step. Coconut skips the words:
-              the model&apos;s last hidden state — the thought — is fed straight back in as the
-              next input, so reasoning runs as vectors and is never decoded into text. Freed from
-              saying one thing at a time, a continuous thought can hold{" "}
-              <strong>several candidate paths at once</strong> and drop them as evidence arrives —
-              a built-in breadth-first search, where a written chain must gamble on a single line.
+              the model&apos;s last hidden state, the thought itself, is fed straight back in as
+              the next input, so reasoning runs as vectors and is never decoded into text. Freed
+              from saying one thing at a time, a continuous thought can hold{" "}
+              <strong>several candidate paths at once</strong> and drop them as evidence arrives, a
+              built-in breadth-first search, where a written chain must gamble on a single line.
               <Cite n={REF.coconut} />
             </p>
             <div
               className="flex flex-col gap-3"
               role="img"
-              aria-label={`Accuracy of the same model thinking in words versus in latent space. ProsQA, a planning-heavy task: ${cc.prosqaCot} percent in words with ${cc.prosqaCotTokens} thought tokens, ${cc.prosqaCoconut} percent in latent space with ${cc.prosqaCoconutTokens} tokens. GSM8K, grade-school math: ${cc.gsm8kCot} percent in words with ${cc.gsm8kCotTokens} tokens, ${cc.gsm8kCoconut} percent in latent space with ${cc.gsm8kCoconutTokens} tokens.`}
+              aria-label={`Accuracy of the same GPT-2-scale model thinking in words versus in latent space. ProsQA, a planning-heavy task: ${cc.prosqaCot} percent in words with ${cc.prosqaCotTokens} thought tokens, ${cc.prosqaCoconut} percent in latent space with ${cc.prosqaCoconutTokens} tokens. GSM8K, grade-school math: ${cc.gsm8kCot} percent in words with ${cc.gsm8kCotTokens} tokens, ${cc.gsm8kCoconut} percent in latent space with ${cc.gsm8kCoconutTokens} tokens.`}
             >
+              {/* The scale belongs here and not in the page footnote: these four
+                  bars carry the argument, and a ~20-point planning gain read as
+                  a frontier result would be a different and much larger claim. */}
+              <p className="text-sm font-semibold text-ink">
+                One GPT-2-scale model, two thinking media
+              </p>
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-semibold text-ink">ProsQA — planning-heavy questions</p>
+                <p className="text-sm text-ink">ProsQA, planning-heavy questions</p>
                 <Bar label={`in words · ${cc.prosqaCotTokens} thought tokens`} value={cc.prosqaCot} tone="bg-grid" />
                 <Bar label={`in latent space · ${cc.prosqaCoconutTokens} tokens`} value={cc.prosqaCoconut} tone="bg-compute" />
               </div>
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-semibold text-ink">GSM8K — grade-school math</p>
+                <p className="text-sm text-ink">GSM8K, grade-school math</p>
                 <Bar label={`in words · ${cc.gsm8kCotTokens} thought tokens`} value={cc.gsm8kCot} tone="bg-grid" />
                 <Bar label={`in latent space · ${cc.gsm8kCoconutTokens} tokens`} value={cc.gsm8kCoconut} tone="bg-compute" />
               </div>
@@ -165,12 +177,13 @@ export function Page19() {
               The trade reads both ways: where planning dominates, silent thought jumps{" "}
               {cc.prosqaCot}% → {cc.prosqaCoconut}% on less than a third of the thinking tokens;
               on grade-school math it gives back {mathDrop} points. Better exploration and cheaper
-              tokens — not uniformly better reasoning.
+              tokens, not uniformly better reasoning, and measured at the scale in the figure&apos;s
+              title rather than at the frontier.
             </p>
             <div className="rounded border-l-4 border-wrong bg-wrong/10 p-3 text-sm text-ink">
-              The price is the transcript. Page 17 asked whether the written chain even tells the
-              truth; a latent chain removes the question by removing the page —{" "}
-              <strong>there is nothing to read, faithful or not</strong>. Efficiency and
+              The price is the transcript. Page 18 asked whether the written chain even tells the
+              truth; a latent chain removes the question by removing the page.{" "}
+              <strong>There is nothing to read, faithful or not.</strong> Efficiency and
               monitorability are pulling in opposite directions, and much of this line of work
               (self-distilled latent thought,
               <Cite n={REF.codi} /> pause tokens
@@ -192,75 +205,10 @@ export function Page19() {
           </RefItem>
         </Note>
 
-        {/* Step 2 — adaptive compute */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. Budgets that flex</h2>
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-ink">
-              Act 2 spent the same budget on every question. Difficulty was the hidden variable all
-              along: estimate it first, then match the method and the budget to it — brief
-              sequential thought for easy prompts, wide search for hard ones. That{" "}
-              <strong>compute-optimal allocation</strong> is over{" "}
-              {snell.fit!.params.efficiencyVsBestOfN}× more efficient than uniform best-of-N,
-              enough for a small model to out-think one {snell.fit!.params.largerModelFactor}×
-              larger on a matched budget.
-              <Cite n={REF.snell} /> Budget forcing is the same idea as a hand-held knob:
-              appending &ldquo;Wait&rdquo; stretches thinking from {s1.fit!.params.start}% to{" "}
-              {s1.fit!.params.end}% on AIME24 before the curve flattens.
-              <Cite n={REF.s1} /> Deployed models now ship exactly this dial, sold as{" "}
-              <em>reasoning effort</em>.
-            </p>
-          </div>
-        </section>
-
-        <Note kicker="References">
-          <RefItem n={REF.snell} href="https://arxiv.org/abs/2408.03314">
-            Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally</em>.
-          </RefItem>
-          <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
-            Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em>.
-          </RefItem>
-        </Note>
-
-        {/* Step 3 — agents */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Thinking that acts</h2>
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-ink">
-              Reasoning also stops being a closed monologue. ReAct interleaves thought with
-              action: think a step, call a tool, read what comes back, think again — so a chain
-              can fetch facts it never memorized and test guesses against the world instead of
-              itself.
-              <Cite n={REF.react} />
-            </p>
-            <p className="rounded border border-dashed border-grid bg-surface-raised p-2 text-center font-mono text-sm text-ink">
-              thought → action → observation → thought …
-            </p>
-            <p className="text-ink">
-              Pushed to the limit, the whole toolbox fuses into an agent: at the 2024 International
-              Olympiad in Informatics, an o1-based system ran hand-engineered test-time strategies
-              — thousands of sampled programs, clustered, tested and ranked before submitting.
-              Every selection trick from this act, aimed at one contest. Its RL-trained successors
-              then matched that <em>without</em> the scaffold: the strategy was learned, not
-              engineered.
-              <Cite n={REF.ioi} />
-            </p>
-          </div>
-        </section>
-
-        <Note kicker="References">
-          <RefItem n={REF.react} href="https://arxiv.org/abs/2210.03629">
-            Yao et al. 2023, <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>.
-          </RefItem>
-          <RefItem n={REF.ioi} href="https://arxiv.org/abs/2502.06807" preprint>
-            OpenAI 2025, <em>Competitive Programming with Large Reasoning Models</em>.
-          </RefItem>
-        </Note>
-
-        {/* Step 4 — the capstone panel */}
+        {/* Step 2 — the capstone panel */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            4. Build a reasoner
+            2. Build a reasoner
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               illustrative composite · not a live model
             </span>
@@ -268,7 +216,9 @@ export function Page19() {
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-ink">
               Every lever below is a page you have played. Compose a reasoning system and read the
-              four numbers this whole story has been trading against each other.
+              four numbers this whole story has been trading against each other. None of the four
+              is free, and <strong>no lever moves only one of them</strong>: that is the finding,
+              and it is easier to feel here than to be told.
             </p>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -369,6 +319,13 @@ export function Page19() {
                   checked={cfg.adaptive}
                   onChange={(v) => change({ adaptive: v })}
                 />
+                <p className="text-xs text-ink-muted">
+                  Adaptive spends by estimated difficulty instead of spending the same on every
+                  prompt: over {snell.fit!.params.efficiencyVsBestOfN}× more efficient than uniform
+                  best-of-N on easy and medium problems, and least useful on the hardest.
+                  <Cite n={REF.snell} /> The estimate is the part that can be wrong, so it is
+                  charged a point and a half of accuracy here.
+                </p>
               </div>
 
               {/* readouts */}
@@ -377,9 +334,9 @@ export function Page19() {
                   <Stat
                     label="suite accuracy"
                     sub="mean over three families"
-                    value={`${out.accuracy.toFixed(1)}%`}
+                    value={`${Math.round(out.accuracy)}%`}
                     tone="text-correct"
-                    aria={`suite accuracy: ${out.accuracy.toFixed(1)} percent`}
+                    aria={`suite accuracy: ${Math.round(out.accuracy)} percent`}
                   />
                   <Stat
                     label="compute bill"
@@ -390,7 +347,7 @@ export function Page19() {
                   />
                   <Stat
                     label="latency"
-                    sub="parallel samples are free"
+                    sub="assuming samples run at once"
                     value={fmtX(out.latency)}
                     tone="text-ink"
                     aria={`latency: ${out.latency} times one direct answer`}
@@ -416,35 +373,129 @@ export function Page19() {
             </div>
             <p className="text-xs text-ink-muted">
               Each lever moves the readouts in the direction its cited page reported; the
-              magnitudes are pedagogical, and the arithmetic is pinned by the test suite.
+              magnitudes are pedagogical, and the arithmetic is pinned by the test suite. The bill
+              counts every sample; the latency counts one, because the panel assumes N samples are
+              drawn at the same time on N machines. Draw them one after another instead, as page
+              16&apos;s invoice does, and latency tracks the bill.
             </p>
           </div>
         </section>
 
         <Note kicker="Try it">
-          <p>Turn N up: the bill climbs, the latency does not — samples run in parallel.</p>
+          <p>Turn N up: the bill climbs, the latency does not, because the samples run at once.</p>
           <p>
             Then switch the medium to latent: the bill and the latency collapse, and so does the
             transcript.
           </p>
+          <p>
+            Then look for a setting where nothing is given up. There isn&apos;t one.
+          </p>
+        </Note>
+
+        {/* The close: page 2's question, answered in halves */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">The question you were asked on page 2</h2>
+          <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            <p>
+              Who won the most recent World Cup. The answer came back wrong twice over: the record
+              had moved after the model&apos;s training cutoff, and the question never said the
+              men&apos;s tournament, though the answer assumed it. Act 2 was opened to pay that
+              debt. Seventeen pages later, here is the bill it actually paid.
+            </p>
+            <div className="rounded-lg border-l-4 border-correct bg-surface-raised p-3">
+              <p className="text-sm font-semibold text-ink">The misread question: settled.</p>
+              <p className="mt-1 text-sm text-ink">
+                This is exactly what thinking is for. The failure was a reflex answer to an
+                ambiguous question, and every lever in this story is a way of not answering on
+                reflex. A written chain can put &ldquo;which tournament?&rdquo; on the page where a
+                blurt has nowhere to put it. That is page 1&apos;s distinction doing real work:
+                recognizing an answer and constructing one are not the same act, and only the
+                second one ever notices the question.
+              </p>
+            </div>
+            <div className="rounded-lg border-l-4 border-wrong bg-surface-raised p-3">
+              <p className="text-sm font-semibold text-ink">
+                The record that moved: not settled, and not settleable.
+              </p>
+              <p className="mt-1 text-sm text-ink">
+                No budget fixes this one. Longer chains, wider votes, better judges, deeper search
+                and silent latent thought all rearrange what the weights already hold. None of them
+                puts a fact in there that was never in there. Page 3 priced the obvious repair,
+                retraining, and found a compounding bill, a finite stock of text and a lag of weeks.
+              </p>
+            </div>
+            <p>
+              What settles it is the one lever that stops being a monologue. ReAct interleaves
+              thought with action: think a step, call a tool, read what comes back, think again.
+              <Cite n={REF.react} />
+            </p>
+            <p className="rounded border border-dashed border-grid bg-surface-raised p-2 text-center font-mono text-sm text-ink">
+              thought → action → observation → thought …
+            </p>
+            <p>
+              So a chain can fetch a fact it never memorized and test a guess against the world
+              instead of against itself. Note what that is and is not. It is not thinking harder;
+              it is looking it up, and the thinking in this story is what decides when to look and
+              what to do with the answer. Pushed to the limit the whole toolbox fuses into an
+              agent: at the 2024 International Olympiad in Informatics, an o1-based system ran
+              hand-engineered test-time strategies, thousands of sampled programs, clustered,
+              tested and ranked before submitting. Every selection trick in Act 2, aimed at one
+              contest. Its RL-trained successors then matched that <em>without</em> the scaffold,
+              so the strategy was learned rather than engineered.
+              <Cite n={REF.ioi} />
+            </p>
+            <p className="text-ink-muted">
+              Now look back at the four readouts you were just trading, and notice which one the
+              panel does not have. There is no dial for <em>knows the thing</em>. Nineteen pages of
+              inference-time compute settle one half of page 2&apos;s failure completely and buy
+              nothing at all on the other half, and that is the honest shape of the answer.
+            </p>
+          </div>
+        </section>
+
+        <Note kicker="References">
+          <RefItem n={REF.react} href="https://arxiv.org/abs/2210.03629">
+            Yao et al. 2023, <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>.
+          </RefItem>
+          <RefItem n={REF.ioi} href="https://arxiv.org/abs/2502.06807" preprint>
+            OpenAI 2025, <em>Competitive Programming with Large Reasoning Models</em>.
+          </RefItem>
         </Note>
       </div>
 
-      {/* Synthesis */}
+      {/* What to carry out */}
       <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        Where the story lands: inference-time scaling opened a{" "}
-        <strong>second, durable axis of progress</strong> — accuracy bought at the point of use
-        rather than baked in at training time. Its bounds ran through every page of this act:{" "}
-        <strong>economics</strong> (thinking is metered), <strong>verification</strong> (a
-        selector is only as good as its judge), and <strong>interpretability</strong> (thinking
-        you cannot read is thinking you cannot audit). The frontier above pushes on all three at
-        once.
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+          Three things to take with you
+        </p>
+        <ul className="mt-2 flex list-disc flex-col gap-2 pl-5">
+          <li>
+            <strong>A score is a reading, not a property.</strong> When the next headline lands,
+            ask page 15&apos;s four questions: which model variant, which version of the test,
+            whose harness, how much thinking.
+          </li>
+          <li>
+            <strong>Ask what the gain cost.</strong> Nothing above moved accuracy alone. Bill,
+            latency and readability are the other three columns of every result you will read, and
+            they are usually missing from it.
+          </li>
+          <li>
+            <strong>Treat the trace as a witness, not a recording.</strong> Page 18&apos;s dial is
+            the reason: a chain optimized to look good is a chain that has learned to look good.
+          </li>
+        </ul>
+        <p className="mt-3">
+          Inference-time scaling opened a{" "}
+          <strong>second, durable axis of progress</strong>, accuracy bought at the point of use
+          rather than baked in at training time. It is bounded by economics, by verification and by
+          what you can still read, and it does not reach the things the model never knew. Everything
+          on this page is an attempt to move one of those four walls.
+        </p>
       </div>
 
-      
       <p className="text-xs text-ink-muted">
-        Step 1&apos;s bars are verbatim from the Coconut results table (GPT-2-scale experiments;
-        accuracy and thought-token counts). Step 4 is an illustrative composite, not a live model.
+        Step 1&apos;s bars are verbatim from the Coconut results table, GPT-2-scale experiments,
+        accuracy and thought-token counts. Step 2 is an illustrative composite, not a live model.
       </p>
 
       <PageNav n={PAGE_N} />
