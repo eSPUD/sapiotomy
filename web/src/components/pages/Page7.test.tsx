@@ -140,7 +140,32 @@ describe("Page 7 (frequency voting) component", () => {
     // read as "voting loses", which the pile disproves.
     expect(PAGE7.claims.splitting_a_fixed_budget_pays).toBe(false);
     expect(screen.getByText(/Splitting is not what fails; capping is\./i)).toBeInTheDocument();
-    expect(document.body.textContent).toContain("no cheaper way to buy it");
+    // The cost claim is bounded to the two arms this run has, and page 6's arm is
+    // reported the way page 6 measured it: the chain does continue when pushed, it
+    // just does not score better. Saying it "refuses to continue" contradicted
+    // page-06-derived.json, where mean tokens run 693.0 up to 1251.8 under injection.
+    const body = document.body.textContent ?? "";
+    expect(body).toContain("Of the two ways of spending tried here");
+    expect(body).not.toMatch(/no cheaper way to buy it/i);
+    expect(body).not.toMatch(/refuse to continue/i);
+    expect(body).toMatch(/that chain keeps writing, and the extra tokens do not buy a better answer/);
+  });
+
+  // The sweep does not single out one temperature: plurality accuracy ties at the top.
+  // Both places that describe the sweep have to carry the tie, or the readout claims a
+  // falloff the data does not show and the caveat claims a rule that does not decide.
+  it("reports the temperature sweep's tie rather than a falloff it does not show", () => {
+    render(<Page7 />);
+    const best = Math.max(...PAGE7.figure2.diversity.map((d) => d.plurality_accuracy));
+    const tied = PAGE7.figure2.diversity.filter(
+      (d) => Math.abs(d.plurality_accuracy - best) < 1e-9,
+    );
+    expect(tied.length).toBeGreaterThan(1);
+    const body = document.body.textContent ?? "";
+    expect(body).not.toMatch(/past T = 0\.3 each chain gets worse/);
+    for (const d of tied) expect(body).toContain(`T = ${d.temperature}`);
+    expect(body).toMatch(/the vote comes out the same\s+at T = /);
+    expect(body).toMatch(/voted exactly as well/);
   });
 
   it("shows capped against uncapped at the SAME number of chains", () => {
@@ -163,10 +188,14 @@ describe("Page 7 (frequency voting) component", () => {
     expect(split1.accuracy).toBeCloseTo(pile1.accuracy, 10);
   });
 
+  // The voter control's readout quotes the same thrown-away share at N = 16, which is
+  // the agreement we want and not a duplicate claim, so this pins the handoff by its
+  // own sentence rather than by the number being unique on the page.
   it("closes on the number page 8 opens on", () => {
     render(<Page7 />);
-    expect(screen.getByText(/23%/)).toBeInTheDocument();
-    expect(screen.getByText(/the vote discarded it/i)).toBeInTheDocument();
+    const handoff = screen.getByText(/the vote discarded it/i);
+    expect(handoff).toBeInTheDocument();
+    expect(handoff.textContent).toMatch(/23%/);
   });
 
   it("labels the diversity readout as a count on its own smaller item set", () => {
@@ -221,5 +250,51 @@ describe("Page 7 (frequency voting) component", () => {
     expect(body).not.toMatch(/modelled/i);
     expect(body).not.toMatch(/illustrative/i);
     expect(screen.queryByRole("slider", { name: /temperature/i })).toBeNull();
+  });
+
+  /**
+   * The page's subject is what happens as you add voters, and until now it had no
+   * control that adds one: the reader had to read "does the vote still beat one
+   * chain at N = 4?" off a static line. These pin the control and, more
+   * importantly, that it only ever lands on a measured point of the run's own N
+   * axis. An interpolated readout here would be a simulation on a page whose
+   * whole claim is that every number is measured.
+   */
+  it("lets the reader set how many chains the vote sees", () => {
+    render(<Page7 />);
+    const dial = screen.getByRole("slider", { name: /chains the vote may see/i });
+    expect(dial).toHaveAttribute("min", "0");
+    expect(dial).toHaveAttribute("max", String(PAGE7.figure2.hot.points.length - 1));
+    // opens on the finished result the prose above the chart quotes
+    expect(dial).toHaveValue(String(PAGE7.figure2.hot.points.length - 1));
+  });
+
+  it("reads out only measured points of the run's own N axis", () => {
+    render(<Page7 />);
+    const dial = screen.getByRole("slider", { name: /chains the vote may see/i });
+    const live = document.querySelector("[aria-live='polite']")!;
+    for (const [i, p] of PAGE7.figure2.hot.points.entries()) {
+      fireEvent.change(dial, { target: { value: String(i) } });
+      const text = live.textContent ?? "";
+      expect(text).toMatch(new RegExp(`${Math.round(p.accuracy * 100)}%`));
+      expect(text).toMatch(new RegExp(`${Math.round(p.coverage * 100)}%`));
+    }
+  });
+
+  // The question F64 says the reader could not ask. At N = 2 the tie rule puts the
+  // vote BELOW one sampled chain, and the readout has to say so rather than
+  // describing every position as a gain.
+  it("owns the positions where the vote is behind one chain", () => {
+    render(<Page7 />);
+    const pts = PAGE7.figure2.hot.points;
+    const dial = screen.getByRole("slider", { name: /chains the vote may see/i });
+    const live = document.querySelector("[aria-live='polite']")!;
+    const behind = pts.findIndex((p, i) => i > 0 && p.accuracy < pts[0].accuracy);
+    expect(behind).toBeGreaterThan(0);
+    fireEvent.change(dial, { target: { value: String(behind) } });
+    expect(live.textContent).toMatch(/below/i);
+    const ahead = pts.findIndex((p, i) => i > 0 && p.accuracy > pts[0].accuracy);
+    fireEvent.change(dial, { target: { value: String(ahead) } });
+    expect(live.textContent).toMatch(/above/i);
   });
 });

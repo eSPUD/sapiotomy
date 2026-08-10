@@ -119,10 +119,20 @@ interface RawDerived {
     n_chains: number;
   };
   localisation: { n_false_distribution: Record<string, number> };
+  detection: {
+    /**
+     * The run's own independent unit. Chains repeat the same problem, so the
+     * chain rate is clustered and the page must be able to quote the problem one.
+     */
+    problem_rate: number;
+    unit_of_independence: string;
+  };
   prm_reliability: {
     auc: number;
     threshold: number;
     threshold_source: string;
+    /** [lowest, highest, count] of the cut-offs that fitted about as well. */
+    threshold_plateau: [number, number, number];
     agreement: number;
     recall_on_false: number;
     specificity_on_true: number;
@@ -339,6 +349,12 @@ export const PAGE9 = {
     rate: det.rate,
     nProblems: det.n_problems,
     nProblemsWithARightChain: det.n_problems_with_a_right_chain,
+    /**
+     * The same count taken over problems rather than chains. The run names the
+     * problem as its unit of independence, so the page quotes this beside the
+     * chain rate rather than letting the chain rate stand as "the" rate.
+     */
+    problemRate: raw.detection.problem_rate,
     /** The PRM's rate, present only when its measured reliability cleared the gate. */
     prm: raw.headline.detection_prm
       ? {
@@ -358,6 +374,16 @@ export const PAGE9 = {
      * notebook's `localisation_survives_segmentation` claim is false because of it.
      */
     spreadPts: loc.segmentation_spread_pts,
+    /**
+     * Where the four segmentations actually landed, on the subsample they were
+     * run over. The spread alone reads as a band around the median, and it is
+     * not one: none of the four re-cuts produced the median itself.
+     */
+    subsample: {
+      nChains: loc.share_sound_on_subsample.n_chains,
+      low: loc.share_sound_on_subsample.low,
+      high: loc.share_sound_on_subsample.high,
+    },
     survivesSegmentation: raw.claims.localisation_survives_segmentation === true,
     nLocalisable: loc.n_localisable,
     nWrong: loc.n_wrong,
@@ -395,6 +421,9 @@ export const PAGE9 = {
           nStepsCompared: prm.n_steps_compared,
           threshold: prm.threshold,
           thresholdSource: prm.threshold_source,
+          /** How many cut-offs fitted about as well, and the range they span. */
+          thresholdPlateauCount: prm.threshold_plateau[2],
+          thresholdPlateauSpan: prm.threshold_plateau[1] - prm.threshold_plateau[0],
         }
       : null,
   },

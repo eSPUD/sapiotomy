@@ -148,3 +148,138 @@ one pinned anchor.
 | 6 (section 3 history) | Same fix as 4 — the table is gone |
 | 7 (o3 in 3 not 2) | o3 appears exactly once, as "the law applied again" |
 | The Good | Three closing blocks kept verbatim, in place |
+
+---
+
+# Post-review findings (2026-08-09)
+
+Everything above describes the refactor that **shipped**. This section is new: it collects
+the page-13 findings raised by the full-deck review in
+`docs/review/pages_1_through_14_analysis.md`, deferred out of the fix queue by author
+direction for a design conversation.
+
+Three page-13 blockers are **not** here because they are being fixed now, in the forward-plan
+pass: **F2** (name the joint two-axis surface as authored), **F3** (draw the waterfall as
+three parallel readings, not an additive stack), **F6** (the "they do not substitute" claim).
+Expect the fidelity note, the waterfall figure and section 2's closing line to have changed
+by the time this document is picked up.
+
+## Do not touch
+
+Two elements are named in the review as load-bearing strengths. Any fix below must leave
+them intact.
+
+- **Section 4's four open questions** (`Page13.tsx:379-396`) **and the handoff**
+  (`:779-784`). Each question is answerable only by an open model, page 14 answers all four,
+  and the pairing is pinned in test on both sides. The analysis calls this the strongest
+  structural device in pages 12-14 and page 13's real novelty claim, present in no source
+  paper.
+
+---
+
+## Honesty protocol vs the figure
+
+### F17 · major · "confirmed frame only" badges three unconfirmed station labels
+
+The badge (`Page13.tsx:498-500`) and figcaption (`:543`, *"The shape is the whole of what was
+confirmed"*) sit directly above sub-labels making specific mechanism claims:
+
+- *"generate xk — k sampled chains explore instead"* (`:521-525`)
+- *"reinforce — this updates the current model, so gains compound"* (`:533-537`)
+
+A reader who trusts the badge concludes OpenAI stated that o1's training samples k chains per
+problem and reinforces in place. Both are inferences from the phrase "reinforcement learning",
+and they are exactly the class of unconfirmed specifics this page cut its rumored recipe to
+avoid. **The page's honesty protocol is stricter than its own figure.**
+
+Fix: either drop the mechanism sub-labels to what was confirmed, or badge them separately.
+
+### F92 · minor · section 2 asserts as fact what section 4 calls unknowable
+
+`:585-588` states without hedge that *"x100 thinking is one answer whose private chain is
+allowed to run a hundred times as long, not a hundred sampled answers"*. `:381-383` then says
+*"nothing visible from outside tells the two apart"*. The page's own header comment admits it
+(`:104-105`); no on-screen word does.
+
+Fix: hedge section 2 to what section 4 already concedes. Small, and it strengthens section 4.
+
+### F91 · minor · the o1 dot is called "verbatim" and its x position is authored
+
+`Page13.tsx:159` computes the dot's x by inverting the authored law (≈ x65). The fidelity
+note says *"the dashed GPT-4o line and the o1 dot are verbatim"* (`:666-667`). Only the dot's
+**y** (74.4%) is published.
+
+Overlaps the F2 fix landing now; re-read the rewritten fidelity note before acting.
+
+---
+
+## Pedagogy
+
+### F18 · major (partly opinion) · the one predict-observe-explain moment is narrated four times first
+
+The page's only discovery beat is pre-stated in four places before the reader can act:
+
+1. in prose before the chart (`:593-599`)
+2. as static staircase labels on it (`:345-366`)
+3. in the fine print under it (`:603-607`)
+4. in the closing line (`:654-661`)
+
+Only *then* does the margin note say "drag" (`:672-677`).
+
+A reader reaches the sliders already holding the conclusion and drags to confirm, not to
+discover, which is the decoration failure mode this venue penalizes. Page 14 has a "setup
+before, meaning after" guard pinned in test; page 13 has none.
+
+Fix: cut three of the four. **The opinion component is which three** — that is the design
+call this document exists to hold. Note that (4) is also being reworded right now by the F6
+fix, so decide (1)-(3) first.
+
+---
+
+## Figure artifacts and wording
+
+### F93 · minor · the x1 curve's left end is a clamp artifact presented as data
+
+`floor = 1` in `twoAxisAccuracy` means the run enters the plot at 1% and runs flat for part of
+a decade. A reader reads it as *"no amount of thinking helps an untrained model below some
+threshold"*, a claim neither the page nor the source makes.
+
+### F94 · minor · "the missing RL's share" renders as a bare `+` with no unit
+
+`:645-651` renders a `BigNumber` with `prefix="+"` and no suffix; the chart bracket says *"the
+missing RL: +29.5"*. A reader may take it as a percentage **share** rather than accuracy
+**points**.
+
+### F95 · minor · "one instant answer from a strong LLM (GPT-4o)" contradicts page 5
+
+`Page13.tsx:438-439`. Page 5 established that a 2026 instruct model writes a chain unasked.
+What the label means is *"no RL-trained long private chain"*. Say that. Note this label sits
+inside the waterfall, which the F3 fix is redrawing now.
+
+---
+
+## Dead constraint
+
+### F96 · minor · `starListing.tsx` preserves a constraint whose purpose is gone
+
+`starListing.tsx:3-9` instructs *"never fork this column"* because *"page 13's diff is only
+honest if the left-hand side is exactly what the reader ran on page 12."* **Page 13 no longer
+imports it.** A future editor will preserve a constraint that no longer binds anything.
+
+Fix: delete the docstring or the module. This is also listed in the forward plan's
+orphaned-surface sweep (item 54), so check whether that pass took it first.
+
+---
+
+## Not a defect, recorded so it is not re-raised
+
+**F101 · GPT-4o at 12% here vs 9.3% on page 14.** Both are correctly sourced (OpenAI's own
+report vs DeepSeek's measurement). Page 15 uses exactly this pair as a teaching case and
+**needs the discrepancy to arrive unexplained**. The forward plan resolves this explicitly:
+leave both pages silent. Do not add a reconciling clause.
+
+**Page 14's Simulated/Cited footer.** A prior pass proposed deleting it for consistency with
+page 13's inline-only provenance. The review finds page 13 is the page with the disclosure
+gap (F2, F17). If uniformity is wanted, **unify upward**: page 14's footer is the correct
+pattern. Do not action the prior proposal.
+

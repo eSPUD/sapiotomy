@@ -72,16 +72,32 @@
  * (×10, ×10) opens
  * with the bracket showing exactly one decade forgone. The Try-it note is a
  * single imperative sentence, page 2's margin grammar — the interpretation
- * (thinking walks your curve and never climbs to the next one; the equality
- * law(2,0) = law(0,2)) lives in the card's closing line, where the deck puts
- * meaning. The fidelity note is compressed to two sentences; "the slope is
+ * lives in the card's closing line, where the deck puts meaning. That line
+ * used to say the dials "do not substitute", which the parametrization
+ * contradicts: the two exponents enter as a sum, so law(2,0) = law(0,2) = 21.0
+ * and a decade of one is exactly a decade of the other. It now states the
+ * equality and puts the real asymmetry where it belongs, in WHEN the compute is
+ * bought (RL once, thinking on every answer). Do not reintroduce a
+ * non-substitution claim without changing the law it describes. The fidelity
+ * note discloses the joint surface itself as authored, not just its span and
+ * slope: the announcement published two SEPARATE charts, and one shared law in
+ * which training is a pure horizontal shift appears in no source. "The slope is
  * the claim; the absolute compute is a secret" survives on purpose — it is
  * itself an abstraction (labs publish shapes, not units).
  *
  * Section 3 is one question asked twice — "Stack the toolbox, or turn the
- * knobs?" The waterfall is the stacking answer (Act 2's tricks as a second
- * storey on the learned chain; rows are mechanisms, model names demoted to
- * parentheses). The knob answer is El-Kishky's own ablation, compressed to
+ * knobs?" The bars are the stacking answer (Act 2's tricks as a second storey
+ * on the learned chain; rows are mechanisms, model names demoted to
+ * parentheses). They used to be a WATERFALL, each row starting where the last
+ * ended and printing an invented +8.9 and +9.7; that was wrong and must not
+ * come back. The announcement reports 74.4 pass@1, 83.3 with consensus among 64
+ * samples and 93 re-ranking 1000 samples as three readings of ONE model, so
+ * re-ranking is an alternative to the 64-way vote, not a storey on top of it,
+ * and the increments between them are nowhere in the source. The rows are
+ * therefore drawn from a common zero and print absolute scores only, with the
+ * three o1 readings grouped under their own heading; page 15's first courtroom
+ * case needs the 74.4-to-93 gap to read as one model measured three ways. The
+ * knob answer is El-Kishky's own ablation, compressed to
  * one paragraph in the deck's vocabulary — o1-ioi is the toolbox bolted on
  * by hand at the frontier, an early o3 is the knobs turned further, and the
  * knobs won — with the paper's conclusion as the one verbatim anchor. No
@@ -405,6 +421,38 @@ function Stage({ tone, title, sub }: { tone: string; title: string; sub: string 
   );
 }
 
+/**
+ * One bar in section 3's figure. Every bar is drawn from a common zero and
+ * carries its own published score: the readings are alternatives, so none of
+ * them may start where another ended.
+ */
+function Reading({
+  label,
+  note,
+  value,
+  tone,
+}: {
+  label: string;
+  note: string;
+  value: number;
+  tone: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="w-44 shrink-0 text-ink-muted">
+        {label}
+        <span className="block text-xs text-ink-muted">{note}</span>
+      </span>
+      <div className="relative h-5 flex-1 rounded bg-surface-raised">
+        <div className={`absolute left-0 h-5 rounded ${tone}`} style={{ width: `${value}%` }} />
+      </div>
+      <span className="w-16 shrink-0 text-right font-mono font-semibold tabular-nums text-ink">
+        {value}%
+      </span>
+    </div>
+  );
+}
+
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
@@ -429,46 +477,29 @@ export function Page13() {
   /* The finding, not the parking spot: what the forgone RL would have added here. */
   const gap = law(testExp, P.maxExp) - acc;
 
-  const chainGain = +(P.o1Pass1 - P.gpt4oAime).toFixed(1);
-  const voteGain = +(P.o1Cons64 - P.o1Pass1).toFixed(1);
-  const rerankGain = +(P.o1Rerank1000 - P.o1Cons64).toFixed(1);
-
-  const waterfall = [
+  /*
+   * Section 3's three readings: one o1, one benchmark, three sampling budgets.
+   * The announcement reports them as alternatives for the same model, so they
+   * are three bars from a common zero, never an additive stack.
+   */
+  const readings = [
     {
-      label: "no learned chain",
-      note: "one instant answer from a strong LLM (GPT-4o)",
-      start: 0,
-      gain: P.gpt4oAime,
-      total: P.gpt4oAime,
-      tone: "bg-grid",
-      base: true,
-    },
-    {
-      label: "the learned chain",
-      note: "one long private chain, trained in by section 1's loop",
-      start: P.gpt4oAime,
-      gain: chainGain,
-      total: P.o1Pass1,
+      label: "one chain",
+      note: "the private chain answers once, scored pass@1",
+      value: P.o1Pass1,
       tone: "bg-compute",
-      base: false,
     },
     {
-      label: "+ page 7's voting",
-      note: "majority across 64 chains",
-      start: P.o1Pass1,
-      gain: voteGain,
-      total: P.o1Cons64,
+      label: "page 7's voting",
+      note: "the majority answer across 64 of those chains",
+      value: P.o1Cons64,
       tone: "bg-compute",
-      base: false,
     },
     {
-      label: "+ page 8's re-ranker",
-      note: "a learned judge picks from 1000 chains",
-      start: P.o1Cons64,
-      gain: rerankGain,
-      total: P.o1Rerank1000,
+      label: "page 8's re-ranker",
+      note: "a learned judge picks one of 1000 of those chains",
+      value: P.o1Rerank1000,
       tone: "bg-correct",
-      base: false,
     },
   ];
 
@@ -654,17 +685,21 @@ export function Page13() {
             <p className="text-sm text-ink-muted">
               <strong className="text-ink">Thinking slides you along the curve; only training
               lifts it.</strong>{" "}
-              The two dials pay the same +{P.slopePerDecade} per decade, but they do not
-              substitute, because thinking walks your curve and never climbs to the next one. That
-              climb is paid for in a currency page 3&apos;s wall does not price: chains the model
-              writes itself, not the finite stock of human text.
+              The two dials pay the same +{P.slopePerDecade} per decade, and on this surface they
+              trade one for one: a decade of thinking buys back exactly the decade of RL you
+              skipped, which is why ×1 training with ×100 thinking scores the same{" "}
+              {law(2, 0).toFixed(1)} as ×100 training with ×1 thinking. What differs is how often
+              you pay. The RL is bought once, before any question arrives, and in a currency page
+              3&apos;s wall does not price: chains the model writes itself, not the finite stock of
+              human text. The thinking is bought again on every answer.
             </p>
             <p className="text-xs text-ink-muted">
-              OpenAI published both charts with the compute axis unlabeled: a log scale in
-              undisclosed, relative units. So the ×1 to ×100 span and the{" "}
-              +{P.slopePerDecade}-per-decade slope are this redrawing&apos;s; the dashed GPT-4o
-              line and the o1 dot are verbatim. The slope is the claim; the absolute compute is a
-              secret.
+              OpenAI published two separate charts, one per axis, both with the compute axis
+              unlabeled: a log scale in undisclosed, relative units. Joining them into one surface,
+              so that a decade of either dial buys the same points and training is a clean sideways
+              shift, is this deck&apos;s construction and not a published result; so are the ×1 to
+              ×100 span and the +{P.slopePerDecade}-per-decade slope. The dashed GPT-4o line and
+              the o1 dot are verbatim. The slope is the claim; the absolute compute is a secret.
             </p>
           </div>
         </section>
@@ -681,40 +716,38 @@ export function Page13() {
           <h2 className="text-xl font-semibold text-ink">3. Stack the toolbox, or turn the knobs?</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              First answer: stack. Act 2 did not become obsolete; it became the second storey.
-              Each increment below is one of its mechanisms, stacked on top of the learned chain,
-              on competition maths (AIME 2024):
+              First answer: stack. Act 2 did not become obsolete; it became the second storey: put
+              one of its mechanisms over the learned chain and the score moves. Below, one o1 on
+              competition maths (AIME 2024) read three ways, against a strong LLM with no learned
+              chain at all:
             </p>
             <div
               className="flex flex-col gap-2"
               role="img"
-              aria-label={`AIME 2024 accuracy waterfall: a strong LLM with no learned chain starts at ${P.gpt4oAime} percent; the learned chain adds ${chainGain} points to reach ${P.o1Pass1}; page 7's majority voting across 64 chains adds ${voteGain} to reach ${P.o1Cons64}; page 8's learned re-ranker over 1000 chains adds ${rerankGain} to reach ${P.o1Rerank1000}.`}
+              aria-label={`AIME 2024, four readings, every bar drawn from a common zero. A strong LLM with no learned chain, GPT-4o, scores ${P.gpt4oAime} percent. The same o1 is then read three ways: ${P.o1Pass1} percent with its private chain answering once, ${P.o1Cons64} percent taking the majority across 64 of those chains with page 7's voting, and ${P.o1Rerank1000} percent when page 8's learned judge picks one of 1000 of those chains. The three o1 readings are alternatives, so no bar starts where another one ends.`}
             >
-              {waterfall.map((b) => (
-                <div key={b.label} className="flex items-center gap-2 text-sm">
-                  <span className="w-44 shrink-0 text-ink-muted">
-                    {b.label}
-                    <span className="block text-xs text-ink-muted">{b.note}</span>
-                  </span>
-                  <div className="relative h-5 flex-1 rounded bg-surface-raised">
-                    <div
-                      className={`absolute h-5 rounded ${b.tone}`}
-                      style={{ left: `${b.start}%`, width: `${b.gain}%` }}
-                    />
-                  </div>
-                  <span className="w-16 shrink-0 text-right">
-                    <span className="block font-mono font-semibold tabular-nums text-ink">
-                      {b.base ? `${b.total}%` : `+${b.gain}`}
-                    </span>
-                    {b.base ? null : (
-                      <span className="block font-mono text-xs tabular-nums text-ink-muted">
-                        = {b.total}%
-                      </span>
-                    )}
-                  </span>
-                </div>
-              ))}
+              <Reading
+                label="no learned chain"
+                note="one instant answer from a strong LLM (GPT-4o)"
+                value={P.gpt4oAime}
+                tone="bg-grid"
+              />
+              <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  o1, one model read three ways
+                </p>
+                {readings.map((r) => (
+                  <Reading key={r.label} {...r} />
+                ))}
+              </div>
             </div>
+            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
+              Every bar starts at zero, because the last three are alternatives and not a ladder:
+              the vote and the re-ranker each replace the single chain, and neither runs on the
+              other.{" "}
+              <strong className="text-ink">Same model, same fifteen problems; what changed is how
+              many chains were bought and who picked among them.</strong>
+            </figcaption>
           </figure>
 
           <h3 className="text-lg font-semibold text-ink">
