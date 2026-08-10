@@ -290,32 +290,16 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
         </text>
       ))}
 
-      {/* the target: the big model's one greedy answer, and the bill it costs */}
-      <line x1={0} x2={innerW} y1={y(tgt.accuracy)} y2={y(tgt.accuracy)} className="stroke-ink" strokeWidth={1} strokeDasharray="4 3" />
-      <text x={innerW - 2} y={y(tgt.accuracy) - 5} textAnchor="end" className="fill-ink text-[11px] font-semibold">
-        {tgt.label}, one answer · {PAGE11.pct(tgt.accuracy)}%
-      </text>
-      <line x1={x(1)} x2={x(1)} y1={0} y2={innerH} className="stroke-ink-muted" strokeWidth={0.75} strokeDasharray="3 3" opacity={0.6} />
-      <text x={x(1)} y={11} textAnchor="middle" className="fill-ink-muted text-[9px]">
-        its bill
-      </text>
-
-      {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
-      <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.9} />
-      <text x={x(last.xTarget) - 2} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct text-[10px]">
-        coverage {PAGE11.pct(band.coverageAt16)}%
-      </text>
-
-      {/* the small model, thinking harder: the 3B vote curve */}
-      <path d={votePath} fill="none" className="stroke-compute" strokeWidth={2.5} />
-      {vote.map((p) => (
-        <circle key={p.n} cx={x(p.xTarget)} cy={y(p.accuracy)} r={2.5} className="fill-compute stroke-canvas" strokeWidth={1} />
-      ))}
-      <text x={x(last.xTarget) + 5} y={y(last.accuracy) + 4} className="fill-compute text-[10px] font-semibold">
-        3B, vote@{last.n}
-      </text>
-
-      {/* the greedy family: where each size lands with one answer */}
+      {/* the parameter ladder: the greedy family, one answer each, tied so the
+          smallest point reads as the bottom of a trend, not a stray dot */}
+      <path
+        d={band.greedy.map((g, i) => `${i === 0 ? "M" : "L"}${xf(g.flops)},${y(g.accuracy)}`).join("")}
+        fill="none"
+        className="stroke-ink-muted"
+        strokeWidth={1}
+        strokeDasharray="2 2"
+        opacity={0.55}
+      />
       {band.greedy.map((g) => (
         <g key={g.label}>
           <circle
@@ -326,12 +310,44 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
             strokeWidth={1.5}
           />
           {g.label !== tgt.label ? (
-            <text x={xf(g.flops)} y={y(g.accuracy) + 14} textAnchor="middle" className="fill-ink-muted text-[9px]">
+            <text x={xf(g.flops)} y={y(g.accuracy) + 15} textAnchor="middle" className="fill-ink-muted text-[9px]">
               {g.label}
             </text>
           ) : null}
         </g>
       ))}
+
+      {/* the target line: the big model's one greedy answer. Its label sits at
+          the LEFT, clear of the coverage line and the vote end on the right */}
+      <line x1={0} x2={innerW} y1={y(tgt.accuracy)} y2={y(tgt.accuracy)} className="stroke-ink" strokeWidth={1} strokeDasharray="4 3" />
+      <text x={2} y={y(tgt.accuracy) - 6} textAnchor="start" className="fill-ink text-[11px] font-semibold">
+        {tgt.label} greedy · {PAGE11.pct(tgt.accuracy)}%
+      </text>
+      <line x1={x(1)} x2={x(1)} y1={0} y2={innerH} className="stroke-ink-muted" strokeWidth={0.75} strokeDasharray="3 3" opacity={0.6} />
+      <text x={x(1)} y={11} textAnchor="middle" className="fill-ink-muted text-[9px]">
+        the 7B&rsquo;s bill
+      </text>
+
+      {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
+      <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="5 3" opacity={0.9} />
+      <text x={x(last.xTarget) - 3} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct text-[10px] font-semibold">
+        coverage {PAGE11.pct(band.coverageAt16)}%
+      </text>
+
+      {/* the small model, thinking harder: the 3B vote curve. Labeled mid-curve,
+          away from the crowded right edge */}
+      <path d={votePath} fill="none" className="stroke-compute" strokeWidth={2.5} />
+      {vote.map((p) => (
+        <circle key={p.n} cx={x(p.xTarget)} cy={y(p.accuracy)} r={2.5} className="fill-compute stroke-canvas" strokeWidth={1} />
+      ))}
+      {(() => {
+        const lbl = vote[Math.max(0, vote.length - 2)];
+        return (
+          <text x={x(lbl.xTarget)} y={y(lbl.accuracy) + 16} textAnchor="middle" className="fill-compute text-[10px] font-semibold">
+            3B, more samples
+          </text>
+        );
+      })()}
 
       {/* the strongest realizable selector we own, where we own one (page 8) */}
       {band.bestOf ? (
@@ -345,7 +361,7 @@ function MeasuredGame({ band, nIdx }: { band: Band; nIdx: number }) {
             className="fill-wrong stroke-canvas"
             strokeWidth={1.25}
           />
-          <text x={x(band.bestOf.xTarget)} y={y(band.bestOf.accuracy) - 9} textAnchor="middle" className="fill-wrong text-[9px]">
+          <text x={x(band.bestOf.xTarget) + 9} y={y(band.bestOf.accuracy) + 3} textAnchor="start" className="fill-wrong text-[9px]">
             best-of-16
           </text>
         </g>
@@ -888,24 +904,43 @@ export function Page11() {
             </p>
           </div>
         </section>
-        <Note kicker="Try it">
-          <p>
-            Push <em>test-time compute</em> to 16 and watch the blue curve stall below the black
-            line, on {vote16.xTarget.toFixed(0)} times the bigger model&rsquo;s bill.
-          </p>
-          <p>Then switch to the easy band and try to cross there instead.</p>
-        </Note>
+        <div className="flex flex-col gap-4 lg:pt-9">
+          <aside className="flex flex-col gap-1.5 rounded-lg border border-compute/40 bg-compute/5 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-compute">Reproduce it</p>
+            <a
+              href={`/notebooks/${PAGE11.download.slug}.zip`}
+              download
+              className="text-sm font-semibold text-compute underline underline-offset-2 hover:text-compute/80"
+            >
+              Download the notebook and traces
+            </a>
+            <p className="text-xs text-ink-muted">
+              every number in this figure, re-derivable offline in REPLAY mode (
+              {PAGE11.download.sizeLabel}, no GPU)
+            </p>
+          </aside>
+          <aside className="flex flex-col gap-2 text-sm text-ink-muted">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">Try it</p>
+            <p>
+              Push <em>test-time compute</em> to 16 and watch the blue curve stall below the black
+              line, on {vote16.xTarget.toFixed(0)} times the bigger model&rsquo;s bill.
+            </p>
+            <p>Then switch to the easy band and try to cross there instead.</p>
+          </aside>
+        </div>
 
         {/* Step 2 — the law, stated */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">2. The published law, and its fine print</h2>
           <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-sm text-ink">
-              That was our own instrument, in 2026. The law that predicted a crossing is older:
-              Snell et al. 2024 measured it on models from before the reasoning-training recipes,
-              and found that guessing how hard a prompt is first, then choosing the strategy and
-              budget to match, can beat a bigger model at a matched bill. They call it
-              compute-optimal.
+              That was our own instrument, in 2026, and the result should surprise you: the
+              published record says a small model that thinks <em>can</em> out-buy a bigger one.
+              The rest of this page is that record, and the gap between it and what we measured.
+              Start with the law itself. Snell et al. 2024, on models from before the
+              reasoning-training recipes, found that guessing how hard a prompt is first, then
+              choosing the strategy and budget to match, can beat a bigger model at a matched bill.
+              They call it compute-optimal.
               <Cite n={REF.snell} /> Three numbers carry it:
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -961,25 +996,25 @@ export function Page11() {
           <h2 className="text-xl font-semibold text-ink">3. Each scale owns a band of the budget</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Section 1&rsquo;s chart, measured. Same axes, and the same colour order smallest to
-              largest: three real models (
-              <strong className="text-ink">Pythia 410M, 2.8B, and 12B</strong>) on a growing GSM8K
-              sample budget under weighted majority voting.
-              <Cite n={REF.wu} /> The real family is wider than the game&rsquo;s: the 2.8B is about
-              7× the 410M and the 12B about 29×, so the colours carry rank here, not the
-              game&rsquo;s multiples, and the game&rsquo;s 14× dot has no counterpart on this
-              chart. Section 2 allocated by prompt; this allocates by budget. Each curve is drawn
-              bold only where that model is the compute-optimal buy, and the shading covers only
-              the budgets where more than one model was measured.
+              The law is not only Snell&rsquo;s claim; Wu et al. 2024 measured it. Three real
+              models (<strong className="text-ink">Pythia 410M, 2.8B, and 12B</strong>) on a growing
+              GSM8K sample budget under weighted majority voting: sampling the small one many times
+              beats sampling a big one a few times, and the crossings the law predicts show up in
+              the data.
+              <Cite n={REF.wu} /> This is a 2024-era family, and a wide one: the 2.8B is about 7×
+              the 410M and the 12B about 29×, so the colours carry rank, not fixed multiples.
+              Section 2 allocated by prompt; this allocates by budget. Each curve is drawn bold only
+              where that model is the compute-optimal buy, and the shading covers only the budgets
+              where more than one model was measured.
             </p>
             <PythiaChart />
             <figcaption className="text-sm text-ink-muted">
               On a small budget the <strong className="text-ink">410M model is the
               compute-optimal pick</strong>: sampling it many times beats sampling a big model a
               few times. Then every curve flattens. Once the 410M saturates near 60%, the 2.8B and
-              then the 12B pull ahead, so each scale owns a band of the budget axis, the same
-              handoff you steered through in section 1. The grey strips are those handoffs, and
-              they are wide: inside them the leading curves differ by less than the ±3 points this
+              then the 12B pull ahead, so each scale owns a band of the budget axis. The grey
+              strips are those handoffs, and they are wide: inside them the leading curves differ
+              by less than the ±3 points this
               figure was read to, so the crossing sits somewhere in the strip rather than on a
               line. The second strip covers the whole 12B band, so the order of the handoffs is
               what this chart shows, not the budget at which the 12B takes over.
@@ -1042,7 +1077,10 @@ export function Page11() {
             4's job: better search still spends everything at answer time. */}
         <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
-            <strong className="text-ink">This page leaves two loose ends.</strong> The selection
+            <strong className="text-ink">So why did the crossing not appear for us?</strong> The
+            record above is real, but the law lives in a narrow window, where the model reaches the
+            answer sometimes but not reliably, and on a 2026 post-trained model that window has
+            shrunk toward the hardest problems. That leaves two loose ends. The selection
             wall: the answer is in the pile, but no rule we can run at answer time reliably grabs
             it, and past the hardest problems the pile stops holding it at all. And the waste:
             sampling, voting, and search all spend their compute at answer time and throw away the
@@ -1064,15 +1102,8 @@ export function Page11() {
           MATH-500 level 4 to 5 problems, reproduced to the digit before any new generation (gate
           1), plus a fresh 50-item easy band at levels 1 to 3. One family, one grader, one date, so
           the crossing&rsquo;s absence is an instance on a 2026 instrument, not a refutation of the
-          cited results, which is why sections 3 and 4 keep them as published.{" "}
-          <a
-            href={`/notebooks/${PAGE11.download.slug}.zip`}
-            className="text-compute underline"
-            download
-          >
-            Download the notebook and re-derive it ({PAGE11.download.sizeLabel})
-          </a>
-          .
+          cited results, which is why sections 3 and 4 keep them as published. The notebook that
+          produced this section is linked at the top of the page.
         </p>
         <p>
           <strong className="text-ink">Cited</strong>: the law panels in section 2 are Snell et

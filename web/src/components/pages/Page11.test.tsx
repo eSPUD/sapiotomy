@@ -135,18 +135,24 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
 
   it("hands off to Act 3 on the two loose ends: selection and waste", () => {
     render(<Page11 />);
-    expect(screen.getByText(/This page leaves two loose ends/i)).toBeInTheDocument();
+    expect(screen.getByText(/So why did the crossing not appear for us/i)).toBeInTheDocument();
+    expect(screen.getByText(/the law lives in a narrow window/i)).toBeInTheDocument();
     expect(screen.getByText(/The selection\s*wall/i)).toBeInTheDocument();
     expect(screen.getByText(/train the reasoning into the weights/i)).toBeInTheDocument();
     expect(screen.getByText(/pages 13 and 14 reward only correct answers/i)).toBeInTheDocument();
   });
 
-  it("labels the footer Measured / Cited and offers the notebook download", () => {
+  it("labels the footer Measured / Cited", () => {
     render(<Page11 />);
     expect(screen.getByText("Measured")).toBeInTheDocument();
     expect(screen.getByText("Cited")).toBeInTheDocument();
     expect(screen.getByText(/instance on a 2026 instrument, not a refutation/i)).toBeInTheDocument();
-    const dl = screen.getByRole("link", { name: /Download the notebook and re-derive it/i });
+  });
+
+  it("offers the notebook + traces download at the top of the figure", () => {
+    render(<Page11 />);
+    expect(screen.getByText("Reproduce it")).toBeInTheDocument();
+    const dl = screen.getByRole("link", { name: /Download the notebook and traces/i });
     expect(dl).toHaveAttribute("href", "/notebooks/page-11-training-vs-scale.zip");
     expect(dl).toHaveAttribute("download");
   });
@@ -241,14 +247,12 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(bands[2]).toHaveClass("fill-wrong-bright");
   });
 
-  it("scales the Pythia family by its real ratios, not the game's multiples", () => {
+  it("scales the Pythia family by its real ratios, not fixed multiples", () => {
     render(<Page11 />);
     expect(
-      screen.getByText(/the 2\.8B is about\s+7× the 410M and the 12B about 29×/i),
+      screen.getByText(/the 2\.8B is about 7× the 410M and the 12B about 29×/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/the game[’']s 14× dot has no counterpart on this\s+chart/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/the colours carry rank, not fixed multiples/i)).toBeInTheDocument();
   });
 
 });
