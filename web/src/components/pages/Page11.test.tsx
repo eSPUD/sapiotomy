@@ -77,6 +77,12 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     ).toBeInTheDocument();
   });
 
+  it("makes the coverage-selection gap explicit, not a mystery line", () => {
+    render(<Page11 />);
+    expect(screen.getByText("found, not selected")).toBeInTheDocument();
+    expect(screen.getByText(/the shaded gap is what the vote throws away/i)).toBeInTheDocument();
+  });
+
   it("prices the game in multiples of the big model's own bill", () => {
     render(<Page11 />);
     expect(screen.getByText(/single greedy\s*answer is the target/i)).toBeInTheDocument();

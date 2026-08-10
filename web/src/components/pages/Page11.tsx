@@ -256,6 +256,17 @@ function MeasuredGame({ band, model, nIdx }: { band: Band; model: SmallModel; nI
   const showBestOf = band.bestOf !== null && model === "3B";
   const votePath = vote.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.xTarget)},${y(p.accuracy)}`).join("");
   const covPath = vote.map((p, i) => `${i === 0 ? "M" : "L"}${x(p.xTarget)},${y(p.coverage)}`).join("");
+  // the coverage-selection gap: the closed region between what voting returns
+  // (the vote curve, below) and what was reachable (coverage, above). Shading it
+  // is what makes coverage legible: it is the answers found and thrown away.
+  const gapArea =
+    "M" +
+    vote.map((p) => `${x(p.xTarget)},${y(p.accuracy)}`).join("L") +
+    "L" +
+    [...vote].reverse().map((p) => `${x(p.xTarget)},${y(p.coverage)}`).join("L") +
+    "Z";
+  // label the gap at a central point, clear of the crowded right edge
+  const gap = vote[Math.floor((vote.length - 1) / 2)];
   const marker = vote[nIdx];
   const last = vote[vote.length - 1];
 
@@ -320,6 +331,18 @@ function MeasuredGame({ band, model, nIdx }: { band: Band; model: SmallModel; nI
       <line x1={0} x2={innerW} y1={y(tgt.accuracy)} y2={y(tgt.accuracy)} className="stroke-ink" strokeWidth={1.25} strokeDasharray="4 3" />
       <text x={2} y={y(tgt.accuracy) - 6} textAnchor="start" className="fill-ink text-[11px] font-semibold">
         the bar to beat: {tgt.label} greedy, {PAGE11.pct(tgt.accuracy)}%
+      </text>
+
+      {/* the coverage-selection gap, shaded: answers found (top) and thrown away
+          by the vote (bottom). This is what coverage is for. */}
+      <path d={gapArea} className="fill-correct" opacity={0.14} stroke="none" />
+      <text
+        x={x(gap.xTarget)}
+        y={px((y(gap.accuracy) + y(gap.coverage)) / 2)}
+        textAnchor="middle"
+        className="fill-correct text-[9px] font-semibold"
+      >
+        found, not selected
       </text>
 
       {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
@@ -816,7 +839,7 @@ export function Page11() {
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
               <Key shape="line" className="bg-ink-muted" label="a bigger model (scale up the parameters)" />
               <Key shape="line" className="bg-compute" label={`the ${model}, thinking harder (more samples + a vote)`} />
-              <Key shape="line" className="bg-correct" label="coverage: a correct answer was in the pile" />
+              <Key shape="line" className="bg-correct" label="coverage: the answer was in the pile (the shaded gap is what the vote throws away)" />
               {showBestOf ? (
                 <Key shape="diamond" className="bg-wrong" label="best-of-16 (a trained verifier)" />
               ) : null}
