@@ -173,7 +173,10 @@ describe("Page 6, figure 2: the same dial, every problem", () => {
 
   // The heights bar is load-bearing and cannot go in the notebook, because the
   // figure invites the comparison on screen. It moved from the retired footer
-  // into the margin beside the curve it qualifies.
+  // into the margin beside the curve it qualifies, and was trimmed on
+  // 2026-08-10 to the one line a reader of the figure cannot supply: the cap
+  // rate at the top stop is already printed under the chart, so the margin
+  // stopped repeating it.
   it("names every checkpoint but claims shape rather than level", () => {
     render(<Page6 />);
     for (const c of F2.curves) {
@@ -181,7 +184,12 @@ describe("Page 6, figure 2: the same dial, every problem", () => {
     }
     expect(body()).toContain("the shape is the part that is not about any of these checkpoints");
     expect(body()).toContain("Read the shape rather than the heights");
-    expect(body()).toContain("a level comparison is barred twice over");
+    // Kicker plus one line, and nothing else.
+    const limits = screen.getByText(/a level comparison is barred twice over/).closest("aside")!;
+    expect(limits.textContent).toBe(
+      "LimitsThe three differ in size and in training, and the 7B ran at 8-bit against bf16 for the other two, so a level comparison is barred twice over.",
+    );
+    expect(body()).not.toContain("still hit the cap at");
   });
 
   it("attributes budget forcing with no number of theirs attached", () => {

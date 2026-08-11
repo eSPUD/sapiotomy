@@ -1444,14 +1444,14 @@ export function Page6() {
             any of these checkpoints.
           </p>
         </section>
-        <Note kicker="What the heights are not">
+        {/* One line, and only the one the figure cannot supply. The cap rate at
+            the top stop is printed under the chart already, and the reader is
+            told to read the shape in the body; what neither can say is that
+            these three levels are not commensurable in the first place. */}
+        <Note kicker="Limits">
           <p>
-            The heights are not a claim. The three differ in size and in training, and the 7B ran at
-            8-bit against bf16 for the other two, so a level comparison is barred twice over.
-          </p>
-          <p>
-            {pct(F2.primary.points[B.length - 1].truncation_rate)} of chains still hit the cap at{" "}
-            {TOP}, which understates the right-hand end rather than flattering it.
+            The three differ in size and in training, and the 7B ran at 8-bit against bf16 for the
+            other two, so a level comparison is barred twice over.
           </p>
         </Note>
 
