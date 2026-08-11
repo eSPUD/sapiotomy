@@ -270,9 +270,29 @@ export function Page16() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
-        Act {page.act} · {ACTS[page.act].title}
-      </p>
+      {/* Pages 5 to 10 each put their run's download here, beside the act kicker,
+          and a reader who has come through Act 2 has learned to look here for it.
+          This page draws five runs rather than one, so it carries five, but they
+          belong in the same place rather than buried under the figure they source. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs text-ink-muted">the runs behind the chart:</span>
+          {NOTEBOOKS.map((n) => (
+            <a
+              key={n.page}
+              href={n.href}
+              download
+              aria-label={`Page ${n.page}: ${n.title}. Download the notebook and traces, zip, ${n.size}`}
+              className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
+            >
+              page {n.page} ({n.size}) ↓
+            </a>
+          ))}
+        </div>
+      </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
@@ -314,35 +334,17 @@ export function Page16() {
           that goes backwards.
         </p>
 
-        {/* Where the rungs came from. Derived from the ladder in lib/page16.ts, so a
-            rung that is added or cut cannot leave this list pointing at the wrong
-            set of runs. Stacked rather than run together: it is a list of files a
-            reader might actually download, not a sentence. */}
-        <div className="flex max-w-2xl flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
-          <p className="text-sm text-ink">
-            <strong className="text-ink">Every chain above was written by {WRITER}.</strong> One
-            model wrote all of it. What changes down the chart is how many chains it was allowed to
-            write and what got to pick between them, never who was writing. Where a judge appears it
-            scores chains, it does not write them.
-          </p>
-          <p className="text-sm text-ink-muted">
-            Each run below is the notebook that produced it, with its traces, so any rung can be
-            re-derived without a GPU:
-          </p>
-          <ul className="flex flex-col gap-1.5">
-            {NOTEBOOKS.map((n) => (
-              <li key={n.page} className="text-sm">
-                <a
-                  href={n.href}
-                  className="text-ink underline decoration-grid underline-offset-2 hover:text-compute"
-                >
-                  Page {n.page}: {n.title}
-                </a>{" "}
-                <span className="text-ink-muted">(notebook and traces, zip)</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* The one thing a reader needs in order to read the chart correctly, and
+            nothing else. The downloads used to sit here and were moved to the top
+            line on 2026-08-10: they are provenance, and a list of five zips between
+            the chart and the conclusions interrupted the argument at its seam. */}
+        <p className="max-w-2xl border-l-2 border-grid pl-3 text-sm text-ink-muted">
+          <strong className="text-ink">Every chain above was written by {WRITER}.</strong> One model
+          wrote all of it. What changes down the chart is how many chains it was allowed to write
+          and what got to pick between them, never who was writing; where a judge appears it scores
+          chains, it does not write them. The run behind each rung is linked at the top of this
+          page, traces included, so any of them can be re-derived without a GPU.
+        </p>
       </div>
 
       <div className="flex flex-col gap-3">

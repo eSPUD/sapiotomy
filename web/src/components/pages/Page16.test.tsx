@@ -193,16 +193,23 @@ describe("Page 16 (wrap-up) component", () => {
    * 2026-08-10 with the removal of the other-model row, which is what made the
    * disclaimer true: every remaining rung is the same model's chains.
    */
-  it("shows which notebook every rung came from, one per line", () => {
+  it("offers every rung's run on the top line, where pages 5 to 10 put theirs", () => {
     render(<Page16 />);
     expect(NOTEBOOKS.length).toBeGreaterThan(0);
     for (const n of NOTEBOOKS) {
       const link = screen.getByRole("link", { name: new RegExp(`Page ${n.page}: ${n.title}`, "i") });
       expect(link.getAttribute("href")).toBe(n.href);
+      // `download` and a stated size are the convention on every other run page.
+      expect(link).toHaveAttribute("download");
+      expect(link.getAttribute("aria-label")).toContain(n.size);
     }
     // Derived from the ladder, so a rung can never quietly outlive its source.
     const pages = [...new Set(LADDER.map((r) => r.page))].sort((a, b) => a - b);
     expect(NOTEBOOKS.map((n) => n.page)).toEqual(pages);
+    // They belong above the chart, not between the chart and the conclusions.
+    const first = screen.getByRole("link", { name: new RegExp(`Page ${NOTEBOOKS[0].page}:`, "i") });
+    const chart = screen.getByRole("img", { name: /What each lever scored/i });
+    expect(first.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("says one model wrote every chain on the chart, and can still say it", () => {

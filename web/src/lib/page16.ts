@@ -283,14 +283,14 @@ if (WAIT.before / WAIT.table.n !== PAGE5.figure2.bare.accuracy) {
  * the right one. Any page that gains a rung must gain an entry here, and NOTEBOOKS
  * throws rather than silently omitting a source.
  */
-const NOTEBOOK_BY_PAGE: Record<number, { title: string; href: string }> = {
-  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/page-05-how-to-reason.zip" },
-  6: { title: "Thinking longer, and budget forcing", href: "/notebooks/page-06-thinking-longer.zip" },
-  7: { title: "Sampling and voting", href: "/notebooks/page-07-frequency-voting.zip" },
-  8: { title: "Best-of-N and the judges", href: "/notebooks/page-08-best-of-n.zip" },
-  9: { title: "Outcome against process grading", href: "/notebooks/page-09-outcome-vs-process.zip" },
-  10: { title: "The search arm", href: "/notebooks/page-10-search-arm.zip" },
-  11: { title: "Training against scale", href: "/notebooks/page-11-training-vs-scale.zip" },
+const NOTEBOOK_BY_PAGE: Record<number, { title: string; href: string; size: string }> = {
+  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/page-05-how-to-reason.zip", size: "0.8 MB" },
+  6: { title: "Thinking longer, and budget forcing", href: "/notebooks/page-06-thinking-longer.zip", size: "2.0 MB" },
+  7: { title: "Sampling and voting", href: "/notebooks/page-07-frequency-voting.zip", size: "3.0 MB" },
+  8: { title: "Best-of-N and the judges", href: "/notebooks/page-08-best-of-n.zip", size: "9.7 MB" },
+  9: { title: "Outcome against process grading", href: "/notebooks/page-09-outcome-vs-process.zip", size: "1.6 MB" },
+  10: { title: "The search arm", href: "/notebooks/page-10-search-arm.zip", size: "4.8 MB" },
+  11: { title: "Training against scale", href: "/notebooks/page-11-training-vs-scale.zip", size: "2.7 MB" },
 };
 
 export const LADDER: Rung[] = [
@@ -379,7 +379,7 @@ export const WRITER = GREEDY_3B.label;
  * The notebooks behind the rungs, derived from the ladder rather than listed by
  * hand, so a rung that is added or cut cannot leave the download list lying.
  */
-export const NOTEBOOKS: { page: number; title: string; href: string }[] = [
+export const NOTEBOOKS: { page: number; title: string; href: string; size: string }[] = [
   ...new Set(LADDER.map((r) => r.page)),
 ]
   .sort((a, b) => a - b)
