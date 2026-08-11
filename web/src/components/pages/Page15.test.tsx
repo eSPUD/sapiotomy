@@ -100,7 +100,10 @@ describe("Page 15 (when reasoning breaks) component", () => {
     // mechanism, so the two figures the slider drives stay next to each other.
     const step2 = step(/Thinking too hard/i);
     expect(step2.textContent).toMatch(/about the axis rather than about thinking/i);
-    const note = screen.getByText(/What this axis cannot show/i).closest("aside")!;
+    // The note is named for the thing in the figure it explains. It used to open on
+    // what the axis cannot show in general, which was a claim about the experiment
+    // rather than help reading the ledger, and that line is the notebook's now.
+    const note = screen.getByText(/Why the top rung is empty/i).closest("aside")!;
     expect(note.textContent).toMatch(/it is the same generation/i);
     expect(note.textContent).toMatch(/The axis runs out before the model does/i);
   });
@@ -130,21 +133,24 @@ describe("Page 15 (when reasoning breaks) component", () => {
     expect(screen.getAllByText(/more characters of working/i).length).toBeGreaterThan(0);
   });
 
-  it("keeps all three controls on screen, the reader-facing one in the body", () => {
+  it("keeps the reader-facing control in the body and the apparatus off the page", () => {
     render(<Page15 />);
     // "Not a strategy" guards the reader's takeaway: without it step 2 reads as
     // "cut your budget at 512 and win", which is a technique that does not exist.
-    // It stays in the body. The other two defend the specimen's reading against a
-    // skeptic, which is apparatus, so they sit in the margin as on pages 5 and 7.
+    // It stays. The other two defended the specimen's reading against a skeptic,
+    // which is apparatus, and a margin note may only help a reader read the figure
+    // beside it, so they went to the notebook on 2026-08-10.
     const step2 = step(/Thinking too hard/i);
     expect(step2.textContent).toMatch(/Not a strategy/i);
-    expect(screen.getByText(/Not a truncated proof/i)).toBeInTheDocument();
-    expect(screen.getByText(/Not the model already knowing/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Not a truncated proof/i)).toBeNull();
+    expect(screen.queryByText(/Not the model already knowing/i)).toBeNull();
   });
 
   it("pins the three controls to claims the run came back false on", () => {
     // These are the assertions that stop the specimen becoming a strategy the reader
-    // takes away. Each is false in the shipped run and the copy depends on it.
+    // takes away. Each is false in the shipped run. The first two no longer appear in
+    // the copy, but the specimen's reading still rests on them, so they stay pinned
+    // here: a rerun that flips one needs new copy, not a green suite.
     expect(PAGE17.controls.concludedWhenCut.cameFromFinishedReasoning).toBe(false);
     expect(PAGE17.controls.isItARule.stoppingEarlyIsAStrategy).toBe(false);
     expect(PAGE17.controls.isItARule.cutPointsBeatResampling).toBe(false);
@@ -196,30 +202,45 @@ describe("Page 15 (when reasoning breaks) component", () => {
     expect(step3.textContent).toMatch(/trained to score/i);
   });
 
-  it("draws the ground truth the grader is audited against, at true width", () => {
+  // Step 3 carried a second beat until 2026-08-10: the sliver of a chain a checker
+  // can adjudicate, the reward model's quality figures taken inside it, and the
+  // selection null. Three of its four claims were page 9's own, restated a page
+  // later, so the beat moved to page 9 whole. Page9.test.tsx owns it now. What must
+  // not happen is a partial move that leaves either page half-arguing it.
+  it("leaves the grader's audit surface to page 9, which owns the measurement", () => {
     render(<Page15 />);
-    const bar = screen.getByRole("img", { name: /arithmetic checker can adjudicate/i });
-    // The bar is NOT the grader's blind spot. A trained reward model scores every
-    // step, which is the job it was trained for; the independent checker is what
-    // declines, because its rule is closed-form numeric on both sides. Reading the
-    // sliver as the grader's reach contradicts the copy directly beneath it.
-    expect(bar.getAttribute("aria-label")).toMatch(/scores all [\d,]+ and is silent on none/i);
-    expect(bar.getAttribute("aria-label")).toMatch(/nothing independent can check it against/i);
-    // Where the reward model's numbers were taken is the claim, so the figure has to
-    // say it rather than leave the two facts adjacent and unjoined.
-    expect(bar.getAttribute("aria-label")).toMatch(/was measured inside/i);
-    expect(screen.getByText(/were\s+all measured in here/i)).toBeInTheDocument();
-    expect(screen.getByText(/is unmeasured/i)).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /can adjudicate/i })).toBeNull();
+    expect(screen.queryByText(/were\s+all measured in here/i)).toBeNull();
+    expect(screen.queryByText(/second coordinate/i)).toBeNull();
+    expect(screen.queryByText(/soundness of their working/i)).toBeNull();
+    // And no orphaned pointer at a figure that is no longer here.
+    expect(document.body.textContent).not.toMatch(/both figures/i);
   });
 
-  it("prices trusting the grader anyway, in the two ways we measured", () => {
+  // A margin note may only help a reader read the figure beside it. Anything else,
+  // provenance, apparatus, a caveat about the experiment, is the notebook's. The
+  // shape that rule enforces is length: one short paragraph. Reference notes are a
+  // different thing and carry one entry per citation.
+  it("keeps every margin note to one paragraph of help with the figure beside it", () => {
+    const { container } = render(<Page15 />);
+    for (const aside of Array.from(container.querySelectorAll("aside"))) {
+      const kicker = aside.querySelector("p")?.textContent ?? "";
+      if (/^references$/i.test(kicker)) continue;
+      // The kicker is the first <p>; the note itself is whatever follows it.
+      const body = Array.from(aside.querySelectorAll("p")).slice(1);
+      expect(body.length).toBeLessThanOrEqual(1);
+      const words = (body[0]?.textContent ?? "").trim().split(/\s+/).filter(Boolean).length;
+      expect(words).toBeLessThanOrEqual(60);
+    }
+  });
+
+  it("still lands step 4's calculator claim, now sourced to page 9", () => {
     render(<Page15 />);
-    // The step filter's null, quoted as the one problem it moved rather than as a
-    // percentage, because one in a hundred is the honest unit here.
-    expect(
-      screen.getByText(/Filtering\s+page 7's candidates by the soundness of their working/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/where the chain is cut into steps/i)).toBeInTheDocument();
+    // The claim survives the move; only its antecedent changed. It used to read
+    // "Step 3 is why that is not a platitude", and step 3 no longer establishes it.
+    const claim = screen.getByText(/carry no closed-form numeric claim anywhere/i);
+    expect(claim.textContent).toMatch(/Page 9 is why that is not a platitude/i);
+    expect(claim.textContent).toContain(PAGE17.readable.nChainsUnreadable.toLocaleString());
   });
 
   it("no longer claims the overthinking threshold it cannot measure", () => {

@@ -156,12 +156,14 @@ describe("page 17's measured material", () => {
       expect(PAGE17.reliability.steepest.fallPts).toBeGreaterThan(10);
     });
 
-    it("reports the share of the chain no checker can read", () => {
+    // The sliver, the PRM's audit surface and the selection null left this loader on
+    // 2026-08-10 for page 9, which owns the measurement and now draws them. What page
+    // 15 still borrows is the share itself, for step 4's argument that a calculator
+    // needs something to fire on. lib/page09.ts gates the numbers.
+    it("still borrows the share of the chain no checker can read", () => {
       expect(PAGE17.readable.shareUnjudged).toBeGreaterThan(0.9);
-      expect(PAGE17.readable.stepsJudged).toBeLessThan(PAGE17.readable.stepsTotal);
-      // The PRM's quality figures were computed inside the readable sliver, which is the
-      // whole point of putting them next to each other.
-      expect(PAGE17.readable.prm).not.toBeNull();
+      expect(PAGE17.readable.nChainsUnreadable).toBeLessThanOrEqual(PAGE17.readable.nChains);
+      expect(PAGE17.readable.shareChainsUnreadable).toBeGreaterThan(0.5);
     });
   });
 

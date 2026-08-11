@@ -32,21 +32,27 @@
  *   2. FIND THE BREAK. One question, one click, re-answerable: which line goes
  *      wrong, or does nothing? The reveal underlines what the checker proved,
  *      chips what the PRM opined, and lets the reader grade again.
- *   3. WHAT STEP GRADING BUYS. One figure, framed on the PRM: how many right
- *      answers each grader can catch bad reasoning inside. Localisation and the
- *      null selector rung follow it in a line each.
+ *   3. WHAT STEP GRADING BUYS. How many right answers each grader can catch bad
+ *      reasoning inside, then where the PRM's own quality figures were taken.
+ *      Localisation and the null selector rung follow in a line each.
  *
- * Run conditions (decoding, dates, segmentation) are the notebook's to state,
- * and so is the PRM's measured reliability. The margins hold only what a reader
- * looking at the thing beside them cannot work out: how to read a step with no
- * underline. A limit on a figure is not a margin note, it is a caption, so the
- * PRM's fitted cut-off sits under the bars it qualifies.
+ * Run conditions (decoding, dates, segmentation) are the notebook's to state.
+ * The PRM's measured reliability used to be as well, and that rule was right
+ * while the numbers arrived flat: an AUC beside the bars gave a reader nothing
+ * to do with it. Beat 3 now says WHERE it was measured, on the 5.8% of steps the
+ * checker can read, which turns the same three numbers into a limit the reader
+ * can act on. That claim came from page 15 on 2026-08-10 and the numbers came
+ * with it. The margins hold only what a reader looking at the thing beside them
+ * cannot work out: how to read a step with no underline. A limit on a figure is
+ * not a margin note, it is a caption, so the PRM's fitted cut-off and the
+ * checker's denominator both sit under the bars they qualify.
  *
  * Lightman et al. 2023 is cited for the technique and priority; the numbers on
  * screen are our own.
  */
 
 import { useState } from "react";
+import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { PAGE9, pct, tidyMath, type Specimen } from "@/lib/page09";
@@ -118,6 +124,63 @@ function splitOnClaim(text: string, claim: string | null) {
     gapBefore: /\n\s*$/.test(before) ? "\n" : " ",
     gapAfter: /^\s*\n/.test(after) ? "\n" : " ",
   };
+}
+
+/* ------------------------------------------------- where the PRM was audited */
+
+const A_W = 640;
+const A_H = 168;
+const A_M = { top: 40, right: 16, bottom: 44, left: 16 };
+const A_IW = A_W - A_M.left - A_M.right;
+
+/**
+ * Where the process reward model's quality figures were taken. One bar, every
+ * step of the graded run, split at what the arithmetic checker can adjudicate.
+ *
+ * This arrived from page 15 on 2026-08-10, and the split it draws is the one
+ * step 1 already states in prose. That is not a repeat: step 1 uses the split to
+ * introduce the two instruments' reach, and here it does a different job, which
+ * is to say how much of the grader we were ever able to check. The figure exists
+ * because the sliver has to be seen at true width to land: a sentence reading
+ * "5.8%" is a number, and a strip this thin beside the rest of the bar is an
+ * argument. The AUC is drawn INSIDE the sliver rather than beside the bar,
+ * because where it was measured is the whole claim.
+ */
+function AuditSurface({ prm }: { prm: NonNullable<typeof PAGE9.graders.prm> }) {
+  const g = PAGE9.graders;
+  const share = 1 - g.shareUnjudged;
+  const w = Math.max(share * A_IW, 3);
+  return (
+    <ChartFrame
+      title={`Of ${g.stepsTotal.toLocaleString()} steps, the arithmetic checker can adjudicate ${g.stepsJudged.toLocaleString()}, or ${pct(share, 1)}. The reward model scores all ${g.stepsTotal.toLocaleString()} and is silent on none, so the remaining ${pct(g.shareUnjudged, 1)} is what nothing independent can check it against. Its AUC of ${prm.auc.toFixed(2)} was measured inside that ${pct(share, 1)}.`}
+      width={A_W}
+      height={A_H}
+      margin={A_M}
+    >
+      <rect x={0} y={0} width={A_IW} height={44} className="fill-ink opacity-[0.07]" />
+      <rect x={0} y={0} width={w} height={44} className="fill-correct" />
+
+      {/* The leader has to come from outside: nothing legible fits in the sliver. */}
+      <line x1={w / 2} x2={w / 2} y1={-14} y2={0} className="stroke-correct" strokeWidth={1} />
+      <text x={w / 2 - 2} y={-20} className="fill-ink text-[11px] font-semibold">
+        {pct(share, 1)} checkable
+      </text>
+      <text x={A_IW - 4} y={26} textAnchor="end" className="fill-ink text-[12px] font-semibold">
+        {pct(g.shareUnjudged, 1)}: the reward model scores these, nothing independent checks it
+      </text>
+
+      <path
+        d={`M0,58 L0,66 L${w},66 L${w},58`}
+        fill="none"
+        className="stroke-ink-muted"
+        strokeWidth={1}
+      />
+      <text x={0} y={82} className="fill-ink-muted text-[11px]">
+        its AUC of {prm.auc.toFixed(2)}, its recall of {pct(prm.recallOnFalse, 0)} and its
+        specificity of {pct(prm.specificityOnTrue, 0)} were all measured in here
+      </text>
+    </ChartFrame>
+  );
 }
 
 export function Page9() {
@@ -690,35 +753,91 @@ export function Page9() {
                   </div>
                 ))}
               </div>
-              <figcaption className="text-sm text-ink-muted">
-                An outcome grader compares only the final answer to the known one, so no model reads
-                the working and it catches none of this by construction; the question is what reading
-                the steps adds. The checker&apos;s{" "}
-                <strong className="text-ink">{pct(det.rate, 2)}</strong> is a proof you can redo by
-                hand and a floor, not a rate: it counts chains, and many chains are the same problem
-                sampled again, so the count that stands on its own is problems, where it is{" "}
-                <strong className="text-ink">{pct(det.problemRate, 1)}</strong> ({det.nProblems} of
-                the {det.nProblemsWithARightChain} problems that produced a right answer). With only{" "}
-                {det.nContaminated} chains carrying a provable break it undercounts either way, and
-                it reads arithmetic alone. Name the denominator too: of those {det.nRightChains}{" "}
-                right chains the checker could read only{" "}
-                <strong className="text-ink">{det.nRightReachable}</strong>, because the rest carry
-                no closed-form numeric claim anywhere, so {det.nRightChains - det.nRightReachable}{" "}
-                of them are silence rather than evidence. Over the chains it did read the rate is{" "}
-                <strong className="text-ink">{pct(det.reachableRate, 2)}</strong>, and that is the
-                honest shape of the undercount.{" "}
+              {/* One entry per bar, plus the baseline that is not drawn as one. This
+                  used to be a single paragraph carrying all three graders and every
+                  qualification at once, which at this size nobody read. The content is
+                  the same and none of it moved to a margin, because a limit on a figure
+                  is a caption; it is the shape that changed, and the jargon went. */}
+              <dl className="flex flex-col gap-2 text-sm text-ink-muted">
+                <div>
+                  <dt className="inline font-semibold text-ink">Outcome grader, 0%. </dt>
+                  <dd className="inline">
+                    It compares the final answer to the known one and never opens the working, so it
+                    catches none of this by construction. The question is what reading the steps
+                    adds.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline font-semibold text-ink">
+                    Checker, {pct(det.rate, 2)}. A floor, not a rate.{" "}
+                  </dt>
+                  <dd className="inline">
+                    It counts chains, and many chains are the same problem sampled again. By problem
+                    it is <strong className="text-ink">{pct(det.problemRate, 1)}</strong>,{" "}
+                    {det.nProblems} of the {det.nProblemsWithARightChain} problems that produced a
+                    right answer.
+                  </dd>
+                </div>
+                <div>
+                  <dt className="inline font-semibold text-ink">
+                    What it could read, {det.nRightReachable} of {det.nRightChains}.{" "}
+                  </dt>
+                  <dd className="inline">
+                    It reads arithmetic and nothing else, so{" "}
+                    {det.nRightChains - det.nRightReachable} of those right chains are silence
+                    rather than evidence. Over the ones it did read the rate is{" "}
+                    <strong className="text-ink">{pct(det.reachableRate, 2)}</strong>. Either way it
+                    undercounts.
+                  </dd>
+                </div>
                 {det.prm && prm ? (
-                  <>
-                    {prmName}&apos;s <strong className="text-ink">{pct(det.prm.rate, 1)}</strong> is
-                    a trained model&apos;s opinion rather than a proof, and{" "}
-                    <strong className="text-ink">its cut is fitted, not held out</strong>: the{" "}
-                    {prm.threshold.toFixed(2)} that turns a score into a verdict was picked to match
-                    the checker&apos;s own labels, so these are not two independent readings of the
-                    same thing. On the Lucky chain above it was the one that missed the slip.
-                  </>
+                  <div>
+                    <dt className="inline font-semibold text-ink">
+                      {prmName}, {pct(det.prm.rate, 1)}. An opinion, not a proof.{" "}
+                    </dt>
+                    <dd className="inline">
+                      <strong className="text-ink">Its cut is fitted, not held out</strong>: the{" "}
+                      {prm.threshold.toFixed(2)} that turns a score into a verdict was picked to
+                      match the checker&apos;s own labels, so these are not two independent readings
+                      of the same thing. On Lucky, above, it missed the slip.
+                    </dd>
+                  </div>
                 ) : null}
-              </figcaption>
+              </dl>
             </figure>
+
+            {/* Arrived from page 15 on 2026-08-10, where it was the second half of a
+                verifier beat. It belongs here: it qualifies the PRM bar directly
+                above it, and this page owns the measurement. */}
+            {prm ? (
+              <>
+                <p className="text-sm text-ink-muted">
+                  Which leaves the harder question about the bar on the right. A score is an
+                  opinion, so how good is this one, and how much of the chain did we ever get to
+                  find out on?
+                </p>
+                <figure
+                  aria-label="What share of the graded steps an independent checker can adjudicate"
+                  className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+                >
+                  <AuditSurface prm={prm} />
+                </figure>
+                <p className="text-sm text-ink-muted">
+                  The reward model scores every one of these{" "}
+                  {PAGE9.graders.stepsTotal.toLocaleString()} steps and is silent on none, which is
+                  the job it was trained for. The checker is the one that declines: it adjudicates{" "}
+                  {PAGE9.graders.stepsJudged.toLocaleString()}, because its rule is arithmetic on
+                  both sides and the rest state something else, <em>by symmetry</em> or{" "}
+                  <em>consider the cases</em> or a claim about where the working has got to. So the
+                  sliver is not the grader&apos;s blind spot. It is the only ground truth we have to
+                  audit the grader against, and every number that makes it look trustworthy was
+                  taken inside it. Its reliability on the other{" "}
+                  {pct(PAGE9.graders.shareUnjudged, 1)} is unmeasured, and those are the prose steps
+                  least like the ones it was scored on, so read the figures above as the optimistic
+                  end.
+                </p>
+              </>
+            ) : null}
 
             <p className="text-sm text-ink-muted">
               <strong className="text-ink">And what it catches, it can place.</strong> On the{" "}

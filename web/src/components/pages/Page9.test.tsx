@@ -28,13 +28,52 @@ const findTheBreakThenReveal = (trace = PAGE9.lucky) => {
   fireEvent.click(screen.getByRole("button", { name: /reveal what the graders found/i }));
 };
 
-// The PRM's reliability against the checker is measured in the notebook, and
-// quoting it here bought a reader looking at the bars nothing they could act on.
-// It is gone from the page entirely rather than demoted.
-describe("Page 9's PRM reliability is the notebook's to state", () => {
-  it("quotes no AUC anywhere on the page", () => {
+/**
+ * This page refused to quote the PRM's AUC at all until 2026-08-10, and the
+ * reason was sound: a reliability figure beside the bars gave a reader looking
+ * at them nothing to act on. What arrived from page 15 is not the figure, it is
+ * WHERE the figure was taken, on the 5.8% of steps the checker can read. That
+ * turns the same three numbers into a limit, so the rule was reversed rather
+ * than worked around. The tests below are what keep the numbers from drifting
+ * back to being quoted flat: every one of them must arrive inside the bar.
+ */
+describe("Page 9 audits its own grader", () => {
+  it("draws the ground truth the PRM is audited against, at true width", () => {
     render(<Page9 />);
-    expect(document.body.textContent).not.toMatch(/AUC/);
+    const bar = screen.getByRole("img", { name: /can adjudicate/i });
+    // The sliver is NOT the grader's blind spot. The PRM scores every step, which
+    // is the job it was trained for; the checker is what declines, because its rule
+    // is arithmetic on both sides. Reading it the other way contradicts the copy
+    // directly beneath it.
+    expect(bar.getAttribute("aria-label")).toMatch(/scores all [\d,]+ and is silent on none/i);
+    expect(bar.getAttribute("aria-label")).toMatch(/nothing independent can check it against/i);
+    expect(bar.getAttribute("aria-label")).toMatch(/was measured inside/i);
+  });
+
+  it("quotes no reliability figure without saying where it was measured", () => {
+    render(<Page9 />);
+    if (!PAGE9.graders.prm) {
+      expect(document.body.textContent).not.toMatch(/AUC/);
+      return;
+    }
+    // All three numbers live inside the bracket under the sliver, in one sentence
+    // that ends "measured in here". A number that escapes that sentence is the old
+    // flat quotation coming back, which is the thing the original rule was for.
+    const inHere = screen.getByText(/were all measured in here/i);
+    expect(inHere.textContent).toContain(PAGE9.graders.prm.auc.toFixed(2));
+    expect(inHere.textContent).toContain(pct(PAGE9.graders.prm.recallOnFalse, 0));
+    expect(inHere.textContent).toContain(pct(PAGE9.graders.prm.specificityOnTrue, 0));
+    expect(screen.getAllByText(/AUC/).length).toBe(1);
+  });
+
+  it("names the sliver as the audit surface rather than as the grader's reach", () => {
+    render(<Page9 />);
+    if (!PAGE9.graders.prm) return;
+    const p = screen.getByText(/the only ground truth we have to audit the grader against/i);
+    expect(p.textContent).toContain(PAGE9.graders.stepsJudged.toLocaleString());
+    // And the consequence, which is the whole reason the numbers are allowed here.
+    expect(p.textContent).toMatch(/is unmeasured/i);
+    expect(p.textContent).toMatch(/read the figures above as the optimistic end/i);
   });
 });
 
@@ -171,7 +210,7 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(screen.getByText(/not the same as proving it sound/i)).toBeInTheDocument();
   });
 
-  it("frames section 3 as one figure and identifies the graders it plots", () => {
+  it("frames section 3's first figure and identifies the graders it plots", () => {
     render(<Page9 />);
     expect(
       screen.getByText(/how often a right answer hides a false step/i),
@@ -192,11 +231,17 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(screen.getByText(/undercounts/i)).toBeInTheDocument();
   });
 
+  // The caption is a list, one entry per bar plus the baseline that is not drawn
+  // as one, so these scope to the whole list rather than to the entry's own label.
+  // It was a single paragraph carrying all three graders until 2026-08-10, which
+  // at this type size nobody read. Same content, same place, legible shape.
+  const gradersCaption = () => screen.getByText(/a floor, not a rate/i).closest("dl")!;
+
   // The chain rate is clustered within problems, and the run says so. Quoting it
   // alone reads as one independent observation per chain, which it is not.
   it("names the problem, not the chain, as the unit the count stands on", () => {
     render(<Page9 />);
-    const caption = screen.getByText(/a floor, not a rate/i);
+    const caption = gradersCaption();
     expect(caption.textContent).toMatch(/the same problem sampled again/i);
     expect(caption.textContent).toContain(
       `${PAGE9.detection.nProblems} of the ${PAGE9.detection.nProblemsWithARightChain} problems`,
@@ -209,7 +254,7 @@ describe("Page 9 (outcome vs process supervision) component", () => {
   it("discloses under the bars that the PRM's cut was fitted on the checker's labels", () => {
     render(<Page9 />);
     if (!PAGE9.graders.prm) return;
-    const caption = screen.getByText(/a floor, not a rate/i);
+    const caption = gradersCaption();
     expect(caption.textContent).toMatch(/its cut is fitted, not held out/i);
     expect(caption.textContent).toContain(PAGE9.graders.prm.threshold.toFixed(2));
     expect(caption.textContent).toMatch(/not two independent readings of the same thing/i);

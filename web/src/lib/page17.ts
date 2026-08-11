@@ -554,23 +554,24 @@ export const PAGE17 = {
   },
 
   /**
-   * Step 3b comes wholesale from page 9 rather than being re-derived here, so page 9's
-   * gates run first and the two pages cannot disagree about one measurement.
+   * What page 15 still borrows from page 9, wholesale rather than re-derived, so
+   * page 9's gates run first and the two pages cannot disagree about one number.
+   *
+   * This was step 3b's whole instrument until 2026-08-10. That beat moved to page
+   * 9, which owns the measurement, and took the sliver, the grader's audit surface
+   * and the selection null with it. What is left is the two facts page 15 and page
+   * 16 still argue from, and nothing here is drawn as a figure any more.
    */
   readable: {
     stepsTotal: PAGE9.graders.stepsTotal,
-    stepsJudged: PAGE9.graders.stepsJudged,
     shareUnjudged: PAGE9.graders.shareUnjudged,
     /**
-     * Chains carrying no closed-form numeric claim anywhere. Page 15 argues for
-     * feedback from outside the model, and this is the number that argues it: a
-     * calculator never fires at all on two chains in three.
+     * Chains carrying no closed-form numeric claim anywhere. Page 15's step 4
+     * argues for feedback from outside the model, and this is the number that
+     * argues it: a calculator never fires at all on two chains in three.
      */
     nChainsUnreadable: PAGE9.detection.nChainsUnreadable,
     shareChainsUnreadable: PAGE9.detection.shareChainsUnreadable,
     nChains: PAGE9.detection.nChainsGraded,
-    prm: PAGE9.graders.prm,
-    selection: PAGE9.selection,
-    localisationSpreadPts: PAGE9.localisation.spreadPts,
   },
 } as const;

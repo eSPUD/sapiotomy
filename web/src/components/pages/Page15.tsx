@@ -35,17 +35,21 @@
  * Step 2 is page 6's budget sweep with the losses drawn back in. Its centre is
  * ONE problem: right when cut off and made to commit, wrong when allowed to
  * finish, and its mistake is an unjustified symmetry assumption a reader can
- * check. THE SPECIMEN MUST NOT TRAVEL WITHOUT ITS THREE CONTROLS, all three of
- * which stay on screen and are the reason the beat is honest. The cut chain had
- * not derived anything (0 of 25 rescues had concluded); the model did not simply
- * know the answer (page 5's blurt arm gets 6 of 16); and stopping early is not
- * a strategy, because a fixed cut is worse than finishing and the best cut buys
- * no more coverage per token than plain resampling. Without those three a
- * reader leaves with a technique that does not exist. The first two defend the
- * specimen's reading and sit in the margin; the third defends the reader's
- * takeaway and so stays in the body. The figure earns control 1 anyway: at the
+ * check. Three controls were run against it. Stopping early is not a strategy,
+ * because a fixed cut is worse than finishing and the best cut buys no more
+ * coverage per token than plain resampling: that one defends the READER'S
+ * TAKEAWAY, so it stays in the body, and without it a reader leaves with a
+ * technique that does not exist. The other two defend the specimen's reading
+ * against a skeptic. They sat in the margin until 2026-08-10 and are now the
+ * notebook's, under the rule that a margin note may only help a reader read the
+ * figure beside it. The figure carries the first of them by itself: at the
  * middle cuts the bad assumption is already written and the forced commit
- * ignores it, which is that control drawn rather than asserted.
+ * ignores it, which is that control drawn rather than asserted. The second (page
+ * 5's zero-token blurt arm gets 6 of 16, so this is not the model already
+ * knowing) is NOT drawn anywhere, and it is the one thing this page now asserts
+ * that a reader cannot check on screen. `PAGE17.controls` still gates both, and
+ * Page15.test.tsx still pins them false, so a rerun that flips one is a finding
+ * rather than a green suite.
  *
  * The old step 3 asserted that easy problems cross an overthinking threshold
  * before hard ones. Pooled over three checkpoints our own run puts both medians
@@ -54,16 +58,17 @@
  * budget. The claim is deleted rather than softened; docs/page_17_findings.md
  * section 4 is why, and the loader keeps it reachable as a stated null.
  *
- * Step 3 is now the verifier, measured twice. Reliability falls with the very
+ * Step 3 is now the verifier, measured once. Reliability falls with the very
  * temperature that makes best-of-N worth running, and only the judge trained to
  * score stays flat, so the figure is a crossing and must be read left to right.
- * Then the quieter coordinate, and it is NOT that the grader is blind: the
- * reward model scores all 18,772 steps and is silent on none. The independent
- * arithmetic checker is what declines, on 94.2% of them, because its rule is
- * closed-form numeric on both sides. So the sliver is the ground truth we can
- * audit the grader with, not the grader's reach, and the reward model's AUC,
- * recall and specificity were all taken inside it. Its reliability on the other
- * 94.2% is unmeasured, which is the sharper worry rather than the weaker one.
+ *
+ * It carried a second coordinate until 2026-08-10: the share of a chain we can
+ * audit a grader against, drawn as a sliver. Three of its four claims were page
+ * 9's own, restated, and the fourth (that the reward model's AUC, recall and
+ * specificity were all taken inside that sliver) belonged beside the bar it
+ * qualifies. The whole beat moved to page 9 beat 3 rather than being split, and
+ * page 9's rule against quoting a flat AUC went with it, since the claim about
+ * WHERE the numbers were taken is what gives a reader something to do with them.
  *
  * Step 4 is the balance: what still works, and the contamination caveat, which
  * discounts every accuracy number in Acts 2 and 3 and is therefore a callout
@@ -590,66 +595,6 @@ function ReliabilitySweep() {
   );
 }
 
-/* ------------------------------------------------------------------ step 3b */
-
-const S_W = 640;
-const S_H = 168;
-const S_M = { top: 40, right: 16, bottom: 44, left: 16 };
-const S_IW = S_W - S_M.left - S_M.right;
-
-/**
- * Where the process grader's quality figures were taken. One bar, every step of
- * 1,580 real chains, split at what an arithmetic checker can adjudicate.
- *
- * The figure exists because the sliver has to be seen at true width to land: a
- * table row reading "5.8%" is a number, and a strip this thin next to the rest
- * of the bar is an argument. The reward model's AUC is drawn INSIDE the sliver
- * rather than beside the bar, because where it was measured is the whole claim.
- */
-function ReadableSliver() {
-  const readable = PAGE17.readable;
-  const share = 1 - readable.shareUnjudged;
-  const w = Math.max(share * S_IW, 3);
-  const prm = readable.prm;
-  return (
-    <ChartFrame
-      title={`Of ${readable.stepsTotal.toLocaleString()} steps across ${readable.nChains.toLocaleString()} chains, an independent arithmetic checker can adjudicate ${readable.stepsJudged.toLocaleString()}, or ${pct(share, 1)}. The reward model scores all ${readable.stepsTotal.toLocaleString()} and is silent on none, so the remaining ${pct(readable.shareUnjudged, 1)} is what nothing independent can check it against.${prm ? ` The process reward model's AUC of ${prm.auc.toFixed(2)} was measured inside that ${pct(share, 1)}.` : ""}`}
-      width={S_W}
-      height={S_H}
-      margin={S_M}
-    >
-      <rect x={0} y={0} width={S_IW} height={44} className="fill-ink opacity-[0.07]" />
-      <rect x={0} y={0} width={w} height={44} className="fill-correct" />
-
-      {/* The leader has to come from outside: nothing legible fits in the sliver. */}
-      <line x1={w / 2} x2={w / 2} y1={-14} y2={0} className="stroke-correct" strokeWidth={1} />
-      <text x={w / 2 - 2} y={-20} className="fill-ink text-[11px] font-semibold">
-        {pct(share, 1)} checkable
-      </text>
-      <text x={S_IW - 4} y={26} textAnchor="end" className="fill-ink text-[12px] font-semibold">
-        {pct(readable.shareUnjudged, 1)}: the reward model scores these, nothing independent checks
-        it
-      </text>
-
-      {prm ? (
-        <>
-          <path
-            d={`M0,58 L0,66 L${w},66 L${w},58`}
-            fill="none"
-            className="stroke-ink-muted"
-            strokeWidth={1}
-          />
-          <text x={0} y={82} className="fill-ink-muted text-[11px]">
-            the reward model&apos;s AUC of {prm.auc.toFixed(2)}, its recall of{" "}
-            {pct(prm.recallOnFalse, 0)} and its specificity of {pct(prm.specificityOnTrue, 0)} were
-            all measured in here
-          </text>
-        </>
-      ) : null}
-    </ChartFrame>
-  );
-}
-
 export function Page15() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
@@ -862,30 +807,12 @@ export function Page15() {
           <Note kicker="Try it">
             <p>Drag to {PAGE17.axisBound.maxBudget} and read what it commits to.</p>
           </Note>
-          <Note kicker="What this axis cannot show">
+          <Note kicker="Why the top rung is empty">
             <p>
-              It cannot show accuracy falling past a peak, only that some prefix beat the whole.
-            </p>
-            <p>
-              It is also why the top rung is empty. Under greedy decoding a chain that has already
-              stopped itself is not run again at a larger budget, it is the same generation, and{" "}
+              Under greedy decoding a chain that has already stopped itself is not run again at a
+              larger budget, it is the same generation, and{" "}
               {pct(PAGE17.axisBound.shareSelfTerminated, 0)} of these end themselves before{" "}
               {PAGE17.axisBound.maxBudget} tokens. The axis runs out before the model does.
-            </p>
-          </Note>
-          <Note kicker="Two controls on the specimen">
-            <p>
-              <strong className="text-ink">Not a truncated proof.</strong> Of all{" "}
-              {PAGE17.controls.concludedWhenCut.cases} rescues like this in the run,{" "}
-              {PAGE17.controls.concludedWhenCut.withAConclusion} had concluded anything when cut,
-              against {pct(PAGE17.controls.concludedWhenCut.boxedWhenFinished, 0)} of chains
-              allowed to finish. The answer came from the commit, which is what the figure draws.
-            </p>
-            <p>
-              <strong className="text-ink">Not the model already knowing.</strong> Page 5&apos;s
-              zero-token blurt arm gets {PAGE17.controls.blurtArm.blurtRight} of these{" "}
-              {PAGE17.controls.blurtArm.items} items. Partial working plus a commit does something
-              neither end of that does alone.
             </p>
           </Note>
           <Note kicker="References">
@@ -908,7 +835,7 @@ export function Page15() {
           <h2 className="text-xl font-semibold text-ink">
             3. Scoring gone wrong
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              our runs · the same {PAGE17.run.items} problems · pages 8 and 9
+              our run · the same {PAGE17.run.items} problems · page 8&apos;s judges
             </span>
           </h2>
           <p className="text-ink-muted">
@@ -937,57 +864,18 @@ export function Page15() {
             one more resampling eventually lowers true accuracy outright.
             <Cite n={REF.stroebl} />
           </p>
-
-          <div className="flex flex-col gap-3 border-t border-dashed border-grid pt-4">
-            <p className="text-ink-muted">
-              And there is a second coordinate, quieter and worse: how much of the chain we can
-              check the grader against.
-            </p>
-            <section
-              aria-label="What share of real chains an independent checker can adjudicate"
-              className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
-            >
-              <ReadableSliver />
-            </section>
-            <p className="text-ink-muted">
-              Page 9 graded {PAGE17.readable.stepsTotal.toLocaleString()} steps of real working
-              twice. The reward model scores every one of them and is silent on none, which is the
-              job it was trained for. The arithmetic checker is the one that declines: it
-              adjudicates {PAGE17.readable.stepsJudged.toLocaleString()} of them, because its rule
-              is closed-form numeric on both sides and the rest state something else,{" "}
-              <em>by symmetry</em> or <em>consider the cases</em> or a claim about where the
-              algorithm has got to. So the bar is not the grader&apos;s blind spot. It is the ground
-              truth we have to audit the grader with, and every number that makes the reward model
-              trustworthy was measured inside the sliver. Its reliability on the other{" "}
-              {pct(PAGE17.readable.shareUnjudged, 1)} is unmeasured.
-            </p>
-            <p className="text-ink-muted">
-              Two prices for trusting it anyway. Filtering page 7&apos;s candidates by the soundness
-              of their working moved a majority vote from{" "}
-              {pct(PAGE17.readable.selection?.majority ?? 0)} to{" "}
-              {pct(PAGE17.readable.selection?.filtered ?? 0)}, changing{" "}
-              {PAGE17.readable.selection?.nChanged ?? 0} problem in {PAGE17.run.items}. And how much
-              of a wrong chain counts as sound swings by the spread page 9 draws, on nothing but
-              where the chain is cut into steps.
-            </p>
-          </div>
+          {/* Two limits on the figure. A limit is a caption, not a margin note, so they
+              sit in the body under the sweep they qualify rather than beside it. */}
+          <p className="text-sm text-ink-muted">
+            Candidate depth is held at {REL.depth} throughout, because reliability decays with that
+            too. And reliability is undefined where no candidate is right, so the denominator
+            shrinks as the temperature rises, which makes this decline the conservative reading.
+          </p>
         </section>
 
         <div className="flex flex-col gap-6">
           <Note kicker="Try it">
             <p>Follow one judge left to right, then find the line that never moves.</p>
-          </Note>
-          <Note kicker="Where this comes from">
-            <p>
-              Both figures are the deck&apos;s own runs, drawn here for the first time: page
-              8&apos;s judges re-read at every temperature it sampled, and page 9&apos;s step
-              grading re-read as a question about the grader rather than about the chain.
-            </p>
-            <p>
-              Reliability is undefined where no candidate is right, so its denominator shrinks
-              with the temperature and this decline is the conservative reading. Candidate depth
-              is held at {REL.depth} throughout, because reliability decays with that too.
-            </p>
           </Note>
         </div>
 
@@ -997,7 +885,7 @@ export function Page15() {
           <p className="text-ink">
             <strong className="text-ink">Feedback from outside the model.</strong> Self-correction
             fails <em>unaided</em>; give the reviser real information, a failing unit test, a
-            calculator, a proof checker, and revision has something to push against. Step 3 is why
+            calculator, a proof checker, and revision has something to push against. Page 9 is why
             that is not a platitude: {PAGE17.readable.nChainsUnreadable.toLocaleString()} of{" "}
             {PAGE17.readable.nChains.toLocaleString()} real chains (
             {pct(PAGE17.readable.shareChainsUnreadable, 0)}) carry no closed-form numeric claim
