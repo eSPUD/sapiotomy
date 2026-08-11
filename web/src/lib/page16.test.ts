@@ -283,6 +283,44 @@ describe("page 16's concept check", () => {
     }
   });
 
+  // A reader who knows the idea should pick the answer without parsing a compound
+  // clause, and a reader who does not should get no help from the shape of the
+  // options. The first draft failed both: q11's key ran 25 words against
+  // distractors of 8, and across the bank the key was the longest option 11 times
+  // in 12, so "pick the long one" scored better than knowing the deck.
+  it("never makes the right answer the conspicuously long one", () => {
+    for (const q of QUIZ) {
+      const key = q.options.find((o) => o.correct)!.text;
+      const longestDistractor = Math.max(
+        ...q.options.filter((o) => !o.correct).map((o) => o.text.length),
+      );
+      expect(key.length / longestDistractor, `${q.id} key is ${key.length} chars`).toBeLessThan(1.3);
+    }
+  });
+
+  it("does not let 'pick the longest' beat knowing the answer", () => {
+    const keyIsLongest = QUIZ.filter((q) => {
+      const key = q.options.find((o) => o.correct)!.text.length;
+      return q.options.every((o) => o.text.length <= key);
+    }).length;
+    // Strictly better than chance would be 3 of 12. Some overlap is unavoidable
+    // because a key sometimes needs a clause a distractor does not, but a reader
+    // must not be able to farm it.
+    expect(keyIsLongest, `key is the longest option in ${keyIsLongest} of ${QUIZ.length}`)
+      .toBeLessThanOrEqual(QUIZ.length / 2);
+  });
+
+  it("asks in sentences a person would say out loud", () => {
+    for (const q of QUIZ) {
+      // A stem is a scene then a question, not a run report with a question mark
+      // on the end. Two proxies: it ends on a question, and it breaks the setup
+      // into more than one sentence rather than one long subordinate pile.
+      expect(q.stem.trim().endsWith("?"), `${q.id} does not end on a question`).toBe(true);
+      const sentences = q.stem.split(/[.?]\s+/).filter(Boolean).length;
+      expect(sentences, `${q.id} is one long sentence`).toBeGreaterThan(1);
+    }
+  });
+
   it("cites a page that exists, for every question", () => {
     for (const q of QUIZ) {
       expect(PAGES.some((p) => p.n === q.page), `${q.id} cites page ${q.page}`).toBe(true);
