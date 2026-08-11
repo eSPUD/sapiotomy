@@ -203,9 +203,6 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** The date the run was made, for the provenance chip. */
-const RUN_DATE = M.timestamp_utc.slice(0, 10);
-
 const chip = "rounded-full border border-grid px-2 py-0.5 text-ink-muted";
 const seg = (active: boolean) =>
   `rounded px-3 py-1.5 text-sm font-semibold ${
@@ -214,14 +211,9 @@ const seg = (active: boolean) =>
 
 /* ------------------------------------------------------------------ figure 1 */
 
-/**
- * How much of the model's output has been revealed, against how much the gagged
- * run wrote on the same problem. The tick is the whole of the blurt: six tokens.
- */
-function TokenMeter({ written, total, blurtTokens }: { written: number; total: number; blurtTokens: number }) {
+/** How much of the model's output on this tab has been revealed so far. */
+function TokenMeter({ written, total }: { written: number; total: number }) {
   const w = Math.max(0, Math.min(1, written / total)) * 100;
-  const tick = (blurtTokens / total) * 100;
-  const showTick = blurtTokens < total;
   return (
     <div className="flex flex-col gap-1">
       <div className="relative h-2 w-full overflow-hidden rounded-sm border border-grid bg-surface-raised">
@@ -229,17 +221,9 @@ function TokenMeter({ written, total, blurtTokens }: { written: number; total: n
           className="h-full bg-compute motion-safe:transition-[width] motion-safe:duration-500"
           style={{ width: `${w}%` }}
         />
-        {showTick ? (
-          <div className="absolute inset-y-0 w-px bg-wrong" style={{ left: `${tick}%` }} />
-        ) : null}
       </div>
-      <p className="flex flex-wrap justify-between gap-x-3 font-mono text-xs tabular-nums text-ink-muted">
-        <span>
-          {written} of {total} tokens written
-        </span>
-        {showTick ? (
-          <span className="text-wrong">the forbidden run stopped at {blurtTokens}</span>
-        ) : null}
+      <p className="font-mono text-xs tabular-nums text-ink-muted">
+        {written} of {total} tokens written
       </p>
     </div>
   );
@@ -533,7 +517,6 @@ export function Page5() {
   const maxStep = tab.steps.length;
   const done = step >= maxStep;
   const written = step === 0 ? 0 : tab.steps[step - 1].tokenEnd;
-  const gaggedTab = F1.tabs.find((t) => t.condition === "forced_blurt")!;
   /** Placeholder width for a step still to come, scaled by the tokens it holds. */
   const longestStep = Math.max(...tab.steps.map((s) => s.tokenEnd - s.tokenStart));
   const barPct = (tokens: number) => Math.max(14, Math.round((tokens / longestStep) * 90));
@@ -546,7 +529,7 @@ export function Page5() {
     setAnnounce(
       F1.tabs[i].condition === "bare"
         ? "Bare prompt: nothing in it asks for working. Press Next or Play to walk what the model wrote anyway."
-        : "The same question with the working forbidden. Press Next to see the whole answer.",
+        : "The same question with no reasoning. Press Next to see the whole answer.",
     );
   };
 
@@ -700,7 +683,7 @@ export function Page5() {
                   onClick={() => pickTab(i)}
                   className={seg(i === tabIndex)}
                 >
-                  {t.condition === "bare" ? "the question alone" : "working forbidden"}
+                  {t.condition === "bare" ? "the question alone" : "non-reasoning"}
                 </button>
               ))}
             </div>
@@ -762,11 +745,7 @@ export function Page5() {
                     press Next{reducedMotion ? "" : " or Play"} to walk what it wrote
                   </p>
                 ) : null}
-                <TokenMeter
-                  written={written}
-                  total={tab.tokensGenerated}
-                  blurtTokens={gaggedTab.tokensGenerated}
-                />
+                <TokenMeter written={written} total={tab.tokensGenerated} />
               </div>
             </div>
 
@@ -850,7 +829,7 @@ export function Page5() {
             below is one of those {F2.bare.n} problems; the switch is the same suffix you just read.
           </p>
           <section
-            aria-label="The cost of forbidding the working"
+            aria-label="The cost of working with no reasoning"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Reasoning condition">
@@ -920,7 +899,7 @@ export function Page5() {
                   under an unpressed switch spends the figure before it is touched. */}
               {gagged ? (
                 <p className="text-ink">
-                  Forbidding the working costs {F2.suppression.deltaPts} points. The two conditions
+                  Working with no reasoning costs {F2.suppression.deltaPts} points. The two conditions
                   score the same on most of these problems, so the test looks only at the{" "}
                   {T.afterOnly + T.beforeOnly} where they differ: reasoning wins {T.afterOnly} of
                   those and loses {T.beforeOnly}. A split that lopsided is unlikely to be luck (
@@ -951,7 +930,7 @@ export function Page5() {
             set of a model&apos;s trained numbers among the many a lab ships. So the same test ran on
             its smaller and larger siblings, on the same {F2.bare.n} problems. Each bar below is one
             model&apos;s score,
-            cut in two: on the left, what it still gets right with the working forbidden; on the
+            cut in two: on the left, what it still gets right with no reasoning; on the
             right, what the working adds. Bigger models are better at maths, so the bars get longer
             going down. Watch where the left piece ends instead.
           </p>
@@ -966,7 +945,7 @@ export function Page5() {
             <FloorChart />
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
               <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm bg-wrong" /> solved with the working forbidden
+                <span className="h-3 w-5 rounded-sm bg-wrong" /> solved with no reasoning
               </span>
               <span className="flex items-center gap-2">
                 <span className="h-3 w-5 rounded-sm bg-compute" /> added by the working
@@ -987,7 +966,7 @@ export function Page5() {
               these {F2.bare.n} problems the working is worth more than{" "}
               {F3.cross.param_ratio.toFixed(1)} times the parameters, on the thinnest evidence the
               page has: {pLabel(F3.cross.p)}, {F3.cross.fixed} problems one way and{" "}
-              {F3.cross.broken} the other, where forbidding the working above cost{" "}
+              {F3.cross.broken} the other, where working with no reasoning above cost{" "}
               {F2.suppression.deltaPts} points at {pLabel(F2.suppression.p)}. Take this one as a
               hint; the flat floor is the finding.
             </div>
@@ -1050,12 +1029,6 @@ export function Page5() {
               <div className="flex gap-2">
                 <dt>output</dt>
                 <dd className="text-ink">900 generations</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt>run</dt>
-                <dd className="text-ink">
-                  {M.run_id} · {RUN_DATE}
-                </dd>
               </div>
             </dl>
             <CostChart />

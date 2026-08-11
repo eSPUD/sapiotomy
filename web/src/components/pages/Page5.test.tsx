@@ -26,8 +26,12 @@ const BARE = PAGE5.figure1.tabs[1];
 
 const body = () => document.body.textContent ?? "";
 const nextBtn = () => screen.getByRole("button", { name: /next ▸/i });
-const bareTab = () => screen.getByRole("button", { name: /the question alone/i });
-const blurtTab = () => screen.getByRole("button", { name: /working forbidden/i });
+// Both conditions are named "non-reasoning" wherever they appear, so figure 1's
+// prompt tabs and figure 2's switch share a label; scope each to its own group.
+const promptTabs = () => within(screen.getByRole("group", { name: "Prompt" }));
+const conditionSwitch = () => within(screen.getByRole("group", { name: "Reasoning condition" }));
+const bareTab = () => promptTabs().getByRole("button", { name: /the question alone/i });
+const blurtTab = () => promptTabs().getByRole("button", { name: /non-reasoning/i });
 
 /** Walk the whole trace via Next presses (reduced motion → no Play). */
 function walk(steps: number) {
@@ -181,7 +185,7 @@ describe("Page 5, figure 1: the chain is already there", () => {
     expect(body()).toContain(`${BARE.tokensGenerated} of ${BARE.tokensGenerated} tokens written`);
   });
 
-  it("switching to the forbidden prompt resets the walk and lands wrong", () => {
+  it("switching to the non-reasoning prompt resets the walk and lands wrong", () => {
     render(<Page5 />);
     walk(BARE.steps.length);
     fireEvent.click(blurtTab());
@@ -207,7 +211,7 @@ describe("Page 5, figure 1: the chain is already there", () => {
   });
 });
 
-describe("Page 5, figure 2: the cost of forbidding the working", () => {
+describe("Page 5, figure 2: the cost of working with no reasoning", () => {
   beforeEach(() => {
     reducedMotion = true;
   });
@@ -228,12 +232,12 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
 
   it("starts with the model reasoning and flips to the floor", () => {
     render(<Page5 />);
-    const fig2 = screen.getByLabelText("The cost of forbidding the working");
+    const fig2 = screen.getByLabelText("The cost of working with no reasoning");
     expect(body()).toContain(`solved, of the same ${PAGE5.figure2.bare.n} problems`);
     expect(within(fig2).getByText(String(PAGE5.figure2.bare.nCorrect))).toBeInTheDocument();
     expect(body()).toContain(`median ${PAGE5.figure2.bare.medianTokens} tokens written`);
 
-    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
+    fireEvent.click(conditionSwitch().getByRole("button", { name: "non-reasoning" }));
     expect(within(fig2).getByText(String(PAGE5.figure2.blurt.nCorrect))).toBeInTheDocument();
     expect(body()).toContain(`median ${PAGE5.figure2.blurt.medianTokens} tokens written`);
     expect(body()).toContain(
@@ -247,10 +251,10 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
   // the cost and its test arrive with the reveal rather than above an untouched control.
   it("prints the paired contrast with its discordant count and p-value", () => {
     render(<Page5 />);
-    expect(body()).not.toContain("Forbidding the working costs");
-    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
+    expect(body()).not.toContain("Working with no reasoning costs");
+    fireEvent.click(conditionSwitch().getByRole("button", { name: "non-reasoning" }));
     expect(body()).toContain(
-      `Forbidding the working costs ${PAGE5.figure2.suppression.deltaPts} points`,
+      `Working with no reasoning costs ${PAGE5.figure2.suppression.deltaPts} points`,
     );
     expect(body()).toContain("exact McNemar");
     expect(body()).toContain("p < 0.0001");
@@ -266,7 +270,7 @@ describe("Page 5, figure 2: the cost of forbidding the working", () => {
 
   it("shows the exact gag string, since one phrasing is all it is", () => {
     render(<Page5 />);
-    fireEvent.click(screen.getByRole("button", { name: "non-reasoning" }));
+    fireEvent.click(conditionSwitch().getByRole("button", { name: "non-reasoning" }));
     expect(body()).toContain("Give only the final answer.");
   });
 
@@ -286,7 +290,7 @@ describe("Page 5, figure 3: the floor is flat", () => {
   it("says why a third figure exists and which end of the bars to read", () => {
     render(<Page5 />);
     expect(body()).toContain("Maybe the 3B is just an odd checkpoint");
-    expect(body()).toContain("what it still gets right with the working forbidden");
+    expect(body()).toContain("what it still gets right with no reasoning");
     expect(body()).toContain("Bigger models are better at maths, so the bars get longer");
     expect(body()).toContain("Watch where the left piece ends instead");
   });
@@ -386,7 +390,10 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(vitals).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B");
     expect(vitals).toContain("MATH-500 levels 4 and 5");
     expect(vitals).toContain("900 generations");
-    expect(vitals).toContain(PAGE5.manifest.run_id);
+    // The run id and its date are in the downloadable notebook, not on the page:
+    // a 40-character hash is provenance no reader can check by eye, and pages 6
+    // and 7 already keep theirs off the page.
+    expect(body()).not.toContain(PAGE5.manifest.run_id);
   });
 
   // The instruments are cited where the close names all three checkpoints: the
