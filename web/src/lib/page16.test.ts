@@ -1,10 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { BANDS, CROSSING, ITEM_COUNT, LADDER, OTHER_AXIS, QUIZ, pct } from "./page16";
+import {
+  ADAPTIVE_NULL,
+  BANDS,
+  CROSSING,
+  FORCED,
+  ITEM_COUNT,
+  JUDGES,
+  LADDER,
+  OTHER_AXIS,
+  QUIZ,
+  pct,
+} from "./page16";
 import { PAGE5 } from "./page05";
 import { PAGE6 } from "./page06";
 import { PAGE7 } from "./page07";
 import { PAGE8 } from "./page08";
 import { PAGE9 } from "./page09";
+import { WAIT_TABLE } from "./page06";
 import { PAGE11 } from "./page11";
 import { curves } from "./curves";
 import { PAGES } from "./pages";
@@ -42,17 +54,24 @@ describe("page 16's ladder", () => {
     expect(at("one greedy chain").accuracy).toBe(PAGE11.bands.hard.target.accuracy);
   });
 
-  it("puts thinking longer on the chart, as the lever it is", () => {
-    // Page 6 is the deck's first inference-time knob and was missing from the
-    // first draft of this chart. Its rungs have to climb, and the shortest one
-    // has to sit level with no chain at all: that coincidence is the argument
-    // that the tokens ARE the computation, so it must not be quietly dropped.
-    const chain = LADDER.filter((r) => r.band === "chain");
-    expect(chain.length).toBeGreaterThanOrEqual(4);
-    const accs = chain.map((r) => r.accuracy);
-    expect([...accs]).toEqual([...accs].sort((a, b) => a - b));
-    expect(at("cut off at 128 tokens").accuracy).toBe(at("no chain at all").accuracy);
-    expect(chain.filter((r) => r.page === 6).length).toBeGreaterThan(0);
+  it("puts forcing more thinking on the chart, and lets it come out flat", () => {
+    // Page 6's wait arm is the deck's one measurement of making a model that
+    // has finished carry on. It is a null and the chart must show it as one:
+    // a band that only climbs would be an advert rather than a summary.
+    const forced = at("forced to keep thinking");
+    expect(forced.page).toBe(6);
+    expect(forced.accuracy).toBeCloseTo(WAIT_TABLE!.after / WAIT_TABLE!.table.n, 5);
+    expect(forced.accuracy).toBeLessThanOrEqual(at("one chain of thought, greedy").accuracy);
+    expect(forced.note).toMatch(/times the tokens/);
+  });
+
+  it("pairs the wait arm to the chain directly above it", () => {
+    // The arm's "before" IS the rung above it, which is what lets a reader read
+    // the step between two adjacent bars as a result. page16.ts throws on load
+    // if that stops being true, because then it is two runs and not one step.
+    expect(FORCED.before).toBe(at("one chain of thought, greedy").accuracy);
+    expect(FORCED.turnedRight).toBeLessThan(FORCED.turnedWrong);
+    expect(FORCED.tokenMultiple).toBeGreaterThan(1);
   });
 
   it("bookends the first band with page 5's own paired contrast", () => {
@@ -79,15 +98,12 @@ describe("page 16's ladder", () => {
     expect(at("trained verifier picks one").page).toBe(8);
   });
 
-  it("puts search on the chart as an absence, with no borrowed number", () => {
-    // Page 10 ships no run: hand-authored tree, Yao et al.'s bars on other
-    // tasks, and its measuring arm packaged unrun. Omitting it would imply the
-    // deck covered the ground; giving it a bar would invent a result.
-    const search = LADDER.filter((r) => r.notRun);
-    expect(search).toHaveLength(1);
-    expect(search[0].page).toBe(10);
-    expect(search[0].accuracy).toBe(0);
-    expect(search[0].note).toMatch(/never run on these problems/i);
+  it("draws no rung for search, which was never run on these problems", () => {
+    // Page 10 ships no run: hand-authored tree, Yao et al.'s bars on Game of 24
+    // and crosswords. A bar would invent a result and borrowing Yao's number
+    // would put another task on this axis. The takeaways carry it instead.
+    expect(LADDER.some((r) => r.page === 10)).toBe(false);
+    expect(LADDER.every((r) => r.accuracy > 0)).toBe(true);
   });
 
   it("takes its vote and its selector from ONE run, since they are compared", () => {
@@ -136,9 +152,7 @@ describe("page 16's ladder", () => {
     const ceiling = LADDER.filter((r) => r.ceiling);
     expect(ceiling).toHaveLength(1);
     const best = Math.max(
-      ...LADDER.filter((r) => !r.ceiling && !r.notRun && r.band !== "elsewhere").map(
-        (r) => r.accuracy,
-      ),
+      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
     );
     expect(ceiling[0].accuracy).toBeGreaterThan(best);
   });
@@ -161,6 +175,35 @@ describe("page 16's ladder", () => {
 
   it("cites a real page for every rung", () => {
     for (const r of LADDER) expect(PAGES.some((p) => p.n === r.page)).toBe(true);
+  });
+});
+
+describe("page 16's takeaways", () => {
+  it("rests the judge takeaway on what page 15 measured, not on a hunch", () => {
+    // The claim is a crossing: models asked to judge decay as the pool they are
+    // judging gets more diverse, and the trained scorer does not. If a re-run
+    // ever flattens the first or bends the second, takeaway 3 is wrong.
+    expect(JUDGES.worstFallPts).toBeGreaterThan(0);
+    expect(JUDGES.trainedFallPts).toBeLessThan(JUDGES.worstFallPts);
+    expect(JUDGES.depth).toBeGreaterThan(1);
+  });
+
+  it("keeps the adaptive-compute takeaway honest about its own null", () => {
+    // The oracle got hindsight and still bought no more coverage per token than
+    // plain resampling. The takeaway proposes a direction; this is why it may
+    // not be written as a result.
+    expect(ADAPTIVE_NULL.beatsResampling).toBe(false);
+    expect(ADAPTIVE_NULL.oracle).toBeGreaterThan(ADAPTIVE_NULL.natural);
+    expect(ADAPTIVE_NULL.sampling).toBeCloseTo(ADAPTIVE_NULL.oracle, 1);
+    expect(ADAPTIVE_NULL.oracleTokens).toBeGreaterThan(0);
+  });
+
+  it("has a coverage gap worth writing takeaway 2 about", () => {
+    const ceiling = LADDER.find((r) => r.ceiling)!;
+    const best = Math.max(
+      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
+    );
+    expect(Math.round((ceiling.accuracy - best.valueOf()) * 100)).toBeGreaterThan(10);
   });
 });
 
@@ -198,7 +241,7 @@ describe("page 16's other axis (quoted, not plotted)", () => {
   });
 
   it("still beats every lever on the chart, which is why it is quoted at all", () => {
-    const best = Math.max(...LADDER.filter((r) => !r.notRun).map((r) => r.accuracy));
+    const best = Math.max(...LADDER.map((r) => r.accuracy));
     expect(OTHER_AXIS.math500).toBeGreaterThan(best);
   });
 });

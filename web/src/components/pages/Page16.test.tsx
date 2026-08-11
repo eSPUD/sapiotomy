@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { BANDS, BIGGER, CROSSING, LADDER, OTHER_AXIS, QUIZ, WRITER } from "@/lib/page16";
+import {
+  ADAPTIVE_NULL,
+  BANDS,
+  BIGGER,
+  CROSSING,
+  FORCED,
+  LADDER,
+  OTHER_AXIS,
+  QUIZ,
+  WRITER,
+} from "@/lib/page16";
 import { Page16 } from "./Page16";
 
 /**
@@ -52,9 +62,7 @@ describe("Page 16 (wrap-up) component", () => {
     // The chart's one argument: the last step does not happen. If the ceiling
     // ever stops leading, the page's prose is wrong and this must fail.
     const best = Math.max(
-      ...LADDER.filter((r) => !r.ceiling && !r.notRun && r.band !== "elsewhere").map(
-        (r) => r.accuracy,
-      ),
+      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
     );
     const ceiling = LADDER.find((r) => r.ceiling)!;
     expect(ceiling.accuracy).toBeGreaterThan(best);
@@ -86,33 +94,15 @@ describe("Page 16 (wrap-up) component", () => {
     expect(fig.textContent).not.toMatch(/\bBILL\b/i);
   });
 
-  it("announces the unrun rung as unrun, in the picture and to a screen reader", () => {
+  it("shows forcing more thinking as the null it measured", () => {
     render(<Page16 />);
     const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    const search = LADDER.find((r) => r.notRun)!;
-    expect(fig.getAttribute("aria-label")).toContain(`${search.label}, not run on these problems`);
-    // And its own clause must never carry a percentage, which is the whole
-    // point. Rung clauses are separated by "; ", so slice to that boundary
-    // rather than to a full stop: the labels contain commas and colons.
-    const label = fig.getAttribute("aria-label")!;
-    const clause = label.slice(label.indexOf(search.label)).split(";")[0];
-    expect(clause).not.toMatch(/\d+%/);
-    expect(within(fig).getByText("not run")).toBeInTheDocument();
+    const forced = LADDER.find((r) => r.label.includes("forced to keep thinking"))!;
+    expect(fig.getAttribute("aria-label")).toContain(forced.label);
+    // The chart may not flatter it: the rung sits at or below the chain above.
+    expect(forced.accuracy).toBeLessThanOrEqual(FORCED.before);
   });
 
-  it("answers the search question instead of drawing a bar for it", () => {
-    render(<Page16 />);
-    // A conclusion page owes the reader the reasoning, not a shrug. All three
-    // obstacles have to be on the page, each traceable to the page that measured it.
-    const card = screen.getByText(/search, which we taught and never measured/i).closest("div")!;
-    expect(card.textContent).toMatch(/Page 10 ships no run/);
-    expect(card.textContent).toMatch(/7B judge in memory beside the 3B writer/);
-    expect(card.textContent).toMatch(/pay for every node you look at/);
-    expect(card.textContent).toMatch(new RegExp(WRITER));
-    expect(card.textContent).toMatch(new RegExp(BIGGER));
-    // And it must not read as a finding.
-    expect(card.textContent).toMatch(/None of that is a result/);
-  });
 
   it("reads page 11's crossing off measured compute in the copy", () => {
     render(<Page16 />);
@@ -239,6 +229,59 @@ describe("Page 16 (wrap-up) component", () => {
   });
 
   // ---- section 3: the honest close ----
+
+  // ---- section 1b: the takeaways ----
+
+  it("carries five numbered takeaways, read as a set", () => {
+    render(<Page16 />);
+    expect(screen.getByText(/What to take with you/i)).toBeInTheDocument();
+    for (let n = 1; n <= 5; n++) {
+      expect(screen.getByText(`${n}.`)).toBeInTheDocument();
+    }
+  });
+
+  it("says reasoning wins, and that being made to do more of it does not", () => {
+    render(<Page16 />);
+    const one = screen.getByText(/Letting the model reason wins/i).closest("section")!;
+    expect(one.textContent).toMatch(/largest move on the chart/i);
+    // The counterweight must travel with it, or the takeaway reads as "more is better".
+    expect(one.textContent).toMatch(
+      new RegExp(`${FORCED.tokenMultiple.toFixed(1)} times the tokens`),
+    );
+    expect(one.textContent).toMatch(/churn, not progress/i);
+  });
+
+  it("names the judge as the bottleneck and prices the fix", () => {
+    render(<Page16 />);
+    const three = screen.getByText(/the judge is the bottleneck/i).closest("section")!;
+    expect(three.textContent).toMatch(/trained to score/);
+    // The cost has to be in the same breath, or "get a better judge" reads free.
+    const bestBill = LADDER.find((r) => r.label.includes("trained verifier"))!.bill!;
+    const biggerBill = LADDER.find((r) => r.band === "elsewhere")!.bill!;
+    expect(three.textContent).toMatch(new RegExp(`${Math.round(bestBill)} greedy chains`));
+    expect(three.textContent).toMatch(new RegExp(biggerBill.toFixed(1)));
+  });
+
+  it("offers adaptive compute as a direction and prints its own null beside it", () => {
+    render(<Page16 />);
+    const four = screen.getByText(/adaptive compute is for/i).closest("section")!;
+    expect(four.textContent).toMatch(/spend by difficulty/i);
+    // Proposing it without page 15's oracle result would be selling a technique
+    // this deck measured and could not make work.
+    expect(ADAPTIVE_NULL.beatsResampling).toBe(false);
+    expect(four.textContent).toMatch(/could not demonstrate/i);
+    expect(four.textContent).toMatch(new RegExp(`${ADAPTIVE_NULL.oracleTokens} tokens`));
+  });
+
+  it("keeps the pay-for-every-node lesson, and says why search has no bar", () => {
+    render(<Page16 />);
+    const five = screen.getByText(/you pay for every node you look at/i).closest("section")!;
+    expect(five.textContent).toMatch(/paying for it/i);
+    expect(five.textContent).toMatch(/never ran it here/i);
+    expect(five.textContent).toMatch(new RegExp(`${BIGGER} judge in memory beside the ${WRITER}`));
+    // Search has no rung, and must not acquire one without a run behind it.
+    expect(LADDER.some((r) => r.page === 10)).toBe(false);
+  });
 
   it("ends on what the deck did not settle, not on a summary", () => {
     render(<Page16 />);

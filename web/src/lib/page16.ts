@@ -31,12 +31,12 @@
  * stays a chart of accuracy, and the one comparison that turns on cost is made
  * in a sentence where it can carry its own units.
  *
- * SEARCH IS ON THE CHART WITH NO BAR. Page 10 taught it and never ran it: its
- * tree is hand-authored, its bars are Yao et al.'s on other tasks, and the arm
- * that would measure it ships unrun. A summary chart that simply omitted it
- * would imply the deck had covered the ground. So the rung is drawn as an
- * absence and captioned as one. Do not give it a bar without a run behind it,
- * and do not borrow Yao et al.'s number: that is Game of 24, not our items.
+ * SEARCH IS NOT A RUNG. Page 10 taught it and never ran it: its tree is
+ * hand-authored, its bars are Yao et al.'s on Game of 24 and crosswords, and
+ * the arm that would measure it ships unrun. It is not drawn, and it is not
+ * silently dropped either: the takeaways below carry what the deck does know
+ * about it. Do not give it a bar without a run behind it, and do not borrow
+ * Yao et al.'s number, which is another task on another axis.
  *
  * PAGE 9'S RUNG CARRIES ITS OWN BASELINE. Its filtering arm ran over a pool
  * whose vote sits at 57%, so the only true statement is "57 to 58, one problem
@@ -68,7 +68,7 @@
  *      source, where the fix is obvious.
  */
 import { PAGE5 } from "./page05";
-import { PAGE6 } from "./page06";
+import { PAGE6, WAIT_TABLE, pLabel } from "./page06";
 import { PAGE7 } from "./page07";
 import { PAGE8 } from "./page08";
 import { PAGE9 } from "./page09";
@@ -125,12 +125,6 @@ export interface Rung {
    * stays a chart of accuracy.
    */
   bill?: number;
-  /**
-   * A lever the deck taught and never measured on these problems. Drawn with
-   * no bar and captioned as absent, because the alternative is a summary chart
-   * that quietly implies the deck ran something it did not.
-   */
-  notRun?: true;
   /** One clause on what the rung is, not what it scored. */
   note: string;
   /** A ceiling nothing reached, drawn hollow because it is not a technique. */
@@ -242,10 +236,32 @@ function assertBaselineAgrees(): void {
 }
 
 const TOP_BUDGET = PAGE6.budgets[PAGE6.budgets.length - 1];
-const CUT_SHORT = budgetRung(PAGE6.budgets[0]);
-const CUT_MID = budgetRung(PAGE6.budgets[2]);
 const FINISHED = budgetRung(TOP_BUDGET);
 assertBaselineAgrees();
+
+/**
+ * Page 6's other arm: refuse to let the chain stop, append `Wait`, make it carry
+ * on. It is the deck's one measurement of forcing MORE reasoning onto a model
+ * that had finished, and it is a null, which is why it belongs on a summary
+ * chart next to the chain that is worth 36 points.
+ *
+ * Its `before` is the same greedy chain as the rung above it, so the two rungs
+ * are a paired arm and the reader can read the step between them directly. If
+ * they ever stop agreeing, the pair is two different runs and must not be drawn
+ * as one step.
+ */
+const WAIT = required(
+  WAIT_TABLE,
+  "page 6's wait-injection arm, which is the chart's only measurement of forcing more thinking",
+);
+if (WAIT.before / WAIT.table.n !== PAGE5.figure2.bare.accuracy) {
+  throw new Page16DataError(
+    `page 16 draws page 6's wait arm directly under the greedy chain it extends, but the arm ` +
+      `starts from ${pct(WAIT.before / WAIT.table.n)} and the chain above it is ` +
+      `${pct(PAGE5.figure2.bare.accuracy)}. Those are two different runs and the step between ` +
+      `them is not a measurement.`,
+  );
+}
 
 /**
  * The whole toolbox as one column of bars, floor to ceiling, in three bands.
@@ -271,25 +287,18 @@ export const LADDER: Rung[] = [
   },
   {
     band: "chain",
-    label: `one chain, cut off at ${CUT_SHORT.budget} tokens`,
-    accuracy: CUT_SHORT.accuracy,
-    page: 6,
-    note: "the same score as no chain at all: too short to be a computation",
-  },
-  {
-    band: "chain",
-    label: `one chain, cut off at ${CUT_MID.budget} tokens`,
-    accuracy: CUT_MID.accuracy,
-    page: 6,
-    note: "most of the climb happens in here",
-  },
-  {
-    band: "chain",
     label: "one chain of thought, greedy",
     accuracy: PAGE5.figure2.bare.accuracy,
     page: 5,
     bill: bill(GREEDY_3B.flops),
     note: `${PAGE5.figure2.bare.medianTokens} tokens, median; the baseline every later rung is paired against`,
+  },
+  {
+    band: "chain",
+    label: "one chain, forced to keep thinking",
+    accuracy: WAIT.after / WAIT.table.n,
+    page: 6,
+    note: `${WAIT.tokenMultiple.toFixed(1)} times the tokens, ${WAIT.table.afterOnly} answers turned right against ${WAIT.table.beforeOnly} turned wrong, ${pLabel(WAIT.p)}`,
   },
   {
     band: "sample",
@@ -330,14 +339,6 @@ export const LADDER: Rung[] = [
   },
   {
     band: "sample",
-    label: "search over partial chains, scored as they are written",
-    accuracy: 0,
-    page: 10,
-    notRun: true,
-    note: "taught on page 10 and never run on these problems: its arm ships unrun, and it needs a 7B judge in memory beside the 3B writer",
-  },
-  {
-    band: "sample",
     label: `at least one of the ${VOTE_16.n} was right`,
     accuracy: COVERAGE,
     page: 7,
@@ -363,6 +364,47 @@ export const BIGGER = HARD.target.label;
 
 /** How much of a real chain a step checker can actually adjudicate. Page 9's. */
 export const CHECKABLE_SHARE = 1 - PAGE9.graders.shareUnjudged;
+
+/** Page 6's wait arm, for the takeaway that forcing more thinking is a null. */
+export const FORCED = {
+  before: WAIT.before / WAIT.table.n,
+  after: WAIT.after / WAIT.table.n,
+  tokenMultiple: WAIT.tokenMultiple,
+  turnedRight: WAIT.table.afterOnly,
+  turnedWrong: WAIT.table.beforeOnly,
+  churn: WAIT.churn,
+  p: WAIT.p,
+} as const;
+
+/**
+ * What the deck actually measured about judges, for the takeaway that the judge
+ * is the bottleneck. Every model asked to judge decays as the pool it is judging
+ * gets more diverse; the one trained to score does not. That is the argument for
+ * a trained judge, and best-of-N is the expensive way you have to use one.
+ */
+export const JUDGES = {
+  worstFallPts: PAGE17.reliability.steepest.fallPts,
+  trainedFallPts:
+    (PAGE17.reliability.trained.points[0].reliability -
+      PAGE17.reliability.trained.points[PAGE17.reliability.trained.points.length - 1].reliability) *
+    100,
+  depth: PAGE17.reliability.depth,
+} as const;
+
+/**
+ * The measured counterweight to "adaptive compute fixes this". Page 15 gave one
+ * form of it an oracle: the best cut point per problem, chosen with hindsight.
+ * It reached `oracle` for about `oracleTokens` tokens, and plain resampling
+ * reached `sampling` at the same cost. So the direction is right and this deck
+ * has no rule that beats sampling per token, and the copy has to say both.
+ */
+export const ADAPTIVE_NULL = {
+  oracle: PAGE17.controls.isItARule.oracle,
+  oracleTokens: Math.round(PAGE17.controls.isItARule.oracleTokenCost),
+  sampling: PAGE17.controls.isItARule.samplingCoverage,
+  natural: PAGE17.controls.isItARule.natural,
+  beatsResampling: PAGE17.controls.isItARule.cutPointsBeatResampling,
+} as const;
 
 /* ------------------------------------------------- the other axis, off-chart */
 
