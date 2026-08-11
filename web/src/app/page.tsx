@@ -120,7 +120,7 @@ export default function Home() {
                   <sup aria-hidden="true" className="text-compute">&dagger;</sup>
                 </span>
                 <span>Undergraduate Student, B.S. in Computer Science</span>
-                <span>Department of Computer Science, Western Governors University</span>
+                <span>Western Governors University</span>
               </li>
             </ol>
             <div className="flex flex-col gap-1 text-xs text-ink-muted">
