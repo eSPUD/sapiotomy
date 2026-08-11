@@ -11,10 +11,30 @@
  * Section 1 is the loop itself, drawn as the animated loop graph (StarLoop):
  * generate → filter → (correct: keep) / (wrong: rationalize from the answer as a
  * hint → keep) → fine-tune → repeat, with a signal that forks at the filter so
- * both branches reach fine-tune together. The correctness check is always on —
- * the answer key is what the whole loop rests on. The old seeded accuracy chart
- * (lib/star.ts) was removed — it was an illustrative simulation, not measured
- * data, so the page now shows only the mechanism and the cited results.
+ * both branches reach fine-tune together. The old seeded accuracy chart
+ * (lib/star.ts) was removed: it was an illustrative simulation, not measured
+ * data, so the page shows only the mechanism and the cited results.
+ *
+ * The answer key is a TOGGLE, and the history matters because it was removed
+ * once and should not be removed the same way twice. It went in 31a342d, right
+ * after the accuracy chart it drove went in 9d90498, and that removal was
+ * correct: with nothing downstream to change, flipping it swapped two label
+ * strings over an identical animation, so a reader who flipped it and saw
+ * nothing move learned that the key does not matter much. That is the opposite
+ * of this page's thesis.
+ *
+ * It is back because the page's lede asks "what happens when you take the answer
+ * key away?" and prose was the only answer on offer. It is back on the condition
+ * that killed it: the off state is a different MECHANISM, not a different
+ * caption. With no key the fork disappears (one signal, not two), rationalize
+ * becomes unreachable rather than skipped (the hint IS the answer you no longer
+ * have, so the node is drawn dead rather than deleted, and the reader can see
+ * what the key bought), the shortcut stops being a shortcut and becomes the only
+ * wire, the signal never earns its verified green, and fine-tune trains on
+ * everything instead of on keepers. The aria-label is rewritten in full for each
+ * state, since a reduced-motion or screen-reader reader never sees the animation
+ * and must get the same distinction from text alone. Page12.test.tsx holds that
+ * line: a label-swap toggle fails it.
  *
  * Section 1 also carries the loop written down (merged in from the former
  * section 2): the paper's Algorithm 1 compressed to ten annotated pseudocode
@@ -68,12 +88,14 @@
  * beside the sections that use them, provenance footnote at the bottom.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { Toggle } from "@/components/Toggle";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { STAR_LINES } from "@/lib/starListing";
+import { useStore } from "@/store/useStore";
 
 const PAGE_N = 12;
 
@@ -211,11 +233,26 @@ function StarLoop({ filter }: { filter: boolean }) {
   const subRefs = useRef<(SVGTextElement | null)[]>([]);
 
   useEffect(() => {
+    // Toggling restarts the animation, so any node left lit by the previous
+    // state has to be put back. Under reduced motion this reset IS the render:
+    // the effect returns immediately after it and the diagram stays static.
+    for (let i = 0; i < rectRefs.current.length; i++) {
+      rectRefs.current[i]?.setAttribute("class", RECT_BASE);
+      titleRefs.current[i]?.setAttribute("class", TITLE_BASE);
+      subRefs.current[i]?.setAttribute("class", SUB_BASE);
+    }
+    dotARef.current?.setAttribute("opacity", "0");
+    dotBRef.current?.setAttribute("opacity", "0");
     if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    // Phase durations (ms). The split (SP) is shared by both paths, so they
-    // arrive at fine-tune together: the correct dot eases the whole SP along the
-    // shortcut while the wrong dot spends it on F→R, a dwell, then R→FT.
-    const DG = 480, GF = 620, DF = 480, SP = 1200, DFT = 480, FTG = 620;
+
+    // Phase durations (ms). With the key ON the split (SP) is shared by both
+    // paths, so they arrive at fine-tune together: the correct dot eases the
+    // whole SP along the shortcut while the wrong dot spends it on F→R, a dwell,
+    // then R→FT. With the key OFF there is no split to share, so that phase
+    // collapses to one traversal by one dot and is shortened to match: the loop
+    // is genuinely quicker with nothing to check, which is the point.
+    const DG = 480, GF = 620, DF = 480, DFT = 480, FTG = 620;
+    const SP = filter ? 1200 : 700;
     const S1 = 440, SD = 320, S2 = SP - S1 - SD; // F→R, rationalize dwell, R→FT
     const B = [DG, DG + GF, DG + GF + DF, DG + GF + DF + SP, DG + GF + DF + SP + DFT];
     const TOTAL = B[4] + FTG;
@@ -242,13 +279,19 @@ function StarLoop({ filter }: { filter: boolean }) {
       } else if (e < B[2]) {
         hi = 1; // dwell at filter
       } else if (e < B[3]) {
-        const ls = e - B[2]; // the split
-        a = bezier(SHORTCUT, ls / SP); // correct answer, straight to fine-tune
-        if (ls < S1) b = bezier(EDGES[1], ls / S1); // wrong answer → rationalize
-        else if (ls < S1 + SD) hi = 2; // rationalize with the hint (dwell)
-        else b = bezier(EDGES[2], (ls - S1 - SD) / S2); // rationalized → fine-tune
+        const ls = e - B[2];
+        // Key on: the split. One dot takes the verified shortcut, the other
+        // detours through rationalize, and they are timed to land together.
+        // Key off: no fork exists, so a single dot walks the same wire to
+        // fine-tune and the rationalize node is never visited at all.
+        a = bezier(SHORTCUT, ls / SP);
+        if (filter) {
+          if (ls < S1) b = bezier(EDGES[1], ls / S1); // wrong answer → rationalize
+          else if (ls < S1 + SD) hi = 2; // rationalize with the hint (dwell)
+          else b = bezier(EDGES[2], (ls - S1 - SD) / S2); // rationalized → fine-tune
+        }
       } else if (e < B[4]) {
-        hi = 3; // both have arrived: dwell at fine-tune
+        hi = 3; // arrived: dwell at fine-tune
       } else {
         a = bezier(EDGES[3], (e - B[4]) / FTG); // fine-tune → generate
       }
@@ -258,63 +301,110 @@ function StarLoop({ filter }: { filter: boolean }) {
         titleRefs.current[i]?.setAttribute("class", hot ? TITLE_HOT : TITLE_BASE);
         subRefs.current[i]?.setAttribute("class", hot ? SUB_HOT : SUB_BASE);
       }
-      // tint the trunk signal green while it rides the correct-answer shortcut
-      dotARef.current?.setAttribute("class", e >= B[2] && e < B[3] ? "fill-correct" : "fill-compute");
+      // Tint the trunk signal green only while it rides a VERIFIED shortcut.
+      // With the key off nothing was checked, so the dot never earns the colour.
+      dotARef.current?.setAttribute(
+        "class",
+        filter && e >= B[2] && e < B[3] ? "fill-correct" : "fill-compute",
+      );
       place(dotARef, a ? a[0] : 0, a ? a[1] : 0, !!a);
       place(dotBRef, b ? b[0] : 0, b ? b[1] : 0, !!b);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [filter]);
 
   const nodes = [
-    { x: 164, y: 23, title: "generate", sub: "a rationale + answer" },
+    { x: 164, y: 23, title: "generate", sub: "a rationale + answer", dead: false },
     {
       x: 316,
       y: 139,
-      title: filter ? "filter" : "filter (off)",
+      title: filter ? "filter" : "no filter",
       sub: filter ? "answer vs. the key" : "no key: keep all",
+      dead: false,
     },
-    { x: 164, y: 255, title: "rationalize", sub: "hint = the answer" },
-    { x: 12, y: 139, title: "fine-tune", sub: "base model, on keepers" },
+    {
+      x: 164,
+      y: 255,
+      title: "rationalize",
+      // Without a key there is no correct answer to hand back, so this step is not
+      // merely skipped, it is impossible. The sub-label says which.
+      sub: filter ? "hint = the answer" : "no answer to hint with",
+      dead: !filter,
+    },
+    { x: 12, y: 139, title: "fine-tune", sub: filter ? "base model, on keepers" : "base model, on everything", dead: false },
   ];
+
+  /** The two edges that only exist because a wrong answer can be sent for repair. */
+  const detourDead = !filter;
 
   return (
     <svg
       viewBox="0 0 480 324"
       role="img"
-      aria-label={`STaR's loop. Generate a rationale and answer. Filter: ${
-        filter ? "check the answer against the key" : "the key is off, so every rationale is kept"
-      }. A correct answer is kept directly. A wrong one is handed the correct answer as a hint, and the model rationalizes its way to that answer; the successful rationalization is kept too. The base model is fine-tuned on the keepers, and the loop repeats.`}
+      aria-label={
+        filter
+          ? "STaR's loop, with the answer key on. Generate a rationale and answer. Filter: check the answer against the key. A correct answer is kept directly. A wrong one is handed the correct answer as a hint, and the model rationalizes its way to that answer; the successful rationalization is kept too. The base model is fine-tuned on the keepers, and the loop repeats."
+          : "STaR's loop, with the answer key taken away. Generate a rationale and answer. There is now nothing to check the answer against, so the filter keeps every rationale, correct or not, and the correct-and-wrong split is gone. The rationalize step is unreachable, because handing the correct answer back as a hint requires having it. The base model is fine-tuned on everything the model wrote, and the loop repeats with no signal from outside it."
+      }
       className="mx-auto w-full max-w-[480px]"
     >
-      {/* the correct-answer shortcut: dashed, straight from filter to fine-tune */}
-      <path d={edgeD(SHORTCUT)} fill="none" strokeWidth={1.6} strokeDasharray="5 4" className="stroke-ink-muted" />
-      <Chevron e={SHORTCUT} cls="fill-correct" />
-      <text x={240} y={148} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
-        correct ✓ keep
+      {/* Key on: the correct-answer shortcut, dashed, one branch of a fork.
+          Key off: the same wire is the ONLY way through, so it is drawn solid,
+          and nothing about it is coloured as correct, because nothing checked it. */}
+      <path
+        d={edgeD(SHORTCUT)}
+        fill="none"
+        strokeWidth={filter ? 1.6 : 2}
+        strokeDasharray={filter ? "5 4" : undefined}
+        className="stroke-ink-muted"
+      />
+      <Chevron e={SHORTCUT} cls={filter ? "fill-correct" : "fill-ink-muted"} />
+      <text
+        x={240}
+        y={148}
+        textAnchor="middle"
+        className={`text-[11px] font-semibold ${filter ? "fill-correct" : "fill-ink-muted"}`}
+      >
+        {filter ? "correct ✓ keep" : "keep everything"}
       </text>
 
-      {/* the loop wire: the four edges the signal travels */}
+      {/* The loop wire. With the key off, the two edges through rationalize carry
+          nothing, so they are drawn as the dead ends they are rather than removed:
+          a reader flipping the switch should see what was lost, not a redrawn graph. */}
       <g fill="none" strokeWidth={2} className="stroke-ink-muted">
         {EDGES.map((e, i) => (
-          <path key={i} d={edgeD(e)} />
+          <path
+            key={i}
+            d={edgeD(e)}
+            strokeOpacity={detourDead && (i === 1 || i === 2) ? 0.18 : 1}
+            strokeDasharray={detourDead && (i === 1 || i === 2) ? "3 5" : undefined}
+          />
         ))}
       </g>
 
       {/* direction chevrons at each edge midpoint */}
-      {EDGES.map((e, i) => (
-        <Chevron key={i} e={e} />
-      ))}
+      {EDGES.map((e, i) =>
+        detourDead && (i === 1 || i === 2) ? null : <Chevron key={i} e={e} />,
+      )}
 
-      {/* branch labels: the wrong-answer path and its hint-driven recovery */}
-      <text x={432} y={214} textAnchor="middle" className="fill-wrong text-[11px] font-semibold">
-        wrong ✗
-      </text>
-      <text x={104} y={256} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
-        ✓ kept
-      </text>
+      {/* branch labels: the wrong-answer path and its hint-driven recovery. Both
+          name a fork, so both go when the fork does. */}
+      {filter ? (
+        <>
+          <text x={432} y={214} textAnchor="middle" className="fill-wrong text-[11px] font-semibold">
+            wrong ✗
+          </text>
+          <text x={104} y={256} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
+            ✓ kept
+          </text>
+        </>
+      ) : (
+        <text x={240} y={318} textAnchor="middle" className="fill-wrong text-[11px] font-semibold">
+          nothing is checked, so nothing is discarded
+        </text>
+      )}
       <text x={70} y={108} textAnchor="middle" className="fill-ink-muted text-[11px]">
         ↺ repeat
       </text>
@@ -324,9 +414,11 @@ function StarLoop({ filter }: { filter: boolean }) {
       <circle ref={dotARef} cx={N_GEN[0]} cy={N_GEN[1]} r={5.5} opacity={0} className="fill-compute" />
       <circle ref={dotBRef} cx={N_FILTER[0]} cy={N_FILTER[1]} r={5.5} opacity={0} className="fill-compute" />
 
-      {/* the four nodes; each fills solid compute when the signal dwells on it */}
+      {/* the four nodes; each fills solid compute when the signal dwells on it.
+          A dead node is drawn at reduced opacity: still on the graph, so the reader
+          can see which step the missing key cost them, but visibly out of the loop. */}
       {nodes.map((n, i) => (
-        <g key={n.title}>
+        <g key={n.title} opacity={n.dead ? 0.35 : 1}>
           <rect
             ref={(el) => {
               rectRefs.current[i] = el;
@@ -337,6 +429,7 @@ function StarLoop({ filter }: { filter: boolean }) {
             height={46}
             rx={10}
             className={RECT_BASE}
+            strokeDasharray={n.dead ? "4 3" : undefined}
           />
           <text
             ref={(el) => {
@@ -408,8 +501,13 @@ function CodeLine({
 
 export function Page12() {
   const page = getPage(PAGE_N)!;
+  const recordInteraction = useStore((s) => s.recordInteraction);
   const paper = curves.starCqa;
   const p = paper.fit!.params;
+
+  // The lede's question is "what happens when you take the answer key away?", so
+  // the page opens with it on: the reader has to take it away themselves.
+  const [keyOn, setKeyOn] = useState(true);
 
   const bars = [
     { label: "GPT-J, few-shot, answer only", value: p.fewShotDirect, tone: "bg-grid", note: "no reasoning, no training" },
@@ -453,17 +551,42 @@ export function Page12() {
             next round of reasoning.
           </p>
 
-          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            {/* the loop itself, with the rationalization branch, signal animated to turn */}
-            <StarLoop filter />
+          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
+            <Toggle
+              label="Answer key"
+              checked={keyOn}
+              onLabel="on"
+              offLabel="off"
+              onChange={(v) => {
+                setKeyOn(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
 
-            <p className="text-ink">
-              This is <strong>STaR</strong>&apos;s loop.
-              <Cite n={REF.star} /> It still needs a dataset — questions <em>with correct
-              answers</em> — but nobody has to write the reasoning; the model authors that itself.
-              Everything rests on the answer key: the correctness check that decides which rationales
-              are allowed to train, and the external signal deciding what the model may study.
-            </p>
+            {/* the loop itself, with the rationalization branch, signal animated to turn */}
+            <StarLoop filter={keyOn} />
+
+            {keyOn ? (
+              <p className="text-ink">
+                This is <strong>STaR</strong>&apos;s loop.
+                <Cite n={REF.star} /> It still needs a dataset, questions <em>with correct
+                answers</em>, but nobody has to write the reasoning; the model authors that itself.
+                Everything rests on the answer key: the correctness check that decides which
+                rationales are allowed to train, and the external signal deciding what the model may
+                study. <strong className="text-ink">Take it away and see what is left.</strong>
+              </p>
+            ) : (
+              <p className="text-ink">
+                <strong className="text-ink">With no key, nothing decides.</strong> The fork is gone,
+                because there is no answer to sort right from wrong against, so every rationale the
+                model wrote goes into the next training set. The rationalize step goes too, and not
+                because we skipped it: handing the correct answer back as a hint requires having the
+                correct answer. What is left is a model training on whatever it happened to produce,
+                then producing the next round from that. Nothing outside the model is left to
+                correct it, and the loop still turns, which is the trap: it looks like it is
+                working.
+              </p>
+            )}
           </div>
 
           {/* the loop written down — merged in from the former section 2 */}
