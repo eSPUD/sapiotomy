@@ -889,7 +889,7 @@ export function Page7() {
               its own derived.json says so in a field called same_candidates. What
               it did do is re-run this protocol and land here, which is the claim
               that survives the artifact. */}
-          <p className="text-ink">
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             The counting rule is the weakest part of the method: it picks by popularity, and the
             popular answer is not always the right one when the right one is already sitting in the
             box. It also only ever looks at the answer, never at the reasoning that reached it, so a
@@ -898,7 +898,7 @@ export function Page7() {
               Page 8 re-runs this protocol, lands where this page landed, then changes one rule for
               picking one of the {H.n_chains}: stop counting, start judging.
             </em>
-          </p>
+          </div>
         </section>
       </div>
 

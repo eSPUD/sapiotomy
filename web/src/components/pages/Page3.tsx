@@ -52,7 +52,6 @@ import { useMemo, useRef, useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
-import { PullQuote } from "@/components/PullQuote";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
@@ -558,12 +557,12 @@ export function Page3() {
         </Note>
         {/* Both sections in two sentences, in the content column so it does not
             run under the sidenotes. */}
-        <PullQuote>
+        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
           Training-time scaling buys more facts, later, at compounding cost, and it cannot touch a
           bias that was never about missing facts. Every wall here limits what a model can be given{" "}
           <strong>before</strong> the question arrives, which leaves only what it does{" "}
           <strong>after</strong> it.
-        </PullQuote>
+        </div>
         <div aria-hidden="true" />
       </div>
 

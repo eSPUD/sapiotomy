@@ -171,10 +171,11 @@ describe("Page 6, figure 2: the same dial, every problem", () => {
     expect(body()).toContain(PAGE6.procedure);
   });
 
-  // The heights bar used to be a margin note beside the curve. It came out on
-  // 2026-08-11: what carries it now is the instruction in the figure's own
-  // caption and the body line after it, both of which point the reader at the
-  // shape. Nothing on the page may read a height as a fact about scale.
+  // The heights invariant is load-bearing and cannot go in the notebook,
+  // because the figure invites the comparison on screen. The margin note that
+  // used to carry it came out on 2026-08-11; what holds it now is the figure's
+  // own caption and the body line under the chart, both of which put the reader
+  // on the shape.
   it("names every checkpoint but claims shape rather than level", () => {
     render(<Page6 />);
     for (const c of F2.curves) {
@@ -245,9 +246,9 @@ describe("Page 6, figure 3: it stops mattering before you run out of dial", () =
     // The count lives in figure 3's own legend now that the section-5 pill that
     // restated it is gone.
     expect(body()).toContain(`never solved (${F3.neverFlipCount})`);
-    // The margin disclaimer came out on 2026-08-11, so the invariant is now
-    // carried by the phrasing itself: the band is always described by what we
-    // ran, and the word never appears on the page to be walked back.
+    // The margin disclaimer came out on 2026-08-11, so the phrasing carries the
+    // invariant by itself: the band is always described by what we ran, and the
+    // word is never on the page to be walked back.
     expect(body()).toContain("not reached at any length we ran");
     expect(body()).not.toContain("unsolvable");
   });
@@ -552,16 +553,34 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
    * floating in the margin beside nothing at all.
    */
   it("keeps References beside step 1 rather than in a row of its own", () => {
-    const { container } = render(<Page6 />);
+    render(<Page6 />);
     const tryIt = screen.getAllByText("Try it")[0].closest("aside")!;
     const refs = screen.getByText("References").closest("aside")!;
     expect(refs.parentElement).toBe(tryIt.parentElement);
+  });
 
-    // And no spacer cell is left behind holding the row open.
-    const spacers = Array.from(container.querySelectorAll('div[aria-hidden="true"]')).filter(
-      (d) => d.children.length === 0 && !d.textContent,
+  /**
+   * The two columns are auto-placed: the browser fills cells in child order,
+   * so the page reads as steps-with-margins only while every step is followed
+   * by a margin cell. Deleting a note without leaving its cell behind slid
+   * every step below it into the 15rem margin column, on screen only, with the
+   * markup still valid and every other test still green. Hence this one.
+   */
+  it("pairs each step with a margin cell, so nothing slides into the margin", () => {
+    render(<Page6 />);
+    const grid = screen.getByRole("heading", { name: /1\. Cut it off/ }).closest("section")!
+      .parentElement!;
+    const cells = Array.from(grid.children);
+    for (const [i, cell] of cells.entries()) {
+      // Steps take the wide column, notes and their empty stand-ins the margin.
+      if (i % 2 === 0) expect(cell.tagName).toBe("SECTION");
+      else expect(["ASIDE", "DIV"]).toContain(cell.tagName);
+    }
+    // The close is a step, and the last thing in the grid.
+    expect(cells.length % 2).toBe(1);
+    expect(cells[cells.length - 1]).toBe(
+      screen.getByRole("heading", { name: /5\. Where the length runs out/ }).closest("section"),
     );
-    expect(spacers.length).toBeLessThanOrEqual(1);
   });
 
   it("hands off to page 7 by splitting the same budget", () => {

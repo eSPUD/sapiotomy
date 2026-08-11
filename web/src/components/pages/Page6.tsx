@@ -1437,6 +1437,15 @@ export function Page6() {
             any of these checkpoints.
           </p>
         </section>
+        {/* No margin note here. The heights invariant is carried where a reader
+            meets it: the caption on the figure says to read the shape, and the
+            line under the chart says the shape is the part that is not about
+            these checkpoints.
+            The empty cell stays. This grid places its children in order, so a
+            step without a note needs one or every step below it slides into the
+            15rem margin column. */}
+        <div aria-hidden="true" />
+
         {/* Step 3 — figure 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
@@ -1650,7 +1659,7 @@ export function Page6() {
               <span>bar length is the token budget; both rows spend {tokens(H.max_budget)}.</span>
             </div>
           </section>
-          <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             <strong className="text-ink">The dial has a far end, and you have reached it.</strong>{" "}
             This is inference-time scaling in its simplest form: the curve flattens, and{" "}
             {pct(F3.neverFlipShare)} of these problems are not reached at any length we ran. A
@@ -1671,7 +1680,7 @@ export function Page6() {
               Page 7 asks what {H.chains_at_min_budget} voters at {pct(H.accuracy_at_min)} each are
               worth.
             </em>
-          </p>
+          </div>
         </section>
       </div>
 
