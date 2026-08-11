@@ -24,7 +24,7 @@ export function ProgressRail() {
         </Link>
         <div className="flex items-center gap-3">
           <span className="hidden text-xs uppercase tracking-[0.2em] text-ink-muted sm:inline">
-            An interactive explorable · VISxAI 2026
+            An interactive AI explainable
           </span>
           <span className="rounded bg-wrong/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-wrong">
             Pre-print
