@@ -42,17 +42,16 @@
  * is no footer. What the footer used to carry that lives nowhere else is now
  * in the margin note beside the sentence it qualifies.
  *
- * A MARGIN NOTE HERE HELPS THE READER READ THE FIGURE BESIDE IT, and does
- * nothing else. Pages 5 to 7 keep interpretation in the card's prose and leave
- * the margin one short thought, and this page had drifted the other way: four
- * notes of two and three paragraphs, most of it defending the measurement
- * rather than explaining a picture. What survived the 2026-08-10 trim is what
- * the figure cannot say for itself: what the specimen panel's axis IS, which
- * row of the evidence figure is page 7's rule, what kind of model the trained
- * verifier is and that it was rebuilt, and whose comparison the close makes.
- * The agreement percentages, the "cited for the technique" gloss and the
- * restatement of the heuristic row went with it: two of those are in the
- * figure or its caption already and the rest is in the download.
+ * ANYTHING THE ARGUMENT NEEDS IS IN THE PROSE, not in the margin. The page once
+ * carried four notes of two and three paragraphs, most of it defending the
+ * measurement rather than explaining a picture; the 2026-08-10 trim cut that to
+ * four short ones, and the notes are now down to references plus the one thought
+ * a figure cannot say for itself. What the verifier does opens step 1, which
+ * model the trained verifier is opens step 3, and whose comparison the close
+ * makes is a sentence of the close. Only the "vote is on this axis too" note is
+ * still a reading aid, because it names a row of a figure. The claim that the
+ * verifier had to be rebuilt from published weights is gone from the page
+ * entirely and lives in the notebook and the download.
  *
  * THERE IS NO PROVENANCE PLATE, and one must not come back. It opened the page
  * in the notebook's own language (a token cap, four temperatures, an exact
@@ -655,8 +654,10 @@ export function Page8() {
           <p className="text-ink-muted">
             Page 7 counted the chains and kept the answer most of them agreed on. Here the same
             pile is read a second way, one candidate at a time by a judge that scores each on its
-            own: below is a problem where the two rules disagree, and beside it both rules across
-            all {PAGE8.run.items} problems.
+            own. That judge reads one finished candidate and returns a single number, which is
+            where that candidate&apos;s dot sits on the axis below. It never sees the tally, so the
+            rightmost dot is not counting in disguise. Below is a problem where the two rules
+            disagree, and beside it both rules across all {PAGE8.run.items} problems.
           </p>
           <section
             aria-label="One problem's candidates, counted and scored"
@@ -741,16 +742,10 @@ export function Page8() {
             )}
           </section>
         </section>
-        {/* What the left panel's x axis IS, which the reader cannot get from the
-            figure, and nothing else. What it used to also carry, that the cite
-            is for the technique and the numbers are ours, is the page's standing
-            position and is on every pill. */}
-        <Note kicker="What the verifier does">
-          <p>
-            It reads one finished candidate and returns a single number, which is where that
-            candidate&apos;s dot sits on the axis. It never sees the tally, so the rightmost dot is
-            not counting in disguise.
-          </p>
+        {/* What the left panel's x axis IS now opens the step in prose, where a
+            reader meets it before the figure rather than beside it. The margin
+            keeps the reference and nothing else. */}
+        <Note kicker="References">
           <RefItem n={REF.cobbe} href="https://arxiv.org/abs/2110.14168" preprint>
             Cobbe et al. 2021, <em>Training Verifiers to Solve Math Word Problems</em> (arXiv
             2110.14168).
@@ -806,6 +801,16 @@ export function Page8() {
         {/* Step 3 — what a judge is worth */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. What a judge is worth</h2>
+          {/* Which model the winning judge actually is opens the step, because
+              the figure below ranks it against four others and cannot say what
+              it is. */}
+          <p className="text-ink-muted">
+            Five judges read the same candidates, and one of them is the trained verifier from the
+            figures above. It is{" "}
+            <span className="font-mono text-xs">{PAGE8.verifierNote?.model ?? trained?.name}</span>,
+            a process reward model read at the final token only: one number for the whole solution.
+            Grading the steps is the next page.
+          </p>
           <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
             {/* Each point is an average, so the pill says what it averages over
                 before the reader reads a bar as an error. */}
@@ -845,64 +850,49 @@ export function Page8() {
             ) : null}
           </figure>
         </section>
-        <Note kicker="A verifier, not a PRM">
-          <p>
-            The trained verifier is{" "}
-            <span className="font-mono text-xs">{PAGE8.verifierNote?.model ?? trained?.name}</span>,
-            a process reward model read at the final token only: one number for the whole solution.
-            Grading the steps is the next page.
-          </p>
-          {/* Read from the run, not asserted here: a re-run that loads the
-              checkpoint as published drops this paragraph by itself. */}
-          {PAGE8.verifierNote?.rebuilt ? (
-            <p>
-              It did not run as published: the code shipped with it returns nothing usable here, so
-              it was rebuilt from the published weights and every number on this page for it comes
-              from that rebuild.
-            </p>
-          ) : null}
-        </Note>
-
-        {/* Step 4 — the handoff */}
-        <section className="flex min-w-0 flex-col gap-3">
+        {/* Step 4 — the handoff. Page 7 and page 12 close the same way: the
+            argument in plain prose, and only the sentence that hands the reader
+            to the next page inside the compute-bordered box. The whole step used
+            to sit in that box, which spent the emphasis on everything at once.
+            `col-start-1` because step 3 no longer has a margin note to fill the
+            second column. */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">4. Where this leaves us</h2>
-          <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <p>
-              Selection works. Against the same candidates, so does counting: the verifier is{" "}
-              <strong>{PAGE8.caveat.net > 0 ? `+${PAGE8.caveat.net}` : PAGE8.caveat.net}</strong>{" "}
-              problems ahead of the vote, {pValue(PAGE8.caveat.p)}, which is not a difference. Two
-              routes to the same place, and one of them is free.
-            </p>
-            {/* Page 7 closed on the right answers the vote threw away and handed
-                this page the question. Answered here in the numbers both figures
-                already draw, before the pivot that the answer motivates. */}
-            {PAGE8.coverage !== null && trained ? (
-              <p>
-                And page 7&apos;s leftovers are still mostly leftovers. A right answer was in the
-                pile on <strong>{pct(PAGE8.coverage)}</strong> of problems, and on the problems where
-                one exists the vote returns it {pct(PAGE8.bar.mean)} of the time against the trained
-                verifier&apos;s {pct(trained.mean)}. Judging recovers a little of what counting
-                discarded, not most of it.
-                <Cite n={REF.stroebl} />
-              </p>
-            ) : null}
-            <p className="text-ink-muted">
-              So the question is not how many candidates, nor even how good the judge is, but{" "}
-              <em>what the judge is reading</em>. Every rule here grades the final answer and none
-              of them looks at whether step three followed from step two.{" "}
-              <em>Turn the page.</em>
-            </p>
-          </div>
-        </section>
-        {/* The one disclosure the retired footer held that lives nowhere else:
-            whose comparison this is. It belongs beside the sentence that makes
-            it, not under the page, and one sentence is the whole of it. */}
-        <Note kicker="Whose comparison this is">
-          <p>
-            Counting against selection is not a contest anyone else ran: self-consistency and
-            best-of-N are introduced in different chapters of the source we build on
+          <p className="text-ink">
+            Selection works. Against the same candidates, so does counting: the verifier is{" "}
+            <strong>{PAGE8.caveat.net > 0 ? `+${PAGE8.caveat.net}` : PAGE8.caveat.net}</strong>{" "}
+            problems ahead of the vote, {pValue(PAGE8.caveat.p)}, which is not a difference. Two
+            routes to the same place, and one of them is free.
+          </p>
+          {/* Whose comparison this is, said where the comparison is made rather
+              than in a note beside it. It is the one disclosure the retired
+              footer held that lives nowhere else. */}
+          <p className="text-ink">
+            That contest is ours. Counting against selection is not one anyone else ran:
+            self-consistency and best-of-N are introduced in different chapters of the source we
+            build on
             <Cite n={REF.source} /> and are never set against each other there.
           </p>
+          {/* Page 7 closed on the right answers the vote threw away and handed
+              this page the question. Answered here in the numbers both figures
+              already draw, before the pivot that the answer motivates. */}
+          {PAGE8.coverage !== null && trained ? (
+            <p className="text-ink">
+              And page 7&apos;s leftovers are still mostly leftovers. A right answer was in the pile
+              on <strong>{pct(PAGE8.coverage)}</strong> of problems, and on the problems where one
+              exists the vote returns it {pct(PAGE8.bar.mean)} of the time against the trained
+              verifier&apos;s {pct(trained.mean)}. Judging recovers a little of what counting
+              discarded, not most of it.
+              <Cite n={REF.stroebl} />
+            </p>
+          ) : null}
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            So the question is not how many candidates, nor even how good the judge is, but{" "}
+            <em>what the judge is reading</em>. Every rule here grades the final answer and none of
+            them looks at whether step three followed from step two. <em>Turn the page.</em>
+          </div>
+        </section>
+        <Note kicker="References">
           <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
             Stroebl et al. 2024, <em>Inference Scaling fLaws: The Limits of LLM Resampling with
             Imperfect Verifiers</em> (arXiv 2411.17501).
