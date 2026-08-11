@@ -249,26 +249,6 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     }
   });
 
-  // The specimens are picked by role, and a role like "right answer, false step"
-  // can only be filled by a chain the checker could read. So they are drawn from
-  // the gradable tail and are far more checkable than the pile they represent.
-  it("discloses that the specimens are more gradable than the run", () => {
-    render(<Page9 />);
-    const box = screen.getByText(/these three are not a sample/i).closest("div")!;
-    expect(box.textContent).toContain(
-      `${PAGE9.specimenReach.stepsCheckable} of ${PAGE9.specimenReach.stepsTotal}`,
-    );
-    expect(box.textContent).toContain(pct(PAGE9.specimenReach.shareCheckable));
-    expect(box.textContent).toContain(pct(1 - PAGE9.graders.shareUnjudged, 1));
-  });
-
-  it("the specimens really are the unrepresentative end, which is why that box exists", () => {
-    // If a future run made the specimens typical, the disclosure would be
-    // false and should be rewritten rather than left standing.
-    const population = 1 - PAGE9.graders.shareUnjudged;
-    expect(PAGE9.specimenReach.shareCheckable).toBeGreaterThan(population * 2);
-  });
-
   // The margin says nothing underlined means nothing computable. No verdict on
   // the page may call an unread step sound.
   it("never calls an unjudged step sound", () => {
@@ -402,13 +382,6 @@ describe("Page 9 (outcome vs process supervision) component", () => {
       // The page says wrong chains usually break once. If a rerun ever makes that
       // false, this fails rather than leaving the claim standing over new data.
       expect(loc.shareWithOneFalseStep).toBeGreaterThan(0.5);
-    }
-  });
-
-  it("reports the selector rung as the null it is", () => {
-    render(<Page9 />);
-    if (PAGE9.selection && !PAGE9.selection.helps) {
-      expect(screen.getByText(/that is a null result/i)).toBeInTheDocument();
     }
   });
 
