@@ -139,16 +139,19 @@ describe("Page 7 (frequency voting) component", () => {
     // short scores 7% on its own. Saying "splitting loses" without saying why would
     // read as "voting loses", which the pile disproves.
     expect(PAGE7.claims.splitting_a_fixed_budget_pays).toBe(false);
-    expect(screen.getByText(/Splitting is not what fails; capping is\./i)).toBeInTheDocument();
-    // The cost claim is bounded to the two arms this run has, and page 6's arm is
-    // reported the way page 6 measured it: the chain does continue when pushed, it
-    // just does not score better. Saying it "refuses to continue" contradicted
-    // page-06-derived.json, where mean tokens run 693.0 up to 1251.8 under injection.
+    expect(screen.getByText(/Splitting is not what fails, capping is\./i)).toBeInTheDocument();
+    // The cost claim stays bounded to the two arms this run actually has.
+    //
+    // The caption's closing sentence about page 6's arm was cut on 2026-08-10 by
+    // request, and with it the positive assertion that used to sit here. The two
+    // NEGATIVE guards below are the ones that matter and they stay: the page may
+    // not claim there is no cheaper route, and it may not say the pushed chain
+    // refuses to continue, which would contradict page-06-derived.json, where mean
+    // tokens run 693.0 up to 1251.8 under injection.
     const body = document.body.textContent ?? "";
-    expect(body).toContain("Of the two ways of spending tried here");
+    expect(body).toContain("There are two ways of spending here");
     expect(body).not.toMatch(/no cheaper way to buy it/i);
     expect(body).not.toMatch(/refuse to continue/i);
-    expect(body).toMatch(/that chain keeps writing, and the extra tokens do not buy a better answer/);
   });
 
   // The sweep does not single out one temperature: plurality accuracy ties at the top.
@@ -165,7 +168,12 @@ describe("Page 7 (frequency voting) component", () => {
     expect(body).not.toMatch(/past T = 0\.3 each chain gets worse/);
     for (const d of tied) expect(body).toContain(`T = ${d.temperature}`);
     expect(body).toMatch(/the vote comes out the same\s+at T = /);
-    expect(body).toMatch(/voted exactly as well/);
+    // "voted exactly as well" lived in the limitations block under section 5,
+    // which was cut on 2026-08-10. The fact it carried is not lost: it is the
+    // same tie, stated here as a finding about the sweep rather than as a
+    // confession about the setting. What must not come back is a falloff claim
+    // the run does not support, which the assertion above still guards.
+    expect(body).not.toMatch(/does not say/i);
   });
 
   it("shows capped against uncapped at the SAME number of chains", () => {

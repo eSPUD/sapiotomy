@@ -854,17 +854,17 @@ export function Page7() {
               were made to commit mid-thought, which is a property of the run rather than a score.
             </p>
             <p className="text-ink">
-              Dividing a budget does two things at once: it adds chains, and it shortens every one
-              of them. The shortening is the one that lands. At {F2.split[F2.split.length - 1].n}{" "}
-              chains the budget leaves each about {tokens(Math.round(M.split.budget_total / F2.split[F2.split.length - 1].n))}{" "}
-              tokens, every chain hits that ceiling before it has finished, and the vote is counting
-              fragments of arguments rather than arguments.{" "}
-              <strong className="text-ink">Splitting is not what fails; capping is.</strong> Let the
-              same chains run to their own end and the vote works, at {tokens(pileTokens)} tokens
-              against {tokens(oneChainTokens)} for one. Of the two ways of spending tried here,
-              dividing one budget and letting every chain finish, only the second one buys the gain.
-              The obvious cheaper route is the one page 6 already took: pushed past its own stopping
-              point, that chain keeps writing, and the extra tokens do not buy a better answer.
+              Dividing a budget does two things at once. One, it adds chains, and two, it shortens
+              every one of them. The shortening is the one that lands. At{" "}
+              {F2.split[F2.split.length - 1].n} chains the budget leaves each with only{" "}
+              {tokens(Math.round(M.split.budget_total / F2.split[F2.split.length - 1].n))} tokens.
+              Every chain hits that ceiling before finishing, and the vote is counting fragments of
+              arguments rather than arguments.{" "}
+              <strong className="text-ink">Splitting is not what fails, capping is.</strong> Let the
+              same chains run to their own end and the vote indeed works, at {tokens(pileTokens)}{" "}
+              tokens for {last.n} chains vs {tokens(oneChainTokens)} for one. There are two ways of
+              spending here, divide one budget, or let every chain finish. The second one is the
+              winner.
             </p>
           </section>
         </section>
@@ -886,49 +886,22 @@ export function Page7() {
             <strong className="text-ink">The pile knows more than the count.</strong> The right
             answer was somewhere in the {H.n_chains} chains on{" "}
             <strong className="text-ink">{pct(H.coverage)}</strong> of these problems. The vote
-            returned it on <strong className="text-ink">{pct(H.plurality_accuracy)}</strong>. On the{" "}
-            <strong className="text-ink">{pct(H.thrown_away)}</strong> in between, the model
-            produced the right answer and the vote discarded it, because counting can only ever
-            return the answer that comes up most, and on {pct(H.tie_rate)} of problems it could not
-            even break a tie.
+            returned it on <strong className="text-ink">{pct(H.plurality_accuracy)}</strong>. For
+            the <strong className="text-ink">{pct(H.thrown_away)}</strong> in between, the model
+            produced the right answer and the vote discarded it. This is because counting can only
+            ever return the answer that comes up most, and on {pct(H.tie_rate)} of problems it could
+            not even break a tie!
           </p>
-
-          <div className="flex flex-col gap-2 text-ink">
-            <p>
-              <strong className="text-ink">Three things this measurement does not say:</strong>
-            </p>
-            <ul className="list-disc space-y-1.5 pl-5 marker:text-ink-muted">
-              <li>
-                <strong className="text-ink">A tie is a loss.</strong> A tie returns no answer and
-                grades wrong, so some of the gap above is the rule refusing to choose rather than
-                the model failing. Two chains count as agreeing when the grader says their answers
-                are equivalent, so <span className="font-code">1/2</span> and{" "}
-                <span className="font-code">0.5</span> are one bucket.
-              </li>
-              <li>
-                <strong className="text-ink">The temperature is fitted, not held out.</strong> T ={" "}
-                {F2.hot.temperature} was picked by which value voted best on{" "}
-                {F2.diversity[0].n_items} items, where {TIED_WITH_HOT} voted exactly as well, so the
-                vote is being scored at a setting chosen to flatter it and not the only setting that
-                would have done.
-              </li>
-              <li>
-                <strong className="text-ink">Only the answer is graded.</strong> Every number on
-                this page measures whether a chain landed on the right answer, never whether the
-                reasoning that got it there was sound. A chain can agree with the majority for bad
-                reasons and the vote will count it.
-              </li>
-            </ul>
-          </div>
 
           {/* Not "keeps the same candidates": page 8 generated its own pool, and
               its own derived.json says so in a field called same_candidates. What
               it did do is re-run this protocol and land here, which is the claim
               that survives the artifact. */}
           <p className="text-ink">
-            None of that rescues the counting rule, which is the weakest part of the method: it
-            picks by popularity, and the popular answer is not always the right one when the right
-            one is already sitting in the box.{" "}
+            The counting rule is the weakest part of the method: it picks by popularity, and the
+            popular answer is not always the right one when the right one is already sitting in the
+            box. It also only ever looks at the answer, never at the reasoning that reached it, so a
+            chain can agree with the majority for bad reasons and be counted anyway.{" "}
             <em>
               Page 8 re-runs this protocol, lands where this page landed, then changes one rule for
               picking one of the {H.n_chains}: stop counting, start judging.
