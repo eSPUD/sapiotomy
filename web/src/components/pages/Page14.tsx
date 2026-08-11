@@ -13,10 +13,16 @@
  * The lede answers rather than restates. Page 13 now builds the demand
  * itself, so the intro must not re-erect the frame (an earlier draft opened
  * "page 13 priced the exchange, then hid the machinery", which duplicated
- * page 13's own section 4). It names the four questions, then anchors the
- * hook: "backtracking" is the model allocating its own test-time compute, so
- * the question reads as a scaling one and not merely an emergence one. The
- * four do not map one-to-one onto this page's three sections, so the page
+ * page 13's own section 4). It is held to page 12's length — three clauses:
+ * the four questions, the four deliverables, the hook. Two beats an earlier
+ * draft spent here were moved down to where they are shown rather than
+ * previewed: "no worked examples at all" now opens section 1 beside the
+ * recipe that has none, and "taught itself to spend test-time compute nobody
+ * told it to spend" is section 2's reading under the training chart. What the
+ * lede keeps of the hook is the concrete thing the skeleton draws (a chain
+ * that stops mid-solution to re-check), so "backtracking" has a referent
+ * before the question asks where it came from.
+ * The four do not map one-to-one onto this page's three sections, so the page
  * never promises "answered in order" — the sections answer without
  * announcing. Q1/Q2/Q3 land in section 2, Q4 in section 3; section 1 is the
  * handoff's separate "algorithm in full".
@@ -29,8 +35,8 @@
  * question is the thing the reader drives: the scrubber grows a loop (what ten
  * times the thinking is spent on), the skeleton stays ONE chain rather than
  * four parallel ones (what the dial buys), the dot plot puts a 1.5B dot past a
- * closed model's rule (whether the law needs frontier scale). The lede names
- * the four so the reader knows what to watch for; exactly one clause later
+ * closed model's rule (whether the law needs frontier scale). The lede points
+ * back at the four so the reader knows what to watch for; exactly one clause later
  * ("the distinction page 13 could only assert") ties a figure back. One
  * thread is a thread, several are a quiz.
  *
@@ -864,11 +870,8 @@ export function Page14() {
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Page 13 closed with four questions about what sits behind the thinking dial, and no way to
-        answer any of them from outside. In January 2025 DeepSeek published all of it: the
-        algorithm, the weights, the training curve, and the chain itself, visible token by token,
-        trained with <strong className="text-ink">no worked examples at all</strong>. So the
-        questions become answerable, and the first thing the answers show is a model that taught
-        itself to spend test-time compute nobody told it to spend.{" "}
+        answer any of them from outside. In January 2025 DeepSeek published all of it: algorithm,
+        weights, training curve, and a chain that stops mid-solution to re-check its own work.{" "}
         <strong className="text-ink">Where does the backtracking come from?</strong>
         <Cite n={REF.r1} />
       </p>
@@ -886,7 +889,8 @@ export function Page14() {
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-ink">
               <strong>R1-Zero</strong> deletes the usual supervised warm-up entirely and starts RL
-              from a plain base model. The whole recipe,{" "}
+              from a plain base model, with <strong>no worked examples at all</strong>: only
+              problems whose final answers can be checked. The whole recipe,{" "}
               <strong>Group Relative Policy Optimization</strong>, fits in five lines:
               <Cite n={REF.grpo} />
             </p>
