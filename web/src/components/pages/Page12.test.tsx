@@ -108,6 +108,21 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByText("base model, on everything")).toBeInTheDocument();
   });
 
+  /**
+   * Pages 5 to 9, 11 and 13 to 16 each carry this guard. Page 12 did not, and it
+   * had six live violations in its own copy (two pseudocode annotations, the
+   * figcaption's &mdash;, and three in prose). Both toggle states are checked,
+   * since half this page's copy only exists in one of them.
+   */
+  it("has no em dash or en dash anywhere in its copy, in either toggle state", () => {
+    render(<Page12 />);
+    expect(document.body.textContent).not.toContain("—");
+    expect(document.body.textContent).not.toContain("–");
+    fireEvent.click(screen.getByRole("switch", { name: /answer key/i }));
+    expect(document.body.textContent).not.toContain("—");
+    expect(document.body.textContent).not.toContain("–");
+  });
+
   it("rests the loop on the answer key, with no math notation", () => {
     render(<Page12 />);
     expect(

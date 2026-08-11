@@ -373,6 +373,50 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(total).toBe(PAGE9.localisation.nLocalisable);
   });
 
+  /**
+   * The three tests above read text, so they would all still pass if the bars
+   * were drawn upside down, in the wrong order, or with the wrong bin
+   * highlighted. This one reads the geometry instead: the picture has to encode
+   * the same data its description claims.
+   */
+  it("encodes the counts in the bars, in bin order, taller for more chains", () => {
+    render(<Page9 />);
+    const fig = screen.getByRole("img", {
+      name: /how many false steps each of the .* localisable wrong chains contains/i,
+    });
+    const bins = Object.entries(PAGE9.localisation.breaksPerChain)
+      .map(([k, count]) => ({ n: Number(k), count }))
+      .sort((a, b) => a.n - b.n);
+    // The plot frame carries stroke-grid; the bars are the filled marks.
+    const bars = Array.from(fig.querySelectorAll("rect")).filter((r) =>
+      /fill-compute|fill-ink/.test(r.getAttribute("class") ?? ""),
+    );
+    expect(bars).toHaveLength(bins.length);
+
+    const x = bars.map((b) => Number(b.getAttribute("x")));
+    const h = bars.map((b) => Number(b.getAttribute("height")));
+    const y = bars.map((b) => Number(b.getAttribute("y")));
+
+    // Left to right in ascending bin order, so the axis labels mean what they say.
+    expect([...x]).toEqual([...x].sort((a, b) => a - b));
+    // Bars grow downward from a common baseline: y + h is the same for all of them.
+    for (const bottom of y.map((v, i) => v + h[i])) {
+      expect(bottom).toBeCloseTo(y[0] + h[0], 6);
+    }
+    // Height is monotone in count, so a bigger bin is never drawn shorter. This
+    // is what an inverted scale would break.
+    for (let i = 0; i < bins.length; i++) {
+      for (let j = 0; j < bins.length; j++) {
+        if (bins[i].count > bins[j].count) expect(h[i]).toBeGreaterThan(h[j]);
+        if (bins[i].count === bins[j].count) expect(h[i]).toBeCloseTo(h[j], 6);
+      }
+    }
+    // The tallest bar is the highlighted one, and it is the single-false-step bin.
+    const peakIx = h.indexOf(Math.max(...h));
+    expect(bins[peakIx].n).toBe(1);
+    expect(bars[peakIx].getAttribute("class")).toContain("fill-compute");
+  });
+
   it("reads the break-count spike off the run rather than asserting a shape", () => {
     render(<Page9 />);
     const loc = PAGE9.localisation;

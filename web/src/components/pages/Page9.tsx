@@ -954,8 +954,10 @@ export function Page9() {
                 . That is the fact the median cannot carry, and it is the whole case for grading
                 steps: a chain that goes wrong in one place has a place to find, while a chain that
                 was wrong throughout would give a step grader nothing to localise and would cost
-                outcome grading nothing to discard whole. On {loc.nLocalisable} chains, read the
-                shape and not the digits.
+                outcome grading nothing to discard whole. Read the shape and not the digits, and
+                read it at its true reach: {loc.nLocalisable} of {loc.nWrong.toLocaleString()} wrong
+                chains ({pct(loc.nLocalisable / loc.nWrong, 0)}) have a findable break at all, so
+                this is the shape of the ones we can place, not of wrong chains in general.
               </p>
             </section>
 

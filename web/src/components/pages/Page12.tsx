@@ -111,10 +111,10 @@ const REF = { star: 1, exit: 2, rft: 3, gvm: 4 } as const;
  */
 const CODE_NOTES: Record<number, { note?: React.ReactNode }> = {
   0: { note: "one model is both student and teacher" },
-  1: { note: "expert iteration (Anthony et al. 2017) — the same loop, before LLMs" },
+  1: { note: "expert iteration (Anthony et al. 2017): the same loop, before LLMs" },
   3: { note: "the only supervision that exists: answers, never reasoning" },
   4: {
-    note: "one greedy rollout — low variance, biased exploration; RFT (Yuan et al. 2023) samples k instead",
+    note: "one greedy rollout: low variance, biased exploration; RFT (Yuan et al. 2023) samples k instead",
   },
   5: {
     note: "in RL terms: a binary reward, checked for free by section 1's answer key",
@@ -551,6 +551,9 @@ export function Page12() {
             next round of reasoning.
           </p>
 
+          {/* The compute-tinted left rule is the deck's mark for a block the reader
+              can operate (pages 8 and 14 use it the same way). This block earned it
+              when it stopped being a picture and became a switch. */}
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <Toggle
               label="Answer key"
@@ -605,8 +608,8 @@ export function Page12() {
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
               The ten lines above are STaR&apos;s Algorithm 1, condensed.
-              <Cite n={REF.star} /> Line 2&apos;s loop is not just similar to reinforcement learning
-              &mdash; it is the same procedure, <em>expert iteration</em>, from five years before LLM
+              <Cite n={REF.star} /> Line 2&apos;s loop is not just similar to reinforcement learning:
+              it is the same procedure, <em>expert iteration</em>, from five years before LLM
               reasoning.
               <Cite n={REF.exit} /> Line 5 makes one attempt per problem; the <em>RFT</em> variant
               samples several instead and keeps the ones that reach the right answer.
@@ -700,13 +703,13 @@ export function Page12() {
             <figcaption className="text-sm text-ink-muted">
               GPT-J has 6B parameters, and nobody wrote it a single worked solution. Fine-tuned on
               rationales it generated and filtered itself, it lands at{" "}
-              <strong className="text-ink">{p.star}%</strong> — clear past the{" "}
+              <strong className="text-ink">{p.star}%</strong>, clear past the{" "}
               {p.fewShotCotLamda}% of a LaMDA <strong className="text-ink">23× its size</strong>{" "}
               prompted the same way, beside <strong className="text-ink">{p.gpt3Finetuned.toFixed(1)}%</strong>{" "}
               for a GPT-3 <strong className="text-ink">30× its size</strong> fine-tuned on the full
               human-labelled training set.
               <Cite n={REF.star} /> And the gap above the {p.gptjFinetuned}% answer-only
-              fine-tune is the page&apos;s point: the value was never the answers — it was{" "}
+              fine-tune is the page&apos;s point. The value was never the answers, it was{" "}
               <em>training on the reasoning</em>.
             </figcaption>
           </figure>
@@ -734,8 +737,8 @@ export function Page12() {
             <ul className="list-disc space-y-1.5 pl-5 marker:text-ink-muted">
               <li>
                 <strong className="text-ink">Spend at answer time.</strong> All of Act 2 spends the
-                compute after the question lands — show the road, cap the tokens, sample and vote,
-                score and re-rank, search the tree — and page 11 priced that shelf against
+                compute after the question lands (show the road, cap the tokens, sample and vote,
+                score and re-rank, search the tree) and page 11 priced that shelf against
                 parameters.
               </li>
               <li>

@@ -82,7 +82,7 @@ import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
-import { PAGE17, pct, tidyMath } from "@/lib/page17";
+import { PAGE17, Page17DataError, pct, tidyMath } from "@/lib/page17";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 15;
@@ -454,7 +454,9 @@ const pointsWord = (n: number) => (Math.abs(Number(n.toFixed(0))) === 1 ? "point
  */
 const R_START = 0;
 if (gapAt(R_START) >= 0) {
-  throw new Error(
+  // Typed, as lib/page17.ts does for every other data invariant on this page's
+  // run: a data failure has to be distinguishable from an ordinary bug.
+  throw new Page17DataError(
     "page 15's reliability dial opens on the column where the trained scorer trails, and on " +
       "this run it leads there, so the sweep no longer crosses",
   );
