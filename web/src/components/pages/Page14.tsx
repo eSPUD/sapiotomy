@@ -1181,21 +1181,22 @@ export function Page14() {
           </div>
         </section>
 
-      </div>
-
-
-      <div className="flex flex-col gap-1 text-xs text-ink-muted">
-        <p>
-          <strong className="text-ink">Simulated</strong>: the training curve&apos;s intermediate
-          points are interpolated along the reported 15.6% → 71.0% climb; the trace skeleton is a
-          schematic of the Table 3 trace&apos;s structure, not its text; and where the aha lands
-          on the slider is an illustrative placement; the paper gives the behaviour, not a step
-          number.
-        </p>
-        <p>
-          <strong className="text-ink">Cited</strong>: every benchmark number is transcribed from
-          DeepSeek-AI 2025 (Tables 3 to 5, Figures 2 and 3) and pinned in the test suite.
-        </p>
+        {/* Simulated vs cited, in the content column rather than across the whole
+            page: it qualifies the figures above it, and a line that runs under the
+            margin notes reads as a footer for the spread instead. */}
+        <div className="flex flex-col gap-1 text-xs text-ink-muted lg:col-start-1">
+          <p>
+            <strong className="text-ink">Simulated</strong>: the training curve&apos;s intermediate
+            points are interpolated along the reported 15.6% → 71.0% climb; the trace skeleton is a
+            schematic of the Table 3 trace&apos;s structure, not its text; and where the aha lands
+            on the slider is an illustrative placement; the paper gives the behaviour, not a step
+            number.
+          </p>
+          <p>
+            <strong className="text-ink">Cited</strong>: every benchmark number is transcribed from
+            DeepSeek-AI 2025 (Tables 3 to 5, Figures 2 and 3) and pinned in the test suite.
+          </p>
+        </div>
       </div>
 
       <PageNav n={PAGE_N} />

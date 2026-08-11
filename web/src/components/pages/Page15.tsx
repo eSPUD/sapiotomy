@@ -1027,20 +1027,23 @@ export function Page15() {
             against verified rewards, not requested politely at inference time.
           </p>
         </section>
-      </div>
 
-      {/* Handoff to 16. This used to hand off to a faithfulness page, cut on
-          2026-08-10, and then briefly closed the deck. Page 16 now does the
-          closing, so the assumption the cut page was going to attack is handed
-          forward as the open question rather than delivered as a last word. */}
-      <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        Notice what every repair on this page assumed. The verifier reads the chain, the reviser
-        reads the chain, and the reader reads the chain, and all three take it for what it says it
-        is: the working that produced the answer.{" "}
-        <em className="text-ink-muted">
-          Hold that. Next: every lever in this story on one axis, and ten questions on the
-          mechanisms rather than the magnitudes.
-        </em>
+        {/* Handoff to 16. This used to hand off to a faithfulness page, cut on
+            2026-08-10, and then briefly closed the deck. Page 16 now does the
+            closing, so the assumption the cut page was going to attack is handed
+            forward as the open question rather than delivered as a last word.
+            In the content column, page 3's shape for a handoff: outside the grid
+            on its own max-w-2xl it was the one block on the page set narrower
+            than everything above it. */}
+        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink lg:col-start-1">
+          Notice what every repair on this page assumed. The verifier reads the chain, the reviser
+          reads the chain, and the reader reads the chain, and all three take it for what it says
+          it is: the working that produced the answer.{" "}
+          <em className="text-ink-muted">
+            Hold that. Next: every lever in this story on one axis, and ten questions on the
+            mechanisms rather than the magnitudes.
+          </em>
+        </div>
       </div>
 
       <PageNav n={PAGE_N} />

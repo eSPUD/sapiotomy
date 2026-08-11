@@ -565,15 +565,18 @@ export function Page4() {
           </div>
         </section>
         <div aria-hidden="true" />
-      </div>
 
-      <p className="text-xs text-ink-muted">
-        the three walkthroughs are authored teaching examples; every intermediate number is derived
-        from {P.a} × {P.b} and recomputed by the test suite · line multiplication is a visual method
-        commonly taught as a Japanese technique; &ldquo;Vedic&rdquo; names the Urdhva-Tiryagbhyam
-        (&ldquo;vertically and crosswise&rdquo;) sutra
-        <Cite n={REF.vedic} /> · the destination {P.display} is page 1&apos;s round 3
-      </p>
+        {/* The provenance line belongs to the content column, not to the full
+            width of the page: run under the margin notes it reads as a footer
+            for the whole spread rather than for the three walkthroughs above it. */}
+        <p className="text-xs text-ink-muted lg:col-start-1">
+          the three walkthroughs are authored teaching examples; every intermediate number is
+          derived from {P.a} × {P.b} and recomputed by the test suite · line multiplication is a
+          visual method commonly taught as a Japanese technique; &ldquo;Vedic&rdquo; names the
+          Urdhva-Tiryagbhyam (&ldquo;vertically and crosswise&rdquo;) sutra
+          <Cite n={REF.vedic} /> · the destination {P.display} is page 1&apos;s round 3
+        </p>
+      </div>
 
       <div aria-live="polite" className="sr-only">
         {announcement}

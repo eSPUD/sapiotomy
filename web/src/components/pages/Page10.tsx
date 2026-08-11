@@ -768,20 +768,21 @@ export function Page10() {
             </RefItem>
           </Note>
         </div>
-      </div>
 
-      {/* Every page from 5 to 9 hands the next one a question; this one used to end
-          inside a caption, then inside step 3. Page 9 puts the handoff outside the
-          grid, full width, so it reads as the page's last word rather than the last
-          word of its last step. The seam page 11 opens on is the price, in the one
-          currency both sides of it are denominated in. */}
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-        <em>
-          Everything on pages 5 to 10 spends the same thing: arithmetic at answer time, bought by
-          the token and paid for once per question. Parameters are bought with the same currency, in
-          bulk, before any question arrives. So which is the better buy at a matched bill? Turn the
-          page.
-        </em>
+        {/* Every page from 5 to 9 hands the next one a question; this one used to
+            end inside a caption, then inside step 3. It sits in the grid's content
+            column on its own row, page 3's shape for a handoff, so it reads as the
+            page's last word rather than the last word of its last step and still
+            keeps the measure. The seam page 11 opens on is the price, in the one
+            currency both sides of it are denominated in. */}
+        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink lg:col-start-1">
+          <em>
+            Everything on pages 5 to 10 spends the same thing: arithmetic at answer time, bought by
+            the token and paid for once per question. Parameters are bought with the same currency,
+            in bulk, before any question arrives. So which is the better buy at a matched bill? Turn
+            the page.
+          </em>
+        </div>
       </div>
 
       <PageNav n={PAGE_N} />

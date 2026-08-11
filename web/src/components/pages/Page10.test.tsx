@@ -319,18 +319,24 @@ describe("Page 10 — step 3 and house style", () => {
     const { container } = render(<Page10 />);
     const article = container.querySelector("article")!;
     const kids = [...article.children];
-    // Last child is the page nav; the handoff card is the only thing between it and
-    // the grid of steps + margin notes — no citation-chip row anywhere.
+    // Last child is the page nav; everything above it is the one grid, and the
+    // handoff card is that grid's last cell rather than a full-width block below
+    // it (page 3's shape, adopted 2026-08-10) — no citation-chip row anywhere.
     expect(kids.at(-1)?.querySelector("a[href*='p/']")).toBeTruthy();
-    expect(kids.at(-2)?.textContent).toMatch(/Turn the page\./);
     // Located by a note rather than by position, so moving the handoff cannot
     // silently retarget this at the wrong element.
     const grid = screen.getAllByText("References")[0].closest("div.grid")!;
+    expect(kids.at(-2)).toBe(grid);
     expect(grid.textContent).toMatch(/Yao et al\. 2023/);
     expect(grid.textContent).toMatch(/Holtzman et al\. 2020/);
     // the References notes live inside the grid; no bare link chips follow it
     expect(grid.querySelector('aside a[href*="arxiv"]')).toBeTruthy();
-    expect(kids.at(-2)?.querySelector("a")).toBeNull();
+    const handoff = screen
+      .getByText(/Everything on pages 5 to 10 spends the same thing/)
+      .closest("div")!;
+    expect([...grid.children].at(-1)).toBe(handoff);
+    expect(handoff.textContent).toMatch(/Turn the page\./);
+    expect(handoff.querySelector("a")).toBeNull();
   });
 
   // Pages 5 to 9 each hand the next one a question. This page's last content sentence
