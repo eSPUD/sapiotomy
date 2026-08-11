@@ -18,14 +18,13 @@ env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-defaults:
-  run:
-    working-directory: web
-
 jobs:
   gate:
     name: Quality gates
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,6 +41,11 @@ jobs:
     name: Deploy to production
     needs: gate
     runs-on: ubuntu-latest
+    # NOTE: these steps run from the REPO ROOT on purpose — do not add
+    # `working-directory: web` here. The Vercel project's Root Directory
+    # setting is `web`, and `vercel build` applies it relative to the CWD. Run
+    # from web/ and the CLI resolves web/web, which builds nothing and ships a
+    # deployment that 404s on every path.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,7 +55,23 @@ jobs:
         run: npm i -g vercel@latest
       - name: Pull Vercel project settings (production)
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Show resolved Root Directory
+        run: node -e "const s=require('./.vercel/project.json').settings||{};console.log('rootDirectory:',JSON.stringify(s.rootDirectory),'framework:',JSON.stringify(s.framework))"
       - name: Build (prebuilt)
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Verify build output is not empty
+        # A misconfigured Root Directory produces a valid-but-empty output dir.
+        # Vercel accepts that deployment and every request then returns
+        # `404: NOT_FOUND`. Fail here instead, where the cause is readable.
+        run: |
+          test -f .vercel/output/config.json || { echo "::error::.vercel/output/config.json missing — vercel build produced no output. Check the Root Directory printed above."; exit 1; }
+          # Next may emit prerendered routes as static HTML, as functions, or
+          # both, so accept either shape. What must never pass is an output
+          # with no app assets at all, which is what a wrong Root Directory
+          # yields and what serves `404: NOT_FOUND` on every path.
+          test -d .vercel/output/static/_next || test -d .vercel/output/functions || {
+            echo "::error::Build output has no _next assets and no functions — the app did not build. Check the Root Directory printed above."; exit 1; }
+          echo "Output files: $(find .vercel/output -type f | wc -l)"
+          find .vercel/output -maxdepth 2 -mindepth 1
       - name: Deploy to production
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
