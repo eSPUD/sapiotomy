@@ -23,7 +23,7 @@ const serif = Source_Serif_4({
 // text of the work is one canonical URL (the landing), so every page points
 // citation_fulltext_html_url there rather than at itself.
 const CITATION_META = {
-  citation_title: "The Story of Inference-Time Scaling: The Training-Time Loop Behind It",
+  citation_title: "The Story of Inference-Time Scaling and the Training-Time loop behind it",
   citation_author: ["Bangalore Lakshman, Shashank", "Eiers, Scott Lawrence"],
   citation_publication_date: "2026/08/10",
   citation_journal_title: "Preprint (submitted to the VISxAI Workshop at IEEE VIS)",

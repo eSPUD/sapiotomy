@@ -4,7 +4,7 @@ import { Reveal } from "@/components/Reveal";
 import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
 
 const CITATION = `@misc{bangalorelakshman2026its,
-  title  = {The Story of Inference-Time Scaling: The Training-Time Loop Behind It},
+  title  = {The Story of Inference-Time Scaling and the Training-Time loop behind it},
   author = {Bangalore Lakshman, Shashank and Eiers, Scott Lawrence},
   year   = {2026},
   note   = {Preprint. Submitted to the VISxAI Workshop at IEEE VIS; not yet peer-reviewed.},
