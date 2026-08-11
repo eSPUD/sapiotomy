@@ -632,6 +632,29 @@ function PythiaChart() {
 
   const { bands, boundaries } = ownershipScan(series.map((s) => s.pts));
 
+  /**
+   * The wash tiles the whole axis; the rail marks only where two curves were
+   * compared.
+   *
+   * The scan can only crown a leader where at least two models were measured,
+   * which here is 8 to 990 out of an axis running 1 to 4096. Drawn at that
+   * extent the washes left 42% of the plot bare, and the two end bands, the
+   * ones whose whole point is that the smallest model owns the cheap end and
+   * the largest owns the dear end, came out the two shortest on the page: the
+   * 12B's was 8% of the width. So each end band now runs out to the axis edge.
+   * The claim survives the extension because outside the compared stretch
+   * there is no rival left on the grid, not a rival that wins: below 8 the
+   * budget does not cover the 2.8B's cheapest run, and past 990 the 2.8B was
+   * not sampled any further. The rail is what says which is which, and the
+   * footnote under the figure says so.
+   */
+  const [X0, X1] = xScale.domain() as [number, number];
+  const drawn = bands.map((b, i) => ({
+    ...b,
+    d0: i === 0 ? X0 : b.x0,
+    d1: i === bands.length - 1 ? X1 : b.x1,
+  }));
+
   // The strip along the bottom that carries the ownership labels and, under
   // them, the handover bars. Nothing else is drawn in it.
   const LABEL_Y = innerH - 22;
@@ -644,11 +667,11 @@ function PythiaChart() {
    * stretch of the axis. Narrow bands push right instead, into the budgets
    * where nothing was left to compare against.
    */
-  const labelX = (b: { idx: number; x0: number; x1: number }) => {
+  const labelX = (b: { idx: number; d0: number; d1: number }) => {
     const half = labelW(`${series[b.idx].label} leads`) / 2;
-    const lo = x(b.x0) + half;
-    const hi = Math.max(x(b.x1) - half, lo);
-    return px(Math.min(Math.max((x(b.x0) + x(b.x1)) / 2, lo), hi));
+    const lo = x(b.d0) + half;
+    const hi = Math.max(x(b.d1) - half, lo);
+    return px(Math.min(Math.max((x(b.d0) + x(b.d1)) / 2, lo), hi));
   };
 
   const title = `GSM8K accuracy against inference FLOPs per question, log x axis, three Pythia models under weighted majority voting. ${series
@@ -660,7 +683,7 @@ function PythiaChart() {
     .map((b) => `the ${series[b.idx].label} leads from ${b.x0.toFixed(0)} to ${b.x1.toFixed(0)}`)
     .join(", ")}. Under the band names, one capped bar per handover spans the budgets where the two leading curves sit within the ${READ_OFF_TOLERANCE} point read-off tolerance, so each crossing is bracketed rather than located: ${boundaries
     .map((h) => `the handover near ${h.at.toFixed(0)} is bracketed from ${h.x0.toFixed(0)} to ${h.x1.toFixed(0)}`)
-    .join("; ")}.`;
+    .join("; ")}. The washes tile the whole axis; the saturated rail along the top of each band marks the stretch where two or more models were measured against each other, which is ${bands[0].x0.toFixed(0)} to ${bands[bands.length - 1].x1.toFixed(0)}.`;
 
   return (
     <ChartFrame
@@ -679,17 +702,20 @@ function PythiaChart() {
           DEEPENS with scale, which separates them in plain greyscale, and the
           rail puts each colour on the page at full strength where a reader can
           actually compare them. */}
-      {bands.map((b) => (
+      {drawn.map((b) => (
         <g key={`wash${b.idx}-${b.x0}`}>
           <rect
             data-testid="ownership-wash"
-            x={x(b.x0)}
+            x={x(b.d0)}
             y={0}
-            width={px(x(b.x1) - x(b.x0))}
+            width={px(x(b.d1) - x(b.d0))}
             height={innerH}
             className={series[b.idx].band}
             opacity={WASH_OPACITY[b.idx] ?? 0.12}
           />
+          {/* the rail is the measured claim: it spans only the budgets where
+              this model was compared against another, which is why the two end
+              bands carry a wash wider than their rail */}
           <rect
             data-testid="ownership-rail"
             x={x(b.x0)}
@@ -701,7 +727,7 @@ function PythiaChart() {
           />
         </g>
       ))}
-      {bands.map((b) => (
+      {drawn.map((b) => (
         <text
           key={`leadlabel${b.idx}-${b.x0}`}
           data-testid="ownership-band"
@@ -758,10 +784,13 @@ function PythiaChart() {
         </text>
       ))}
 
+      {/* The bold segment follows the wash, not the rail: a curve that went
+          thin over the cheap end would say the 410M stops leading there, when
+          what stops is the comparison. */}
       <defs>
-        {bands.map((b, i) => (
+        {drawn.map((b, i) => (
           <clipPath key={`clip${i}`} id={`pythia-band-${i}`}>
-            <rect x={x(b.x0)} y={0} width={px(x(b.x1) - x(b.x0))} height={innerH} />
+            <rect x={x(b.d0)} y={0} width={px(x(b.d1) - x(b.d0))} height={innerH} />
           </clipPath>
         ))}
       </defs>
@@ -771,7 +800,7 @@ function PythiaChart() {
       {series.map((s) => (
         <path key={`ghost${s.label}`} d={path(s.pts)} fill="none" className={s.stroke} strokeWidth={1.25} opacity={0.35} />
       ))}
-      {bands.map((b, i) => (
+      {drawn.map((b, i) => (
         <path
           key={`lead${i}`}
           data-testid="lead-segment"
@@ -1268,15 +1297,19 @@ export function Page11() {
               the bottom say how firmly each handover is placed, and they are wide: across each bar
               the two leading curves differ by less than the ±3 points this figure was read to, so
               the crossing sits somewhere in the bar rather than on the edge the wash has to draw.
-              The second bar runs past the end of the 12B&rsquo;s band, so the order of the handoffs
-              is what this chart shows, not the budget at which the 12B takes over. This is a
+              The second bar runs to the last budget where two models were still being compared, so
+              the order of the handoffs is what this chart shows, not the budget at which the 12B
+              takes over. This is a
               2024-era family and a wide one, the 2.8B about 7× the 410M and the 12B about 29×, so
               the colours carry rank, not fixed multiples.
             </figcaption>
             <p className="text-xs text-ink-muted">
               read off the paper&rsquo;s figure by eye (±3 points) and replotted as accuracy; two
-              of their five model sizes omitted for legibility. Bands stop where only one model was
-              still measured: with nothing to compare against there is no leader to claim
+              of their five model sizes omitted for legibility. The washes tile the axis, but only
+              the rail on top of each band was measured against a rival: left of the 410M&rsquo;s
+              rail the budget does not cover the 2.8B&rsquo;s cheapest run, and right of the
+              12B&rsquo;s the 2.8B was not sampled any further. Out there the wash names the last
+              model standing, not a winner over a rival
             </p>
           </figure>
         </section>
