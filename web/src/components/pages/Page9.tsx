@@ -183,6 +183,88 @@ function AuditSurface({ prm }: { prm: NonNullable<typeof PAGE9.graders.prm> }) {
   );
 }
 
+/* The break-count histogram, sized to sit inline under beat two's paragraph. */
+const B_W = 400;
+const B_H = 168;
+const B_M = { top: 20, right: 12, bottom: 40, left: 34 };
+const B_IW = B_W - B_M.left - B_M.right;
+const B_IH = B_H - B_M.top - B_M.bottom;
+
+/**
+ * How many false steps a wrong chain actually contains, which the median share-sound
+ * figure above cannot show. The median is a statement about WHERE the break falls;
+ * this is a statement about HOW MANY there are, and the two answer different
+ * questions about the same 44 chains.
+ *
+ * The shape is the argument: the distribution is not a spread around a typical value,
+ * it is a spike. Nearly three chains in four go wrong in exactly one place, which is
+ * the fact that makes step-level grading worth its cost at all: if a wrong chain were
+ * wrong throughout, there would be nothing for a step grader to localise and outcome
+ * grading would lose nothing by throwing the chain away whole.
+ *
+ * `breaksPerChain` and `shareWithOneFalseStep` were both loaded by lib/page09.ts and
+ * drawn nowhere until this figure. n is small (44) and printed on the figure rather
+ * than left to the caption, because a five-bar chart invites more confidence than 44
+ * chains can pay for.
+ */
+function BreakCounts() {
+  const loc = PAGE9.localisation;
+  const bins = Object.entries(loc.breaksPerChain)
+    .map(([k, count]) => ({ n: Number(k), count }))
+    .sort((a, b) => a.n - b.n);
+  const total = bins.reduce((sum, b) => sum + b.count, 0);
+  const peak = Math.max(...bins.map((b) => b.count));
+  const bw = B_IW / bins.length;
+
+  return (
+    <ChartFrame
+      title={`How many false steps each of the ${total} localisable wrong chains contains. ${bins
+        .map((b) => `${b.count} chain${b.count === 1 ? "" : "s"} with ${b.n} false step${b.n === 1 ? "" : "s"}`)
+        .join(", ")}. Most wrong chains go wrong in exactly one place.`}
+      width={B_W}
+      height={B_H}
+      margin={B_M}
+      xLabel="false steps in the chain"
+      yLabel="chains"
+    >
+      {bins.map((b, i) => {
+        const h = (b.count / peak) * B_IH;
+        const hot = b.n === 1;
+        return (
+          <g key={b.n}>
+            <rect
+              x={i * bw + bw * 0.18}
+              y={B_IH - h}
+              width={bw * 0.64}
+              height={h}
+              className={hot ? "fill-compute" : "fill-ink opacity-30"}
+            />
+            <text
+              x={i * bw + bw / 2}
+              y={B_IH - h - 5}
+              textAnchor="middle"
+              className={`text-[11px] font-semibold ${hot ? "fill-compute" : "fill-ink-muted"}`}
+            >
+              {b.count}
+            </text>
+            <text
+              x={i * bw + bw / 2}
+              y={B_IH + 15}
+              textAnchor="middle"
+              className="fill-ink-muted text-[11px]"
+            >
+              {b.n}
+            </text>
+          </g>
+        );
+      })}
+      <text x={B_IW} y={10} textAnchor="end" className="fill-ink-muted text-[10px]">
+        n = {total} chains
+      </text>
+    </ChartFrame>
+  );
+}
+
 export function Page9() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
@@ -853,6 +935,29 @@ export function Page9() {
                 </>
               ) : null}
             </p>
+
+            {/* The median says where the break falls. This says how many there are, and
+                the spike is what makes localising worth doing at all. */}
+            <section
+              aria-label="How many false steps each localisable wrong chain contains"
+              className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+            >
+              <BreakCounts />
+              <p className="text-sm text-ink-muted">
+                And it usually breaks <strong className="text-ink">once</strong>. Of those{" "}
+                {loc.nLocalisable} chains,{" "}
+                <strong className="text-ink">{loc.breaksPerChain["1"]}</strong> contain exactly one
+                false step
+                {loc.shareWithOneFalseStep !== null ? (
+                  <> ({pct(loc.shareWithOneFalseStep, 0)} of them)</>
+                ) : null}
+                . That is the fact the median cannot carry, and it is the whole case for grading
+                steps: a chain that goes wrong in one place has a place to find, while a chain that
+                was wrong throughout would give a step grader nothing to localise and would cost
+                outcome grading nothing to discard whole. On {loc.nLocalisable} chains, read the
+                shape and not the digits.
+              </p>
+            </section>
 
             {sel && !sel.helps ? (
               <p className="text-sm text-ink-muted">

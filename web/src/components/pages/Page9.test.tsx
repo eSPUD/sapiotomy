@@ -343,6 +343,49 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     }
   });
 
+  /**
+   * The median share-sound figure says WHERE a chain breaks. It cannot say how
+   * many times, and until this figure shipped the run's own answer to that was
+   * loaded by lib/page09.ts and drawn nowhere. These assertions keep it drawn,
+   * keep it honest about n, and keep every bar tied to the run rather than to a
+   * number typed into the page.
+   */
+  it("draws how many false steps a wrong chain contains, not just where the first one is", () => {
+    render(<Page9 />);
+    const loc = PAGE9.localisation;
+    const fig = screen.getByRole("img", {
+      name: /how many false steps each of the .* localisable wrong chains contains/i,
+    });
+    // Every bin in the run reaches the figure's description; none is quietly dropped.
+    for (const [n, count] of Object.entries(loc.breaksPerChain)) {
+      expect(fig.getAttribute("aria-label")).toContain(
+        `${count} chain${count === 1 ? "" : "s"} with ${n} false step${n === "1" ? "" : "s"}`,
+      );
+    }
+  });
+
+  it("prints n on the break-count figure, because 44 chains is a small n", () => {
+    render(<Page9 />);
+    const total = Object.values(PAGE9.localisation.breaksPerChain).reduce((a, b) => a + b, 0);
+    expect(screen.getByText(`n = ${total} chains`)).toBeInTheDocument();
+    // The bins have to account for the localisable population exactly, or the
+    // figure is drawing a different set of chains from the sentence above it.
+    expect(total).toBe(PAGE9.localisation.nLocalisable);
+  });
+
+  it("reads the break-count spike off the run rather than asserting a shape", () => {
+    render(<Page9 />);
+    const loc = PAGE9.localisation;
+    const p = screen.getByText(/that is the fact the median cannot carry/i);
+    expect(p.textContent).toContain(String(loc.breaksPerChain["1"]));
+    if (loc.shareWithOneFalseStep !== null) {
+      expect(p.textContent).toContain(pct(loc.shareWithOneFalseStep, 0));
+      // The page says wrong chains usually break once. If a rerun ever makes that
+      // false, this fails rather than leaving the claim standing over new data.
+      expect(loc.shareWithOneFalseStep).toBeGreaterThan(0.5);
+    }
+  });
+
   it("reports the selector rung as the null it is", () => {
     render(<Page9 />);
     if (PAGE9.selection && !PAGE9.selection.helps) {
