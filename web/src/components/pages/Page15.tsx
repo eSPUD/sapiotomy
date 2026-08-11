@@ -414,6 +414,34 @@ const TRAINED_CLEAR_PTS =
   (REL.trained.points[R_HOT].reliability - R_BEST_OTHER[R_HOT]) * 100;
 
 /**
+ * Which line the trained scorer is actually being charged against at each column.
+ * The reader who moves the dial is owed the name, not just the gap: "clear of what"
+ * is half the claim, and on this run the answer happens to be the same selector at
+ * every temperature, which is itself worth being able to see.
+ */
+const R_BEST_OTHER_LINE = REL.temperatures.map((t, i) =>
+  R_OTHERS.reduce((a, b) => (b.points[i].reliability > a.points[i].reliability ? b : a)),
+);
+
+/** The trained scorer's lead over the best alternative, in points, at one column. */
+const gapAt = (i: number) => (REL.trained.points[i].reliability - R_BEST_OTHER[i]) * 100;
+
+/**
+ * The sweep's coldest column is the one that makes the page's point, so it is where
+ * the dial starts: there the trained scorer is BEHIND, and a reader who drags from
+ * there watches a deficit turn into a lead without any judge getting better. If a
+ * rerun ever removes that inversion, the crossing the figure is built around is gone
+ * and the module says so rather than opening on a column that no longer surprises.
+ */
+const R_START = 0;
+if (gapAt(R_START) >= 0) {
+  throw new Error(
+    "page 15's reliability dial opens on the column where the trained scorer trails, and on " +
+      "this run it leads there, so the sweep no longer crosses",
+  );
+}
+
+/**
  * Push overlapping right-hand labels apart. Three selectors land within a point
  * of each other at the hottest column, and stacked-on-top-of-each-other labels
  * would read as a rendering fault rather than as a tie.
@@ -443,7 +471,7 @@ function dodge(ys: number[], gap = 13): number[] {
  * the two drawn to be followed: the trained scorer, flat, and the unexamined
  * chain, falling furthest. The three in between are the field they move against.
  */
-function ReliabilitySweep() {
+function ReliabilitySweep({ tempIndex }: { tempIndex: number }) {
   const trained = REL.trained;
   // Five labels at the right edge, three of them inside a few points of each
   // other, read as a rendering fault. The two model-as-judge lines finish on the
@@ -489,7 +517,7 @@ function ReliabilitySweep() {
           (l) =>
             `${l.label}: ${l.points.map((p) => `${pct(p.reliability)} at temperature ${p.temperature}`).join(", ")}`,
         )
-        .join(". ")}. Every judge that is a model asked to judge decays; the trained reward model does not.`}
+        .join(". ")}. Every judge that is a model asked to judge decays; the trained reward model does not. The dial is on temperature ${REL.temperatures[tempIndex]}, where the trained reward model is ${Math.abs(gapAt(tempIndex)).toFixed(0)} points ${gapAt(tempIndex) >= 0 ? "clear of" : "behind"} ${R_BEST_OTHER_LINE[tempIndex].label}, the best of the rest.`}
       width={R_W}
       height={R_H}
       margin={R_M}
@@ -517,34 +545,59 @@ function ReliabilitySweep() {
         ].join(" ")}
       />
 
-      {/* The wedge alone is a shape; this gives it a number, at the column where the
-          page's sentence is read. */}
-      <g>
-        <line
-          x1={rx(T_MAX) - 16}
-          x2={rx(T_MAX) - 16}
-          y1={ry(trained.points[R_HOT].reliability)}
-          y2={ry(R_BEST_OTHER[R_HOT])}
-          className="stroke-compute"
-          strokeWidth={1.5}
-        />
-        <text
-          x={rx(T_MAX) - 22}
-          y={(ry(trained.points[R_HOT].reliability) + ry(R_BEST_OTHER[R_HOT])) / 2}
-          textAnchor="end"
-          className="fill-compute text-[10px] font-semibold"
-        >
-          {TRAINED_CLEAR_PTS.toFixed(0)} points clear
-        </text>
-      </g>
+      {/* The wedge alone is a shape; this gives it a number, at the column the reader
+          has the dial on. It is drawn after the wedge and before the lines so the
+          measured points stay on top of their own measurement. */}
+      {(() => {
+        const gx = rx(REL.temperatures[tempIndex]);
+        const yT = ry(trained.points[tempIndex].reliability);
+        const yO = ry(R_BEST_OTHER[tempIndex]);
+        const gap = gapAt(tempIndex);
+        // Anchor the label away from the plot edge, or it clips at either end.
+        const leftHalf = gx < R_IW / 2;
+        return (
+          <g>
+            <line
+              x1={gx}
+              x2={gx}
+              y1={0}
+              y2={R_IH}
+              className="stroke-ink-muted"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              strokeOpacity={0.7}
+            />
+            <line
+              x1={gx}
+              x2={gx}
+              y1={yT}
+              y2={yO}
+              className={gap >= 0 ? "stroke-compute" : "stroke-wrong"}
+              strokeWidth={3}
+            />
+            <text
+              x={gx + (leftHalf ? 8 : -8)}
+              y={(yT + yO) / 2 + 3}
+              textAnchor={leftHalf ? "start" : "end"}
+              className={`text-[10px] font-semibold ${gap >= 0 ? "fill-compute" : "fill-wrong"}`}
+            >
+              {gap >= 0
+                ? `${gap.toFixed(0)} points clear`
+                : `${Math.abs(gap).toFixed(0)} points behind`}
+            </text>
+          </g>
+        );
+      })()}
 
-      {REL.temperatures.map((t) => (
+      {REL.temperatures.map((t, i) => (
         <text
           key={t}
           x={rx(t)}
           y={R_IH + 16}
           textAnchor="middle"
-          className="fill-ink-muted text-[11px]"
+          className={
+            i === tempIndex ? "fill-ink text-[11px] font-semibold" : "fill-ink-muted text-[11px]"
+          }
         >
           {t.toFixed(1)}
         </text>
@@ -563,15 +616,26 @@ function ReliabilitySweep() {
               strokeOpacity={line.trained || falls ? 1 : 0.6}
               points={line.points.map((p) => `${rx(p.temperature)},${ry(p.reliability)}`).join(" ")}
             />
-            {line.points.map((p) => (
-              <circle
-                key={p.temperature}
-                cx={rx(p.temperature)}
-                cy={ry(p.reliability)}
-                r={line.trained || falls ? 3.5 : 2}
-                className={fill}
-              />
-            ))}
+            {line.points.map((p, i) => {
+              // The two the dial is comparing get a ring at the selected column, so
+              // the gap bar is visibly drawn between two measured points and not
+              // between a point and an abstraction.
+              const charged =
+                i === tempIndex &&
+                (line.trained || line.selector === R_BEST_OTHER_LINE[tempIndex].selector);
+              return (
+                <circle
+                  key={p.temperature}
+                  cx={rx(p.temperature)}
+                  cy={ry(p.reliability)}
+                  r={charged ? 5 : line.trained || falls ? 3.5 : 2}
+                  className={fill}
+                  stroke={charged ? "currentColor" : undefined}
+                  strokeWidth={charged ? 1.5 : undefined}
+                  strokeOpacity={charged ? 1 : undefined}
+                />
+              );
+            })}
           </g>
         );
       })}
@@ -602,6 +666,7 @@ export function Page15() {
   const h = huang.fit!.params;
 
   const [budgetIndex, setBudgetIndex] = useState(0);
+  const [tempIndex, setTempIndex] = useState(R_START);
 
   return (
     <article className="flex flex-col gap-6">
@@ -846,9 +911,37 @@ export function Page15() {
           </p>
           <section
             aria-label="Reliability of five ways of picking an answer, against sampling temperature"
-            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
           >
-            <ReliabilitySweep />
+            <Slider
+              label="Sampling temperature"
+              min={0}
+              max={REL.temperatures.length - 1}
+              value={tempIndex}
+              format={(i) => REL.temperatures[i].toFixed(2)}
+              ticks={REL.temperatures.map((t, i) => i)}
+              onChange={(v) => {
+                setTempIndex(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
+            <ReliabilitySweep tempIndex={tempIndex} />
+            <p className="text-sm text-ink-muted">
+              At <strong className="text-ink">{REL.temperatures[tempIndex].toFixed(2)}</strong>, the
+              trained scorer is{" "}
+              <strong className={gapAt(tempIndex) >= 0 ? "text-ink" : "text-wrong"}>
+                {Math.abs(gapAt(tempIndex)).toFixed(0)} points{" "}
+                {gapAt(tempIndex) >= 0 ? "clear of" : "behind"}
+              </strong>{" "}
+              {R_BEST_OTHER_LINE[tempIndex].label}, the best of everything else at this setting.{" "}
+              {gapAt(tempIndex) < 0
+                ? "Start here and the trained scorer looks like the wrong pick. Turn the dial up."
+                : null}
+            </p>
+            <p className="text-xs text-ink-muted">
+              The dial moves between the four settings this run measured. It does not interpolate,
+              because nothing was measured between them.
+            </p>
           </section>
           <p className="text-ink-muted">
             Temperature buys the candidate diversity page 8 was selling, and the same knob blinds
@@ -875,7 +968,10 @@ export function Page15() {
 
         <div className="flex flex-col gap-6">
           <Note kicker="Try it">
-            <p>Follow one judge left to right, then find the line that never moves.</p>
+            <p>
+              Turn the temperature up and watch the trained scorer go from behind to clear without
+              ever getting better.
+            </p>
           </Note>
         </div>
 

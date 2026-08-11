@@ -190,6 +190,84 @@ describe("Page 15 (when reasoning breaks) component", () => {
     ).toBeInTheDocument();
   });
 
+  /**
+   * The dial is the page's answer to its own sentence, that reliability "is a reading
+   * taken at a setting". Until it shipped, the page asserted that and then showed a
+   * static chart, which is exactly the shape it accuses page 8 of. These assertions
+   * keep the dial reading off the run, keep it honest that only four settings were
+   * measured, and keep the one column where the trained scorer TRAILS reachable,
+   * because that column is the whole crossing.
+   */
+  const tempDial = () => screen.getByRole("slider", { name: /sampling temperature/i });
+  const relFig = () => screen.getByRole("img", { name: /against sampling temperature/i });
+
+  it("hands the reader the temperature knob the prose names", () => {
+    render(<Page15 />);
+    const dial = tempDial();
+    expect(dial).toBeInTheDocument();
+    // One stop per measured column, and no stops in between.
+    expect(dial).toHaveAttribute("min", "0");
+    expect(dial).toHaveAttribute("max", String(PAGE17.reliability.temperatures.length - 1));
+    expect(screen.getByText(/does not interpolate, because nothing was measured between/i))
+      .toBeInTheDocument();
+  });
+
+  it("opens on the column where the trained scorer is behind, which is the crossing", () => {
+    render(<Page15 />);
+    const rel = PAGE17.reliability;
+    const others = rel.lines.filter((l) => !l.trained);
+    const gapAt = (i: number) =>
+      (rel.trained.points[i].reliability -
+        Math.max(...others.map((o) => o.points[i].reliability))) *
+      100;
+    // The run must still cross, or the figure is built around something that is gone.
+    expect(gapAt(0)).toBeLessThan(0);
+    expect(gapAt(rel.temperatures.length - 1)).toBeGreaterThan(0);
+    expect(tempDial()).toHaveValue("0");
+    // Twice on purpose: once annotating the figure, once in the sentence under it.
+    // If those two ever quote different numbers for the same column the page is
+    // arguing with itself, so the count is asserted rather than the presence.
+    expect(
+      screen.getAllByText(new RegExp(`${Math.abs(gapAt(0)).toFixed(0)} points\\s+behind`, "i")),
+    ).toHaveLength(2);
+  });
+
+  it("turns the deficit into a lead as the reader turns the dial up", () => {
+    render(<Page15 />);
+    const rel = PAGE17.reliability;
+    const others = rel.lines.filter((l) => !l.trained);
+    const hot = rel.temperatures.length - 1;
+    const gapHot =
+      (rel.trained.points[hot].reliability -
+        Math.max(...others.map((o) => o.points[hot].reliability))) *
+      100;
+    fireEvent.change(tempDial(), { target: { value: String(hot) } });
+    // Three, and the third is the point. Two are the dial's own readout (figure
+    // annotation plus the sentence under it); the third is the page's standing
+    // "it finishes N points clear" paragraph, which was written before the dial
+    // existed. Driving the dial to the hot column must land on exactly the number
+    // that paragraph already quotes, or the reader can produce a figure that
+    // contradicts the prose beside it.
+    expect(
+      screen.getAllByText(new RegExp(`${gapHot.toFixed(0)} points\\s+clear`, "i")),
+    ).toHaveLength(3);
+    // The readout is not the only thing that moves: the figure's own description
+    // has to follow the dial, or a screen-reader user gets a frozen chart.
+    expect(relFig().getAttribute("aria-label")).toContain(
+      `The dial is on temperature ${rel.temperatures[hot]}`,
+    );
+  });
+
+  it("names what the trained scorer is being charged against, not just the gap", () => {
+    render(<Page15 />);
+    const rel = PAGE17.reliability;
+    const others = rel.lines.filter((l) => !l.trained);
+    const best = others.reduce((a, b) => (b.points[0].reliability > a.points[0].reliability ? b : a));
+    expect(screen.getByText(/the best of everything else at this setting/i).textContent).toContain(
+      best.label,
+    );
+  });
+
   it("makes the crossing the claim rather than any one column", () => {
     render(<Page15 />);
     // The crossing, stated as one: mid-pack at the cold end, clear at the hot end,
