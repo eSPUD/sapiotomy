@@ -25,9 +25,12 @@
  * 16 sampled chains solves 55%: +12 points, p = 0.0075. Against one SAMPLED
  * chain the same vote gains only 4 points and does not resolve (p = 0.39),
  * because sampling at T=0.3 is already worth something on its own. The page
- * quotes the greedy contrast because that is what "improves on chain of thought"
- * means here, and the footnote carries the other one. Never quote the 12 and the
- * sampled baseline in the same breath.
+ * leads on the greedy contrast because that is what "improves on chain of
+ * thought" means here, and the sampled contrast is the guard on it. The guard
+ * used to be a margin note; it is now the last sentence of step 3's callout, so
+ * the +12 and the thing that qualifies it are read in one pass. THE TWO MUST
+ * STAY TOGETHER: a reader who takes the 12 without the 4 credits all of it to
+ * counting, which is the one misreading this page exists to prevent.
  *
  * Layout: pages 5 and 6's shell. One reading column of numbered steps, each
  * beside its own margin note. Every step that carries a figure opens on a
@@ -86,10 +89,18 @@
  *   right answer and the vote threw it away. That is page 8's whole subject and
  *   it is deliberately not drawn here (see docs/page_8_refactor.md).
  *
- * The apparatus is in the margin, one note per step, not in a footer. The
- * three-paragraph tail this page used to end on was doing the notebook's job: a
- * reader who wants the method downloads the run. A note may say what a reader
- * cannot work out from the figure beside it, and nothing else.
+ * The apparatus is in the margin, not in a footer. The three-paragraph tail this
+ * page used to end on was doing the notebook's job: a reader who wants the
+ * method downloads the run. A note may say what a reader cannot work out from
+ * the figure beside it, and nothing else.
+ *
+ * NOT every step has a note, and steps 3, 4 and 5 must not grow one back. Their
+ * notes were guards on how to read a figure — how much of the +12 is counting,
+ * and that the fork is two lines rather than two experiments — which is the
+ * reader's first question about the figure and not a footnote to it. Both are
+ * now in the reading column: step 3's closes its headline callout, step 4's sets
+ * up its chart before the reader sees it. A section with no note beside it MUST
+ * carry `lg:col-start-1`, or the next one flows into the note column.
  *
  * Load-bearing and easy to lose:
  *   · the diversity readout is measured on 30 items, not 100. It is a count of
@@ -767,8 +778,11 @@ export function Page7() {
                 The two methods score the same on most of these problems, so the test looks only at
                 the {F2.gain.fixed + F2.gain.broken} where they differ: the vote wins{" "}
                 {F2.gain.fixed} of those and loses {F2.gain.broken}. A split that lopsided is
-                unlikely to be luck ({pLabel(F2.gain.p)}, exact McNemar). Part of the gain is
-                sampling rather than counting, and the margin says how much.
+                unlikely to be luck ({pLabel(F2.gain.p)}, exact McNemar). Read the +
+                {F2.gain.gain_pts.toFixed(0)} as sampling plus counting: against one{" "}
+                <em>sampled</em> chain rather than a greedy one, the vote gains{" "}
+                {F2.gainVsOneSample.pts.toFixed(0)} points, which this run cannot tell from chance (
+                {pLabel(F2.gainVsOneSample.p)}).
               </span>
             </div>
             <div className="grid gap-3 text-xs text-ink-muted sm:grid-cols-2">
@@ -813,20 +827,9 @@ export function Page7() {
             </p>
           </div>
         </section>
-        {/* The honesty guard on the +12, down to the one measurement the chart cannot
-            show. The callout beside the chart already names the greedy baseline and
-            says part of the gain is sampling, so repeating either here was three
-            sentences of throat-clearing in front of the number that matters. */}
-        <Note kicker="How much of that is the counting">
-          <p>
-            Read the +{F2.gain.gain_pts.toFixed(0)} as sampling plus counting. Against one{" "}
-            <em>sampled</em> chain rather than a greedy one, the vote gains{" "}
-            {F2.gainVsOneSample.pts.toFixed(0)} points, which this run cannot tell from chance ({pLabel(F2.gainVsOneSample.p)}).
-          </p>
-        </Note>
-
-        {/* Step 4 */}
-        <section className="flex min-w-0 flex-col gap-3">
+        {/* Step 4. Starts a new grid row explicitly: step 3 has no margin note, so
+            without this the section would flow into the note column. */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">
             4. And what it costs
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
@@ -836,8 +839,10 @@ export function Page7() {
           <p className="text-ink-muted">
             Sixteen chains cost sixteen times the tokens. So what if you do not have sixteen times
             the budget? Below, one fixed budget of {tokens(M.split.budget_total)} tokens is divided
-            between the chains, and the same chains are run again with no budget at all. The two
-            lines start as one run and end a long way apart.
+            between the chains, and the same chains are run again with no budget at all. Read it as
+            two lines, not two experiments: at every point on the x axis the model gets the same
+            number of chains, and the only thing that changes between the lines is whether it is
+            allowed to finish them. They start as one run and end a long way apart.
           </p>
           <section
             aria-label="The same budget split N ways"
@@ -863,14 +868,6 @@ export function Page7() {
             </p>
           </section>
         </section>
-        <Note kicker="Read it as">
-          <p>
-            Two lines, not two experiments. At every point on the x axis the model gets the same
-            number of chains, and the only thing that changes between the lines is whether it is
-            allowed to finish them.
-          </p>
-        </Note>
-
         {/* Step 5. Page 12's closing shape: prose at full width in the reading
             column, no card and no display number, and the limits brought in from
             the margin. They were three caveats in 9px grey beside the one claim
