@@ -85,11 +85,16 @@ export default function Home() {
       {/* About the series */}
       <section className="mt-16 flex flex-col gap-8">
         <div className="flex flex-col gap-3">
-          <h2 className="text-2xl font-bold text-ink">How to read it</h2>
+          <h2 className="text-2xl font-bold text-ink">How to explore</h2>
           <p className="text-justify text-sm hyphens-auto text-ink-muted">
             Chapters stand alone but build in order. Every figure is live: sliders re-derive the
             curves, diagrams answer clicks, and the demos sample from a real model when one is
             available; canned transcripts otherwise.
+          </p>
+          <p className="text-justify text-sm hyphens-auto text-ink-muted">
+            Several chapters ship a downloadable Python notebook, linked at the top of the page: the
+            harness, the model&apos;s own generations, and the data behind the figures, so you can
+            re-derive every plot yourself.
           </p>
           <p className="text-justify text-sm hyphens-auto text-ink-muted">
             It is written for undergraduate students and other learners meeting these ideas for the
