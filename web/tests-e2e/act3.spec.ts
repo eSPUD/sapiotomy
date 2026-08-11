@@ -15,13 +15,13 @@ test.describe("Act 3 (pages 12–16)", () => {
     await expect(page.getByRole("link", { name: /^Page 16 →/ })).toBeVisible();
   });
 
-  test("Page 16 closes the deck: one axis, twelve questions, two open items", async ({ page }) => {
+  test("Page 16 closes the deck: one axis, ten questions, scrambled options", async ({ page }) => {
     await page.goto("/p/16");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Wrap-Up");
-    await expect(page.getByRole("group", { name: /of 12/ })).toHaveCount(12);
+    await expect(page.getByRole("group", { name: /of 10/ })).toHaveCount(10);
 
     // The check grades as it goes: answering one question resolves it in place.
-    const first = page.getByRole("group", { name: /^1 of 12/ });
+    const first = page.getByRole("group", { name: /^1 of 10/ });
     await first.getByRole("radio").first().check();
     await expect(first.getByText(/Right\.|Not quite\./)).toBeVisible();
 
@@ -30,6 +30,29 @@ test.describe("Act 3 (pages 12–16)", () => {
     // match is a case-insensitive substring.
     await expect(page.getByRole("link", { name: /^Page 17 →/ })).toHaveCount(0);
     await expect(page.getByText("The End", { exact: true })).toBeVisible();
+  });
+
+  /**
+   * The options are re-scrambled on every load. This is the one assertion that
+   * needs a real browser: jsdom can confirm the effect runs, but only a genuine
+   * reload sequence shows that a reader who refreshes gets a different order.
+   *
+   * Reloading a handful of times and requiring the order to change at least once
+   * keeps it from being flaky: four options have 24 orders, so ten independent
+   * loads all landing on the authored one is not something that happens.
+   */
+  test("Page 16 re-scrambles the quiz options on every load", async ({ page }) => {
+    const readFirstQuestion = async () => {
+      await page.goto("/p/16");
+      const first = page.getByRole("group", { name: /^1 of 10/ });
+      await expect(first).toBeVisible();
+      return (await first.getByRole("radio").all()).length > 0
+        ? (await first.locator("label").allInnerTexts()).join("|")
+        : "";
+    };
+    const seen = new Set<string>();
+    for (let i = 0; i < 10; i++) seen.add(await readFirstQuestion());
+    expect(seen.size).toBeGreaterThan(1);
   });
 
   test("preprint sources are visibly flagged", async ({ page }) => {

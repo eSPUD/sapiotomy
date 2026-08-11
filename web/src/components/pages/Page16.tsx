@@ -26,21 +26,29 @@
  * them, and the module refuses to build the ladder at all if those runs stop
  * agreeing about how many problems they saw.
  *
- * SECTION 2 IS THE CONCEPT CHECK. Twelve questions, one per page, every one
+ * SECTION 2 IS THE CONCEPT CHECK. Ten questions, every one
  * about a mechanism rather than a magnitude: which failure a second pass can
  * reach, why a vote needs disagreement, why coverage is not accuracy, what a
  * run is entitled to claim at p = 0.45. The numbers in the stems are
  * interpolated from the measured modules, so a re-run cannot leave a question
  * quoting a figure the deck no longer draws. Each question resolves as it is
  * answered and says which page it came from, so a miss is a pointer rather than
- * a mark.
+ * a mark. The options are re-scrambled on every load and on every Start over
+ * (Quiz.tsx), so position never becomes the tell.
  *
- * SECTION 3 IS WHAT THE DECK DID NOT SETTLE, and it is deliberately last. Two
- * items, both of them live: every accuracy number here is discounted by
- * contamination we cannot size, and page 15's closing question about whether
- * the chain is the real reason is not answered anywhere in these sixteen pages.
- * The deck used to have a page for the second one; it was cut, and the honest
- * move is to say the question is open rather than to quietly stop raising it.
+ * It was twelve questions, one per page, until 2026-08-10. Pages 8 and 11 lost
+ * theirs, so it is ten and the one-per-page claim is gone from the copy with
+ * them; if a question is ever added back, put it where its page falls in the
+ * order, since the section still reads in the deck's order.
+ *
+ * THE PAGE NO LONGER CLOSES ON WHAT IT DID NOT SETTLE. Section 3 carried two
+ * open items, the contamination discount and page 15's question about whether
+ * the chain is the real reason, and was cut on 2026-08-10 by request. Two things
+ * that outlived it and should not be quietly dropped as well: SUBMISSION.md
+ * still says this page closes on those two items and still says the
+ * contamination discount is stated on pages 15 AND 16, and the closing sentence
+ * below still ends the deck on the chain not being shown to be the reason, which
+ * is now the only place on this page that says so.
  *
  * NO NEW DATA. This page loads nothing of its own. If a number here disagrees
  * with the page it came from, the deck is contradicting itself in front of the
@@ -288,8 +296,8 @@ export function Page16() {
         under the hood. Reasoning turned out to be{" "}
         <strong className="text-ink">one knob that can be turned many different ways</strong>, and
         that can even be moved from one axis to another. Here is every lever on the first axis,
-        measured on the same problems the pages showed you. Then twelve questions, to see whether
-        the mechanisms landed rather than whether the numbers stuck.
+        measured on the same problems the pages showed you. Then ten questions, to see whether the
+        mechanisms landed rather than whether the numbers stuck.
       </p>
 
       <div className="flex flex-col gap-3">
@@ -389,63 +397,20 @@ export function Page16() {
 
       <div className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-ink">
-          2. Twelve questions
+          2. Ten questions
           <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
             concepts, not numbers
           </span>
         </h2>
         <p className="max-w-2xl text-ink">
-          One per page, in the deck&apos;s order. Each answers itself as soon as you pick, and says
-          which page it came from. Nothing here needs a number memorised: where a figure appears it
-          is the setting the question is asked in, not the thing being asked.
+          In the deck&apos;s order. Each answers itself as soon as you pick, and says which page it
+          came from. The options are shuffled on every visit, so where an answer sat last time tells
+          you nothing. Nothing here needs a number memorised: where a figure appears it is the
+          setting the question is asked in, not the thing being asked.
         </p>
         <Quiz questions={QUIZ} onAnswer={() => recordInteraction(PAGE_N)} />
       </div>
 
-      <div className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold text-ink">3. What this deck did not settle</h2>
-        <p className="max-w-2xl text-ink">
-          Two things are open, and both of them reach backwards over everything above.
-        </p>
-        <div className="flex max-w-2xl flex-col gap-4">
-          <div className="rounded-lg border-l-4 border-wrong bg-wrong/10 p-4 text-sm text-ink">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              every number is discounted
-            </p>
-            <p className="mt-2">
-              Every accuracy number in this deck was measured on problems the model may already
-              have seen. A benchmark is published text and published text is what the next model
-              trains on, so a score can be reciting the test rather than reasoning through it. Here
-              is the size of it. On AIME 2025, released after these models trained, reasoning
-              models scored 7 to 30 points below their 1983 to 2024 averages, and a conventional
-              model fell from 40% to 1%.{" "}
-              <a
-                href="https://arxiv.org/abs/2504.00294"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline decoration-grid underline-offset-2 hover:text-ink"
-              >
-                Balachandran et al. 2025
-              </a>
-              . That discounts the ladder above and the frontier scores of Act 3 alike, and it does
-              not tell you by how much, which is the uncomfortable part.
-            </p>
-          </div>
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-sm text-ink">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              and the chain may not be the reason
-            </p>
-            <p className="mt-2">
-              Every lever above reads the chain and takes it for what it says it is: the working
-              that produced the answer. Whether that is true is a separate question, and this deck
-              does not answer it. It is worth knowing that{" "}
-              {pct(PAGE17.readable.shareUnjudged, 0)} of the steps in real chains state nothing a
-              checker can compute, so for most of the text there is nothing to hold it to from the
-              inside.
-            </p>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
         The one sentence to leave with: a model can get dramatically better answers by thinking

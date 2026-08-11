@@ -31,9 +31,25 @@ import { Page16 } from "./Page16";
  * a screenshot, so they are pinned here.
  */
 
-// Anchored: an unanchored /1 of 12/ also matches "11 of 12" and "12 of 12".
-const q1 = () => screen.getByRole("group", { name: /^1 of 12/ });
+// Anchored: an unanchored /1 of 10/ also matches "10 of 10".
+const q1 = () => screen.getByRole("group", { name: /^1 of 10/ });
 const optionsIn = (fieldset: HTMLElement) => within(fieldset).getAllByRole("radio");
+
+/**
+ * The radio for one authored option, found by its TEXT and never by its
+ * position. Quiz.tsx re-scrambles the option order on every mount, so an index
+ * into `q.options` says nothing about which radio is where on screen. A test
+ * that clicked `radios[keyIndex]` would pass or fail by luck.
+ */
+const radioFor = (fieldset: HTMLElement, text: string): HTMLElement => {
+  const label = optionsIn(fieldset)
+    .map((r) => r.closest("label")!)
+    .find((l) => l.textContent?.includes(text));
+  if (!label) throw new Error(`no option reading "${text.slice(0, 40)}" in this question`);
+  return label.querySelector("input")!;
+};
+const keyOf = (q: (typeof QUIZ)[number]) => q.options.find((o) => o.correct)!.text;
+const distractorOf = (q: (typeof QUIZ)[number]) => q.options.find((o) => !o.correct)!.text;
 
 describe("Page 16 (wrap-up) component", () => {
   it("tags itself Act 3 and closes the deck", () => {
@@ -172,9 +188,9 @@ describe("Page 16 (wrap-up) component", () => {
 
   // ---- section 2: the concept check ----
 
-  it("asks twelve questions, each naming the page it came from", () => {
+  it("asks ten questions, each naming the page it came from", () => {
     render(<Page16 />);
-    expect(screen.getAllByRole("group", { name: /of 12/ })).toHaveLength(12);
+    expect(screen.getAllByRole("group", { name: /of 10/ })).toHaveLength(10);
     for (const q of QUIZ) {
       expect(screen.getAllByText(new RegExp(`page ${q.page} · ${q.concept}`)).length).toBeGreaterThan(0);
     }
@@ -193,8 +209,7 @@ describe("Page 16 (wrap-up) component", () => {
   it("marks a right answer right, and says why", () => {
     render(<Page16 />);
     const first = QUIZ[0];
-    const keyIndex = first.options.findIndex((o) => o.correct);
-    fireEvent.click(optionsIn(q1())[keyIndex]);
+    fireEvent.click(radioFor(q1(), keyOf(first)));
     expect(within(q1()).getByText(/^Right\./)).toBeInTheDocument();
     expect(within(q1()).getByText(first.why)).toBeInTheDocument();
   });
@@ -202,8 +217,7 @@ describe("Page 16 (wrap-up) component", () => {
   it("marks a wrong answer wrong, and still shows which one was right", () => {
     render(<Page16 />);
     const first = QUIZ[0];
-    const wrongIndex = first.options.findIndex((o) => !o.correct);
-    fireEvent.click(optionsIn(q1())[wrongIndex]);
+    fireEvent.click(radioFor(q1(), distractorOf(first)));
     expect(within(q1()).getByText(/^Not quite\./)).toBeInTheDocument();
     // The explanation is not a punishment: it appears whichever option was picked.
     expect(within(q1()).getByText(first.why)).toBeInTheDocument();
@@ -214,38 +228,35 @@ describe("Page 16 (wrap-up) component", () => {
   it("does not let a wrong answer be taken back and re-picked", () => {
     render(<Page16 />);
     const first = QUIZ[0];
-    const wrongIndex = first.options.findIndex((o) => !o.correct);
-    const keyIndex = first.options.findIndex((o) => o.correct);
-    fireEvent.click(optionsIn(q1())[wrongIndex]);
+    fireEvent.click(radioFor(q1(), distractorOf(first)));
     for (const r of optionsIn(q1())) expect(r).toBeDisabled();
     // Clicking the key afterwards must not turn the verdict green: the point of
     // a concept check is finding out what you knew, not what you can converge on.
-    fireEvent.click(optionsIn(q1())[keyIndex]);
+    fireEvent.click(radioFor(q1(), keyOf(first)));
     expect(within(q1()).getByText(/^Not quite\./)).toBeInTheDocument();
   });
 
   it("keeps a running tally, and offers a way to start over", () => {
     render(<Page16 />);
-    expect(screen.getByText(/right of 0 answered, 12 in all/)).toBeInTheDocument();
+    expect(screen.getByText(/right of 0 answered, 10 in all/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /start over/i })).toBeNull();
 
-    const keyIndex = QUIZ[0].options.findIndex((o) => o.correct);
-    fireEvent.click(optionsIn(q1())[keyIndex]);
-    expect(screen.getByText(/right of 1 answered, 12 in all/)).toBeInTheDocument();
+    fireEvent.click(radioFor(q1(), keyOf(QUIZ[0])));
+    expect(screen.getByText(/right of 1 answered, 10 in all/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /start over/i }));
-    expect(screen.getByText(/right of 0 answered, 12 in all/)).toBeInTheDocument();
+    expect(screen.getByText(/right of 0 answered, 10 in all/)).toBeInTheDocument();
     for (const r of optionsIn(q1())) expect(r).not.toBeDisabled();
   });
 
   it("scores the whole set once every question is answered", () => {
     render(<Page16 />);
     for (const [i, q] of QUIZ.entries()) {
-      const group = screen.getByRole("group", { name: new RegExp(`^${i + 1} of 12`) });
-      fireEvent.click(optionsIn(group)[q.options.findIndex((o) => o.correct)]);
+      const group = screen.getByRole("group", { name: new RegExp(`^${i + 1} of 10`) });
+      fireEvent.click(radioFor(group, keyOf(q)));
     }
     expect(screen.getByText(/Every one\./)).toBeInTheDocument();
-    expect(screen.getByText(/12 of 12\./)).toBeInTheDocument();
+    expect(screen.getByText(/10 of 10\./)).toBeInTheDocument();
   });
 
   // ---- section 3: the honest close ----
@@ -325,26 +336,25 @@ describe("Page 16 (wrap-up) component", () => {
     expect(LADDER.some((r) => r.page === 10)).toBe(false);
   });
 
-  it("ends on what the deck did not settle, not on a summary", () => {
+  /**
+   * Section 3 ("What this deck did not settle") was cut on 2026-08-10 by
+   * request. It carried the contamination discount and page 15's question about
+   * whether the chain is the real reason.
+   *
+   * What this now guards is the one thing that outlived it: the closing sentence
+   * still ends the deck on the open question rather than on a summary, and it is
+   * the only place left on this page that says the chain has not been shown to
+   * be the reason for the answer. If that sentence goes too, the page ends on a
+   * tidy recap and the deck stops admitting its own limit, so this test fails
+   * rather than letting that happen quietly.
+   */
+  it("still ends on the open question rather than on a summary", () => {
     render(<Page16 />);
-    expect(screen.getByText(/What this deck did not settle/i)).toBeInTheDocument();
-    // Both open items, and the second is the question page 15 hands forward.
-    expect(screen.getByText(/every number is discounted/i)).toBeInTheDocument();
-    // The caveat is sized and sourced here now. It used to state the claim and
-    // point at page 15 for the evidence, which put a whole-deck measurement
-    // caveat inside a page about the mechanisms by which reasoning breaks.
-    const discounted = screen.getByText(/every number is discounted/i).closest("div")!;
-    expect(discounted.textContent).toMatch(/published text is what the next model trains on/);
-    expect(discounted.textContent).toMatch(/7 to 30 points below/);
-    expect(discounted.textContent).toMatch(/fell from 40% to 1%/);
-    expect(discounted.textContent).not.toMatch(/Page 15 sizes it/);
-    expect(
-      screen.getByRole("link", { name: /Balachandran et al\. 2025/i }).getAttribute("href"),
-    ).toBe("https://arxiv.org/abs/2504.00294");
-    expect(screen.getByText(/and the chain may not be the reason/i)).toBeInTheDocument();
+    expect(screen.queryByText(/What this deck did not settle/i)).toBeNull();
     expect(
       screen.getByText(/nobody has yet shown is the reason for the answer/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/where the field is, and where you now are/i)).toBeInTheDocument();
   });
 
   it("carries no em dash or en dash in rendered copy", () => {

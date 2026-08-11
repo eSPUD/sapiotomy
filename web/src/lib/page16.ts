@@ -48,9 +48,9 @@
  * 22, and for the deck's own measurement of how much of that gap is the item
  * mix rather than the distillation.
  *
- * THE CONCEPT CHECK (section 2) is twelve questions, and every one of them is
+ * THE CONCEPT CHECK (section 2) is ten questions, and every one of them is
  * about a MECHANISM rather than a magnitude. A reader who has understood the
- * deck can answer all twelve without remembering a single number; the numbers
+ * deck can answer all ten without remembering a single number; the numbers
  * appear only as the setting the question is asked in, and they are
  * interpolated from the measured modules so a re-run cannot leave the question
  * stem quoting a figure the page no longer draws.
@@ -596,29 +596,6 @@ export const QUESTIONS: Question[] = [
       "Coverage is what the generator found; accuracy is what the selection rule kept. The gap is not a generation problem at all, which is why the next lever is a better selector rather than more chains.",
   },
   {
-    id: "q8-selection-verdict",
-    page: 8,
-    concept: "what a run may claim",
-    stem: `Best-of-sixteen with a trained verifier scored ${pct(
-      PAGE8.headline.accuracy,
-    )} against one chain's ${pct(PAGE8.oneChain)}, at ${
-      PAGE8.headline.p < 0.001 ? "p < 0.001" : `p = ${PAGE8.headline.p.toFixed(3)}`
-    }. Against the majority vote on the same candidates it was ahead by ${
-      Math.round((PAGE8.headline.accuracy - PAGE8.majority.accuracy) * 100)
-    } points at p = ${PAGE8.caveat.p.toFixed(2)}. What is the page entitled to say?`,
-    options: [
-      {
-        text: "That selecting beats one chain, and that this run cannot tell the verifier and the vote apart",
-        correct: true,
-      },
-      { text: "That the trained verifier beats the vote, since it scored higher" },
-      { text: "That the vote beats the trained verifier, since it is cheaper" },
-      { text: "That neither is worth running, since one is not clearly ahead" },
-    ],
-    why:
-      "A difference you cannot distinguish from noise is not a result. Reporting the four points without the p-value would turn an unresolved comparison into a recommendation, which is the failure the deck is most careful about.",
-  },
-  {
     id: "q9-process-sliver",
     page: 9,
     concept: "where a grader can see",
@@ -652,33 +629,6 @@ export const QUESTIONS: Question[] = [
     ],
     why:
       "Pruning is what search does with a node after paying for it, not instead of paying for it. This is why a deeper search can be worse value than plain sampling even when it explores more.",
-  },
-  {
-    id: "q11-keystone",
-    page: 11,
-    concept: "answer-time against parameters",
-    stem: `Priced in measured FLOPs, in units of one greedy chain from the ${
-      GREEDY_3B.label
-    }: its sixteen-way vote reached ${pct(VOTE_16.accuracy)} for about ${Math.round(
-      bill(VOTE_16.flops),
-    )} chains, and a trained verifier picking among those chains reached ${pct(
-      BEST_OF.accuracy,
-    )} for about ${Math.round(bill(BEST_OF.flops))}. One greedy chain from the ${
-      HARD.target.label
-    } reached that same ${pct(HARD.target.accuracy)} for about ${bill(HARD.target.flops).toFixed(
-      1,
-    )}. What is the finding?`,
-    options: [
-      {
-        text: "On these problems no answer-time rule we tested out-bought the larger model at a matched bill, even though a right answer was often in the pile",
-        correct: true,
-      },
-      { text: "Sampling and voting always beat buying a larger model" },
-      { text: "Parameters always beat answer-time compute, at any budget" },
-      { text: "The two are equivalent, so it does not matter which you buy" },
-    ],
-    why:
-      "Both knobs spend the same FLOPs, so they can be charged against each other. Here the bigger model won at a matched bill, and the reason is not generation: coverage was high and no rule reliably picked the right chain out.",
   },
   {
     id: "q12-external-check",
@@ -718,11 +668,16 @@ export const QUESTIONS: Question[] = [
 ];
 
 /**
- * Twelve, deliberately, and spread one per page rather than weighted to the
- * pages with the best numbers on them: 2, 3, 5, 6, 7, 7, 8, 9, 10, 11, 12, 15.
- * Page 7 gets two because it teaches two separable things (why voting needs
- * disagreement, and why coverage is not accuracy) and the second is the one the
- * rest of Act 2 is built on.
+ * Ten, over pages 2, 3, 5, 6, 7, 7, 9, 10, 12 and 15.
+ *
+ * It was twelve, spread one per page, until 2026-08-10, when the questions for
+ * pages 8 and 11 were cut by request. So the one-per-page property is gone and
+ * the copy no longer claims it. Page 7 still gets two, because it teaches two
+ * separable things (why voting needs disagreement, and why coverage is not
+ * accuracy) and the second is the one the rest of Act 2 is built on.
+ *
+ * The order is the deck's order, so anything added back belongs at its page's
+ * position rather than on the end.
  */
 export const QUIZ: Question[] = QUESTIONS;
 

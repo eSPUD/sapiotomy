@@ -1038,8 +1038,8 @@ export function Page15() {
         reads the chain, and the reader reads the chain, and all three take it for what it says it
         is: the working that produced the answer.{" "}
         <em className="text-ink-muted">
-          Hold that. Next: every lever in this story on one axis, twelve questions, and the two
-          things the deck never settled.
+          Hold that. Next: every lever in this story on one axis, and ten questions on the
+          mechanisms rather than the magnitudes.
         </em>
       </div>
 

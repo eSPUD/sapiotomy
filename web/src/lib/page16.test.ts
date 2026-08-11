@@ -253,8 +253,9 @@ describe("page 16's other axis (quoted, not plotted)", () => {
 });
 
 describe("page 16's concept check", () => {
-  it("asks twelve questions", () => {
-    expect(QUIZ).toHaveLength(12);
+  it("asks ten questions", () => {
+    // Twelve until 2026-08-10, when pages 8 and 11 lost theirs by request.
+    expect(QUIZ).toHaveLength(10);
   });
 
   it("gives every question exactly one right answer", () => {
