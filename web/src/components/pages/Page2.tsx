@@ -289,12 +289,12 @@ export function Page2() {
             wrong answer into a flagged one, and a flagged one into a reason to go look.
           </p>
 
-          <PullQuote>
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             Nothing about the model changed between the reflex and the trace. Same weights, same
             training data, same cutoff. The only difference is that it{" "}
             <strong>spent effort before answering</strong>. That effort is the subject of the rest
             of this story: what it buys, how to buy more of it, and where buying more stops helping.
-          </PullQuote>
+          </div>
         </section>
         <Note kicker="References" bottom>
           <RefItem n={REF.askell} href="https://arxiv.org/abs/2112.00861" preprint>
