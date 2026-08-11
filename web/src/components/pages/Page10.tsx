@@ -706,14 +706,13 @@ export function Page10() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. What search buys</h2>
           <p className="text-ink-muted">
-            Nobody can publish these five head-to-head on a real model. Once a step is a sentence
-            rather than a word, only greedy and beam can actually be run: breadth-first would have
-            to keep every line a model could write next, depth-first has no way to know a line is
-            doomed short of writing it out to the end, and MCTS would have to finish thousands of
-            lines per question. That is a limit of the hardware and of steps written in free text,
-            not a verdict on the algorithms. The closest measurement is the same branch, score,
-            backtrack machinery taken apart piece by piece on a real word task: GPT-4 filling
-            5&times;5 crosswords, with and without the ability to back up.
+            Running these five head-to-head on a real model is out of reach here. Once a step is a
+            sentence rather than a word, breadth-first has to keep every line a model could write
+            next, depth-first cannot tell a line is doomed without finishing it, and MCTS needs
+            thousands of finished lines per question; only greedy and beam stay practical. That is
+            a limit of the hardware, not a verdict on the algorithms. The closest measurement takes
+            the same branch, score, backtrack machinery apart piece by piece on a real word task:
+            GPT-4 filling 5&times;5 crosswords, with and without the ability to back up.
             <Cite n={REF.tot} /> The two bars with a piece switched off are the ones that matter.
           </p>
           <section
@@ -755,17 +754,10 @@ export function Page10() {
             they wrapped, and the second landed under step 3 at main-column width. */}
         <div className="flex flex-col gap-6">
           <Note kicker="No run of our own">
+            <p>Pages 5 to 9 each ship the run their numbers come from. This page ships none.</p>
             <p>
-              Pages 5 to 9 each ship the run their numbers come from. This page ships none. The
-              29-word tree is written by hand: its words and their chances were chosen so the five
-              behaviours are legible, not sampled from a model. The bars above are Yao et
-              al.&apos;s.
-            </p>
-            <p>
-              The arm that would give this page a measurement of its own is written and sits in the
-              download at the top, unrun. It holds the 3B writer beside a 7B judge, about 21 GB
-              resident, and of the five strategies only greedy and beam would survive to be
-              measured.
+              The 29-word tree is written by hand, chosen so the five behaviours are legible. The
+              bars above are Yao et al.&apos;s.
             </p>
           </Note>
 

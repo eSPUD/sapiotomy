@@ -242,9 +242,9 @@ describe("Page 10 — step 3 and house style", () => {
     // The concession is not breadth-first alone: of the five, only greedy and beam
     // survive contact with a real reasoning tree.
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/only greedy and beam can actually be run/i);
-    expect(body).toMatch(/depth-first has no way to know a line is doomed/i);
-    expect(body).toMatch(/MCTS would have to finish thousands of lines per question/i);
+    expect(body).toMatch(/only greedy and beam stay practical/i);
+    expect(body).toMatch(/depth-first cannot tell a line is doomed without finishing it/i);
+    expect(body).toMatch(/MCTS needs thousands of finished lines per question/i);
     expect(body).toMatch(/not a verdict on the algorithms/i);
   });
 
@@ -300,7 +300,7 @@ describe("Page 10 — step 3 and house style", () => {
     expect(couplet.textContent).not.toMatch(/The trap is not a toy/);
     expect(replay.textContent).not.toMatch(/written by hand\. The search over them is real/);
     expect(crosswords.textContent).not.toMatch(/Chain of thought fills/);
-    expect(crosswords.textContent).not.toMatch(/Nobody can publish these five head-to-head/);
+    expect(crosswords.textContent).not.toMatch(/head-to-head on a real model is out of reach/);
   });
 
   it("links each reference from its RefItem entry, not a footer chip", () => {
@@ -370,8 +370,10 @@ describe("Page 10 — step 3 and house style", () => {
     // the two things a reader could mistake for our measurements, named as what they are
     expect(body).toMatch(/29-word tree is written by hand/);
     expect(body).toMatch(/bars above are Yao et al\./);
-    // and why it was not run, so the omission reads as a cost and not an oversight
-    expect(body).toMatch(/21 GB/);
-    expect(body).toMatch(/only greedy and beam would survive to be measured/);
+    // Why it was not run belongs to step 3's prose, not the note: the note names what
+    // the page carries and stops. The margin used to carry the arm's size and which
+    // strategies would survive, which is the page's longest note about its own absence.
+    expect(body).not.toMatch(/21 GB/);
+    expect(body).toMatch(/only greedy and beam stay practical/);
   });
 });

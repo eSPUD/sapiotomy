@@ -322,6 +322,49 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     }
   });
 
+  // Drawn only over the budgets where two models were measured, the washes left
+  // 42% of the plot bare and made the two end bands the shortest on the page —
+  // the 12B's was 8% of the width, which reads as "the biggest model barely wins
+  // anywhere" rather than "it owns the dear end".
+  it("tiles the whole budget axis with the washes, edge to edge", () => {
+    render(<Page11 />);
+    const washes = screen.getAllByTestId("ownership-wash");
+    const plot = washes[0].closest("svg")!.querySelector("rect.fill-surface")!;
+    const innerW = Number(plot.getAttribute("width"));
+    expect(Number(washes[0].getAttribute("x"))).toBeCloseTo(0, 1);
+    const last = washes[washes.length - 1];
+    expect(Number(last.getAttribute("x")) + Number(last.getAttribute("width"))).toBeCloseTo(innerW, 1);
+  });
+
+  // What the extension must not do is claim a measurement that was not made.
+  it("keeps each rail inside its wash, and narrower than it on the two end bands", () => {
+    render(<Page11 />);
+    const washes = screen.getAllByTestId("ownership-wash");
+    const rails = screen.getAllByTestId("ownership-rail");
+    expect(rails).toHaveLength(3);
+    const span = (el: Element) => [
+      Number(el.getAttribute("x")),
+      Number(el.getAttribute("x")) + Number(el.getAttribute("width")),
+    ];
+    rails.forEach((rail, i) => {
+      const [r0, r1] = span(rail);
+      const [w0, w1] = span(washes[i]);
+      expect(r0).toBeGreaterThanOrEqual(w0 - 0.5);
+      expect(r1).toBeLessThanOrEqual(w1 + 0.5);
+    });
+    // the first band's wash runs left of its rail and the last band's runs right
+    // of its: those are the stretches with no rival left on the grid
+    expect(span(washes[0])[0]).toBeLessThan(span(rails[0])[0]);
+    expect(span(washes[2])[1]).toBeGreaterThan(span(rails[2])[1]);
+    // the middle band was compared end to end, so its rail spans its wash
+    expect(span(rails[1])[0]).toBeCloseTo(span(washes[1])[0], 1);
+    expect(span(rails[1])[1]).toBeCloseTo(span(washes[1])[1], 1);
+    // and the figure says which mark carries the measurement
+    expect(
+      screen.getByText(/only the rail on top of each band was measured against a rival/i),
+    ).toBeInTheDocument();
+  });
+
   it("keeps every Pythia band label inside the band it names", () => {
     render(<Page11 />);
     const washes = screen.getAllByTestId("ownership-wash");
