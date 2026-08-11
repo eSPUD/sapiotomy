@@ -27,10 +27,13 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(status).toHaveTextContent(/No sample budget on this band crosses the line/);
   });
 
-  it("slides the marker down the vote curve to one sample", () => {
+  it("slides the marker back to the model's own greedy answer, the fork", () => {
     render(<Page11 />);
-    setSlider(/test-time compute/i, 0); // n = 1
-    expect(screen.getByRole("status")).toHaveTextContent(/vote@1:/);
+    setSlider(/test-time compute/i, 0); // rung 0: one answer, greedy
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /3B greedy: 43%, still 17 points under the Qwen2\.5-7B[’']s 60%/,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(/0\.5× its bill/);
   });
 
   it("switches to the easy band and still shows no crossing", () => {
@@ -80,12 +83,36 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
   it("makes the coverage-selection gap explicit, not a mystery line", () => {
     render(<Page11 />);
     expect(screen.getByText("found, not selected")).toBeInTheDocument();
-    expect(screen.getByText(/the shaded gap is what the vote throws away/i)).toBeInTheDocument();
+    // one riser per sample budget that has a gap (n = 1 has none), plus the
+    // counted bracket on the widest
+    expect(screen.getAllByTestId("gap-riser")).toHaveLength(4);
+    expect(screen.getByText("23 points")).toBeInTheDocument();
+    expect(screen.getByText(/the green risers are what the vote throws away/i)).toBeInTheDocument();
+  });
+
+  it("starts the vote road ON the small model's greedy dot, never past it", () => {
+    render(<Page11 />);
+    expect(screen.getByText(/Both roads leave the same dot/i)).toBeInTheDocument();
+    // the ring marks the fork; the road's first vertex must be that exact point,
+    // not a sampled n = 1 draw that sits beside it and doubles the curve back
+    for (const band of [/^hard$/i, /^easy$/i]) {
+      for (const m of [/^3B$/, /^1\.5B$/]) {
+        clickBand(band);
+        fireEvent.click(screen.getByRole("button", { name: m }));
+        const ring = screen.getByTestId("branch-point");
+        const road = screen.getByTestId("vote-road").getAttribute("d")!;
+        expect(road.startsWith(`M${ring.getAttribute("cx")},${ring.getAttribute("cy")}`)).toBe(true);
+        // and every rung after it costs strictly more, so the road only goes right
+        const xs = [...road.matchAll(/[ML]([\d.]+),/g)].map((mm) => Number(mm[1]));
+        expect(xs).toEqual([...xs].sort((a, b) => a - b));
+        expect(new Set(xs).size).toBe(xs.length);
+      }
+    }
   });
 
   it("prices the game in multiples of the big model's own bill", () => {
     render(<Page11 />);
-    expect(screen.getByText(/single greedy\s*answer is the target/i)).toBeInTheDocument();
+    expect(screen.getByText(/single greedy answer\s*sets the bar/i)).toBeInTheDocument();
     expect(screen.getByText(/one times its own bill/i)).toBeInTheDocument();
   });
 
@@ -102,8 +129,36 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
   it("frames section 2 as the published 2024 law", () => {
     render(<Page11 />);
     expect(screen.getByRole("heading", { name: /2\. The published law/ })).toBeInTheDocument();
-    expect(screen.getByText(/That was our own instrument, in 2026/i)).toBeInTheDocument();
-    expect(screen.getByText(/from before the reasoning-training recipes/i)).toBeInTheDocument();
+    expect(screen.getByText(/That was one model family, on one date/i)).toBeInTheDocument();
+    expect(screen.getByText(/says the opposite is\s*possible/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/on models from before the reasoning recipes/i),
+    ).toBeInTheDocument();
+  });
+
+  it("lifts each section's lede out of its card, into the page's whitespace", () => {
+    render(<Page11 />);
+    // pages 5 to 9's shape: the sentence saying what the figure is a picture OF
+    // sits on the page background; the bordered card holds only the figure.
+    for (const lede of [
+      /Both roads leave the same dot/i,
+      /That was one model family, on one date/i,
+      /The law is not only Snell/i,
+      /Section 3 varied how/i,
+    ]) {
+      const el = screen.getByText(lede);
+      expect(el.closest("figure")).toBeNull();
+      expect(el.closest(".bg-surface")).toBeNull();
+    }
+    // and every figure heading carries its own kicker in the whitespace above
+    for (const kicker of [
+      /measured, Qwen2\.5-3B against 7B/i,
+      /Snell et al\. 2024, on models from before the reasoning recipes/i,
+      /Wu et al\. 2024, Pythia 410M, 2\.8B and 12B on GSM8K/i,
+      /MATH500 table, sampling against tree search/i,
+    ]) {
+      expect(screen.getByText(kicker)).toBeInTheDocument();
+    }
   });
 
   it("grounds the 4x claim in its baseline: flat 256 vs difficulty-first 64", () => {
@@ -119,12 +174,16 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText(/serve billions \(R → ∞\) and parameters win/i)).toBeInTheDocument();
   });
 
-  it("keeps the distribution intuition in the hard-mode box", () => {
+  it("states the hard-mode boundary in plain words, with no unglossed jargon", () => {
     render(<Page11 />);
     expect(
-      screen.getByText(/only surface answers the model can\s*already produce/i),
+      screen.getByText(/only ever surface an answer the model was\s*already capable of writing/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/the distribution itself never moves/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/a thousand tries are a thousand copies of the same wrong\s*idea/i),
+    ).toBeInTheDocument();
+    // "the distribution" was never defined on this page, so it is not spent here
+    expect(document.body.textContent).not.toMatch(/the distribution/i);
   });
 
   /* ---- sections 3 and 4, Wu receipts (kept as published) --------------- */
@@ -163,25 +222,28 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
   it("hands off to Act 3 on the two loose ends: selection and waste", () => {
     render(<Page11 />);
     expect(screen.getByText(/So why did the crossing not appear for us/i)).toBeInTheDocument();
-    expect(screen.getByText(/the law lives in a narrow window/i)).toBeInTheDocument();
-    expect(screen.getByText(/The selection\s*wall/i)).toBeInTheDocument();
-    expect(screen.getByText(/train the reasoning into the weights/i)).toBeInTheDocument();
-    expect(screen.getByText(/pages 13 and 14 reward only correct answers/i)).toBeInTheDocument();
+    expect(screen.getByText(/The law lives in a narrow window/i)).toBeInTheDocument();
+    expect(screen.getByText(/The selection wall/i)).toBeInTheDocument();
+    expect(screen.getByText(/trains the reasoning into the weights/i)).toBeInTheDocument();
+    expect(screen.getByText(/pages 13 and 14 reward\s*only correct answers/i)).toBeInTheDocument();
   });
 
-  it("labels the footer Measured / Cited", () => {
+  it("retires the Measured / Cited footer, keeping the apparatus beside its figures", () => {
     render(<Page11 />);
-    expect(screen.getByText("Measured")).toBeInTheDocument();
-    expect(screen.getByText("Cited")).toBeInTheDocument();
-    expect(screen.getByText(/instance on a 2026 instrument, not a refutation/i)).toBeInTheDocument();
+    expect(screen.queryByText("Measured")).not.toBeInTheDocument();
+    expect(screen.queryByText("Cited")).not.toBeInTheDocument();
+    // the per-figure fine print stays where the claim is
+    expect(screen.getByText(/read off the paper[’']s figure by eye/i)).toBeInTheDocument();
+    expect(screen.getByText(/no digitization\s*involved/i)).toBeInTheDocument();
   });
 
-  it("offers the notebook + traces download at the top of the figure", () => {
+  it("puts the notebook download on the top line, as on page 5", () => {
     render(<Page11 />);
-    expect(screen.getByText("Reproduce it")).toBeInTheDocument();
     const dl = screen.getByRole("link", { name: /Download the notebook and traces/i });
     expect(dl).toHaveAttribute("href", "/notebooks/page-11-training-vs-scale.zip");
     expect(dl).toHaveAttribute("download");
+    expect(dl).toHaveTextContent(/zip, 2\.8 MB/);
+    expect(screen.queryByText("Reproduce it")).not.toBeInTheDocument();
   });
 
   it("keeps all reference notes to bare cites, each beside its first use", () => {
@@ -190,7 +252,7 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(notes).toHaveLength(3);
     expect(notes[0].textContent).toMatch(/Snell et al\. 2024, Scaling LLM Test-Time Compute/);
     expect(notes[0].textContent).toMatch(/Brown et al\. 2024, Large Language Monkeys/);
-    expect(notes[0].textContent).toMatch(/Shojaee et al\. 2025, The Illusion of Thinking/);
+    expect(notes[0].textContent).not.toMatch(/Shojaee/);
     expect(notes[1].textContent).toMatch(/Wu et al\. 2024, Inference Scaling Laws/);
     expect(notes[2].textContent).toMatch(/Stroebl et al\. 2024, Inference Scaling fLaws/);
     for (const note of notes) {
@@ -203,7 +265,6 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     for (const [name, href] of [
       [/Snell et al\. 2024/, "https://arxiv.org/abs/2408.03314"],
       [/Brown et al\. 2024/, "https://arxiv.org/abs/2407.21787"],
-      [/Shojaee et al\. 2025/, "https://arxiv.org/abs/2506.06941"],
       [/Wu et al\. 2024/, "https://arxiv.org/abs/2408.00724"],
       [/Stroebl et al\. 2024/, "https://arxiv.org/abs/2411.17501"],
     ] as const) {
@@ -240,11 +301,66 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     render(<Page11 />);
     expect(screen.getAllByTestId("handover-strip")).toHaveLength(2);
     expect(
-      screen.getByText(/the crossing sits somewhere in the bracket rather than on a\s+line/i),
+      screen.getByText(/the crossing sits somewhere in the bar rather than on the edge/i),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/not the budget at which the 12B takes over/i),
     ).toBeInTheDocument();
+  });
+
+  it("washes one coloured band per Pythia scale, smallest-green to largest-red", () => {
+    render(<Page11 />);
+    const washes = screen.getAllByTestId("ownership-wash");
+    expect(washes).toHaveLength(3);
+    expect(washes[0]).toHaveClass("fill-correct-bright");
+    expect(washes[1]).toHaveClass("fill-compute-bright");
+    expect(washes[2]).toHaveClass("fill-wrong-bright");
+    // the washes tile the compared range: each starts where the last one ended
+    const edge = (el: Element, a: "x" | "width") => Number(el.getAttribute(a));
+    for (let i = 1; i < washes.length; i++) {
+      expect(edge(washes[i], "x")).toBeCloseTo(edge(washes[i - 1], "x") + edge(washes[i - 1], "width"), 1);
+    }
+  });
+
+  it("keeps every Pythia band label inside the band it names", () => {
+    render(<Page11 />);
+    const washes = screen.getAllByTestId("ownership-wash");
+    const labels = screen.getAllByTestId("ownership-band");
+    expect(labels).toHaveLength(3);
+    labels.forEach((label, i) => {
+      const cx = Number(label.getAttribute("x"));
+      const x0 = Number(washes[i].getAttribute("x"));
+      // never spills left into the neighbour's wash, which would claim the
+      // wrong stretch of the axis
+      expect(cx - (label.textContent!.length * 5.8) / 2).toBeGreaterThanOrEqual(x0 - 0.5);
+    });
+  });
+
+  it("keeps the handover bars out of the band labels' row", () => {
+    render(<Page11 />);
+    // the bug this replaced: a full-height dashed rule cut through "410M leads".
+    // The bars live in their own strip, so no bar shares a row with a label.
+    const labelY = Number(screen.getAllByTestId("ownership-band")[0].getAttribute("y"));
+    for (const strip of screen.getAllByTestId("handover-strip")) {
+      for (const line of strip.querySelectorAll("line")) {
+        const ys = [Number(line.getAttribute("y1")), Number(line.getAttribute("y2"))];
+        expect(Math.min(...ys)).toBeGreaterThan(labelY);
+      }
+    }
+  });
+
+  it("centres each handover bar on the band edge it brackets", () => {
+    render(<Page11 />);
+    const washes = screen.getAllByTestId("ownership-wash");
+    const edges = washes.slice(1).map((w) => Number(w.getAttribute("x")));
+    screen.getAllByTestId("handover-strip").forEach((strip, i) => {
+      const bar = strip.querySelector("line")!;
+      const [x0, x1] = [Number(bar.getAttribute("x1")), Number(bar.getAttribute("x2"))];
+      // the crossing the bar brackets is the wash edge, and it is inside the bar
+      expect(edges[i]).toBeGreaterThanOrEqual(x0);
+      expect(edges[i]).toBeLessThanOrEqual(x1);
+      expect(Number(strip.querySelector("circle")!.getAttribute("cx"))).toBeCloseTo(edges[i], 1);
+    });
   });
 
   it("colours the Pythia lead segments smallest-green to largest-red", () => {
@@ -259,7 +375,7 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
   it("scales the Pythia family by its real ratios, not fixed multiples", () => {
     render(<Page11 />);
     expect(
-      screen.getByText(/the 2\.8B is about 7× the 410M and the 12B about 29×/i),
+      screen.getByText(/the 2\.8B about 7× the 410M and the 12B about 29×/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/the colours carry rank, not fixed multiples/i)).toBeInTheDocument();
   });
