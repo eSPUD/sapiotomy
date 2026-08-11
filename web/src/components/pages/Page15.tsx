@@ -978,7 +978,7 @@ export function Page15() {
             judging better: it sits mid-pack at the cold end and never improves. It finishes{" "}
             {TRAINED_CLEAR_PTS.toFixed(0)} points clear because everything else came down to meet
             it. What this sweep measures is the verifier, not the reasoning, and with an imperfect
-            one more resampling eventually lowers true accuracy outright.
+            one, more resampling eventually lowers true accuracy outright.
             <Cite n={REF.stroebl} />
           </p>
           {/* Two limits on the figure. A limit is a caption, not a margin note, so they

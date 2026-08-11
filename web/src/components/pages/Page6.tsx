@@ -749,7 +749,7 @@ function WaitCrossing() {
     <ChartFrame
       title={`What ${WAIT_TABLE.waits} "${FW!.word}" injections did to ${t.n} problems on the ${shortLabel(
         WAIT_TABLE.label,
-      )}. Allowed to stop it solved ${solvedBefore}; with the stop suppressed it solved ${solvedAfter}. ${t.both} were right either way, ${t.neither} were wrong either way, ${t.afterOnly} turned from wrong to right and ${t.beforeOnly} turned from right to wrong.`}
+      )}. Allowed to stop, it solved ${solvedBefore}; with the stop suppressed it solved ${solvedAfter}. ${t.both} were right either way, ${t.neither} were wrong either way, ${t.afterOnly} turned from wrong to right and ${t.beforeOnly} turned from right to wrong.`}
       width={X_W}
       height={X_H}
       margin={X_M}
@@ -1587,7 +1587,7 @@ export function Page6() {
                 <p className="text-sm text-ink">
                   {WAIT_TABLE!.table.afterOnly} answers turned from wrong to right against{" "}
                   {WAIT_TABLE!.table.beforeOnly} that turned from right to wrong,{" "}
-                  {pLabel(WAIT_TABLE!.p)}. Both crossings are thick and they cancel. In all{" "}
+                  {pLabel(WAIT_TABLE!.p)}. Both crossings are thick and they cancel. In all,{" "}
                   {pct(WAIT_TABLE!.churn)} of answers moved, because a further{" "}
                   {WAIT_TABLE!.movedWithoutChangingTheVerdict} swapped one wrong answer for another
                   and never touched the verdict.

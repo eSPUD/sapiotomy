@@ -1042,7 +1042,7 @@ export function Page5() {
             Both numbers rise with the checkpoint, but not together. Reasoning, the three models
             write almost the same amount, a median of {F3.models.map((m) => m.bareMedianTokens).join(", ")}{" "}
             tokens, and solve {F3.models.map((m) => pct(m.bareAccuracy)).join(", ")} of the same
-            hundred. Non-reasoning they write{" "}
+            hundred. Non-reasoning, they write{" "}
             {F3.models.map((m) => m.blurtMedianTokens).join(", ")} tokens and solve{" "}
             {F3.models.map((m) => pct(m.blurtAccuracy)).join(", ")}. The tokens move with the
             prompt; the accuracy moves with the model.
