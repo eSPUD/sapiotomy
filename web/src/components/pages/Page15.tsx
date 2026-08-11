@@ -64,11 +64,14 @@
  *
  * It carried a second coordinate until 2026-08-10: the share of a chain we can
  * audit a grader against, drawn as a sliver. Three of its four claims were page
- * 9's own, restated, and the fourth (that the reward model's AUC, recall and
- * specificity were all taken inside that sliver) belonged beside the bar it
- * qualifies. The whole beat moved to page 9 beat 3 rather than being split, and
- * page 9's rule against quoting a flat AUC went with it, since the claim about
- * WHERE the numbers were taken is what gives a reader something to do with them.
+ * 9's own, restated a page later. The fourth, that the reward model's AUC,
+ * recall and specificity were all taken inside that sliver, was real and is now
+ * nowhere in the deck. The beat was moved to page 9 beat 3, which is where it
+ * belonged if it belonged anywhere, and cut the same day: that beat is already
+ * one figure with three qualifications under it, and a second bar restating page
+ * 9's own step 1 pushed it past what a reader will carry. The claim survives
+ * only as page 16's q9, which gives a reader the two facts and asks what
+ * follows. Do not restage it here; the reason it left was length, not truth.
  *
  * Step 4 is the balance: what still works, and the contamination caveat, which
  * discounts every accuracy number in Acts 2 and 3 and is therefore a callout

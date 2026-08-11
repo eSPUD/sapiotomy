@@ -32,27 +32,28 @@
  *   2. FIND THE BREAK. One question, one click, re-answerable: which line goes
  *      wrong, or does nothing? The reveal underlines what the checker proved,
  *      chips what the PRM opined, and lets the reader grade again.
- *   3. WHAT STEP GRADING BUYS. How many right answers each grader can catch bad
- *      reasoning inside, then where the PRM's own quality figures were taken.
- *      Localisation and the null selector rung follow in a line each.
+ *   3. WHAT STEP GRADING BUYS. One figure, framed on the PRM: how many right
+ *      answers each grader can catch bad reasoning inside. Localisation and the
+ *      null selector rung follow it in a line each.
  *
- * Run conditions (decoding, dates, segmentation) are the notebook's to state.
- * The PRM's measured reliability used to be as well, and that rule was right
- * while the numbers arrived flat: an AUC beside the bars gave a reader nothing
- * to do with it. Beat 3 now says WHERE it was measured, on the 5.8% of steps the
- * checker can read, which turns the same three numbers into a limit the reader
- * can act on. That claim came from page 15 on 2026-08-10 and the numbers came
- * with it. The margins hold only what a reader looking at the thing beside them
- * cannot work out: how to read a step with no underline. A limit on a figure is
- * not a margin note, it is a caption, so the PRM's fitted cut-off and the
- * checker's denominator both sit under the bars they qualify.
+ * Run conditions (decoding, dates, segmentation) are the notebook's to state,
+ * and so is the PRM's measured reliability. Page 15's audit-surface beat (the
+ * 5.8% sliver, with the PRM's AUC, recall and specificity drawn inside it) was
+ * moved here on 2026-08-10 and cut from the deck the same day. It was a real
+ * claim and it did not fit: beat 3 is one figure with three qualifications
+ * already, and a second bar restating step 1's split pushed the beat past what
+ * a reader will carry. The AUC rule below survived the attempt intact.
+ *
+ * The margins hold only what a reader looking at the thing beside them cannot
+ * work out: how to read a step with no underline. A limit on a figure is not a
+ * margin note, it is a caption, so the PRM's fitted cut-off and the checker's
+ * denominator both sit under the bars they qualify.
  *
  * Lightman et al. 2023 is cited for the technique and priority; the numbers on
  * screen are our own.
  */
 
 import { useState } from "react";
-import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { PAGE9, pct, tidyMath, type Specimen } from "@/lib/page09";
@@ -124,63 +125,6 @@ function splitOnClaim(text: string, claim: string | null) {
     gapBefore: /\n\s*$/.test(before) ? "\n" : " ",
     gapAfter: /^\s*\n/.test(after) ? "\n" : " ",
   };
-}
-
-/* ------------------------------------------------- where the PRM was audited */
-
-const A_W = 640;
-const A_H = 168;
-const A_M = { top: 40, right: 16, bottom: 44, left: 16 };
-const A_IW = A_W - A_M.left - A_M.right;
-
-/**
- * Where the process reward model's quality figures were taken. One bar, every
- * step of the graded run, split at what the arithmetic checker can adjudicate.
- *
- * This arrived from page 15 on 2026-08-10, and the split it draws is the one
- * step 1 already states in prose. That is not a repeat: step 1 uses the split to
- * introduce the two instruments' reach, and here it does a different job, which
- * is to say how much of the grader we were ever able to check. The figure exists
- * because the sliver has to be seen at true width to land: a sentence reading
- * "5.8%" is a number, and a strip this thin beside the rest of the bar is an
- * argument. The AUC is drawn INSIDE the sliver rather than beside the bar,
- * because where it was measured is the whole claim.
- */
-function AuditSurface({ prm }: { prm: NonNullable<typeof PAGE9.graders.prm> }) {
-  const g = PAGE9.graders;
-  const share = 1 - g.shareUnjudged;
-  const w = Math.max(share * A_IW, 3);
-  return (
-    <ChartFrame
-      title={`Of ${g.stepsTotal.toLocaleString()} steps, the arithmetic checker can adjudicate ${g.stepsJudged.toLocaleString()}, or ${pct(share, 1)}. The reward model scores all ${g.stepsTotal.toLocaleString()} and is silent on none, so the remaining ${pct(g.shareUnjudged, 1)} is what nothing independent can check it against. Its AUC of ${prm.auc.toFixed(2)} was measured inside that ${pct(share, 1)}.`}
-      width={A_W}
-      height={A_H}
-      margin={A_M}
-    >
-      <rect x={0} y={0} width={A_IW} height={44} className="fill-ink opacity-[0.07]" />
-      <rect x={0} y={0} width={w} height={44} className="fill-correct" />
-
-      {/* The leader has to come from outside: nothing legible fits in the sliver. */}
-      <line x1={w / 2} x2={w / 2} y1={-14} y2={0} className="stroke-correct" strokeWidth={1} />
-      <text x={w / 2 - 2} y={-20} className="fill-ink text-[11px] font-semibold">
-        {pct(share, 1)} checkable
-      </text>
-      <text x={A_IW - 4} y={26} textAnchor="end" className="fill-ink text-[12px] font-semibold">
-        {pct(g.shareUnjudged, 1)}: the reward model scores these, nothing independent checks it
-      </text>
-
-      <path
-        d={`M0,58 L0,66 L${w},66 L${w},58`}
-        fill="none"
-        className="stroke-ink-muted"
-        strokeWidth={1}
-      />
-      <text x={0} y={82} className="fill-ink-muted text-[11px]">
-        its AUC of {prm.auc.toFixed(2)}, its recall of {pct(prm.recallOnFalse, 0)} and its
-        specificity of {pct(prm.specificityOnTrue, 0)} were all measured in here
-      </text>
-    </ChartFrame>
-  );
 }
 
 export function Page9() {
@@ -805,39 +749,6 @@ export function Page9() {
                 ) : null}
               </dl>
             </figure>
-
-            {/* Arrived from page 15 on 2026-08-10, where it was the second half of a
-                verifier beat. It belongs here: it qualifies the PRM bar directly
-                above it, and this page owns the measurement. */}
-            {prm ? (
-              <>
-                <p className="text-sm text-ink-muted">
-                  Which leaves the harder question about the bar on the right. A score is an
-                  opinion, so how good is this one, and how much of the chain did we ever get to
-                  find out on?
-                </p>
-                <figure
-                  aria-label="What share of the graded steps an independent checker can adjudicate"
-                  className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
-                >
-                  <AuditSurface prm={prm} />
-                </figure>
-                <p className="text-sm text-ink-muted">
-                  The reward model scores every one of these{" "}
-                  {PAGE9.graders.stepsTotal.toLocaleString()} steps and is silent on none, which is
-                  the job it was trained for. The checker is the one that declines: it adjudicates{" "}
-                  {PAGE9.graders.stepsJudged.toLocaleString()}, because its rule is arithmetic on
-                  both sides and the rest state something else, <em>by symmetry</em> or{" "}
-                  <em>consider the cases</em> or a claim about where the working has got to. So the
-                  sliver is not the grader&apos;s blind spot. It is the only ground truth we have to
-                  audit the grader against, and every number that makes it look trustworthy was
-                  taken inside it. Its reliability on the other{" "}
-                  {pct(PAGE9.graders.shareUnjudged, 1)} is unmeasured, and those are the prose steps
-                  least like the ones it was scored on, so read the figures above as the optimistic
-                  end.
-                </p>
-              </>
-            ) : null}
 
             <p className="text-sm text-ink-muted">
               <strong className="text-ink">And what it catches, it can place.</strong> On the{" "}

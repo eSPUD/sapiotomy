@@ -205,9 +205,10 @@ describe("Page 15 (when reasoning breaks) component", () => {
   // Step 3 carried a second beat until 2026-08-10: the sliver of a chain a checker
   // can adjudicate, the reward model's quality figures taken inside it, and the
   // selection null. Three of its four claims were page 9's own, restated a page
-  // later, so the beat moved to page 9 whole. Page9.test.tsx owns it now. What must
-  // not happen is a partial move that leaves either page half-arguing it.
-  it("leaves the grader's audit surface to page 9, which owns the measurement", () => {
+  // later. It went to page 9 and was cut from there the same day for length, so it
+  // is out of the deck; Page9.test.tsx guards the other end. What must not happen
+  // is a half-cut that leaves the page pointing at a figure it no longer draws.
+  it("no longer argues the grader's audit surface, which left the deck", () => {
     render(<Page15 />);
     expect(screen.queryByRole("img", { name: /can adjudicate/i })).toBeNull();
     expect(screen.queryByText(/were\s+all measured in here/i)).toBeNull();

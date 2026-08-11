@@ -28,52 +28,27 @@ const findTheBreakThenReveal = (trace = PAGE9.lucky) => {
   fireEvent.click(screen.getByRole("button", { name: /reveal what the graders found/i }));
 };
 
-/**
- * This page refused to quote the PRM's AUC at all until 2026-08-10, and the
- * reason was sound: a reliability figure beside the bars gave a reader looking
- * at them nothing to act on. What arrived from page 15 is not the figure, it is
- * WHERE the figure was taken, on the 5.8% of steps the checker can read. That
- * turns the same three numbers into a limit, so the rule was reversed rather
- * than worked around. The tests below are what keep the numbers from drifting
- * back to being quoted flat: every one of them must arrive inside the bar.
- */
-describe("Page 9 audits its own grader", () => {
-  it("draws the ground truth the PRM is audited against, at true width", () => {
+// The PRM's reliability against the checker is measured in the notebook, and
+// quoting it here bought a reader looking at the bars nothing they could act on.
+// It is gone from the page entirely rather than demoted.
+//
+// Page 15's audit-surface beat was moved here on 2026-08-10 and cut the same day.
+// It would have earned the numbers back by saying WHERE they were taken, but it
+// needed a second bar restating step 1's split and a paragraph under it, and beat
+// 3 does not have room. The whole claim left the deck, so the rule stands as it
+// was and this is the guard that keeps it standing.
+describe("Page 9's PRM reliability is the notebook's to state", () => {
+  it("quotes no AUC anywhere on the page", () => {
     render(<Page9 />);
-    const bar = screen.getByRole("img", { name: /can adjudicate/i });
-    // The sliver is NOT the grader's blind spot. The PRM scores every step, which
-    // is the job it was trained for; the checker is what declines, because its rule
-    // is arithmetic on both sides. Reading it the other way contradicts the copy
-    // directly beneath it.
-    expect(bar.getAttribute("aria-label")).toMatch(/scores all [\d,]+ and is silent on none/i);
-    expect(bar.getAttribute("aria-label")).toMatch(/nothing independent can check it against/i);
-    expect(bar.getAttribute("aria-label")).toMatch(/was measured inside/i);
+    expect(document.body.textContent).not.toMatch(/AUC/);
   });
 
-  it("quotes no reliability figure without saying where it was measured", () => {
+  it("draws one figure in beat 3, not two", () => {
     render(<Page9 />);
-    if (!PAGE9.graders.prm) {
-      expect(document.body.textContent).not.toMatch(/AUC/);
-      return;
-    }
-    // All three numbers live inside the bracket under the sliver, in one sentence
-    // that ends "measured in here". A number that escapes that sentence is the old
-    // flat quotation coming back, which is the thing the original rule was for.
-    const inHere = screen.getByText(/were all measured in here/i);
-    expect(inHere.textContent).toContain(PAGE9.graders.prm.auc.toFixed(2));
-    expect(inHere.textContent).toContain(pct(PAGE9.graders.prm.recallOnFalse, 0));
-    expect(inHere.textContent).toContain(pct(PAGE9.graders.prm.specificityOnTrue, 0));
-    expect(screen.getAllByText(/AUC/).length).toBe(1);
-  });
-
-  it("names the sliver as the audit surface rather than as the grader's reach", () => {
-    render(<Page9 />);
-    if (!PAGE9.graders.prm) return;
-    const p = screen.getByText(/the only ground truth we have to audit the grader against/i);
-    expect(p.textContent).toContain(PAGE9.graders.stepsJudged.toLocaleString());
-    // And the consequence, which is the whole reason the numbers are allowed here.
-    expect(p.textContent).toMatch(/is unmeasured/i);
-    expect(p.textContent).toMatch(/read the figures above as the optimistic end/i);
+    // The audit bar was the second. Beat 3 already carries a figure with three
+    // qualifications under it; a reader will not carry a fourth.
+    expect(screen.queryByRole("img", { name: /can adjudicate/i })).toBeNull();
+    expect(screen.queryByText(/were all measured in here/i)).toBeNull();
   });
 });
 
