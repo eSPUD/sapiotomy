@@ -24,7 +24,7 @@
  * point with a number on it. The checker's underline is a fact; the PRM's chip is
  * an opinion, and here the opinion is the one that is wrong.
  *
- * The three beats:
+ * The four beats:
  *   1. WHAT CAN BE GRADED AT ALL. Three conditions on a gradable step: a fact to
  *      be right about, a right answer that can still hide a wrong step, and a unit
  *      big enough to carry a claim. Then the two instruments and their opposite
@@ -33,8 +33,11 @@
  *      wrong, or does nothing? The reveal underlines what the checker proved,
  *      chips what the PRM opined, and lets the reader grade again.
  *   3. WHAT STEP GRADING BUYS. One figure, framed on the PRM: how many right
- *      answers each grader can catch bad reasoning inside. Localisation and the
- *      null selector rung follow it in a line each.
+ *      answers each grader can catch bad reasoning inside. A rate, and nothing
+ *      else.
+ *   4. WHERE THE CHAIN BREAKS. The other question about the same chains: not how
+ *      often a break is findable but where it falls and how many there are. The
+ *      median position in a line, then the break-count spike as a figure.
  *
  * Run conditions (decoding, dates, segmentation) are the notebook's to state,
  * and so is the PRM's measured reliability. Page 15's audit-surface beat (the
@@ -267,7 +270,6 @@ export function Page9() {
 
   const det = PAGE9.detection;
   const loc = PAGE9.localisation;
-  const sel = PAGE9.selection;
   const prm = PAGE9.graders.prm;
   const share = PAGE9.graders.shareUnjudged;
 
@@ -363,8 +365,8 @@ export function Page9() {
             </span>
             ; the other {pct(share)} state nothing it can compute. A{" "}
             <strong className="text-ink">process reward model</strong>
-            <Cite n={REF.lightman} /> takes the opposite trade: it scores every step and is silent on
-            none, but a score is an opinion where the checker&apos;s label is a fact.
+            <Cite n={REF.lightman} /> takes the opposite trade: nothing goes unscored, but a score
+            is a judgment call where the checker&apos;s label is deterministic arithmetic.
           </p>
         </section>
 
@@ -624,9 +626,9 @@ export function Page9() {
                       </p>
                     ) : (
                       <p>
-                        The PRM flagged it too, and it is silent on none, so it also has a verdict
-                        on every sound line above. Those are opinions; only the underline is a
-                        proof.
+                        The PRM flagged it too, and nothing goes unscored, so it also has a verdict
+                        on every sound line above. Those are judgment calls; only the underline is
+                        arithmetic.
                       </p>
                     )
                   ) : null}
@@ -716,30 +718,6 @@ export function Page9() {
             would fine-tune on it, and only a step grader can point at the line to fix. How often
             does that happen? The next beat measures it, and the honest answer is smaller than the
             story wants.
-          </div>
-
-          {/* The specimens cannot be typical, and the next beat's numbers are
-              unreadable if the reader assumes they are. Section 10 picks by
-              ROLE, and "a right answer with a false step in it" can only be
-              filled by a chain the checker could read, so the three shown here
-              are drawn from the gradable tail by construction. Stated in the
-              step body rather than the provenance note (house rule, pages
-              3-8): a reader who hand-grades three half-checkable chains and
-              then meets 5.8% has no way to reconcile the two, and the mismatch
-              reads as the page contradicting itself. */}
-          <div className="rounded-lg border border-dashed border-grid bg-surface p-4 text-sm text-ink-muted">
-            <strong className="text-ink">These three are not a sample.</strong> They were picked
-            to fill roles, and a role like &ldquo;right answer, false step&rdquo; can only be
-            filled by a chain the checker could read, so all three come from the gradable end of
-            the pile. Across them the checker judged{" "}
-            <strong className="font-mono text-ink">
-              {PAGE9.specimenReach.stepsCheckable} of {PAGE9.specimenReach.stepsTotal}
-            </strong>{" "}
-            steps ({pct(PAGE9.specimenReach.shareCheckable)}); across all{" "}
-            {PAGE9.run.chains.toLocaleString()} chains it judged{" "}
-            <strong className="font-mono text-ink">{pct(1 - share, 1)}</strong>. Grading three
-            chains by hand here will leave you with a rosier sense of how much of a chain can be
-            checked than the run supports, which is what the next beat has to correct.
           </div>
         </section>
 
@@ -840,9 +818,25 @@ export function Page9() {
               ) : null}
             </dl>
           </figure>
+        </section>
+
+        <div aria-hidden="true" />
+
+        {/* Step 4 — where the break falls, and how many there are. Beat 3 answers
+            "how often", which is a rate; this answers "where" and "how many",
+            which are shape. They rode in one section until 2026-08-11, and the
+            figure below arrived two qualifications deep into another beat's
+            caption with no heading of its own to be read under. */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            4. Where the chain breaks
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              measured · {loc.nLocalisable} localisable chains
+            </span>
+          </h2>
 
           <p className="text-sm text-ink-muted">
-            <strong className="text-ink">And what it catches, it can place.</strong> On the{" "}
+            <strong className="text-ink">What the judge catches, it can place.</strong> On the{" "}
             {loc.nLocalisable} wrong chains with a findable break, the median chain ran{" "}
             <strong className="text-ink">{pct(loc.medianShareSound ?? 0)}</strong> of its length
             before the line that breaks; outcome grading throws all of it away.{" "}
@@ -880,15 +874,6 @@ export function Page9() {
               this is the shape of the ones we can place, not of wrong chains in general.
             </p>
           </section>
-
-          {sel && !sel.helps ? (
-            <p className="text-sm text-ink-muted">
-              Turned the other way, as a filter to pick winners rather than to find errors, the
-              checker earns nothing: dropping candidates with a false step moved the vote on{" "}
-              {sel.nChanged} problem in {sel.nProblems}. That is a null result, and the honest one
-              at this reach.
-            </p>
-          ) : null}
         </section>
 
         <div aria-hidden="true" />

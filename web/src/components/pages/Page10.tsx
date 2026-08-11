@@ -54,6 +54,12 @@ const PAGE_N = 10;
  * none: the tree is hand-authored and the bars are Yao et al.'s. The arm that
  * would give it one is written and packaged here unrun, so the label has to
  * promise the notebook and not a result.
+ *
+ * That disclosure is a standing line under the intro, not a margin note. As a
+ * note beside step 3 it arrived after both figures it governs, next to the one
+ * it says least about; it has to be read before the first tap, and it is what
+ * the top line's unrun download is promising. It must stay in the reading
+ * column and above step 1.
  */
 const NOTEBOOK_ZIP = "/notebooks/page-10-search-arm.zip";
 const NW_ = buildNextWord(NEXT_WORD_SPEC as unknown as NextWordSpec);
@@ -337,6 +343,17 @@ export function Page10() {
         <strong className="text-ink">chain</strong>: a single line, written forward, with no way
         back. Keep a few unfinished lines alive instead and you have a{" "}
         <strong className="text-ink">tree</strong>.
+      </p>
+      {/* The provenance, in the reading column and above every figure it governs.
+          It used to be a margin note beside step 3, which put it after both figures
+          and beside the one it says least about. It sits here because it is the
+          caveat the reader needs before the first tap, and because it is what the
+          top line's unrun download is promising. */}
+      <p className="max-w-2xl text-ink-muted">
+        <strong className="text-ink">Nothing here is a measurement of ours.</strong> Pages 5 to 9
+        each ship the run their numbers come from. This page ships none. The 29-word tree below is
+        written by hand, chosen so the five behaviours are legible, and the crossword bars in step 3
+        are Yao et al.&apos;s.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -750,17 +767,10 @@ export function Page10() {
           </p>
         </section>
 
-        {/* Both notes ride in one cell, as step 1's pair do. Left as two grid children
-            they wrapped, and the second landed under step 3 at main-column width. */}
+        {/* One note in this cell now: the "No run of our own" note that used to sit
+            above it is the standing line under the intro. The wrapper stays so the
+            cell keeps step 1's shape if a second note ever returns. */}
         <div className="flex flex-col gap-6">
-          <Note kicker="No run of our own">
-            <p>Pages 5 to 9 each ship the run their numbers come from. This page ships none.</p>
-            <p>
-              The 29-word tree is written by hand, chosen so the five behaviours are legible. The
-              bars above are Yao et al.&apos;s.
-            </p>
-          </Note>
-
           <Note kicker="References">
             <RefItem n={REF.tot} href="https://arxiv.org/abs/2305.10601">
               Yao et al. 2023, <em>Tree of Thoughts: Deliberate Problem Solving with Large Language
