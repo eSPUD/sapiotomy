@@ -96,16 +96,12 @@ describe("Page 15 (when reasoning breaks) component", () => {
     render(<Page15 />);
     // Under greedy decoding a self-terminated chain is not rerun at a larger budget.
     // Without this the flat top reads as a measured plateau. The caption under the
-    // ledger says which of the two it is, and the margin note beside it carries the
-    // mechanism, so the two figures the slider drives stay next to each other.
+    // ledger says which of the two it is and carries the mechanism itself: it was a
+    // margin note long enough to outweigh the figure it explained, so it is body prose.
     const step2 = step(/Thinking too hard/i);
     expect(step2.textContent).toMatch(/about the axis rather than about thinking/i);
-    // The note is named for the thing in the figure it explains. It used to open on
-    // what the axis cannot show in general, which was a claim about the experiment
-    // rather than help reading the ledger, and that line is the notebook's now.
-    const note = screen.getByText(/Why the top rung is empty/i).closest("aside")!;
-    expect(note.textContent).toMatch(/it is the same generation/i);
-    expect(note.textContent).toMatch(/The axis runs out before the model does/i);
+    expect(step2.textContent).toMatch(/it is the same generation/i);
+    expect(step2.textContent).toMatch(/The axis runs out before the model does/i);
   });
 
   it("walks the specimen from a forced commit to its own wrong ending", () => {

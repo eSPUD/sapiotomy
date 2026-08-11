@@ -803,7 +803,10 @@ export function Page15() {
           <p className="text-ink-muted">
             Every rung loses answers as well as gaining them, and those losses were never drawn
             until now. The top rung gains <strong className="text-ink">nothing</strong>, for a
-            reason that is about the axis rather than about thinking.
+            reason that is about the axis rather than about thinking: under greedy decoding a chain
+            that has already stopped itself is not run again at a larger budget, it is the same
+            generation, and {pct(PAGE17.axisBound.shareSelfTerminated, 0)} of these end themselves
+            before {PAGE17.axisBound.maxBudget} tokens. The axis runs out before the model does.
           </p>
 
           {/* The invitation is the last line of the intro, directly above the figure it invites
@@ -832,7 +835,7 @@ export function Page15() {
 
           {/* Control 3 stays in the body because without it a reader leaves with a technique
               that does not exist. Controls 1 and 2 defend the specimen's reading rather than
-              the reader's takeaway, so they sit in the margin.
+              the reader's takeaway, so they are the notebook's (see the file header).
 
               This used to be a boxed aside, and the two readings under it two more boxes, which
               made the close of the step three stacked cards of the same weight. Only the counts
@@ -895,14 +898,6 @@ export function Page15() {
         <div className="flex flex-col gap-6">
           <Note kicker="Try it">
             <p>Drag to {PAGE17.axisBound.maxBudget} and read what it commits to.</p>
-          </Note>
-          <Note kicker="Why the top rung is empty">
-            <p>
-              Under greedy decoding a chain that has already stopped itself is not run again at a
-              larger budget, it is the same generation, and{" "}
-              {pct(PAGE17.axisBound.shareSelfTerminated, 0)} of these end themselves before{" "}
-              {PAGE17.axisBound.maxBudget} tokens. The axis runs out before the model does.
-            </p>
           </Note>
           <Note kicker="References">
             <RefItem n={REF.zeng} href="https://arxiv.org/abs/2502.12215">
