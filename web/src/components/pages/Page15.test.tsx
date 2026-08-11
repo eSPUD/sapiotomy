@@ -227,9 +227,34 @@ describe("Page 15 (when reasoning breaks) component", () => {
     // Twice on purpose: once annotating the figure, once in the sentence under it.
     // If those two ever quote different numbers for the same column the page is
     // arguing with itself, so the count is asserted rather than the presence.
-    expect(
-      screen.getAllByText(new RegExp(`${Math.abs(gapAt(0)).toFixed(0)} points\\s+behind`, "i")),
-    ).toHaveLength(2);
+    const n = Math.abs(gapAt(0)).toFixed(0);
+    const word = Math.abs(Number(n)) === 1 ? "point" : "points";
+    expect(screen.getAllByText(new RegExp(`${n} ${word}\\s+behind`, "i"))).toHaveLength(2);
+    // The cold column rounds to exactly one point on this run, so "1 points behind"
+    // is reachable on first render rather than being a theoretical plural bug.
+    expect(screen.queryByText(/\b1 points\b/)).not.toBeInTheDocument();
+  });
+
+  /**
+   * At one column two selectors are exactly level for best-of-the-rest. Naming
+   * only one of them would tell the reader a selector was uniquely best at a
+   * setting where two were tied, which is the kind of quiet overstatement this
+   * deck's provenance rules exist to prevent.
+   */
+  it("names every selector tied for best of the rest, not just the first found", () => {
+    render(<Page15 />);
+    const rel = PAGE17.reliability;
+    const others = rel.lines.filter((l) => !l.trained);
+    const tiedAt = rel.temperatures.map((t, i) => {
+      const top = Math.max(...others.map((o) => o.points[i].reliability));
+      return others.filter((o) => Math.abs(o.points[i].reliability - top) < 1e-9);
+    });
+    const tiedIx = tiedAt.findIndex((ls) => ls.length > 1);
+    if (tiedIx < 0) return; // no tie on this run, nothing to hold
+    fireEvent.change(tempDial(), { target: { value: String(tiedIx) } });
+    const readout = screen.getByText(/tie for best of everything else at this setting/i)
+      .parentElement!;
+    for (const l of tiedAt[tiedIx]) expect(readout.textContent).toContain(l.label);
   });
 
   it("turns the deficit into a lead as the reader turns the dial up", () => {

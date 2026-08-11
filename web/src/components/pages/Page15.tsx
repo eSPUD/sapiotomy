@@ -416,15 +416,34 @@ const TRAINED_CLEAR_PTS =
 /**
  * Which line the trained scorer is actually being charged against at each column.
  * The reader who moves the dial is owed the name, not just the gap: "clear of what"
- * is half the claim, and on this run the answer happens to be the same selector at
- * every temperature, which is itself worth being able to see.
+ * is half the claim.
+ *
+ * ALL of the lines that reach the top, not the first one found. On this run the
+ * 0.60 column is an exact tie between the majority vote and the bigger model, and
+ * naming only one of them would tell the reader that one selector was uniquely
+ * best at a setting where two were level.
  */
-const R_BEST_OTHER_LINE = REL.temperatures.map((t, i) =>
-  R_OTHERS.reduce((a, b) => (b.points[i].reliability > a.points[i].reliability ? b : a)),
+const R_TIE_EPS = 1e-9;
+const R_BEST_OTHER_LINES = REL.temperatures.map((t, i) =>
+  R_OTHERS.filter((o) => Math.abs(o.points[i].reliability - R_BEST_OTHER[i]) < R_TIE_EPS),
 );
+
+/** "majority vote", or "majority vote and judged by a bigger model" when they tie. */
+const bestOtherLabel = (i: number): string => {
+  const ls = R_BEST_OTHER_LINES[i].map((l) => l.label);
+  if (ls.length === 1) return ls[0];
+  return `${ls.slice(0, -1).join(", ")} and ${ls[ls.length - 1]}`;
+};
 
 /** The trained scorer's lead over the best alternative, in points, at one column. */
 const gapAt = (i: number) => (REL.trained.points[i].reliability - R_BEST_OTHER[i]) * 100;
+
+/**
+ * "1 point behind", never "1 points behind". The coldest column rounds to exactly
+ * one point, so the singular is reachable on first render rather than being a
+ * theoretical case.
+ */
+const pointsWord = (n: number) => (Math.abs(Number(n.toFixed(0))) === 1 ? "point" : "points");
 
 /**
  * The sweep's coldest column is the one that makes the page's point, so it is where
@@ -517,7 +536,7 @@ function ReliabilitySweep({ tempIndex }: { tempIndex: number }) {
           (l) =>
             `${l.label}: ${l.points.map((p) => `${pct(p.reliability)} at temperature ${p.temperature}`).join(", ")}`,
         )
-        .join(". ")}. Every judge that is a model asked to judge decays; the trained reward model does not. The dial is on temperature ${REL.temperatures[tempIndex]}, where the trained reward model is ${Math.abs(gapAt(tempIndex)).toFixed(0)} points ${gapAt(tempIndex) >= 0 ? "clear of" : "behind"} ${R_BEST_OTHER_LINE[tempIndex].label}, the best of the rest.`}
+        .join(". ")}. Every judge that is a model asked to judge decays; the trained reward model does not. The dial is on temperature ${REL.temperatures[tempIndex]}, where the trained reward model is ${Math.abs(gapAt(tempIndex)).toFixed(0)} ${pointsWord(gapAt(tempIndex))} ${gapAt(tempIndex) >= 0 ? "clear of" : "behind"} ${bestOtherLabel(tempIndex)}, the best of the rest.`}
       width={R_W}
       height={R_H}
       margin={R_M}
@@ -582,8 +601,8 @@ function ReliabilitySweep({ tempIndex }: { tempIndex: number }) {
               className={`text-[10px] font-semibold ${gap >= 0 ? "fill-compute" : "fill-wrong"}`}
             >
               {gap >= 0
-                ? `${gap.toFixed(0)} points clear`
-                : `${Math.abs(gap).toFixed(0)} points behind`}
+                ? `${gap.toFixed(0)} ${pointsWord(gap)} clear`
+                : `${Math.abs(gap).toFixed(0)} ${pointsWord(gap)} behind`}
             </text>
           </g>
         );
@@ -622,7 +641,8 @@ function ReliabilitySweep({ tempIndex }: { tempIndex: number }) {
               // between a point and an abstraction.
               const charged =
                 i === tempIndex &&
-                (line.trained || line.selector === R_BEST_OTHER_LINE[tempIndex].selector);
+                (line.trained ||
+                  R_BEST_OTHER_LINES[tempIndex].some((o) => o.selector === line.selector));
               return (
                 <circle
                   key={p.temperature}
@@ -930,10 +950,14 @@ export function Page15() {
               At <strong className="text-ink">{REL.temperatures[tempIndex].toFixed(2)}</strong>, the
               trained scorer is{" "}
               <strong className={gapAt(tempIndex) >= 0 ? "text-ink" : "text-wrong"}>
-                {Math.abs(gapAt(tempIndex)).toFixed(0)} points{" "}
+                {Math.abs(gapAt(tempIndex)).toFixed(0)} {pointsWord(gapAt(tempIndex))}{" "}
                 {gapAt(tempIndex) >= 0 ? "clear of" : "behind"}
               </strong>{" "}
-              {R_BEST_OTHER_LINE[tempIndex].label}, the best of everything else at this setting.{" "}
+              {bestOtherLabel(tempIndex)},{" "}
+              {R_BEST_OTHER_LINES[tempIndex].length > 1
+                ? "which tie for best of everything else at this setting"
+                : "the best of everything else at this setting"}
+              .{" "}
               {gapAt(tempIndex) < 0
                 ? "Start here and the trained scorer looks like the wrong pick. Turn the dial up."
                 : null}
