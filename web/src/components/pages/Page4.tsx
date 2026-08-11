@@ -32,7 +32,7 @@
  */
 
 import { useEffect, useId, useMemo, useState } from "react";
-import { Cite, RefItem } from "@/components/Cite";
+import { RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { GAME_ROUNDS, MULT_METHODS, type MultMethodKey } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
@@ -565,17 +565,6 @@ export function Page4() {
           </div>
         </section>
         <div aria-hidden="true" />
-
-        {/* The provenance line belongs to the content column, not to the full
-            width of the page: run under the margin notes it reads as a footer
-            for the whole spread rather than for the three walkthroughs above it. */}
-        <p className="text-xs text-ink-muted lg:col-start-1">
-          the three walkthroughs are authored teaching examples; every intermediate number is
-          derived from {P.a} × {P.b} and recomputed by the test suite · line multiplication is a
-          visual method commonly taught as a Japanese technique; &ldquo;Vedic&rdquo; names the
-          Urdhva-Tiryagbhyam (&ldquo;vertically and crosswise&rdquo;) sutra
-          <Cite n={REF.vedic} /> · the destination {P.display} is page 1&apos;s round 3
-        </p>
       </div>
 
       <div aria-live="polite" className="sr-only">
