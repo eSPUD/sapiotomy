@@ -2,10 +2,9 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import {
   ADAPTIVE_NULL,
-  BIGGER,
-  CROSSING,
   FORCED,
   LADDER,
+  NOTEBOOKS,
   OTHER_AXIS,
   QUIZ,
   WRITER,
@@ -187,6 +186,33 @@ describe("Page 16 (wrap-up) component", () => {
   });
 
   // ---- section 2: the concept check ----
+
+  /**
+   * The chart says where every number came from, in a stacked list of the
+   * notebooks that produced them, plus the one-writer disclaimer. Added
+   * 2026-08-10 with the removal of the other-model row, which is what made the
+   * disclaimer true: every remaining rung is the same model's chains.
+   */
+  it("shows which notebook every rung came from, one per line", () => {
+    render(<Page16 />);
+    expect(NOTEBOOKS.length).toBeGreaterThan(0);
+    for (const n of NOTEBOOKS) {
+      const link = screen.getByRole("link", { name: new RegExp(`Page ${n.page}: ${n.title}`, "i") });
+      expect(link.getAttribute("href")).toBe(n.href);
+    }
+    // Derived from the ladder, so a rung can never quietly outlive its source.
+    const pages = [...new Set(LADDER.map((r) => r.page))].sort((a, b) => a - b);
+    expect(NOTEBOOKS.map((n) => n.page)).toEqual(pages);
+  });
+
+  it("says one model wrote every chain on the chart, and can still say it", () => {
+    render(<Page16 />);
+    expect(screen.getByText(new RegExp(`Every chain above was written by ${WRITER}`))).toBeInTheDocument();
+    // The claim is only true while no rung belongs to another writer.
+    expect(LADDER.some((r) => r.band === "elsewhere")).toBe(false);
+    // A judge scores chains, it does not write them, and the page says so.
+    expect(screen.getByText(/it scores chains, it does not write them/i)).toBeInTheDocument();
+  });
 
   it("asks ten questions, each naming the page it came from", () => {
     render(<Page16 />);

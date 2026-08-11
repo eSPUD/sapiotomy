@@ -60,10 +60,11 @@ import { PageNav } from "@/components/PageNav";
 import { Quiz } from "@/components/Quiz";
 import {
   ADAPTIVE_NULL,
-  CROSSING,
   ITEM_COUNT,
   LADDER,
+  NOTEBOOKS,
   QUIZ,
+  WRITER,
   pct,
 } from "@/lib/page16";
 import { ACTS, getPage } from "@/lib/pages";
@@ -105,7 +106,7 @@ const ROW = 32;
 // label gutter wide enough for the longest row, and readouts that ride the end
 // of their own bar. Not a table with columns, which is what this became for one
 // revision and what pulled the eye off the bars.
-const M = { top: 12, right: 132, bottom: 34, left: 256 };
+const M = { top: 12, right: 56, bottom: 34, left: 272 };
 const IW = W - M.left - M.right;
 const H = LADDER.length * ROW + M.top + M.bottom;
 const IH = H - M.top - M.bottom;
@@ -148,7 +149,7 @@ function Ladder() {
               ? `, up from ${pct(r.baseline)} on that run's own vote`
               : ""
           }`,
-      ).join(". ")}. The steps get smaller as you go, a wide gap is left between the best selector and the answers that were generated and not picked, and the last row ties the best selector's accuracy on a model twice the size.`}
+      ).join(". ")}. The steps get smaller as you go, and a wide gap is left between the best selector and the answers that were generated and not picked. Every chain on the chart was written by ${WRITER}.`}
       width={W}
       height={H}
       margin={M}
@@ -174,30 +175,18 @@ function Ladder() {
         />
       ) : null}
 
-      {/* Where the best selector and the bigger model tie. */}
-      <line
-        x1={x(CROSSING)}
-        x2={x(CROSSING)}
-        y1={0}
-        y2={IH}
-        strokeDasharray="4 3"
-        className="stroke-correct"
-        strokeWidth={1.5}
-      />
-
       {LADDER.map((r, i) => {
         const y = i * ROW + 6;
         const h = ROW - 12;
         const base = r.baseline ?? 0;
         return (
           <g key={r.label}>
-            <text
-              x={-10}
-              y={y + h - 3}
-              textAnchor="end"
-              className={`text-[11px] ${r.ceiling ? "fill-ink-muted italic" : "fill-ink"}`}
-            >
-              {r.label}
+            {/* Label and source in ONE right-aligned run, ending at the bar. The
+                page tag used to sit in the plot at a fixed offset past the value,
+                which collided with the value on every short bar. */}
+            <text x={-10} y={y + h - 3} textAnchor="end" className="text-[11px]">
+              <tspan className={r.ceiling ? "fill-ink-muted italic" : "fill-ink"}>{r.label}</tspan>
+              <tspan className="fill-ink-muted"> · page {r.page}</tspan>
             </text>
 
             {r.ceiling ? (
@@ -262,9 +251,6 @@ function Ladder() {
             >
               {pct(r.accuracy)}
             </text>
-            <text x={x(r.accuracy) + 44} y={y + h - 3} className="fill-ink-muted text-[10px]">
-              page {r.page}
-            </text>
           </g>
         );
       })}
@@ -327,6 +313,36 @@ export function Page16() {
           the largest single move on the chart, and being made to write more of it is the only step
           that goes backwards.
         </p>
+
+        {/* Where the rungs came from. Derived from the ladder in lib/page16.ts, so a
+            rung that is added or cut cannot leave this list pointing at the wrong
+            set of runs. Stacked rather than run together: it is a list of files a
+            reader might actually download, not a sentence. */}
+        <div className="flex max-w-2xl flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
+          <p className="text-sm text-ink">
+            <strong className="text-ink">Every chain above was written by {WRITER}.</strong> One
+            model wrote all of it. What changes down the chart is how many chains it was allowed to
+            write and what got to pick between them, never who was writing. Where a judge appears it
+            scores chains, it does not write them.
+          </p>
+          <p className="text-sm text-ink-muted">
+            Each run below is the notebook that produced it, with its traces, so any rung can be
+            re-derived without a GPU:
+          </p>
+          <ul className="flex flex-col gap-1.5">
+            {NOTEBOOKS.map((n) => (
+              <li key={n.page} className="text-sm">
+                <a
+                  href={n.href}
+                  className="text-ink underline decoration-grid underline-offset-2 hover:text-compute"
+                >
+                  Page {n.page}: {n.title}
+                </a>{" "}
+                <span className="text-ink-muted">(notebook and traces, zip)</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">

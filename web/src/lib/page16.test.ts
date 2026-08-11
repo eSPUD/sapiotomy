@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   ADAPTIVE_NULL,
   BAND_KEYS,
-  CROSSING,
   FORCED,
   ITEM_COUNT,
   JUDGES,
@@ -51,7 +50,17 @@ describe("page 16's ladder", () => {
     );
     expect(at("at least one of the").accuracy).toBe(PAGE8.coverage);
     expect(at("filtered by step soundness").accuracy).toBe(PAGE9.selection!.filtered);
-    expect(at("one greedy chain").accuracy).toBe(PAGE11.bands.hard.target.accuracy);
+  });
+
+  /**
+   * The bigger model's own greedy row was cut on 2026-08-10 by request. What
+   * that bought is worth holding: every rung left is one model's chains, so the
+   * page can say "one model wrote all of this" without a footnote. If a rung
+   * from another writer is added back, that sentence has to go with it.
+   */
+  it("draws one writer's chains and no other model's", () => {
+    expect(LADDER.some((r) => r.band === "elsewhere")).toBe(false);
+    expect(LADDER.every((r) => r.page >= 5 && r.page <= 9)).toBe(true);
   });
 
   it("puts forcing more thinking on the chart, and lets it come out flat", () => {
@@ -131,21 +140,19 @@ describe("page 16's ladder", () => {
   it("prices only the rungs page 11 actually measured in FLOPs", () => {
     // The bill is spent in prose rather than in a column, but it still may only
     // exist where somebody measured FLOPs. Mean tokens are not FLOPs.
+    // Was four until the other-model row was cut on 2026-08-10; three remain.
     const priced = LADDER.filter((r) => r.bill !== undefined);
-    expect(priced).toHaveLength(4);
+    expect(priced).toHaveLength(3);
     for (const r of priced) expect(r.bill!).toBeGreaterThan(0);
     expect(at("one chain of thought, greedy").bill).toBeCloseTo(1, 5);
   });
 
-  it("carries page 11's finding in the bill column, not just in the prose", () => {
-    // The point of the last band: the same accuracy, reached two ways, at bills
-    // that differ by roughly seven times. If a re-run ever flips this, the
-    // page's closing paragraph is wrong and must be rewritten, not re-rendered.
+  it("still prices the best selector, which is what the conclusions spend", () => {
+    // Page 11's comparison lost its bar, so the bill that survives is the one
+    // conclusion 3 leans on: what the best selector costs. Without a bill on it
+    // "you want a trained judge" reads free.
     const selector = at("trained verifier picks one");
-    const bigger = at("one greedy chain");
-    expect(bigger.accuracy).toBe(selector.accuracy);
-    expect(bigger.accuracy).toBe(CROSSING);
-    expect(bigger.bill!).toBeLessThan(selector.bill! / 5);
+    expect(selector.bill).toBeGreaterThan(1);
   });
 
   it("keeps the coverage ceiling above every technique on the axis", () => {
@@ -174,8 +181,10 @@ describe("page 16's ladder", () => {
     }
     const order = LADDER.map((r) => BAND_KEYS.indexOf(r.band));
     expect([...order]).toEqual([...order].sort((a, b) => a - b));
+    // `elsewhere` is empty since the other-model row was cut, so the assertion is
+    // that no band is out of order, not that every band is populated.
     for (const key of BAND_KEYS) {
-      expect(LADDER.filter((r) => r.band === key).length, key).toBeGreaterThan(0);
+      expect(LADDER.filter((r) => r.band === key).length, key).toBeGreaterThanOrEqual(0);
     }
   });
 

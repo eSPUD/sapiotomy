@@ -276,6 +276,23 @@ if (WAIT.before / WAIT.table.n !== PAGE5.figure2.bare.accuracy) {
  * same 60% the best selector reached for 21.6 greedy chains is reached by a
  * bigger model for 2.2 of them.
  */
+/**
+ * The shipped notebook for each page whose run this chart draws. Filenames are
+ * the zips in `public/notebooks`; `notebookBundles.test.ts` is what keeps those
+ * archives honest about the runs they carry, and this table only has to point at
+ * the right one. Any page that gains a rung must gain an entry here, and NOTEBOOKS
+ * throws rather than silently omitting a source.
+ */
+const NOTEBOOK_BY_PAGE: Record<number, { title: string; href: string }> = {
+  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/page-05-how-to-reason.zip" },
+  6: { title: "Thinking longer, and budget forcing", href: "/notebooks/page-06-thinking-longer.zip" },
+  7: { title: "Sampling and voting", href: "/notebooks/page-07-frequency-voting.zip" },
+  8: { title: "Best-of-N and the judges", href: "/notebooks/page-08-best-of-n.zip" },
+  9: { title: "Outcome against process grading", href: "/notebooks/page-09-outcome-vs-process.zip" },
+  10: { title: "The search arm", href: "/notebooks/page-10-search-arm.zip" },
+  11: { title: "Training against scale", href: "/notebooks/page-11-training-vs-scale.zip" },
+};
+
 export const LADDER: Rung[] = [
   {
     band: "chain",
@@ -344,22 +361,37 @@ export const LADDER: Rung[] = [
     note: "the ceiling a perfect selector would reach, and nothing did",
     ceiling: true,
   },
-  {
-    band: "elsewhere",
-    label: `${HARD.target.label}, one greedy chain`,
-    accuracy: HARD.target.accuracy,
-    page: 11,
-    bill: bill(HARD.target.flops),
-    note: "the same score as the best selector, for a seventh of its bill",
-  },
 ];
 
-/** The accuracy two rungs tie at: the comparison the last band exists to make. */
-export const CROSSING = HARD.target.accuracy;
-
-/** The two checkpoints the chart compares, named once so no copy has to guess. */
+/**
+ * The bigger model's own greedy row was cut from the ladder on 2026-08-10, and
+ * the dashed crossing rule went with it: the rule marked exactly that row's
+ * accuracy, so with the row gone it marked nothing a reader could name.
+ *
+ * One thing that removal bought, which is worth keeping true: every chain still
+ * on this chart was written by the SAME model. The judges on page 8's rung score
+ * chains, they do not write them, so `WRITER` describes the whole chart and the
+ * page says so under it.
+ */
 export const WRITER = GREEDY_3B.label;
-export const BIGGER = HARD.target.label;
+
+/**
+ * The notebooks behind the rungs, derived from the ladder rather than listed by
+ * hand, so a rung that is added or cut cannot leave the download list lying.
+ */
+export const NOTEBOOKS: { page: number; title: string; href: string }[] = [
+  ...new Set(LADDER.map((r) => r.page)),
+]
+  .sort((a, b) => a - b)
+  .map((page) => {
+    const meta = NOTEBOOK_BY_PAGE[page];
+    if (!meta) {
+      throw new Page16DataError(
+        `page 16 draws a rung from page ${page} and has no notebook to show for it`,
+      );
+    }
+    return { page, ...meta };
+  });
 
 /** How much of a real chain a step checker can actually adjudicate. Page 9's. */
 export const CHECKABLE_SHARE = 1 - PAGE9.graders.shareUnjudged;
