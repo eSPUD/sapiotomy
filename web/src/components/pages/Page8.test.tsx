@@ -70,17 +70,13 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(note.textContent).toMatch(/next page/);
   });
 
-  // Every headline number on the page comes from a reconstruction of the
-  // checkpoint, so the page says so. Driven off the run: a re-run that loads it
-  // as published drops the paragraph, and this test drops with it.
-  it("discloses that the trained verifier did not run as published", () => {
+  // The checkpoint had to be rebuilt from its published weights, and that is a
+  // fact about the apparatus rather than about selection. It lives in the
+  // notebook and the download now; the page does not stop to litigate it.
+  it("leaves the rebuild of the checkpoint to the notebook", () => {
     render(<Page8 />);
-    const rebuilt = PAGE8.verifierNote?.rebuilt ?? false;
-    const found = screen.queryByText(/It did not run as published/);
-    expect(Boolean(found)).toBe(rebuilt);
-    if (rebuilt) {
-      expect(found!.textContent).toMatch(/every number on this page for it comes from that rebuild/);
-    }
+    expect(screen.queryByText(/did not run as published/)).toBeNull();
+    expect(document.body.textContent).not.toMatch(/rebuilt|published weights/);
   });
 
   // Provenance is pills at the figures, not the plate this page used to open
