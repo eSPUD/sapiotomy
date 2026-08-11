@@ -1033,18 +1033,17 @@ export function Page11() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      {/* Six sentences, not three. This was the deck's densest opener: it asked the
-          reader to hold FLOPs, pretraining, parameters, sampling and voting at once,
-          glossed only the first, then made them count back to resolve "the second
-          kind". The facts and the hedges are unchanged; only the welding is undone. */}
+      {/* Four sentences, at pages 8 to 10's opener length. The FLOPs gloss rides
+          along in the claim rather than taking a sentence of its own, and the
+          once/every-question contrast carries the pretraining split in one line —
+          step 2's R panel is where that split gets its full airing. */}
       <p className="max-w-2xl text-lg text-ink-muted">
-        FLOPs are floating-point operations, the raw count of arithmetic a chip does. A bigger model
-        and more thinking are{" "}
-        <strong className="text-ink">two ways to spend the same FLOPs</strong>. Pretraining burns
-        them once, before any question arrives, into the model&rsquo;s parameters (the numbers it
-        learns during training). Sampling and voting burn them at answer time, on every question you
-        ask. Act 2 built the answer-time kind. Matched budget for budget on the deck&rsquo;s own run,
-        a 3B model against a 7B on the same problems,{" "}
+        A bigger model and more thinking are{" "}
+        <strong className="text-ink">two ways to spend the same FLOPs</strong> (floating-point
+        operations, the raw count of arithmetic a chip does). Pretraining burns them once, into the
+        model&rsquo;s parameters; sampling and voting burn them at answer time, on every question
+        you ask. Act 2 built the answer-time kind. Matched bill for bill on the deck&rsquo;s own
+        run, a 3B against a 7B,{" "}
         <strong className="text-ink">can thinking harder out-buy a bigger model?</strong>
       </p>
 
