@@ -205,15 +205,6 @@ function prefersReducedMotion(): boolean {
 /** The date the run was made, for the provenance chip. */
 const RUN_DATE = M.timestamp_utc.slice(0, 10);
 
-/**
- * The run's condition keys in the only two names the page prints. A raw key
- * ("bare") in a margin note reads as a third arm the reader never met.
- */
-const CONDITION_NAME: Record<string, string> = {
-  bare: "reasoning",
-  forced_blurt: "non-reasoning",
-};
-
 const chip = "rounded-full border border-grid px-2 py-0.5 text-ink-muted";
 const seg = (active: boolean) =>
   `rounded px-3 py-1.5 text-sm font-semibold ${
@@ -999,20 +990,6 @@ export function Page5() {
         <Note kicker="Limits">
           <p>
             Three checkpoints are not a scaling law, and nothing here is plotted against size.
-          </p>
-          <p>
-            {pct(PAGE5.truncation.worst.rate)} of the{" "}
-            {CONDITION_NAME[PAGE5.truncation.worst.condition]} traces hit the token cap, so the
-            measured cost of forbidding the working is{" "}
-            {PAGE5.truncation.biases_headline === "conservative"
-              ? "an undercount, not an overcount"
-              : "an overcount, not an undercount"}
-            .
-          </p>
-          <p>
-            The non-reasoning suffix is one phrasing and another would move the floor. And
-            the run records whether working appeared and whether the answer landed, never whether
-            the working was sound.
           </p>
         </Note>
 

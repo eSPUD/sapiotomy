@@ -227,15 +227,15 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(close.textContent).toContain(pct(trained.mean));
   });
 
-  // Page 7 used to claim page 8 reused its chains. It did not, and the receipt
-  // for what actually holds is on this page.
-  it("shows the agreement with page 7 rather than claiming identity", () => {
+  // Page 7 used to claim page 8 reused its chains. It did not, and the margin
+  // note beside the evidence figure says whose chains these are. The three
+  // agreement percentages that used to sit beside it are in the download: the
+  // margin's job is to name the row, not to re-run the comparison.
+  it("names the vote's row as page 7's rule without claiming page 7's chains", () => {
     render(<Page8 />);
     expect(PAGE8.agreement.sameCandidates).toBe(false);
     const note = screen.getByText(/chains this page generated itself/);
-    expect(note.textContent).toContain(pct(PAGE8.agreement.page7Vote));
-    expect(note.textContent).toContain(pct(PAGE8.agreement.page8Vote));
-    expect(note.textContent).toContain(pct(PAGE8.agreement.page8Coverage));
+    expect(note.textContent).toMatch(/page 7's counting rule/);
   });
 
   // The two sources moved from CitationBadge chips into numbered RefItem entries

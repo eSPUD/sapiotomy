@@ -561,6 +561,14 @@ export const PAGE17 = {
     stepsTotal: PAGE9.graders.stepsTotal,
     stepsJudged: PAGE9.graders.stepsJudged,
     shareUnjudged: PAGE9.graders.shareUnjudged,
+    /**
+     * Chains carrying no closed-form numeric claim anywhere. Page 15 argues for
+     * feedback from outside the model, and this is the number that argues it: a
+     * calculator never fires at all on two chains in three.
+     */
+    nChainsUnreadable: PAGE9.detection.nChainsUnreadable,
+    shareChainsUnreadable: PAGE9.detection.shareChainsUnreadable,
+    nChains: PAGE9.detection.nChainsGraded,
     prm: PAGE9.graders.prm,
     selection: PAGE9.selection,
     localisationSpreadPts: PAGE9.localisation.spreadPts,

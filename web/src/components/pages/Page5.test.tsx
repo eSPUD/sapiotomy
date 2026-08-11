@@ -414,19 +414,20 @@ describe("Page 5: provenance and what the page may claim", () => {
   // What survives sits in the margin beside the figure it qualifies, and only
   // what a reader cannot work out from that figure: method went back to the
   // download, including the grading provenance, which is true and not needed
-  // while looking at 100 squares.
+  // while looking at 100 squares. Trimmed again on 2026-08-10 to the one line
+  // a reader of this figure cannot supply: the truncation rate and the suffix
+  // caveat are the notebook's, not the margin's.
   it("carries the limits in the margin rather than in a footer", () => {
     render(<Page5 />);
-    // The truncation note names the arm the way the rest of the page does and
-    // says which way the bias runs; it used to print the run's condition key
-    // ("bare") and a bare adjective ("biases the headline conservative").
     const limits = screen.getByText(/Three checkpoints are not a scaling law/).closest("aside")!;
-    expect(limits.textContent).toContain(
-      "of the reasoning traces hit the token cap, so the measured cost of forbidding the working is an undercount, not an overcount",
+    // Kicker plus one line, and nothing else.
+    expect(limits.textContent).toBe(
+      "LimitsThree checkpoints are not a scaling law, and nothing here is plotted against size.",
     );
     expect(limits.textContent).not.toMatch(/\bbare\b|forced_blurt/);
-    expect(body()).toContain("is one phrasing and another would move the floor");
-    expect(body()).toContain("never whether the working was sound");
+    expect(body()).not.toContain("hit the token cap");
+    expect(body()).not.toContain("is one phrasing and another would move the floor");
+    expect(body()).not.toContain("never whether the working was sound");
     expect(body()).not.toContain("reasoning-from-scratch");
   });
 

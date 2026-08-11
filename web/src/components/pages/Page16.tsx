@@ -419,12 +419,22 @@ export function Page16() {
               every number is discounted
             </p>
             <p className="mt-2">
-              A benchmark is published text and published text is what the next model trains on, so
-              a score can be reciting the test rather than reasoning through it. On problems
-              released after these models trained, reasoning models scored 7 to 30 points below
-              their older-year averages. That discounts the ladder above and the frontier scores of
-              Act 3 alike, and it does not tell you by how much.{" "}
-              <span className="text-ink-muted">Page 15 sizes it.</span>
+              Every accuracy number in this deck was measured on problems the model may already
+              have seen. A benchmark is published text and published text is what the next model
+              trains on, so a score can be reciting the test rather than reasoning through it. Here
+              is the size of it. On AIME 2025, released after these models trained, reasoning
+              models scored 7 to 30 points below their 1983 to 2024 averages, and a conventional
+              model fell from 40% to 1%.{" "}
+              <a
+                href="https://arxiv.org/abs/2504.00294"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-grid underline-offset-2 hover:text-ink"
+              >
+                Balachandran et al. 2025
+              </a>
+              . That discounts the ladder above and the frontier scores of Act 3 alike, and it does
+              not tell you by how much, which is the uncomfortable part.
             </p>
           </div>
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-sm text-ink">

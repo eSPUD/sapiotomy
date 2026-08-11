@@ -422,6 +422,8 @@ export const PAGE9 = {
     /** Chains with nothing checkable in them at all, over the whole graded pile. */
     nChainsUnreadable: raw.detection.n_chains_with_no_checkable_step,
     shareChainsUnreadable: raw.detection.share_chains_with_no_checkable_step,
+    /** The pile those two are taken over, so a page can print "N of M". */
+    nChainsGraded: raw.headline.n_chains,
     /** The PRM's rate, present only when its measured reliability cleared the gate. */
     prm: raw.headline.detection_prm
       ? {

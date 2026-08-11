@@ -307,6 +307,17 @@ describe("Page 16 (wrap-up) component", () => {
     expect(screen.getByText(/What this deck did not settle/i)).toBeInTheDocument();
     // Both open items, and the second is the question page 15 hands forward.
     expect(screen.getByText(/every number is discounted/i)).toBeInTheDocument();
+    // The caveat is sized and sourced here now. It used to state the claim and
+    // point at page 15 for the evidence, which put a whole-deck measurement
+    // caveat inside a page about the mechanisms by which reasoning breaks.
+    const discounted = screen.getByText(/every number is discounted/i).closest("div")!;
+    expect(discounted.textContent).toMatch(/published text is what the next model trains on/);
+    expect(discounted.textContent).toMatch(/7 to 30 points below/);
+    expect(discounted.textContent).toMatch(/fell from 40% to 1%/);
+    expect(discounted.textContent).not.toMatch(/Page 15 sizes it/);
+    expect(
+      screen.getByRole("link", { name: /Balachandran et al\. 2025/i }).getAttribute("href"),
+    ).toBe("https://arxiv.org/abs/2504.00294");
     expect(screen.getByText(/and the chain may not be the reason/i)).toBeInTheDocument();
     expect(
       screen.getByText(/nobody has yet shown is the reason for the answer/i),
