@@ -684,13 +684,16 @@ export function Page15() {
               verbatim published numbers
             </span>
           </h2>
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-sm text-ink">
-              You have almost certainly tried this yourself: you ask a model a question, the answer
-              comes back wrong, so you send it straight back with &ldquo;check that again and fix
-              any mistakes.&rdquo; No hints, no tools, just re-reading. Measured across two rounds
-              of exactly that, accuracy goes <strong>down</strong>:
-            </p>
+          <p className="text-ink-muted">
+            You have almost certainly tried this yourself: you ask a model a question, the answer
+            comes back wrong, so you send it straight back with &ldquo;check that again and fix any
+            mistakes.&rdquo; No hints, no tools, just re-reading. Measured across two rounds of
+            exactly that, accuracy goes <strong className="text-ink">down</strong>.
+          </p>
+          <section
+            aria-label="Two rounds of unaided self-correction, on two published benchmarks"
+            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+          >
             <div className="grid gap-3 sm:grid-cols-2">
               <SelfCorrectPanel
                 heading="GPT-4 · GSM8K"
@@ -709,16 +712,14 @@ export function Page15() {
                 ]}
               />
             </div>
-            <p className="text-sm text-ink-muted">
-              The reason is structural: the same weights that produced the error are asked to find
-              it, so the review mostly re-approves the answer, and when the model does change
-              something, it flips correct answers to wrong{" "}
-              <em>more often than the reverse</em>.
-              <Cite n={REF.huang} /> Nothing new enters the system; &ldquo;are you
-              sure?&rdquo; just adds noise, and on CommonSenseQA one round of it cost GPT-3.5 half
-              its score.
-            </p>
-          </div>
+          </section>
+          <p className="text-ink-muted">
+            The reason is structural: the same weights that produced the error are asked to find it,
+            so the review mostly re-approves the answer, and when the model does change something,
+            it flips correct answers to wrong <em>more often than the reverse</em>.
+            <Cite n={REF.huang} /> Nothing new enters the system; &ldquo;are you sure?&rdquo; just
+            adds noise, and on CommonSenseQA one round of it cost GPT-3.5 half its score.
+          </p>
         </section>
 
         <Note kicker="References">
@@ -737,119 +738,123 @@ export function Page15() {
               our run · {PAGE17.run.items} problems · {PAGE17.run.primaryLabel} · greedy
             </span>
           </h2>
-          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
-            <p className="text-sm text-ink">
-              Step 1 was a revision <strong className="text-ink">you asked for</strong>. This one
-              the model performs on its own: left running, a chain keeps writing, and what it
-              writes can replace an answer it had already reached. Raise the token cap and page
-              6&apos;s accuracy curve climbs, though most of the climb is chains that were being
-              cut off mid-thought finally reaching an end. But a rising curve only shows the{" "}
-              <strong>balance</strong> of two things happening at once. Below, the same run with
-              them separated: the answers each doubling of the budget wins, and the answers it
-              costs.
+          <p className="text-ink-muted">
+            Step 1 was a revision <strong className="text-ink">you asked for</strong>. This one the
+            model performs on its own: left running, a chain keeps writing, and what it writes can
+            replace an answer it had already reached. Raise the token cap and page 6&apos;s accuracy
+            curve climbs, though most of the climb is chains that were being cut off mid-thought
+            finally reaching an end. But a rising curve only shows the{" "}
+            <strong className="text-ink">balance</strong> of two things happening at once. Below,
+            the same run with them separated: the answers each doubling of the budget wins, and the
+            answers it costs.
+          </p>
+          <section
+            aria-label="Answers won and lost at each doubling of the token budget"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            <Slider
+              label="Token budget"
+              min={0}
+              max={PAGE17.run.budgets.length - 1}
+              value={budgetIndex}
+              format={(i) => `${PAGE17.run.budgets[i]} tokens`}
+              onChange={(v) => {
+                setBudgetIndex(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
+            <RungLedger active={budgetIndex} />
+          </section>
+          <p className="text-ink-muted">
+            Every rung loses answers as well as gaining them, and those losses were never drawn
+            until now. The top rung gains <strong className="text-ink">nothing</strong>, for a
+            reason that is about the axis rather than about thinking.
+          </p>
+
+          {/* The invitation is the last line of the intro, directly above the figure it invites
+              the reader into, as on pages 5 and 7. */}
+          <p className="text-ink-muted">
+            So look at one of the losses. The budget above still drives what follows. Watch a single
+            problem: <span className="font-mono text-xs text-ink">{PAGE17.specimen.shortId}</span>,
+            minimise <em>(x+y)(y+z)</em> given <em>xyz(x+y+z) = 1</em>. The answer is{" "}
+            {PAGE17.specimen.groundTruth}.
+          </p>
+          <section
+            aria-label="One chain at the chosen budget, from a forced commit to its own ending"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            <SpecimenChain budgetIndex={budgetIndex} />
+          </section>
+          <p className="text-ink-muted">
+            Cut at {PAGE17.specimen.rightWhenCutAt.join(", ")} tokens and forced to commit, it
+            answers {PAGE17.specimen.groundTruth} three times over. Allowed to run to its own{" "}
+            {PAGE17.specimen.naturalLength}-token ending, it answers{" "}
+            <span className="font-mono text-xs">{tidyMath(PAGE17.specimen.wrongAnswer ?? "")}</span>.
+            The step that costs it is lit, and every line after it is correct arithmetic carrying a
+            wrong assumption to a confident finish. It breaks on{" "}
+            {PAGE17.specimen.alsoRegressesOn.join(" and ")} too.
+          </p>
+
+          {/* Control 3 stays in the body because without it a reader leaves with a technique
+              that does not exist. Controls 1 and 2 defend the specimen's reading rather than
+              the reader's takeaway, so they sit in the margin. */}
+          <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              what this is not
             </p>
+            <p className="text-sm text-ink">
+              <strong>Not a strategy.</strong> Stopping every problem at{" "}
+              {PAGE17.controls.isItARule.fixedCut} tokens scores{" "}
+              {pct(PAGE17.controls.isItARule.fixedCutAccuracy, 0)} against{" "}
+              {pct(PAGE17.controls.isItARule.natural, 0)} for finishing, and the best cut per
+              problem reaches {pct(PAGE17.controls.isItARule.oracle, 0)} for about{" "}
+              {Math.round(PAGE17.controls.isItARule.oracleTokenCost)} tokens where plain
+              resampling reaches {pct(PAGE17.controls.isItARule.samplingCoverage, 0)} at the same
+              cost. This is page 7&apos;s coverage without page 8&apos;s selector: a better
+              answer is in the pile and nothing we tested finds it.
+            </p>
+          </div>
 
-            <div className="flex flex-col gap-3">
-              <Slider
-                label="Token budget"
-                min={0}
-                max={PAGE17.run.budgets.length - 1}
-                value={budgetIndex}
-                format={(i) => `${PAGE17.run.budgets[i]} tokens`}
-                onChange={(v) => {
-                  setBudgetIndex(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-              <RungLedger active={budgetIndex} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col justify-center rounded-lg border border-grid bg-surface-raised p-4">
               <p className="text-sm text-ink-muted">
-                Every rung loses answers as well as gaining them, and those losses were never drawn
-                until now. The top rung gains <strong className="text-ink">nothing</strong>, for a
-                reason that is about the axis rather than about thinking.
+                Problems the model talks itself out of, per {PAGE17.run.items}:
+              </p>
+              <div className="mt-2 flex items-end gap-4">
+                {PAGE17.affected.byModel.map((m) => (
+                  <div key={m.model} className="flex flex-col items-center gap-1">
+                    <span className="font-mono text-2xl font-bold tabular-nums text-wrong">
+                      {m.rescued}
+                    </span>
+                    <span className="text-xs text-ink-muted">
+                      {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2 text-sm text-ink-muted">
+                The one aggregate claim here, and it is about capability rather than budgets: the
+                better the model, the less of this it does.
               </p>
             </div>
-
-            <div className="flex flex-col gap-3">
-              <p className="text-sm text-ink">
-                So look at one of the losses. Drag the budget and watch a single problem:{" "}
-                <span className="font-mono text-xs text-ink-muted">{PAGE17.specimen.shortId}</span>,
-                minimise <em>(x+y)(y+z)</em> given <em>xyz(x+y+z) = 1</em>. The answer is{" "}
-                {PAGE17.specimen.groundTruth}.
-              </p>
-              <SpecimenChain budgetIndex={budgetIndex} />
+            <div className="flex flex-col justify-center rounded-lg border border-grid bg-surface-raised p-4">
               <p className="text-sm text-ink-muted">
-                Cut at {PAGE17.specimen.rightWhenCutAt.join(", ")} tokens and forced to commit, it
-                answers {PAGE17.specimen.groundTruth} three times over. Allowed to run to its own{" "}
-                {PAGE17.specimen.naturalLength}-token ending, it answers{" "}
-                <span className="font-mono text-xs">{tidyMath(PAGE17.specimen.wrongAnswer ?? "")}</span>. The
-                step that costs it is lit, and every line after it is correct arithmetic carrying a
-                wrong assumption to a confident finish. It breaks on{" "}
-                {PAGE17.specimen.alsoRegressesOn.join(" and ")} too.
+                If you had to guess right from wrong by length alone:
+              </p>
+              <p className="font-mono text-3xl font-bold tabular-nums text-compute">
+                {PAGE17.length.auc.toFixed(2)}
+              </p>
+              <p className="mt-1 text-sm text-ink-muted">
+                Over page 8&apos;s whole pile, a correct candidate is the longer one about a
+                quarter of the time. Inverted, preferring the{" "}
+                <strong className="text-ink">shorter</strong> chain scores{" "}
+                {PAGE17.length.inverted.toFixed(2)}, beating {PAGE17.length.beats.length} of the
+                models that page asked to judge, at no cost. Wrong answers elsewhere burn ~225%
+                more tokens amid ~4× more strategy switches: thrashing, not depth.
+                <Cite n={REF.zeng} />
+                <Cite n={REF.wang} />
               </p>
             </div>
-
-            {/* Control 3 stays in the body because without it a reader leaves with a technique
-                that does not exist. Controls 1 and 2 defend the specimen's reading rather than
-                the reader's takeaway, so they sit in the margin. */}
-            <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                what this is not
-              </p>
-              <p className="text-sm text-ink">
-                <strong>Not a strategy.</strong> Stopping every problem at{" "}
-                {PAGE17.controls.isItARule.fixedCut} tokens scores{" "}
-                {pct(PAGE17.controls.isItARule.fixedCutAccuracy, 0)} against{" "}
-                {pct(PAGE17.controls.isItARule.natural, 0)} for finishing, and the best cut per
-                problem reaches {pct(PAGE17.controls.isItARule.oracle, 0)} for about{" "}
-                {Math.round(PAGE17.controls.isItARule.oracleTokenCost)} tokens where plain
-                resampling reaches {pct(PAGE17.controls.isItARule.samplingCoverage, 0)} at the same
-                cost. This is page 7&apos;s coverage without page 8&apos;s selector: a better
-                answer is in the pile and nothing we tested finds it.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="flex flex-col justify-center rounded-lg border border-grid bg-surface-raised p-4">
-                <p className="text-sm text-ink-muted">
-                  Problems the model talks itself out of, per {PAGE17.run.items}:
-                </p>
-                <div className="mt-2 flex items-end gap-4">
-                  {PAGE17.affected.byModel.map((m) => (
-                    <div key={m.model} className="flex flex-col items-center gap-1">
-                      <span className="font-mono text-2xl font-bold tabular-nums text-wrong">
-                        {m.rescued}
-                      </span>
-                      <span className="text-xs text-ink-muted">
-                        {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2 text-sm text-ink-muted">
-                  The one aggregate claim here, and it is about capability rather than budgets: the
-                  better the model, the less of this it does.
-                </p>
-              </div>
-              <div className="flex flex-col justify-center rounded-lg border border-grid bg-surface-raised p-4">
-                <p className="text-sm text-ink-muted">
-                  If you had to guess right from wrong by length alone:
-                </p>
-                <p className="font-mono text-3xl font-bold tabular-nums text-compute">
-                  {PAGE17.length.auc.toFixed(2)}
-                </p>
-                <p className="mt-1 text-sm text-ink-muted">
-                  Over page 8&apos;s whole pile, a correct candidate is the longer one about a
-                  quarter of the time. Inverted, preferring the{" "}
-                  <strong className="text-ink">shorter</strong> chain scores{" "}
-                  {PAGE17.length.inverted.toFixed(2)}, beating {PAGE17.length.beats.length} of the
-                  models that page asked to judge, at no cost. Wrong answers elsewhere burn ~225%
-                  more tokens amid ~4× more strategy switches: thrashing, not depth.
-                  <Cite n={REF.zeng} />
-                  <Cite n={REF.wang} />
-                </p>
-              </div>
-            </div>
-
           </div>
         </section>
 
@@ -906,57 +911,65 @@ export function Page15() {
               our runs · the same {PAGE17.run.items} problems · pages 8 and 9
             </span>
           </h2>
-          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-sm text-ink">
-              Step 2 leaned on a judge, and page 8 sold one: selection beats voting, up to the
-              ceiling its reliability sets. That sentence quotes reliability as though it were a
-              property of the judge. It is not. It is a reading taken at a setting, and the setting
-              is a knob page 8 turned two pages ago.
-            </p>
+          <p className="text-ink-muted">
+            Step 2 leaned on a judge, and page 8 sold one: selection beats voting, up to the ceiling
+            its reliability sets. That sentence quotes reliability as though it were a property of
+            the judge. It is not. It is a reading taken at a setting, and the setting is a knob page
+            8 turned two pages ago.
+          </p>
+          <section
+            aria-label="Reliability of five ways of picking an answer, against sampling temperature"
+            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+          >
             <ReliabilitySweep />
-            <p className="text-sm text-ink-muted">
-              Temperature buys the candidate diversity page 8 was selling, and the same knob blinds
-              whatever has to sort the candidates. Sort them with nothing and reliability falls{" "}
-              {REL.steepest.fallPts.toFixed(0)} points across the sweep. Sort them with{" "}
-              <strong className="text-ink">a model asked to judge</strong> and it still falls.
-            </p>
-            <p className="text-sm text-ink">
-              Only the line <strong className="text-ink">trained to score</strong> holds, and not
-              by judging better: it sits mid-pack at the cold end and never improves. It finishes{" "}
-              {TRAINED_CLEAR_PTS.toFixed(0)} points clear because everything else came down to meet
-              it. What this sweep measures is the verifier, not the reasoning, and with an
-              imperfect one more resampling eventually lowers true accuracy outright.
-              <Cite n={REF.stroebl} />
-            </p>
+          </section>
+          <p className="text-ink-muted">
+            Temperature buys the candidate diversity page 8 was selling, and the same knob blinds
+            whatever has to sort the candidates. Sort them with nothing and reliability falls{" "}
+            {REL.steepest.fallPts.toFixed(0)} points across the sweep. Sort them with{" "}
+            <strong className="text-ink">a model asked to judge</strong> and it still falls.
+          </p>
+          <p className="text-ink-muted">
+            Only the line <strong className="text-ink">trained to score</strong> holds, and not by
+            judging better: it sits mid-pack at the cold end and never improves. It finishes{" "}
+            {TRAINED_CLEAR_PTS.toFixed(0)} points clear because everything else came down to meet
+            it. What this sweep measures is the verifier, not the reasoning, and with an imperfect
+            one more resampling eventually lowers true accuracy outright.
+            <Cite n={REF.stroebl} />
+          </p>
 
-            <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-4">
-              <p className="text-sm text-ink">
-                And there is a second coordinate, quieter and worse: how much of the chain we can
-                check the grader against.
-              </p>
+          <div className="flex flex-col gap-3 border-t border-dashed border-grid pt-4">
+            <p className="text-ink-muted">
+              And there is a second coordinate, quieter and worse: how much of the chain we can
+              check the grader against.
+            </p>
+            <section
+              aria-label="What share of real chains an independent checker can adjudicate"
+              className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+            >
               <ReadableSliver />
-              <p className="text-sm text-ink-muted">
-                Page 9 graded {PAGE17.readable.stepsTotal.toLocaleString()} steps of real working
-                twice. The reward model scores every one of them and is silent on none, which is
-                the job it was trained for. The arithmetic checker is the one that declines: it
-                adjudicates {PAGE17.readable.stepsJudged.toLocaleString()} of them, because its
-                rule is closed-form numeric on both sides and the rest state something else,{" "}
-                <em>by symmetry</em> or <em>consider the cases</em> or a claim about where the
-                algorithm has got to. So the bar is not the grader&apos;s blind spot. It is the
-                ground truth we have to audit the grader with, and every number that makes the
-                reward model trustworthy was measured inside the sliver. Its reliability on the
-                other {pct(PAGE17.readable.shareUnjudged, 1)} is unmeasured.
-              </p>
-              <p className="text-sm text-ink-muted">
-                Two prices for trusting it anyway. Filtering page 7&apos;s candidates by the
-                soundness of their working moved a majority vote from{" "}
-                {pct(PAGE17.readable.selection?.majority ?? 0)} to{" "}
-                {pct(PAGE17.readable.selection?.filtered ?? 0)}, changing{" "}
-                {PAGE17.readable.selection?.nChanged ?? 0} problem in {PAGE17.run.items}. And how
-                much of a wrong chain counts as sound swings by the spread page 9 draws, on nothing
-                but where the chain is cut into steps.
-              </p>
-            </div>
+            </section>
+            <p className="text-ink-muted">
+              Page 9 graded {PAGE17.readable.stepsTotal.toLocaleString()} steps of real working
+              twice. The reward model scores every one of them and is silent on none, which is the
+              job it was trained for. The arithmetic checker is the one that declines: it
+              adjudicates {PAGE17.readable.stepsJudged.toLocaleString()} of them, because its rule
+              is closed-form numeric on both sides and the rest state something else,{" "}
+              <em>by symmetry</em> or <em>consider the cases</em> or a claim about where the
+              algorithm has got to. So the bar is not the grader&apos;s blind spot. It is the ground
+              truth we have to audit the grader with, and every number that makes the reward model
+              trustworthy was measured inside the sliver. Its reliability on the other{" "}
+              {pct(PAGE17.readable.shareUnjudged, 1)} is unmeasured.
+            </p>
+            <p className="text-ink-muted">
+              Two prices for trusting it anyway. Filtering page 7&apos;s candidates by the soundness
+              of their working moved a majority vote from{" "}
+              {pct(PAGE17.readable.selection?.majority ?? 0)} to{" "}
+              {pct(PAGE17.readable.selection?.filtered ?? 0)}, changing{" "}
+              {PAGE17.readable.selection?.nChanged ?? 0} problem in {PAGE17.run.items}. And how much
+              of a wrong chain counts as sound swings by the spread page 9 draws, on nothing but
+              where the chain is cut into steps.
+            </p>
           </div>
         </section>
 

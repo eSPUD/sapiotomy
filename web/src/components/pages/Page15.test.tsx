@@ -27,6 +27,17 @@ const budgetSlider = () => screen.getByRole("slider", { name: /token budget/i })
 const setBudget = (i: number) =>
   fireEvent.change(budgetSlider(), { target: { value: String(i) } });
 
+/**
+ * Scope to a numbered step by its heading, never by `closest("section")` from a
+ * control or a figure. Each step now wraps its figures in labelled <section>
+ * regions of their own, as pages 5, 7 and 9 do, so climbing from a slider or a
+ * chart lands inside the figure rather than on the step. Climbing from the
+ * step's own <h2> cannot: the h2 is a child of the step and a sibling of every
+ * figure in it.
+ */
+const step = (heading: RegExp) =>
+  screen.getByRole("heading", { name: heading }).closest("section")!;
+
 describe("Page 15 (when reasoning breaks) component", () => {
   it("prints Huang et al.'s Table 3 rows verbatim, both getting worse", () => {
     render(<Page15 />);
@@ -55,7 +66,7 @@ describe("Page 15 (when reasoning breaks) component", () => {
     // One failure with two triggers: revision the reader asked for, then revision the
     // model performs unprompted when a chain left running overwrites an answer it had
     // already reached. Nothing new enters in either case, which is the shared hinge.
-    const step2 = budgetSlider().closest("section")!;
+    const step2 = step(/Thinking too hard/i);
     expect(step2.textContent).toMatch(/Step 1 was a revision/i);
     expect(step2.textContent).toMatch(/you asked for/i);
     expect(step2.textContent).toMatch(/the model performs on its own/i);
@@ -87,7 +98,7 @@ describe("Page 15 (when reasoning breaks) component", () => {
     // Without this the flat top reads as a measured plateau. The caption under the
     // ledger says which of the two it is, and the margin note beside it carries the
     // mechanism, so the two figures the slider drives stay next to each other.
-    const step2 = budgetSlider().closest("section")!;
+    const step2 = step(/Thinking too hard/i);
     expect(step2.textContent).toMatch(/about the axis rather than about thinking/i);
     const note = screen.getByText(/What this axis cannot show/i).closest("aside")!;
     expect(note.textContent).toMatch(/it is the same generation/i);
@@ -125,7 +136,7 @@ describe("Page 15 (when reasoning breaks) component", () => {
     // "cut your budget at 512 and win", which is a technique that does not exist.
     // It stays in the body. The other two defend the specimen's reading against a
     // skeptic, which is apparatus, so they sit in the margin as on pages 5 and 7.
-    const step2 = budgetSlider().closest("section")!;
+    const step2 = step(/Thinking too hard/i);
     expect(step2.textContent).toMatch(/Not a strategy/i);
     expect(screen.getByText(/Not a truncated proof/i)).toBeInTheDocument();
     expect(screen.getByText(/Not the model already knowing/i)).toBeInTheDocument();
@@ -180,9 +191,7 @@ describe("Page 15 (when reasoning breaks) component", () => {
     expect(screen.getByText(/mid-pack at the cold end/i)).toBeInTheDocument();
     expect(screen.getByText(/came down to meet it/i)).toBeInTheDocument();
     // The contrast the figure is built on: asked to judge against trained to score.
-    const step3 = screen
-      .getByRole("img", { name: /against sampling temperature/i })
-      .closest("section")!;
+    const step3 = step(/Scoring gone wrong/i);
     expect(step3.textContent).toMatch(/a model asked to judge/i);
     expect(step3.textContent).toMatch(/trained to score/i);
   });
