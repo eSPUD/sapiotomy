@@ -45,11 +45,10 @@
  * ANYTHING THE ARGUMENT NEEDS IS IN THE PROSE, not in the margin. The page once
  * carried four notes of two and three paragraphs, most of it defending the
  * measurement rather than explaining a picture; the 2026-08-10 trim cut that to
- * four short ones, and the notes are now down to references plus the one thought
- * a figure cannot say for itself. What the verifier does opens step 1, which
- * model the trained verifier is opens step 3, and whose comparison the close
- * makes is a sentence of the close. Only the "vote is on this axis too" note is
- * still a reading aid, because it names a row of a figure. The claim that the
+ * four short ones, and the notes now hold references and nothing else. What the
+ * verifier does opens step 1, which row of the evidence figure is page 7's rule
+ * opens step 2, which model the trained verifier is opens step 3, and whose
+ * comparison the close makes is a sentence of the close. The claim that the
  * verifier had to be rebuilt from published weights is gone from the page
  * entirely and lives in the notebook and the download.
  *
@@ -755,6 +754,15 @@ export function Page8() {
         {/* Step 2 — what each rule fixed and broke */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">2. What each rule fixed, and what it broke</h2>
+          {/* One row of the figure is the previous page's rule, which the row
+              label cannot say, and it did not read the previous page's chains,
+              which nothing else on the page says. The rest of the retired note
+              was the close's point made early. */}
+          <p className="text-ink-muted">
+            One row per selection rule, each against the same single chain on the same problems.
+            The majority-vote row is page 7&apos;s counting rule, re-run here on chains this page
+            generated itself.
+          </p>
           <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
             {/* The fact the whole page rests on, and the reason the rows may be
                 compared to each other at all. */}
@@ -782,17 +790,10 @@ export function Page8() {
             </figcaption>
           </figure>
         </section>
-        {/* Which row is which. The bars carry the counts, the net and the p
-            value already, so the only thing left for the margin is that one of
-            these rows is the previous page's rule and costs nothing to run.
-            Page 7's handoff used to claim these were page 7's own chains: they
-            are not, and the clause saying so stays. */}
-        <Note kicker="The vote is on this axis too">
-          <p>
-            The majority-vote row is page 7&apos;s counting rule, re-run on chains this page
-            generated itself. It clears the same bar as the trained verifier and needs no second
-            model to do it.
-          </p>
+        {/* The bars carry the counts, the net and the p value, and the step's
+            opening prose carries which row is page 7's. Nothing is left for the
+            margin but the reference. */}
+        <Note kicker="References">
           <RefItem n={REF.source} href="https://mng.bz/lZ5B">
             Raschka 2025, <em>Build a Reasoning Model (From Scratch)</em> (Manning).
           </RefItem>
