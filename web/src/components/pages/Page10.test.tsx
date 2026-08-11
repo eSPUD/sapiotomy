@@ -271,6 +271,38 @@ describe("Page 10 — step 3 and house style", () => {
     expect(container.textContent).toMatch(/two bars with a piece switched off/i);
   });
 
+  // Pages 5 to 9 lay a step out as heading, setup prose in the page column, then a
+  // labelled region holding the figure and nothing else, with the caption unboxed
+  // underneath. Page 10 used to put all of it inside one box per step, so the border
+  // meant "this step" rather than "this figure".
+  it("keeps setup prose and captions outside the figure regions, as pages 5 to 9 do", () => {
+    render(<Page10 />);
+    const step = (heading: RegExp) =>
+      screen.getByRole("heading", { name: heading, level: 2 }).parentElement!;
+    const figure = (label: RegExp) =>
+      screen.getByRole("region", { name: label }) as HTMLElement;
+
+    // Each step announces its figure as a region, and the region holds the apparatus.
+    const couplet = figure(/four words missing/i);
+    const replay = figure(/replayed under each search strategy/i);
+    const crosswords = figure(/crosswords/i);
+    expect(within(couplet).getByRole("button", { name: /^got\s/ })).toBeInTheDocument();
+    expect(within(replay).getByRole("group", { name: /search strategy/i })).toBeInTheDocument();
+    expect(within(crosswords).getByRole("img", { name: /percentage of crossword words/i })).toBeInTheDocument();
+
+    // The invitation is the last line of the intro, above the box, not inside it.
+    expect(couplet.textContent).not.toMatch(/Tap a word to add it/);
+    expect(step(/finish the line/i).textContent).toMatch(/Tap a word to add it/);
+    expect(replay.textContent).not.toMatch(/Pick one and press play/);
+    expect(step(/search the same tree/i).textContent).toMatch(/Pick one and press play/);
+
+    // Captions sit under their figure, in the page column.
+    expect(couplet.textContent).not.toMatch(/The trap is not a toy/);
+    expect(replay.textContent).not.toMatch(/written by hand\. The search over them is real/);
+    expect(crosswords.textContent).not.toMatch(/Chain of thought fills/);
+    expect(crosswords.textContent).not.toMatch(/Nobody can publish these five head-to-head/);
+  });
+
   it("links each reference from its RefItem entry, not a footer chip", () => {
     render(<Page10 />);
     expect(screen.getByRole("link", { name: /Yao et al\. 2023/ })).toHaveAttribute(
@@ -287,14 +319,18 @@ describe("Page 10 — step 3 and house style", () => {
     const { container } = render(<Page10 />);
     const article = container.querySelector("article")!;
     const kids = [...article.children];
-    // last child is the page nav; the grid of steps + margin notes sits directly
-    // before it — no citation-chip row in between
+    // Last child is the page nav; the handoff card is the only thing between it and
+    // the grid of steps + margin notes — no citation-chip row anywhere.
     expect(kids.at(-1)?.querySelector("a[href*='p/']")).toBeTruthy();
-    const grid = kids.at(-2)!;
+    expect(kids.at(-2)?.textContent).toMatch(/Turn the page\./);
+    // Located by a note rather than by position, so moving the handoff cannot
+    // silently retarget this at the wrong element.
+    const grid = screen.getAllByText("References")[0].closest("div.grid")!;
     expect(grid.textContent).toMatch(/Yao et al\. 2023/);
     expect(grid.textContent).toMatch(/Holtzman et al\. 2020/);
-    // the References notes are the last thing before nav; no bare link chips follow the grid
+    // the References notes live inside the grid; no bare link chips follow it
     expect(grid.querySelector('aside a[href*="arxiv"]')).toBeTruthy();
+    expect(kids.at(-2)?.querySelector("a")).toBeNull();
   });
 
   // Pages 5 to 9 each hand the next one a question. This page's last content sentence
