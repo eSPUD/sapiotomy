@@ -171,10 +171,12 @@ describe("Page 6, figure 2: the same dial, every problem", () => {
     expect(body()).toContain(PAGE6.procedure);
   });
 
-  // The heights bar used to be a margin note beside the curve. It came out on
-  // 2026-08-11: what carries it now is the instruction in the figure's own
-  // caption and the body line after it, both of which point the reader at the
-  // shape. Nothing on the page may read a height as a fact about scale.
+  // The heights bar is load-bearing and cannot go in the notebook, because the
+  // figure invites the comparison on screen. It moved from the retired footer
+  // into the margin beside the curve it qualifies, and was trimmed on
+  // 2026-08-10 to the one line a reader of the figure cannot supply: the cap
+  // rate at the top stop is already printed under the chart, so the margin
+  // stopped repeating it.
   it("names every checkpoint but claims shape rather than level", () => {
     render(<Page6 />);
     for (const c of F2.curves) {
@@ -182,6 +184,11 @@ describe("Page 6, figure 2: the same dial, every problem", () => {
     }
     expect(body()).toContain("the shape is the part that is not about any of these checkpoints");
     expect(body()).toContain("Read the shape rather than the heights");
+    // Kicker plus one line, and nothing else.
+    const limits = screen.getByText(/a level comparison is barred twice over/).closest("aside")!;
+    expect(limits.textContent).toBe(
+      "LimitsThe three differ in size and in training, and the 7B ran at 8-bit against bf16 for the other two, so a level comparison is barred twice over.",
+    );
     expect(body()).not.toContain("still hit the cap at");
   });
 
@@ -245,11 +252,10 @@ describe("Page 6, figure 3: it stops mattering before you run out of dial", () =
     // The count lives in figure 3's own legend now that the section-5 pill that
     // restated it is gone.
     expect(body()).toContain(`never solved (${F3.neverFlipCount})`);
-    // The margin disclaimer came out on 2026-08-11, so the invariant is now
-    // carried by the phrasing itself: the band is always described by what we
-    // ran, and the word never appears on the page to be walked back.
-    expect(body()).toContain("not reached at any length we ran");
-    expect(body()).not.toContain("unsolvable");
+    // The word appears once, inside its own disclaimer, and nowhere else.
+    expect(body()).toContain("never a claim that those problems are unsolvable");
+    expect(body().match(/unsolvable/g)).toHaveLength(1);
+    expect(body()).toContain("Page 7 changes the decoding");
   });
 
   // The figure places each problem by a MEASURED quantity, so the dial line
