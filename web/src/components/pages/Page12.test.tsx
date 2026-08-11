@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Page12 } from "./Page12";
 
 describe("Page 12 (STaR and self-improvement)", () => {
@@ -30,95 +30,22 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).not.toBeInTheDocument();
   });
 
-  /**
-   * This page's one control used to be forbidden. The toggle was dropped in
-   * 31a342d because the seeded accuracy chart it drove had just been removed as
-   * an unmeasured simulation, which left it swapping two label strings over an
-   * identical animation: a control whose payoff was cosmetic, and worse than
-   * none, since a reader who flips it and sees nothing change learns that the
-   * answer key does not matter much.
-   *
-   * It is back on the condition that killed it. The off state has to be a
-   * genuinely different mechanism, not a relabelled one, and these tests are
-   * what hold that line. Deleting them to make a label-swap toggle pass would
-   * reintroduce exactly the defect the original removal was right about.
-   */
-  it("still runs no iteration stepper, and states the key's absence rather than hinting it", () => {
+  it("has no controls: the correctness check is always on", () => {
     render(<Page12 />);
+    // No step-through button and no answer-key toggle — the check is always on.
     expect(screen.queryByRole("button", { name: /Run iteration/ })).not.toBeInTheDocument();
-    // The off state must say what it means in words, not only in the drawing.
-    expect(screen.queryByText(/With no key, nothing decides/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("switch", { name: /answer key/i }));
-    expect(screen.getByText(/With no key, nothing decides/)).toBeInTheDocument();
-  });
-
-  it("opens with the key on, so the lede's question is the reader's to answer", () => {
-    render(<Page12 />);
-    const sw = screen.getByRole("switch", { name: /answer key/i });
-    expect(sw).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByText(/Take it away and see what is left/)).toBeInTheDocument();
-  });
-
-  it("removes the fork itself when the key goes, not just the fork's labels", () => {
-    render(<Page12 />);
-    // Key on: a correct branch and a wrong branch, each named on the diagram.
-    expect(screen.getByText("correct ✓ keep")).toBeInTheDocument();
-    expect(screen.getByText("wrong ✗")).toBeInTheDocument();
-    expect(screen.getByText("✓ kept")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("switch", { name: /answer key/i }));
-
-    // Key off: both branch labels are gone, because the branch is gone.
-    expect(screen.queryByText("wrong ✗")).not.toBeInTheDocument();
-    expect(screen.queryByText("✓ kept")).not.toBeInTheDocument();
-    expect(screen.queryByText("correct ✓ keep")).not.toBeInTheDocument();
-    expect(screen.getByText("keep everything")).toBeInTheDocument();
-    expect(screen.getByText(/nothing is checked, so nothing is discarded/)).toBeInTheDocument();
-  });
-
-  it("marks rationalize unreachable without a key, rather than silently skipping it", () => {
-    render(<Page12 />);
-    expect(screen.getByText("hint = the answer")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("switch", { name: /answer key/i }));
-    // The step stays on the graph so the reader can see what the key bought,
-    // and says why it cannot run: the hint IS the answer you no longer have.
-    expect(screen.getByText("no answer to hint with")).toBeInTheDocument();
-    expect(screen.getByText(/requires having the correct answer/)).toBeInTheDocument();
-  });
-
-  it("rewrites the figure's description for both states, not only its picture", () => {
-    render(<Page12 />);
-    const on = screen.getByRole("img", { name: /STaR's loop/ }).getAttribute("aria-label") ?? "";
-    expect(on).toMatch(/answer key on/i);
-    expect(on).toMatch(/check the answer against the key/i);
-
-    fireEvent.click(screen.getByRole("switch", { name: /answer key/i }));
-    const off = screen.getByRole("img", { name: /STaR's loop/ }).getAttribute("aria-label") ?? "";
-    expect(off).toMatch(/answer key taken away/i);
-    expect(off).toMatch(/every rationale, correct or not/i);
-    expect(off).toMatch(/unreachable/i);
-    // A reader who never sees the animation must still get the difference.
-    expect(off).not.toBe(on);
-  });
-
-  it("what fine-tuning trains on changes with the key, since that is the consequence", () => {
-    render(<Page12 />);
-    expect(screen.getByText("base model, on keepers")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("switch", { name: /answer key/i }));
-    expect(screen.getByText("base model, on everything")).toBeInTheDocument();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(screen.queryByText(/No answer key: every rationale trains/)).not.toBeInTheDocument();
   });
 
   /**
    * Pages 5 to 9, 11 and 13 to 16 each carry this guard. Page 12 did not, and it
    * had six live violations in its own copy (two pseudocode annotations, the
-   * figcaption's &mdash;, and three in prose). Both toggle states are checked,
-   * since half this page's copy only exists in one of them.
+   * figcaption's &mdash;, and three in prose), all fixed on 2026-08-10 with
+   * colons and parentheses rather than by rewording.
    */
-  it("has no em dash or en dash anywhere in its copy, in either toggle state", () => {
+  it("has no em dash or en dash anywhere in its copy", () => {
     render(<Page12 />);
-    expect(document.body.textContent).not.toContain("—");
-    expect(document.body.textContent).not.toContain("–");
-    fireEvent.click(screen.getByRole("switch", { name: /answer key/i }));
     expect(document.body.textContent).not.toContain("—");
     expect(document.body.textContent).not.toContain("–");
   });
