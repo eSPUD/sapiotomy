@@ -1033,12 +1033,18 @@ export function Page11() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
+      {/* Six sentences, not three. This was the deck's densest opener: it asked the
+          reader to hold FLOPs, pretraining, parameters, sampling and voting at once,
+          glossed only the first, then made them count back to resolve "the second
+          kind". The facts and the hedges are unchanged; only the welding is undone. */}
       <p className="max-w-2xl text-lg text-ink-muted">
-        A bigger model and more thinking are{" "}
-        <strong className="text-ink">two ways to spend the same FLOPs</strong> (floating-point
-        operations, the raw count of arithmetic a chip does): pretraining burns them once into
-        parameters, sampling and voting burn them at answer time. Act 2 built the second kind.
-        Matched budget for budget on this deck&rsquo;s own instrument,{" "}
+        FLOPs are floating-point operations, the raw count of arithmetic a chip does. A bigger model
+        and more thinking are{" "}
+        <strong className="text-ink">two ways to spend the same FLOPs</strong>. Pretraining burns
+        them once, before any question arrives, into the model&rsquo;s parameters (the numbers it
+        learns during training). Sampling and voting burn them at answer time, on every question you
+        ask. Act 2 built the answer-time kind. Matched budget for budget on the deck&rsquo;s own run,
+        a 3B model against a 7B on the same problems,{" "}
         <strong className="text-ink">can thinking harder out-buy a bigger model?</strong>
       </p>
 
@@ -1239,16 +1245,17 @@ export function Page11() {
                 problems it can already sometimes solve
               </LawPanel>
               <LawPanel head="R" headTone="text-wrong" title="decides the regime" art={<ArtRatioR />}>
-                R = tokens you will serve ÷ tokens you trained on. Pretraining is bought once and
-                amortized over every query; thinking is a surcharge on every one. Serve little
-                (R → 0) and thinking wins; serve billions (R → ∞) and parameters win
+                R = tokens you will serve ÷ tokens you trained on. Pretraining is bought once, and
+                its cost is spread over every query you ever answer. Thinking is a surcharge on each
+                one. Serve little (R → 0) and thinking wins; serve billions (R → ∞) and parameters
+                win
               </LawPanel>
             </div>
             <p className="rounded border-l-4 border-wrong bg-wrong/10 p-3 text-sm text-ink">
               <strong>Hard mode is the other boundary:</strong> where the small model has no
               foothold, no budget rescues it. Sampling can only ever surface an answer the model was
               already capable of writing. Drawing more samples turns up more of what it can write,
-              <Cite n={REF.monkeys} /> but it does not teach the model anything: if this model would
+              <Cite n={REF.monkeys} /> but it does not teach the model anything. If this model would
               never write the right answer, a thousand tries are a thousand copies of the same wrong
               idea. Parameters are the knob that changes what it can write at all.
             </p>
@@ -1274,10 +1281,11 @@ export function Page11() {
             </span>
           </h2>
           <p className="text-ink-muted">
-            The law is not only Snell&rsquo;s claim; Wu et al. 2024 measured it. Three real models
-            on a growing GSM8K sample budget under weighted majority voting: sampling the small one
-            many times beats sampling a big one a few times, and the crossings the law predicts show
-            up in the data.
+            The law is not only Snell&rsquo;s claim; Wu et al. 2024 measured it. They took three
+            real models on GSM8K (grade-school word problems), gave each steadily more samples, and
+            had them vote, with each vote weighted by a scorer&rsquo;s confidence. Sampling the small
+            one many times beats sampling a big one a few times. And the crossings the law predicts
+            show up in the data.
             <Cite n={REF.wu} /> Section 2 allocated by prompt; this allocates by budget. Below, the
             budget axis is washed into one band per scale, the stretch of budgets where that model
             is the compute-optimal buy, and each curve runs bold through its own band.
@@ -1294,9 +1302,10 @@ export function Page11() {
               compute-optimal pick</strong>: sampling it many times beats sampling a big model a
               few times. Then every curve flattens. Once the 410M saturates near 60%, the 2.8B and
               then the 12B pull ahead, so each scale owns a band of the budget axis. The bars along
-              the bottom say how firmly each handover is placed, and they are wide: across each bar
-              the two leading curves differ by less than the ±3 points this figure was read to, so
-              the crossing sits somewhere in the bar rather than on the edge the wash has to draw.
+              the bottom say how firmly each handover is placed, and they are wide. Across each
+              bar, the two leading curves differ by less than the ±3 points this figure was read to.
+              So the crossing sits somewhere inside the bar, and not on the edge the wash has to
+              draw.
               The second bar runs to the last budget where two models were still being compared, so
               the order of the handoffs is what this chart shows, not the budget at which the 12B
               takes over. This is a
@@ -1306,9 +1315,9 @@ export function Page11() {
             <p className="text-xs text-ink-muted">
               read off the paper&rsquo;s figure by eye (±3 points) and replotted as accuracy; two
               of their five model sizes omitted for legibility. The washes tile the axis, but only
-              the rail on top of each band was measured against a rival: left of the 410M&rsquo;s
-              rail the budget does not cover the 2.8B&rsquo;s cheapest run, and right of the
-              12B&rsquo;s the 2.8B was not sampled any further. Out there the wash names the last
+              the rail on top of each band was measured against a rival. Left of the 410M&rsquo;s
+              rail, the budget does not cover the 2.8B&rsquo;s cheapest run. Right of the
+              12B&rsquo;s, the 2.8B was not sampled any further. Out there the wash names the last
               model standing, not a winner over a rival
             </p>
           </figure>
@@ -1341,10 +1350,11 @@ export function Page11() {
               <Key shape="diamond" className="bg-correct-bright" label="REBASE tree search + weighted voting (32 samples)" />
             </div>
             <figcaption className="text-sm text-ink-muted">
-              Across every inference strategy and both benchmarks they tested, Wu et al. find the
-              7B model needs <strong className="text-ink">about half the total FLOPs</strong> of
-              the 34B to reach comparable accuracy, and this table&rsquo;s sharpest instance is
-              sharper still: 7B with tree search{" "}
+              Wu et al. tested every inference strategy and both benchmarks. Across all of them
+              they find the 7B model needs{" "}
+              <strong className="text-ink">about half the total FLOPs</strong> of the 34B to reach
+              comparable accuracy. This table&rsquo;s sharpest instance is sharper still: 7B with
+              tree search{" "}
               <strong className="text-ink">edges the 34B model&rsquo;s best sampling run with
               roughly 8× fewer inference FLOPs</strong>.
               <Cite n={REF.wu} /> The fine print holds here too: gains from
@@ -1376,9 +1386,9 @@ export function Page11() {
             rule we can run at answer time reliably grabs it. And the waste: a chain that reached
             the answer is a worked solution the model wrote for itself, and the vote throws it
             away.{" "}
-            <em>Act 3 stops selecting at inference time and trains the reasoning into the weights:
-            page 12 keeps the winning chains and fine-tunes on them, and pages 13 and 14 reward
-            only correct answers until the reasoning emerges on its own.</em>
+            <em>Act 3 stops selecting at inference time and trains the reasoning into the weights.
+            Page 12 keeps the winning chains and fine-tunes on them. Pages 13 and 14 reward only
+            correct answers, until the reasoning emerges on its own.</em>
           </p>
         </div>
       </div>

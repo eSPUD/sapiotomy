@@ -300,9 +300,15 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
   it("brackets each Pythia handover instead of ruling a crossing", () => {
     render(<Page11 />);
     expect(screen.getAllByTestId("handover-strip")).toHaveLength(2);
-    expect(
-      screen.getByText(/the crossing sits somewhere in the bar rather than on the edge/i),
-    ).toBeInTheDocument();
+    // Matched on the claim rather than on one phrasing: this sentence was split in
+    // two on 2026-08-10 for length, and the assertion should survive rewording
+    // while still failing if the bracketing claim itself is dropped.
+    const bracket = screen.getByText(/the crossing sits somewhere inside the bar/i);
+    expect(bracket).toBeInTheDocument();
+    expect(bracket.textContent).toMatch(/not on the edge/i);
+    // The hedge that licenses the bracketing: the bars are as wide as the read-off
+    // tolerance. Without it "somewhere inside the bar" is an assertion, not a result.
+    expect(bracket.textContent).toMatch(/±3 points this figure was read to/i);
     expect(
       screen.getByText(/not the budget at which the 12B takes over/i),
     ).toBeInTheDocument();

@@ -658,13 +658,27 @@ export function Page5() {
               one problem · one model · two prompts
             </span>
           </h2>
+          {/* The deck's terminology floor. Every measured number from here to page 16 is
+              counted in tokens, taken from a checkpoint, and decoded greedily, and until
+              2026-08-10 none of the three was ever defined: `greedy` reached the reader
+              first inside the provenance chip below, where no gloss fits. Glossed here, at
+              the deck's first measured page, in the inline-parenthetical style page 11
+              already uses for FLOPs. Do not delete these as the page tightens; the audience
+              is first-year undergraduates with no ML background, and the run's own units
+              are not something they can be assumed to arrive with. */}
           <p className="text-ink-muted">
             A model you can download in 2026 does this natively. Nothing has to ask it to: given a
             hard maths question and nothing else, Qwen2.5-3B-Instruct writes{" "}
-            {F1.tabs[bareIndex].tokensGenerated} tokens of chain before it answers. Below is one
-            MATH-500 problem put to it twice, at the same decoding settings, on two prompts that are
-            the same string apart from what is appended at the end. Pick a prompt and step through
-            what it wrote.
+            {F1.tabs[bareIndex].tokensGenerated} tokens of chain before it answers. A{" "}
+            <strong className="text-ink">token</strong> is a word-piece, the unit a model writes one
+            at a time, and it is what every length on this page is counted in.
+          </p>
+          <p className="text-ink-muted">
+            Below is one MATH-500 problem put to it twice, on two prompts that are the same string
+            apart from what is appended at the end. Both runs decode{" "}
+            <strong className="text-ink">greedily</strong>: at every step the model takes its single
+            most likely next token, so the same prompt always produces the same chain, and nothing
+            below is a lucky draw. Pick a prompt and step through what it wrote.
           </p>
           <section
             aria-label="One problem, two prompts"
@@ -938,8 +952,10 @@ export function Page5() {
             </span>
           </h2>
           <p className="text-ink-muted">
-            Maybe the 3B is just an odd checkpoint. So the same test ran on its smaller and larger
-            siblings, on the same {F2.bare.n} problems. Each bar below is one model&apos;s score,
+            Maybe the 3B is just an odd <strong className="text-ink">checkpoint</strong>, one saved
+            set of a model&apos;s trained numbers among the many a lab ships. So the same test ran on
+            its smaller and larger siblings, on the same {F2.bare.n} problems. Each bar below is one
+            model&apos;s score,
             cut in two: on the left, what it still gets right with the working forbidden; on the
             right, what the working adds. Bigger models are better at maths, so the bars get longer
             going down. Watch where the left piece ends instead.

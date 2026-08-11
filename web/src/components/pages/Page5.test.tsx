@@ -118,6 +118,35 @@ describe("Page 5, figure 1: the chain is already there", () => {
     expect(screen.queryByText(tidyMath(BARE.steps[0].text))).toBeNull();
   });
 
+  /**
+   * The terminology floor. Page 5 is the deck's first measured page, and every
+   * number from here to page 16 is counted in tokens, taken from a checkpoint,
+   * and decoded greedily. None of the three was defined anywhere in the deck
+   * until 2026-08-10: `greedy` reached a reader first inside a provenance chip
+   * and `checkpoint` first inside a chart's aria-label, neither of which can
+   * hold a gloss. The audience is first-year undergraduates with no ML
+   * background, so these three carry five later pages and must not be trimmed
+   * away as the page tightens.
+   */
+  it("defines token, greedy and checkpoint, since every later number is denominated in them", () => {
+    render(<Page5 />);
+    const t = body();
+    expect(t).toMatch(/A token is a word-piece, the unit a model writes one at a time/i);
+    expect(t).toMatch(/takes its single most likely next token/i);
+    expect(t).toMatch(/one saved set of a model's trained numbers/i);
+  });
+
+  it("glosses greedy in prose, not only in the provenance chip that cannot hold one", () => {
+    render(<Page5 />);
+    // The chip is provenance and stays; what matters is that the gloss reaches
+    // the reader somewhere a sentence can actually explain it.
+    expect(body()).toContain("bf16");
+    const gloss = screen.getByText(/single most likely next token/i);
+    expect(gloss.closest("p")).not.toBeNull();
+    // And it says what greedy buys the reader: the trace below is not a lucky draw.
+    expect(gloss.textContent).toMatch(/the same prompt always produces the same chain/i);
+  });
+
   // The step's premise, and the reason its heading is "what it looks like"
   // rather than a claim: the technique is not being demonstrated here, it is
   // already in the weights and the figure is a look at what that produces.
