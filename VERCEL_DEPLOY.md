@@ -46,6 +46,41 @@ When `vercel link` asks for the root directory, it is already `web` because you
 `cd`'d into it. If you link from the repo root instead, set the root to `web` in
 **Project → Settings → General → Root Directory**.
 
+> **Careful:** linking from inside `web/` creates a project whose Root Directory
+> is *empty*, while Option A creates one where it is `web`. Both work on their
+> own, but `.github/workflows/deploy.yml` assumes the Option A shape (Root
+> Directory = `web`, CLI run from the repo root). If you set the project up via
+> Option B, either clear the CI assumption or set Root Directory to `web` to
+> match. See the next section for why mixing them 404s.
+
+---
+
+## Root Directory applies exactly once
+
+`vercel build` resolves the project's **Root Directory** setting *relative to the
+directory you run it in*. So the setting and the working directory must not both
+point at `web`:
+
+| CLI run from | Root Directory setting | Result |
+| --- | --- | --- |
+| repo root | `web` | correct, this is what CI does |
+| `web/` | *(empty)* | correct |
+| `web/` | `web` | resolves `web/web`, builds nothing |
+| repo root | *(empty)* | no framework detected, builds nothing |
+
+The last two rows are the failure this repo hit: the build step still "succeeds",
+Vercel accepts the empty output, and then every path on the deployment answers
+
+```
+404: NOT_FOUND
+Code: NOT_FOUND
+```
+
+That error is served by Vercel's edge, not by the app, so it means *the
+deployment contains no routes* rather than "this page is missing". The
+`Verify build output is not empty` step in the deploy workflow now fails loudly
+in that case instead of shipping a blank deployment.
+
 ---
 
 ## Settings worth confirming (Project → Settings)

@@ -515,77 +515,84 @@ const SC = curves.selfCorrection.fit!.params;
 const TOP = FINISHED;
 const KNEE = budgetRung(PAGE6.budgets[PAGE6.budgets.length - 2]);
 
+/**
+ * The bank was rewritten on 2026-08-10 against two rules the first draft broke.
+ *
+ * SAY IT THE WAY A PERSON WOULD. Several stems were a run report with a question
+ * mark on the end ("What is the page entitled to say?", "What follows?"), and
+ * carried every number the page had rather than the two the question turns on.
+ * A stem now sets a scene in short sentences and asks the thing plainly.
+ *
+ * THE ANSWER SHOULD BE STRAIGHTFORWARD. A reader who knows the idea should be
+ * able to pick it without parsing a compound clause, and a reader who does not
+ * should get no help from the shape of the options. That means the key is stated
+ * flat, and it is not visibly the longest thing on offer: the old q11 key ran to
+ * 25 words against distractors of 8, which is answerable without reading the
+ * stem. page16.test.ts pins the ratio so the tell cannot creep back.
+ */
 export const QUESTIONS: Question[] = [
   {
     id: "q1-two-failures",
     page: 2,
     concept: "what thinking longer can reach",
     stem:
-      "One question was answered wrong twice over: the record it asked about had moved after the model finished training, and the question was read as being about the men's tournament when it never said so. A second, slower pass over the same question, with no new information, fixes which of those?",
+      "A model gets one question wrong in two separate ways. It quotes a record that changed after its training data was collected, and it assumes the question is about the men's tournament when the question never said so. You hand it back and let it think the question over again, with nothing new to go on. Which mistake can it fix?",
     options: [
-      { text: "The misreading, and only the misreading", correct: true },
-      { text: "The stale record, and only the stale record" },
+      { text: "The assumption, but not the stale record", correct: true },
+      { text: "The stale record, but not the assumption" },
       { text: "Both of them" },
       { text: "Neither of them" },
     ],
     why:
-      "Re-reading is free and the misreading is in the question, so a slower pass can catch it. The record is a fact the model never held; no amount of thinking imports it. That split is the whole reason the deck has two halves.",
+      "The assumption is a misreading of a question the model can read again, so a slower pass can catch it. The record is a fact it never had, and no amount of thinking imports a fact. That split is why this deck has two halves.",
   },
   {
     id: "q2-retraining",
     page: 3,
     concept: "what retraining cannot buy",
     stem:
-      "Suppose the compounding bill, the finite stock of human text and the weeks of lag were all solved, and you could retrain the model from scratch every morning for free. Which of the two failures above would still be there tomorrow?",
+      "Now imagine retraining were free. No compute bill, no shortage of fresh text, no waiting weeks for a run to finish. You rebuild the model from scratch every morning. Which of those two mistakes is still there tomorrow?",
     options: [
-      { text: "The misreading, because it was never about what the model had read", correct: true },
-      { text: "The stale record, because yesterday's text is always a day behind" },
-      { text: "Both, because retraining changes nothing about behaviour" },
-      { text: "Neither, because a fresh model is a correct model" },
+      { text: "The assumption, because it was never about what the model had read", correct: true },
+      { text: "The stale record, because yesterday's text is always one day behind" },
+      { text: "Both, because retraining does not change how a model behaves" },
+      { text: "Neither, because a freshly trained model is a correct one" },
     ],
     why:
-      "Retraining is aimed at the corpus. The misreading is a habit of how the question gets processed, so it survives every retrain and is exactly what an answer-time pass is for.",
+      "Retraining aims at the corpus. The assumption is a habit in how the question gets handled, so it survives every retrain, and that is exactly the gap answer-time compute was invented to fill.",
   },
   {
     id: "q3-what-a-chain-is",
     page: 5,
     concept: "what a chain of thought is",
     stem:
-      "A model writes out its working and then gives an answer. For the model, what is that written working?",
+      "A model writes out its working, then gives an answer. To the model, what is that written working?",
     options: [
-      {
-        text: "The computation itself: the answer is produced by writing it, token by token",
-        correct: true,
-      },
-      { text: "A readable summary of reasoning the model did internally before writing" },
-      { text: "A justification composed after the answer was chosen" },
-      { text: "A passage recalled from training data that matched the question" },
+      { text: "The thinking itself: the answer gets computed as the text is written", correct: true },
+      { text: "A readable summary of the thinking it had already finished before writing" },
+      { text: "A justification written up after the answer was picked" },
+      { text: "A passage recalled from training data that fit the question" },
     ],
     why:
-      "For a person, saying your reasoning out loud is a report of thinking that already happened. For a model the text IS the thinking: each token is computed with every earlier token in view, so taking the working away does not hide the reasoning, it removes it.",
+      "When a person talks through their reasoning, they are reporting thinking that already happened. For a model the text IS the thinking: every token is computed with all the earlier ones in view. Take the working away and you have not hidden the reasoning, you have removed it.",
   },
   {
     id: "q5-axis-bound",
     page: 6,
     concept: "reading a flat curve",
-    stem: `Sweeping the token budget, accuracy climbed to ${pct(
-      KNEE.accuracy,
-    )} at ${KNEE.budget} tokens and sat at ${pct(TOP.accuracy)} at ${
-      TOP.budget
-    }. Given that ${pct(
+    stem: `You raise the token budget and accuracy climbs, ${pct(KNEE.accuracy)} at ${
+      KNEE.budget
+    } tokens, then it goes flat: ${pct(TOP.accuracy)} at ${TOP.budget}. One more thing to know. ${pct(
       PAGE17.axisBound.shareSelfTerminated,
-    )} of these chains stop themselves before the largest budget, what does the flat top show?`,
+    )} of these chains stop themselves before the biggest budget. What is the flat part telling you?`,
     options: [
-      {
-        text: "The end of the axis: above a chain's own stopping point, a bigger cap replays the same generation",
-        correct: true,
-      },
-      { text: "That the model starts overthinking once it passes 1024 tokens" },
-      { text: "That the remaining problems are simply beyond this model" },
-      { text: "That the grader stops being able to read chains that long" },
+      { text: "The axis ran out: a bigger cap replays a chain that already stopped", correct: true },
+      { text: "The model starts overthinking once its chains get long enough" },
+      { text: "The problems still unsolved are simply too hard for this model" },
+      { text: "The grader stops being able to read the chains once they get this long" },
     ],
     why:
-      "Under greedy decoding a chain that has already ended is not rerun at a larger cap, it is the identical generation. So the flat top is a fact about the instrument, and any claim about accuracy falling past a peak needs a different axis to stand on.",
+      "Under greedy decoding a chain that has already ended is not rerun at a bigger cap, it is the identical generation. So the flat top is a fact about the measuring stick, not about the model, and any claim that accuracy falls past a peak needs a different axis to stand on.",
   },
   {
     id: "q6-diversity",
@@ -593,109 +600,92 @@ export const QUESTIONS: Question[] = [
     concept: "what voting needs",
     stem: `Sixteen chains sampled at temperature zero scored ${pct(
       PAGE7.figure2.cold.points[PAGE7.figure2.cold.points.length - 1].accuracy,
-    )}, which is exactly what one chain scored. Why did sixteen buy nothing?`,
+    )}. One chain on its own scored exactly the same. Why did the other fifteen buy nothing?`,
     options: [
-      {
-        text: "At temperature zero the sixteen chains are identical, and a vote among copies has one opinion",
-        correct: true,
-      },
-      { text: "Sixteen is too few for a majority to form" },
-      { text: "The ties were resolved in favour of the wrong answer" },
-      { text: "The chains were truncated before they could disagree" },
+      { text: "All sixteen are the same chain, so the vote has one opinion", correct: true },
+      { text: "Sixteen chains is too few for a majority to form" },
+      { text: "The ties all got resolved in favour of a wrong answer" },
+      { text: "The chains were cut off before they could disagree" },
     ],
     why:
-      "Voting converts disagreement into a signal. With no disagreement there is nothing to convert, so the thing self-consistency actually buys is diversity, and the temperature knob is what pays for it.",
+      "Voting turns disagreement into a signal. With nothing to disagree about there is nothing to turn, so what self-consistency really buys is diversity, and temperature is the knob you pay for it with.",
   },
   {
     id: "q7-coverage",
     page: 7,
     concept: "coverage against accuracy",
-    stem: `With ${PAGE7.handoff.n_chains} chains sampled hot, the majority vote landed on ${pct(
+    stem: `Sample ${PAGE7.handoff.n_chains} chains hot. The majority vote gets ${pct(
       PAGE7.handoff.plurality_accuracy,
-    )} of problems, while at least one of those chains was right on ${pct(
+    )} of the problems right. But on ${pct(
       PAGE7.handoff.coverage,
-    )}. What is that gap?`,
+    )} of them, at least one of those chains had the right answer. What is that gap made of?`,
     options: [
-      {
-        text: "Problems where the right answer was generated and the vote threw it away",
-        correct: true,
-      },
-      { text: "Problems no chain solved, which more sampling would eventually reach" },
+      { text: "Problems where a right answer was generated and the vote binned it", correct: true },
+      { text: "Problems that no chain solved, which more sampling would eventually reach" },
       { text: "Problems where the vote tied and had to guess" },
-      { text: "Measurement noise between two ways of counting the same thing" },
+      { text: "Noise between two ways of counting the same thing" },
     ],
     why:
-      "Coverage is what the generator found; accuracy is what the selection rule kept. The gap is not a generation problem at all, which is why the next lever is a better selector rather than more chains.",
+      "Coverage is what the generator found. Accuracy is what the selection rule kept. The gap between them is not a generation problem at all, which is why the next thing to fix is the selector rather than the number of chains.",
   },
   {
-    id: "q9-process-sliver",
+    id: "q9-right-answer-wrong-working",
     page: 9,
-    concept: "where a grader can see",
-    stem: `Of ${PAGE9.graders.stepsTotal.toLocaleString()} steps across real chains, an arithmetic checker could adjudicate ${PAGE9.graders.stepsJudged.toLocaleString()}, or ${pct(
-      1 - PAGE9.graders.shareUnjudged,
-      1,
-    )}. The process reward model scores every step and is silent on none. What follows?`,
+    concept: "why the answer is not enough",
+    stem:
+      "A model works through a problem, slips on one division halfway down, and still lands on the right final answer. Two graders look at it. One compares only the final answer to the known one. The other reads every line. What does the first grader say?",
     options: [
-      {
-        text: "Its reliability was measured inside that sliver, so its numbers are an optimistic estimate of how it does on the rest",
-        correct: true,
-      },
-      { text: "Nothing, because it scores every step and therefore reads every step" },
-      { text: "Its reliability is understated, since the checkable steps are the hard ones" },
-      { text: "The problem only affects chains that reach a wrong answer" },
+      { text: "It passes the chain, because the answer is right", correct: true },
+      { text: "It fails the chain, because the working is broken" },
+      { text: "It passes the chain, but flags it as low confidence" },
+      { text: "It cannot grade a chain that contains a slip" },
     ],
     why:
-      "Most of a chain is prose: 'by symmetry', 'consider the cases'. Where the checker is silent there was nothing to score the grader against, so the grader's quality figures come from the small part of the chain a machine could adjudicate.",
+      "An outcome grader never opens the working, so a right answer reached by broken reasoning goes straight through. That is the whole case for grading steps: the failure it catches is invisible from the answer alone, and it is the failure you would least like to trust.",
   },
   {
     id: "q10-search-bill",
     page: 10,
     concept: "what search costs",
     stem:
-      "Search over thoughts branches, scores partial lines, prunes the poor ones and backtracks. What does the compute bill scale with?",
+      "Tree search branches into several partial lines of reasoning, scores them, drops the weak ones and backs up to try somewhere else. What does the compute bill scale with?",
     options: [
-      { text: "Every node that gets evaluated, including the ones thrown away", correct: true },
-      { text: "The length of the single path that survives to the end" },
-      { text: "The depth of the tree, since width is explored in parallel for free" },
-      { text: "The number of distinct final answers the search produces" },
+      { text: "Every node it evaluated, including the ones it threw away", correct: true },
+      { text: "The single path that survives all the way to the end" },
+      { text: "The depth of the tree, since width is explored for free" },
+      { text: "The number of different final answers it produced" },
     ],
     why:
-      "Pruning is what search does with a node after paying for it, not instead of paying for it. This is why a deeper search can be worse value than plain sampling even when it explores more.",
+      "Pruning is what search does with a node after paying for it, not instead of paying for it. That is why a deeper search can be worse value than plain sampling even though it explores more.",
   },
   {
     id: "q12-external-check",
     page: 12,
     concept: "what self-improvement rests on",
     stem:
-      "STaR trains a model on rationales it wrote itself, and R1 was taught to reason by rewarding it for reaching right answers. Strip both down: what is the one ingredient neither loop works without?",
+      "STaR trains a model on reasoning it wrote itself. R1 was taught to reason by rewarding it for getting answers right. Strip both loops back to the one thing neither works without. What is it?",
     options: [
-      {
-        text: "An external check on the answer, deciding which of the model's own output it is allowed to learn from",
-        correct: true,
-      },
-      { text: "A larger teacher model to imitate" },
-      { text: "Human-written worked solutions for every problem" },
-      { text: "Sampling at a high enough temperature to find rare solutions" },
+      { text: "Something outside the model deciding which attempts were right", correct: true },
+      { text: "A bigger teacher model for it to imitate" },
+      { text: "Human-written worked solutions for every problem in the training set" },
+      { text: "A temperature high enough to stumble on rare solutions" },
     ],
     why:
-      "Neither loop needs anyone to write the reasoning, which is what makes them scale. Both need something outside the model to say which attempts were right, and remove that filter and the model trains on its own errors.",
+      "Neither loop needs a person to write the reasoning, which is what lets them scale. Both need something outside the model to say which attempts were right. Take that filter away and the model trains on its own mistakes.",
   },
   {
     id: "q13-self-correction",
     page: 15,
     concept: "why unaided revision fails",
-    stem: `Asked to look its answer over and correct any mistakes, with no new information and no tools, GPT-3.5 on CommonSenseQA went from ${SC.gpt35Csqa0}% to ${SC.gpt35Csqa1}% after one round. Why does asking again make things worse?`,
+    stem: `Ask a model to look over its own answer and fix any mistakes. No hints, no tools, nothing it did not already have. On CommonSenseQA that took GPT-3.5 from ${SC.gpt35Csqa0}% down to ${SC.gpt35Csqa1}%. Why does asking make it worse?`,
     options: [
-      {
-        text: "The same weights that produced the error are asked to find it, so nothing new enters and the revision mostly adds noise",
-        correct: true,
-      },
+      { text: "The weights that produced the error are the ones asked to find it", correct: true },
       { text: "The model forgets its first answer and has to start over" },
       { text: "The extra prompt pushes the question out of the context window" },
-      { text: "It is specific to multiple choice, where there are wrong options to be talked into" },
+      { text: "It only happens on multiple choice, where wrong options tempt it" },
     ],
     why:
-      "Review needs information the reviewer did not already have. A failing test, a calculator, a proof checker: give revision something to push against and it works. 'Are you sure?' is not information.",
+      "A review needs information the reviewer did not already have. A failing test, a calculator, a proof checker: give revision something to push against and it works. 'Are you sure?' is not information.",
   },
 ];
 

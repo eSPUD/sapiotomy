@@ -64,11 +64,14 @@
  *
  * It carried a second coordinate until 2026-08-10: the share of a chain we can
  * audit a grader against, drawn as a sliver. Three of its four claims were page
- * 9's own, restated, and the fourth (that the reward model's AUC, recall and
- * specificity were all taken inside that sliver) belonged beside the bar it
- * qualifies. The whole beat moved to page 9 beat 3 rather than being split, and
- * page 9's rule against quoting a flat AUC went with it, since the claim about
- * WHERE the numbers were taken is what gives a reader something to do with them.
+ * 9's own, restated a page later. The fourth, that the reward model's AUC,
+ * recall and specificity were all taken inside that sliver, was real and is now
+ * nowhere in the deck. The beat was moved to page 9 beat 3, which is where it
+ * belonged if it belonged anywhere, and cut the same day: that beat is already
+ * one figure with three qualifications under it, and a second bar restating page
+ * 9's own step 1 pushed it past what a reader will carry. The claim survives
+ * only as page 16's q9, which gives a reader the two facts and asks what
+ * follows. Do not restage it here; the reason it left was length, not truth.
  *
  * Step 4 is the balance: what still works, and the contamination caveat, which
  * discounts every accuracy number in Acts 2 and 3 and is therefore a callout
@@ -776,9 +779,9 @@ export function Page15() {
             replace an answer it had already reached. Raise the token cap and page 6&apos;s accuracy
             curve climbs, though most of the climb is chains that were being cut off mid-thought
             finally reaching an end. But a rising curve only shows the{" "}
-            <strong className="text-ink">balance</strong> of two things happening at once. Below,
-            the same run with them separated: the answers each doubling of the budget wins, and the
-            answers it costs.
+            <strong className="text-ink">balance</strong> of two things happening at once. Each
+            doubling of the budget wins some answers and loses others, and the curve reports only
+            the difference. The figure below separates them.
           </p>
           <section
             aria-label="Answers won and lost at each doubling of the token budget"
@@ -829,65 +832,64 @@ export function Page15() {
 
           {/* Control 3 stays in the body because without it a reader leaves with a technique
               that does not exist. Controls 1 and 2 defend the specimen's reading rather than
-              the reader's takeaway, so they sit in the margin. */}
-          <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              what this is not
-            </p>
-            <p className="text-sm text-ink">
-              <strong>Not a strategy.</strong> Stopping every problem at{" "}
-              {PAGE17.controls.isItARule.fixedCut} tokens scores{" "}
-              {pct(PAGE17.controls.isItARule.fixedCutAccuracy, 0)} against{" "}
-              {pct(PAGE17.controls.isItARule.natural, 0)} for finishing, and the best cut per
-              problem reaches {pct(PAGE17.controls.isItARule.oracle, 0)} for about{" "}
-              {Math.round(PAGE17.controls.isItARule.oracleTokenCost)} tokens where plain
-              resampling reaches {pct(PAGE17.controls.isItARule.samplingCoverage, 0)} at the same
-              cost. This is page 7&apos;s coverage without page 8&apos;s selector: a better
-              answer is in the pile and nothing we tested finds it.
-            </p>
-          </div>
+              the reader's takeaway, so they sit in the margin.
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex flex-col justify-center rounded-lg border border-grid bg-surface-raised p-4">
-              <p className="text-sm text-ink-muted">
-                Problems the model talks itself out of, per {PAGE17.run.items}:
-              </p>
-              <div className="mt-2 flex items-end gap-4">
-                {PAGE17.affected.byModel.map((m) => (
-                  <div key={m.model} className="flex flex-col items-center gap-1">
-                    <span className="font-mono text-2xl font-bold tabular-nums text-wrong">
-                      {m.rescued}
-                    </span>
-                    <span className="text-xs text-ink-muted">
-                      {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <p className="mt-2 text-sm text-ink-muted">
-                The one aggregate claim here, and it is about capability rather than budgets: the
-                better the model, the less of this it does.
-              </p>
+              This used to be a boxed aside, and the two readings under it two more boxes, which
+              made the close of the step three stacked cards of the same weight. Only the counts
+              are a figure, so only the counts keep a frame; the rest is body prose like the
+              paragraphs above it. */}
+          <p className="text-ink-muted">
+            <strong className="text-ink">Not a strategy.</strong> Stopping every problem at{" "}
+            {PAGE17.controls.isItARule.fixedCut} tokens scores{" "}
+            {pct(PAGE17.controls.isItARule.fixedCutAccuracy, 0)} against{" "}
+            {pct(PAGE17.controls.isItARule.natural, 0)} for finishing, and the best cut per problem
+            reaches {pct(PAGE17.controls.isItARule.oracle, 0)} for about{" "}
+            {Math.round(PAGE17.controls.isItARule.oracleTokenCost)} tokens where plain resampling
+            reaches {pct(PAGE17.controls.isItARule.samplingCoverage, 0)} at the same cost. This is
+            page 7&apos;s coverage without page 8&apos;s selector: a better answer is in the pile
+            and nothing we tested finds it.
+          </p>
+
+          <section
+            aria-label="Problems each model talks itself out of"
+            className="flex flex-col gap-2 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            <p className="text-sm text-ink-muted">
+              Problems the model talks itself out of, per {PAGE17.run.items}:
+            </p>
+            <div className="flex items-end gap-6">
+              {PAGE17.affected.byModel.map((m) => (
+                <div key={m.model} className="flex flex-col items-center gap-1">
+                  <span className="font-mono text-2xl font-bold tabular-nums text-wrong">
+                    {m.rescued}
+                  </span>
+                  <span className="text-xs text-ink-muted">
+                    {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
+                  </span>
+                </div>
+              ))}
             </div>
-            <div className="flex flex-col justify-center rounded-lg border border-grid bg-surface-raised p-4">
-              <p className="text-sm text-ink-muted">
-                If you had to guess right from wrong by length alone:
-              </p>
-              <p className="font-mono text-3xl font-bold tabular-nums text-compute">
-                {PAGE17.length.auc.toFixed(2)}
-              </p>
-              <p className="mt-1 text-sm text-ink-muted">
-                Over page 8&apos;s whole pile, a correct candidate is the longer one about a
-                quarter of the time. Inverted, preferring the{" "}
-                <strong className="text-ink">shorter</strong> chain scores{" "}
-                {PAGE17.length.inverted.toFixed(2)}, beating {PAGE17.length.beats.length} of the
-                models that page asked to judge, at no cost. Wrong answers elsewhere burn ~225%
-                more tokens amid ~4× more strategy switches: thrashing, not depth.
-                <Cite n={REF.zeng} />
-                <Cite n={REF.wang} />
-              </p>
-            </div>
-          </div>
+          </section>
+          <p className="text-ink-muted">
+            The one aggregate claim here, and it is about capability rather than budgets: the
+            better the model, the less of this it does.
+          </p>
+
+          <p className="text-ink-muted">
+            <strong className="text-ink">Length alone is worth something.</strong> Guess right from
+            wrong by how long the chain is and you score{" "}
+            <span className="font-mono font-bold tabular-nums text-compute">
+              {PAGE17.length.auc.toFixed(2)}
+            </span>{" "}
+            over page 8&apos;s whole pile, because a correct candidate is the longer one only about
+            a quarter of the time. Invert it, prefer the{" "}
+            <strong className="text-ink">shorter</strong> chain, and you score{" "}
+            {PAGE17.length.inverted.toFixed(2)}, beating {PAGE17.length.beats.length} of the models
+            that page asked to judge, at no cost. Wrong answers elsewhere burn ~225% more tokens
+            amid ~4× more strategy switches: thrashing, not depth.
+            <Cite n={REF.zeng} />
+            <Cite n={REF.wang} />
+          </p>
         </section>
 
         <div className="flex flex-col gap-6">
@@ -970,10 +972,11 @@ export function Page15() {
             </p>
           </section>
           <p className="text-ink-muted">
-            Temperature buys the candidate diversity page 8 was selling, and the same knob blinds
-            whatever has to sort the candidates. Sort them with nothing and reliability falls{" "}
-            {REL.steepest.fallPts.toFixed(0)} points across the sweep. Sort them with{" "}
-            <strong className="text-ink">a model asked to judge</strong> and it still falls.
+            Temperature is what buys the candidate diversity page 8 was selling. It is also what
+            blinds whatever has to pick from those candidates. Take one chain and pick nothing, and
+            reliability drops {REL.steepest.fallPts.toFixed(0)} points across the sweep. Put{" "}
+            <strong className="text-ink">a model asked to judge</strong> in charge of the picking
+            and it drops anyway.
           </p>
           <p className="text-ink-muted">
             Only the line <strong className="text-ink">trained to score</strong> holds, and not by

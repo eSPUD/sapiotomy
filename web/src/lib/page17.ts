@@ -557,10 +557,10 @@ export const PAGE17 = {
    * What page 15 still borrows from page 9, wholesale rather than re-derived, so
    * page 9's gates run first and the two pages cannot disagree about one number.
    *
-   * This was step 3b's whole instrument until 2026-08-10. That beat moved to page
-   * 9, which owns the measurement, and took the sliver, the grader's audit surface
-   * and the selection null with it. What is left is the two facts page 15 and page
-   * 16 still argue from, and nothing here is drawn as a figure any more.
+   * This was step 3b's whole instrument until 2026-08-10, when that beat was cut:
+   * the sliver, the grader's audit surface and the selection null all went, first
+   * to page 9 and then out of the deck. What is left is the two facts page 15 and
+   * page 16 still argue from, and nothing here is drawn as a figure any more.
    */
   readable: {
     stepsTotal: PAGE9.graders.stepsTotal,
