@@ -1437,17 +1437,6 @@ export function Page6() {
             any of these checkpoints.
           </p>
         </section>
-        {/* One line, and only the one the figure cannot supply. The cap rate at
-            the top stop is printed under the chart already, and the reader is
-            told to read the shape in the body; what neither can say is that
-            these three levels are not commensurable in the first place. */}
-        <Note kicker="Limits">
-          <p>
-            The three differ in size and in training, and the 7B ran at 8-bit against bf16 for the
-            other two, so a level comparison is barred twice over.
-          </p>
-        </Note>
-
         {/* Step 3 — figure 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
@@ -1531,10 +1520,6 @@ export function Page6() {
         <Note kicker="Try it">
           <p>
             Drag the line from {B[0]} to {TOP} and watch the shaded strip empty out.
-          </p>
-          <p>
-            <em>Not reached at any length we ran</em> means this grid at this decoding, never a
-            claim that those problems are unsolvable. Page 7 changes the decoding.
           </p>
         </Note>
 
