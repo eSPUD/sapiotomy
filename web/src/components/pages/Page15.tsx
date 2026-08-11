@@ -16,6 +16,17 @@
  * Step 1 is verbatim published data (Huang et al., ICLR 2024, Table 3): asked
  * to re-check its own reasoning with no new information, a model gets WORSE.
  *
+ * THE SPINE OF THE PAGE IS ONE FAILURE WITH TWO TRIGGERS, and the section titles
+ * carry it. Step 1 ("Fix your mistakes") is revision the reader asked for. Step 2
+ * ("Thinking too hard") is revision the model performs unprompted, when a chain
+ * left running overwrites an answer it had already reached. Nothing new enters in
+ * either case. Step 3 ("Scoring gone wrong") is the verifier that could have caught
+ * either one, and its claim, that reliability is a coordinate rather than a property,
+ * is made in the copy rather than in the title so the four headings stay one register.
+ * The titles also answer the page's own subtitle: without
+ * them a reader cannot map self-correction, overthinking and verifier reliability
+ * onto the sections that measure them.
+ *
  * Steps 2 and 3 were an authored Markov chain and an authored inverse-U until
  * `page_17_when_reasoning_breaks.ipynb` re-read pages 5 to 9. Both are now the
  * deck's own runs (lib/page17.ts), and what replaced them is smaller than what
@@ -24,15 +35,17 @@
  * Step 2 is page 6's budget sweep with the losses drawn back in. Its centre is
  * ONE problem: right when cut off and made to commit, wrong when allowed to
  * finish, and its mistake is an unjustified symmetry assumption a reader can
- * check. THE SPECIMEN MUST NOT TRAVEL WITHOUT ITS THREE CONTROLS, which are on
- * screen beside it and are the reason the beat is honest. The cut chain had not
- * derived anything (0 of 25 rescues had concluded); the model did not simply
+ * check. THE SPECIMEN MUST NOT TRAVEL WITHOUT ITS THREE CONTROLS, all three of
+ * which stay on screen and are the reason the beat is honest. The cut chain had
+ * not derived anything (0 of 25 rescues had concluded); the model did not simply
  * know the answer (page 5's blurt arm gets 6 of 16); and stopping early is not
  * a strategy, because a fixed cut is worse than finishing and the best cut buys
  * no more coverage per token than plain resampling. Without those three a
- * reader leaves with a technique that does not exist. The figure earns them:
- * at the middle cuts the bad assumption is already written and the forced
- * commit ignores it, which is control 1 drawn rather than asserted.
+ * reader leaves with a technique that does not exist. The first two defend the
+ * specimen's reading and sit in the margin; the third defends the reader's
+ * takeaway and so stays in the body. The figure earns control 1 anyway: at the
+ * middle cuts the bad assumption is already written and the forced commit
+ * ignores it, which is that control drawn rather than asserted.
  *
  * The old step 3 asserted that easy problems cross an overthinking threshold
  * before hard ones. Pooled over three checkpoints our own run puts both medians
@@ -44,9 +57,13 @@
  * Step 3 is now the verifier, measured twice. Reliability falls with the very
  * temperature that makes best-of-N worth running, and only the judge trained to
  * score stays flat, so the figure is a crossing and must be read left to right.
- * Then the quieter coordinate: 94.2% of the steps in 1,580 real chains state
- * nothing a checker can compute, and the reward model's quality figures were
- * taken inside the other 5.8%.
+ * Then the quieter coordinate, and it is NOT that the grader is blind: the
+ * reward model scores all 18,772 steps and is silent on none. The independent
+ * arithmetic checker is what declines, on 94.2% of them, because its rule is
+ * closed-form numeric on both sides. So the sliver is the ground truth we can
+ * audit the grader with, not the grader's reach, and the reward model's AUC,
+ * recall and specificity were all taken inside it. Its reliability on the other
+ * 94.2% is unmeasured, which is the sharper worry rather than the weaker one.
  *
  * Step 4 is the balance: what still works, and the contamination caveat, which
  * discounts every accuracy number in Acts 2 and 3 and is therefore a callout
@@ -61,13 +78,12 @@ import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { PAGE17, pct, tidyMath } from "@/lib/page17";
-import { pLabel, WAIT_TABLE } from "@/lib/page06";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 15;
 
 /** Page 15's references, numbered in order of first appearance. */
-const REF = { huang: 1, zeng: 2, wang: 3, stroebl: 4, balachandran: 5 } as const;
+const REF = { huang: 1, zeng: 2, wang: 3, stroebl: 4 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -361,7 +377,36 @@ const REL = PAGE17.reliability;
 const T_MIN = REL.temperatures[0];
 const T_MAX = REL.temperatures[REL.temperatures.length - 1];
 const rx = (t: number) => ((t - T_MIN) / (T_MAX - T_MIN)) * R_IW;
-const ry = (r: number) => R_IH - r * R_IH;
+
+/**
+ * The axis floor. Every line lives between 38 and 77, so a 0 baseline spent a
+ * third of the canvas on emptiness and squeezed five series into a band too
+ * narrow to follow. 100 stays on the axis because "no judge here is anywhere
+ * near perfect" is part of the claim; the floor is what gives way. Kept below
+ * the lowest measured point so no line is ever clipped by it.
+ */
+const R_FLOOR = 0.25;
+const ry = (r: number) => R_IH - ((r - R_FLOOR) / (1 - R_FLOOR)) * R_IH;
+
+/** The two lines the reader is meant to follow: the flat one and the one that falls. */
+const TRAINED = "best-of-N (skywork-prm)";
+const NO_JUDGE = "one chain";
+/** Both are a model asked to judge, and they land on the same point at the hot end. */
+const MODEL_JUDGES = ["best-of-N (self)", "best-of-N (qwen7b)"];
+
+/**
+ * The wedge's lower edge: the best of everything that is not the trained scorer,
+ * at each temperature, which is the fairest thing to charge the trained line
+ * against. Module level so the figure's annotation and the paragraph beneath it
+ * cannot quote different numbers for the same gap.
+ */
+const R_OTHERS = REL.lines.filter((l) => !l.trained);
+const R_BEST_OTHER = REL.temperatures.map((t, i) =>
+  Math.max(...R_OTHERS.map((o) => o.points[i].reliability)),
+);
+const R_HOT = REL.temperatures.length - 1;
+const TRAINED_CLEAR_PTS =
+  (REL.trained.points[R_HOT].reliability - R_BEST_OTHER[R_HOT]) * 100;
 
 /**
  * Push overlapping right-hand labels apart. Three selectors land within a point
@@ -387,19 +432,50 @@ function dodge(ys: number[], gap = 13): number[] {
  * a wide margin, because it is the only line that does not decay. So the figure
  * is built to be read left to right. The widening wedge between the trained line
  * and the best model-judge is drawn as area, which is the comparison the reader
- * would otherwise have to do four times by eye, and the full 0 to 100 axis is
- * kept rather than zoomed because "no judge here is anywhere near perfect" is
- * also page 17's point.
+ * would otherwise have to do four times by eye. 100 stays on the axis because
+ * "no judge here is anywhere near perfect" is also page 17's point; the floor
+ * does not, because no line goes near it. Two lines carry the argument and are
+ * the two drawn to be followed: the trained scorer, flat, and the unexamined
+ * chain, falling furthest. The three in between are the field they move against.
  */
 function ReliabilitySweep() {
   const trained = REL.trained;
-  const others = REL.lines.filter((l) => !l.trained);
-  // The wedge's lower edge: the best model-judge at each temperature, which is
-  // the fairest thing to charge the trained line against.
-  const bestOther = REL.temperatures.map((t, i) =>
-    Math.max(...others.map((o) => o.points[i].reliability)),
-  );
-  const labelYs = dodge(REL.lines.map((l) => ry(l.points[l.points.length - 1].reliability)));
+  // Five labels at the right edge, three of them inside a few points of each
+  // other, read as a rendering fault. The two model-as-judge lines finish on the
+  // same value, so they get one label between them rather than two stacked on a
+  // single point. If a rerun ever pulls them apart, they label themselves again.
+  const endOf = (l: (typeof REL.lines)[number]) => l.points[l.points.length - 1].reliability;
+  const judgeEnds = REL.lines.filter((l) => MODEL_JUDGES.includes(l.selector)).map(endOf);
+  const mergeJudges =
+    judgeEnds.length === MODEL_JUDGES.length &&
+    Math.max(...judgeEnds) - Math.min(...judgeEnds) <= 0.02;
+
+  const entries = REL.lines.flatMap((l) => {
+    const tone = l.trained
+      ? "fill-compute font-semibold"
+      : l.selector === NO_JUDGE
+        ? "fill-wrong font-semibold"
+        : "fill-ink-muted";
+    const leader = l.trained
+      ? "stroke-compute"
+      : l.selector === NO_JUDGE
+        ? "stroke-wrong"
+        : "stroke-grid";
+    if (mergeJudges && MODEL_JUDGES.includes(l.selector)) {
+      if (l.selector !== MODEL_JUDGES[0]) return [];
+      return [
+        {
+          key: "model-judges",
+          text: "two model judges",
+          y: ry(judgeEnds.reduce((a, b) => a + b, 0) / judgeEnds.length),
+          tone,
+          leader,
+        },
+      ];
+    }
+    return [{ key: l.selector, text: l.label, y: ry(endOf(l)), tone, leader }];
+  });
+  const labelYs = dodge(entries.map((e) => e.y));
 
   return (
     <ChartFrame
@@ -415,7 +491,7 @@ function ReliabilitySweep() {
       xLabel="sampling temperature, the knob that buys candidate diversity"
       yLabel="reliability (%)"
     >
-      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+      {[0.25, 0.5, 0.75, 1].map((t) => (
         <g key={t}>
           <line x1={0} x2={R_IW} y1={ry(t)} y2={ry(t)} className="stroke-grid" strokeWidth={1} />
           <text x={-8} y={ry(t) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
@@ -432,7 +508,7 @@ function ReliabilitySweep() {
         className="fill-compute opacity-[0.16]"
         points={[
           ...REL.temperatures.map((t, i) => `${rx(t)},${ry(trained.points[i].reliability)}`),
-          ...REL.temperatures.map((t, i) => `${rx(t)},${ry(bestOther[i])}`).reverse(),
+          ...REL.temperatures.map((t, i) => `${rx(t)},${ry(R_BEST_OTHER[i])}`).reverse(),
         ].join(" ")}
       />
 
@@ -442,27 +518,18 @@ function ReliabilitySweep() {
         <line
           x1={rx(T_MAX) - 16}
           x2={rx(T_MAX) - 16}
-          y1={ry(trained.points[trained.points.length - 1].reliability)}
-          y2={ry(bestOther[bestOther.length - 1])}
+          y1={ry(trained.points[R_HOT].reliability)}
+          y2={ry(R_BEST_OTHER[R_HOT])}
           className="stroke-compute"
           strokeWidth={1.5}
         />
         <text
           x={rx(T_MAX) - 22}
-          y={
-            (ry(trained.points[trained.points.length - 1].reliability) +
-              ry(bestOther[bestOther.length - 1])) /
-            2
-          }
+          y={(ry(trained.points[R_HOT].reliability) + ry(R_BEST_OTHER[R_HOT])) / 2}
           textAnchor="end"
           className="fill-compute text-[10px] font-semibold"
         >
-          {(
-            (trained.points[trained.points.length - 1].reliability -
-              bestOther[bestOther.length - 1]) *
-            100
-          ).toFixed(0)}{" "}
-          points clear
+          {TRAINED_CLEAR_PTS.toFixed(0)} points clear
         </text>
       </g>
 
@@ -478,43 +545,44 @@ function ReliabilitySweep() {
         </text>
       ))}
 
-      {REL.lines.map((line) => (
-        <g key={line.selector}>
-          <polyline
-            fill="none"
-            className={line.trained ? "stroke-compute" : "stroke-ink-muted"}
-            strokeWidth={line.trained ? 2.5 : 1.25}
-            strokeOpacity={line.trained ? 1 : 0.75}
-            points={line.points.map((p) => `${rx(p.temperature)},${ry(p.reliability)}`).join(" ")}
-          />
-          {line.points.map((p) => (
-            <circle
-              key={p.temperature}
-              cx={rx(p.temperature)}
-              cy={ry(p.reliability)}
-              r={line.trained ? 3.5 : 2}
-              className={line.trained ? "fill-compute" : "fill-ink-muted"}
+      {REL.lines.map((line) => {
+        const falls = line.selector === NO_JUDGE;
+        const stroke = line.trained ? "stroke-compute" : falls ? "stroke-wrong" : "stroke-ink-muted";
+        const fill = line.trained ? "fill-compute" : falls ? "fill-wrong" : "fill-ink-muted";
+        return (
+          <g key={line.selector}>
+            <polyline
+              fill="none"
+              className={stroke}
+              strokeWidth={line.trained || falls ? 2.5 : 1.25}
+              strokeOpacity={line.trained || falls ? 1 : 0.6}
+              points={line.points.map((p) => `${rx(p.temperature)},${ry(p.reliability)}`).join(" ")}
             />
-          ))}
-        </g>
-      ))}
+            {line.points.map((p) => (
+              <circle
+                key={p.temperature}
+                cx={rx(p.temperature)}
+                cy={ry(p.reliability)}
+                r={line.trained || falls ? 3.5 : 2}
+                className={fill}
+              />
+            ))}
+          </g>
+        );
+      })}
 
-      {REL.lines.map((line, i) => (
-        <g key={`label-${line.selector}`}>
+      {entries.map((e, i) => (
+        <g key={`label-${e.key}`}>
           <line
             x1={R_IW}
             x2={R_IW + 8}
-            y1={ry(line.points[line.points.length - 1].reliability)}
+            y1={e.y}
             y2={labelYs[i]}
-            className={line.trained ? "stroke-compute" : "stroke-grid"}
+            className={e.leader}
             strokeWidth={1}
           />
-          <text
-            x={R_IW + 12}
-            y={labelYs[i] + 3}
-            className={`text-[10px] ${line.trained ? "fill-compute font-semibold" : "fill-ink-muted"}`}
-          >
-            {line.label}
+          <text x={R_IW + 12} y={labelYs[i] + 3} className={`text-[10px] ${e.tone}`}>
+            {e.text}
           </text>
         </g>
       ))}
@@ -545,7 +613,7 @@ function ReadableSliver() {
   const prm = readable.prm;
   return (
     <ChartFrame
-      title={`Of ${readable.stepsTotal.toLocaleString()} steps across 1,580 chains, an arithmetic checker can adjudicate ${readable.stepsJudged.toLocaleString()}, or ${pct(share, 1)}. The remaining ${pct(readable.shareUnjudged, 1)} state nothing it can compute.${prm ? ` The process reward model's AUC of ${prm.auc.toFixed(2)} was measured inside that ${pct(share, 1)}.` : ""}`}
+      title={`Of ${readable.stepsTotal.toLocaleString()} steps across ${readable.nChains.toLocaleString()} chains, an independent arithmetic checker can adjudicate ${readable.stepsJudged.toLocaleString()}, or ${pct(share, 1)}. The reward model scores all ${readable.stepsTotal.toLocaleString()} and is silent on none, so the remaining ${pct(readable.shareUnjudged, 1)} is what nothing independent can check it against.${prm ? ` The process reward model's AUC of ${prm.auc.toFixed(2)} was measured inside that ${pct(share, 1)}.` : ""}`}
       width={S_W}
       height={S_H}
       margin={S_M}
@@ -559,7 +627,8 @@ function ReadableSliver() {
         {pct(share, 1)} checkable
       </text>
       <text x={S_IW - 4} y={26} textAnchor="end" className="fill-ink text-[12px] font-semibold">
-        {pct(readable.shareUnjudged, 1)} prose: nothing a checker can compute
+        {pct(readable.shareUnjudged, 1)}: the reward model scores these, nothing independent checks
+        it
       </text>
 
       {prm ? (
@@ -610,16 +679,17 @@ export function Page15() {
         {/* Step 1 — intrinsic self-correction fails */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. Marking its own homework
+            1. Fix your mistakes
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               verbatim published numbers
             </span>
           </h2>
           <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink">
-              The obvious fix for a wrong answer is to ask the model to look it over and correct any
-              mistakes: no hints, no tools, just re-reading. Measured across two rounds of exactly
-              that, accuracy goes <strong>down</strong>:
+              You have almost certainly tried this yourself: you ask a model a question, the answer
+              comes back wrong, so you send it straight back with &ldquo;check that again and fix
+              any mistakes.&rdquo; No hints, no tools, just re-reading. Measured across two rounds
+              of exactly that, accuracy goes <strong>down</strong>:
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <SelfCorrectPanel
@@ -648,17 +718,6 @@ export function Page15() {
               sure?&rdquo; just adds noise, and on CommonSenseQA one round of it cost GPT-3.5 half
               its score.
             </p>
-            <p className="border-t border-dashed border-grid pt-3 text-sm text-ink-muted">
-              We ran the gentler version. Page 6 refused to let its models stop, appending{" "}
-              <span className="font-mono text-ink">Wait</span> and making them carry on: a
-              reconsideration rather than a re-read. It moved {pct(WAIT_TABLE!.churn)} of the
-              answers and cost {WAIT_TABLE!.tokenMultiple.toFixed(1)}× the tokens, turning{" "}
-              {WAIT_TABLE!.table.afterOnly} wrong answers right against{" "}
-              {WAIT_TABLE!.table.beforeOnly} right ones wrong.{" "}
-              <strong className="text-ink">No checkpoint resolves its crossing</strong> ({pLabel(WAIT_TABLE!.p)}),
-              so ours is a null rather than a confirmation. The paper says review makes it worse;
-              we measured that the gentler form mostly churns. Both rule out asking again.
-            </p>
           </div>
         </section>
 
@@ -670,19 +729,24 @@ export function Page15() {
           </RefItem>
         </Note>
 
-        {/* Step 2 — what the climbing curve netted out */}
+        {/* Step 2 — thinking too hard: page 6's curve with the losses drawn back in */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            2. What the climbing curve netted out
+            2. Thinking too hard
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               our run · {PAGE17.run.items} problems · {PAGE17.run.primaryLabel} · greedy
             </span>
           </h2>
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-sm text-ink">
-              Step 1 held the model to a re-read, which is why nothing new could be solved. Loosen
-              that: give it more room to think and let it write fresh working. Page 6 did exactly
-              this and its accuracy curve climbs. That curve is a <strong>net</strong>. Here are the two numbers it is the difference of.
+              Step 1 was a revision <strong className="text-ink">you asked for</strong>. This one
+              the model performs on its own: left running, a chain keeps writing, and what it
+              writes can replace an answer it had already reached. Raise the token cap and page
+              6&apos;s accuracy curve climbs, though most of the climb is chains that were being
+              cut off mid-thought finally reaching an end. But a rising curve only shows the{" "}
+              <strong>balance</strong> of two things happening at once. Below, the same run with
+              them separated: the answers each doubling of the budget wins, and the answers it
+              costs.
             </p>
 
             <div className="flex flex-col gap-3">
@@ -699,17 +763,13 @@ export function Page15() {
               />
               <RungLedger active={budgetIndex} />
               <p className="text-sm text-ink-muted">
-                Every rung loses answers as well as gaining them, and those losses were never
-                drawn until now. The top rung gains{" "}
-                <strong className="text-ink">nothing</strong>, and not because thinking longer
-                stopped working: under greedy decoding a chain that has already stopped itself is
-                not run again at a larger budget, it is the same generation.{" "}
-                {pct(PAGE17.axisBound.shareSelfTerminated, 0)} of these end themselves before{" "}
-                {PAGE17.axisBound.maxBudget} tokens. The axis runs out before the model does.
+                Every rung loses answers as well as gaining them, and those losses were never drawn
+                until now. The top rung gains <strong className="text-ink">nothing</strong>, for a
+                reason that is about the axis rather than about thinking.
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-dashed border-grid pt-4">
+            <div className="flex flex-col gap-3">
               <p className="text-sm text-ink">
                 So look at one of the losses. Drag the budget and watch a single problem:{" "}
                 <span className="font-mono text-xs text-ink-muted">{PAGE17.specimen.shortId}</span>,
@@ -728,25 +788,12 @@ export function Page15() {
               </p>
             </div>
 
-            {/* The three controls. Each was run to break the specimen's story and each partly
-                succeeded, so none of them is optional and none is a footnote. */}
+            {/* Control 3 stays in the body because without it a reader leaves with a technique
+                that does not exist. Controls 1 and 2 defend the specimen's reading rather than
+                the reader's takeaway, so they sit in the margin. */}
             <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                three things this is not
-              </p>
-              <p className="text-sm text-ink">
-                <strong>Not a truncated proof.</strong> Of all{" "}
-                {PAGE17.controls.concludedWhenCut.cases} rescues like this in the run,{" "}
-                {PAGE17.controls.concludedWhenCut.withAConclusion} had concluded anything when cut,
-                against {pct(PAGE17.controls.concludedWhenCut.boxedWhenFinished, 0)} of chains
-                allowed to finish. The answer came from the commit, which is why the figure shows
-                the model writing its bad assumption and then ignoring it.
-              </p>
-              <p className="text-sm text-ink">
-                <strong>Not the model already knowing.</strong> Page 5&apos;s zero-token blurt arm
-                gets {PAGE17.controls.blurtArm.blurtRight} of these{" "}
-                {PAGE17.controls.blurtArm.items} items. Partial working plus a commit does
-                something neither end of that does alone.
+                what this is not
               </p>
               <p className="text-sm text-ink">
                 <strong>Not a strategy.</strong> Stopping every problem at{" "}
@@ -813,14 +860,27 @@ export function Page15() {
           <Note kicker="What this axis cannot show">
             <p>
               It cannot show accuracy falling past a peak, only that some prefix beat the whole.
-              Greedy decoding replays the same generation above the model&apos;s own stopping
-              point, so nothing new happens up there.
             </p>
             <p>
-              That bound retired a claim this page used to make: that easy problems cross an
-              overthinking threshold before hard ones. Our run puts both medians at the same
-              budget, and this instrument could not settle it at any sample size, so the claim is{" "}
-              <strong className="text-ink">deleted rather than softened</strong>.
+              It is also why the top rung is empty. Under greedy decoding a chain that has already
+              stopped itself is not run again at a larger budget, it is the same generation, and{" "}
+              {pct(PAGE17.axisBound.shareSelfTerminated, 0)} of these end themselves before{" "}
+              {PAGE17.axisBound.maxBudget} tokens. The axis runs out before the model does.
+            </p>
+          </Note>
+          <Note kicker="Two controls on the specimen">
+            <p>
+              <strong className="text-ink">Not a truncated proof.</strong> Of all{" "}
+              {PAGE17.controls.concludedWhenCut.cases} rescues like this in the run,{" "}
+              {PAGE17.controls.concludedWhenCut.withAConclusion} had concluded anything when cut,
+              against {pct(PAGE17.controls.concludedWhenCut.boxedWhenFinished, 0)} of chains
+              allowed to finish. The answer came from the commit, which is what the figure draws.
+            </p>
+            <p>
+              <strong className="text-ink">Not the model already knowing.</strong> Page 5&apos;s
+              zero-token blurt arm gets {PAGE17.controls.blurtArm.blurtRight} of these{" "}
+              {PAGE17.controls.blurtArm.items} items. Partial working plus a commit does something
+              neither end of that does alone.
             </p>
           </Note>
           <Note kicker="References">
@@ -838,10 +898,10 @@ export function Page15() {
           </Note>
         </div>
 
-        {/* Step 3 — the verifier's reliability is a coordinate, not a property */}
+        {/* Step 3 — scoring gone wrong: reliability is a coordinate, not a property */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            3. A verifier&apos;s reliability is a coordinate, not a property
+            3. Scoring gone wrong
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               our runs · the same {PAGE17.run.items} problems · pages 8 and 9
             </span>
@@ -855,32 +915,37 @@ export function Page15() {
             </p>
             <ReliabilitySweep />
             <p className="text-sm text-ink-muted">
-              Temperature is where the candidates come from, and it is also what blinds the judge.
-              Every judge here that is <strong className="text-ink">a model asked to judge</strong>{" "}
-              decays as the pool gets noisier, one unexamined chain worst at{" "}
-              {REL.steepest.fallPts.toFixed(0)} points. The only flat line is the one{" "}
-              <strong className="text-ink">trained to score</strong>: it starts mid-pack and ends
-              well clear, without having improved at all. Read it left to right, because the coldest
-              column tells a different story. With an imperfect verifier more resampling eventually
-              lowers true accuracy anyway, so a plateau is the best any of these buys.
+              Temperature buys the candidate diversity page 8 was selling, and the same knob blinds
+              whatever has to sort the candidates. Sort them with nothing and reliability falls{" "}
+              {REL.steepest.fallPts.toFixed(0)} points across the sweep. Sort them with{" "}
+              <strong className="text-ink">a model asked to judge</strong> and it still falls.
+            </p>
+            <p className="text-sm text-ink">
+              Only the line <strong className="text-ink">trained to score</strong> holds, and not
+              by judging better: it sits mid-pack at the cold end and never improves. It finishes{" "}
+              {TRAINED_CLEAR_PTS.toFixed(0)} points clear because everything else came down to meet
+              it. What this sweep measures is the verifier, not the reasoning, and with an
+              imperfect one more resampling eventually lowers true accuracy outright.
               <Cite n={REF.stroebl} />
             </p>
 
             <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-4">
               <p className="text-sm text-ink">
-                And there is a second coordinate, quieter and worse: how much of the chain the
-                grader can read at all.
+                And there is a second coordinate, quieter and worse: how much of the chain we can
+                check the grader against.
               </p>
               <ReadableSliver />
               <p className="text-sm text-ink-muted">
                 Page 9 graded {PAGE17.readable.stepsTotal.toLocaleString()} steps of real working
-                twice, and an arithmetic checker can adjudicate{" "}
-                {PAGE17.readable.stepsJudged.toLocaleString()} of them. The rest are prose:{" "}
-                <em>by symmetry</em>, <em>consider the cases</em>. The reward model scores every
-                step and is silent on none, but the numbers that make it trustworthy were measured
-                against the checker, so they were measured inside the sliver. Page 9&apos;s run
-                file says so: an optimistic estimate of its reliability on the prose steps it is
-                trusted with.
+                twice. The reward model scores every one of them and is silent on none, which is
+                the job it was trained for. The arithmetic checker is the one that declines: it
+                adjudicates {PAGE17.readable.stepsJudged.toLocaleString()} of them, because its
+                rule is closed-form numeric on both sides and the rest state something else,{" "}
+                <em>by symmetry</em> or <em>consider the cases</em> or a claim about where the
+                algorithm has got to. So the bar is not the grader&apos;s blind spot. It is the
+                ground truth we have to audit the grader with, and every number that makes the
+                reward model trustworthy was measured inside the sliver. Its reliability on the
+                other {pct(PAGE17.readable.shareUnjudged, 1)} is unmeasured.
               </p>
               <p className="text-sm text-ink-muted">
                 Two prices for trusting it anyway. Filtering page 7&apos;s candidates by the
@@ -920,8 +985,10 @@ export function Page15() {
             <strong className="text-ink">Feedback from outside the model.</strong> Self-correction
             fails <em>unaided</em>; give the reviser real information, a failing unit test, a
             calculator, a proof checker, and revision has something to push against. Step 3 is why
-            that is not a platitude: on {pct(PAGE17.readable.shareUnjudged, 0)} of the chain there
-            is nothing to check against from inside.
+            that is not a platitude: {PAGE17.readable.nChainsUnreadable.toLocaleString()} of{" "}
+            {PAGE17.readable.nChains.toLocaleString()} real chains (
+            {pct(PAGE17.readable.shareChainsUnreadable, 0)}) carry no closed-form numeric claim
+            anywhere, so a calculator never fires at all on two chains in three.
           </p>
           <p className="text-ink">
             <strong className="text-ink">
@@ -936,30 +1003,7 @@ export function Page15() {
             &ldquo;wait, let me re-check&rdquo; that RL taught DeepSeek-R1 (page 14) was learned
             against verified rewards, not requested politely at inference time.
           </p>
-          <div className="rounded-lg border-l-4 border-wrong bg-wrong/10 p-4 text-sm text-ink">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              And one caveat that reaches backwards
-            </p>
-            <p className="mt-2">
-              <strong>Every accuracy number in this story was measured on problems the model may
-              already have seen.</strong> A benchmark is published text, and published text is what
-              the next model trains on, so a score can be reciting the test rather than reasoning
-              through it. Here is the size of it: on AIME 2025, released after these models trained, reasoning
-              models scored 7 to 30 points below their 1983 to 2024 averages, and a conventional
-              model fell from 40% to 1%.
-              <Cite n={REF.balachandran} /> That discounts the levers of Act 2 and the frontier
-              scores of Act 3 alike; it does not tell you by how much, which is the uncomfortable
-              part.
-            </p>
-          </div>
         </section>
-
-        <Note kicker="References">
-          <RefItem n={REF.balachandran} href="https://arxiv.org/abs/2504.00294" preprint>
-            Balachandran et al. 2025, <em>Inference-Time Scaling for Complex Tasks: Where We Stand
-            and What Lies Ahead</em>.
-          </RefItem>
-        </Note>
       </div>
 
       {/* Handoff to 16. This used to hand off to a faithfulness page, cut on

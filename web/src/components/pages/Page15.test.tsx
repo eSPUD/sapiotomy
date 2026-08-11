@@ -50,14 +50,28 @@ describe("Page 15 (when reasoning breaks) component", () => {
 
   // ---- step 2: measured, specimen-led, and fenced by its own controls ----
 
-  it("keeps step 1's re-read apart from step 2's fresh working", () => {
+  it("bridges step 1 to step 2 on the trigger, not on the experiment", () => {
     render(<Page15 />);
+    // One failure with two triggers: revision the reader asked for, then revision the
+    // model performs unprompted when a chain left running overwrites an answer it had
+    // already reached. Nothing new enters in either case, which is the shared hinge.
     const step2 = budgetSlider().closest("section")!;
-    expect(step2.textContent).toMatch(/Step 1 held the model to a re-read/i);
-    expect(step2.textContent).toMatch(/let it write fresh working/i);
-    // The old slider was called "extra passes" and modelled revision. Nothing on the
-    // page may imply step 2 is step 1 run again.
+    expect(step2.textContent).toMatch(/Step 1 was a revision/i);
+    expect(step2.textContent).toMatch(/you asked for/i);
+    expect(step2.textContent).toMatch(/the model performs on its own/i);
+    // They are still separate measurements: different models, benchmarks and
+    // instruments. The old slider was called "extra passes" and modelled revision.
+    // Nothing on the page may imply step 2 is step 1 run again.
     expect(screen.queryByRole("slider", { name: /revision|extra passes/i })).toBeNull();
+  });
+
+  it("titles the sections with the failure modes the page promises", () => {
+    render(<Page15 />);
+    // The subtitle sells self-correction, verifier reliability and overthinking. A
+    // reader who cannot map those onto the sections cannot navigate the page.
+    expect(screen.getByRole("heading", { name: /Fix your mistakes/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Thinking too hard/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Scoring gone wrong/i })).toBeInTheDocument();
   });
 
   it("draws the losses page 6's curve nets out, on every rung", () => {
@@ -70,10 +84,14 @@ describe("Page 15 (when reasoning breaks) component", () => {
   it("blames the empty top rung on the axis rather than on the model", () => {
     render(<Page15 />);
     // Under greedy decoding a self-terminated chain is not rerun at a larger budget.
-    // Without this the flat top reads as a measured plateau.
+    // Without this the flat top reads as a measured plateau. The caption under the
+    // ledger says which of the two it is, and the margin note beside it carries the
+    // mechanism, so the two figures the slider drives stay next to each other.
     const step2 = budgetSlider().closest("section")!;
-    expect(step2.textContent).toMatch(/it is the same generation/i);
-    expect(step2.textContent).toMatch(/The axis runs out before the model does/i);
+    expect(step2.textContent).toMatch(/about the axis rather than about thinking/i);
+    const note = screen.getByText(/What this axis cannot show/i).closest("aside")!;
+    expect(note.textContent).toMatch(/it is the same generation/i);
+    expect(note.textContent).toMatch(/The axis runs out before the model does/i);
   });
 
   it("walks the specimen from a forced commit to its own wrong ending", () => {
@@ -101,12 +119,16 @@ describe("Page 15 (when reasoning breaks) component", () => {
     expect(screen.getAllByText(/more characters of working/i).length).toBeGreaterThan(0);
   });
 
-  it("prints all three controls beside the specimen, not in a footnote", () => {
+  it("keeps all three controls on screen, the reader-facing one in the body", () => {
     render(<Page15 />);
+    // "Not a strategy" guards the reader's takeaway: without it step 2 reads as
+    // "cut your budget at 512 and win", which is a technique that does not exist.
+    // It stays in the body. The other two defend the specimen's reading against a
+    // skeptic, which is apparatus, so they sit in the margin as on pages 5 and 7.
     const step2 = budgetSlider().closest("section")!;
-    expect(step2.textContent).toMatch(/Not a truncated proof/i);
-    expect(step2.textContent).toMatch(/Not the model already knowing/i);
     expect(step2.textContent).toMatch(/Not a strategy/i);
+    expect(screen.getByText(/Not a truncated proof/i)).toBeInTheDocument();
+    expect(screen.getByText(/Not the model already knowing/i)).toBeInTheDocument();
   });
 
   it("pins the three controls to claims the run came back false on", () => {
@@ -153,8 +175,10 @@ describe("Page 15 (when reasoning breaks) component", () => {
 
   it("makes the crossing the claim rather than any one column", () => {
     render(<Page15 />);
-    expect(screen.getByText(/read it left to right/i)).toBeInTheDocument();
-    expect(screen.getByText(/starts mid-pack/i)).toBeInTheDocument();
+    // The crossing, stated as one: mid-pack at the cold end, clear at the hot end,
+    // and clear because the others fell rather than because it rose.
+    expect(screen.getByText(/mid-pack at the cold end/i)).toBeInTheDocument();
+    expect(screen.getByText(/came down to meet it/i)).toBeInTheDocument();
     // The contrast the figure is built on: asked to judge against trained to score.
     const step3 = screen
       .getByRole("img", { name: /against sampling temperature/i })
@@ -163,14 +187,20 @@ describe("Page 15 (when reasoning breaks) component", () => {
     expect(step3.textContent).toMatch(/trained to score/i);
   });
 
-  it("draws the share of the chain no checker can read, at true width", () => {
+  it("draws the ground truth the grader is audited against, at true width", () => {
     render(<Page15 />);
     const bar = screen.getByRole("img", { name: /arithmetic checker can adjudicate/i });
-    expect(bar.getAttribute("aria-label")).toMatch(/state nothing it can compute/i);
+    // The bar is NOT the grader's blind spot. A trained reward model scores every
+    // step, which is the job it was trained for; the independent checker is what
+    // declines, because its rule is closed-form numeric on both sides. Reading the
+    // sliver as the grader's reach contradicts the copy directly beneath it.
+    expect(bar.getAttribute("aria-label")).toMatch(/scores all [\d,]+ and is silent on none/i);
+    expect(bar.getAttribute("aria-label")).toMatch(/nothing independent can check it against/i);
     // Where the reward model's numbers were taken is the claim, so the figure has to
     // say it rather than leave the two facts adjacent and unjoined.
     expect(bar.getAttribute("aria-label")).toMatch(/was measured inside/i);
     expect(screen.getByText(/were\s+all measured in here/i)).toBeInTheDocument();
+    expect(screen.getByText(/is unmeasured/i)).toBeInTheDocument();
   });
 
   it("prices trusting the grader anyway, in the two ways we measured", () => {
@@ -189,18 +219,15 @@ describe("Page 15 (when reasoning breaks) component", () => {
     // ones. Pooled over all three checkpoints the medians are identical, so the claim is
     // gone from the page rather than softened. See docs/page_17_findings.md section 4.
     expect(PAGE17.levelNull.easyBreaksSooner).toBe(false);
-    // No figure asserts it and no step is built on it. The only survival is the
-    // footnote, which names it as deleted, and that sentence is required: a claim
-    // withdrawn in silence reads to a returning reader as a claim forgotten.
+    // No figure asserts it and no step is built on it. The retraction itself is no
+    // longer printed: it addressed readers of an earlier draft, and a reader who
+    // never met the claim cannot be told it was withdrawn. Its account lives in the
+    // file header and in docs/page_17_findings.md section 4, and the loader keeps
+    // the null reachable, which is what stops it creeping back.
     expect(screen.queryByRole("img", { name: /easy problems against hard ones/i })).toBeNull();
     expect(screen.queryByText(/authored shape/i)).toBeNull();
-    // The retraction moved out of the page footer and into the margin note
-    // beside step 2, next to the very axis bound that makes the claim
-    // unsettleable. It must still be stated somewhere a reader will meet it.
-    const retraction = screen.getByText(/retired a claim this page used to make/i).closest("aside")!;
-    expect(retraction.textContent).toMatch(/What this axis cannot show/i);
-    expect(retraction.textContent).toMatch(/easy problems cross an\s+overthinking threshold/);
-    expect(screen.getByText(/deleted rather than softened/i)).toBeInTheDocument();
+    expect(screen.queryByText(/overthinking threshold/i)).toBeNull();
+    expect(screen.queryByText(/easy problems/i)).toBeNull();
   });
 
   // ---- cross-references and the seam ----
@@ -215,20 +242,15 @@ describe("Page 15 (when reasoning breaks) component", () => {
     }
   });
 
-  it("promotes the contamination caveat out of a trailing muted line", () => {
+  it("does not carry the contamination caveat, which is not a way reasoning breaks", () => {
     render(<Page15 />);
-    expect(screen.getByText(/one caveat that reaches backwards/i)).toBeInTheDocument();
-    // Bolded, and scoped to the whole story rather than to this page's demo.
-    const lead = screen.getByText(/measured on problems the model may/i);
-    expect(lead.tagName).toBe("STRONG");
-    const caveat = lead.closest("p")!;
-    expect(caveat.textContent).toMatch(/Act\s*2 and the frontier scores of Act 3/);
-    // The scoreboard page taught familiarity as the third way a test stops
-    // working, and it was cut on 2026-08-10. The caveat used to back-reference
-    // it; with nowhere to point, it now states the mechanism itself in one
-    // clause before spending the size of it. It must do both.
-    expect(caveat.textContent).toMatch(/published text is what the next model trains on/);
-    expect(caveat.textContent).not.toMatch(/Page 15 called this/);
+    // The caveat landed here only because this page used to back-reference the
+    // scoreboard page, cut on 2026-08-10. It is about whether the measurements
+    // mean anything, not about a mechanism by which reasoning breaks, so it now
+    // lives in page 16's "what this deck did not settle", which already carried
+    // the claim and used to point here for its size. Page 16's test owns it.
+    expect(screen.queryByText(/one caveat that reaches backwards/i)).toBeNull();
+    expect(screen.queryByText(/measured on problems the model may/i)).toBeNull();
   });
 
   it("hands the chain-is-the-reason question forward instead of ending on a reference note", () => {
