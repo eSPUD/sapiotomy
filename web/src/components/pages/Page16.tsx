@@ -52,7 +52,6 @@ import { PageNav } from "@/components/PageNav";
 import { Quiz } from "@/components/Quiz";
 import {
   ADAPTIVE_NULL,
-  BANDS,
   BIGGER,
   CHECKABLE_SHARE,
   CROSSING,
@@ -85,12 +84,12 @@ function Takeaway({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-grid bg-surface p-4">
-      <h3 className="flex gap-3 text-sm font-semibold text-ink">
+    <section className="rounded-lg border border-grid bg-surface p-3">
+      <h3 className="flex gap-2.5 text-sm font-semibold text-ink">
         <span className="font-mono text-ink-muted">{n}.</span>
         <span>{title}</span>
       </h3>
-      <div className="mt-2 pl-7 text-sm text-ink-muted">{children}</div>
+      <p className="mt-1 pl-6 text-sm text-ink-muted">{children}</p>
     </section>
   );
 }
@@ -99,51 +98,38 @@ const PAGE_N = 16;
 
 /* ------------------------------------------------------------- the ladder */
 
-const W = 760;
-const ROW = 28;
-const BAND_H = 26;
-// Top margin carries the column headers; left fits the longest rung label
-// whole; right fits three fixed columns (accuracy, bill, page).
-const M = { top: 22, right: 118, bottom: 36, left: 284 };
+const W = 700;
+const ROW = 32;
+// The deck's bar-chart grammar, kept from every other page that draws one: a
+// label gutter wide enough for the longest row, and readouts that ride the end
+// of their own bar. Not a table with columns, which is what this became for one
+// revision and what pulled the eye off the bars.
+const M = { top: 12, right: 132, bottom: 34, left: 256 };
 const IW = W - M.left - M.right;
-const H = LADDER.length * ROW + BANDS.length * BAND_H + M.top + M.bottom;
+const H = LADDER.length * ROW + M.top + M.bottom;
 const IH = H - M.top - M.bottom;
 
 const x = (v: number) => v * IW;
 
-/** The two right-hand columns, at fixed offsets so they read as a table. */
-const COL_ACC = IW + 14;
-const COL_PAGE = IW + 62;
-
-/** Row tops, precomputed once so band headers and rungs cannot drift apart. */
-const LAYOUT = (() => {
-  const rows: { rung: (typeof LADDER)[number]; y: number }[] = [];
-  const headers: { band: (typeof BANDS)[number]; y: number }[] = [];
-  let y = 0;
-  for (const band of BANDS) {
-    headers.push({ band, y });
-    y += BAND_H;
-    for (const rung of LADDER.filter((r) => r.band === band.key)) {
-      rows.push({ rung, y });
-      y += ROW;
-    }
-  }
-  return { rows, headers, height: y };
-})();
-
 /**
- * The toolbox on one axis, floor to ceiling, in three bands.
+ * The toolbox on one axis, floor to ceiling.
  *
  * Bars are the rungs the deck measured; the coverage rung is hollow because it
  * is not a technique, it is what a perfect selector would have reached, and the
  * gap between it and the best solid bar is filled rather than left for the
  * reader to measure by eye.
  *
- * Two things here are not decoration. The bill column is why the last band is
- * worth drawing: two rungs tie at the same accuracy and one of them costs a
- * seventh of the other, which is page 11's finding read straight off a row.
- * And page 9's rung carries a baseline tick, because its run is not the others'
- * and the only honest reading of it is the distance from that tick.
+ * Two things here are not decoration. The dashed rule marks where the best
+ * selector and a model twice the size land at the same accuracy, which is the
+ * comparison the last row exists to make. And page 9's rung carries a baseline
+ * tick on the bar, because its run is not the others' and the only honest
+ * reading of it is the distance from that tick.
+ *
+ * The rungs are grouped in `LADDER` and the grouping is NOT drawn. Headings
+ * over the groups turned a chart into a table of contents: they doubled the
+ * chart's height, pushed the labels away from their bars and made the eye track
+ * horizontally to find a score. The grouping still orders the rows, and the
+ * prose under the chart names the three movements.
  */
 function Ladder() {
   const solid = LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere");
@@ -151,22 +137,17 @@ function Ladder() {
   const ceiling = LADDER.find((r) => r.ceiling);
   return (
     <ChartFrame
-      title={`What each lever scored on the same ${ITEM_COUNT} problems, in three groups. ${BANDS.map(
-        (b) =>
-          `${b.title}: ${LADDER.filter((r) => r.band === b.key)
-            .map(
-              (r) =>
-                `${r.label}, ${pct(r.accuracy)}${
-                  // Spoken without its baseline, page 9's rung is a bare 58%
-                  // sitting under page 8's 60%, which is the exact misreading
-                  // the tick on the bar exists to prevent for sighted readers.
-                  r.baseline !== undefined
-                    ? `, up from ${pct(r.baseline)} on that run's own vote`
-                    : ""
-                }`,
-            )
-            .join("; ")}`,
-      ).join(". ")}. The steps get smaller as you go, a wide gap is left between the best selector and the answers that were generated and not picked, and the last group ties the best selector's accuracy for a fraction of its bill.`}
+      title={`What each lever scored on the same ${ITEM_COUNT} problems. ${LADDER.map(
+        (r) =>
+          `${r.label}, ${pct(r.accuracy)}${
+            // Spoken without its baseline, page 9's rung is a bare 58% sitting
+            // under page 8's 60%, which is the exact misreading the tick on the
+            // bar exists to prevent for sighted readers.
+            r.baseline !== undefined
+              ? `, up from ${pct(r.baseline)} on that run's own vote`
+              : ""
+          }`,
+      ).join(". ")}. The steps get smaller as you go, a wide gap is left between the best selector and the answers that were generated and not picked, and the last row ties the best selector's accuracy on a model twice the size.`}
       width={W}
       height={H}
       margin={M}
@@ -180,13 +161,6 @@ function Ladder() {
           </text>
         </g>
       ))}
-
-      <text x={COL_ACC} y={-8} className="fill-ink-muted text-[9px] uppercase tracking-wide">
-        score
-      </text>
-      <text x={COL_PAGE} y={-8} className="fill-ink-muted text-[9px] uppercase tracking-wide">
-        from
-      </text>
 
       {/* What was generated and never picked: the one gap the page argues about. */}
       {ceiling ? (
@@ -210,26 +184,15 @@ function Ladder() {
         strokeWidth={1.5}
       />
 
-      {LAYOUT.headers.map(({ band, y }) => (
-        <text
-          key={band.key}
-          x={-10}
-          y={y + BAND_H - 8}
-          textAnchor="end"
-          className="fill-ink-muted text-[10px] font-semibold uppercase tracking-wide"
-        >
-          {band.title}
-        </text>
-      ))}
-
-      {LAYOUT.rows.map(({ rung: r, y }) => {
-        const h = ROW - 10;
+      {LADDER.map((r, i) => {
+        const y = i * ROW + 6;
+        const h = ROW - 12;
         const base = r.baseline ?? 0;
         return (
           <g key={r.label}>
             <text
               x={-10}
-              y={y + h - 2}
+              y={y + h - 3}
               textAnchor="end"
               className={`text-[11px] ${r.ceiling ? "fill-ink-muted italic" : "fill-ink"}`}
             >
@@ -277,7 +240,7 @@ function Ladder() {
                 />
                 <text
                   x={x(base) - 4}
-                  y={y + h - 2}
+                  y={y + h - 3}
                   textAnchor="end"
                   className="fill-canvas text-[10px] font-semibold"
                 >
@@ -286,16 +249,19 @@ function Ladder() {
               </>
             ) : null}
 
+            {/* The readouts ride the bar rather than sitting in a column, so a
+                row is read left to right in one move and the eye never leaves
+                the bar it is reading. */}
             <text
-              x={COL_ACC}
-              y={y + h - 2}
+              x={x(r.accuracy) + 6}
+              y={y + h - 3}
               className={`text-[11px] font-semibold tabular-nums ${
                 r.ceiling ? "fill-wrong" : "fill-ink"
               }`}
             >
               {pct(r.accuracy)}
             </text>
-            <text x={COL_PAGE} y={y + h - 2} className="fill-ink-muted text-[10px]">
+            <text x={x(r.accuracy) + 44} y={y + h - 3} className="fill-ink-muted text-[10px]">
               page {r.page}
             </text>
           </g>
@@ -353,32 +319,18 @@ export function Page16() {
         </p>
         <Ladder />
 
-        <p className="max-w-2xl text-sm text-ink-muted">
+        {/* The chart's one caption. It replaces four paragraphs that restated
+            every rung in prose: the rungs are legible, and what a reader cannot
+            get from the picture is the SHAPE, which is what this says. The
+            numbers those paragraphs carried are spent once, in the takeaways.
+
+            The clause about a 128-token chain scoring what no chain scores went
+            with the rung it described. Do not reinstate it: there is no longer a
+            bar on this chart behind it. */}
+        <p className="max-w-2xl border-l-2 border-grid pl-3 text-sm text-ink-muted">
           Read it top to bottom as steps that keep getting smaller. Writing the reasoning at all is
-          the largest single move on the chart, and a chain cut off at{" "}
-          {LADDER[1].label.replace(/^one chain, cut off at /, "")} scores exactly what no chain at
-          all scores, which is the cheapest way to see that the tokens are not a description of the
-          computation, they are the computation.
-        </p>
-        <p className="max-w-2xl text-sm text-ink-muted">
-          Then sampling. Sixteen chains buy nothing until they are allowed to disagree; voting on
-          the disagreement buys real points; putting a trained judge in front of the vote buys a
-          few more that this run could not separate from noise. Grading every step of the working
-          rather than the answer, page 9&apos;s lever, moved one problem in {ITEM_COUNT} and is
-          drawn against its own vote for that reason.
-        </p>
-        <p className="max-w-2xl text-sm text-ink-muted">
-          Then the step that never comes. On {pct(ceiling.accuracy)} of these problems at least one
-          of the sixteen chains was right and the best rule we tested kept {pct(best.accuracy)}.
-          The shaded band is the answer sitting in the pile, generated and thrown away.
-        </p>
-        <p className="max-w-2xl text-sm text-ink-muted">
-          Then the last band, which is on the chart to be read against the one above it. Two rungs
-          tie at {pct(CROSSING)}, and the axis cannot show what separates them, so here it is in
-          measured compute: reaching {pct(CROSSING)} by sampling sixteen chains and having a
-          trained judge pick costs about {Math.round(bestBill)} greedy chains, and reaching it with
-          a model twice the size costs about {biggerBill.toFixed(1)}. That is page 11&apos;s
-          finding, and it is the knob moving off this axis onto another one.
+          the largest single move on the chart, and being made to write more of it is the only step
+          that goes backwards.
         </p>
       </div>
 
@@ -386,120 +338,58 @@ export function Page16() {
         <h2 className="text-xl font-semibold text-ink">
           1b. What to take with you
           <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-            five things the chart is evidence for
+            six things the chart is evidence for
           </span>
         </h2>
-        <p className="max-w-2xl text-ink">
-          Read as a set, the rungs say more than any one of them does alone. Five things worth
-          keeping, and one of them is the reason the chart has a last band at all.
-        </p>
-
-        <div className="flex max-w-2xl flex-col gap-4">
-          <Takeaway n={1} title="Letting the model reason wins, and it wins every time">
-            <p>
-              It is the largest move on the chart and nothing after it is close: {pct(floor.accuracy)}{" "}
-              when the model must answer on the spot, {pct(baseline.accuracy)} when it is allowed
-              to write its working first, on the same problems, {PAGE5.figure2.suppression.fixed}{" "}
-              fixed against {PAGE5.figure2.suppression.broken} broken. If you do one thing, do this
-              one.
-            </p>
-            <p className="mt-2">
-              <strong>More of it is a different claim.</strong> Refusing to let the chain stop and
-              making it carry on cost {FORCED.tokenMultiple.toFixed(1)} times the tokens and turned{" "}
-              {FORCED.turnedRight} answers right against {FORCED.turnedWrong} turned wrong. That is
-              churn, not progress. Reasoning is worth having; being made to do more of it, with
-              nothing new to go on, is not.
-            </p>
+        <div className="flex max-w-2xl flex-col gap-3">
+          <Takeaway n={1} title="Letting the model reason wins, every time">
+            {pct(floor.accuracy)} answering on the spot, {pct(baseline.accuracy)} allowed to write
+            its working first, same problems, {PAGE5.figure2.suppression.fixed} fixed against{" "}
+            {PAGE5.figure2.suppression.broken} broken. Making it write <em>more</em>, with nothing
+            new to go on, cost {FORCED.tokenMultiple.toFixed(1)} times the tokens and turned{" "}
+            {FORCED.turnedRight} answers right against {FORCED.turnedWrong} wrong. Worth having,
+            not worth forcing.
           </Takeaway>
 
           <Takeaway n={2} title="The answer is usually already in the pile">
-            <p>
-              On {pct(ceiling.accuracy)} of these problems at least one of sixteen sampled chains
-              was right, and the best rule we tested kept {pct(best.accuracy)}. That{" "}
-              {Math.round((ceiling.accuracy - best.accuracy) * 100)}-point band is not a generation
-              problem, and more sampling does not touch it. Everything hard about answer-time
-              compute is downstream of a solved problem: the model found it, and we threw it away.
-            </p>
+            One of sixteen chains was right on {pct(ceiling.accuracy)} of these problems and the
+            best rule we tested kept {pct(best.accuracy)}. Those{" "}
+            {Math.round((ceiling.accuracy - best.accuracy) * 100)} points are not a generation
+            problem, and more sampling does not touch them.
           </Takeaway>
 
           <Takeaway n={3} title="So the judge is the bottleneck, and judges can barely read">
-            <p>
-              A judge that reads a chain is reading mostly prose. Page 9 graded real working twice
-              and an arithmetic checker could adjudicate {pct(CHECKABLE_SHARE, 1)} of the steps;
-              the rest state nothing a machine can compute. And page 15 turned the one knob that
-              makes candidates worth judging: as sampling temperature rises, every model asked to
-              judge decays, the worst by {JUDGES.worstFallPts.toFixed(0)} points. Only the model{" "}
-              <strong>trained to score</strong> holds its line.
-            </p>
-            <p className="mt-2">
-              So you want a trained judge. The catch is how you spend one: best-of-N is the way,
-              and best-of-{JUDGES.depth} cost about {Math.round(bestBill)} greedy chains to reach{" "}
-              {pct(CROSSING)}, which a model twice the size reached for about{" "}
-              {biggerBill.toFixed(1)}. A better judge is the right lever and it is priced like a
-              bigger model.
-            </p>
+            An arithmetic checker can adjudicate {pct(CHECKABLE_SHARE, 1)} of the steps in a real
+            chain; the rest is prose. And as sampling gets hotter, every model asked to judge
+            decays, the worst by {JUDGES.worstFallPts.toFixed(0)} points, while the one{" "}
+            <strong className="text-ink">trained to score</strong> holds. So you want a trained
+            judge, and best-of-{JUDGES.depth} spends about {Math.round(bestBill)} greedy chains to
+            reach {pct(CROSSING)}, which a model twice the size reaches for {biggerBill.toFixed(1)}.
           </Takeaway>
 
-          <Takeaway n={4} title="Which is what adaptive compute is for, and it is not free either">
-            <p>
-              If a flat sixteen chains for every problem is the wrong shape, spend by difficulty:
-              one chain where one will do, the whole pile where it will not. That is the direction
-              this deck points, and it is the honest answer to takeaway 3.
-            </p>
-            <p className="mt-2">
-              <strong>It is also the thing we could not demonstrate.</strong> Page 15 gave one form
-              of it an oracle, the best stopping point per problem chosen with hindsight. It
-              reached {pct(ADAPTIVE_NULL.oracle)} for about {ADAPTIVE_NULL.oracleTokens} tokens,
-              and plain resampling reached the same {pct(ADAPTIVE_NULL.sampling)} for the same
-              money. Knowing where to spend is worth something only if you can know it in advance,
-              and nothing we tested could.
-            </p>
+          <Takeaway n={4} title="Adaptive compute is where that points, not where it lands">
+            Spend by difficulty rather than sixteen chains flat. Page 15 gave one form of it an
+            oracle, the best stopping point per problem chosen with hindsight, and it bought no
+            more per token than plain resampling. Knowing where to spend only pays if you can know
+            it in advance.
           </Takeaway>
 
           <Takeaway n={5} title="And you pay for every node you look at">
-            <p>
-              Search is the elaborate version of takeaway 3: branch, score the partial lines, prune
-              the poor ones, back up. Pruning is what you do with a node <em>after</em> paying for
-              it, so the bill counts everything you looked at and threw away. That is why a smarter
-              search is not automatically cheaper than sampling sixteen chains flat.
-            </p>
-            <p className="mt-2">
-              It is the one lever with no bar on the chart, because we never ran it here. Page
-              10&apos;s tree is written by hand and its published bars are Yao et al.&apos;s on
-              Game of 24 and crosswords, which are not these problems, and the arm that would
-              measure it ships unrun. Worth knowing what it would take: a {BIGGER} judge in memory
-              beside the {WRITER} writer, which is both models at once rather than a cheaper one.
-            </p>
+            Pruning is what you do with a node <em>after</em> paying for it, so a smarter search is
+            not automatically cheaper. It has no bar here because page 10 ships no run, and what it
+            would take is a {BIGGER} judge in memory beside the {WRITER} writer.
           </Takeaway>
 
-          <div className="rounded-lg border-l-4 border-wrong bg-surface p-4 text-sm text-ink">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-              and the one that is not on this axis at all
-            </p>
-            <p className="mt-2">
-              <strong>{OTHER_AXIS.label}</strong> is our {OTHER_AXIS.ours.label} after someone else
-              fine-tuned it on {OTHER_AXIS.teacher.samplesK}K reasoning traces from{" "}
-              {OTHER_AXIS.teacher.label}. It scores {pct(OTHER_AXIS.math500, 1)} on MATH-500. Our
-              copy of the same base model, greedy, scores {pct(OTHER_AXIS.ours.hard)}. Nothing on
-              the chart above moves a model that far.
-            </p>
-            <p className="mt-2">
-              It is deliberately not a bar up there, because it is not measured on the same thing.
-              That number is the whole of MATH-500, all five difficulty levels; our hundred
-              problems are {OTHER_AXIS.ours.hardLevels} only, the hard end, on our harness. We can
-              size the difference rather than wave at it: the same three checkpoints score{" "}
-              {OTHER_AXIS.bandGapPts.min} to {OTHER_AXIS.bandGapPts.max} points higher on{" "}
-              {OTHER_AXIS.ours.easyLevels} than on {OTHER_AXIS.ours.hardLevels}, with nothing
-              changed but the mix of problems. Our own 1.5B goes from {pct(OTHER_AXIS.ours.hard)}{" "}
-              to {pct(OTHER_AXIS.ours.easy)} that way.
-            </p>
-            <p className="mt-2 text-ink-muted">
-              So a large piece of that gap is the test and the rest is the distillation, and this
-              deck cannot tell you the split. That is not a footnote about one number. It is what a
-              score is: a reading taken at a setting, and the setting travels with it or the number
-              means nothing.
-            </p>
-          </div>
+          <Takeaway n={6} title="And the biggest move in this story is not on this axis">
+            <strong className="text-ink">{OTHER_AXIS.label}</strong>, our {OTHER_AXIS.ours.label}{" "}
+            fine-tuned by someone else on {OTHER_AXIS.teacher.samplesK}K traces from{" "}
+            {OTHER_AXIS.teacher.label}, scores {pct(OTHER_AXIS.math500, 1)} on MATH-500 where our
+            copy scores {pct(OTHER_AXIS.ours.hard)}. Not a bar, because it is not the same test:
+            that is all five difficulty levels and ours is {OTHER_AXIS.ours.hardLevels}. Our own
+            checkpoints score {OTHER_AXIS.bandGapPts.min} to {OTHER_AXIS.bandGapPts.max} points
+            higher on the easy band, so a large piece of that gap is the test and the rest is the
+            distillation, and this deck cannot tell you the split.
+          </Takeaway>
         </div>
       </div>
 
