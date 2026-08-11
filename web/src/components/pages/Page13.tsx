@@ -522,8 +522,8 @@ export function Page13() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        By page 12 the compute had split in two: the kind spent at answer time (pages 5 to 11:
-        votes, judges, search) and the kind already sunk into the weights (page 12: the reasoning
+        By page 12, compute had split in two: the compute spent at answer time (pages 5 to 11:
+        votes, judges, search) and the compute already sunk into the weights (page 12: the reasoning
         trained in). <strong className="text-ink">o1</strong> is the first commercial model to
         turn both dials, and it kept the recipe. Its signature is{" "}
         <strong className="text-ink">a curve with two compute axes</strong>: how much of the score
