@@ -36,7 +36,12 @@
  *      answers each grader can catch bad reasoning inside. Localisation and the
  *      null selector rung follow it in a line each.
  *
- * Run conditions (decoding, dates, segmentation) are the notebook's to state.
+ * Run conditions (decoding, dates, segmentation) are the notebook's to state,
+ * and so is the PRM's measured reliability. The margins hold only what a reader
+ * looking at the thing beside them cannot work out: how to read a step with no
+ * underline. A limit on a figure is not a margin note, it is a caption, so the
+ * PRM's fitted cut-off sits under the bars it qualifies.
+ *
  * Lightman et al. 2023 is cited for the technique and priority; the numbers on
  * screen are our own.
  */
@@ -638,40 +643,14 @@ export function Page9() {
             </div>
           </section>
 
-          <div className="flex flex-col gap-6">
-            <Note kicker="Provenance">
-              <p>
-                Real chains, not authored: sampled from {PAGE9.run.model.split("/").pop()} at T=
-                {PAGE9.run.temperature} and reused from page 7&apos;s pile, so pages 6 to 9 describe
-                one population. Only chains the model ended itself are graded. Full run conditions
-                live in the notebook.
-              </p>
-              <p>
-                Underlines come from a deterministic arithmetic checker that judges only what is
-                closed-form numeric on both sides. Nothing underlined means nothing computable, not
-                nothing wrong.
-              </p>
-            </Note>
-            {prm ? (
-              <Note kicker="The PRM">
-                <p>
-                  {prm.id} at {prm.quantisation}, admitted only after being measured against the
-                  checker: AUC {prm.auc.toFixed(2)} over {prm.nStepsCompared.toLocaleString()} steps.
-                  That reliability was measured on arithmetic, its friendliest ground, so treat it as
-                  an upper bound, and above you saw it fall short of even that.
-                </p>
-                <p>
-                  <strong className="text-ink">Its cut is fitted, not held out.</strong> The{" "}
-                  {prm.threshold.toFixed(2)} that turns a score into a verdict was picked by which
-                  value best matched the checker&apos;s own labels, and{" "}
-                  {prm.thresholdPlateauCount} cut-offs spanning{" "}
-                  {Math.round(prm.thresholdPlateauSpan * 100)} points of the score matched about as
-                  well. So its share below is not a second, independent reading of the checker&apos;s:
-                  it was calibrated against it, at a setting chosen to agree with it.
-                </p>
-              </Note>
-            ) : null}
-          </div>
+          {/* One reading key, and nothing else. The run conditions and the PRM's
+              measured reliability are the notebook's to state; the fitted cut is
+              a limit on the bars, so it sits in the figure's caption where the
+              bars are. What a reader of this trace cannot work out unaided is
+              what the absence of an underline means. */}
+          <Note kicker="The underline">
+            <p>Nothing underlined means nothing computable, not nothing wrong.</p>
+          </Note>
         </div>
 
         {/* Step 3 — what step-grading buys, one figure framed on the PRM */}
@@ -730,11 +709,12 @@ export function Page9() {
                 honest shape of the undercount.{" "}
                 {det.prm && prm ? (
                   <>
-                    {prmName}&apos;s <strong className="text-ink">{pct(det.prm.rate, 1)}</strong> is a
-                    trained model&apos;s opinion, measured reliable enough to quote (see the margin)
-                    but still a score, and one read at a cut-off fitted on the checker&apos;s own
-                    labels, so these are not two independent readings of the same thing. On the Lucky
-                    chain above it was the one that missed the slip.
+                    {prmName}&apos;s <strong className="text-ink">{pct(det.prm.rate, 1)}</strong> is
+                    a trained model&apos;s opinion rather than a proof, and{" "}
+                    <strong className="text-ink">its cut is fitted, not held out</strong>: the{" "}
+                    {prm.threshold.toFixed(2)} that turns a score into a verdict was picked to match
+                    the checker&apos;s own labels, so these are not two independent readings of the
+                    same thing. On the Lucky chain above it was the one that missed the slip.
                   </>
                 ) : null}
               </figcaption>
@@ -766,11 +746,7 @@ export function Page9() {
           </section>
 
           <Note kicker="References">
-            <p>
-              Cited for the technique and for priority: process supervision, and training a reward
-              model on step labels rather than outcomes. The numbers on this page are our own, on our
-              own model, and are not comparable to theirs.
-            </p>
+            <p>Cited for the technique. The numbers here are our own model&apos;s, not theirs.</p>
             <RefItem n={REF.lightman} href="https://arxiv.org/abs/2305.20050" preprint>
               Lightman et al. 2023, <em>Let&apos;s Verify Step by Step</em> (arXiv 2305.20050).
             </RefItem>

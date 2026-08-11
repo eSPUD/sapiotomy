@@ -28,15 +28,13 @@ const findTheBreakThenReveal = (trace = PAGE9.lucky) => {
   fireEvent.click(screen.getByRole("button", { name: /reveal what the graders found/i }));
 };
 
-// The AUC appears ONCE, in the note that admits the PRM. It may not sit in the
-// figure, where a reader would read it as a property of the finding.
-describe("Page 9's PRM reliability is quoted once", () => {
-  it("keeps the AUC in the margin and out of the figures", () => {
+// The PRM's reliability against the checker is measured in the notebook, and
+// quoting it here bought a reader looking at the bars nothing they could act on.
+// It is gone from the page entirely rather than demoted.
+describe("Page 9's PRM reliability is the notebook's to state", () => {
+  it("quotes no AUC anywhere on the page", () => {
     render(<Page9 />);
-    const body = document.body.textContent ?? "";
-    expect(body.match(/AUC/g) ?? []).toHaveLength(1);
-    const note = screen.getByText(/admitted only after being measured against the checker/);
-    expect(note.textContent).toMatch(/AUC/);
+    expect(document.body.textContent).not.toMatch(/AUC/);
   });
 });
 
@@ -206,15 +204,17 @@ describe("Page 9 (outcome vs process supervision) component", () => {
   });
 
   // The PRM's cut was fitted against the checker's labels, so its bar is not a
-  // second, independent reading of the checker's.
-  it("discloses that the PRM's cut was fitted on the checker's labels", () => {
+  // second, independent reading of the checker's. That is a limit on the figure,
+  // so it is stated under the bars rather than in a margin beside another beat.
+  it("discloses under the bars that the PRM's cut was fitted on the checker's labels", () => {
     render(<Page9 />);
     if (!PAGE9.graders.prm) return;
-    expect(screen.getByText(/its cut is fitted, not held out/i)).toBeInTheDocument();
-    const note = screen.getByText("The PRM").closest("aside")!;
-    expect(note.textContent).toMatch(/best matched the checker's own labels/i);
-    expect(note.textContent).toContain(`${PAGE9.graders.prm.thresholdPlateauCount} cut-offs`);
-    expect(screen.getByText(/not two independent readings of the same thing/i)).toBeInTheDocument();
+    const caption = screen.getByText(/a floor, not a rate/i);
+    expect(caption.textContent).toMatch(/its cut is fitted, not held out/i);
+    expect(caption.textContent).toContain(PAGE9.graders.prm.threshold.toFixed(2));
+    expect(caption.textContent).toMatch(/not two independent readings of the same thing/i);
+    // Nothing points at a margin for it.
+    expect(document.body.textContent).not.toMatch(/see the margin/i);
   });
 
   // Every specimen scores above the PRM's cut on every line. A reader who works
@@ -310,17 +310,34 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(screen.getByText(/a poem has none mid-stanza/i)).toBeInTheDocument();
   });
 
-  it("names both graders in the margin rather than implying a PRM that never ran", () => {
+  // The margin beside the trace carries one thing: how to read a step the checker
+  // left unmarked. Everything that justified the instruments rather than helping
+  // read them (the sampling conditions, the PRM's reliability and quantisation)
+  // went back to the notebook on 2026-08-10.
+  it("keeps the trace's margin to the one reading key the figure cannot supply", () => {
     render(<Page9 />);
-    expect(
-      screen.getByText(/deterministic arithmetic checker that judges only/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/nothing computable, not nothing wrong/i)).toBeInTheDocument();
+    const note = screen.getByText("The underline").closest("aside")!;
+    expect(note.textContent).toBe(
+      "The underlineNothing underlined means nothing computable, not nothing wrong.",
+    );
+    expect(screen.queryByText("Provenance")).toBeNull();
+    expect(screen.queryByText("The PRM")).toBeNull();
     if (PAGE9.graders.prm) {
-      const note = screen.getByText("The PRM").closest("aside")!;
-      expect(note.textContent).toContain(PAGE9.graders.prm.id);
-      expect(note.textContent).toMatch(/upper bound/i);
+      // The model is still named, in the figure that plots it, by its own label.
+      expect(document.body.textContent).not.toContain(PAGE9.graders.prm.id);
+      expect(document.body.textContent).toContain(PAGE9.graders.prm.id.split("/").pop());
     }
+    expect(document.body.textContent).not.toMatch(/upper bound|friendliest ground/i);
+  });
+
+  // The references note is a citation, not an essay about one.
+  it("keeps the references note to its citation", () => {
+    render(<Page9 />);
+    const note = screen.getByText("References").closest("aside")!;
+    expect(note.textContent).toContain(
+      "Cited for the technique. The numbers here are our own model's, not theirs.",
+    );
+    expect(note.textContent).not.toMatch(/priority|comparable/i);
   });
 
   it("cites Lightman as a numbered reference reachable from an inline marker", () => {
