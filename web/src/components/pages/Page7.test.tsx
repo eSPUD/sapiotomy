@@ -113,12 +113,18 @@ describe("Page 7 (frequency voting) component", () => {
     expect(intro).not.toMatch(/likel|distribution|logit/i);
   });
 
-  // The +12 is voting AND sampling. The decomposition is in the margin; the box has to
-  // point at it, or a reader who stops there credits all of it to counting.
+  // The +12 is voting AND sampling. The decomposition used to sit in a margin note
+  // that the box pointed at; it is now the box's own last sentence, because a reader
+  // who stops at the headline credits all 12 points to counting.
   it("does not let the headline box own sampling's contribution", () => {
     render(<Page7 />);
     const callout = screen.getByText(/decoded greedily/i).closest("div")!;
-    expect(callout.textContent).toMatch(/sampling rather than counting, and the margin says how much/);
+    const text = callout.textContent ?? "";
+    expect(text).toMatch(/sampling plus counting/);
+    expect(text).toMatch(
+      new RegExp(`gains ${PAGE7.figure2.gainVsOneSample.pts.toFixed(0)} points`),
+    );
+    expect(text).toMatch(/cannot tell from chance/);
   });
 
   it("explains the flat temperature-zero line rather than hiding it", () => {
