@@ -52,20 +52,13 @@ import { PageNav } from "@/components/PageNav";
 import { Quiz } from "@/components/Quiz";
 import {
   ADAPTIVE_NULL,
-  BIGGER,
-  CHECKABLE_SHARE,
   CROSSING,
-  FORCED,
   ITEM_COUNT,
-  JUDGES,
   LADDER,
-  OTHER_AXIS,
   QUIZ,
-  WRITER,
   pct,
 } from "@/lib/page16";
 import { ACTS, getPage } from "@/lib/pages";
-import { PAGE5 } from "@/lib/page05";
 import { PAGE17 } from "@/lib/page17";
 import { useStore } from "@/store/useStore";
 
@@ -277,15 +270,9 @@ export function Page16() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
   const ceiling = LADDER.find((r) => r.ceiling)!;
-  const floor = LADDER[0];
-  const baseline = LADDER.find((r) => r.label.includes("greedy"))!;
   const best = LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").reduce((a, b) =>
     b.accuracy > a.accuracy ? b : a,
   );
-  // The two rows the closing paragraph reads off the bill column. Both are
-  // asserted present in page16.test.ts: the paragraph is meaningless without them.
-  const bestBill = best.bill ?? 0;
-  const biggerBill = LADDER.find((r) => r.band === "elsewhere")!.bill ?? 0;
 
   return (
     <article className="flex flex-col gap-6">
@@ -335,60 +322,67 @@ export function Page16() {
       </div>
 
       <div className="flex flex-col gap-3">
+        {/* The conclusions carry NO figures and NO model names, deliberately. The
+            chart directly above is where the numbers live, priced and sourced; a
+            reader who wants one reads it off the rung. Restating them here made
+            six dense paragraphs a reader had to decode a second time, right at the
+            point where the deck should be handing over an idea rather than a
+            table. Every claim below is still exactly what its rung shows, and the
+            counterweights travel with their claims. Do not reintroduce percentages
+            here as the page tightens: the ladder is the evidence, this is what it
+            means. */}
         <h2 className="text-xl font-semibold text-ink">
-          1b. What to take with you
+          1b. Conclusions
           <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
             six things the chart is evidence for
           </span>
         </h2>
         <div className="flex max-w-2xl flex-col gap-3">
           <Takeaway n={1} title="Letting the model reason wins, every time">
-            {pct(floor.accuracy)} answering on the spot, {pct(baseline.accuracy)} allowed to write
-            its working first, same problems, {PAGE5.figure2.suppression.fixed} fixed against{" "}
-            {PAGE5.figure2.suppression.broken} broken. Making it write <em>more</em>, with nothing
-            new to go on, cost {FORCED.tokenMultiple.toFixed(1)} times the tokens and turned{" "}
-            {FORCED.turnedRight} answers right against {FORCED.turnedWrong} wrong. Worth having,
-            not worth forcing.
+            Ask for the answer on its own and it mostly gets it wrong. Let it write its working
+            first, on the same problems, and it gets far more of them right. But making it write{" "}
+            <em>more</em> working, when it has nothing new to go on, is a different thing: it costs
+            a great deal more and turns about as many answers wrong as it turns right. Reasoning is
+            worth having. It is not worth forcing.
           </Takeaway>
 
           <Takeaway n={2} title="The answer is usually already in the pile">
-            One of sixteen chains was right on {pct(ceiling.accuracy)} of these problems and the
-            best rule we tested kept {pct(best.accuracy)}. Those{" "}
-            {Math.round((ceiling.accuracy - best.accuracy) * 100)} points are not a generation
-            problem, and more sampling does not touch them.
+            Ask the same question many times and a right answer turns up far more often than any
+            rule we tried managed to pick out. The gap between what was found and what was chosen is
+            not a thinking problem, and sampling harder does not close it.
           </Takeaway>
 
           <Takeaway n={3} title="So the judge is the bottleneck, and judges can barely read">
-            An arithmetic checker can adjudicate {pct(CHECKABLE_SHARE, 1)} of the steps in a real
-            chain; the rest is prose. And as sampling gets hotter, every model asked to judge
-            decays, the worst by {JUDGES.worstFallPts.toFixed(0)} points, while the one{" "}
-            <strong className="text-ink">trained to score</strong> holds. So you want a trained
-            judge, and best-of-{JUDGES.depth} spends about {Math.round(bestBill)} greedy chains to
-            reach {pct(CROSSING)}, which a model twice the size reaches for {biggerBill.toFixed(1)}.
+            Something has to choose. An arithmetic checker can only mark the small part of a chain
+            that is arithmetic, and the rest is prose it cannot read at all. Meanwhile the more
+            variety you buy by sampling, the worse every model asked to judge gets, while a model{" "}
+            <strong className="text-ink">trained to score</strong> holds steady. So you want a
+            trained judge. But sampling and judging your way to what a bigger model reaches on its
+            own costs many times more compute than simply using the bigger model.
           </Takeaway>
 
           <Takeaway n={4} title="Adaptive compute is where that points, not where it lands">
-            Spend by difficulty rather than sixteen chains flat. Page 15 gave one form of it an
-            oracle, the best stopping point per problem chosen with hindsight, and it bought no
-            more per token than plain resampling. Knowing where to spend only pays if you can know
-            it in advance.
+            Spend more on the hard questions and less on the easy ones, rather than the same on all
+            of them. That is the obvious next move, and this deck could not make it pay: even
+            picking the best stopping point for each question with hindsight bought no more per unit
+            of compute than plain resampling. Knowing where to spend only helps if you can know it
+            in advance.
           </Takeaway>
 
           <Takeaway n={5} title="And you pay for every node you look at">
-            Pruning is what you do with a node <em>after</em> paying for it, so a smarter search is
-            not automatically cheaper. It has no bar here because page 10 ships no run, and what it
-            would take is a {BIGGER} judge in memory beside the {WRITER} writer.
+            Branching through partial chains and cutting the bad ones sounds cheaper than it is. You
+            pay for a branch before you can judge it, so pruning never refunds what looking cost. It
+            has no bar here because this deck never ran it, and running it would mean holding a
+            second, larger model in memory beside the one doing the writing.
           </Takeaway>
 
           <Takeaway n={6} title="And the biggest move in this story is not on this axis">
-            <strong className="text-ink">{OTHER_AXIS.label}</strong>, our {OTHER_AXIS.ours.label}{" "}
-            fine-tuned by someone else on {OTHER_AXIS.teacher.samplesK}K traces from{" "}
-            {OTHER_AXIS.teacher.label}, scores {pct(OTHER_AXIS.math500, 1)} on MATH-500 where our
-            copy scores {pct(OTHER_AXIS.ours.hard)}. Not a bar, because it is not the same test:
-            that is all five difficulty levels and ours is {OTHER_AXIS.ours.hardLevels}. Our own
-            checkpoints score {OTHER_AXIS.bandGapPts.min} to {OTHER_AXIS.bandGapPts.max} points
-            higher on the easy band, so a large piece of that gap is the test and the rest is the
-            distillation, and this deck cannot tell you the split.
+            The largest jump in the whole deck came from none of the levers on this chart. It came
+            from taking a small model and training it on the reasoning of a much stronger one. It is
+            not a bar here because it was not the same test: the published result covers every
+            difficulty level and this chart is only the hardest ones, and our own models score
+            noticeably higher on the easier mix. So part of that gap is the easier test and part is
+            the training, and this deck cannot tell you how it splits.
           </Takeaway>
         </div>
       </div>

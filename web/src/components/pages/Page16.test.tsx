@@ -148,17 +148,16 @@ describe("Page 16 (wrap-up) component", () => {
     }
   });
 
-  it("quotes the distilled model but keeps it off the axis, and says why", () => {
+  it("keeps the distilled result off the axis, and says why it cannot be one", () => {
     render(<Page16 />);
-    // The published number is the whole of MATH-500; the chart is levels 4 and 5.
-    // The page must carry the number AND the reason it is not a bar, including
-    // the deck's own measurement of what the easier mix is worth.
+    // The conclusions carry no figures, so what has to survive is the REASON the
+    // biggest move in the deck is not a bar: a different test, plus the deck's own
+    // admission that it cannot separate the easier test from the training.
     const six = screen.getByText(/not on this axis/i).closest("section")!;
-    expect(six.textContent).toMatch(new RegExp(OTHER_AXIS.label));
-    expect(six.textContent).toMatch(/not a bar, because it is not the same test/i);
-    expect(six.textContent).toMatch(
-      new RegExp(`${OTHER_AXIS.bandGapPts.min} to ${OTHER_AXIS.bandGapPts.max} points`),
-    );
+    expect(six.textContent).toMatch(/not a bar/i);
+    expect(six.textContent).toMatch(/not the same test/i);
+    expect(six.textContent).toMatch(/every difficulty level/i);
+    expect(six.textContent).toMatch(/cannot tell you how it splits/i);
   });
 
   it("lays the wrap-up out top to bottom, never two columns of prose", () => {
@@ -255,19 +254,43 @@ describe("Page 16 (wrap-up) component", () => {
 
   it("carries six numbered takeaways, read as a set", () => {
     render(<Page16 />);
-    expect(screen.getByText(/What to take with you/i)).toBeInTheDocument();
+    expect(screen.getByText(/Conclusions/i)).toBeInTheDocument();
     for (let n = 1; n <= 6; n++) {
       expect(screen.getByText(`${n}.`)).toBeInTheDocument();
+    }
+  });
+
+  /**
+   * The conclusions carry no figures at all, on purpose. The ladder directly
+   * above is where the numbers live, priced and sourced off the modules that
+   * measured them; restating them here made a reader decode the same table twice
+   * at the exact point the deck should be handing over an idea. This guard is on
+   * the whole section rather than on any one takeaway, because the failure mode
+   * is a percentage creeping back in during a later tightening pass.
+   */
+  it("states the conclusions in words, with no figures and no model names", () => {
+    render(<Page16 />);
+    const heading = screen.getByText(/1b\. Conclusions/i);
+    const section = heading.closest("div")!;
+    const bodies = Array.from(section.querySelectorAll("section")).map((el) => el.textContent ?? "");
+    expect(bodies).toHaveLength(6);
+    for (const text of bodies) {
+      // The leading "N." of each numbered heading is the only digit allowed.
+      const body = text.replace(/^\s*\d+\./, "");
+      expect(body).not.toMatch(/\d/);
+      // No model names either: a reader should not need to know what a Qwen is.
+      expect(body).not.toMatch(/Qwen|R1|DeepSeek|Distill|MATH-500/i);
     }
   });
 
   it("says reasoning wins, and that being made to do more of it does not", () => {
     render(<Page16 />);
     const one = screen.getByText(/Letting the model reason wins/i).closest("section")!;
-    // The counterweight must travel with it, or the takeaway reads as "more is better".
-    expect(one.textContent).toMatch(
-      new RegExp(`${FORCED.tokenMultiple.toFixed(1)} times the tokens`),
-    );
+    // The counterweight must travel with it, or the takeaway reads as "more is
+    // better". It is stated in words now rather than in a token multiple, so the
+    // guard is on the claim: forcing costs more and does not pay.
+    expect(one.textContent).toMatch(/costs a great deal more/i);
+    expect(one.textContent).toMatch(/as many answers wrong as it turns right/i);
     expect(one.textContent).toMatch(/not worth forcing/i);
   });
 
@@ -276,28 +299,28 @@ describe("Page 16 (wrap-up) component", () => {
     const three = screen.getByText(/the judge is the bottleneck/i).closest("section")!;
     expect(three.textContent).toMatch(/trained to score/);
     // The cost has to be in the same breath, or "get a better judge" reads free.
-    const bestBill = LADDER.find((r) => r.label.includes("trained verifier"))!.bill!;
-    const biggerBill = LADDER.find((r) => r.band === "elsewhere")!.bill!;
-    expect(three.textContent).toMatch(new RegExp(`${Math.round(bestBill)} greedy chains`));
-    expect(three.textContent).toMatch(new RegExp(biggerBill.toFixed(1)));
+    // Priced in words now, but it must still say that matching a bigger model this
+    // way costs more than simply using the bigger model.
+    expect(three.textContent).toMatch(/costs many times more compute/i);
+    expect(three.textContent).toMatch(/simply using the bigger model/i);
   });
 
   it("offers adaptive compute as a direction and prints its own null beside it", () => {
     render(<Page16 />);
     const four = screen.getByText(/Adaptive compute is where that points/i).closest("section")!;
-    expect(four.textContent).toMatch(/Spend by difficulty/i);
+    expect(four.textContent).toMatch(/Spend more on the hard questions/i);
     // Proposing it without page 15's oracle result would be selling a technique
     // this deck measured and could not make work.
     expect(ADAPTIVE_NULL.beatsResampling).toBe(false);
-    expect(four.textContent).toMatch(/no more per token than plain resampling/i);
+    expect(four.textContent).toMatch(/no more per unit of compute than plain resampling/i);
   });
 
   it("keeps the pay-for-every-node lesson, and says why search has no bar", () => {
     render(<Page16 />);
     const five = screen.getByText(/you pay for every node you look at/i).closest("section")!;
-    expect(five.textContent).toMatch(/paying for it/i);
-    expect(five.textContent).toMatch(/page 10 ships no run/i);
-    expect(five.textContent).toMatch(new RegExp(`${BIGGER} judge in memory beside the ${WRITER}`));
+    expect(five.textContent).toMatch(/before you can judge it/i);
+    expect(five.textContent).toMatch(/never ran it/i);
+    expect(five.textContent).toMatch(/second, larger model in memory/i);
     // Search has no rung, and must not acquire one without a run behind it.
     expect(LADDER.some((r) => r.page === 10)).toBe(false);
   });
