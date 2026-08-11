@@ -374,12 +374,27 @@ describe("Page 10 — step 3 and house style", () => {
     expect(body).toMatch(/Pages 5 to 9 each ship the run their numbers come from\./);
     expect(body).toMatch(/This page ships none\./);
     // the two things a reader could mistake for our measurements, named as what they are
-    expect(body).toMatch(/29-word tree is written by hand/);
-    expect(body).toMatch(/bars above are Yao et al\./);
-    // Why it was not run belongs to step 3's prose, not the note: the note names what
-    // the page carries and stops. The margin used to carry the arm's size and which
-    // strategies would survive, which is the page's longest note about its own absence.
+    expect(body).toMatch(/29-word tree below is written by hand/);
+    expect(body).toMatch(/crossword bars in step 3 are Yao et al\./);
+    // Why it was not run belongs to step 3's prose: the disclosure names what the page
+    // carries and stops. It used to carry the arm's size and which strategies would
+    // survive, which is the page's longest passage about its own absence.
     expect(body).not.toMatch(/21 GB/);
     expect(body).toMatch(/only greedy and beam stay practical/);
+  });
+
+  // It was a margin note beside step 3, which put it after both figures it governs and
+  // beside the one it says least about. A reader who taps a word in step 1 has already
+  // been told the tree is authored.
+  it("puts the disclosure in the reading column, above step 1", () => {
+    render(<Page10 />);
+    const disclosure = screen.getByText(/Nothing here is a measurement of ours/).closest("p")!;
+    expect(disclosure.closest("aside")).toBeNull();
+    const step1 = screen.getByRole("heading", { name: /finish the line/i, level: 2 });
+    expect(
+      disclosure.compareDocumentPosition(step1) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    // one margin note left in step 3's cell: its references
+    expect(screen.queryByText("No run of our own")).toBeNull();
   });
 });
