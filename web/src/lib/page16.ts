@@ -23,12 +23,20 @@
  * step between them that nobody measured. Do not "fix" the 55/56 discrepancy by
  * averaging: it is two pools, and page 8 owns the paired test between them.
  *
- * THE BILL COLUMN IS DELIBERATELY SPARSE. Four rungs carry a FLOPs multiple and
- * six do not. Page 11 computed inference FLOPs properly; nothing else in the
- * deck did, and mean tokens are not FLOPs. An empty cell says "this run did not
- * price itself", which is true. Filling it by scaling token counts would put an
- * estimate in the same column as a measurement, in the same units, with no way
- * for a reader to tell them apart. That is the one thing this page must not do.
+ * THE BILL IS SPENT IN PROSE, NOT IN A COLUMN. Page 11 priced four of these
+ * rungs in measured FLOPs and nothing else in the deck priced anything, because
+ * mean tokens are not FLOPs. A column with four numbers and six blanks reads as
+ * missing data rather than as two kinds of run, and the price only actually
+ * decides one comparison on the page. So `bill` stays in the data, the chart
+ * stays a chart of accuracy, and the one comparison that turns on cost is made
+ * in a sentence where it can carry its own units.
+ *
+ * SEARCH IS ON THE CHART WITH NO BAR. Page 10 taught it and never ran it: its
+ * tree is hand-authored, its bars are Yao et al.'s on other tasks, and the arm
+ * that would measure it ships unrun. A summary chart that simply omitted it
+ * would imply the deck had covered the ground. So the rung is drawn as an
+ * absence and captioned as one. Do not give it a bar without a run behind it,
+ * and do not borrow Yao et al.'s number: that is Game of 24, not our items.
  *
  * PAGE 9'S RUNG CARRIES ITS OWN BASELINE. Its filtering arm ran over a pool
  * whose vote sits at 57%, so the only true statement is "57 to 58, one problem
@@ -107,11 +115,22 @@ export interface Rung {
   baseline?: number;
   /**
    * Measured inference FLOPs, as a multiple of one greedy chain from the 3B.
-   * Present ONLY on the four rungs page 11 priced: it computed these properly
-   * and the rest of the deck did not, and a token count is not a FLOP count.
-   * A blank cell is honest; an estimated one would not be.
+   * Present ONLY on the rungs page 11 priced: it computed these properly and
+   * the rest of the deck did not, and a token count is not a FLOP count.
+   *
+   * This is NOT drawn as a column. A number in every row that had one and a
+   * blank in every row that did not reads as missing data rather than as two
+   * different kinds of run, and the bill only actually decides one comparison.
+   * So it is spent in prose, where it can be said in a sentence, and the chart
+   * stays a chart of accuracy.
    */
   bill?: number;
+  /**
+   * A lever the deck taught and never measured on these problems. Drawn with
+   * no bar and captioned as absent, because the alternative is a summary chart
+   * that quietly implies the deck ran something it did not.
+   */
+  notRun?: true;
   /** One clause on what the rung is, not what it scored. */
   note: string;
   /** A ceiling nothing reached, drawn hollow because it is not a technique. */
@@ -202,10 +221,31 @@ const budgetRung = (budget: number) => {
   return r;
 };
 
+/**
+ * Page 5's bare arm and the top of page 6's sweep are the same measurement made
+ * twice: one greedy chain from the 3B on these hundred items, uncapped in
+ * practice. The ladder quotes page 5, because page 5 is where that number is
+ * established as a paired result against the blurt arm and page 6 inherits it
+ * as the end of an axis. If the two ever disagree, one of the runs moved and
+ * the band is telling a story about two different models.
+ */
+function assertBaselineAgrees(): void {
+  const p5 = PAGE5.figure2.bare.accuracy;
+  const p6 = PAGE6.figure2.primary.points[PAGE6.figure2.primary.points.length - 1].accuracy;
+  if (p5 !== p6) {
+    throw new Page16DataError(
+      `page 16's baseline rung: page 5 measures one greedy chain at ${pct(p5)} and page 6's ` +
+        `top rung measures it at ${pct(p6)}. The ladder puts page 6's budget rungs under page ` +
+        `5's full chain, which only reads as one climb while those agree.`,
+    );
+  }
+}
+
 const TOP_BUDGET = PAGE6.budgets[PAGE6.budgets.length - 1];
 const CUT_SHORT = budgetRung(PAGE6.budgets[0]);
 const CUT_MID = budgetRung(PAGE6.budgets[2]);
 const FINISHED = budgetRung(TOP_BUDGET);
+assertBaselineAgrees();
 
 /**
  * The whole toolbox as one column of bars, floor to ceiling, in three bands.
@@ -245,11 +285,11 @@ export const LADDER: Rung[] = [
   },
   {
     band: "chain",
-    label: "one chain, allowed to finish",
-    accuracy: FINISHED.accuracy,
-    page: 6,
+    label: "one chain of thought, greedy",
+    accuracy: PAGE5.figure2.bare.accuracy,
+    page: 5,
     bill: bill(GREEDY_3B.flops),
-    note: `${Math.round(FINISHED.mean_tokens)} tokens, mean; the baseline every later rung is paired against`,
+    note: `${PAGE5.figure2.bare.medianTokens} tokens, median; the baseline every later rung is paired against`,
   },
   {
     band: "sample",
@@ -290,6 +330,14 @@ export const LADDER: Rung[] = [
   },
   {
     band: "sample",
+    label: "search over partial chains, scored as they are written",
+    accuracy: 0,
+    page: 10,
+    notRun: true,
+    note: "taught on page 10 and never run on these problems: its arm ships unrun, and it needs a 7B judge in memory beside the 3B writer",
+  },
+  {
+    band: "sample",
     label: `at least one of the ${VOTE_16.n} was right`,
     accuracy: COVERAGE,
     page: 7,
@@ -306,8 +354,15 @@ export const LADDER: Rung[] = [
   },
 ];
 
-/** The accuracy two rungs tie at, which is the whole reason the bill column exists. */
+/** The accuracy two rungs tie at: the comparison the last band exists to make. */
 export const CROSSING = HARD.target.accuracy;
+
+/** The two checkpoints the chart compares, named once so no copy has to guess. */
+export const WRITER = GREEDY_3B.label;
+export const BIGGER = HARD.target.label;
+
+/** How much of a real chain a step checker can actually adjudicate. Page 9's. */
+export const CHECKABLE_SHARE = 1 - PAGE9.graders.shareUnjudged;
 
 /* ------------------------------------------------- the other axis, off-chart */
 

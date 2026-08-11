@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { BANDS, CROSSING, LADDER, OTHER_AXIS, QUIZ } from "@/lib/page16";
+import { BANDS, BIGGER, CROSSING, LADDER, OTHER_AXIS, QUIZ, WRITER } from "@/lib/page16";
 import { Page16 } from "./Page16";
 
 /**
@@ -52,7 +52,9 @@ describe("Page 16 (wrap-up) component", () => {
     // The chart's one argument: the last step does not happen. If the ceiling
     // ever stops leading, the page's prose is wrong and this must fail.
     const best = Math.max(
-      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
+      ...LADDER.filter((r) => !r.ceiling && !r.notRun && r.band !== "elsewhere").map(
+        (r) => r.accuracy,
+      ),
     );
     const ceiling = LADDER.find((r) => r.ceiling)!;
     expect(ceiling.accuracy).toBeGreaterThan(best);
@@ -75,23 +77,50 @@ describe("Page 16 (wrap-up) component", () => {
     }
   });
 
-  it("speaks the bill for every priced rung, not just the accuracy", () => {
+  it("keeps the bill out of the chart and in the prose, where it has units", () => {
     render(<Page16 />);
     const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    // The bill column is the chart's second axis. A label that omits it hides
-    // page 11's finding from anyone not looking at the picture.
-    for (const r of LADDER.filter((x) => x.bill !== undefined)) {
-      expect(fig.getAttribute("aria-label")).toContain(`costing ${r.bill!.toFixed(1)} greedy chains`);
-    }
+    // A column with four numbers and six blanks reads as missing data. The one
+    // comparison that turns on cost is made in a sentence instead.
+    expect(fig.getAttribute("aria-label")).not.toMatch(/greedy chains/);
+    expect(fig.textContent).not.toMatch(/\bBILL\b/i);
   });
 
-  it("reads page 11's crossing off the bill column in the copy", () => {
+  it("announces the unrun rung as unrun, in the picture and to a screen reader", () => {
+    render(<Page16 />);
+    const fig = screen.getByRole("img", { name: /What each lever scored/i });
+    const search = LADDER.find((r) => r.notRun)!;
+    expect(fig.getAttribute("aria-label")).toContain(`${search.label}, not run on these problems`);
+    // And its own clause must never carry a percentage, which is the whole
+    // point. Rung clauses are separated by "; ", so slice to that boundary
+    // rather than to a full stop: the labels contain commas and colons.
+    const label = fig.getAttribute("aria-label")!;
+    const clause = label.slice(label.indexOf(search.label)).split(";")[0];
+    expect(clause).not.toMatch(/\d+%/);
+    expect(within(fig).getByText("not run")).toBeInTheDocument();
+  });
+
+  it("answers the search question instead of drawing a bar for it", () => {
+    render(<Page16 />);
+    // A conclusion page owes the reader the reasoning, not a shrug. All three
+    // obstacles have to be on the page, each traceable to the page that measured it.
+    const card = screen.getByText(/search, which we taught and never measured/i).closest("div")!;
+    expect(card.textContent).toMatch(/Page 10 ships no run/);
+    expect(card.textContent).toMatch(/7B judge in memory beside the 3B writer/);
+    expect(card.textContent).toMatch(/pay for every node you look at/);
+    expect(card.textContent).toMatch(new RegExp(WRITER));
+    expect(card.textContent).toMatch(new RegExp(BIGGER));
+    // And it must not read as a finding.
+    expect(card.textContent).toMatch(/None of that is a result/);
+  });
+
+  it("reads page 11's crossing off measured compute in the copy", () => {
     render(<Page16 />);
     const bigger = LADDER.find((r) => r.band === "elsewhere")!;
     const selector = LADDER.find((r) => r.label.includes("trained verifier"))!;
     expect(bigger.accuracy).toBe(CROSSING);
     // Scoped to the paragraph: question 11 quotes the same bills, on purpose.
-    const para = screen.getByText(/Now read the bill column/i);
+    const para = screen.getByText(/Then the last band/i);
     expect(para.textContent).toMatch(new RegExp(`about ${Math.round(selector.bill!)} greedy chains`));
     expect(para.textContent).toMatch(new RegExp(`about ${bigger.bill!.toFixed(1)}`));
   });

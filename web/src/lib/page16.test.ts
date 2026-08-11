@@ -33,9 +33,7 @@ describe("page 16's ladder", () => {
 
   it("reads its rungs out of the pages that measured them, never a copy", () => {
     expect(at("no chain at all").accuracy).toBe(PAGE5.figure2.blurt.accuracy);
-    expect(at("allowed to finish").accuracy).toBe(
-      PAGE6.figure2.primary.points.find((p) => p.budget === 2048)!.accuracy,
-    );
+    expect(at("one chain of thought, greedy").accuracy).toBe(PAGE5.figure2.bare.accuracy);
     expect(at("temperature zero").accuracy).toBe(
       PAGE7.figure2.cold.points[PAGE7.figure2.cold.points.length - 1].accuracy,
     );
@@ -54,6 +52,42 @@ describe("page 16's ladder", () => {
     const accs = chain.map((r) => r.accuracy);
     expect([...accs]).toEqual([...accs].sort((a, b) => a - b));
     expect(at("cut off at 128 tokens").accuracy).toBe(at("no chain at all").accuracy);
+    expect(chain.filter((r) => r.page === 6).length).toBeGreaterThan(0);
+  });
+
+  it("bookends the first band with page 5's own paired contrast", () => {
+    // The blurt arm and the full chain are one paired result on one run, and
+    // page 6's cuts sit between them as the climb. Citing the full chain to
+    // page 6 would split a pair across two pages for no reason.
+    expect(at("no chain at all").page).toBe(5);
+    expect(at("one chain of thought, greedy").page).toBe(5);
+  });
+
+  it("keeps page 5's baseline and page 6's top rung agreeing", () => {
+    // They are the same measurement made twice. The band only reads as one
+    // climb while they match, and page16.ts throws on load if they stop.
+    expect(PAGE5.figure2.bare.accuracy).toBe(
+      PAGE6.figure2.primary.points[PAGE6.figure2.primary.points.length - 1].accuracy,
+    );
+  });
+
+  it("cites the vote and the coverage ceiling to page 7, which measured them", () => {
+    expect(at("sampled chains, voted").page).toBe(7);
+    expect(at("at least one of the").page).toBe(7);
+    expect(at("temperature zero").page).toBe(7);
+    // Selection is page 8's: that is the page that ran the judges.
+    expect(at("trained verifier picks one").page).toBe(8);
+  });
+
+  it("puts search on the chart as an absence, with no borrowed number", () => {
+    // Page 10 ships no run: hand-authored tree, Yao et al.'s bars on other
+    // tasks, and its measuring arm packaged unrun. Omitting it would imply the
+    // deck covered the ground; giving it a bar would invent a result.
+    const search = LADDER.filter((r) => r.notRun);
+    expect(search).toHaveLength(1);
+    expect(search[0].page).toBe(10);
+    expect(search[0].accuracy).toBe(0);
+    expect(search[0].note).toMatch(/never run on these problems/i);
   });
 
   it("takes its vote and its selector from ONE run, since they are compared", () => {
@@ -79,13 +113,12 @@ describe("page 16's ladder", () => {
   });
 
   it("prices only the rungs page 11 actually measured in FLOPs", () => {
-    // An empty bill cell says "this run did not price itself". Filling it from
-    // token counts would put an estimate in the same column, in the same units,
-    // as a measurement. Four rungs have a price; the rest must not.
+    // The bill is spent in prose rather than in a column, but it still may only
+    // exist where somebody measured FLOPs. Mean tokens are not FLOPs.
     const priced = LADDER.filter((r) => r.bill !== undefined);
     expect(priced).toHaveLength(4);
     for (const r of priced) expect(r.bill!).toBeGreaterThan(0);
-    expect(at("allowed to finish").bill).toBeCloseTo(1, 5);
+    expect(at("one chain of thought, greedy").bill).toBeCloseTo(1, 5);
   });
 
   it("carries page 11's finding in the bill column, not just in the prose", () => {
@@ -103,7 +136,9 @@ describe("page 16's ladder", () => {
     const ceiling = LADDER.filter((r) => r.ceiling);
     expect(ceiling).toHaveLength(1);
     const best = Math.max(
-      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
+      ...LADDER.filter((r) => !r.ceiling && !r.notRun && r.band !== "elsewhere").map(
+        (r) => r.accuracy,
+      ),
     );
     expect(ceiling[0].accuracy).toBeGreaterThan(best);
   });
@@ -163,7 +198,7 @@ describe("page 16's other axis (quoted, not plotted)", () => {
   });
 
   it("still beats every lever on the chart, which is why it is quoted at all", () => {
-    const best = Math.max(...LADDER.map((r) => r.accuracy));
+    const best = Math.max(...LADDER.filter((r) => !r.notRun).map((r) => r.accuracy));
     expect(OTHER_AXIS.math500).toBeGreaterThan(best);
   });
 });
