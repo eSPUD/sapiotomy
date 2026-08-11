@@ -343,12 +343,19 @@ export function Page10() {
         {/* Step 1 — the reader writes the line. */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Finish the line</h2>
-          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-ink">
-              Tap a word to add it. The finished line has to{" "}
-              <strong>rhyme with &ldquo;{SPEC.rhymesWith}&rdquo;</strong>. That is the whole rule.
-            </p>
-
+          {/* Pages 5 to 9 keep the invitation as the last line of the intro, directly
+              above the figure it invites the reader into. It used to sit inside the box. */}
+          <p className="text-ink-muted">
+            Be the model for four words. Below is a couplet missing the end of its second line,
+            with the words the model thinks could come next and its hunch about each. Tap a word to
+            add it. The finished line has to{" "}
+            <strong className="text-ink">rhyme with &ldquo;{SPEC.rhymesWith}&rdquo;</strong>. That
+            is the whole rule.
+          </p>
+          <section
+            aria-label="A couplet with four words missing, and the model's candidates for each"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+          >
             <Line words={mine.words} tone={myDone ? (mine.rhymed ? "good" : "bad") : "plain"} />
 
             {!myDone ? (
@@ -394,12 +401,6 @@ export function Page10() {
               </div>
             )}
 
-            <p className="text-xs text-ink-muted">
-              The trap is not a toy. Run for real on GPT-2, always-take-the-likeliest-word gets
-              stuck repeating a phrase in {degenGreedy}% of its continuations.
-              <Cite n={REF.degen} /> Human text: {degenHuman}%.
-            </p>
-
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-sm text-ink-muted">
                 {mine.words.length} of {SPEC.length} words
@@ -414,7 +415,12 @@ export function Page10() {
                 </button>
               ) : null}
             </div>
-          </div>
+          </section>
+          <p className="text-sm text-ink-muted">
+            The trap is not a toy. Run for real on GPT-2, always-take-the-likeliest-word gets stuck
+            repeating a phrase in {degenGreedy}% of its continuations.
+            <Cite n={REF.degen} /> Human text: {degenHuman}%.
+          </p>
         </section>
 
         <div className="flex flex-col gap-6">
@@ -433,16 +439,18 @@ export function Page10() {
         {/* Step 2 — five strategies replayed over one fixed tree. */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">2. Watch it search the same tree</h2>
-          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-sm text-ink-muted">
-              Greedy is what you just did: a chain of thought, no checking, no way back. The other
-              four are <strong className="text-ink">best-of-N with the judge moved inside the
-              loop</strong>, and here the judge is the model&rsquo;s own confidence: it rates
-              unfinished lines while they are being written, and the search decides which to
-              extend. Nothing on this page checks whether a line can still rhyme. Pick one and
-              press play; the shape of the lit-up region is the strategy.
-            </p>
-
+          <p className="text-ink-muted">
+            Greedy is what you just did: a chain of thought, no checking, no way back. The other
+            four are <strong className="text-ink">best-of-N with the judge moved inside the
+            loop</strong>, and here the judge is the model&rsquo;s own confidence: it rates
+            unfinished lines while they are being written, and the search decides which to extend.
+            Nothing on this page checks whether a line can still rhyme. Pick one and press play; the
+            shape of the lit-up region is the strategy.
+          </p>
+          <section
+            aria-label="The same fixed tree of words, replayed under each search strategy"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+          >
             <div className="flex flex-wrap gap-1.5" role="group" aria-label="Search strategy">
               {STRATEGIES.map((s) => (
                 <button
@@ -530,12 +538,13 @@ export function Page10() {
               </span>
             </div>
 
-            {/* the one fixed tree; the replay only changes what is lit */}
-            <div
-              className="overflow-x-auto rounded-lg border border-dashed border-grid bg-surface-raised p-2"
-              role="img"
-              aria-label={aria}
-            >
+            {/* The one fixed tree; the replay only changes what is lit. It used to
+                carry its own dashed frame and raised plane, because the box around it
+                meant "this step" and the tree needed delimiting from the prose sharing
+                that box. The box means "this figure" now, so the tree sits on it: an
+                unvisited node is fill-surface over stroke-grid and reads as hollow
+                against the same surface, which is what it is. */}
+            <div className="overflow-x-auto" role="img" aria-label={aria}>
               <svg
                 viewBox={`0 0 ${LAYOUT.width} ${LAYOUT.height}`}
                 width={LAYOUT.width}
@@ -681,12 +690,11 @@ export function Page10() {
                 </div>
               )}
             </div>
-
-            <p className="text-xs text-ink-muted">
-              The words and their probabilities are written by hand. The search over them is real,
-              and the replay is its actual trace.
-            </p>
-          </div>
+          </section>
+          <p className="text-sm text-ink-muted">
+            The words and their probabilities are written by hand. The search over them is real, and
+            the replay is its actual trace.
+          </p>
         </section>
 
         <Note kicker="Reading the replay">
@@ -697,19 +705,21 @@ export function Page10() {
         {/* Step 3 — what search buys, measured. */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. What search buys</h2>
-          <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-sm text-ink-muted">
-              Nobody can publish these five head-to-head on a real model. Once a step is a
-              sentence rather than a word, only greedy and beam can actually be run: breadth-first
-              would have to keep every line a model could write next, depth-first has no way to
-              know a line is doomed short of writing it out to the end, and MCTS would have to
-              finish thousands of lines per question. That is a limit of the hardware and of steps
-              written in free text, not a verdict on the algorithms. The closest measurement is the same
-              branch, score, backtrack machinery taken apart piece by piece on a real word task:
-              GPT-4 filling 5&times;5 crosswords, with and without the ability to back up.
-              <Cite n={REF.tot} /> The two bars with a piece switched off are the ones that
-              matter.
-            </p>
+          <p className="text-ink-muted">
+            Nobody can publish these five head-to-head on a real model. Once a step is a sentence
+            rather than a word, only greedy and beam can actually be run: breadth-first would have
+            to keep every line a model could write next, depth-first has no way to know a line is
+            doomed short of writing it out to the end, and MCTS would have to finish thousands of
+            lines per question. That is a limit of the hardware and of steps written in free text,
+            not a verdict on the algorithms. The closest measurement is the same branch, score,
+            backtrack machinery taken apart piece by piece on a real word task: GPT-4 filling
+            5&times;5 crosswords, with and without the ability to back up.
+            <Cite n={REF.tot} /> The two bars with a piece switched off are the ones that matter.
+          </p>
+          <section
+            aria-label="GPT-4 filling 5×5 crosswords, with pieces of the search switched off"
+            className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+          >
             <div
               className="flex flex-col gap-2"
               role="img"
@@ -727,51 +737,59 @@ export function Page10() {
                 </div>
               ))}
             </div>
-            <p className="text-sm text-ink-muted">
-              Chain of thought fills <strong className="text-ink">{cot}%</strong> of the words,
-              barely above no reasoning at all, because one chain commits to its first answer just
-              as yours did. Take the full search and switch off{" "}
-              <strong className="text-ink">pruning</strong> and it drops to {totNoPrune}%. Switch
-              off <strong className="text-ink">backtracking</strong> instead and it collapses to{" "}
-              {totNoBacktrack}%, almost back to plain chain of thought. That is the whole argument
-              in two bars:{" "}
-              <em>what search buys is not more thinking, it is the ability to take a thought back</em>
-              . What that costs is the trade the rest of this act is about.
-            </p>
-          </figure>
-          {/* Every page from 5 to 9 hands the next one a question; this one used to end
-              inside a caption. The seam page 11 opens on is the price, in the one
-              currency both sides of it are denominated in. */}
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <em>
-              Everything on pages 5 to 10 spends the same thing: arithmetic at answer time, bought
-              by the token and paid for once per question. Parameters are bought with the same
-              currency, in bulk, before any question arrives. So which is the better buy at a
-              matched bill? Turn the page.
-            </em>
-          </div>
+          </section>
+          <p className="text-sm text-ink-muted">
+            Chain of thought fills <strong className="text-ink">{cot}%</strong> of the words, barely
+            above no reasoning at all, because one chain commits to its first answer just as yours
+            did. Take the full search and switch off{" "}
+            <strong className="text-ink">pruning</strong> and it drops to {totNoPrune}%. Switch off{" "}
+            <strong className="text-ink">backtracking</strong> instead and it collapses to{" "}
+            {totNoBacktrack}%, almost back to plain chain of thought. That is the whole argument in
+            two bars:{" "}
+            <em>what search buys is not more thinking, it is the ability to take a thought back</em>.
+            What that costs is the trade the rest of this act is about.
+          </p>
         </section>
 
-        <Note kicker="No run of our own">
-          <p>
-            Pages 5 to 9 each ship the run their numbers come from. This page ships none. The
-            29-word tree is written by hand: its words and their chances were chosen so the five
-            behaviours are legible, not sampled from a model. The bars above are Yao et
-            al.&apos;s.
-          </p>
-          <p>
-            The arm that would give this page a measurement of its own is written and sits in the
-            download at the top, unrun. It holds the 3B writer beside a 7B judge, about 21 GB
-            resident, and of the five strategies only greedy and beam would survive to be measured.
-          </p>
-        </Note>
+        {/* Both notes ride in one cell, as step 1's pair do. Left as two grid children
+            they wrapped, and the second landed under step 3 at main-column width. */}
+        <div className="flex flex-col gap-6">
+          <Note kicker="No run of our own">
+            <p>
+              Pages 5 to 9 each ship the run their numbers come from. This page ships none. The
+              29-word tree is written by hand: its words and their chances were chosen so the five
+              behaviours are legible, not sampled from a model. The bars above are Yao et
+              al.&apos;s.
+            </p>
+            <p>
+              The arm that would give this page a measurement of its own is written and sits in the
+              download at the top, unrun. It holds the 3B writer beside a 7B judge, about 21 GB
+              resident, and of the five strategies only greedy and beam would survive to be
+              measured.
+            </p>
+          </Note>
 
-        <Note kicker="References">
-          <RefItem n={REF.tot} href="https://arxiv.org/abs/2305.10601">
-            Yao et al. 2023, <em>Tree of Thoughts: Deliberate Problem Solving with Large Language
-            Models</em> (NeurIPS 2023).
-          </RefItem>
-        </Note>
+          <Note kicker="References">
+            <RefItem n={REF.tot} href="https://arxiv.org/abs/2305.10601">
+              Yao et al. 2023, <em>Tree of Thoughts: Deliberate Problem Solving with Large Language
+              Models</em> (NeurIPS 2023).
+            </RefItem>
+          </Note>
+        </div>
+      </div>
+
+      {/* Every page from 5 to 9 hands the next one a question; this one used to end
+          inside a caption, then inside step 3. Page 9 puts the handoff outside the
+          grid, full width, so it reads as the page's last word rather than the last
+          word of its last step. The seam page 11 opens on is the price, in the one
+          currency both sides of it are denominated in. */}
+      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+        <em>
+          Everything on pages 5 to 10 spends the same thing: arithmetic at answer time, bought by
+          the token and paid for once per question. Parameters are bought with the same currency, in
+          bulk, before any question arrives. So which is the better buy at a matched bill? Turn the
+          page.
+        </em>
       </div>
 
       <PageNav n={PAGE_N} />

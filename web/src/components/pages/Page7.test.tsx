@@ -27,7 +27,7 @@ describe("Page 7 (frequency voting) component", () => {
   it("keeps the unresolved sampled-chain contrast in the footnote, not the headline", () => {
     render(<Page7 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/one .*sampled.* chain instead of a greedy one/i);
+    expect(body).toMatch(/sampled.* chain rather than a greedy one/i);
     expect(body).toMatch(/p = 0\.388/);
   });
 

@@ -42,6 +42,18 @@
  * is no footer. What the footer used to carry that lives nowhere else is now
  * in the margin note beside the sentence it qualifies.
  *
+ * A MARGIN NOTE HERE HELPS THE READER READ THE FIGURE BESIDE IT, and does
+ * nothing else. Pages 5 to 7 keep interpretation in the card's prose and leave
+ * the margin one short thought, and this page had drifted the other way: four
+ * notes of two and three paragraphs, most of it defending the measurement
+ * rather than explaining a picture. What survived the 2026-08-10 trim is what
+ * the figure cannot say for itself: what the specimen panel's axis IS, which
+ * row of the evidence figure is page 7's rule, what kind of model the trained
+ * verifier is and that it was rebuilt, and whose comparison the close makes.
+ * The agreement percentages, the "cited for the technique" gloss and the
+ * restatement of the heuristic row went with it: two of those are in the
+ * figure or its caption already and the rest is in the download.
+ *
  * THERE IS NO PROVENANCE PLATE, and one must not come back. It opened the page
  * in the notebook's own language (a token cap, four temperatures, an exact
  * McNemar, a run id forty characters long) and asked the reader to carry all of
@@ -640,6 +652,16 @@ export function Page8() {
         {/* Step 1 — one batch, two rules */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Judge one batch two ways</h2>
+          {/* Pages 5, 6 and 7 open every figure step on a sentence saying what
+              the figure is a picture OF. This step went straight from its
+              heading into the card, so the reader met two panels with no idea
+              what either was for. */}
+          <p className="text-ink-muted">
+            Page 7 counted the chains and kept the answer most of them agreed on. Here the same
+            pile is read a second way, one candidate at a time by a judge that scores each on its
+            own: below is a problem where the two rules disagree, and beside it both rules across
+            all {PAGE8.run.items} problems.
+          </p>
           <section
             aria-label="One problem's candidates, counted and scored"
             className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
@@ -723,18 +745,15 @@ export function Page8() {
             )}
           </section>
         </section>
-        {/* The word "verifier" is new to the deck here, so the margin carries the
-            mechanics the prose above does not stop for, and the cite for the
-            technique that used to sit in the footer. */}
+        {/* What the left panel's x axis IS, which the reader cannot get from the
+            figure, and nothing else. What it used to also carry, that the cite
+            is for the technique and the numbers are ours, is the page's standing
+            position and is on every pill. */}
         <Note kicker="What the verifier does">
           <p>
-            It reads the problem and one finished candidate and returns a single number. Best-of-N
-            keeps the candidate with the highest one. It writes nothing, and it never sees the
-            tally, so whatever it buys is not counting in disguise.
-          </p>
-          <p>
-            Cited for the technique, training a verifier and selecting among N sampled solutions.
-            The numbers on this page are our own.
+            It reads one finished candidate and returns a single number, which is where that
+            candidate&apos;s dot sits on the axis. It never sees the tally, so the rightmost dot is
+            not counting in disguise.
           </p>
           <RefItem n={REF.cobbe} href="https://arxiv.org/abs/2110.14168" preprint>
             Cobbe et al. 2021, <em>Training Verifiers to Solve Math Word Problems</em> (arXiv
@@ -772,26 +791,16 @@ export function Page8() {
             </figcaption>
           </figure>
         </section>
+        {/* Which row is which. The bars carry the counts, the net and the p
+            value already, so the only thing left for the margin is that one of
+            these rows is the previous page's rule and costs nothing to run.
+            Page 7's handoff used to claim these were page 7's own chains: they
+            are not, and the clause saying so stays. */}
         <Note kicker="The vote is on this axis too">
           <p>
-            Counting fixes {PAGE8.majority.fixed} and breaks {PAGE8.majority.broke}, {" "}
-            {pValue(PAGE8.majority.p)}. It clears the same bar, for free.
-          </p>
-          {/* Page 7's handoff used to claim these were page 7's own chains. They
-              are not, and the receipt for what is actually true is better than
-              the claim it replaces. */}
-          <p>
-            That vote is page 7&apos;s rule re-run here, on chains this page generated itself: at
-            the same temperature and {PAGE8.agreement.n} candidates it reads{" "}
-            {pct(PAGE8.agreement.page8Vote)} against page 7&apos;s {pct(PAGE8.agreement.page7Vote)},
-            with a right answer somewhere in the pile on {pct(PAGE8.agreement.page8Coverage)} of
-            problems both times. Different chains, same place.
-          </p>
-          {/* The rule on the losing row of the figure beside this note, named at
-              last: it was "the source we build on" and nothing else. */}
-          <p>
-            The length heuristic on that figure is the source&apos;s own scorer, run here on our
-            candidates.
+            The majority-vote row is page 7&apos;s counting rule, re-run on chains this page
+            generated itself. It clears the same bar as the trained verifier and needs no second
+            model to do it.
           </p>
           <RefItem n={REF.source} href="https://mng.bz/lZ5B">
             Raschka 2025, <em>Build a Reasoning Model (From Scratch)</em> (Manning).
@@ -851,9 +860,9 @@ export function Page8() {
               checkpoint as published drops this paragraph by itself. */}
           {PAGE8.verifierNote?.rebuilt ? (
             <p>
-              It did not run as published. The code shipped with it returns nothing usable on the
-              software here, so it was rebuilt from the published weights on a standard model body,
-              and every number on this page for it comes from that rebuild.
+              It did not run as published: the code shipped with it returns nothing usable here, so
+              it was rebuilt from the published weights and every number on this page for it comes
+              from that rebuild.
             </p>
           ) : null}
         </Note>
@@ -891,17 +900,11 @@ export function Page8() {
         </section>
         {/* The one disclosure the retired footer held that lives nowhere else:
             whose comparison this is. It belongs beside the sentence that makes
-            it, not under the page. */}
+            it, not under the page, and one sentence is the whole of it. */}
         <Note kicker="Whose comparison this is">
           <p>
-            Cited for the shape behind the two recovery numbers beside it: an imperfect judge asked
-            to pick from more and more candidates eventually reads its own noise. The measurement is
-            ours.
-          </p>
-          <p>
-            So is the comparison. Counting against selection is not a contest anyone else ran here:
-            self-consistency and best-of-N are introduced in different chapters of the source we
-            build on
+            Counting against selection is not a contest anyone else ran: self-consistency and
+            best-of-N are introduced in different chapters of the source we build on
             <Cite n={REF.source} /> and are never set against each other there.
           </p>
           <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>

@@ -271,6 +271,47 @@ const easy: Band = {
   selectionAt16: easy3bVote[easy3bVote.length - 1].accuracy,
 };
 
+/* ------------------------------------------- the sampling road, as drawn */
+
+/** One rung of the sampling road. */
+export interface RoadPoint extends VotePoint {
+  /** true for rung 0: the model's own greedy answer, where there is nothing to
+   *  vote over yet and coverage is just that one answer */
+  greedy: boolean;
+}
+
+/**
+ * The sampling road for one small model on one band, as page 11 draws it:
+ * rung 0 is that model's OWN single greedy answer (the black dot on the
+ * parameter line), then the vote points at n = 2, 4, 8 and 16. Both the vote
+ * curve and the coverage curve leave rung 0, so the two roads visibly part at
+ * one dot and the coverage gap opens from zero.
+ *
+ * Rung 0 is the greedy answer and not the run's n = 1 sampled draw on purpose.
+ * Both are one answer at one answer's bill, but the sampled draw lands a little
+ * to the LEFT of the greedy dot (a temperature-0.6 chain came out shorter than
+ * the greedy one) and a little above or below it (it is one draw over 50 to 100
+ * items). Plotting both as vertices made the curve double back through the very
+ * dot it is supposed to be leaving, which read as a drawing bug. The sampled
+ * n = 1 row is untouched in derived.json and the notebook, and the gates below
+ * still check it.
+ */
+export function roadFor(band: Band, model: SmallModel): RoadPoint[] {
+  const own = band.greedy.find((g) => g.label === `Qwen2.5-${model}`);
+  if (!own) throw new Page11DataError(`the ${band.key} band has no greedy point for the ${model}`);
+  return [
+    {
+      n: 1,
+      accuracy: own.accuracy,
+      coverage: own.accuracy,
+      flops: own.flops,
+      xTarget: own.flops / band.target.flops,
+      greedy: true,
+    },
+    ...band.voteByModel[model].filter((p) => p.n > 1).map((p) => ({ ...p, greedy: false })),
+  ];
+}
+
 /* --------------------------------------------------- the load-time gates */
 
 const claims = RAW.claims;
@@ -314,8 +355,27 @@ for (const b of [easy, hard] as const) {
   );
 }
 
+// The road the page draws must only ever go right: a rung that costs less than
+// the one before it doubles the curve back through the dot it just left, which
+// is what the greedy-versus-sampled-n=1 pair used to do. If a future run
+// reorders the budgets, this is a load error rather than a confusing chart.
+for (const b of [easy, hard] as const) {
+  for (const m of ["1.5B", "3B"] as const) {
+    const road = roadFor(b, m);
+    for (let i = 1; i < road.length; i++) {
+      assert(
+        road[i].xTarget > road[i - 1].xTarget,
+        `the ${m} road on the ${b.key} band doubles back: rung ${road[i].n} costs less than rung ${
+          road[i - 1].n
+        }`,
+      );
+    }
+  }
+}
+
 export const PAGE11 = {
   bands: { easy, hard },
+  roadFor,
   /** N stops on the sampling slider, shared by both bands' 3B vote curves. */
   sampleStops: hard.voteCurve.map((p) => p.n),
   gate2: { accuracy: gate2.accuracy, floor: gate2.floor, n: gate2.n },
