@@ -1047,7 +1047,7 @@ export function Page5() {
             {F3.models.map((m) => pct(m.blurtAccuracy)).join(", ")}. The tokens move with the
             prompt; the accuracy moves with the model.
           </p>
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             <p className="text-ink">
               You have probably done this before. When telling the model to skip the working and
               answer, the answer gets worse.{" "}

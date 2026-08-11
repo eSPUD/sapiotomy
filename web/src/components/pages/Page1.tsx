@@ -221,10 +221,10 @@ export function Page1() {
           </p>
           {/* The only seam in the deck that had no hook: this page ended here and page 2
               opened cold on "an LLM", leaving the bridge to be built twice. */}
-          <p className="leading-relaxed text-ink-muted">
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             Keep the distinction. The next page asks a question that looks like recognition and is
             not, and watches a machine answer it on reflex.
-          </p>
+          </div>
         </section>
         <div aria-hidden="true" />
       </div>

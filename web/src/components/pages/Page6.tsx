@@ -1665,7 +1665,7 @@ export function Page6() {
               <span>bar length is the token budget; both rows spend {tokens(H.max_budget)}.</span>
             </div>
           </section>
-          <p className="rounded border-l-4 border-compute bg-surface p-4 text-base text-ink">
+          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             <strong className="text-ink">The dial has a far end, and you have reached it.</strong>{" "}
             This is inference-time scaling in its simplest form: the curve flattens, and{" "}
             {pct(F3.neverFlipShare)} of these problems are not reached at any length we ran. A
@@ -1686,7 +1686,7 @@ export function Page6() {
               Page 7 asks what {H.chains_at_min_budget} voters at {pct(H.accuracy_at_min)} each are
               worth.
             </em>
-          </p>
+          </div>
         </section>
       </div>
 

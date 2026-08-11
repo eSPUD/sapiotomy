@@ -602,7 +602,7 @@ export function Page12() {
             model becomes.
           </p>
 
-          <div className="flex flex-col gap-2 text-ink">
+          <div className="flex flex-col gap-2 rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             <p>
               <strong className="text-ink">There are now two ways to buy reasoning:</strong> spend
               the compute when the question arrives, or spend it long before, building the reasoning
