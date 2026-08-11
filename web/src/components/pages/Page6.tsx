@@ -80,6 +80,7 @@ import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { NotebookDownload } from "@/components/NotebookDownload";
 import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE6,
@@ -1151,24 +1152,16 @@ export function Page6() {
           has scrolled a pixel — not buried in a footer. The run's instrument
           line used to sit here as a colophon; it belongs to the notebook and is
           left to it. */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 flex-col gap-2">
-          <p className="text-xs uppercase tracking-wide text-ink-muted">
-            Act {page.act} · {ACTS[page.act].title}
-          </p>
-          <h1 className="text-3xl font-bold text-ink">
-            <span className="font-mono text-ink-muted">{page.n}. </span>
-            {page.title}
-          </h1>
-        </div>
-        <a
-          className="shrink-0 rounded border border-grid px-3 py-1.5 text-xs text-ink-muted hover:border-compute hover:text-ink"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          Notebook, harness &amp; every trace ({NOTEBOOK_SIZE}) ↓
-        </a>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-xs uppercase tracking-wide text-ink-muted">
+          Act {page.act} · {ACTS[page.act].title}
+        </p>
+        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
       </div>
+      <h1 className="text-3xl font-bold text-ink">
+        <span className="font-mono text-ink-muted">{page.n}. </span>
+        {page.title}
+      </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
         Page 5 gave the model a chain. A chain has a{" "}
         <strong className="text-ink">length</strong>, and that length is compute you pay for, one

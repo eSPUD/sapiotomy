@@ -260,7 +260,7 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
 
   it("links the notebook and traces for download", () => {
     render(<Page8 />);
-    const link = screen.getByRole("link", { name: /notebook \+ .* traces/ });
+    const link = screen.getByRole("link", { name: /download the notebook/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-08-best-of-n.zip");
   });
 

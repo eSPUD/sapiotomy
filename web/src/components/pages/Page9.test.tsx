@@ -469,7 +469,7 @@ describe("Page 9 (outcome vs process supervision) component", () => {
 
   it("leaves the run conditions to the notebook, downloadable from the top line", () => {
     render(<Page9 />);
-    const link = screen.getByRole("link", { name: /graded chains/i });
+    const link = screen.getByRole("link", { name: /download the notebook/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-09-outcome-vs-process.zip");
     expect(link).toHaveAttribute("download");
     expect(screen.queryByText(/top-p/i)).toBeNull();

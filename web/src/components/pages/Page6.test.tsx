@@ -507,7 +507,7 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
 
   it("offers the notebook, the harness and the traces as one download", () => {
     render(<Page6 />);
-    const link = screen.getByRole("link", { name: /notebook, harness/i });
+    const link = screen.getByRole("link", { name: /download the notebook/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-06-thinking-longer.zip");
   });
 
@@ -531,19 +531,19 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("puts the notebook download at the top beside the title, with no run colophon", () => {
+  it("puts the notebook download at the top on the act-kicker line, with no run colophon", () => {
     const { container } = render(<Page6 />);
     // The hairline colophon that used to head the page, naming the run, is gone:
     // its jargon belongs to the notebook and is left to it.
     expect(container.querySelector(".border-y")).toBeNull();
     expect(body()).not.toContain(PAGE6.manifest.run_id);
 
-    // The download shares the top line with the title rather than sitting in a
-    // footer: it is a sibling of the <h1>'s column, both inside one header row.
-    const heading = screen.getByRole("heading", { level: 1 });
-    const download = screen.getByRole("link", { name: /notebook, harness/i });
-    const headerRow = heading.closest("div")!.parentElement!;
-    expect(headerRow).toContainElement(download);
+    // The download is the shared NotebookDownload button, on the top line beside
+    // the act kicker (page 5's shape), not in a footer.
+    const download = screen.getByRole("link", { name: /download the notebook/i });
+    expect(download).toHaveAttribute("href", "/notebooks/page-06-thinking-longer.zip");
+    expect(download).toHaveAttribute("download");
+    expect(download.parentElement?.textContent).toContain("Act 2");
 
     // The reference still lives in the right-hand References sidenote.
     const refs = screen.getByText("References").closest("aside")!;

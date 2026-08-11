@@ -48,7 +48,7 @@ const PAGES = [
   { n: 7, slug: "page-07-frequency-voting", notebook: "page_07_frequency_voting.ipynb",
     declared: "3.1 MB", extras: [], repoNotebookIsTheShippedOne: true },
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
-    declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"],
+    declared: "10.1 MB", extras: ["scores.jsonl", "judge_solves.jsonl"],
     repoNotebookIsTheShippedOne: false },
   // Page 9 was absent from this list until 2026-08-09, and it had drifted in the two
   // ways the list exists to catch: it unpacked flat instead of into a folder, and its
@@ -57,7 +57,7 @@ const PAGES = [
   // aggregate from them and writes the artifacts), which is only possible now that
   // REPLAY can adopt this page's own scores instead of needing a GPU for them.
   { n: 9, slug: "page-09-outcome-vs-process", notebook: "page_09_outcome_vs_process.ipynb",
-    declared: null, extras: [], repoNotebookIsTheShippedOne: true },
+    declared: "1.6 MB", extras: [], repoNotebookIsTheShippedOne: true },
   { n: 11, slug: "page-11-training-vs-scale", notebook: "page_11_training_vs_scale.ipynb",
     declared: "2.8 MB", extras: [], repoNotebookIsTheShippedOne: true },
 ] as const;
@@ -85,7 +85,8 @@ describe.each(PAGES)("page $n's notebook bundle", ({
     const mb = statSync(zipPath(slug)).size / 1e6;
     expect(mb).toBeGreaterThan(0);
     // The label is what a reader decides to click on, so a stale one is a small
-    // lie in the one place the page asks for trust. Page 8 prints none.
+    // lie in the one place the page asks for trust. Every page now prints one
+    // via the shared NotebookDownload button.
     if (declared) expect(`${mb.toFixed(1)} MB`).toBe(declared);
   });
 

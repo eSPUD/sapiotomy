@@ -102,6 +102,7 @@ import { useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { NotebookDownload } from "@/components/NotebookDownload";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { PAGE7, chainsFor, pLabel, pct, tidyMath, tokens } from "@/lib/page07";
@@ -542,13 +543,7 @@ export function Page7() {
         <p className="text-xs uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
-        <a
-          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          Download the notebook, the harness and every chain (zip, {NOTEBOOK_SIZE}) ↓
-        </a>
+        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
       </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>

@@ -77,12 +77,14 @@ import { useMemo, useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
+import { NotebookDownload } from "@/components/NotebookDownload";
 import { PAGE8, pValue, pct, tidyMath } from "@/lib/page08";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 8;
 const NOTEBOOK_ZIP = "/notebooks/page-08-best-of-n.zip";
+const NOTEBOOK_SIZE = "10.1 MB";
 
 /* Page 7's convention, arrived at independently and adopted here: of everything
    the run recorded, the two facts a reader needs are WHICH MODEL and WHICH
@@ -623,13 +625,7 @@ export function Page8() {
         <p className="text-xs uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
-        <a
-          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          notebook + {PAGE8.run.chains.toLocaleString()} traces ↓
-        </a>
+        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
       </div>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
