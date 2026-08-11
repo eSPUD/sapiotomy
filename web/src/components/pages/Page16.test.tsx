@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import {
   ADAPTIVE_NULL,
-  BANDS,
   BIGGER,
   CROSSING,
   FORCED,
@@ -69,10 +68,35 @@ describe("Page 16 (wrap-up) component", () => {
     expect(fig.getAttribute("aria-label")).toMatch(/generated and not picked/i);
   });
 
-  it("groups the rungs into named bands a screen reader can hear", () => {
+  it("draws no band headings, and speaks none either", () => {
+    // Headings over the groups turned the chart into a table of contents. The
+    // grouping still orders the rows; nothing renders or announces its titles,
+    // so sighted and screen-reader readers get the same chart.
     render(<Page16 />);
     const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    for (const b of BANDS) expect(fig.getAttribute("aria-label")).toContain(b.title);
+    for (const title of [
+      "what writing the reasoning is worth",
+      "what sampling and selecting add to it",
+      "what the same money buys elsewhere",
+    ]) {
+      expect(fig.getAttribute("aria-label")).not.toContain(title);
+      expect(fig.textContent).not.toContain(title.toUpperCase());
+    }
+  });
+
+  it("puts each readout on its own bar rather than in a side column", () => {
+    // The deck's bar-chart grammar: a row is read left to right in one move.
+    render(<Page16 />);
+    const fig = screen.getByRole("img", { name: /What each lever scored/i });
+    expect(fig.textContent).not.toMatch(/\bSCORE\b|\bFROM\b/);
+    // Every readout sits to the right of the bar end it belongs to.
+    const texts = Array.from(fig.querySelectorAll("text"));
+    for (const r of LADDER) {
+      const value = texts.find(
+        (el) => el.textContent === `${Math.round(r.accuracy * 100)}%` && el.getAttribute("x"),
+      );
+      expect(value, r.label).toBeTruthy();
+    }
   });
 
   it("speaks page 9's baseline, so its rung is not heard as a bare 58%", () => {
@@ -104,15 +128,16 @@ describe("Page 16 (wrap-up) component", () => {
   });
 
 
-  it("reads page 11's crossing off measured compute in the copy", () => {
+  it("captions the chart with its shape, not with a restatement of every rung", () => {
     render(<Page16 />);
-    const bigger = LADDER.find((r) => r.band === "elsewhere")!;
-    const selector = LADDER.find((r) => r.label.includes("trained verifier"))!;
-    expect(bigger.accuracy).toBe(CROSSING);
-    // Scoped to the paragraph: question 11 quotes the same bills, on purpose.
-    const para = screen.getByText(/Then the last band/i);
-    expect(para.textContent).toMatch(new RegExp(`about ${Math.round(selector.bill!)} greedy chains`));
-    expect(para.textContent).toMatch(new RegExp(`about ${bigger.bill!.toFixed(1)}`));
+    // Four paragraphs used to walk the rungs the chart already draws. What a
+    // reader cannot get from the picture is the shape, so that is all the
+    // caption says, and the numbers are spent once in the takeaways.
+    const caption = screen.getByText(/Read it top to bottom as steps that keep getting smaller/i);
+    expect(caption.textContent).toMatch(/largest single move on the chart/i);
+    expect(caption.textContent).toMatch(/the only step that goes backwards/i);
+    // The clause about a 128-token chain went with the rung it described.
+    expect(caption.textContent).not.toMatch(/cut off at/i);
   });
 
   it("puts thinking longer on the chart", () => {
@@ -121,7 +146,6 @@ describe("Page 16 (wrap-up) component", () => {
     for (const r of LADDER.filter((x) => x.page === 6)) {
       expect(fig.getAttribute("aria-label")).toContain(r.label);
     }
-    expect(screen.getByText(/they are the computation/i)).toBeInTheDocument();
   });
 
   it("quotes the distilled model but keeps it off the axis, and says why", () => {
@@ -129,15 +153,12 @@ describe("Page 16 (wrap-up) component", () => {
     // The published number is the whole of MATH-500; the chart is levels 4 and 5.
     // The page must carry the number AND the reason it is not a bar, including
     // the deck's own measurement of what the easier mix is worth.
-    expect(screen.getByText(new RegExp(OTHER_AXIS.label))).toBeInTheDocument();
-    expect(screen.getByText(/deliberately/i).closest("p")!.textContent).toMatch(
-      /not.*a bar up there/i,
+    const six = screen.getByText(/not on this axis/i).closest("section")!;
+    expect(six.textContent).toMatch(new RegExp(OTHER_AXIS.label));
+    expect(six.textContent).toMatch(/not a bar, because it is not the same test/i);
+    expect(six.textContent).toMatch(
+      new RegExp(`${OTHER_AXIS.bandGapPts.min} to ${OTHER_AXIS.bandGapPts.max} points`),
     );
-    expect(
-      screen.getByText(
-        new RegExp(`${OTHER_AXIS.bandGapPts.min} to ${OTHER_AXIS.bandGapPts.max} points higher`),
-      ),
-    ).toBeInTheDocument();
   });
 
   it("lays the wrap-up out top to bottom, never two columns of prose", () => {
@@ -232,10 +253,10 @@ describe("Page 16 (wrap-up) component", () => {
 
   // ---- section 1b: the takeaways ----
 
-  it("carries five numbered takeaways, read as a set", () => {
+  it("carries six numbered takeaways, read as a set", () => {
     render(<Page16 />);
     expect(screen.getByText(/What to take with you/i)).toBeInTheDocument();
-    for (let n = 1; n <= 5; n++) {
+    for (let n = 1; n <= 6; n++) {
       expect(screen.getByText(`${n}.`)).toBeInTheDocument();
     }
   });
@@ -243,12 +264,11 @@ describe("Page 16 (wrap-up) component", () => {
   it("says reasoning wins, and that being made to do more of it does not", () => {
     render(<Page16 />);
     const one = screen.getByText(/Letting the model reason wins/i).closest("section")!;
-    expect(one.textContent).toMatch(/largest move on the chart/i);
     // The counterweight must travel with it, or the takeaway reads as "more is better".
     expect(one.textContent).toMatch(
       new RegExp(`${FORCED.tokenMultiple.toFixed(1)} times the tokens`),
     );
-    expect(one.textContent).toMatch(/churn, not progress/i);
+    expect(one.textContent).toMatch(/not worth forcing/i);
   });
 
   it("names the judge as the bottleneck and prices the fix", () => {
@@ -264,20 +284,19 @@ describe("Page 16 (wrap-up) component", () => {
 
   it("offers adaptive compute as a direction and prints its own null beside it", () => {
     render(<Page16 />);
-    const four = screen.getByText(/adaptive compute is for/i).closest("section")!;
-    expect(four.textContent).toMatch(/spend by difficulty/i);
+    const four = screen.getByText(/Adaptive compute is where that points/i).closest("section")!;
+    expect(four.textContent).toMatch(/Spend by difficulty/i);
     // Proposing it without page 15's oracle result would be selling a technique
     // this deck measured and could not make work.
     expect(ADAPTIVE_NULL.beatsResampling).toBe(false);
-    expect(four.textContent).toMatch(/could not demonstrate/i);
-    expect(four.textContent).toMatch(new RegExp(`${ADAPTIVE_NULL.oracleTokens} tokens`));
+    expect(four.textContent).toMatch(/no more per token than plain resampling/i);
   });
 
   it("keeps the pay-for-every-node lesson, and says why search has no bar", () => {
     render(<Page16 />);
     const five = screen.getByText(/you pay for every node you look at/i).closest("section")!;
     expect(five.textContent).toMatch(/paying for it/i);
-    expect(five.textContent).toMatch(/never ran it here/i);
+    expect(five.textContent).toMatch(/page 10 ships no run/i);
     expect(five.textContent).toMatch(new RegExp(`${BIGGER} judge in memory beside the ${WRITER}`));
     // Search has no rung, and must not acquire one without a run behind it.
     expect(LADDER.some((r) => r.page === 10)).toBe(false);

@@ -84,19 +84,18 @@ export const pct = (v: number, digits = 0): string => `${(v * 100).toFixed(digit
 
 /* --------------------------------------------------------------- the ladder */
 
+/**
+ * The three movements the rungs are grouped in. This is an ORDERING and a
+ * semantic tag, not a set of headings: drawing them turned the chart into a
+ * table of contents, doubled its height and pulled every readout off its own
+ * bar. The prose under the chart names the movements instead.
+ *
+ * `elsewhere` is the one the rendering still reads: it is the row measured on a
+ * different model, so it is coloured apart and excluded from "best technique".
+ */
 export type BandKey = "chain" | "sample" | "elsewhere";
 
-export interface Band {
-  key: BandKey;
-  /** The question this group of rungs answers. */
-  title: string;
-}
-
-export const BANDS: Band[] = [
-  { key: "chain", title: "what writing the reasoning is worth" },
-  { key: "sample", title: "what sampling and selecting add to it" },
-  { key: "elsewhere", title: "what the same money buys elsewhere" },
-];
+export const BAND_KEYS: BandKey[] = ["chain", "sample", "elsewhere"];
 
 export interface Rung {
   band: BandKey;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ADAPTIVE_NULL,
-  BANDS,
+  BAND_KEYS,
   CROSSING,
   FORCED,
   ITEM_COUNT,
@@ -164,12 +164,18 @@ describe("page 16's ladder", () => {
     expect(ITEM_COUNT).toBe(PAGE11.bands.hard.nItems);
   });
 
-  it("sorts every rung into a declared band, and leaves none empty", () => {
+  it("keeps the rungs grouped in order, even though the groups are not drawn", () => {
+    // The bands order the chart and tag the row measured on another model. They
+    // are no longer headings, so the only thing left to protect is that the
+    // grouping is contiguous: rungs interleaved between bands would put the
+    // other-model row in the middle of the answer-time ladder.
     for (const r of LADDER) {
-      expect(BANDS.some((b) => b.key === r.band), `${r.label} has band ${r.band}`).toBe(true);
+      expect(BAND_KEYS.includes(r.band), `${r.label} has band ${r.band}`).toBe(true);
     }
-    for (const b of BANDS) {
-      expect(LADDER.filter((r) => r.band === b.key).length, b.key).toBeGreaterThan(0);
+    const order = LADDER.map((r) => BAND_KEYS.indexOf(r.band));
+    expect([...order]).toEqual([...order].sort((a, b) => a - b));
+    for (const key of BAND_KEYS) {
+      expect(LADDER.filter((r) => r.band === key).length, key).toBeGreaterThan(0);
     }
   });
 
