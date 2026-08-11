@@ -50,7 +50,10 @@
  * denominator both sit under the bars they qualify.
  *
  * Lightman et al. 2023 is cited for the technique and priority; the numbers on
- * screen are our own.
+ * screen are our own. Its References note sits beside beat 1, the beat that
+ * carries the inline marker, per the house rule on pages 3-8. It used to sit
+ * beside beat 3, two screens below the only Cite on the page, where a reader
+ * following the marker had nothing to find.
  */
 
 import { useState } from "react";
@@ -368,7 +371,15 @@ export function Page9() {
             none, but a score is an opinion where the checker&apos;s label is a fact.
           </p>
         </section>
-        <div aria-hidden="true" />
+
+        {/* House style, pages 3-8: the reference sits beside the step that cites
+            it. The marker is in this beat, so the entry is too. */}
+        <Note kicker="References">
+          <p>Cited for the technique. The numbers here are our own model&apos;s, not theirs.</p>
+          <RefItem n={REF.lightman} href="https://arxiv.org/abs/2305.20050" preprint>
+            Lightman et al. 2023, <em>Let&apos;s Verify Step by Step</em> (arXiv 2305.20050).
+          </RefItem>
+        </Note>
 
         {/* Step 2 — grade it yourself */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -884,12 +895,7 @@ export function Page9() {
           ) : null}
         </section>
 
-        <Note kicker="References">
-          <p>Cited for the technique. The numbers here are our own model&apos;s, not theirs.</p>
-          <RefItem n={REF.lightman} href="https://arxiv.org/abs/2305.20050" preprint>
-            Lightman et al. 2023, <em>Let&apos;s Verify Step by Step</em> (arXiv 2305.20050).
-          </RefItem>
-        </Note>
+        <div aria-hidden="true" />
 
         {/* The hand-off, in the content column so it does not run under the notes. */}
         <div className="min-w-0 rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">

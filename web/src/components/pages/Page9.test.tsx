@@ -447,6 +447,17 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     expect(note.textContent).not.toMatch(/priority|comparable/i);
   });
 
+  // It sat beside beat 3 while its only marker was in beat 1, two screens up.
+  it("puts the references note beside the beat that carries the marker", () => {
+    render(<Page9 />);
+    const note = screen.getByText("References").closest("aside")!;
+    const marker = document.querySelector("a[href='#ref-1']")!;
+    const beat2 = screen.getByText(/2\. Find the break/);
+    // Marker first, then its note, and both above the next beat.
+    expect(marker.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(note.compareDocumentPosition(beat2) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("cites Lightman as a numbered reference reachable from an inline marker", () => {
     render(<Page9 />);
     const link = screen.getByRole("link", { name: /Let's Verify Step by Step/ });
