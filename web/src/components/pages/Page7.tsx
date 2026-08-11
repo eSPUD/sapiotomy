@@ -818,22 +818,15 @@ export function Page7() {
             </p>
           </div>
         </section>
-        {/* The step 2 invitation that used to open this note lived one step from the
-            figure it referred to, and step 2's own prose already says to click a row.
-            What is left is the decomposition, which is the honesty guard on the +12 and
-            has to say plainly what it is guarding against. */}
+        {/* The honesty guard on the +12, down to the one measurement the chart cannot
+            show. The callout beside the chart already names the greedy baseline and
+            says part of the gain is sampling, so repeating either here was three
+            sentences of throat-clearing in front of the number that matters. */}
         <Note kicker="How much of that is the counting">
           <p>
-            Not all {F2.gain.gain_pts.toFixed(0)} points of it. Sampling on its own is already worth
-            something.
-          </p>
-          <p>
-            Measured, though not drawn: if the thing being beaten is one <em>sampled</em> chain
-            instead of a greedy one, the same vote gains only{" "}
-            {F2.gainVsOneSample.pts.toFixed(0)} points, too small for this run to tell apart from
-            chance ({pLabel(F2.gainVsOneSample.p)}). The {F2.gain.gain_pts.toFixed(0)} points beside
-            the chart are what the vote adds to the greedy chain pages 5 and 6 ran, which is the
-            comparison this page is about.
+            Read the +{F2.gain.gain_pts.toFixed(0)} as sampling plus counting. Against one{" "}
+            <em>sampled</em> chain rather than a greedy one, the vote gains{" "}
+            {F2.gainVsOneSample.pts.toFixed(0)} points, which this run cannot tell from chance ({pLabel(F2.gainVsOneSample.p)}).
           </p>
         </Note>
 
