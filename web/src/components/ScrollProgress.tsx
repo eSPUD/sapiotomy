@@ -3,20 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PAGES, pageHref } from "@/lib/pages";
+import { ACTS, PAGES, pageHref } from "@/lib/pages";
 
-const TOTAL = PAGES.length; // 16 chapters since the 2026-08-10 cut and wrap-up
-
-/**
- * Whole-app reading progress + quick navigation, at the bottom of the header.
- * The bar is one small clickable segment per page: read pages are filled solid,
- * the current page's segment fills as it's scrolled, pages ahead stay empty.
- * Clicking a segment jumps to that page (clicking the current page scrolls to
- * its top); hovering (or focusing) a segment shows the page title in a popup.
- */
+/** Chapter navigation with a persistent current-page marker and reading progress. */
 export function ScrollProgress() {
   const pathname = usePathname();
-  const match = pathname.match(/^\/p\/(\d+)/);
+  const match = pathname.match(/^\/p\/(\d+)\/?$/);
   const currentPage = match ? Number(match[1]) : 0; // 0 on the landing / other routes
   const [scrollFrac, setScrollFrac] = useState(0);
 
@@ -36,44 +28,51 @@ export function ScrollProgress() {
     };
   }, [pathname]);
 
+  const current = PAGES.find((p) => p.n === currentPage);
+
   return (
-    <div className="absolute inset-x-0 bottom-0 flex h-2 gap-px">
-      {PAGES.map((p) => {
-        const page = p.n;
-        const fill = currentPage > page ? 1 : currentPage === page ? scrollFrac : 0;
-        const isCurrent = currentPage === page;
-        // Keep edge tooltips inside the viewport.
-        const tipAlign =
-          page <= 2 ? "left-0" : page >= TOTAL - 1 ? "right-0" : "left-1/2 -translate-x-1/2";
-        return (
-          <Link
-            key={page}
-            href={pageHref(page)}
-            aria-label={`Chapter ${page}: ${p.title}`}
-            onClick={
-              isCurrent
-                ? (e) => {
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }
-                : undefined
-            }
-            className="group relative block flex-1"
-          >
-            <div className="h-full overflow-hidden bg-grid transition-colors group-hover:bg-wrong">
-              <div
-                className="h-full bg-compute transition-colors group-hover:bg-wrong"
-                style={{ width: `${fill * 100}%` }}
-              />
-            </div>
-            <span
-              className={`pointer-events-none absolute top-full z-20 mt-1 whitespace-nowrap rounded bg-ink px-2 py-1 text-[11px] font-medium text-canvas opacity-0 shadow-md transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${tipAlign}`}
+    <div className="mx-auto max-w-5xl px-4 pb-3">
+      <p className="mb-2 text-sm text-ink" aria-live="polite" aria-atomic="true">
+        {current
+          ? `Act ${current.act} · ${ACTS[current.act].title} — ${current.n} / ${PAGES.length}: ${current.title}`
+          : "Explore the chapters"}
+      </p>
+      <div className="grid grid-cols-8 gap-1 sm:grid-cols-[repeat(16,minmax(0,1fr))]">
+        {PAGES.map((p) => {
+          const page = p.n;
+          const fill = currentPage > page ? 1 : currentPage === page ? scrollFrac : 0;
+          const isCurrent = currentPage === page;
+          return (
+            <Link
+              key={page}
+              href={pageHref(page)}
+              aria-label={`Chapter ${page}: ${p.title}`}
+              aria-current={isCurrent ? "page" : undefined}
+              title={`Chapter ${page}: ${p.title}`}
+              scroll={true}
+              onClick={
+                isCurrent
+                  ? (e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+                      e.preventDefault();
+                      window.scrollTo({ top: 0, behavior: "instant" });
+                    }
+                  : undefined
+              }
+              className={`group relative flex min-h-[44px] items-center justify-center rounded border text-sm tabular-nums focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-compute ${
+                isCurrent
+                  ? "border-compute bg-compute font-bold text-canvas"
+                  : "border-grid bg-surface text-ink hover:border-compute hover:text-compute"
+              }`}
             >
-              {page}. {p.title}
-            </span>
-          </Link>
-        );
-      })}
+              <span aria-hidden="true">{String(page).padStart(2, "0")}</span>
+              <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-grid">
+                <div className="h-full bg-compute" style={{ width: `${fill * 100}%` }} />
+              </div>
+            </Link>
+          );
+        })}
+      </div>
     </div>
   );
 }
