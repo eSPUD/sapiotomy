@@ -1,5 +1,23 @@
 # Deploying to Vercel
 
+## Camera-ready branch
+
+`dev/camera-ready` disables automatic Vercel Git deployments through
+`web/vercel.json`. Pushes to this branch still run GitHub CI, but do not create
+Vercel deployments. The rule is specific to this branch.
+
+Deploy this branch manually with the Vercel CLI when a preview is wanted.
+With the project's Root Directory set to `web`, run from the repository root:
+
+```bash
+git switch dev/camera-ready
+vercel
+```
+
+This creates a preview. Use `vercel --prod` only when intentionally publishing
+to production. The Git deployment rule does not prevent authorized manual
+deployments through the CLI, dashboard, or API.
+
 The explorable is a **static, pre-computed Next.js app** — no GPU, no database, no
 API keys required for the MVP. It fits comfortably in Vercel's Hobby tier (note:
 Hobby is non-commercial use only) and costs nothing to serve.
