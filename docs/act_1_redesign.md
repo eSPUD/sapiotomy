@@ -52,3 +52,8 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 - Tool use appears nowhere else in the deck: introduce it here in one sentence, not as a lever the deck returns to.
 - Knock-on for slide 3: its premise ("the obvious way to supply it is to train the model again") becomes the contrast "retrain to add the fact, or look it up at answer time", with retraining as the expensive route.
 - Paragraph after the comic ("Look at what each step bought. Step 1 settles the bias outright...", ~80 words) becomes "In the first panel, rereading the question fixes the **bias** on its own, with no new information. The **knowledge gap** is different. The 2026 final was after its cutoff, so rereading won't help. Instead, the next two panels spot the gap and then fix it with a lookup."
+- Closing box ("Nothing about the model changed between the reflex and the trace. Same weights, same training data, same cutoff. ... what it buys, how to buy more of it, and where buying more stops helping.") becomes "The model itself never changed between the two answers. It had the same training data and the same cutoff. The only difference is that it spent more time, and more compute, before answering. That is inference-time scaling. Why not just retrain the model on newer data instead?" *Why:* echoes slide 1's definition word for word, names the term, and hands off to slide 3's retrain-or-look-up question.
+
+## Back pocket
+
+- "What it buys, how to buy more of it, and where buying more stops helping" (cut from slide 2's closing): reword without the tricolon for the slide 5 lede, where inference-time scaling becomes the reader's lever.
