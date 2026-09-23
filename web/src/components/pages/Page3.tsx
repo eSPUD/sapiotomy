@@ -19,20 +19,18 @@
  * inference talk here.
  *
  * Layout rule: no reveals, no drag-to-unlock. TWO numbered sections down the
- * left, one per failure page 2 raises: the knowledge gap (cost, lag, aim, data)
- * and the bias. Section 1's four walls are h3 sub-heads, so its argument reads
- * as a list; section 2 is now a two-sentence summary of the bias (the fact was
- * already there, so more reading cannot answer it; more text only sharpens the
- * default) with no sub-heads — the model-collapse and alignment challenges were
- * trimmed away. Each section is followed by its margin cell. Citations
+ * left, one per failure page 2 raises: the knowledge gap (cost, lag, data)
+ * and the bias. Section 1's three walls are h3 sub-heads, so its argument reads
+ * as a list; section 2 is one paragraph on the bias (the fact was already
+ * there, so more data would not have helped; next-word training on more text
+ * strengthens the default) with no sub-heads. Each section is followed by its
+ * margin cell. Citations
  * follow the page-2 house style: numbered inline markers (Cite) at the claim
  * they support, a References margin note (RefItem) beside the step that uses
  * each source. References live only in those margin notes; non-peer-reviewed
  * sources carry a preprint flag there. Section 1's References note sits beside
- * it; section 2's margin cell holds a "Why bias happens" sidenote that explains
- * the next-token-prediction cause and cites Zhao et al. 2018 for it. There is
- * still no "how to
- * read this page" rail (a slider, a dial and a text box need no instructions).
+ * it; section 2 cites nothing, so its margin cell is empty. There is still no
+ * "how to read this page" rail (a slider, a dial and a text box need no instructions).
  * What is cited vs derived is said inline in each step's h2 annotation
  * ("derived from the two Epoch trends", "cited stock, derived demand"), and the
  * DataWindowMeter's caption line carries the "cited window, not a burn rate"
@@ -89,7 +87,6 @@ const REF = {
   chinchilla: 4,
   dataStock: 5,
   datasetSizes: 6,
-  winobias: 7,
 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
@@ -266,9 +263,8 @@ export function Page3() {
       </h1>
 
       <p className="max-w-2xl text-lg text-ink-muted">
-        A missing fact needs new knowledge, and the obvious way to supply it is to{" "}
-        <strong className="text-ink">train the model again</strong>. The bill says no, then the data
-        says no. And even if both said yes, it would do nothing about the bias.
+        Retraining on newer data moves the training data cutoff forward, as long as there is enough
+        data to train on. Would that close the knowledge gap? Would it fix the knowledge bias?
       </p>
 
       {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
@@ -377,24 +373,19 @@ export function Page3() {
               burns{" "}
               {fmtM(DAYS * RUN_M)} a year: one <strong>GPT-4</strong>-class run costs an estimated $
               {RUN_M}M of compute, and <strong>Gemini Ultra</strong> an estimated ${GEMINI_M}M.
-              <Cite n={REF.runCost} />
+              <Cite n={REF.runCost} /> For one missing fact, like the 2026 final, that bill is not
+              economically feasible.
             </figcaption>
           </figure>
 
           <h3 className="text-lg font-semibold text-ink">b. It always lags</h3>
           <p className="text-ink">
-            A training run takes weeks, so the cutoff moves forward but never reaches <em>now</em>.
-            Retraining resets the clock. It does not stop it.
-          </p>
-
-          <h3 className="text-lg font-semibold text-ink">c. It cannot be aimed</h3>
-          <p className="text-ink">
-            There is no retraining for one missing fact. You buy the whole distribution to obtain a
-            single result.
+            A training run takes weeks, so by the time a model is finished, its cutoff is already
+            behind. The gap shrinks, but it never closes.
           </p>
 
           <h3 className="text-lg font-semibold text-ink">
-            d. The data runs out
+            c. The data runs out
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               cited stock, derived demand
             </span>
@@ -405,14 +396,13 @@ export function Page3() {
           >
             <p className="text-sm text-ink">
               {/* First load-bearing use of "parameter" in the deck, and pages 5 and 11 are
-                  both denominated in it. One parenthetical, at the altitude of this page. */}
-              Suppose money were no object. It still fails. A <strong>bigger</strong> model only pays
-              off if it also <strong>reads more</strong>, in step: about {cp.tokensPerParam} tokens
-              per <strong>parameter</strong> (one of the numbers inside the model that training
-              adjusts, and the usual way of saying how big it is), which is the scaling law.
-              <Cite n={REF.chinchilla} /> So the ceiling was never money. It is how much there is
-              worth reading, and{" "}
-              <strong className="text-ink">no budget buys tokens that do not exist</strong>.
+                  both denominated in it. Defined once, at the altitude of this page. */}
+              Suppose money were no object. Frontier models keep getting bigger, and bigger models
+              need more text. Researchers who trained hundreds of models at different sizes found a{" "}
+              <strong>scaling law</strong>: about {cp.tokensPerParam} tokens of text for every{" "}
+              <strong>parameter</strong>, the numbers inside a model that training adjusts.
+              <Cite n={REF.chinchilla} /> There is only so much text, roughly {STOCK_T} trillion
+              tokens of quality writing, and no budget buys tokens that do not exist.
             </p>
             <div className="rounded-lg border border-grid bg-surface-raised p-4">
               <p className="text-xs uppercase tracking-wide text-ink-muted">
@@ -430,9 +420,9 @@ export function Page3() {
                 forward from their dataset-size regression to 2030. */}
             <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
               <figcaption className="text-sm text-ink">
-                So when does the field actually reach the ceiling? Epoch project the largest training
-                set forward from its own trend, about{" "}
-                <strong>&times;{PP.growthPerYearMedian.toFixed(1)} a year</strong>. Drag the year.
+                Epoch projects that the largest training sets grow about &times;
+                {PP.growthPerYearMedian.toFixed(1)} a year. Drag the year to see when that line meets
+                the stock of text that exists.
                 <Cite n={REF.datasetSizes} />
               </figcaption>
               <LineChart
@@ -479,11 +469,7 @@ export function Page3() {
                 <strong className="text-ink">
                   {MONTH_NAMES[PP.medianCrossesStockMonth - 1]} {PP.medianCrossesStockYear}
                 </strong>
-                , inside the window below.
-              </p>
-              <p className="text-xs text-ink-muted">
-                the trend projection only · Epoch also run a compute-based projection, which is not
-                drawn here
+                .
               </p>
             </figure>
 
@@ -534,34 +520,21 @@ export function Page3() {
           </h2>
 
           <p className="text-ink">
-            Page 2&apos;s model held the 2023 title the whole time and dropped it anyway, so the
-            miss was never about what it had read &mdash; <strong>more reading cannot answer
-            it</strong>. And because a model settles on whatever its corpus says most, more text
-            from the same world only <strong>sharpens that default</strong> rather than loosening
-            it.
+            In the World Cup problem, the model almost certainly had the women&apos;s 2023 title in
+            its data and left it out anyway. More data would not have helped. Even worse, a model is
+            trained to predict the most likely next word, which means it goes with whatever its
+            training data covers most. Retraining on more text, where the men&apos;s tournament still
+            gets more coverage, <strong>strengthens that bad habit</strong>.
           </p>
         </section>
-
-        <Note kicker="Why bias happens">
-          <p>
-            A model is trained to predict the likeliest next token over its corpus, so an ambiguous
-            question returns whichever reading that corpus makes most probable. The majority pattern
-            wins by default, and nothing in the objective flags that a quieter reading was there to
-            pick.
-            <Cite n={REF.winobias} />
-          </p>
-          <RefItem n={REF.winobias} href="https://arxiv.org/abs/1804.06876">
-            Zhao et al. 2018, <em>Gender Bias in Coreference Resolution: Evaluation and Debiasing
-            Methods</em> (NAACL 2018).
-          </RefItem>
-        </Note>
+        <div aria-hidden="true" />
         {/* Both sections in two sentences, in the content column so it does not
             run under the sidenotes. */}
         <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-          Training-time scaling buys more facts, later, at compounding cost, and it cannot touch a
-          bias that was never about missing facts. Every wall here limits what a model can be given{" "}
-          <strong>before</strong> the question arrives, which leaves only what it does{" "}
-          <strong>after</strong> it.
+          Training-time scaling buys more knowledge, narrowing the knowledge gap, but at a compounding
+          cost. It can also make the knowledge bias worse. The problem is that retraining spends its
+          compute before anyone asks. Thinking it through spends compute at answer time, on the
+          question actually asked.
         </div>
         <div aria-hidden="true" />
       </div>

@@ -209,7 +209,7 @@ export const SPAIN_SYSTEM2_TRACE = {
     },
     {
       name: "Check my own limits",
-      text: "A count of titles changes whenever a final is played, and my training was sealed in early 2025. Any final after that falls outside what I know.",
+      text: "A count of titles changes whenever a final is played, and my training data ends in early 2025. Any final after that falls outside what I know.",
     },
     {
       name: "Do not answer from memory alone",

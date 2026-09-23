@@ -8,9 +8,11 @@
  * so the gap reopens continuously.
  *
  * Narrative spine (three steps), each a distinct failure:
- *   1. A training-cutoff slider (Jan 2017 to Dec 2026): sliding it changes which
- *      of Spain's titles sealed memory can recall, and so the answer it gives.
- *      That is the knowledge gap, a missing FACT.
+ *   1. A training data cutoff slider (Jan 2024 to today, Sep 2026): sliding it
+ *      changes which of Spain's titles the training data covers, and so the
+ *      answer it gives. The stretch from the cutoff to today is shaded as the
+ *      knowledge gap, a missing FACT; the July 2026 final sits inside it until
+ *      the cutoff passes it.
  *   2. Bias, not staleness. The question never said MEN'S, and Spain's women won
  *      in 2023, BEFORE the cutoff. The model held that fact and still left it
  *      out, resolving an ambiguous question to the reading its training data
@@ -20,10 +22,11 @@
  *      the control.
  *   3. What a System 2 pass would have done, as an authored trace. Rereading the
  *      question settles the BIAS outright (it needs no information the model
- *      lacks). It cannot close the knowledge GAP, since thinking never conjures
- *      an unseen fact, but it converts a confident wrong answer into a flagged
- *      one. The closing beat: nothing about the model changed, only that it
- *      spent effort before answering, which hands off to the rest of the deck.
+ *      lacks). It cannot close the knowledge GAP by thinking alone, but it can
+ *      spot the gap and close it with a lookup. The closing beat: nothing about
+ *      the model changed, only that it spent more time and compute before
+ *      answering, which is inference-time scaling; it hands off to page 3's
+ *      retrain-or-look-up question.
  */
 
 import { useState } from "react";
@@ -48,17 +51,24 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 /** A cutoff is a month, encoded as years*12 + month(0-11), so it slides smoothly. */
 const monthIndex = (year: number, month0: number) => year * 12 + month0;
-const CUTOFF_MIN = monthIndex(2017, 0); // Jan 2017 (the 2010 title is always known)
-const CUTOFF_MAX = monthIndex(2026, 11); // Dec 2026 (past the July final)
-const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025 — the machine's real seal
+const CUTOFF_MIN = monthIndex(2024, 0); // Jan 2024 (the 2010 title is always known)
+/** "Today", fixed rather than read from the clock so the page and its tests
+ *  stay deterministic. The slider ends here and the knowledge gap runs to it. */
+const TODAY = monthIndex(2026, 8); // Sep 2026
+const CUTOFF_MAX = TODAY;
+const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025, the machine's real cutoff
+/** The July 2026 men's final, the one change in the answer, marked on the track. */
+const FINAL_2026 = monthIndex(2026, 6);
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
+/** A month's position along the slider's range, in percent. */
+const cutoffPct = (i: number) => ((i - CUTOFF_MIN) / (CUTOFF_MAX - CUTOFF_MIN)) * 100;
 
 /** Men's finals are played in July. Section 1 counts only the men's tournament,
  *  which is the reading the model silently assumes; section 2 is about that. */
 const DEFAULT_READING_FINALS = SPAIN_ALL_TITLES.mens.map((y) => monthIndex(y, 6));
 
 /** Page 2's references, numbered in order of first appearance. */
-const REF = { winobias: 1, askell: 2 } as const;
+const REF = { winobias: 1 } as const;
 
 /**
  * The cutoff explorer. `finals` decides which titles count as knowable and
@@ -80,10 +90,11 @@ function CutoffWidget({
   const known = finals.filter((f) => f <= cutoff).length;
   const gap = total - known;
   const cutoffText = fmtCutoff(cutoff);
+  const finalKnown = FINAL_2026 <= cutoff;
 
   return (
     <section
-      aria-label="Training cutoff explorer"
+      aria-label="Training data cutoff explorer"
       className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface"
     >
       <div className="flex flex-col gap-4 p-4">
@@ -92,7 +103,7 @@ function CutoffWidget({
         {/* the reader sets the model's training cutoff */}
         <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-3">
           <label htmlFor={id} className="flex flex-wrap items-baseline gap-2 text-sm text-ink-muted">
-            <span>training cutoff:</span>
+            <span>training data cutoff:</span>
             <span className="font-mono text-base font-semibold text-ink">{cutoffText}</span>
           </label>
           <input
@@ -106,10 +117,47 @@ function CutoffWidget({
               setCutoff(Number(e.target.value));
               recordInteraction(PAGE_N);
             }}
-            aria-label="Training cutoff month and year"
+            aria-label="Training data cutoff month and year"
             aria-valuetext={cutoffText}
             className="w-full accent-compute"
           />
+          {/* The knowledge gap under the slider, in the same track vocabulary as
+              page 3's data-window meter: the wrong hue fills from the cutoff to
+              today, and the 2026 final sits inside it until the cutoff passes it.
+              Inset by half the native thumb so percentages line up with the thumb. */}
+          <div className="mx-2">
+            {/* The final's label sits above the track, clear of "today" at phone width. */}
+            <div className="relative mb-1 h-4 text-[11px]">
+              <span
+                className={`absolute -translate-x-full whitespace-nowrap pr-1 ${
+                  finalKnown ? "text-correct" : "text-wrong"
+                }`}
+                style={{ left: `${cutoffPct(FINAL_2026)}%` }}
+              >
+                2026 final
+              </span>
+            </div>
+            <div
+              role="img"
+              aria-label={`Timeline ${fmtCutoff(CUTOFF_MIN)} to today, ${fmtCutoff(TODAY)}. The knowledge gap runs from the ${cutoffText} training data cutoff to today. The ${fmtCutoff(FINAL_2026)} final falls ${finalKnown ? "within the cutoff" : "inside the gap"}.`}
+              className="relative h-3 rounded-sm border border-grid bg-canvas"
+            >
+              <div
+                className="absolute inset-y-0 right-0 rounded-sm bg-wrong/25"
+                style={{ left: `${cutoffPct(cutoff)}%` }}
+              />
+              <div
+                className={`absolute -bottom-1.5 -top-1.5 w-1 -translate-x-1/2 rounded-sm ring-1 ring-canvas ${
+                  finalKnown ? "bg-correct" : "bg-wrong"
+                }`}
+                style={{ left: `${cutoffPct(FINAL_2026)}%` }}
+              />
+            </div>
+            <div className="mt-1.5 flex justify-between text-[11px] text-ink-muted">
+              <span>{fmtCutoff(CUTOFF_MIN)}</span>
+              <span>today</span>
+            </div>
+          </div>
         </div>
 
         {/* what the model says, off a memory sealed at that cutoff */}
@@ -125,7 +173,7 @@ function CutoffWidget({
                   : "border-wrong/60 bg-wrong/15 text-wrong"
               }`}
             >
-              {gap <= 0 ? "✓ current" : `✗ ${gap === 1 ? "one" : gap} short`}
+              {gap <= 0 ? "✓ within cutoff" : `✗ ${gap === 1 ? "one" : gap} short`}
             </span>
           </div>
           <p className="text-lg text-ink">&ldquo;{replies[known]}&rdquo;</p>
@@ -158,23 +206,9 @@ function IdealAnswer() {
 
 /** A margin note that sits beside its step and scrolls with the page.
  *  (Same shell as Page 1, so Act 1 reads as one layout.) */
-function Note({
-  kicker,
-  bottom = false,
-  children,
-}: {
-  kicker: string;
-  /** Sit at the foot of the sidenote column instead of the top of the row. The
-   *  house position for the closing References note beside the final step. */
-  bottom?: boolean;
-  children: React.ReactNode;
-}) {
+function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
-    <aside
-      className={`flex flex-col gap-2 text-sm text-ink-muted ${
-        bottom ? "lg:mt-auto lg:self-end" : "lg:pt-9"
-      }`}
-    >
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -194,9 +228,8 @@ export function Page2() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        What does it take for an LLM to be useful (helpful, harmless and honest)
-        <Cite n={REF.askell} /> in the real world? What are the pitfalls of System 1 thinking in the
-        real world?
+        What happens when an LLM answers with System 1 thinking in the real world? A single question
+        about the World Cup shows at least two ways it can go wrong.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -213,21 +246,21 @@ export function Page2() {
           />
 
           <p className="text-ink">
-            A model learns everything it knows before a fixed <strong>training cutoff</strong>, and
-            the answer it gives depends on when it was trained. This creates a perpetual{" "}
-            <strong>knowledge gap</strong> after the model is trained, as new data is created by the
-            world.
+            A model only knows what was in its training data, and it can only be trained on data
+            that existed before its <strong>training data cutoff</strong>. Even events occurring
+            before that cutoff can be missing if the data did not cover them. Together these create a
+            perpetual <strong>knowledge gap</strong>, one that widens as the world creates new data.
           </p>
 
           <p className="text-ink">
-            Based on the knowledge cutoff date, the model gives an answer without thinking it
-            through. System 1 thinking leads to an incorrect response.
+            In the example above, the model answered from what it learned, without thinking it
+            through. System 1 thinking led it to an incorrect answer.
           </p>
 
           <PullQuote>Are knowledge gaps addressable by System 2 thinking?</PullQuote>
         </section>
         <Note kicker="Try it">
-          <p>Slide the training cutoff to move the model&apos;s memory back and forth in time.</p>
+          <p>Slide the training data cutoff to move the model&apos;s memory back and forth in time.</p>
         </Note>
 
         {/* Step 2 */}
@@ -242,19 +275,23 @@ export function Page2() {
           <IdealAnswer />
 
           <p className="text-ink">
-            Every answer above quietly counted only the men&apos;s tournament. That is a{" "}
-            <strong>knowledge bias</strong>, and it is not the knowledge gap.
+            Every answer above silently counted only the men&apos;s tournament. We call this a{" "}
+            <strong>knowledge bias</strong>, and it is different from the knowledge gap.
           </p>
 
           <p className="text-ink">
-            The 2023 win happened <em>before</em> the cutoff, so the model held the fact the whole
-            time and left it out anyway. Nothing was missing from its memory. Handed an ambiguous
-            question, it resolved the ambiguity to whichever reading its training data talked about
-            most, and never mentioned that it had chosen. That is what makes a knowledge bias
-            different from a knowledge gap: the gap is about what the model was never shown, the
-            bias about which part of what it holds it decides to use. Models do this in the small
-            too: given a sentence that could refer to either of two people, they resolve it to the
-            stereotype-consistent reading rather than flagging that the sentence is ambiguous.
+            The women&apos;s 2023 win happened before the cutoff and was widely covered. The model
+            almost certainly had it in its data, but it left it out anyway. When handed an ambiguous
+            question, it went with the reading its training data covered most, and never told you
+            there was a choice. This is what separates the knowledge bias from the knowledge gap.
+            The gap is about what the model never saw, whereas the bias is about what it saw but
+            never thought to count.
+          </p>
+
+          <p className="text-ink">
+            The same bias shows up in ordinary sentences. Given a sentence that could refer to either
+            of two people, a model goes with the stereotyped reading instead of flagging that the
+            sentence is ambiguous.
             <Cite n={REF.winobias} />
           </p>
 
@@ -272,35 +309,27 @@ export function Page2() {
           <h2 className="text-xl font-semibold text-ink">3. Thinking it through</h2>
 
           <p className="text-ink">
-            Both misses share a shape: the model answered <em>immediately</em> (System 1 thinking).
-            It never reread the
-            question, and it never weighed what it might not know. A System 2 pass does both before
-            committing to anything.
+            Both of these failures stem from System 1 thinking, answering immediately. Here is what a
+            System 2 pass does instead.
           </p>
 
           <System2Comic />
 
           <p className="text-ink">
-            Look at what each step bought. Step 1 settles the{" "}
-            <strong>bias</strong> outright, and it needed no new information: the ambiguity was
-            sitting in the question the whole time, and reading it carefully was enough. Step 2 does
-            not close the <strong>knowledge gap</strong>, because thinking cannot conjure a fact the
-            model was never shown. What it does is notice the boundary, which turns a confident
-            wrong answer into a flagged one, and a flagged one into a reason to go look.
+            In the first panel, rereading the question fixes the <strong>bias</strong> on its own,
+            with no new information. The <strong>knowledge gap</strong> is different. The 2026 final
+            was after its cutoff, so rereading won&apos;t help. Instead, the next two panels spot the
+            gap and then fix it with a lookup.
           </p>
 
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            Nothing about the model changed between the reflex and the trace. Same weights, same
-            training data, same cutoff. The only difference is that it{" "}
-            <strong>spent effort before answering</strong>. That effort is the subject of the rest
-            of this story: what it buys, how to buy more of it, and where buying more stops helping.
+            The model itself never changed between the two answers. It had the same training data
+            and the same cutoff. The only difference is that it spent more time, and more compute,
+            before answering. That is inference-time scaling. Why not just retrain the model on newer
+            data instead?
           </div>
         </section>
-        <Note kicker="References" bottom>
-          <RefItem n={REF.askell} href="https://arxiv.org/abs/2112.00861" preprint>
-            Askell et al. 2021, <em>A General Language Assistant as a Laboratory for Alignment</em>.
-          </RefItem>
-        </Note>
+        <div aria-hidden="true" />
       </div>
 
       <PageNav n={PAGE_N} />
