@@ -62,6 +62,7 @@ Keep the structure and both interactives. Frame: answers slide 2's closing quest
 
 **2. Section 1 challenges.** Section a (the bill compounds) stays as is.
 - Cut c ("It cannot be aimed": "There is no retraining for one missing fact. You buy the whole distribution to obtain a single result."). Fold its point into a's chart caption as a final sentence: "For one missing fact, like the 2026 final, that bill is not economically feasible." *Why:* a standalone c only restated a's cost with no new evidence.
+- b ("It always lags"): "A training run takes weeks, so the cutoff moves forward but never reaches *now*. Retraining resets the clock. It does not stop it." becomes "A training run takes weeks, so by the time a model is finished, its cutoff is already behind. The gap shrinks, but it never closes."
 - d ("The data runs out") becomes c. Section 1 has three challenges: a. The bill compounds, b. It always lags, c. The data runs out.
 
 ## Back pocket
