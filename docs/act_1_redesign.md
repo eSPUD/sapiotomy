@@ -36,3 +36,6 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 - Shade the knowledge gap: fill from the cutoff to "today" in the wrong hue, with the 2026 final inside it. Dragging past the final uncovers it and the answer flips to correct.
 - Relabel the "✓ current" badge to "✓ within cutoff": a late cutoff does not guarantee the model knows (section 1 prose).
 - Not doing: a 2023 women's-final tick (would spoil section 2's reveal); preset model buttons (loses the moving timeline).
+
+**4. Section 2 prose.**
+- "Every answer above quietly counted only the men's tournament. That is a **knowledge bias**, and it is not the knowledge gap." becomes "Every answer above silently counted only the men's tournament. We call this a **knowledge bias**, and it is different from the knowledge gap." ("We call this": knowledge bias is the page's own label, not an established term.)
