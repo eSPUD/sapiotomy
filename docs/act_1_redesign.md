@@ -50,6 +50,7 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 - System 2 comic: keep the lookup and the "Three." answer. The pass rereads the question (fixes the bias), notices its limits (spots the gap), and looks it up (closes the gap); all three are time spent at answer time, so all three are inference-time scaling. Panel 2: "my training was sealed in early 2025" becomes "my training data ends in early 2025".
 - The prose must say which step supplied 2026: thinking recognized the gap and decided to look; the lookup supplied the fact. Pull-quote answer, in substance: "Thinking alone can't fill a knowledge gap, but it can recognize one and go look it up." Supersedes the reviewer plan's "name retrieval once and say why it is out of scope".
 - Tool use appears nowhere else in the deck: introduce it here in one sentence, not as a lever the deck returns to.
+- Resolved by the approved paragraph after the comic (no extra copy): it answers both pull quotes, introduces the lookup, and names it as what supplied 2026.
 - Knock-on for slide 3: its premise ("the obvious way to supply it is to train the model again") becomes the contrast "retrain to add the fact, or look it up at answer time", with retraining as the expensive route.
 - Paragraph after the comic ("Look at what each step bought. Step 1 settles the bias outright...", ~80 words) becomes "In the first panel, rereading the question fixes the **bias** on its own, with no new information. The **knowledge gap** is different. The 2026 final was after its cutoff, so rereading won't help. Instead, the next two panels spot the gap and then fix it with a lookup."
 - Closing box ("Nothing about the model changed between the reflex and the trace. Same weights, same training data, same cutoff. ... what it buys, how to buy more of it, and where buying more stops helping.") becomes "The model itself never changed between the two answers. It had the same training data and the same cutoff. The only difference is that it spent more time, and more compute, before answering. That is inference-time scaling. Why not just retrain the model on newer data instead?" *Why:* echoes slide 1's definition word for word, names the term, and hands off to slide 3's retrain-or-look-up question.
@@ -93,8 +94,12 @@ Keep the page (overrides the reviewer plan's D1 cut): "one problem, many paths" 
 
 **3. Section 2, "Three roads, three tolls".**
 - Takeaway box ("Three journeys, one destination: 223,300. The road changes; the answer does not, and each road pays its own toll. Reasoning is inherently diverse pathfinding from prior knowledge.") becomes "All three methods of reasoning through the problem land on the correct answer. Some take more work than others, and each has its own common mistakes. Trying more than one costs more effort, but it gives you a way to catch those mistakes." *Why:* seeds compute cost, step-level mistakes, and trying several paths, without naming later slides.
+- The takeaway is plain text under the cards, not a shaded box: the deck's shaded box marks the page's closing, and page 4 had two in a row.
 - Heading "2. Three roads, three tolls" becomes "2. The methods and their trade-offs".
-- Proposed (not yet confirmed): cards keep name and trade-off, drop the origin description; note "There are many different ways to do multiplication. We showcase only three here." becomes "There are many ways to multiply; these are three."
+- Cards keep name and trade-off, drop the origin description.
+- Cut the note "There are many different ways to do multiplication. We showcase only three here." (section 1's heading already says "Three ways").
+
+**4. Section 3.** Cut the "3. Where this leaves us" heading. The page ends on one shaded closing box (wording pending) that hands off to chain of thought and seeds trying more than one way.
 
 ## Back pocket
 
