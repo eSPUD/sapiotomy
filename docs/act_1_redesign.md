@@ -24,7 +24,13 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 
 **1. Lede.** "What does it take for an LLM to be useful (helpful, harmless and honest) in the real world? What are the pitfalls of System 1 thinking in the real world?" becomes "What happens when an LLM answers with System 1 thinking in the real world? A single question about the World Cup shows at least two ways it can go wrong." Askell (HHH) citation dropped; the page never returns to it (pending confirm).
 
-**2. Section 1 cutoff slider.** Keep month granularity. Today the range is Jan 2017 to Dec 2026 (120 positions, default Jan 2025) and the answer changes only at Jul 2026, so everything left of the default is dead, the one change is unmarked, and the range runs past today.
+**2. Section 1 prose.** Current: "A model learns everything it knows before a fixed training cutoff, and the answer it gives depends on when it was trained. This creates a perpetual knowledge gap after the model is trained, as new data is created by the world." and "Based on the knowledge cutoff date, the model gives an answer without thinking it through. System 1 thinking leads to an incorrect response." Replace with:
+- "A model only knows what was in its training data, and it can only be trained on data that existed before its **training data cutoff**. Even events before the cutoff can be missing if the data did not cover them. That missing knowledge is the **knowledge gap**, and it grows with every day that passes since the cutoff."
+- "Asked on reflex, the model answers from whatever it learned, and never stops to ask whether that might be incomplete." (proposed)
+- *Why:* a late cutoff is necessary, not sufficient; the gap is about what is in the data, not only time.
+- Term: "training data cutoff" everywhere on the page, including the slider label (now "training cutoff:").
+
+**3. Section 1 cutoff slider.** Keep month granularity. Today the range is Jan 2017 to Dec 2026 (120 positions, default Jan 2025) and the answer changes only at Jul 2026, so everything left of the default is dead, the one change is unmarked, and the range runs past today.
 - Shorten the range to about Jan 2024 through today (Sep 2026).
 - Mark the 2026 final on the track with a labelled tick.
 - Shade the knowledge gap: fill from the cutoff to "today" in the wrong hue, with the 2026 final inside it. Dragging past the final uncovers it and the answer flips to correct.
