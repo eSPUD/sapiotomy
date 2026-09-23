@@ -60,6 +60,10 @@ Keep the structure and both interactives. Frame: answers slide 2's closing quest
 
 **1. Lede.** "A missing fact needs new knowledge, and the obvious way to supply it is to train the model again. The bill says no, then the data says no. And even if both said yes, it would do nothing about the bias." becomes "Retraining on newer data moves the training data cutoff forward. Would that close the knowledge gap? Would it fix the knowledge bias?" The page's closing must then state the verdict plainly.
 
+**2. Section 1 challenges.** Section a (the bill compounds) stays as is.
+- Cut c ("It cannot be aimed": "There is no retraining for one missing fact. You buy the whole distribution to obtain a single result."). Fold its point into a's chart caption as a final sentence: "For one missing fact, like the 2026 final, that bill is not economically feasible." *Why:* a standalone c only restated a's cost with no new evidence.
+- d ("The data runs out") becomes c. Section 1 has three challenges: a. The bill compounds, b. It always lags, c. The data runs out.
+
 ## Back pocket
 
 - "What it buys, how to buy more of it, and where buying more stops helping" (cut from slide 2's closing): reword without the tricolon for the slide 5 lede, where inference-time scaling becomes the reader's lever.
