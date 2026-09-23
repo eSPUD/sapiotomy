@@ -31,6 +31,7 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 - Term: "training data cutoff" everywhere on the page, including the slider label (now "training cutoff:").
 
 **3. Section 1 cutoff slider.** Keep month granularity. Today the range is Jan 2017 to Dec 2026 (120 positions, default Jan 2025) and the answer changes only at Jul 2026, so everything left of the default is dead, the one change is unmarked, and the range runs past today.
+- **Reverted after implementation (too clunky):** the range, final tick and gap shading below were built, then rolled back to the original Jan 2017 to Dec 2026 slider. Kept: the "training data cutoff" label and the "✓ within cutoff" badge.
 - Shorten the range to about Jan 2024 through today (Sep 2026).
 - Mark the 2026 final on the track with a labelled tick.
 - Shade the knowledge gap: fill from the cutoff to "today" in the wrong hue, with the 2026 final inside it. Dragging past the final uncovers it and the answer flips to correct.

@@ -8,11 +8,9 @@
  * so the gap reopens continuously.
  *
  * Narrative spine (three steps), each a distinct failure:
- *   1. A training data cutoff slider (Jan 2024 to today, Sep 2026): sliding it
- *      changes which of Spain's titles the training data covers, and so the
- *      answer it gives. The stretch from the cutoff to today is shaded as the
- *      knowledge gap, a missing FACT; the July 2026 final sits inside it until
- *      the cutoff passes it.
+ *   1. A training data cutoff slider (Jan 2017 to Dec 2026): sliding it changes
+ *      which of Spain's titles the training data covers, and so the answer it
+ *      gives. That is the knowledge gap, a missing FACT.
  *   2. Bias, not staleness. The question never said MEN'S, and Spain's women won
  *      in 2023, BEFORE the cutoff. The model held that fact and still left it
  *      out, resolving an ambiguous question to the reading its training data
@@ -51,17 +49,10 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 
 /** A cutoff is a month, encoded as years*12 + month(0-11), so it slides smoothly. */
 const monthIndex = (year: number, month0: number) => year * 12 + month0;
-const CUTOFF_MIN = monthIndex(2024, 0); // Jan 2024 (the 2010 title is always known)
-/** "Today", fixed rather than read from the clock so the page and its tests
- *  stay deterministic. The slider ends here and the knowledge gap runs to it. */
-const TODAY = monthIndex(2026, 8); // Sep 2026
-const CUTOFF_MAX = TODAY;
+const CUTOFF_MIN = monthIndex(2017, 0); // Jan 2017 (the 2010 title is always known)
+const CUTOFF_MAX = monthIndex(2026, 11); // Dec 2026 (past the July final)
 const CUTOFF_DEFAULT = monthIndex(2025, 0); // Jan 2025, the machine's real cutoff
-/** The July 2026 men's final, the one change in the answer, marked on the track. */
-const FINAL_2026 = monthIndex(2026, 6);
 const fmtCutoff = (i: number) => `${MONTHS[((i % 12) + 12) % 12]} ${Math.floor(i / 12)}`;
-/** A month's position along the slider's range, in percent. */
-const cutoffPct = (i: number) => ((i - CUTOFF_MIN) / (CUTOFF_MAX - CUTOFF_MIN)) * 100;
 
 /** Men's finals are played in July. Section 1 counts only the men's tournament,
  *  which is the reading the model silently assumes; section 2 is about that. */
@@ -90,7 +81,6 @@ function CutoffWidget({
   const known = finals.filter((f) => f <= cutoff).length;
   const gap = total - known;
   const cutoffText = fmtCutoff(cutoff);
-  const finalKnown = FINAL_2026 <= cutoff;
 
   return (
     <section
@@ -121,43 +111,6 @@ function CutoffWidget({
             aria-valuetext={cutoffText}
             className="w-full accent-compute"
           />
-          {/* The knowledge gap under the slider, in the same track vocabulary as
-              page 3's data-window meter: the wrong hue fills from the cutoff to
-              today, and the 2026 final sits inside it until the cutoff passes it.
-              Inset by half the native thumb so percentages line up with the thumb. */}
-          <div className="mx-2">
-            {/* The final's label sits above the track, clear of "today" at phone width. */}
-            <div className="relative mb-1 h-4 text-[11px]">
-              <span
-                className={`absolute -translate-x-full whitespace-nowrap pr-1 ${
-                  finalKnown ? "text-correct" : "text-wrong"
-                }`}
-                style={{ left: `${cutoffPct(FINAL_2026)}%` }}
-              >
-                2026 final
-              </span>
-            </div>
-            <div
-              role="img"
-              aria-label={`Timeline ${fmtCutoff(CUTOFF_MIN)} to today, ${fmtCutoff(TODAY)}. The knowledge gap runs from the ${cutoffText} training data cutoff to today. The ${fmtCutoff(FINAL_2026)} final falls ${finalKnown ? "within the cutoff" : "inside the gap"}.`}
-              className="relative h-3 rounded-sm border border-grid bg-canvas"
-            >
-              <div
-                className="absolute inset-y-0 right-0 rounded-sm bg-wrong/25"
-                style={{ left: `${cutoffPct(cutoff)}%` }}
-              />
-              <div
-                className={`absolute -bottom-1.5 -top-1.5 w-1 -translate-x-1/2 rounded-sm ring-1 ring-canvas ${
-                  finalKnown ? "bg-correct" : "bg-wrong"
-                }`}
-                style={{ left: `${cutoffPct(FINAL_2026)}%` }}
-              />
-            </div>
-            <div className="mt-1.5 flex justify-between text-[11px] text-ink-muted">
-              <span>{fmtCutoff(CUTOFF_MIN)}</span>
-              <span>today</span>
-            </div>
-          </div>
         </div>
 
         {/* what the model says, off a memory sealed at that cutoff */}

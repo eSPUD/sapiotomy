@@ -97,31 +97,22 @@ export function Page1() {
       </h1>
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* The intro is a grid row of its own so its citation can sit beside it. */}
-        <div className="flex max-w-2xl flex-col gap-4 text-lg text-ink-muted">
-          <p>
-            Inference-time scaling, put simply, is about giving a large language model (LLM) more
-            time, and thus more compute, when it answers. To help build intuition for this, we can
-            start by looking at how we, as people, think.
-          </p>
-          <p>
-            The human mind runs two systems.
-            <Cite n={REF.kahneman} /> The first is quick and effortless. The second is slower and
-            more deliberate. Here&apos;s what each one feels like.
-          </p>
-        </div>
-        <Note kicker="References" flush>
-          <RefItem
-            n={REF.kahneman}
-            href="https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow"
-          >
-            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
-          </RefItem>
-        </Note>
+        {/* The intro is a grid row of its own; its margin cell is empty. */}
+        <p className="max-w-2xl text-lg text-ink-muted">
+          Inference-time scaling, put simply, is about giving a large language model (LLM) more
+          time, and thus more compute, when it answers. To help build intuition for this, we can
+          start by looking at how we, as people, think.
+        </p>
+        <div aria-hidden="true" />
 
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Meet the two systems</h2>
+          <p className="leading-relaxed text-ink">
+            The human mind runs two systems.
+            <Cite n={REF.kahneman} /> The first is quick and effortless. The second is slower and
+            more deliberate. Here&apos;s what each one feels like.
+          </p>
           <div className="grid gap-4 md:grid-cols-2">
             {/* System 1 — fast */}
             <section aria-label="System 1" className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
@@ -202,7 +193,14 @@ export function Page1() {
             </section>
           </div>
         </section>
-        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem
+            n={REF.kahneman}
+            href="https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow"
+          >
+            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
+          </RefItem>
+        </Note>
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">

@@ -44,30 +44,12 @@ describe("Page 2 (Thinking in Reality): a training data cutoff slider", () => {
     expect(screen.queryByText(/✓ current/)).toBeNull();
   });
 
-  it("runs the slider from Jan 2024 to a fixed today, Sep 2026", () => {
+  it("runs the slider from Jan 2017 to Dec 2026, starting at Jan 2025", () => {
     render(<Page2 />);
     const slider = screen.getByRole("slider", { name: /training data cutoff/i });
-    expect(slider).toHaveAttribute("min", String(2024 * 12));
-    expect(slider).toHaveAttribute("max", String(2026 * 12 + 8));
+    expect(slider).toHaveAttribute("min", String(2017 * 12));
+    expect(slider).toHaveAttribute("max", String(2026 * 12 + 11));
     expect(slider).toHaveAttribute("aria-valuetext", "Jan 2025");
-  });
-
-  it("shades the knowledge gap to today, with the 2026 final inside it until the cutoff passes it", () => {
-    render(<Page2 />);
-    const track = () => screen.getByRole("img", { name: /knowledge gap/i });
-    expect(screen.getByText("2026 final")).toBeInTheDocument();
-    expect(screen.getByText("today")).toBeInTheDocument();
-    expect(track()).toHaveAccessibleName(/from the Jan 2025 training data cutoff to today/);
-    expect(track()).toHaveAccessibleName(/Jul 2026 final falls inside the gap/);
-    const slider = screen.getByRole("slider", { name: /training data cutoff/i });
-    // One month before the final: still inside the gap, still one short.
-    fireEvent.change(slider, { target: { value: String(2026 * 12 + 5) } });
-    expect(track()).toHaveAccessibleName(/inside the gap/);
-    expect(screen.getByText(/one short/i)).toBeInTheDocument();
-    // The final month itself uncovers it.
-    fireEvent.change(slider, { target: { value: String(2026 * 12 + 6) } });
-    expect(track()).toHaveAccessibleName(/Jul 2026 final falls within the cutoff/);
-    expect(screen.getByText("✓ within cutoff")).toBeInTheDocument();
   });
 
   it("section 2 shows the bias: the question never said men's", () => {
