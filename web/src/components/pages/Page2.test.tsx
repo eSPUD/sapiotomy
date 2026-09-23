@@ -19,11 +19,12 @@ import { SPAIN_SYSTEM2_TRACE, SPAIN_WORLD_CUPS } from "@/lib/authored";
 
 const WC = SPAIN_WORLD_CUPS;
 
-describe("Page 2 (Thinking in Reality): a training-cutoff slider", () => {
+describe("Page 2 (Thinking in Reality): a training data cutoff slider", () => {
   it("shows the question and the cutoff slider, answering one short by default", () => {
     render(<Page2 />);
     expect(screen.getByText(WC.question)).toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: /training cutoff/i })).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /training data cutoff/i })).toBeInTheDocument();
+    expect(screen.getByText("training data cutoff:")).toBeInTheDocument();
     // At the default cutoff (Jan 2025) it answers off a memory that predates 2026.
     expect(screen.getByText(/won the FIFA World Cup once, in 2010/i)).toBeInTheDocument();
     expect(screen.getByText(/one short/i)).toBeInTheDocument();
@@ -35,10 +36,38 @@ describe("Page 2 (Thinking in Reality): a training-cutoff slider", () => {
 
   it("the cutoff slider changes the recalled answer", () => {
     render(<Page2 />);
-    const slider = screen.getByRole("slider", { name: /training cutoff/i });
-    // Past the 2026 final, sealed memory catches up and names both men's titles.
-    fireEvent.change(slider, { target: { value: String(2026 * 12 + 11) } });
+    const slider = screen.getByRole("slider", { name: /training data cutoff/i });
+    // Past the 2026 final, the training data catches up and names both men's titles.
+    fireEvent.change(slider, { target: { value: String(2026 * 12 + 8) } });
     expect(screen.getByText(/twice, in 2010 and 2026/i)).toBeInTheDocument();
+    expect(screen.getByText("✓ within cutoff")).toBeInTheDocument();
+    expect(screen.queryByText(/✓ current/)).toBeNull();
+  });
+
+  it("runs the slider from Jan 2024 to a fixed today, Sep 2026", () => {
+    render(<Page2 />);
+    const slider = screen.getByRole("slider", { name: /training data cutoff/i });
+    expect(slider).toHaveAttribute("min", String(2024 * 12));
+    expect(slider).toHaveAttribute("max", String(2026 * 12 + 8));
+    expect(slider).toHaveAttribute("aria-valuetext", "Jan 2025");
+  });
+
+  it("shades the knowledge gap to today, with the 2026 final inside it until the cutoff passes it", () => {
+    render(<Page2 />);
+    const track = () => screen.getByRole("img", { name: /knowledge gap/i });
+    expect(screen.getByText("2026 final")).toBeInTheDocument();
+    expect(screen.getByText("today")).toBeInTheDocument();
+    expect(track()).toHaveAccessibleName(/from the Jan 2025 training data cutoff to today/);
+    expect(track()).toHaveAccessibleName(/Jul 2026 final falls inside the gap/);
+    const slider = screen.getByRole("slider", { name: /training data cutoff/i });
+    // One month before the final: still inside the gap, still one short.
+    fireEvent.change(slider, { target: { value: String(2026 * 12 + 5) } });
+    expect(track()).toHaveAccessibleName(/inside the gap/);
+    expect(screen.getByText(/one short/i)).toBeInTheDocument();
+    // The final month itself uncovers it.
+    fireEvent.change(slider, { target: { value: String(2026 * 12 + 6) } });
+    expect(track()).toHaveAccessibleName(/Jul 2026 final falls within the cutoff/);
+    expect(screen.getByText("✓ within cutoff")).toBeInTheDocument();
   });
 
   it("section 2 shows the bias: the question never said men's", () => {
@@ -51,10 +80,10 @@ describe("Page 2 (Thinking in Reality): a training-cutoff slider", () => {
       .toBeInTheDocument();
     expect(within(ideal).getByText(/all 3 titles/i)).toBeInTheDocument();
     // The point that makes it a DIFFERENT failure from the knowledge gap.
-    expect(body).toMatch(/happened\s*before\s*the cutoff/i);
-    expect(body).toMatch(/knowledge bias/i);
+    expect(body).toMatch(/The women's 2023 win happened before the cutoff and was widely covered/i);
+    expect(body).toMatch(/We call this a\s*knowledge bias/i);
     expect(body).toMatch(
-      /the gap is about what the model was never shown, the\s*bias about which part of what it holds it decides to use/i,
+      /The gap is about what the model never saw, whereas the bias is about what it saw but\s*never thought to count/i,
     );
   });
 
@@ -72,13 +101,20 @@ describe("Page 2 (Thinking in Reality): a training-cutoff slider", () => {
     expect(body).toMatch(/Three\./);
   });
 
-  it("is honest that thinking settles the bias but cannot conjure the missing fact", () => {
+  it("is honest that rereading settles the bias but a lookup closes the gap", () => {
     render(<Page2 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/needed no new information/i);
-    expect(body).toMatch(/thinking cannot conjure a fact the\s*model was never shown/i);
-    // ...and that the model itself did not change, only the effort it spent.
-    expect(body).toMatch(/spent effort before answering/i);
+    expect(body).toMatch(/fixes the\s*bias\s*on its own,\s*with no new information/i);
+    expect(body).toMatch(/so rereading won't help/i);
+    expect(body).toMatch(/spot the\s*gap and then fix it with a lookup/i);
+    // ...and that the model itself did not change, only the time and compute it spent.
+    expect(body).toMatch(/spent more time, and more compute,\s*before answering/i);
+  });
+
+  it("panel 2 says the training data ends, not that training was sealed", () => {
+    render(<Page2 />);
+    expect(screen.getByText(/my training data ends in early 2025/)).toBeInTheDocument();
+    expect(document.body.textContent ?? "").not.toMatch(/training was sealed/);
   });
 
   it("keeps author-year citations out of the prose", () => {
@@ -90,13 +126,12 @@ describe("Page 2 (Thinking in Reality): a training-cutoff slider", () => {
   it("numbers every citation inline and lists the same numbers in the sidenotes", () => {
     const { container } = render(<Page2 />);
     const marks = Array.from(container.querySelectorAll("sup"));
-    expect(marks).toHaveLength(2);
-    // Both markers are Cite anchors into the References sidenotes.
-    for (const m of marks) {
-      expect(m.querySelector("a")?.getAttribute("href")).toMatch(/^#ref-\d+$/);
-    }
+    expect(marks).toHaveLength(1);
+    // The one marker is a Cite anchor into the References sidenote.
+    expect(marks[0].querySelector("a")?.getAttribute("href")).toMatch(/^#ref-1$/);
     expect(document.body.textContent ?? "").toMatch(/1\.\s*Zhao et al/);
-    expect(document.body.textContent ?? "").toMatch(/2\.\s*Askell et al/);
+    // The HHH citation left with the old lede.
+    expect(document.body.textContent ?? "").not.toMatch(/Askell/);
   });
 
   it("cites the bias source", () => {
@@ -106,14 +141,20 @@ describe("Page 2 (Thinking in Reality): a training-cutoff slider", () => {
 
   it("keeps Act 1's em-dash-free copy rule", () => {
     render(<Page2 />);
-    expect(document.body.textContent ?? "").not.toMatch(/—/);
+    expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
+    // ...including after the cutoff has passed the final.
+    fireEvent.change(screen.getByRole("slider", { name: /training data cutoff/i }), {
+      target: { value: String(2026 * 12 + 8) },
+    });
+    expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
   });
 
-  it("closes by handing the effort question to the rest of the story", () => {
+  it("opens on System 1 in the real world and closes on the retrain question", () => {
     render(<Page2 />);
-    expect(document.body.textContent ?? "").toMatch(
-      /the subject of the rest\s*of this story/i,
-    );
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/What happens when an LLM answers with System 1 thinking in the real world\?/);
+    expect(body).toMatch(/That is inference-time scaling\./);
+    expect(body).toMatch(/Why not just retrain the model on newer\s*data instead\?/);
   });
 
   it("does not render the removed stepper, roads, or guess controls", () => {
