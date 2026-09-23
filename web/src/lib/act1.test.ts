@@ -8,6 +8,7 @@ import {
   SORTING_ITEMS,
   SPAIN_WORLD_CUPS,
   SYSTEMS,
+  SYSTEM_EXAMPLES,
 } from "./authored";
 import { coverageAtLeastOne, sampleGrid } from "./sim";
 
@@ -47,8 +48,30 @@ describe("Page 1 System 1 / System 2 (authored multiplication contrast)", () => 
     expect(17 * 20).toBe(340);
     expect(17 * 4).toBe(68);
     expect(340 + 68).toBe(408);
-    expect(SYSTEMS.slow.steps).toHaveLength(3);
+    expect(20 + 4).toBe(24);
+    // A planning step (split 24) before the three computing steps.
+    expect(SYSTEMS.slow.steps).toEqual(["24 = 20 + 4", "17 × 20 = 340", "17 × 4 = 68", "340 + 68 = 408"]);
     expect(Number(SYSTEMS.slow.answer)).toBe(17 * 24);
+  });
+
+  it("every page 1 example is arithmetically consistent: split, two partials, sum", () => {
+    const n = (x: string) => Number(x.replace(/\s/g, ""));
+    for (const { fast, slow } of SYSTEM_EXAMPLES) {
+      const [fa, fb] = fast.prompt.split("×").map(n);
+      expect(fa * fb).toBe(n(fast.answer));
+      const [a, b] = slow.prompt.split("×").map(n);
+      expect(slow.steps).toHaveLength(4);
+      const [split, p1, p2, sum] = slow.steps;
+      const [hi, lo] = split.split("=")[1].split("+").map(n);
+      expect(n(split.split("=")[0])).toBe(b);
+      expect(hi + lo).toBe(b);
+      expect(p1).toBe(`${a} × ${hi} = ${a * hi}`);
+      expect(p2).toBe(`${a} × ${lo} = ${a * lo}`);
+      expect(sum).toBe(`${a * hi} + ${a * lo} = ${a * b}`);
+      expect(n(slow.answer)).toBe(a * b);
+    }
+    expect(new Set(SYSTEM_EXAMPLES.map((e) => e.slow.prompt)).size).toBe(SYSTEM_EXAMPLES.length);
+    expect(SYSTEM_EXAMPLES[0]).toBe(SYSTEMS);
   });
 
   it("offers six sort items, three per system, with unique ids", () => {

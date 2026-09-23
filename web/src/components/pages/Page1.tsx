@@ -5,7 +5,7 @@ import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { SystemSort } from "@/components/pages/SystemSort";
 import { ACTS, getPage } from "@/lib/pages";
-import { SYSTEMS } from "@/lib/authored";
+import { SYSTEM_EXAMPLES } from "@/lib/authored";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 1;
@@ -13,6 +13,10 @@ const PAGE_N = 1;
 /** Page 1's references, numbered in order of first appearance. */
 const REF = { kahneman: 1 } as const;
 const fmt = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
+/** Both systems run in lockstep on one clock, one step per beat, and step 1
+ *  appears in both panels on the same beat. Each answer lands with its last
+ *  step, so System 1 finishes on beat 1 and System 2 on its final beat. */
+const STEP_MS = 800;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({
@@ -34,56 +38,124 @@ function Note({
   );
 }
 
+/** An empty step row: holds a step's height until the step is written. Hidden
+ *  from the a11y tree, since it is spacing, not content. */
+function StepSlot() {
+  return (
+    <li aria-hidden="true" className="invisible flex flex-wrap items-baseline gap-2">
+      <span className="text-xs uppercase tracking-wide">&nbsp;</span>
+      <span>&nbsp;</span>
+    </li>
+  );
+}
+
 export function Page1() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  // System 1: one tap reveals the product.
-  const [s1Revealed, setS1Revealed] = useState(false);
-
-  // System 2: tap through the steps; a stopwatch runs across the taps.
+  // One "Calculate" press starts both systems at the same moment, each with its
+  // own stopwatch: System 1 finishes almost at once, System 2 keeps working.
+  const [started, setStarted] = useState(false);
+  const [s1Step, setS1Step] = useState(0);
+  const [s1Done, setS1Done] = useState(false);
+  const [s1Ms, setS1Ms] = useState(0);
   const [s2Step, setS2Step] = useState(0);
+  const [s2Done, setS2Done] = useState(false);
   const [s2Ms, setS2Ms] = useState(0);
-  const s2StartRef = useRef<number | null>(null);
+  const [running, setRunning] = useState(false);
+  const startRef = useRef<number | null>(null);
+  const doneRef = useRef({ s1: false, s2: false });
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const [announce, setAnnounce] = useState("");
-  const s2Done = s2Step >= SYSTEMS.slow.steps.length;
+  // Which example the figure shows. The first render is always example 0 (so the
+  // server and client agree). Calculate runs the example on screen if it has not
+  // been run since the page loaded or since Reset; otherwise it draws a new one at
+  // random, never repeating the one just shown.
+  const [exIdx, setExIdx] = useState(0);
+  const ex = SYSTEM_EXAMPLES[exIdx];
+  const replayRef = useRef(true);
+  const nSteps = ex.slow.steps.length;
 
-  useEffect(
-    () => () => {
-      if (tickRef.current) clearInterval(tickRef.current);
-    },
-    [],
-  );
-
-  const revealS1 = () => {
-    if (s1Revealed) return;
-    setS1Revealed(true);
-    recordInteraction(PAGE_N);
-    setAnnounce(`System 1: ${SYSTEMS.fast.prompt} is ${SYSTEMS.fast.answer}. Instant.`);
+  const clearTimers = () => {
+    if (tickRef.current) clearInterval(tickRef.current);
+    tickRef.current = null;
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
   };
 
-  const nextS2 = () => {
-    if (s2Done) return;
-    if (s2Step === 0) {
-      s2StartRef.current = performance.now();
-      recordInteraction(PAGE_N);
+  useEffect(() => clearTimers, []);
+
+  const elapsed = () => (startRef.current == null ? 0 : performance.now() - startRef.current);
+  const later = (ms: number, fn: () => void) => timeoutsRef.current.push(setTimeout(fn, ms));
+
+  const reset = () => {
+    clearTimers();
+    setStarted(false);
+    setRunning(false);
+    setS1Step(0);
+    setS1Done(false);
+    setS1Ms(0);
+    setS2Step(0);
+    setS2Done(false);
+    setS2Ms(0);
+    startRef.current = null;
+    replayRef.current = true;
+    setAnnounce("Reset.");
+  };
+
+  const calculate = () => {
+    if (running) return;
+    clearTimers();
+    let next = exIdx;
+    if (!replayRef.current) {
+      const options = SYSTEM_EXAMPLES.map((_, i) => i).filter((i) => i !== exIdx);
+      next = options[Math.floor(Math.random() * options.length)];
+      setExIdx(next);
+    }
+    replayRef.current = false;
+    const run = SYSTEM_EXAMPLES[next];
+    const steps = run.slow.steps.length;
+    recordInteraction(PAGE_N);
+    setStarted(true);
+    setRunning(true);
+    setS1Step(0);
+    setS1Done(false);
+    setS1Ms(0);
+    setS2Step(0);
+    setS2Done(false);
+    setS2Ms(0);
+    doneRef.current = { s1: false, s2: false };
+    setAnnounce("Both systems are working.");
+    startRef.current = performance.now();
+    tickRef.current = setInterval(() => {
+      const t = elapsed();
+      if (!doneRef.current.s1) setS1Ms(t);
+      if (!doneRef.current.s2) setS2Ms(t);
+    }, 50);
+
+    // System 1: one step, on the same beat as System 2's first, answer with it.
+    later(STEP_MS, () => {
+      setS1Step(1);
+      doneRef.current.s1 = true;
+      setS1Ms(elapsed());
+      setS1Done(true);
+      setAnnounce(`System 1: ${run.fast.prompt} is ${run.fast.answer}. System 2 is still working.`);
+    });
+
+    // System 2: one step per beat, in parallel.
+    for (let i = 1; i < steps; i++) later(i * STEP_MS, () => setS2Step(i));
+    later(steps * STEP_MS, () => {
+      setS2Step(steps);
+      doneRef.current.s2 = true;
       if (tickRef.current) clearInterval(tickRef.current);
-      tickRef.current = setInterval(() => {
-        if (s2StartRef.current != null) setS2Ms(performance.now() - s2StartRef.current);
-      }, 100);
-    }
-    const next = s2Step + 1;
-    setS2Step(next);
-    if (next >= SYSTEMS.slow.steps.length) {
-      if (tickRef.current) {
-        clearInterval(tickRef.current);
-        tickRef.current = null;
-      }
-      if (s2StartRef.current != null) setS2Ms(performance.now() - s2StartRef.current);
-      setAnnounce(`System 2: worked out in ${SYSTEMS.slow.steps.length} steps. ${SYSTEMS.slow.prompt} is ${SYSTEMS.slow.answer}.`);
-    }
+      tickRef.current = null;
+      setS2Ms(elapsed());
+      setS2Done(true);
+      setRunning(false);
+      setAnnounce(`System 2: worked out in ${steps} steps. ${run.slow.prompt} is ${run.slow.answer}.`);
+    });
   };
 
   return (
@@ -97,21 +169,28 @@ export function Page1() {
       </h1>
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* The intro is a grid row of its own; its margin cell is empty. */}
+        {/* The intro is a grid row of its own so its citation can sit beside it. */}
         <p className="max-w-2xl text-lg text-ink-muted">
-          Inference-time scaling, put simply, is about giving a large language model (LLM) more
-          time, and thus more compute, when it answers. To help build intuition for this, we can
-          start by looking at how we, as people, think.
+          Your mind runs two systems.
+          <Cite n={REF.kahneman} /> <strong className="text-ink">System 1</strong> is fast,
+          automatic, and effortless. <strong className="text-ink">System 2</strong> is slow,
+          deliberate, and effortful. Each is important in its own way, and neither can replace the
+          other.
         </p>
-        <div aria-hidden="true" />
+        <Note kicker="References" flush>
+          <RefItem
+            n={REF.kahneman}
+            href="https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow"
+          >
+            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
+          </RefItem>
+        </Note>
 
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. Meet the two systems</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Meet your two systems</h2>
           <p className="leading-relaxed text-ink">
-            The human mind runs two systems.
-            <Cite n={REF.kahneman} /> The first is quick and effortless. The second is slower and
-            more deliberate. Here&apos;s what each one feels like.
+            Let&apos;s take the example of multiplication to illustrate the two systems.
           </p>
           <div className="grid gap-4 md:grid-cols-2">
             {/* System 1 — fast */}
@@ -119,44 +198,36 @@ export function Page1() {
               <div className="flex items-baseline justify-between gap-2">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-compute">System 1 · fast</h3>
                 <span role="timer" aria-label="System 1 time" className="rounded-full border border-grid px-2.5 py-0.5 font-mono text-xs tabular-nums text-ink-muted">
-                  {s1Revealed ? "instant" : "not started"}
+                  {started ? fmt(s1Ms) : "not started"}
                 </span>
               </div>
-              <p className="font-mono text-3xl text-ink">{SYSTEMS.fast.prompt}</p>
+              <p className="font-mono text-3xl text-ink">{ex.fast.prompt}</p>
               {/* System 1's whole workings: one step, in the same slot where
                   System 2 stacks three, so the counts sit side by side. */}
               <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
-                {s1Revealed ? (
+                {s1Step >= 1 ? (
                   <li className="flex flex-wrap items-baseline gap-2">
                     <span className="text-xs uppercase tracking-wide text-ink-muted">Step #1</span>
                     <span>
-                      {SYSTEMS.fast.prompt} = {SYSTEMS.fast.answer}
+                      {ex.fast.prompt} = {ex.fast.answer}
                     </span>
                   </li>
-                ) : null}
-                {/* Two blank rows hold the height of System 2's extra steps, so the
-                    two panels keep the same vertical rhythm. Hidden from the a11y
-                    tree: they are spacing, not content. */}
-                {[0, 1].map((i) => (
-                  <li key={`spacer-${i}`} aria-hidden="true" className="invisible">
-                    &nbsp;
-                  </li>
+                ) : (
+                  <StepSlot />
+                )}
+                {/* Blank rows hold the height of System 2's extra steps, so the two
+                    panels keep the same vertical rhythm. */}
+                {ex.slow.steps.slice(1).map((_, i) => (
+                  <StepSlot key={`spacer-${i}`} />
                 ))}
               </ol>
-              <div className="mt-auto flex flex-col gap-3">
-                {s1Revealed ? (
-                  <>
-                    <p className="font-mono text-5xl font-bold tabular-nums text-compute">{SYSTEMS.fast.answer}</p>
-                    <p className="text-sm text-ink-muted">
-                      The answer comes instantly because it&apos;s familiar. No computing necessary.
-                    </p>
-                  </>
-                ) : (
-                  <button type="button" onClick={revealS1} className="w-fit rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas">
-                    It&apos;s obvious
-                  </button>
-                )}
-              </div>
+              {/* The answer slot keeps its height before the reveal, so the panels do not jump. */}
+              <p
+                className={`mt-auto font-mono text-5xl font-bold tabular-nums text-compute ${s1Done ? "" : "invisible"}`}
+                aria-hidden={!s1Done}
+              >
+                {ex.fast.answer}
+              </p>
             </section>
 
             {/* System 2 — slow */}
@@ -164,42 +235,66 @@ export function Page1() {
               <div className="flex items-baseline justify-between gap-2">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-wrong">System 2 · slow</h3>
                 <span role="timer" aria-label="System 2 time" className="rounded-full border border-grid px-2.5 py-0.5 font-mono text-xs tabular-nums text-ink-muted">
-                  {s2Step === 0 ? "not started" : fmt(s2Ms)}
+                  {started ? fmt(s2Ms) : "not started"}
                 </span>
               </div>
-              <p className="font-mono text-3xl text-ink">{SYSTEMS.slow.prompt}</p>
+              <p className="font-mono text-3xl text-ink">{ex.slow.prompt}</p>
               <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
-                {SYSTEMS.slow.steps.slice(0, s2Step).map((line, i) => (
-                  <li key={i} className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-xs uppercase tracking-wide text-ink-muted">
-                      Step #{i + 1}
-                    </span>
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ol>
-              <div className="mt-auto flex flex-col gap-3">
-                {s2Done ? (
-                  <>
-                    <p className="font-mono text-5xl font-bold tabular-nums text-wrong">{SYSTEMS.slow.answer}</p>
-                    <p className="text-sm text-ink-muted">Not instant. You have to build it step by step.</p>
-                  </>
-                ) : (
-                  <button type="button" onClick={nextS2} className="w-fit rounded bg-wrong px-4 py-2 text-sm font-semibold text-canvas">
-                    {s2Step === 0 ? "Work it out" : "Next step"}
-                  </button>
+                {/* Every row is laid out from the start, so the widget never grows. */}
+                {ex.slow.steps.map((line, i) =>
+                  i < s2Step ? (
+                    <li key={i} className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-xs uppercase tracking-wide text-ink-muted">
+                        Step #{i + 1}
+                      </span>
+                      <span>{line}</span>
+                    </li>
+                  ) : (
+                    <StepSlot key={i} />
+                  ),
                 )}
-              </div>
+              </ol>
+              <p
+                className={`mt-auto font-mono text-5xl font-bold tabular-nums text-wrong ${s2Done ? "" : "invisible"}`}
+                aria-hidden={!s2Done}
+              >
+                {ex.slow.answer}
+              </p>
             </section>
           </div>
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={reset}
+              disabled={!started}
+              aria-label="Reset"
+              title="Reset"
+              className="rounded bg-wrong p-2 text-canvas hover:opacity-90 disabled:opacity-50"
+            >
+              {/* counter-clockwise arrow */}
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 1 0 3-6.7" />
+                <path d="M3 4v5h5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={calculate}
+              disabled={running}
+              className="w-fit rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+            >
+              {running ? "Calculating…" : "Calculate"}
+            </button>
+          </div>
+          <p className="leading-relaxed text-ink">
+            {ex.fast.prompt} is familiar, so <strong>System 1</strong> recognizes the answer
+            instantly. {ex.slow.prompt} is not, so <strong>System 2</strong> has to build it step by step, and that takes time.
+            For a typical person, it takes far longer than the {(nSteps * STEP_MS) / 1000} seconds
+            shown here.
+          </p>
         </section>
-        <Note kicker="References">
-          <RefItem
-            n={REF.kahneman}
-            href="https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow"
-          >
-            Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
-          </RefItem>
+        <Note kicker="Try it">
+          <p>Press Calculate again for a new example, or the arrow to replay the same one.</p>
         </Note>
 
         {/* Step 2 */}

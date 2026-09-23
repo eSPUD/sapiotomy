@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { Page1 } from "./Page1";
-import { SYSTEMS } from "@/lib/authored";
+import { SYSTEMS, SYSTEM_EXAMPLES } from "@/lib/authored";
 
-// The redesigned Page 1 is a System 1 / System 2 contrast: a one-tap reveal on
-// the fast side, a three-tap walkthrough on the slow side, and a drag-or-select
-// sorting game. No fake timers needed — the stopwatch is incidental to behavior.
+// Page 1 is a System 1 / System 2 contrast: one "Calculate" press reveals the
+// fast side at once and plays the slow side one step per beat, then a
+// drag-or-select sorting game. The Calculate tests drive the beats with fake timers.
 const mm = (q: string) => ({
   matches: false,
   media: q,
@@ -23,6 +23,8 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     vi.stubGlobal("performance", { now: () => 0 });
   });
   afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.stubGlobal("matchMedia", mm);
   });
@@ -32,26 +34,93 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Think Fast, Think Slow");
   });
 
-  it("System 1: one tap reveals the product instantly", () => {
+  it("one Calculate button runs both systems in lockstep, System 1 finishing first", () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0); // first draw: example 0
     render(<Page1 />);
+    // A single control drives the figure; the old per-panel buttons are gone.
+    expect(screen.queryByRole("button", { name: /obvious|work it out|next step/i })).toBeNull();
     const s1 = screen.getByRole("region", { name: "System 1" });
-    expect(within(s1).queryByText(SYSTEMS.fast.answer)).not.toBeInTheDocument();
-    fireEvent.click(within(s1).getByRole("button", { name: /obvious/i }));
-    expect(within(s1).getByText(SYSTEMS.fast.answer)).toBeInTheDocument();
+    const s2 = screen.getByRole("region", { name: "System 2" });
+    const answer = (el: HTMLElement, a: string) => within(el).getByText(a).className;
+    expect(answer(s1, SYSTEMS.fast.answer)).toMatch(/invisible/);
+    expect(answer(s2, SYSTEMS.slow.answer)).toMatch(/invisible/);
+    expect(screen.getAllByText("not started")).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+    // Both start together: both stopwatches leave "not started" at once.
+    expect(screen.queryByText("not started")).toBeNull();
+    expect(screen.getByRole("button", { name: /Calculating/ })).toBeDisabled();
+
+    // Beat 1: step 1 appears in both panels at the same moment.
+    act(() => vi.advanceTimersByTime(799));
+    expect(within(s1).queryByText(`${SYSTEMS.fast.prompt} = ${SYSTEMS.fast.answer}`)).toBeNull();
+    expect(within(s2).queryByText(SYSTEMS.slow.steps[0])).toBeNull();
+    expect(answer(s1, SYSTEMS.fast.answer)).toMatch(/invisible/);
+    act(() => vi.advanceTimersByTime(1));
+    expect(within(s1).getByText(`${SYSTEMS.fast.prompt} = ${SYSTEMS.fast.answer}`)).toBeInTheDocument();
+    expect(within(s2).getByText(SYSTEMS.slow.steps[0])).toBeInTheDocument();
+    // System 1's answer lands with its only step, not a beat later.
+    expect(answer(s1, SYSTEMS.fast.answer)).not.toMatch(/invisible/);
+
+    // Beat 2: System 2 writes step 2.
+    act(() => vi.advanceTimersByTime(800));
+    expect(within(s2).getByText(SYSTEMS.slow.steps[1])).toBeInTheDocument();
+
+    // System 2 keeps its beat; its answer lands with its last step, not after.
+    const rest = SYSTEMS.slow.steps.slice(2);
+    rest.forEach((line, i) => {
+      act(() => vi.advanceTimersByTime(800));
+      expect(within(s2).getByText(line)).toBeInTheDocument();
+      if (i < rest.length - 1) expect(answer(s2, SYSTEMS.slow.answer)).toMatch(/invisible/);
+    });
+    expect(answer(s2, SYSTEMS.slow.answer)).not.toMatch(/invisible/);
+    expect(screen.getByRole("button", { name: "Calculate" })).toBeEnabled();
   });
 
-  it("System 2: tapping through the steps builds up to the answer", () => {
+  it("reruns the example on screen first, then shuffles; Reset replays the same one", () => {
+    vi.useFakeTimers();
+    const random = vi.spyOn(Math, "random").mockReturnValue(0);
     render(<Page1 />);
-    const s2 = screen.getByRole("region", { name: "System 2" });
-    // Work it out, then Next step for each remaining line.
-    fireEvent.click(within(s2).getByRole("button", { name: /work it out/i }));
-    for (const line of SYSTEMS.slow.steps.slice(1)) {
-      expect(within(s2).getByRole("button", { name: /next step/i })).toBeInTheDocument();
-      fireEvent.click(within(s2).getByRole("button", { name: /next step/i }));
-      expect(within(s2).getByText(line)).toBeInTheDocument();
-    }
-    // Final line and answer are both present.
-    expect(within(s2).getByText(SYSTEMS.slow.answer)).toBeInTheDocument();
+    const run = () => {
+      fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+      act(() => vi.advanceTimersByTime(800 * SYSTEMS.slow.steps.length));
+    };
+    const reset = screen.getByRole("button", { name: "Reset" });
+    expect(reset).toBeDisabled();
+    expect(reset.textContent).toBe(""); // icon only
+
+    // Reset sits left of Calculate.
+    const buttons = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent);
+    expect(buttons.indexOf("Reset")).toBeLessThan(buttons.indexOf("Calculate"));
+
+    // The first press runs the example already on screen, without shuffling.
+    // (With Math.random pinned to 0, a shuffle would have picked example 1.)
+    run();
+    expect(screen.getByText(SYSTEM_EXAMPLES[0].slow.prompt)).toBeInTheDocument();
+    // A later press draws a new one, never the example just shown.
+    run();
+    expect(screen.queryByText(SYSTEM_EXAMPLES[0].slow.prompt)).toBeNull();
+    expect(screen.getByText(SYSTEM_EXAMPLES[1].slow.prompt)).toBeInTheDocument();
+    // The closing sentence follows the example on screen.
+    expect(document.body.textContent ?? "").toMatch(
+      new RegExp(`${SYSTEM_EXAMPLES[1].fast.prompt} is familiar`),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(screen.getAllByText("not started")).toHaveLength(2);
+    // After Reset, Calculate replays the same example; the press after that shuffles.
+    // (A shuffle from example 1 would have picked example 0.)
+    run();
+    expect(screen.getByText(SYSTEM_EXAMPLES[1].slow.prompt)).toBeInTheDocument();
+    run();
+    expect(screen.queryByText(SYSTEM_EXAMPLES[1].slow.prompt)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(
+      screen.getByText("Press Calculate again for a new example, or the arrow to replay the same one."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reset" })).toBeDisabled();
+    random.mockRestore();
   });
 
   it("numbers the Kahneman citation inline and in the references note", () => {
@@ -75,6 +144,8 @@ describe("Page 1 sorting game (SystemSort)", () => {
     vi.stubGlobal("performance", { now: () => 0 });
   });
   afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.stubGlobal("matchMedia", mm);
   });
@@ -121,41 +192,41 @@ describe("Page 1 copy", () => {
     vi.stubGlobal("performance", { now: () => 0 });
   });
   afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.stubGlobal("matchMedia", mm);
   });
 
-  it("opens by naming inference-time scaling, then the two systems", () => {
+  it("opens on the two systems, then goes straight to the panels", () => {
     render(<Page1 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/Inference-time scaling, put simply, is about giving a large language model \(LLM\) more\s*time/);
-    expect(body).toMatch(/The human mind runs two systems\./);
+    expect(body).toMatch(
+      /Your mind runs two systems\.(reference 1)?\s*System 1 is fast,\s*automatic, and effortless\. System 2 is slow,\s*deliberate, and effortful\. Each is important in its own way, and neither can replace the\s*other\./,
+    );
+    expect(body).not.toMatch(/The human mind runs two systems|One operation, multiplication/);
   });
 
-  it("shows the new reveal lines and drops the panel captions", () => {
+  it("drops the reveal lines and panel captions, and concludes below the panels", () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0);
     render(<Page1 />);
-    const s1 = screen.getByRole("region", { name: "System 1" });
-    fireEvent.click(within(s1).getByRole("button", { name: /obvious/i }));
-    expect(within(s1).getByText(/The answer comes instantly because it's familiar\. No computing necessary\./)).toBeInTheDocument();
-    const s2 = screen.getByRole("region", { name: "System 2" });
-    fireEvent.click(within(s2).getByRole("button", { name: /work it out/i }));
-    for (let i = 1; i < SYSTEMS.slow.steps.length; i++) {
-      fireEvent.click(within(s2).getByRole("button", { name: /next step/i }));
-    }
-    expect(within(s2).getByText("Not instant. You have to build it step by step.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+    act(() => vi.advanceTimersByTime(800 * SYSTEMS.slow.steps.length));
     const body = document.body.textContent ?? "";
+    expect(body).not.toMatch(/No computing necessary|Not instant\. You have to build it/);
+    expect(body).toMatch(/3 × 4 is familiar, so System 1 recognizes the answer instantly\. 17 × 24\s*is not, so System 2 has to build it step by step, and that takes time\.\s*For a typical person, it takes far longer than the 3\.2\s*seconds\s*shown here\./);
     expect(body).not.toMatch(/Recognition, not work/);
     expect(body).not.toMatch(/You feel every step/);
   });
 
   it("keeps rendered text free of em dashes, before and after both reveals", () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0);
     render(<Page1 />);
     expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
-    fireEvent.click(screen.getByRole("button", { name: /obvious/i }));
-    fireEvent.click(screen.getByRole("button", { name: /work it out/i }));
-    for (let i = 1; i < SYSTEMS.slow.steps.length; i++) {
-      fireEvent.click(screen.getByRole("button", { name: /next step/i }));
-    }
+    fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+    act(() => vi.advanceTimersByTime(800 * SYSTEMS.slow.steps.length));
     expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
   });
 });

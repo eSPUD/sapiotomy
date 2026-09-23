@@ -57,10 +57,37 @@ export const SYSTEMS = {
   fast: { prompt: "3 × 4", answer: "12" },
   slow: {
     prompt: "17 × 24",
-    steps: ["17 × 20 = 340", "17 × 4 = 68", "340 + 68 = 408"],
+    steps: ["24 = 20 + 4", "17 × 20 = 340", "17 × 4 = 68", "340 + 68 = 408"],
     answer: "408",
   },
 } as const;
+
+/**
+ * Page 1's figure draws one of these per "Calculate" press, at random. Each pairs
+ * a familiar product (System 1) with one built in four steps (System 2): split
+ * the second factor, two partial products, then add. SYSTEMS is the first
+ * example, so the figure's first render and page 5's callback agree. Every
+ * step is arithmetically checked in act1.test.ts.
+ */
+export const SYSTEM_EXAMPLES = [
+  SYSTEMS,
+  {
+    fast: { prompt: "5 × 6", answer: "30" },
+    slow: {
+      prompt: "23 × 14",
+      steps: ["14 = 10 + 4", "23 × 10 = 230", "23 × 4 = 92", "230 + 92 = 322"],
+      answer: "322",
+    },
+  },
+  {
+    fast: { prompt: "2 × 8", answer: "16" },
+    slow: {
+      prompt: "36 × 12",
+      steps: ["12 = 10 + 2", "36 × 10 = 360", "36 × 2 = 72", "360 + 72 = 432"],
+      answer: "432",
+    },
+  },
+] as const;
 
 /**
  * Six everyday tasks across different topics (perception, language, emotion,

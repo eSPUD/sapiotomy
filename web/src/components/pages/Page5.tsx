@@ -157,7 +157,11 @@ const PAGE_N = 5;
 /** Page 1's System 2 round, so the callback cannot drift from what it calls back to. */
 const S2 = SYSTEMS.slow;
 /** "17 × 20 = 340" → "340": the three results the reader watched themselves build. */
-const S2_RESULTS = S2.steps.map((s) => s.slice(s.lastIndexOf("=") + 1).trim());
+// Only the steps that compute a number: page 1's first step splits 24 into 20 + 4,
+// which is a plan, not a result.
+const S2_RESULTS = S2.steps
+  .map((s) => s.slice(s.lastIndexOf("=") + 1).trim())
+  .filter((r) => /^\d+$/.test(r));
 const F1 = PAGE5.figure1;
 const F2 = PAGE5.figure2;
 const F3 = PAGE5.figure3;
