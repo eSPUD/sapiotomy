@@ -22,8 +22,10 @@ import { MULT_METHODS } from "@/lib/authored";
 
 const M = MULT_METHODS;
 
-// Act 1's hard rule now covers this page too: the Act 2+ jargon never appears.
-const BANNED = /inference/i;
+// Act 1's hard rule: the Act 2+ jargon never appears. The lede now names
+// "inference-time scaling" (the Act 1 plan introduces it on pages 1 and 2 and
+// ties reasoning to it here); any other "inference" talk is still banned.
+const BANNED = /inference(?!-time scaling)/i;
 const expectClean = () => {
   expect(document.body.textContent ?? "").not.toMatch(BANNED);
 };
@@ -40,12 +42,12 @@ describe("Page 4 (Reasoning: Diverse Pathfinding)", () => {
     reducedMotion = true;
   });
 
-  it("shows everything up front: dropdown, panel, meaning band, open questions", () => {
+  it("shows everything up front: dropdown, panel, trade-off cards, closing box", () => {
     render(<Page4 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Reasoning: Diverse Pathfinding",
     );
-    // The dropdown carries all three roads.
+    // The dropdown carries all three methods.
     expect(methodSelect()).toBeInTheDocument();
     expect(screen.getAllByRole("option")).toHaveLength(3);
     // No pop-ups: the meaning band and the finale are on from first paint —
@@ -54,9 +56,8 @@ describe("Page 4 (Reasoning: Diverse Pathfinding)", () => {
       expect(screen.getAllByText(m.name).length).toBeGreaterThanOrEqual(2);
       expect(screen.getAllByText(new RegExp(m.limitation.slice(0, 24))).length).toBeGreaterThan(0);
     }
-    expect(screen.getByText(/Three journeys, one destination/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Reasoning is inherently diverse pathfinding from prior knowledge/i),
+      screen.getByText(/All three methods of reasoning through the problem land on the correct answer\./),
     ).toBeInTheDocument();
     expect(screen.getByText(/guide a machine down different roads/i)).toBeInTheDocument();
     expect(screen.getByText(/chart its own road/i)).toBeInTheDocument();
@@ -198,14 +199,73 @@ describe("Page 4 animated Play (no reduced motion)", () => {
     expect(screen.getByText("step 2 of 4")).toBeInTheDocument();
   });
 
-  // The lede posed the walk AND gave away the convergence, which step 2's verdict box
-  // and step 3 then said again. The payoff belongs to the interactive.
-  it("poses the walk in the lede and leaves the convergence to step 2", () => {
+  // The lede names reasoning and ties it to inference-time scaling; the convergence
+  // and the trade-offs belong to step 2.
+  it("names reasoning in the lede and leaves the convergence to step 2", () => {
     render(<Page4 />);
-    const lede = screen.getByText(/Working a problem out instead of looking it up/).textContent ?? "";
-    expect(lede).toMatch(/three cultures worked it three different ways/);
-    expect(lede).not.toMatch(/to the same/);
+    const lede =
+      screen.getByText(/Working a problem out, instead of recognizing the answer/).textContent ?? "";
+    expect(lede).toMatch(/Reasoning is what inference-time scaling spends its extra time and compute on\./);
+    expect(lede).toMatch(/there is rarely only one way to reason through a problem\./);
+    expect(lede).not.toMatch(/223,300/);
     // Step 2 still owns it.
-    expect(screen.getByText(/Three journeys, one destination/)).toBeInTheDocument();
+    expect(screen.getByText(/land on the correct answer/)).toBeInTheDocument();
+  });
+});
+
+describe("Page 4 layout and copy (Act 1 revisions)", () => {
+  beforeEach(() => {
+    reducedMotion = true;
+  });
+
+  it("uses the new headings, the Try it note, and no origin lines", () => {
+    render(<Page4 />);
+    const h2s = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(h2s[0]).toBe("1. Three ways to work out 350 × 638");
+    expect(h2s[1]).toMatch(/^2\. The methods and their trade-offs/);
+    expect(h2s.some((t) => /Where this leaves us/.test(t ?? ""))).toBe(false);
+    expect(screen.queryByText(/authored walkthroughs/)).toBeNull();
+    expect(screen.getByText("Pick a method, work it through, then try another.")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Vedic multiplication" })).toBeInTheDocument();
+    expect(screen.getByText("Trade-off:")).toBeInTheDocument();
+    const body = document.body.textContent ?? "";
+    expect(body).not.toMatch(/The limit of this road/);
+    expect(body).not.toMatch(/Urdhva|school algorithm|often taught in East Asia/);
+    expect(body).not.toMatch(/We showcase only three here/);
+    expect(body).not.toMatch(/Three journeys|one problem, three roads/i);
+  });
+
+  it("keeps the margin paired: Try it above the reference in one cell", () => {
+    render(<Page4 />);
+    const tryIt = screen.getByText("Try it").closest("aside")!;
+    const refs = screen.getByText("References").closest("aside")!;
+    expect(tryIt.parentElement).toBe(refs.parentElement);
+    expect(
+      tryIt.compareDocumentPosition(refs) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("ends on one shaded box: the closing box is the only border-l-4 compute box after the walkthrough", () => {
+    const { container } = render(<Page4 />);
+    const shaded = Array.from(container.querySelectorAll(".border-l-4.border-compute"));
+    // The walkthrough panel plus the closing box; the takeaway is plain text.
+    expect(shaded).toHaveLength(2);
+    const closing = shaded[shaded.length - 1];
+    expect(closing.textContent).toMatch(/guide a machine down different roads/);
+    expect(screen.getByText(/land on the correct answer/).closest(".border-l-4")).toBeNull();
+  });
+
+  it("has no em dash in its rendered text on any method at any step", () => {
+    render(<Page4 />);
+    for (const key of ["standard", "lines", "vedic"]) {
+      pick(key);
+      for (let i = 0; i < 7; i++) {
+        expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
+        const btn = screen.getByRole("button", { name: /next/i });
+        if ((btn as HTMLButtonElement).disabled) break;
+        fireEvent.click(btn);
+      }
+    }
+    expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
   });
 });
