@@ -98,12 +98,18 @@ export function Page1() {
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* The intro is a grid row of its own so its citation can sit beside it. */}
-        <p className="max-w-2xl text-lg text-ink-muted">
-          Your mind runs two systems. <strong className="text-ink">System 1</strong> is fast,
-          automatic, effortless. <strong className="text-ink">System 2</strong> is slow, deliberate,
-          effortful.
-          <Cite n={REF.kahneman} /> One operation, multiplication, flips you between them.
-        </p>
+        <div className="flex max-w-2xl flex-col gap-4 text-lg text-ink-muted">
+          <p>
+            Inference-time scaling, put simply, is about giving a large language model (LLM) more
+            time, and thus more compute, when it answers. To help build intuition for this, we can
+            start by looking at how we, as people, think.
+          </p>
+          <p>
+            The human mind runs two systems.
+            <Cite n={REF.kahneman} /> The first is quick and effortless. The second is slower and
+            more deliberate. Here&apos;s what each one feels like.
+          </p>
+        </div>
         <Note kicker="References" flush>
           <RefItem
             n={REF.kahneman}
@@ -151,7 +157,7 @@ export function Page1() {
                   <>
                     <p className="font-mono text-5xl font-bold tabular-nums text-compute">{SYSTEMS.fast.answer}</p>
                     <p className="text-sm text-ink-muted">
-                      The answer was already there. You didn&apos;t compute it; you recognized it.
+                      The answer comes instantly because it&apos;s familiar. No computing necessary.
                     </p>
                   </>
                 ) : (
@@ -159,7 +165,6 @@ export function Page1() {
                     It&apos;s obvious
                   </button>
                 )}
-                <p className="text-xs text-ink-muted">Automatic · Effortless · Recognition, not work</p>
               </div>
             </section>
 
@@ -186,14 +191,13 @@ export function Page1() {
                 {s2Done ? (
                   <>
                     <p className="font-mono text-5xl font-bold tabular-nums text-wrong">{SYSTEMS.slow.answer}</p>
-                    <p className="text-sm text-ink-muted">You built it, line by line. That building is System 2.</p>
+                    <p className="text-sm text-ink-muted">Not instant. You have to build it step by step.</p>
                   </>
                 ) : (
                   <button type="button" onClick={nextS2} className="w-fit rounded bg-wrong px-4 py-2 text-sm font-semibold text-canvas">
                     {s2Step === 0 ? "Work it out" : "Next step"}
                   </button>
                 )}
-                <p className="text-xs text-ink-muted">Deliberate · Sequential · You feel every step</p>
               </div>
             </section>
           </div>
@@ -207,23 +211,24 @@ export function Page1() {
         </section>
         <Note kicker="Sort it">
           <p>Drag a chip into a system, or select it and press &ldquo;Place here.&rdquo;</p>
-          <p>Correct drops lock in green; wrong ones flash red and bounce back.</p>
+          <p>Correct drops are green, and wrong drops show up as red.</p>
         </Note>
 
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. The difference</h2>
           <p className="leading-relaxed text-ink">
-            Same operation, two different machines. <strong>System 1</strong> recognizes the answer;{" "}
-            <strong>System 2</strong> builds it. One arrives whole, instant, effortless, automatic.
-            The other comes line by line, slow, deliberate, and you feel every step. Recognizing an
-            answer and constructing one are not the same act.
+            A good rule of thumb for telling the two systems apart is familiarity.{" "}
+            <strong>System 1</strong> recognizes or reacts as things happen, by reflex.{" "}
+            <strong>System 2</strong> spends more time, and brain power, to solve a problem you
+            cannot recognize instantly. Even though System 2 is slower, it often leads to a better
+            answer, one with fewer errors.
           </p>
-          {/* The only seam in the deck that had no hook: this page ended here and page 2
-              opened cold on "an LLM", leaving the bridge to be built twice. */}
+          {/* The hand-off: hints at training (what you have learned) versus
+              inference-time scaling (how long you think) without naming either. */}
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            Keep the distinction. The next page asks a question that looks like recognition and is
-            not, and watches a machine answer it on reflex.
+            Remember the difference between the two systems. Some answers depend on what you have
+            already learned. Others depend on how long you are willing to think.
           </div>
         </section>
         <div aria-hidden="true" />
