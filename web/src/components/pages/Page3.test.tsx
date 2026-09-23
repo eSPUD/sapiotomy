@@ -41,19 +41,16 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("shows both problems, the slider, and the guess box up front", () => {
     render(<Page3 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training-Time Scaling");
-    // Section 1's four walls are each their own sub-head; section 2 is now a
-    // two-sentence summary with no sub-heads.
-    for (const h of [
-      /The bill compounds/i,
-      /It always lags/i,
-      /It cannot be aimed/i,
-      /The data runs out/i,
-    ]) {
+    // Section 1's three walls are each their own sub-head, lettered a to c;
+    // section 2 is one paragraph with no sub-heads.
+    for (const h of [/a\. The bill compounds/i, /b\. It always lags/i, /c\. The data runs out/i]) {
       expect(screen.getByRole("heading", { level: 3, name: h })).toBeInTheDocument();
     }
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(3);
+    expect(screen.queryByRole("heading", { level: 3, name: /It cannot be aimed/i })).toBeNull();
     // The bias section states both limits as prose.
-    expect(screen.getByText(/more reading cannot answer\s*it/i)).toBeInTheDocument();
-    expect(screen.getByText(/sharpens that\s*default/i)).toBeInTheDocument();
+    expect(document.body.textContent).toMatch(/More data would not have helped\./);
+    expect(screen.getByText("strengthens that bad habit")).toBeInTheDocument();
     // Step 1: the combined cost curve. The old one-year meter stays gone.
     expect(
       screen.getByRole("heading", { level: 2, name: /1\. Challenges in addressing knowledge gaps/i }),
@@ -71,7 +68,9 @@ describe("Page 3 (Training-Time Scaling)", () => {
     ).toBeInTheDocument();
     // Step 3: the guess, under the same numbered spine as pages 1 and 4.
     // The scaling-law spine: bigger models only pay off if they read more, in step.
-    expect(screen.getByText(/which is the scaling law/i)).toBeInTheDocument();
+    expect(document.body.textContent).toMatch(
+      /found a\s*scaling law: about 20 tokens of text for every\s*parameter/i,
+    );
     // The featured number, plainly glossed; the Chinchilla comparison moved to the footer.
     expect(screen.getByText("≈300T tokens")).toBeInTheDocument();
     expect(screen.getByText(/tokens: the pieces of text a model reads/i)).toBeInTheDocument();
@@ -85,7 +84,9 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(
       screen.getByRole("slider", { name: /drag through the projected years/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/No budget buys tokens that do not exist/i)).toBeInTheDocument();
+    expect(document.body.textContent).toMatch(
+      /roughly 300 trillion\s*tokens of quality writing, and no budget buys tokens that do not exist/i,
+    );
     // The flat per-run rate still anchors the legend, caption, and footer.
     expect(screen.getAllByText(new RegExp(`\\$${RUN_M}M`)).length).toBeGreaterThan(0);
     expect(screen.getByRole("navigation", { name: /page navigation/i })).toBeInTheDocument();
@@ -131,7 +132,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("glosses parameter where it first carries weight", () => {
     render(<Page3 />);
     expect(document.body.textContent).toMatch(
-      /one of the numbers inside the model that training adjusts/,
+      /parameter, the numbers inside a model that training adjusts/,
     );
   });
 
@@ -164,41 +165,64 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expectClean();
   });
 
-  it("names the projection as the trend one, not the compute one", () => {
+  it("captions the projection by where it meets the stock, with no footnote", () => {
     render(<Page3 />);
-    expect(screen.getByText(/the trend projection only/i)).toBeInTheDocument();
-    expect(screen.getByText(/compute-based projection, which is not/i)).toBeInTheDocument();
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/Epoch projects that the largest training sets grow about ×\d\.\d a year/);
+    expect(body).toMatch(/meets\s*the stock of text that exists/);
+    expect(body).not.toMatch(/compute-based projection/i);
+    expect(body).not.toMatch(/inside the window below/i);
     expectClean();
   });
 
-  it("closes on two sentences that state both failures and hand off", () => {
+  it("folds the one-missing-fact point into the bill's caption", () => {
+    render(<Page3 />);
+    const bill = screen.getByRole("figure", { name: /problem one/i });
+    expect(bill.textContent).toMatch(
+      /For one missing fact, like the 2026 final, that bill is not\s*economically feasible\./,
+    );
+  });
+
+  it("opens on the lede's two questions and closes on the plain verdict", () => {
     render(<Page3 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/buys more facts, later, at compounding cost/i);
-    expect(body).toMatch(/cannot touch a bias\s*that was never about missing facts/i);
+    expect(body).toMatch(/Would that close the knowledge gap\? Would it fix the knowledge bias\?/);
+    expect(body).toMatch(/buys more knowledge, narrowing the knowledge gap, but at a compounding\s*cost/i);
+    expect(body).toMatch(/It can also make the knowledge bias worse\./);
     // the hand-off, and the page's standing rule that it never names the sequel
-    expect(body).toMatch(/leaves only what it does\s*after it/i);
+    expect(body).toMatch(/spends compute at answer time, on the\s*question actually asked/i);
     expectClean();
+  });
+
+  it("keeps rendered text free of em dashes", () => {
+    render(<Page3 />);
+    expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
+    dragMonths(12);
+    fireEvent.keyDown(screen.getByRole("slider", { name: /drag through the projected years/i }), {
+      key: "ArrowRight",
+    });
+    expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
   });
 
   it("each margin note carries only the sources its section uses", () => {
     render(<Page3 />);
     const notes = Array.from(document.querySelectorAll("aside")).map((a) => a.textContent ?? "");
-    // Section 1's References note, and section 2's "Why bias happens" sidenote.
-    expect(notes).toHaveLength(2);
-    const [gaps, bias] = notes;
+    // Section 1's References note only: section 2 cites nothing.
+    expect(notes).toHaveLength(1);
+    const [gaps] = notes;
 
-    // The gap section owns every cost and data source, and none of the bias one.
+    // The gap section owns every cost and data source.
     for (const ref of [/Sevilla/, /Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
       expect(gaps).toMatch(ref);
     }
-    expect(gaps).not.toMatch(/Zhao/);
-    // The bias sidenote explains the cause and cites Zhao et al. for it.
-    expect(bias).toMatch(/Why bias happens/i);
-    expect(bias).toMatch(/likeliest next token/i);
-    expect(bias).toMatch(/Zhao/);
-    // The trimmed-away challenges' sources are gone from the page entirely.
-    expect(document.body.textContent ?? "").not.toMatch(/Shumailov|Askell/);
+    // The cut "Why bias happens" note took WinoBias with it; the trimmed-away
+    // challenges' sources are gone from the page entirely.
+    expect(document.body.textContent ?? "").not.toMatch(/Why bias happens|Zhao|Shumailov|Askell/);
+    // References stay numbered 1 to 6 in order of first appearance.
+    const nums = Array.from(document.querySelectorAll("sup")).map((s) =>
+      Number(s.textContent?.replace(/\D/g, "")),
+    );
+    expect([...new Set(nums)]).toEqual([1, 2, 3, 4, 5, 6]);
     expectClean();
   });
 
