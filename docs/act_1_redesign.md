@@ -68,6 +68,10 @@ Keep the structure and both interactives. Frame: answers slide 2's closing quest
 - c chart caption ("So when does the field actually reach the ceiling? Epoch project the largest training set forward from its own trend, about ×N a year. Drag the year.") becomes "Epoch projects that the largest training sets grow about ×N a year. Drag the year to see when that line meets the stock of text that exists."
 - Cut from c: the "trend projection only · Epoch also run a compute-based projection, which is not drawn here" footnote, and "inside the window below" in the readout.
 
+**3. Section 2, knowledge bias.**
+- Paragraph ("Page 2's model held the 2023 title the whole time and dropped it anyway, so the miss was never about what it had read — more reading cannot answer it. And because a model settles on whatever its corpus says most, more text from the same world only sharpens that default rather than loosening it.") becomes "In the World Cup problem, the model almost certainly had the women's 2023 title in its data and left it out anyway. More data would not have helped. Even worse, a model is trained to predict the most likely next word, which means it goes with whatever its training data covers most. Retraining on more text, where the men's tournament still gets more coverage, **strengthens that bad habit**." Removes the page reference, the em dash, and "corpus"; matches slide 2's "almost certainly".
+- Cut the "Why bias happens" margin note and its WinoBias reference (jargon, repeats slide 2, re-cites slide 2's source). Its one new idea (predict the most likely next word) is now in the paragraph. Fixes the white space: the row was as tall as the note.
+
 ## Back pocket
 
 - "What it buys, how to buy more of it, and where buying more stops helping" (cut from slide 2's closing): reword without the tricolon for the slide 5 lede, where inference-time scaling becomes the reader's lever.
