@@ -67,7 +67,7 @@ function maxStepOf(method: MultMethodKey): number {
 
 /** Narration for the current step (step 0 is the setup prompt). */
 function narrationOf(method: MultMethodKey, step: number): string {
-  if (step === 0) return "Press Next (or Play) to walk the road.";
+  if (step === 0) return "Press Next (or Play) to work it through.";
   const max = maxStepOf(method);
   if (step >= max) {
     const landing =
@@ -425,7 +425,7 @@ export function Page4() {
           <h2 className="text-xl font-semibold text-ink">1. Three ways to work out 350 × 638</h2>
           <section
             aria-label="Three ways to work out 350 × 638"
-            className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
+            className="flex flex-col gap-4 rounded-lg bg-surface p-4"
           >
             <div className="flex flex-wrap items-center gap-3">
               <label htmlFor={selectId} className="text-sm font-semibold text-ink">
@@ -486,9 +486,6 @@ export function Page4() {
               {narration}
             </p>
 
-            <p className="border-t border-grid pt-3 text-sm text-ink-muted">
-              <strong className="text-wrong">Trade-off:</strong> {meta.limitation}
-            </p>
           </section>
         </section>
         <div className="flex flex-col gap-6 lg:pt-9">
@@ -506,9 +503,6 @@ export function Page4() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
             2. The methods and their trade-offs
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              what each method is good at, and what it costs
-            </span>
           </h2>
           <section aria-label="The methods and their trade-offs" className="flex flex-col gap-3">
             <div className="grid items-stretch gap-3 md:grid-cols-3">
@@ -521,7 +515,7 @@ export function Page4() {
                     {m.name}
                   </p>
                   <p className="mt-2 text-sm text-ink-muted">
-                    <strong className="text-wrong">limit:</strong> {m.limitation}
+                    <strong className="text-wrong">Trade-off:</strong> {m.limitation}
                   </p>
                 </div>
               ))}

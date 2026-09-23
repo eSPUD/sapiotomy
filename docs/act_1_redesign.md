@@ -101,6 +101,8 @@ Keep the page (overrides the reviewer plan's D1 cut): "one problem, many paths" 
 
 **4. Section 3.** Cut the "3. Where this leaves us" heading. The page ends on one shaded closing box (wording pending) that hands off to chain of thought and seeds trying more than one way.
 
+**5. Follow-ups after the first pass (applied).** Drop the walkthrough's trade-off line (the cards already show it); cut section 2's tag line; cards "limit:" becomes "Trade-off:"; narration "walk the road" becomes "work it through"; Vedic trade-off "The fastest road" becomes "The fastest method"; the walkthrough panel stays shaded but loses its teal bar, so the closing box is the only barred box.
+
 ## Back pocket
 
 - "What it buys, how to buy more of it, and where buying more stops helping" (cut from slide 2's closing): reword without the tricolon for the slide 5 lede, where inference-time scaling becomes the reader's lever.

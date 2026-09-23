@@ -227,12 +227,14 @@ describe("Page 4 layout and copy (Act 1 revisions)", () => {
     expect(screen.queryByText(/authored walkthroughs/)).toBeNull();
     expect(screen.getByText("Pick a method, work it through, then try another.")).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Vedic multiplication" })).toBeInTheDocument();
-    expect(screen.getByText("Trade-off:")).toBeInTheDocument();
+    // One trade-off label per card; the walkthrough no longer repeats it.
+    expect(screen.getAllByText("Trade-off:")).toHaveLength(3);
     const body = document.body.textContent ?? "";
     expect(body).not.toMatch(/The limit of this road/);
     expect(body).not.toMatch(/Urdhva|school algorithm|often taught in East Asia/);
     expect(body).not.toMatch(/We showcase only three here/);
     expect(body).not.toMatch(/Three journeys|one problem, three roads/i);
+    expect(body).not.toMatch(/limit:|walk the road|fastest road|what each method is good at/);
   });
 
   it("keeps the margin paired: Try it above the reference in one cell", () => {
@@ -245,12 +247,12 @@ describe("Page 4 layout and copy (Act 1 revisions)", () => {
     ).toBeTruthy();
   });
 
-  it("ends on one shaded box: the closing box is the only border-l-4 compute box after the walkthrough", () => {
+  it("ends on one teal-barred box: the closing box is the only border-l-4 compute box", () => {
     const { container } = render(<Page4 />);
     const shaded = Array.from(container.querySelectorAll(".border-l-4.border-compute"));
-    // The walkthrough panel plus the closing box; the takeaway is plain text.
-    expect(shaded).toHaveLength(2);
-    const closing = shaded[shaded.length - 1];
+    // The walkthrough panel is shaded but unbarred; the takeaway is plain text.
+    expect(shaded).toHaveLength(1);
+    const closing = shaded[0];
     expect(closing.textContent).toMatch(/guide a machine down different roads/);
     expect(screen.getByText(/land on the correct answer/).closest(".border-l-4")).toBeNull();
   });

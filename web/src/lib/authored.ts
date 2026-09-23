@@ -329,7 +329,7 @@ export const MULT_METHODS = {
     key: "vedic",
     name: "Vedic multiplication",
     limitation:
-      "The fastest road, but the crosswise pattern must be memorized for each size, and the carries stack up in your head.",
+      "The fastest method, but the crosswise pattern must be memorized for each size, and the carries stack up in your head.",
     columns: [
       { say: "Units, vertically: 0 × 8 = 0. Write 0.", place: "units", placeValue: 1, pairs: [[0, 8]], sum: 0, carryIn: 0, digit: 0, carryOut: 0 },
       { say: "Tens, crosswise: 5 × 8 + 0 × 3 = 40. Write 0, carry 4.", place: "tens", placeValue: 10, pairs: [[5, 8], [0, 3]], sum: 40, carryIn: 0, digit: 0, carryOut: 4 },
