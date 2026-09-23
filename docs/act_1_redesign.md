@@ -76,6 +76,12 @@ Keep the structure and both interactives. Frame: answers slide 2's closing quest
 
 **4. Closing box.** "Training-time scaling buys more facts, later, at compounding cost, and it cannot touch a bias that was never about missing facts. Every wall here limits what a model can be given before the question arrives, which leaves only what it does after it." becomes "Training-time scaling buys more knowledge, narrowing the knowledge gap, but at a compounding cost. It can also make the knowledge bias worse. The problem is that retraining spends its compute before anyone asks. Thinking it through spends compute at answer time, on the question actually asked." *Why:* answers the lede's two questions, and frames before/after as where the compute is spent, echoing slide 1's definition.
 
+**5. Second pass: repetition around the charts.**
+- Cut the "every quality token humans have written ≈300T tokens" card (the prose and the chart's "300T stock" line already carry it). Its citation (Villalobos et al.) moves onto the prose sentence stating 300T; its token gloss moves to the first use: "about 20 **tokens** (pieces of text, roughly a word each) for every **parameter**, the numbers inside a model that training adjusts."
+
+- Section a: cut the tag "derived from the two Epoch trends"; opening line becomes "What would it cost to retrain a model every day for a year?"; caption cut to "Frontier training runs grow about ×2.4 more expensive each year, and one GPT-4-class run costs an estimated $78M. For one missing fact, like the 2026 final, that bill is not economically feasible." (Sevilla & Roldán reference dropped with the 5x sentence; references now 1 to 5.)
+- Section c: cut the tag "cited stock, derived demand"; readout becomes "By 2028, the largest training set reaches ≈199T tokens, 66% of the stock. The trend crosses the stock in Jun 2028. Epoch estimates the stock will be fully used between 2026 and 2032." (numbers stay live); cut the window meter and "The band is the cited window, not a burn rate; nothing here depletes."
+
 ## Slide 4. Reasoning: Diverse Pathfinding
 
 Keep the page (overrides the reviewer plan's D1 cut): "one problem, many paths" is the intuition voting, best-of-N and search build on. The problem is that it never connects reasoning to inference-time scaling, and its roads/tolls/cultures layer reads as jargon and history.

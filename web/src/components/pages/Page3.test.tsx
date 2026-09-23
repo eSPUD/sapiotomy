@@ -60,7 +60,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(screen.getByRole("group", { name: /the first year/i })).toBeInTheDocument();
     expect(screen.queryByRole("img", { name: /cumulative bill/i })).toBeNull();
     expect(screen.queryByRole("slider", { name: /drag through the year/i })).toBeNull();
-    expect(screen.getByText(/Training price is not a fixed number/i)).toBeInTheDocument();
+    expect(screen.getByText(/What would it cost to retrain a model every day for a year\?/)).toBeInTheDocument();
     expect(yearSlider()).toBeInTheDocument();
     // Step 2: the data wall, with the two cited anchors.
     expect(
@@ -69,17 +69,13 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // Step 3: the guess, under the same numbered spine as pages 1 and 4.
     // The scaling-law spine: bigger models only pay off if they read more, in step.
     expect(document.body.textContent).toMatch(
-      /found a\s*scaling law: about 20 tokens of text for every\s*parameter/i,
+      /found a\s*scaling law: about 20 tokens \(pieces of text, roughly a word each\) for every\s*parameter/i,
     );
-    // The featured number, plainly glossed; the Chinchilla comparison moved to the footer.
-    expect(screen.getByText("≈300T tokens")).toBeInTheDocument();
-    expect(screen.getByText(/tokens: the pieces of text a model reads/i)).toBeInTheDocument();
+    // The stock card and the window meter are cut: the prose carries 300T and the
+    // token gloss, the chart carries the stock line, the readout carries the window.
+    expect(screen.queryByText("≈300T tokens")).toBeNull();
     expect(screen.queryByText(/A quarter the size, four times the data/i)).toBeNull();
-    expect(screen.getByText("2026–2032")).toBeInTheDocument();
-    // The data wall is a timeline meter, not a pair of static tiles.
-    expect(
-      screen.getByRole("img", { name: /cited full-utilization window/i }),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /cited full-utilization window/i })).toBeNull();
     // Step 2 owns a control of its own: the projection's year marker.
     expect(
       screen.getByRole("slider", { name: /drag through the projected years/i }),
@@ -158,7 +154,8 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // ceiling (it crosses mid-year), so the readout reports a share, and the
     // crossing date is stated alongside it either way.
     expect(screen.getByText(/% of the stock/)).toBeInTheDocument();
-    expect(screen.getByText(/the median crosses the stock in/i)).toBeInTheDocument();
+    expect(screen.getByText(/The trend crosses the stock in/)).toBeInTheDocument();
+    expect(document.body.textContent ?? "").toMatch(/fully used between \d{4} and \d{4}/);
     // Step forward and the median is past the whole stock.
     fireEvent.keyDown(marker, { key: "ArrowRight" });
     expect(screen.getByText(/past the whole stock/i)).toBeInTheDocument();
@@ -212,17 +209,17 @@ describe("Page 3 (Training-Time Scaling)", () => {
     const [gaps] = notes;
 
     // The gap section owns every cost and data source.
-    for (const ref of [/Sevilla/, /Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
+    for (const ref of [/Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
       expect(gaps).toMatch(ref);
     }
     // The cut "Why bias happens" note took WinoBias with it; the trimmed-away
     // challenges' sources are gone from the page entirely.
-    expect(document.body.textContent ?? "").not.toMatch(/Why bias happens|Zhao|Shumailov|Askell/);
-    // References stay numbered 1 to 6 in order of first appearance.
+    expect(document.body.textContent ?? "").not.toMatch(/Why bias happens|Zhao|Shumailov|Askell|Sevilla/);
+    // References stay numbered 1 to 5 in order of first appearance.
     const nums = Array.from(document.querySelectorAll("sup")).map((s) =>
       Number(s.textContent?.replace(/\D/g, "")),
     );
-    expect([...new Set(nums)]).toEqual([1, 2, 3, 4, 5, 6]);
+    expect([...new Set(nums)]).toEqual([1, 2, 3, 4, 5]);
     expectClean();
   });
 
@@ -249,17 +246,18 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // Every citation marker in a figure points at its sidenote entry.
     for (const a of bill.querySelectorAll("sup a"))
       expect(a.getAttribute("href")).toMatch(/^#ref-\d+$/);
-    expect(bill.querySelectorAll("sup")).toHaveLength(3);
-    // three now: the scaling law, the stock, and the observed dataset-size table
-    expect(data.querySelectorAll("sup")).toHaveLength(3);
+    expect(bill.querySelectorAll("sup")).toHaveLength(2);
+    // the scaling law, the stock (in the prose and again beside its window), and the dataset-size table
+    expect(data.querySelectorAll("sup")).toHaveLength(4);
     const badges = screen.getAllByRole("link");
     expect(badges.map((a) => a.textContent ?? "").join(" | ")).toMatch(
-      /Sevilla.*Cottier.*AI Index.*Hoffmann.*Villalobos/,
+      /Cottier.*AI Index.*Hoffmann.*Villalobos/,
     );
-    // Provenance survives inline, in the h2 annotations.
-    expect(screen.getByText(/derived from the two Epoch trends/i)).toBeInTheDocument();
-    expect(screen.getByText(/cited stock, derived demand/i)).toBeInTheDocument();
-    expect(screen.getByText(/not a burn rate/i)).toBeInTheDocument();
+    // The provenance tags, the stock card and the window meter are cut: the
+    // citations carry the sources, and the readout carries the window.
+    const body = document.body.textContent ?? "";
+    expect(body).not.toMatch(/derived from the two Epoch trends|cited stock, derived demand/i);
+    expect(body).not.toMatch(/not a burn rate|every quality token humans have written|fully utilized/i);
     expectClean();
   });
 });

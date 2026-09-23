@@ -81,12 +81,11 @@ const MONTH_TICKS = Array.from({ length: COMBO_MONTHS + 1 }, (_, i) => i);
 
 /** Reference numbers, in order of first appearance on the page. */
 const REF = {
-  computeGrowth: 1,
-  trainTrend: 2,
-  runCost: 3,
-  chinchilla: 4,
-  dataStock: 5,
-  datasetSizes: 6,
+  trainTrend: 1,
+  runCost: 2,
+  chinchilla: 3,
+  dataStock: 4,
+  datasetSizes: 5,
 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
@@ -110,71 +109,6 @@ const fmtM = (m: number) =>
 /** Trillions of tokens: "1.4T" small, "300T" large. */
 const fmtT = (t: number) => `${t >= 10 ? Math.round(t) : t.toFixed(1)}T`;
 
-/** The meter's calendar span, one year either side of the cited window. */
-const TRACK_START = 2025;
-const TRACK_END = 2033;
-/** Mid-2026, drawn as "today" so the cited window has a present to sit after. */
-const TODAY_YEAR = 2026.5;
-
-const trackPct = (year: number) => ((year - TRACK_START) / (TRACK_END - TRACK_START)) * 100;
-
-/**
- * The cited data-stock window on a calendar. Entirely static: the shaded band
- * is Villalobos et al.'s full-utilization window, the hairline their median
- * year, the marker just today. Deliberately NOT a depletion curve and no
- * longer driven by step 1's slider — the source gives a window, not a
- * per-month burn rate, so there is nothing here for a reader to drag. The
- * caption line under the track says exactly that; it is the only place on the
- * page that does, so keep it.
- */
-function DataWindowMeter({
-  startY,
-  endY,
-  medianY,
-}: {
-  startY: number;
-  endY: number;
-  medianY: number;
-}) {
-  const left = trackPct(startY);
-  const width = trackPct(endY) - left;
-  return (
-    <div>
-      <div
-        role="img"
-        aria-label={`Timeline ${TRACK_START} to ${TRACK_END}. The cited full-utilization window runs ${startY} to ${endY}, median ${medianY}; today sits just before it.`}
-        className="relative h-3 rounded-sm border border-grid bg-canvas"
-      >
-        <div
-          className="absolute inset-y-0 rounded-sm bg-wrong/25"
-          style={{ left: `${left}%`, width: `${width}%` }}
-        />
-        <div
-          className="absolute inset-y-0 w-px bg-wrong/70"
-          style={{ left: `${trackPct(medianY)}%` }}
-        />
-        <div
-          className="absolute -bottom-1.5 -top-1.5 w-1 -translate-x-1/2 rounded-sm bg-ink-muted ring-1 ring-canvas"
-          style={{ left: `${trackPct(TODAY_YEAR)}%` }}
-        />
-      </div>
-      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-ink-muted">
-        <span>today</span>
-        <span>
-          fully utilized{" "}
-          <span className="font-mono text-wrong">
-            {startY}–{endY}
-          </span>{" "}
-          · median {medianY}
-        </span>
-      </div>
-      <p className="mt-1 text-[11px] text-ink-muted">
-        The band is the cited window, not a burn rate; nothing here depletes.
-      </p>
-    </div>
-  );
-}
-
 export function Page3() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
@@ -185,7 +119,6 @@ export function Page3() {
   const GEMINI_M = rp.geminiUltraUSDMillion;
   const trainTrend = curves.epochTrainingCosts;
   const tp = trainTrend.fit!.params;
-  const computeGrowth = curves.epochComputeGrowth;
   const dataStock = curves.epochDataStock;
   const ds = dataStock.fit!.params;
   const chinchilla = curves.chinchilla;
@@ -277,17 +210,13 @@ export function Page3() {
 
           <h3 className="text-lg font-semibold text-ink">
             a. The bill compounds
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              derived from the two Epoch trends
-            </span>
           </h3>
           <figure
             aria-label="Problem one: the bill compounds"
             className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <p className="text-sm text-ink">
-              Training price is not a fixed number, so every day of the plan costs more than the day
-              before.
+              What would it cost to retrain a model every day for a year?
             </p>
             <LineChart
               title={`The first year: retraining the same GPT-4-class model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
@@ -365,14 +294,9 @@ export function Page3() {
               )}
             </div>
             <figcaption className="text-sm text-ink">
-              Compute per frontier run grows about 5x a year.
-              <Cite n={REF.computeGrowth} /> Cheaper hardware absorbs part of that, so the{" "}
-              <strong>bill</strong> per run grows ×{tp.perYear} a year.
-              <Cite n={REF.trainTrend} /> Retrain <em>the frontier model of the day</em>, every day,
-              and year one alone runs to {fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Even a flat rate
-              burns{" "}
-              {fmtM(DAYS * RUN_M)} a year: one <strong>GPT-4</strong>-class run costs an estimated $
-              {RUN_M}M of compute, and <strong>Gemini Ultra</strong> an estimated ${GEMINI_M}M.
+              Frontier training runs grow about &times;{tp.perYear} more expensive each year, and one
+              GPT-4-class run costs an estimated ${RUN_M}M.
+              <Cite n={REF.trainTrend} />
               <Cite n={REF.runCost} /> For one missing fact, like the 2026 final, that bill is not
               economically feasible.
             </figcaption>
@@ -386,9 +310,6 @@ export function Page3() {
 
           <h3 className="text-lg font-semibold text-ink">
             c. The data runs out
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              cited stock, derived demand
-            </span>
           </h3>
           <section
             aria-label="Problem two: the data runs out"
@@ -399,23 +320,13 @@ export function Page3() {
                   both denominated in it. Defined once, at the altitude of this page. */}
               Suppose money were no object. Frontier models keep getting bigger, and bigger models
               need more text. Researchers who trained hundreds of models at different sizes found a{" "}
-              <strong>scaling law</strong>: about {cp.tokensPerParam} tokens of text for every{" "}
-              <strong>parameter</strong>, the numbers inside a model that training adjusts.
+              <strong>scaling law</strong>: about {cp.tokensPerParam} <strong>tokens</strong> (pieces of
+              text, roughly a word each) for every <strong>parameter</strong>, the numbers inside a
+              model that training adjusts.
               <Cite n={REF.chinchilla} /> There is only so much text, roughly {STOCK_T} trillion
               tokens of quality writing, and no budget buys tokens that do not exist.
+              <Cite n={REF.dataStock} />
             </p>
-            <div className="rounded-lg border border-grid bg-surface-raised p-4">
-              <p className="text-xs uppercase tracking-wide text-ink-muted">
-                every quality token humans have written
-                <Cite n={REF.dataStock} />
-              </p>
-              <p className="font-mono text-3xl font-bold tabular-nums text-ink">
-                ≈{ds.stockTrillionTokens}T tokens
-              </p>
-              <p className="mt-1 text-xs text-ink-muted">
-                tokens: the pieces of text a model reads, roughly a word each
-              </p>
-            </div>
             {/* Where the trend lands. Epoch's own historical projection, run
                 forward from their dataset-size regression to 2030. */}
             <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
@@ -449,45 +360,27 @@ export function Page3() {
                 height={260}
               />
               <p className="text-sm text-ink-muted">
-                By <strong className="text-ink">{proj.year}</strong> the trend points at{" "}
-                <strong className="text-ink">≈{fmtT(proj.med)}</strong> tokens, with a{" "}
-                {PP.bandCredibility}% band from{" "}
-                <strong className="text-ink">{fmtT(proj.lo)}</strong> to{" "}
-                <strong className="text-ink">{fmtT(proj.hi)}</strong>.{" "}
+                By <strong className="text-ink">{proj.year}</strong>, the largest training set
+                reaches <strong className="text-ink">≈{fmtT(proj.med)}</strong> tokens,{" "}
                 {proj.med >= PP.stockTrillionTokens ? (
-                  <strong className="text-wrong-bright">
-                    That is past the whole stock, so the recipe is asking for text that does not
-                    exist.
-                  </strong>
+                  <strong className="text-wrong-bright">past the whole stock.</strong>
                 ) : (
-                  <>
-                    That is{" "}
-                    {((100 * proj.med) / PP.stockTrillionTokens).toFixed(0)}% of the stock.
-                  </>
+                  <>{((100 * proj.med) / PP.stockTrillionTokens).toFixed(0)}% of the stock.</>
                 )}{" "}
-                On this projection the median crosses the stock in{" "}
+                The trend crosses the stock in{" "}
                 <strong className="text-ink">
                   {MONTH_NAMES[PP.medianCrossesStockMonth - 1]} {PP.medianCrossesStockYear}
                 </strong>
-                .
+                . Epoch estimates the stock will be fully used between {ds.windowStartYear} and{" "}
+                {ds.windowEndYear}.
+                <Cite n={REF.dataStock} />
               </p>
             </figure>
-
-            <DataWindowMeter
-              startY={ds.windowStartYear}
-              endY={ds.windowEndYear}
-              medianY={ds.medianYear}
-            />
 
           </section>
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.computeGrowth} href="https://epoch.ai/blog/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year" preprint>
-            Sevilla &amp; Rold&aacute;n 2024,{" "}
-            <em>Training Compute of Frontier AI Models Grows by 4&ndash;5x per Year</em> (Epoch
-            AI).
-          </RefItem>
           <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models" preprint>
             Cottier et al. 2024, <em>How Much Does It Cost to Train Frontier AI Models?</em>{" "}
             (Epoch AI).
