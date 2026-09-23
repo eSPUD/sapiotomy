@@ -26,7 +26,7 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 
 **2. Section 1 prose.** Current: "A model learns everything it knows before a fixed training cutoff, and the answer it gives depends on when it was trained. This creates a perpetual knowledge gap after the model is trained, as new data is created by the world." and "Based on the knowledge cutoff date, the model gives an answer without thinking it through. System 1 thinking leads to an incorrect response." Replace with:
 - "A model only knows what was in its training data, and it can only be trained on data that existed before its **training data cutoff**. Even events occurring before that cutoff can be missing if the data did not cover them. Together these create a perpetual **knowledge gap**, one that widens as the world creates new data."
-- "Asked on reflex, the model answers from whatever it learned, and never stops to ask whether that might be incomplete." (proposed)
+- "In the example above, the model answered from what it learned, without thinking it through. System 1 thinking led it to an incorrect answer."
 - *Why:* a late cutoff is necessary, not sufficient; the gap is about what is in the data, not only time.
 - Term: "training data cutoff" everywhere on the page, including the slider label (now "training cutoff:").
 
