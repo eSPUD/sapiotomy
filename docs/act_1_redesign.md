@@ -39,3 +39,8 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 
 **4. Section 2 prose.**
 - "Every answer above quietly counted only the men's tournament. That is a **knowledge bias**, and it is not the knowledge gap." becomes "Every answer above silently counted only the men's tournament. We call this a **knowledge bias**, and it is different from the knowledge gap." ("We call this": knowledge bias is the page's own label, not an established term.)
+- The ~120-word paragraph ("The 2023 win happened before the cutoff, so the model held the fact the whole time...") becomes two paragraphs:
+  - "The women's 2023 win happened before the cutoff and was widely covered. The model almost certainly had it in its data, but it left it out anyway. When handed an ambiguous question, it went with the reading its training data covered most, and never told you there was a choice. This is what separates the knowledge bias from the knowledge gap. The gap is about what the model never saw, whereas the bias is about what it saw but never thought to count."
+  - "The same bias shows up in ordinary sentences. Given a sentence that could refer to either of two people, a model goes with the stereotyped reading instead of flagging that the sentence is ambiguous." [WinoBias cite stays here]
+  - *Why:* "almost certainly had it" stays consistent with section 1 (pre-cutoff facts can be missing); the model never considered the women's title, so no "assumed" or "picked".
+- Back pocket: the WinoBias physician example ("The physician hired the secretary because she was overwhelmed") as a possible visual.
