@@ -78,6 +78,8 @@ Keep the structure and both interactives. Frame: answers slide 2's closing quest
 
 Keep the page (overrides the reviewer plan's D1 cut): "one problem, many paths" is the intuition voting, best-of-N and search build on. The problem is that it never connects reasoning to inference-time scaling, and its roads/tolls/cultures layer reads as jargon and history.
 
+**Focus.** Less on *what* the methods are (their names, origins, cultures), more on the point that one problem can be reasoned through by several methods, and each has trade-offs. That is why the cultural framing comes out.
+
 **1. Lede.** "Working a problem out instead of looking it up has a name: reasoning. And here is the surprise: it is never one fixed procedure. Page 1 gave you ... three cultures worked it three different ways ... Pick one below, walk it to the end, then try another and compare what they cost." becomes "Working a problem out, instead of recognizing the answer, has a name: reasoning. Reasoning is what inference-time scaling spends its extra time and compute on. If you've ever compared answers with a classmate, you know there is rarely only one way to reason through a problem." ("Recognizing", not "looking it up": slide 2 made lookup part of the fix.)
 - Section 1 heading "1. Pick a road and walk it" becomes "1. Three ways to work out 350 × 638".
 - The instruction moves to the section 1 margin as a Try it note: "Pick a method, work it through, then try another."
