@@ -93,7 +93,8 @@ Keep the page (overrides the reviewer plan's D1 cut): "one problem, many paths" 
 
 **3. Section 2, "Three roads, three tolls".**
 - Takeaway box ("Three journeys, one destination: 223,300. The road changes; the answer does not, and each road pays its own toll. Reasoning is inherently diverse pathfinding from prior knowledge.") becomes "All three methods of reasoning through the problem land on the correct answer. Some take more work than others, and each has its own common mistakes. Trying more than one costs more effort, but it gives you a way to catch those mistakes." *Why:* seeds compute cost, step-level mistakes, and trying several paths, without naming later slides.
-- Proposed (not yet confirmed): heading "2. Three methods, three trade-offs"; cards keep name and trade-off, drop the origin description; note "There are many different ways to do multiplication. We showcase only three here." becomes "There are many ways to multiply; these are three."
+- Heading "2. Three roads, three tolls" becomes "2. The methods and their trade-offs".
+- Proposed (not yet confirmed): cards keep name and trade-off, drop the origin description; note "There are many different ways to do multiplication. We showcase only three here." becomes "There are many ways to multiply; these are three."
 
 ## Back pocket
 
