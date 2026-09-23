@@ -84,6 +84,13 @@ Keep the page (overrides the reviewer plan's D1 cut): "one problem, many paths" 
 - Section 1 heading "1. Pick a road and walk it" becomes "1. Three ways to work out 350 × 638".
 - The instruction moves to the section 1 margin as a Try it note: "Pick a method, work it through, then try another."
 
+**2. Section 1 walkthrough.**
+- Method names (`name` in `lib/authored.ts`): "Standard long multiplication", "Japanese line multiplication", "Indian Vedic (Urdhva-Tiryagbhyam)" become "Long multiplication", "Line multiplication", "Vertically and crosswise". The Vedic origin lives only in its margin reference.
+- Drop the origin line beside the method dropdown (`meta.origin`).
+- "The limit of this road:" becomes "Trade-off:". Keep the three trade-off texts as they are: each method costs work of a different kind, and each has its own way to go wrong (the seed for why sampling several paths helps).
+- Drop the heading tag "one problem · three methods · authored walkthroughs": the walkthroughs are self-checking arithmetic, nothing to disclose.
+- Not doing: a per-method step count. The counter reads 3, 5, 5 and does not reflect the real difference in work.
+
 ## Back pocket
 
 - "What it buys, how to buy more of it, and where buying more stops helping" (cut from slide 2's closing): reword without the tricolon for the slide 5 lede, where inference-time scaling becomes the reader's lever.
