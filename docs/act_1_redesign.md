@@ -74,6 +74,14 @@ Keep the structure and both interactives. Frame: answers slide 2's closing quest
 
 **4. Closing box.** "Training-time scaling buys more facts, later, at compounding cost, and it cannot touch a bias that was never about missing facts. Every wall here limits what a model can be given before the question arrives, which leaves only what it does after it." becomes "Training-time scaling buys more knowledge, narrowing the knowledge gap, but at a compounding cost. It can also make the knowledge bias worse. The problem is that retraining spends its compute before anyone asks. Thinking it through spends compute at answer time, on the question actually asked." *Why:* answers the lede's two questions, and frames before/after as where the compute is spent, echoing slide 1's definition.
 
+## Slide 4. Reasoning: Diverse Pathfinding
+
+Keep the page (overrides the reviewer plan's D1 cut): "one problem, many paths" is the intuition voting, best-of-N and search build on. The problem is that it never connects reasoning to inference-time scaling, and its roads/tolls/cultures layer reads as jargon and history.
+
+**1. Lede.** "Working a problem out instead of looking it up has a name: reasoning. And here is the surprise: it is never one fixed procedure. Page 1 gave you ... three cultures worked it three different ways ... Pick one below, walk it to the end, then try another and compare what they cost." becomes "Working a problem out, instead of recognizing the answer, has a name: reasoning. Reasoning is what inference-time scaling spends its extra time and compute on. If you've ever compared answers with a classmate, you know there is rarely only one way to reason through a problem." ("Recognizing", not "looking it up": slide 2 made lookup part of the fix.)
+- Section 1 heading "1. Pick a road and walk it" becomes "1. Three ways to work out 350 × 638".
+- The instruction moves to the section 1 margin as a Try it note: "Pick a method, work it through, then try another."
+
 ## Back pocket
 
 - "What it buys, how to buy more of it, and where buying more stops helping" (cut from slide 2's closing): reword without the tricolon for the slide 5 lede, where inference-time scaling becomes the reader's lever.
