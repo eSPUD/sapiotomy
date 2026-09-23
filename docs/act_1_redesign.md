@@ -44,3 +44,6 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
   - "The same bias shows up in ordinary sentences. Given a sentence that could refer to either of two people, a model goes with the stereotyped reading instead of flagging that the sentence is ambiguous." [WinoBias cite stays here]
   - *Why:* "almost certainly had it" stays consistent with section 1 (pre-cutoff facts can be missing); the model never considered the women's title, so no "assumed" or "picked".
 - Back pocket: the WinoBias physician example ("The physician hired the secretary because she was overwhelmed") as a possible visual.
+
+**5. Section 3.** ~290 words that explain the fix three times (opener previews the comic, comic shows it, the paragraph after re-reads it). Target ~170, with the comic carrying it.
+- Opening paragraph ("Both misses share a shape: the model answered immediately (System 1 thinking). It never reread the question, and it never weighed what it might not know. A System 2 pass does both before committing to anything.") becomes "Both of these failures stem from System 1 thinking, answering immediately. Here is what a System 2 pass does instead."
