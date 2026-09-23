@@ -91,6 +91,10 @@ Keep the page (overrides the reviewer plan's D1 cut): "one problem, many paths" 
 - Drop the heading tag "one problem · three methods · authored walkthroughs": the walkthroughs are self-checking arithmetic, nothing to disclose.
 - Not doing: a per-method step count. The counter reads 3, 5, 5 and does not reflect the real difference in work.
 
+**3. Section 2, "Three roads, three tolls".**
+- Takeaway box ("Three journeys, one destination: 223,300. The road changes; the answer does not, and each road pays its own toll. Reasoning is inherently diverse pathfinding from prior knowledge.") becomes "All three methods of reasoning through the problem land on the correct answer. Some take more work than others, and each has its own common mistakes. Trying more than one costs more effort, but it gives you a way to catch them." *Why:* seeds compute cost, step-level mistakes, and trying several paths, without naming later slides.
+- Proposed (not yet confirmed): heading "2. Three methods, three trade-offs"; cards keep name and trade-off, drop the origin description; note "There are many different ways to do multiplication. We showcase only three here." becomes "There are many ways to multiply; these are three."
+
 ## Back pocket
 
 - "What it buys, how to buy more of it, and where buying more stops helping" (cut from slide 2's closing): reword without the tricolon for the slide 5 lede, where inference-time scaling becomes the reader's lever.
