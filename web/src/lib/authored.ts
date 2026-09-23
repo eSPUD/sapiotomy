@@ -300,7 +300,6 @@ export const MULT_METHODS = {
   standard: {
     key: "standard",
     name: "Standard long multiplication",
-    origin: "the school algorithm: one partial product per digit, then add",
     limitation:
       "General at any size, but slow: every digit pair gets touched, and every carry is a chance for a digit to slip.",
     rows: [
@@ -314,7 +313,6 @@ export const MULT_METHODS = {
   lines: {
     key: "lines",
     name: "Japanese line multiplication",
-    origin: "a visual method often taught in East Asia: draw each digit as a bundle of lines, count the crossings",
     limitation:
       "No times tables needed, but big digits mean counting dozens of crossings (5 × 8 alone is 40), and a zero needs a ghost line.",
     diagonals: [
@@ -329,8 +327,7 @@ export const MULT_METHODS = {
 
   vedic: {
     key: "vedic",
-    name: "Indian Vedic (Urdhva-Tiryagbhyam)",
-    origin: "the 'vertically and crosswise' sutra: one pass, one result digit per column",
+    name: "Vedic multiplication",
     limitation:
       "The fastest road, but the crosswise pattern must be memorized for each size, and the carries stack up in your head.",
     columns: [

@@ -1,31 +1,24 @@
 "use client";
 
 /**
- * Page 4, "Reasoning: Diverse Pathfinding" — the Act 1 finale. It catches page 3's
- * pivot (spend the effort when the question arrives, not up front) and names
- * that working-out: reasoning. Page 1's 17 × 24 is recalled, then escalated to
- * a bigger instance, 350 × 638, solved three ways: standard long
- * multiplication, Japanese line multiplication, and Indian Vedic
- * (Urdhva-Tiryagbhyam). A dropdown picks the road; a stepped, animated
- * walkthrough drives it; every road lands on the same 223,300. The meaning:
- * journeys differ, destinations do not, and every method has its own
- * limitations — reasoning is inherently diverse pathfinding from prior
- * knowledge. Act 1 then closes on open questions (can we guide a machine down
- * different roads? why can't it chart its own?) that hand off to Act 2's
- * toolbox. House rules: the Act 2+ jargon is never named here (the /inference/
- * test ban now covers all of Act 1), and nothing pops in — the meaning band
- * and the finale are on screen from first paint; only the walkthrough
- * animates, and only when asked.
+ * Page 4, "Reasoning: Diverse Pathfinding", the Act 1 finale. The lede names
+ * the working-out (reasoning) and ties it to inference-time scaling, then one
+ * problem, 350 × 638, is solved three ways: standard long multiplication,
+ * Japanese line multiplication, and Vedic multiplication. A dropdown picks the
+ * method; a stepped, animated walkthrough drives it; every method lands on the
+ * same 223,300. Step 2 lays the trade-offs side by side: each method costs work
+ * of a different kind and has its own common mistakes, which is why trying more
+ * than one helps. The page ends on one shaded closing box. House rules: the only
+ * Act 2+ term named here is "inference-time scaling" (the lede's), and nothing
+ * pops in: the cards and the closing box are on screen from first paint; only
+ * the walkthrough animates, and only when asked.
  *
  * Layout: page 1's per-step grid. The intro paragraph runs full width above a
- * two-column grid; each numbered step (1. walk a road · 2. three roads, three
- * tolls · 3. where this leaves us) is a left-hand cell followed immediately by
- * its own margin cell, so notes scroll with the step they belong to. There is
- * no sticky instructions rail and no "how to read this page" list: the controls
- * narrate themselves (button labels, the "step N of M" counter, the live
- * narration line) and PageNav carries page-to-page movement. The page's one
- * bibliographic cite — the Vedic sutra's source — sits in step 1's margin as a
- * bare reference note and appears nowhere else.
+ * two-column grid; each numbered step (1. three ways to work out 350 × 638 ·
+ * 2. the methods and their trade-offs) and the closing box is a left-hand cell
+ * followed immediately by its own margin cell, so notes scroll with the step
+ * they belong to. Step 1's margin holds the Try it note and, below it, the
+ * page's one bibliographic cite (the Vedic method's source).
  *
  * All walkthrough numbers live in lib/authored MULT_METHODS and are recomputed
  * from the factors' digits by src/lib/act1.test.ts.
@@ -34,7 +27,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
-import { GAME_ROUNDS, MULT_METHODS, type MultMethodKey } from "@/lib/authored";
+import { MULT_METHODS, type MultMethodKey } from "@/lib/authored";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
@@ -53,7 +46,7 @@ const fmt = (n: number) => n.toLocaleString("en-US");
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside className="flex flex-col gap-2 text-sm text-ink-muted">
       <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -375,7 +368,7 @@ export function Page4() {
     setMethod(key);
     setStep(0);
     setPlaying(false);
-    setAnnouncement(`Method: ${M[key].name}. ${M[key].origin}.`);
+    setAnnouncement(`Method: ${M[key].name}.`);
   };
 
   const go = (next: number) => {
@@ -416,31 +409,22 @@ export function Page4() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      {/* The lede poses the walk; step 2 owns the convergence. It used to give away
-          "three cultures built three roads to the same 223,300" here, and then step 2's
-          verdict box and step 3 said it again. */}
+      {/* The lede names reasoning and ties it to inference-time scaling; step 2 owns the
+          convergence and the trade-offs. */}
       <p className="max-w-2xl text-lg text-ink-muted">
-        Working a problem out instead of looking it up has a name:{" "}
-        <strong className="text-ink">reasoning</strong>. And here is the surprise: it is never one
-        fixed procedure. Page 1 gave you{" "}
-        <strong className="font-mono text-ink">{GAME_ROUNDS[1].prompt}</strong> and one way to build
-        it. Take a bigger one, <strong className="font-mono text-ink">{P.a} × {P.b}</strong>, and
-        three cultures worked it three different ways, each a real method with its own strengths and
-        weaknesses. Pick one below, walk it to the end, then try another and compare what they cost.
+        Working a problem out, instead of recognizing the answer, has a name:{" "}
+        <strong className="text-ink">reasoning</strong>. Reasoning is what inference-time scaling
+        spends its extra time and compute on. If you&apos;ve ever compared answers with a classmate,
+        you know there is rarely only one way to reason through a problem.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — walk one road */}
+        {/* Step 1: work one method through */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            1. Pick a road and walk it
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              one problem · three methods · authored walkthroughs
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">1. Three ways to work out 350 × 638</h2>
           <section
-            aria-label="One problem, three roads"
+            aria-label="Three ways to work out 350 × 638"
             className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4"
           >
             <div className="flex flex-wrap items-center gap-3">
@@ -457,7 +441,6 @@ export function Page4() {
                 <option value="lines">{M.lines.name}</option>
                 <option value="vedic">{M.vedic.name}</option>
               </select>
-              <span className="text-sm text-ink-muted">{meta.origin}</span>
             </div>
 
             <div className="rounded-lg border border-grid bg-surface-raised px-3 py-2">
@@ -504,25 +487,30 @@ export function Page4() {
             </p>
 
             <p className="border-t border-grid pt-3 text-sm text-ink-muted">
-              <strong className="text-wrong">The limit of this road:</strong> {meta.limitation}
+              <strong className="text-wrong">Trade-off:</strong> {meta.limitation}
             </p>
           </section>
         </section>
-        <Note kicker="References">
-          <RefItem n={REF.vedic}>
-            Bharati Krishna Tirtha, <em>Vedic Mathematics</em> (1965).
-          </RefItem>
-        </Note>
+        <div className="flex flex-col gap-6 lg:pt-9">
+          <Note kicker="Try it">
+            <p>Pick a method, work it through, then try another.</p>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.vedic}>
+              Bharati Krishna Tirtha, <em>Vedic Mathematics</em> (1965).
+            </RefItem>
+          </Note>
+        </div>
 
-        {/* Step 2 — the three roads side by side */}
+        {/* Step 2: the three methods side by side */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            2. Three roads, three tolls
+            2. The methods and their trade-offs
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               what each method is good at, and what it costs
             </span>
           </h2>
-          <section aria-label="Three journeys, one destination" className="flex flex-col gap-3">
+          <section aria-label="The methods and their trade-offs" className="flex flex-col gap-3">
             <div className="grid items-stretch gap-3 md:grid-cols-3">
               {([M.standard, M.lines, M.vedic] as const).map((m) => (
                 <div
@@ -532,28 +520,23 @@ export function Page4() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
                     {m.name}
                   </p>
-                  <p className="mt-1 text-sm text-ink">{m.origin}.</p>
                   <p className="mt-2 text-sm text-ink-muted">
                     <strong className="text-wrong">limit:</strong> {m.limitation}
                   </p>
                 </div>
               ))}
             </div>
-            <p className="text-sm text-ink-muted">
-              There are many different ways to do multiplication. We showcase only three here.
+            <p className="text-ink">
+              All three methods of reasoning through the problem land on the correct answer. Some
+              take more work than others, and each has its own common mistakes. Trying more than one
+              costs more effort, but it gives you a way to catch those mistakes.
             </p>
-            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-              Three journeys, one destination: <strong className="font-mono">{P.display}</strong>.
-              The road changes; the answer does not, and each road pays its own toll.{" "}
-              <strong>Reasoning is inherently diverse pathfinding from prior knowledge.</strong>
-            </div>
           </section>
         </section>
         <div aria-hidden="true" />
 
-        {/* Step 3 — the handoff out of Act 1 */}
+        {/* The closing box: the handoff out of Act 1 (wording pending; leave as is) */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Where this leaves us</h2>
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             <em>
               Every culture that needed to multiply built its own road from what it already knew:
