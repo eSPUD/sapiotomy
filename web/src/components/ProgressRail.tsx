@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { ScrollProgress } from "@/components/ScrollProgress";
 
-/** Persistent masthead and chapter navigation. */
+/**
+ * Slim masthead — the app title on every page (Broadsheet nav-brand). The
+ * numbered page index was removed; readers move with the prev/next links at the
+ * foot of each page.
+ */
 export function ProgressRail() {
   return (
     <nav
       aria-label="Story progress"
       className="sticky top-0 z-10 border-b border-grid bg-canvas"
     >
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+      <ScrollProgress />
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-5">
         <Link href="/" className="group flex flex-col leading-tight">
           <span className="text-sm font-semibold text-ink group-hover:text-compute">
             The Story of Inference-Time Scaling
@@ -26,7 +31,6 @@ export function ProgressRail() {
           </span>
         </div>
       </div>
-      <ScrollProgress />
     </nav>
   );
 }

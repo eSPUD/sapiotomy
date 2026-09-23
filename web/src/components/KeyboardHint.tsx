@@ -20,15 +20,14 @@ export function KeyboardHint() {
           <p className="mb-2 font-semibold text-ink">Keyboard navigation</p>
           <ul className="flex flex-col gap-2 text-ink-muted">
             <li>
-              <Kbd>→</Kbd>: next page
+              <Kbd>→</Kbd> / <Kbd>Page Down</Kbd>: next page
             </li>
             <li>
-              <Kbd>←</Kbd>: previous page
+              <Kbd>←</Kbd> / <Kbd>Page Up</Kbd>: previous page
             </li>
             <li>
-              <Kbd>Tab</Kbd> then <Kbd>Enter</Kbd>: jump to any chapter via the chapter navigation
+              <Kbd>Tab</Kbd> then <Kbd>Enter</Kbd>: jump to any chapter via the progress bar
             </li>
-            <li><Kbd>Page Down</Kbd> / <Kbd>Page Up</Kbd>: scroll within a chapter</li>
           </ul>
         </div>
       ) : null}

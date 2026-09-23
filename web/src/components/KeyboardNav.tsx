@@ -8,8 +8,8 @@ const LAST = PAGES.length;
 
 /**
  * Global keyboard navigation between pages:
- *   ArrowRight  → next page (from the landing → page 1)
- *   ArrowLeft    → previous page (from page 1 → landing)
+ *   ArrowRight / PageDown  → next page (from the landing → page 1)
+ *   ArrowLeft  / PageUp    → previous page (from page 1 → landing)
  *
  * Guarded so it never hijacks a focused control (inputs, textareas, selects,
  * sliders, contenteditable) or a modified keystroke — those keep their native
@@ -20,7 +20,7 @@ export function KeyboardNav() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
 
       const el = document.activeElement as HTMLElement | null;
       if (el) {
@@ -30,8 +30,8 @@ export function KeyboardNav() {
         if (role === "slider" || role === "textbox" || role === "radio") return;
       }
 
-      const forward = e.key === "ArrowRight";
-      const back = e.key === "ArrowLeft";
+      const forward = e.key === "ArrowRight" || e.key === "PageDown";
+      const back = e.key === "ArrowLeft" || e.key === "PageUp";
       if (!forward && !back) return;
 
       // Read the LIVE url at keypress (avoids any stale-closure race on rapid keys).
