@@ -34,4 +34,5 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 - Shorten the range to about Jan 2024 through today (Sep 2026).
 - Mark the 2026 final on the track with a labelled tick.
 - Shade the knowledge gap: fill from the cutoff to "today" in the wrong hue, with the 2026 final inside it. Dragging past the final uncovers it and the answer flips to correct.
+- Relabel the "✓ current" badge to "✓ within cutoff": a late cutoff does not guarantee the model knows (section 1 prose).
 - Not doing: a 2023 women's-final tick (would spoil section 2's reveal); preset model buttons (loses the moving timeline).
