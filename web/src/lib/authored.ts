@@ -205,19 +205,19 @@ export const SPAIN_SYSTEM2_TRACE = {
   steps: [
     {
       name: "Read the question again",
-      text: "It says FIFA World Cups, not men's World Cups. Spain fields a team in both tournaments, so both could count.",
+      text: "It says FIFA World Cups, not men's. Both teams count.",
     },
     {
       name: "Check my own limits",
-      text: "A count of titles changes whenever a final is played, and my training data ends in early 2025. Any final after that falls outside what I know.",
+      text: "My training data ends in early 2025. A newer final could be missing.",
     },
     {
       name: "Do not answer from memory alone",
-      text: "Say which tournaments I am counting, and check a current source before committing to a number.",
+      text: "Name the tournaments I'm counting, and check a current source.",
     },
     {
       name: "Count what the question actually asked",
-      text: "The men's team won in 2010 and 2026, and the women's team won in 2023.",
+      text: "Men's: 2010 and 2026. Women's: 2023.",
     },
   ],
   answer: "Three.",

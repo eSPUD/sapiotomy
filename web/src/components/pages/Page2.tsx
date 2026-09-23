@@ -221,8 +221,7 @@ export function Page2() {
           <h2 className="text-xl font-semibold text-ink">2. Answering a question without bias</h2>
 
           <p className="text-ink">
-            <strong>The question never said men&apos;s.</strong> Spain fields a team in both
-            tournaments, and has won three FIFA World Cups between them:
+            <strong>The question never said men&apos;s.</strong>
           </p>
 
           <IdealAnswer />
@@ -236,8 +235,7 @@ export function Page2() {
             The women&apos;s 2023 win happened before the cutoff and was widely covered. The model
             almost certainly had it in its data, but it left it out anyway. When handed an ambiguous
             question, it went with the reading its training data covered most, and never told you
-            there was a choice. This is what separates the knowledge bias from the knowledge gap.
-            The gap is about what the model never saw, whereas the bias is about what it saw but
+            there was a choice. The gap is about what the model never saw, whereas the bias is about what it saw but
             never thought to count.
           </p>
 

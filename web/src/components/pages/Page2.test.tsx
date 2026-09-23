@@ -95,7 +95,7 @@ describe("Page 2 (Thinking in Reality): a training data cutoff slider", () => {
 
   it("panel 2 says the training data ends, not that training was sealed", () => {
     render(<Page2 />);
-    expect(screen.getByText(/my training data ends in early 2025/)).toBeInTheDocument();
+    expect(screen.getByText(/My training data ends in early 2025\. A newer final could be missing\./)).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/training was sealed/);
   });
 

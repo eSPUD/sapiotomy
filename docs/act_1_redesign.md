@@ -56,6 +56,10 @@ Premise stays: knowledge gaps and bias are why inference-time scaling works. Cha
 - Paragraph after the comic ("Look at what each step bought. Step 1 settles the bias outright...", ~80 words) becomes "In the first panel, rereading the question fixes the **bias** on its own, with no new information. The **knowledge gap** is different. The 2026 final was after its cutoff, so rereading won't help. Instead, the next two panels spot the gap and then fix it with a lookup."
 - Closing box ("Nothing about the model changed between the reflex and the trace. Same weights, same training data, same cutoff. ... what it buys, how to buy more of it, and where buying more stops helping.") becomes "The model itself never changed between the two answers. It had the same training data and the same cutoff. The only difference is that it spent more time, and more compute, before answering. That is inference-time scaling. Why not just retrain the model on newer data instead?" *Why:* echoes slide 1's definition word for word, names the term, and hands off to slide 3's retrain-or-look-up question.
 
+**6. Second pass: comic panels cut to one line each** (`SPAIN_SYSTEM2_TRACE`): "It says FIFA World Cups, not men's. Both teams count." / "My training data ends in early 2025. A newer final could be missing." / "Name the tournaments I'm counting, and check a current source." / "Men's: 2010 and 2026. Women's: 2023." Titles unchanged.
+
+**7. Second pass: repetition in section 2.** Section 2's opener becomes only the bold hook "The question never said men's." (the ideal answer card and comic panel 1 already say Spain fields both teams). Cut "This is what separates the knowledge bias from the knowledge gap." from the bias paragraph (the line above and the sentence after already make the distinction).
+
 ## Slide 3. Training-Time Scaling
 
 Keep the structure and both interactives. Frame: answers slide 2's closing question ("Why not just retrain the model on newer data instead?") by letting the interactives deliver the verdict (predict, then observe). Retraining only moves the cutoff; it cannot promise coverage (the gap's second cause) and it sharpens the bias.
