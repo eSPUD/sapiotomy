@@ -135,7 +135,7 @@ describe("Page 2 (Thinking in Reality): a training data cutoff slider", () => {
     render(<Page2 />);
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/What happens when an LLM answers with System 1 thinking in the real world\?/);
-    expect(body).toMatch(/That is inference-time scaling\./);
+    expect(body).not.toMatch(/That is inference-time scaling/);
     expect(body).toMatch(/Why not just retrain the model on newer\s*data instead\?/);
   });
 

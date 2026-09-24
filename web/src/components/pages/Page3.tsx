@@ -196,8 +196,9 @@ export function Page3() {
       </h1>
 
       <p className="max-w-2xl text-lg text-ink-muted">
-        Retraining on newer data moves the training data cutoff forward, as long as there is enough
-        data to train on. Would that close the knowledge gap? Would it fix the knowledge bias?
+        A missing fact needs new knowledge, and the obvious way to supply it is to{" "}
+        <strong className="text-ink">train the model again</strong>. The bill says no, then the data
+        says no. And even if both said yes, it would do nothing about the bias.
       </p>
 
       {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
@@ -210,6 +211,9 @@ export function Page3() {
 
           <h3 className="text-lg font-semibold text-ink">
             a. The bill compounds
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              derived from the two Epoch trends
+            </span>
           </h3>
           <figure
             aria-label="Problem one: the bill compounds"
@@ -311,11 +315,9 @@ export function Page3() {
           <h3 className="text-lg font-semibold text-ink">
             c. The data runs out
           </h3>
-          <section
-            aria-label="Problem two: the data runs out"
-            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
-          >
-            <p className="text-sm text-ink">
+          {/* The argument is section prose, like section b; only the chart keeps a frame. */}
+          <section aria-label="Problem two: the data runs out" className="flex flex-col gap-3">
+            <p className="text-ink">
               {/* First load-bearing use of "parameter" in the deck, and pages 5 and 11 are
                   both denominated in it. Defined once, at the altitude of this page. */}
               Suppose money were no object. Frontier models keep getting bigger, and bigger models
@@ -333,7 +335,9 @@ export function Page3() {
               <figcaption className="text-sm text-ink">
                 Epoch projects that the largest training sets grow about &times;
                 {PP.growthPerYearMedian.toFixed(1)} a year. Drag the year to see when that line meets
-                the stock of text that exists.
+                the stock of text that exists. The shading is the likely range: growth between about
+                &times;{PP.growthPerYearLow.toFixed(1)} and &times;{PP.growthPerYearHigh.toFixed(1)} a
+                year.
                 <Cite n={REF.datasetSizes} />
               </figcaption>
               <LineChart

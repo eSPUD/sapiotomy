@@ -167,6 +167,8 @@ describe("Page 3 (Training-Time Scaling)", () => {
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/Epoch projects that the largest training sets grow about ×\d\.\d a year/);
     expect(body).toMatch(/meets\s*the stock of text that exists/);
+    // The shaded band is explained in the caption, now that the readout no longer quotes it.
+    expect(body).toMatch(/The shading is the likely range: growth between about\s*×1\.8 and ×3\.1 a\s*year\./);
     expect(body).not.toMatch(/compute-based projection/i);
     expect(body).not.toMatch(/inside the window below/i);
     expectClean();
@@ -180,10 +182,10 @@ describe("Page 3 (Training-Time Scaling)", () => {
     );
   });
 
-  it("opens on the lede's two questions and closes on the plain verdict", () => {
+  it("opens on the original lede and closes on the plain verdict", () => {
     render(<Page3 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/Would that close the knowledge gap\? Would it fix the knowledge bias\?/);
+    expect(body).toMatch(/The bill says no, then the data\s*says no\. And even if both said yes, it would do nothing about the bias\./);
     expect(body).toMatch(/buys more knowledge, narrowing the knowledge gap, but at a compounding\s*cost/i);
     expect(body).toMatch(/It can also make the knowledge bias worse\./);
     // the hand-off, and the page's standing rule that it never names the sequel
@@ -256,7 +258,9 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // The provenance tags, the stock card and the window meter are cut: the
     // citations carry the sources, and the readout carries the window.
     const body = document.body.textContent ?? "";
-    expect(body).not.toMatch(/derived from the two Epoch trends|cited stock, derived demand/i);
+    // The bill's derivation stays disclosed beside its heading; the data tag is cut.
+    expect(screen.getByText(/derived from the two Epoch trends/i)).toBeInTheDocument();
+    expect(body).not.toMatch(/cited stock, derived demand/i);
     expect(body).not.toMatch(/not a burn rate|every quality token humans have written|fully utilized/i);
     expectClean();
   });

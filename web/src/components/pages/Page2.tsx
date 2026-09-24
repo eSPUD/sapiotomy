@@ -276,8 +276,7 @@ export function Page2() {
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             The model itself never changed between the two answers. It had the same training data
             and the same cutoff. The only difference is that it spent more time, and more compute,
-            before answering. That is inference-time scaling. Why not just retrain the model on newer
-            data instead?
+            before answering. Why not just retrain the model on newer data instead?
           </div>
         </section>
         <div aria-hidden="true" />
