@@ -243,7 +243,7 @@ export const SPAIN_SYSTEM2_TRACE = {
       text: "Name the tournaments I'm counting, and check a current source.",
     },
     {
-      name: "Count what the question actually asked",
+      name: "Now draft the final response",
       text: "Men's: 2010 and 2026. Women's: 2023.",
     },
   ],

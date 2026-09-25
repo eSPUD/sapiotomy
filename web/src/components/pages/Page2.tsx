@@ -75,7 +75,7 @@ const PAIR_STYLES = {
   count: "bg-compute/15 text-compute",
   cup: "bg-ink/10 text-ink",
 } as const;
-const PAIR_PATTERN = /(\bSpain\b|How many|\bnot\b|\bonce\b|\btwice\b|FIFA World Cups?)/;
+const PAIR_PATTERN = /(\bSpain\b|How many|\bnot\b|\bonce\b|\btwice\b|\bthree\b|FIFA World Cups?)/;
 const pairOf = (word: string): keyof typeof PAIR_STYLES =>
   word === "Spain" ? "country" : word.startsWith("FIFA") ? "cup" : "count";
 
@@ -269,17 +269,18 @@ function IdealAnswer() {
   return (
     <section
       aria-label="The ideal answer"
-      className="flex flex-col gap-2 rounded-lg border border-correct/60 bg-canvas p-4"
+      className="flex flex-col gap-2 rounded-lg border border-grid bg-canvas p-3"
     >
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-          the ideal answer
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+        the ideal answer
+      </p>
+      {/* Set like the chat reply in section 1: model icon, monospace, paired highlights. */}
+      <div className="flex items-start gap-2">
+        <ModelIcon />
+        <p data-testid="ideal-reply" className="font-code text-[15px] text-ink">
+          <Paired text={SPAIN_IDEAL_ANSWER} />
         </p>
-        <span className="rounded-full border border-correct/60 bg-correct/15 px-2 py-0.5 text-xs text-correct">
-          ✓ all {SPAIN_ALL_TITLES.total} titles
-        </span>
       </div>
-      <p className="text-lg text-ink">&ldquo;{SPAIN_IDEAL_ANSWER}&rdquo;</p>
     </section>
   );
 }
@@ -329,12 +330,7 @@ export function Page2() {
             A model only knows what was in its training data, and it can only be trained on data
             that existed before the <strong>model training data cutoff</strong>. Even events occurring
             before that cutoff can be missing if the data did not cover them. Together these create a
-            perpetual <strong>knowledge gap</strong>, one that widens as the world creates new data.
-          </p>
-
-          <p className="text-ink">
-            In the example above, the model answered from what it learned, without thinking it
-            through. System 1 thinking led it to an incorrect answer.
+            perpetual <strong>knowledge gap</strong>, one that widens as the world creates new data every day.
           </p>
 
           <PullQuote>Are knowledge gaps addressable by System 2 thinking?</PullQuote>
@@ -348,28 +344,26 @@ export function Page2() {
           <h2 className="text-xl font-semibold text-ink">2. Answering a question without bias</h2>
 
           <p className="text-ink">
-            <strong>The question never said men&apos;s.</strong>
+            The question never said men&apos;s.
           </p>
 
           <IdealAnswer />
 
           <p className="text-ink">
-            Every answer above silently counted only the men&apos;s tournament. We call this a{" "}
-            <strong>knowledge bias</strong>, and it is different from the knowledge gap.
+            Every answer above counted only the men&apos;s tournament. We call this a{" "}
+            <strong>knowledge bias</strong>, a different problem from the knowledge gap.
           </p>
 
           <p className="text-ink">
-            The women&apos;s 2023 win happened before the cutoff and was widely covered. The model
-            almost certainly had it in its data, but it left it out anyway. When handed an ambiguous
-            question, it went with the reading its training data covered most, and never told you
-            there was a choice. The gap is about what the model never saw, whereas the bias is about what it saw but
-            never thought to count.
+            The women&apos;s 2023 win came before the cutoff and was widely covered, so the model
+            almost certainly knew it. Given an ambiguous question, it went with the reading its data
+            covered most and never said there was a choice. With a knowledge gap, the fact is
+            missing. With a knowledge bias, the fact is there, but the model overlooks it.
           </p>
 
           <p className="text-ink">
-            The same bias shows up in ordinary sentences. Given a sentence that could refer to either
-            of two people, a model goes with the stereotyped reading instead of flagging that the
-            sentence is ambiguous.
+            The same happens in ordinary sentences: when a sentence could refer to either of two
+            people, models pick the stereotyped reading instead of flagging the ambiguity.
             <Cite n={REF.winobias} />
           </p>
 
@@ -384,7 +378,7 @@ export function Page2() {
 
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Thinking it through</h2>
+          <h2 className="text-xl font-semibold text-ink">3. Taking time to answer</h2>
 
           <p className="text-ink">
             Both of these failures stem from System 1 thinking, answering immediately. Here is what a
@@ -402,8 +396,8 @@ export function Page2() {
 
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             The model itself never changed between the two answers. It had the same training data
-            and the same cutoff. The only difference is that it spent more time, and more compute,
-            before answering. Why not just retrain the model on newer data instead?
+            and the same cutoff. The only difference is that it spent more time to reason and
+            reference. <strong>Why not just retrain the model on newer data instead?</strong>
           </div>
         </section>
         <div aria-hidden="true" />

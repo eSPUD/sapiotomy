@@ -25,7 +25,8 @@ describe("Page 2 (Thinking in Reality): a model training data cutoff slider", ()
     // A chat: a user icon with the question, a model icon with the reply, and the
     // cutoff slider underneath the conversation. Icons replace the text labels.
     expect(screen.getByRole("img", { name: "User" })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Model" })).toBeInTheDocument();
+    // One model icon in the chat, one on the ideal answer in section 2.
+    expect(screen.getAllByRole("img", { name: "Model" })).toHaveLength(2);
     expect(screen.queryByText(/the user asks|the model answers/i)).toBeNull();
     expect(screen.getByTestId("user-question")).toHaveTextContent(WC.question);
     expect(
@@ -81,16 +82,18 @@ describe("Page 2 (Thinking in Reality): a model training data cutoff slider", ()
     render(<Page2 />);
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/The question never said men's/i);
-    // The ideal answer is quoted like a model reply, naming both teams.
+    // The ideal answer is set like the chat reply in section 1, naming both teams.
     const ideal = screen.getByRole("region", { name: /The ideal answer/i });
     expect(within(ideal).getByText(/men's team in 2010 and 2026, and the women's team in 2023/i))
       .toBeInTheDocument();
-    expect(within(ideal).getByText(/all 3 titles/i)).toBeInTheDocument();
+    expect(within(ideal).getByRole("img", { name: "Model" })).toBeInTheDocument();
+    expect(within(ideal).getByTestId("ideal-reply").className).toMatch(/font-code/);
+    expect(within(ideal).getByTestId("ideal-reply").querySelector('mark[data-pair="count"]')).toHaveTextContent("three");
     // The point that makes it a DIFFERENT failure from the knowledge gap.
-    expect(body).toMatch(/The women's 2023 win happened before the cutoff and was widely covered/i);
+    expect(body).toMatch(/The women's 2023 win came before the cutoff and was widely covered/i);
     expect(body).toMatch(/We call this a\s*knowledge bias/i);
     expect(body).toMatch(
-      /The gap is about what the model never saw, whereas the bias is about what it saw but\s*never thought to count/i,
+      /With a knowledge gap, the fact is\s*missing\. With a knowledge bias, the fact is there, but the model overlooks it\./i,
     );
   });
 
@@ -115,7 +118,7 @@ describe("Page 2 (Thinking in Reality): a model training data cutoff slider", ()
     expect(body).toMatch(/so rereading won't help/i);
     expect(body).toMatch(/spot the\s*gap and then fix it with a lookup/i);
     // ...and that the model itself did not change, only the time and compute it spent.
-    expect(body).toMatch(/spent more time, and more compute,\s*before answering/i);
+    expect(body).toMatch(/The only difference is that it spent more time to reason and\s*reference\./i);
   });
 
   it("panel 2 says the training data ends, not that training was sealed", () => {
