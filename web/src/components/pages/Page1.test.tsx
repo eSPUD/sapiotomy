@@ -177,13 +177,12 @@ describe("Page 1 sorting game (SystemSort)", () => {
 
   // The definition comes after the widgets, so the reader feels both systems
   // first; the close hints at training versus thinking time without naming either.
-  it("defines the two systems by familiarity, then closes on learned versus thought", () => {
+  it("defines the two systems plainly, then closes on waiting for a reliable answer", () => {
     render(<Page1 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/A good rule of thumb for telling the two systems apart is familiarity/);
-    expect(body).toMatch(/it often leads to a better\s*answer, one with fewer errors/);
-    expect(body).toMatch(/Remember the difference between the two systems/);
-    expect(body).toMatch(/Others depend on how long you are willing to think/);
+    expect(body).not.toMatch(/A good rule of thumb/);
+    expect(body).toMatch(/System 2 scales its effort with the problem, spending more time on harder ones\s*to get them right\./);
+    expect(body).toMatch(/Sometimes it is worth waiting for a more reliable answer than a quick one\. People switch to\s*System 2 when a problem is long or unfamiliar, and it is usually worth the wait\./);
   });
 });
 

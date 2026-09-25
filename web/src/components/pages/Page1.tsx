@@ -311,17 +311,16 @@ export function Page1() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. The difference</h2>
           <p className="leading-relaxed text-ink">
-            A good rule of thumb for telling the two systems apart is familiarity.{" "}
             <strong>System 1</strong> recognizes or reacts as things happen, by reflex.{" "}
-            <strong>System 2</strong> spends more time, and brain power, to solve a problem you
-            cannot recognize instantly. Even though System 2 is slower, it often leads to a better
-            answer, one with fewer errors.
+            <strong>System 2</strong> spends more time to solve a problem you cannot recognize
+            instantly. System 2 scales its effort with the problem, spending more time on harder ones
+            to get them right.
           </p>
           {/* The hand-off: hints at training (what you have learned) versus
               inference-time scaling (how long you think) without naming either. */}
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            Remember the difference between the two systems. Some answers depend on what you have
-            already learned. Others depend on how long you are willing to think.
+            Sometimes it is worth waiting for a more reliable answer than a quick one. People switch to
+            System 2 when a problem is long or unfamiliar, and it is usually worth the wait.
           </div>
         </section>
         <div aria-hidden="true" />

@@ -176,7 +176,7 @@ export const SPAIN_WORLD_CUPS = {
   thinking: {
     steps: [
       "Let me not answer on reflex. This asks for a count of titles, and a count like that can change whenever there's a new final.",
-      "The newest possibility is recent. My training data ends in early 2025, so a 2026 result would fall after my cutoff; I could be a title behind.",
+      "The newest possibility is recent. My training data ends in early 2026, so a final later in 2026 would fall after my cutoff; I could be a title behind.",
       "So I shouldn't count from memory alone. Before I commit, let me check a current source.",
       "The record: Spain won in 2010, and again in 2026.",
     ],
@@ -236,7 +236,7 @@ export const SPAIN_SYSTEM2_TRACE = {
     },
     {
       name: "Check my own limits",
-      text: "My training data ends in early 2025. A newer final could be missing.",
+      text: "My training data ends in early 2026. A newer final could be missing.",
     },
     {
       name: "Do not answer from memory alone",

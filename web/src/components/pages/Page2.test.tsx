@@ -19,37 +19,62 @@ import { SPAIN_SYSTEM2_TRACE, SPAIN_WORLD_CUPS } from "@/lib/authored";
 
 const WC = SPAIN_WORLD_CUPS;
 
-describe("Page 2 (Thinking in Reality): a training data cutoff slider", () => {
+describe("Page 2 (Thinking in Reality): a model training data cutoff slider", () => {
   it("shows the question and the cutoff slider, answering one short by default", () => {
     render(<Page2 />);
-    expect(screen.getByText(WC.question)).toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: /training data cutoff/i })).toBeInTheDocument();
-    expect(screen.getByText("training data cutoff:")).toBeInTheDocument();
-    // At the default cutoff (Jan 2025) it answers off a memory that predates 2026.
-    expect(screen.getByText(/won the FIFA World Cup once, in 2010/i)).toBeInTheDocument();
-    expect(screen.getByText(/one short/i)).toBeInTheDocument();
+    // A chat: a user icon with the question, a model icon with the reply, and the
+    // cutoff slider underneath the conversation. Icons replace the text labels.
+    expect(screen.getByRole("img", { name: "User" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Model" })).toBeInTheDocument();
+    expect(screen.queryByText(/the user asks|the model answers/i)).toBeNull();
+    expect(screen.getByTestId("user-question")).toHaveTextContent(WC.question);
+    expect(
+      screen.getByTestId("model-reply").compareDocumentPosition(screen.getByRole("slider", { name: /model training data cutoff/i })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByRole("slider", { name: /model training data cutoff/i })).toBeInTheDocument();
+    expect(screen.getByText("model training data cutoff:")).toBeInTheDocument();
+    // At the default cutoff (Jan 2026) it answers off a memory that predates the July final.
+    const reply = () => screen.getByTestId("model-reply");
+    expect(reply()).toHaveTextContent(/won the FIFA World Cup once, in 2010/i);
+    // The count is highlighted.
+    expect(reply().querySelector('mark[data-pair="count"]')).toHaveTextContent("once");
+    // No status pill: the highlighted count carries the answer.
+    expect(screen.queryByText(/one short/i)).toBeNull();
+    // Matching words share a highlight across question and reply.
+    const q = screen.getByTestId("user-question");
+    expect(q.querySelector('mark[data-pair="count"]')).toHaveTextContent("How many");
+    expect(q.querySelector('mark[data-pair="cup"]')).toHaveTextContent("FIFA World Cups");
+    expect(q.querySelector('mark[data-pair="country"]')).toHaveTextContent("Spain");
+    expect(reply().querySelector('mark[data-pair="country"]')).toHaveTextContent("Spain");
+    expect(reply().querySelector('mark[data-pair="cup"]')).toHaveTextContent("FIFA World Cup");
+    expect(q.querySelector('mark[data-pair="count"]')!.className).toBe(
+      reply().querySelector('mark[data-pair="count"]')!.className,
+    );
+    expect(q.className).toMatch(/font-code/);
+    expect(reply().className).toMatch(/font-code/);
     // The pedagogically critical property: the stale reply never names 2026.
-    expect(screen.getByText(/won the FIFA World Cup once, in 2010/i).textContent).not.toMatch(
+    expect(reply().textContent).not.toMatch(
       /2026/,
     );
   });
 
   it("the cutoff slider changes the recalled answer", () => {
     render(<Page2 />);
-    const slider = screen.getByRole("slider", { name: /training data cutoff/i });
+    const slider = screen.getByRole("slider", { name: /model training data cutoff/i });
     // Past the 2026 final, the training data catches up and names both men's titles.
     fireEvent.change(slider, { target: { value: String(2026 * 12 + 8) } });
-    expect(screen.getByText(/twice, in 2010 and 2026/i)).toBeInTheDocument();
-    expect(screen.getByText("✓ within cutoff")).toBeInTheDocument();
-    expect(screen.queryByText(/✓ current/)).toBeNull();
+    expect(screen.getByTestId("model-reply")).toHaveTextContent(/twice, in 2010 and 2026/i);
+    expect(screen.getByTestId("model-reply").querySelector('mark[data-pair="count"]')).toHaveTextContent("twice");
+    expect(screen.queryByText(/within cutoff|✓ current/)).toBeNull();
   });
 
-  it("runs the slider from Jan 2017 to Dec 2026, starting at Jan 2025", () => {
+  it("runs the slider across 2026 only, starting at Jan 2026", () => {
     render(<Page2 />);
-    const slider = screen.getByRole("slider", { name: /training data cutoff/i });
-    expect(slider).toHaveAttribute("min", String(2017 * 12));
+    const slider = screen.getByRole("slider", { name: /model training data cutoff/i });
+    expect(slider).toHaveAttribute("min", String(2026 * 12));
     expect(slider).toHaveAttribute("max", String(2026 * 12 + 11));
-    expect(slider).toHaveAttribute("aria-valuetext", "Jan 2025");
+    expect(slider).toHaveAttribute("aria-valuetext", "Jan 2026");
   });
 
   it("section 2 shows the bias: the question never said men's", () => {
@@ -95,7 +120,7 @@ describe("Page 2 (Thinking in Reality): a training data cutoff slider", () => {
 
   it("panel 2 says the training data ends, not that training was sealed", () => {
     render(<Page2 />);
-    expect(screen.getByText(/My training data ends in early 2025\. A newer final could be missing\./)).toBeInTheDocument();
+    expect(screen.getByText(/My training data ends in early 2026\. A newer final could be missing\./)).toBeInTheDocument();
     expect(document.body.textContent ?? "").not.toMatch(/training was sealed/);
   });
 
@@ -125,7 +150,7 @@ describe("Page 2 (Thinking in Reality): a training data cutoff slider", () => {
     render(<Page2 />);
     expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
     // ...including after the cutoff has passed the final.
-    fireEvent.change(screen.getByRole("slider", { name: /training data cutoff/i }), {
+    fireEvent.change(screen.getByRole("slider", { name: /model training data cutoff/i }), {
       target: { value: String(2026 * 12 + 8) },
     });
     expect(document.body.textContent ?? "").not.toMatch(/\u2014/);
