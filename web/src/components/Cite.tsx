@@ -10,21 +10,31 @@
 /**
  * A superscript citation marker, e.g. the 1 in "...a voice is angry.1"
  *
- * The marker is an in-page anchor to its References entry (`#ref-{n}`): clicking
+ * Several works supporting one claim go in one marker, comma separated
+ * ("...feasible.1,2"): pass an array rather than placing two markers side by
+ * side, which would run the numbers together.
+ *
+ * Each number is an in-page anchor to its References entry (`#ref-{n}`): clicking
  * or activating it jumps to that entry in the margin note, which lights up via
  * the `:target` highlight RefItem carries. Pure anchor behaviour, no script.
  */
-export function Cite({ n }: { n: number }) {
+export function Cite({ n }: { n: number | readonly number[] }) {
+  const ns = typeof n === "number" ? [n] : n;
   return (
     <sup className="ml-0.5 font-semibold">
-      <a
-        href={`#ref-${n}`}
-        className="text-compute no-underline hover:underline focus-visible:underline"
-      >
-        {/* Without this a screen reader announces a bare digit mid-sentence. */}
-        <span className="sr-only">reference </span>
-        {n}
-      </a>
+      {ns.map((k, i) => (
+        <span key={k}>
+          {i > 0 ? <span aria-hidden="true">,</span> : null}
+          <a
+            href={`#ref-${k}`}
+            className="text-compute no-underline hover:underline focus-visible:underline"
+          >
+            {/* Without this a screen reader announces a bare digit mid-sentence. */}
+            <span className="sr-only">reference </span>
+            {k}
+          </a>
+        </span>
+      ))}
     </sup>
   );
 }

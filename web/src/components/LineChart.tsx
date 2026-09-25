@@ -51,6 +51,14 @@ export interface LineChartProps {
   /** Accessible name for the draggable marker. Required with onMarkerChange. */
   markerLabel?: string;
   /** Snap step for the dragged marker, in x units. */
+  /** Grid origin for markerStep: the marker lands on markerOrigin + k * markerStep
+   *  (so a marker that opens mid-period keeps even steps). Defaults to 0. */
+  markerOrigin?: number;
+  /** Draw the marker exactly at markerX, reading y off the line between data
+   *  points, instead of jumping to the nearest data point. */
+  markerInterpolate?: boolean;
+  /** A short label drawn at the top of the marker's rule (e.g. "Today"). */
+  markerRuleLabel?: string;
   markerStep?: number;
   /** Spoken value at the marker, e.g. "6 months". */
   markerValueText?: (x: number) => string;
@@ -62,6 +70,15 @@ export interface LineChartProps {
   /** Draw a dashed horizontal reference line (e.g. the reader's prediction). */
   referenceY?: number;
   referenceLabel?: string;
+  /** Tint the plot above referenceY, in this hue (marks a ceiling). */
+  shadeAboveY?: ChartTone;
+  /** Which end of the reference line carries its label; defaults to the right. */
+  referenceLabelAlign?: "start" | "end";
+  /** Draw a dashed vertical reference line at this x (e.g. a crossing point). */
+  referenceX?: number;
+  referenceXLabel?: string;
+  /** Tint the plot to the right of referenceX, in this hue. */
+  shadeRightOfX?: ChartTone;
   /** Optional second line (drawn in the compute hue) for a contrast. */
   secondary?: { points: { x: number; y: number }[]; label?: string };
   /** Draw the secondary line fainter and thinner — context, not a co-star. */
@@ -80,10 +97,14 @@ export interface LineChartProps {
    * estimate and the shading as the range around it.
    */
   band?: { lower: { x: number; y: number }[]; upper: { x: number; y: number }[] };
+  /** Legend entry for the band, drawn as a filled swatch in the band's own tint. */
+  bandLabel?: string;
   /** Shade the area between the primary and secondary lines (the gap itself). */
   fillBetween?: boolean;
   /** Opacity of the fillBetween band (raise it when the band IS the point). */
   fillOpacity?: number;
+  /** Hue of the fillBetween band; defaults to compute. */
+  fillTone?: ChartTone;
   /**
    * Annotation arrows in data coordinates, with an optional label at the
    * midpoint (e.g. slope callouts: "×10 → +29.5").
@@ -145,18 +166,28 @@ export function LineChart({
   onMarkerChange,
   markerLabel,
   markerStep = 1,
+  markerOrigin = 0,
+  markerInterpolate = false,
+  markerRuleLabel,
   markerValueText,
   markerFormat,
   referenceY,
   referenceLabel,
+  shadeAboveY,
+  referenceLabelAlign = "end",
+  referenceX,
+  referenceXLabel,
+  shadeRightOfX,
   secondary,
   secondaryFaint = false,
   primaryLabel,
   primaryTone = "correct",
   secondaryTone = "compute",
   band,
+  bandLabel,
   fillBetween = false,
   fillOpacity = 0.12,
+  fillTone = "compute",
   arrows,
   markPoints = false,
   inlineLabels = false,
@@ -191,11 +222,23 @@ export function LineChart({
   const path = lineGen(points);
   const secondaryPath = secondary ? lineGen(secondary.points) : null;
 
+  /** The line's value at x, between its data points (log-linear on a log axis). */
+  const interpAt = (pts: { x: number; y: number }[], at: number) => {
+    const k = Math.max(0, Math.min(pts.length - 2, pts.findIndex((p) => p.x > at) - 1));
+    const [a, b] = [pts[k], pts[k + 1] ?? pts[k]];
+    const f = b.x === a.x ? 0 : Math.min(1, Math.max(0, (at - a.x) / (b.x - a.x)));
+    const yv = logY
+      ? Math.exp(Math.log(a.y) + f * (Math.log(b.y) - Math.log(a.y)))
+      : a.y + f * (b.y - a.y);
+    return { x: at, y: yv };
+  };
   const markerPoint =
     markerX !== undefined
-      ? points.reduce((best, p) =>
-          Math.abs(p.x - markerX) < Math.abs(best.x - markerX) ? p : best,
-        )
+      ? markerInterpolate
+        ? interpAt(points, markerX)
+        : points.reduce((best, p) =>
+            Math.abs(p.x - markerX) < Math.abs(best.x - markerX) ? p : best,
+          )
       : null;
 
   // The secondary point at the marker, for the delta connector.
@@ -228,9 +271,13 @@ export function LineChart({
 
   const draggable = onMarkerChange !== undefined && markerX !== undefined;
   const [xLo, xHi] = [xd[0], xd[1]];
+  // The first and last grid positions inside the domain, so Home/End and clamping
+  // stay on the marker's step grid.
+  const gridLo = markerOrigin + Math.ceil((xLo - markerOrigin) / markerStep - 1e-9) * markerStep;
+  const gridHi = markerOrigin + Math.floor((xHi - markerOrigin) / markerStep + 1e-9) * markerStep;
   const clampSnap = (v: number) => {
-    const snapped = Math.round(v / markerStep) * markerStep;
-    return Math.min(xHi, Math.max(xLo, snapped));
+    const snapped = markerOrigin + Math.round((v - markerOrigin) / markerStep) * markerStep;
+    return Math.min(gridHi, Math.max(gridLo, snapped));
   };
   /** Map a client pixel to an x value, going through the svg's own coordinate
    *  space so it stays correct when the chart is scaled to fit its column. */
@@ -259,8 +306,8 @@ export function LineChart({
     };
     let next: number | null = null;
     if (e.key in move) next = clampSnap(markerX! + move[e.key]);
-    else if (e.key === "Home") next = xLo;
-    else if (e.key === "End") next = xHi;
+    else if (e.key === "Home") next = gridLo;
+    else if (e.key === "End") next = gridHi;
     if (next === null) return;
     e.preventDefault();
     if (next !== markerX) onMarkerChange!(next);
@@ -297,8 +344,47 @@ export function LineChart({
         </text>
       ))}
 
+      {referenceX !== undefined ? (
+        <g>
+          {shadeRightOfX ? (
+            <rect
+              x={x(referenceX)}
+              y={0}
+              width={Math.max(0, innerW - x(referenceX))}
+              height={innerH}
+              className={FILL[shadeRightOfX]}
+              fillOpacity={0.08}
+            />
+          ) : null}
+          <line
+            x1={x(referenceX)}
+            x2={x(referenceX)}
+            y1={0}
+            y2={innerH}
+            className="stroke-ink-muted"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+          />
+          {referenceXLabel ? (
+            <text x={x(referenceX) + 4} y={12} className="fill-ink-muted text-[10px]">
+              {referenceXLabel}
+            </text>
+          ) : null}
+        </g>
+      ) : null}
+
       {referenceY !== undefined ? (
         <g>
+          {shadeAboveY ? (
+            <rect
+              x={0}
+              y={0}
+              width={innerW}
+              height={Math.max(0, y(referenceY))}
+              className={FILL[shadeAboveY]}
+              fillOpacity={0.1}
+            />
+          ) : null}
           <line
             x1={0}
             x2={innerW}
@@ -309,7 +395,12 @@ export function LineChart({
             strokeDasharray="4 3"
           />
           {referenceLabel ? (
-            <text x={innerW - 4} y={y(referenceY) - 4} textAnchor="end" className="fill-ink-muted text-[10px]">
+            <text
+              x={referenceLabelAlign === "start" ? 4 : innerW - 4}
+              y={y(referenceY) - 4}
+              textAnchor={referenceLabelAlign}
+              className="fill-ink-muted text-[10px]"
+            >
               {referenceLabel}
             </text>
           ) : null}
@@ -317,7 +408,7 @@ export function LineChart({
       ) : null}
 
       {/* the gap between the lines, shaded (drawn under the lines) */}
-      {bandPath ? <path d={bandPath} className="fill-compute" fillOpacity={fillOpacity} /> : null}
+      {bandPath ? <path d={bandPath} className={FILL[fillTone]} fillOpacity={fillOpacity} /> : null}
 
       {secondaryPath ? (
         <path
@@ -394,7 +485,7 @@ export function LineChart({
             </text>
           ) : null}
         </g>
-      ) : (primaryLabel || secondary?.label) ? (
+      ) : (primaryLabel || secondary?.label || bandLabel) ? (
         <g>
           {primaryLabel ? (
             <>
@@ -408,6 +499,23 @@ export function LineChart({
             <>
               <rect x={8} y={22} width={26} height={3} rx={1.5} className={FILL[secondaryTone]} />
               <text x={40} y={26} className="fill-ink text-[10px]">{secondary.label}</text>
+            </>
+          ) : null}
+          {band && bandLabel ? (
+            <>
+              {/* same tint and opacity as the band itself */}
+              <rect
+                x={8}
+                y={secondary?.label ? 32 : 18}
+                width={26}
+                height={10}
+                rx={1.5}
+                className={FILL[primaryTone]}
+                opacity={0.16}
+              />
+              <text x={40} y={secondary?.label ? 40 : 26} className="fill-ink text-[10px]">
+                {bandLabel}
+              </text>
             </>
           ) : null}
         </g>
@@ -513,6 +621,15 @@ export function LineChart({
             strokeWidth={draggable ? 1.5 : 1}
             strokeDasharray="3 3"
           />
+          {markerRuleLabel ? (
+            <text
+              x={x(markerPoint.x) + 4}
+              y={12}
+              className="fill-compute text-[10px] font-semibold"
+            >
+              {markerRuleLabel}
+            </text>
+          ) : null}
           {draggable ? (
             <>
               {/* grab handle at the top of the rule */}

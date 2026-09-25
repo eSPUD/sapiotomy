@@ -63,18 +63,30 @@ const COMBO_MONTHS = 12;
  *  from src/dataset_size_projections.py in their data-stock repo. */
 const PROJ = curves.epochDatasetProjection;
 const PP = PROJ.fit!.params;
-const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-/** Median and 90% band at a projected year. */
-const projAt = (year: number) => {
-  const y = Math.round(year);
-  const i = Math.max(0, PROJ.points.findIndex((p) => p.x === y));
-  return {
-    year: PROJ.points[i].x,
-    med: PROJ.points[i].y,
-    lo: PROJ.band!.lower[i].y,
-    hi: PROJ.band!.upper[i].y,
+/** Median and 90% band at a projected time (fractional year), interpolated
+ *  between Epoch's yearly points on the log scale the chart uses. */
+const projAt = (t: number) => {
+  const pts = PROJ.points;
+  const lerpLog = (arr: { x: number; y: number }[]) => {
+    const k = Math.min(arr.length - 2, Math.max(0, Math.floor(t) - arr[0].x));
+    const a = arr[k];
+    const b = arr[k + 1];
+    const f = Math.min(1, Math.max(0, (t - a.x) / (b.x - a.x)));
+    return Math.exp(Math.log(a.y) + f * (Math.log(b.y) - Math.log(a.y)));
   };
+  return { t, med: lerpLog(pts), lo: lerpLog(PROJ.band!.lower), hi: lerpLog(PROJ.band!.upper) };
 };
+
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** A fractional year as "Sep 2026". */
+const fmtYM = (t: number) => {
+  const m = Math.round((t - Math.floor(t)) * 12);
+  const y = Math.floor(t) + (m === 12 ? 1 : 0);
+  return `${MONTHS_SHORT[m % 12]} ${y}`;
+};
+/** The projection's fixed marker: this month, September 2026 (not read from the
+ *  clock, so the page and its tests stay deterministic). */
+const PROJ_START = 2026 + 8 / 12;
 
 /** One mark per month, on both the chart axis and the slider. */
 const MONTH_TICKS = Array.from({ length: COMBO_MONTHS + 1 }, (_, i) => i);
@@ -116,7 +128,6 @@ export function Page3() {
   const runCost = curves.epochRunCost;
   const rp = runCost.fit!.params;
   const RUN_M = rp.usdMillionPerRun;
-  const GEMINI_M = rp.geminiUltraUSDMillion;
   const trainTrend = curves.epochTrainingCosts;
   const tp = trainTrend.fit!.params;
   const dataStock = curves.epochDataStock;
@@ -135,8 +146,8 @@ export function Page3() {
   /** The size whose compute-optimal appetite is exactly the whole stock. */
 
   // The observed-frontier figure's own year handle, independent of step 1's.
-  const [projYear, setProjYear] = useState(PP.medianCrossesStockYear);
-  const proj = projAt(projYear);
+  // The projection's marker is fixed on the current month.
+  const proj = projAt(PROJ_START);
 
   // The five-year combination: same model (linear) vs the frontier model of
   // the day (per-run price riding Epoch's x2.4/year cost trend). Derived.
@@ -166,6 +177,18 @@ export function Page3() {
    * month the reader is actually standing on.
    */
   const crossedFlatYear = frontierAtM >= sameModelCumulativeUSDM(DAYS);
+  /** The exact month the newest-model plan passes a full year at the flat rate. */
+  const flatYearCrossMonth = useMemo(() => {
+    const target = sameModelCumulativeUSDM(DAYS);
+    let lo = 0;
+    let hi = COMBO_MONTHS;
+    for (let k = 0; k < 40; k++) {
+      const mid = (lo + hi) / 2;
+      if (frontierCumulativeUSDM(mid) >= target) hi = mid;
+      else lo = mid;
+    }
+    return hi;
+  }, []);
 
   const onMonths = (v: number) => {
     if (!monthsTouchedRef.current) {
@@ -197,8 +220,7 @@ export function Page3() {
 
       <p className="max-w-2xl text-lg text-ink-muted">
         A missing fact needs new knowledge, and the obvious way to supply it is to{" "}
-        <strong className="text-ink">train the model again</strong>. The bill says no, then the data
-        says no. And even if both said yes, it would do nothing about the bias.
+        <strong className="text-ink">train the model again</strong>.
       </p>
 
       {/* Each step (left) sits beside its References note (right); step 3 cites nothing. */}
@@ -208,28 +230,44 @@ export function Page3() {
           <h2 className="text-xl font-semibold text-ink">
             1. Challenges in addressing knowledge gaps
           </h2>
+          <p className="text-ink">
+            Retraining runs into three problems: what it costs, how long it takes, and how much text
+            there is to train on.
+          </p>
 
           <h3 className="text-lg font-semibold text-ink">
-            a. The bill compounds
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              derived from the two Epoch trends
-            </span>
+            a. Rising cost
           </h3>
+          {/* The section's text sits above its chart; the chart frame holds only
+              the chart and its live readout. */}
+          <p className="text-ink">
+            What would it cost to retrain a model every day for a year? Frontier training runs grow
+            about &times;{tp.perYear} more expensive each year, and one GPT-4-class run costs an
+            estimated ${RUN_M}M.
+            <Cite n={[REF.trainTrend, REF.runCost]} /> Drag the slider to run the plan forward. For
+            a few missing facts, that bill is not economically feasible.
+          </p>
           <figure
-            aria-label="Problem one: the bill compounds"
+            aria-label="Problem one: rising cost"
             className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <p className="text-sm text-ink">
-              What would it cost to retrain a model every day for a year?
-            </p>
             <LineChart
               title={`The first year: retraining the same GPT-4-class model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
               points={comboSame}
               secondary={{
                 points: comboFrontier,
-                label: `the newest frontier model, daily · e.g. Gemini Ultra at $${GEMINI_M}M · its price climbs`,
+                label: "newest model",
               }}
-              primaryLabel={`the same GPT-4 model, daily · flat $${RUN_M}M a run`}
+              primaryLabel="same model"
+              // The extra spend of chasing the newest model, shaded between the lines.
+              fillBetween
+              fillTone="wrong-bright"
+              fillOpacity={0.15}
+              // Always shown: the month the newest model has spent more than a full
+              // year of the same model, and everything after it.
+              referenceX={flatYearCrossMonth}
+              referenceXLabel="newest > 1 year of same model"
+              shadeRightOfX="wrong-bright"
               primaryTone="compute-bright"
               secondaryTone="wrong-bright"
               markerX={months}
@@ -238,8 +276,8 @@ export function Page3() {
               markerStep={1}
               markerValueText={(m) => `${m} ${m === 1 ? "month" : "months"}`}
               markerFormat={(bn) => fmtM(bn * 1000)}
-              xLabel="months of keeping it up"
-              yLabel="cumulative bill ($ billions)"
+              xLabel="time (months)"
+              yLabel="cumulative cost of training ($ billions)"
               yDomain={[0, 52]}
               xTicks={MONTH_TICKS}
               width={640}
@@ -276,74 +314,82 @@ export function Page3() {
                   </p>
                 </div>
               </div>
-              {/* The designed aha, on screen. It reached the sr-only live region only, so
-                  a sighted reader dragged straight past the moment the page is built
-                  around. Lights when the crossing happens and stays lit. */}
-              {crossedFlatYear ? (
-                <p className="rounded-lg border-l-4 border-wrong bg-wrong/10 px-3 py-2 text-sm text-ink">
-                  <strong className="text-wrong">Month {months}:</strong> chasing the frontier has
-                  already outspent a <em>whole year</em> at the flat rate.
-                </p>
-              ) : null}
-              {months > 0 ? (
-                <p className="text-sm text-ink-muted">
-                  Chasing the frontier costs{" "}
-                  <strong className="text-ink">{fmtM(frontierAtM - sameAtM)}</strong> more so far,
-                  and the gap widens every month.
-                </p>
-              ) : (
-                <p className="text-sm text-ink-muted">
-                  Nothing spent yet. Drag the slider to run the plan forward.
-                </p>
-              )}
             </div>
-            <figcaption className="text-sm text-ink">
-              Frontier training runs grow about &times;{tp.perYear} more expensive each year, and one
-              GPT-4-class run costs an estimated ${RUN_M}M.
-              <Cite n={REF.trainTrend} />
-              <Cite n={REF.runCost} /> For one missing fact, like the 2026 final, that bill is not
-              economically feasible.
-            </figcaption>
           </figure>
 
-          <h3 className="text-lg font-semibold text-ink">b. It always lags</h3>
+          <h3 className="text-lg font-semibold text-ink">b. Always behind</h3>
           <p className="text-ink">
             A training run takes weeks, so by the time a model is finished, its cutoff is already
             behind. The gap shrinks, but it never closes.
           </p>
+          {/* PLACEHOLDER (open item O.12): a scatterplot of training time for 12 to 20
+              popular LLMs, 2022 to 2026, one dot per model (x: release year, y: training
+              time), each dot labelled with its model.
+              Empty on purpose: no values are drawn until each one is grounded in a
+              cited source (model card, paper or lab post). Do not ship with data
+              that has no citation. */}
+          <figure
+            aria-label="Training time of popular LLMs, 2022 to 2026 (placeholder, data not yet added)"
+            data-placeholder="training-time"
+            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+          >
+            <figcaption className="text-sm text-ink">Training time of popular LLMs, 2022 to 2026</figcaption>
+            <div className="flex">
+              <p className="w-6 shrink-0 self-center text-[11px] text-ink-muted [writing-mode:vertical-rl] rotate-180">
+                training time
+              </p>
+              <div className="flex flex-1 flex-col">
+                <div className="flex h-40 items-center justify-center rounded border border-dashed border-grid text-xs text-ink-muted">
+                  Placeholder: scatterplot of 12 to 20 models, one dot per model, from cited sources
+                </div>
+                <div className="mt-1 flex justify-between text-[11px] text-ink-muted">
+                  {[2022, 2023, 2024, 2025, 2026].map((yr) => (
+                    <span key={yr}>{yr}</span>
+                  ))}
+                </div>
+                <p className="text-center text-[11px] text-ink-muted">release year</p>
+              </div>
+            </div>
+          </figure>
 
           <h3 className="text-lg font-semibold text-ink">
-            c. The data runs out
+            c. Not enough text
           </h3>
           {/* The argument is section prose, like section b; only the chart keeps a frame. */}
-          <section aria-label="Problem two: the data runs out" className="flex flex-col gap-3">
+          <section aria-label="Problem two: not enough text" className="flex flex-col gap-3">
+            {/* Section c's text, one paragraph above the chart; the frame holds only the chart. */}
             <p className="text-ink">
               {/* First load-bearing use of "parameter" in the deck, and pages 5 and 11 are
                   both denominated in it. Defined once, at the altitude of this page. */}
-              Suppose money were no object. Frontier models keep getting bigger, and bigger models
-              need more text. Researchers who trained hundreds of models at different sizes found a{" "}
-              <strong>scaling law</strong>: about {cp.tokensPerParam} <strong>tokens</strong> (pieces of
-              text, roughly a word each) for every <strong>parameter</strong>, the numbers inside a
-              model that training adjusts.
-              <Cite n={REF.chinchilla} /> There is only so much text, roughly {STOCK_T} trillion
-              tokens of quality writing, and no budget buys tokens that do not exist.
+              Suppose money were no object. Bigger models need more text: a{" "}
+              <strong>scaling law</strong>, measured across hundreds of models, calls for about{" "}
+              {cp.tokensPerParam} <strong>tokens</strong> (pieces of text, roughly a word each) for
+              every <strong>parameter</strong> (a number training adjusts).
+              <Cite n={REF.chinchilla} /> Only about {STOCK_T} trillion tokens of quality writing
+              exist, and no budget buys tokens that do not exist.
+              <Cite n={REF.dataStock} /> Epoch projects the largest training sets growing about
+              &times;{PP.growthPerYearMedian.toFixed(1)} a year, likely between &times;
+              {PP.growthPerYearLow.toFixed(1)} and &times;{PP.growthPerYearHigh.toFixed(1)} (the
+              shading).
+              <Cite n={REF.datasetSizes} /> The largest training set in{" "}
+              <strong className="text-ink">{fmtYM(proj.t)}</strong>:{" "}
+              <strong className="text-ink">≈{fmtT(proj.med)}</strong> tokens,{" "}
+              {proj.med >= PP.stockTrillionTokens ? (
+                <strong className="text-wrong-bright">more than all quality text</strong>
+              ) : (
+                <>{((100 * proj.med) / PP.stockTrillionTokens).toFixed(0)}% of all quality text</>
+              )}
+              . At this pace it runs out around {PP.medianCrossesStockMonth <= 6 ? "mid-" : "late "}
+              {PP.medianCrossesStockYear} (Epoch&apos;s range: {ds.windowStartYear} to{" "}
+              {ds.windowEndYear}).
               <Cite n={REF.dataStock} />
             </p>
-            {/* Where the trend lands. Epoch's own historical projection, run
-                forward from their dataset-size regression to 2030. */}
             <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
-              <figcaption className="text-sm text-ink">
-                Epoch projects that the largest training sets grow about &times;
-                {PP.growthPerYearMedian.toFixed(1)} a year. Drag the year to see when that line meets
-                the stock of text that exists. The shading is the likely range: growth between about
-                &times;{PP.growthPerYearLow.toFixed(1)} and &times;{PP.growthPerYearHigh.toFixed(1)} a
-                year.
-                <Cite n={REF.datasetSizes} />
-              </figcaption>
               <LineChart
                 title={`Projected largest training set, ${PROJ.points[0].x} to ${PP.lastProjectedYear}, on a log scale in trillions of tokens, with a ${PP.bandCredibility}% band, against the ${PP.stockTrillionTokens}T effective stock. Reproduced from Epoch's historical projection.`}
                 points={PROJ.points}
                 band={PROJ.band}
+                bandLabel={`likely range (×${PP.growthPerYearLow.toFixed(1)} to ×${PP.growthPerYearHigh.toFixed(1)} a year)`}
                 primaryTone="wrong-bright"
                 primaryLabel="projected largest training set"
                 logY
@@ -354,31 +400,18 @@ export function Page3() {
                 xLabel="projected year"
                 yLabel="largest training set (tokens)"
                 referenceY={PP.stockTrillionTokens}
-                referenceLabel={`${PP.stockTrillionTokens}T stock`}
-                markerX={projYear}
-                onMarkerChange={setProjYear}
-                markerLabel="Drag through the projected years"
-                markerStep={1}
-                markerValueText={(v) => String(Math.round(v))}
+                // The cap: all the quality text that exists today. Everything above it is
+                // text that would have to be written first.
+                referenceLabel={`Total quality tokens that exist = ${PP.stockTrillionTokens}T tokens`}
+                shadeAboveY="ink"
+                referenceLabelAlign="start"
+                // A fixed "today" marker: the reader cannot move it.
+                markerX={PROJ_START}
+                markerInterpolate
+                markerRuleLabel="Today"
                 width={640}
                 height={260}
               />
-              <p className="text-sm text-ink-muted">
-                By <strong className="text-ink">{proj.year}</strong>, the largest training set
-                reaches <strong className="text-ink">≈{fmtT(proj.med)}</strong> tokens,{" "}
-                {proj.med >= PP.stockTrillionTokens ? (
-                  <strong className="text-wrong-bright">past the whole stock.</strong>
-                ) : (
-                  <>{((100 * proj.med) / PP.stockTrillionTokens).toFixed(0)}% of the stock.</>
-                )}{" "}
-                The trend crosses the stock in{" "}
-                <strong className="text-ink">
-                  {MONTH_NAMES[PP.medianCrossesStockMonth - 1]} {PP.medianCrossesStockYear}
-                </strong>
-                . Epoch estimates the stock will be fully used between {ds.windowStartYear} and{" "}
-                {ds.windowEndYear}.
-                <Cite n={REF.dataStock} />
-              </p>
             </figure>
 
           </section>

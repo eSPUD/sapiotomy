@@ -890,8 +890,7 @@ export function Page15() {
             {PAGE17.length.inverted.toFixed(2)}, beating {PAGE17.length.beats.length} of the models
             that page asked to judge, at no cost. Wrong answers elsewhere burn ~225% more tokens
             amid ~4× more strategy switches: thrashing, not depth.
-            <Cite n={REF.zeng} />
-            <Cite n={REF.wang} />
+            <Cite n={[REF.zeng, REF.wang]} />
           </p>
         </section>
 
