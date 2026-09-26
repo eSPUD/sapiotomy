@@ -44,6 +44,14 @@ describe("design tokens", () => {
     }
   });
 
+  it("the size ramp reads light to dark and its light end clears the surface", () => {
+    const ramp = [tokens.size1, tokens.size2, tokens.size3, tokens.size4];
+    for (const hue of ramp) expect(hue).toMatch(HEX);
+    const lum = ramp.map(relativeLuminance);
+    for (let i = 1; i < lum.length; i++) expect(lum[i]).toBeLessThan(lum[i - 1]);
+    expect(contrast(tokens.size1, tokens.surface)).toBeGreaterThanOrEqual(2);
+  });
+
   it("each bright hue is brighter than the ink-weight one it stands in for", () => {
     expect(relativeLuminance(tokens.computeBright)).toBeGreaterThan(
       relativeLuminance(tokens.compute),

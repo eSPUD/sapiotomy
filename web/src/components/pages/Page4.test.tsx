@@ -22,10 +22,9 @@ import { MULT_METHODS } from "@/lib/authored";
 
 const M = MULT_METHODS;
 
-// Act 1's hard rule: the Act 2+ jargon never appears. The lede now names
-// "inference-time scaling" (the Act 1 plan introduces it on pages 1 and 2 and
-// ties reasoning to it here); any other "inference" talk is still banned.
-const BANNED = /inference(?!-time scaling)/i;
+// Act 1's hard rule: the Act 2+ jargon never appears. The lede's one mention of
+// "inference-time scaling" was cut, so any "inference" talk is banned again.
+const BANNED = /inference/i;
 const expectClean = () => {
   expect(document.body.textContent ?? "").not.toMatch(BANNED);
 };
@@ -56,11 +55,25 @@ describe("Page 4 (Reasoning: Diverse Pathfinding)", () => {
       expect(screen.getAllByText(m.name).length).toBeGreaterThanOrEqual(2);
       expect(screen.getAllByText(new RegExp(m.limitation.slice(0, 24))).length).toBeGreaterThan(0);
     }
+    // Step 1 opens on the idea before the walkthrough.
+    expect(document.body.textContent).toMatch(
+      /The same multiplication can be worked out in very different ways\. Here are three, each\s*from a different tradition\./,
+    );
+    // Step 2 opens on the convergence and the cost of every method, before the cards.
+    expect(document.body.textContent).toMatch(
+      /land on the correct answer\. Each\s*trades one kind of effort for another, depending on what it asks you to already know\./,
+    );
+    expect(document.body.textContent).not.toMatch(/Some take more work than others|common tradeoffs/);
+    expect(document.body.textContent).not.toMatch(/No method is free/);
+    // Step 2's paragraph names the convergence and the trade-offs; the closing box is the claim.
     expect(
       screen.getByText(/All three methods of reasoning through the problem land on the correct answer\./),
     ).toBeInTheDocument();
-    expect(screen.getByText(/guide a machine down different roads/i)).toBeInTheDocument();
-    expect(screen.getByText(/chart its own road/i)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/catch those mistakes/);
+    expect(
+      screen.getByText(/^There is more than one path from what we know to an answer/),
+    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/guide a machine|chart its own road|Act 2 opens that toolbox/);
     // The walkthrough waits at its setup step.
     expect(screen.getByText("step 0 of 4")).toBeInTheDocument();
     expect(screen.getAllByText(/Press Next/).length).toBeGreaterThan(0);
@@ -199,16 +212,16 @@ describe("Page 4 animated Play (no reduced motion)", () => {
     expect(screen.getByText("step 2 of 4")).toBeInTheDocument();
   });
 
-  // The lede names reasoning and ties it to inference-time scaling; the convergence
-  // and the trade-offs belong to step 2.
+  // The lede names reasoning; the convergence and the trade-offs belong to step 2.
   it("names reasoning in the lede and leaves the convergence to step 2", () => {
     render(<Page4 />);
     const lede =
       screen.getByText(/Working a problem out, instead of recognizing the answer/).textContent ?? "";
-    expect(lede).toMatch(/Reasoning is what inference-time scaling spends its extra time and compute on\./);
+    expect(lede).toMatch(/has a name:\s*reasoning\. If you've ever compared answers/);
+    expect(lede).not.toMatch(/Reasoning is what inference-time scaling spends/);
     expect(lede).toMatch(/there is rarely only one way to reason through a problem\./);
     expect(lede).not.toMatch(/223,300/);
-    // Step 2 still owns it.
+    // Step 2 owns the convergence.
     expect(screen.getByText(/land on the correct answer/)).toBeInTheDocument();
   });
 });
@@ -253,7 +266,14 @@ describe("Page 4 layout and copy (Act 1 revisions)", () => {
     // The walkthrough panel is shaded but unbarred; the takeaway is plain text.
     expect(shaded).toHaveLength(1);
     const closing = shaded[0];
-    expect(closing.textContent).toMatch(/guide a machine down different roads/);
+    expect(closing.textContent?.replace(/\s+/g, " ").trim()).toBe(
+      "There is more than one path from what we know to an answer, and reasoning is how we walk them. It pays off most on the hardest questions. Act 1 ends on an open question: can a large language model learn to reason through a problem instead of answering on reflex? Act 2 builds that toolbox, one technique at a time, for getting a model to reason its way to an answer.",
+    );
+    expect(closing.querySelector("strong")?.textContent).toBe(
+      "can a large language model learn to reason through a problem instead of answering on reflex?",
+    );
+    // Set upright: the closing box carries no italics.
+    expect(closing.querySelector("em, i")).toBeNull();
     expect(screen.getByText(/land on the correct answer/).closest(".border-l-4")).toBeNull();
   });
 

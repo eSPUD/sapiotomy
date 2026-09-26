@@ -14,6 +14,11 @@ const config: Config = {
         "compute-bright": tokens.computeBright,
         "wrong-bright": tokens.wrongBright,
         "correct-bright": tokens.correctBright,
+        // Sequential cyan ramp for a magnitude, light (1) to dark (4).
+        "size-1": tokens.size1,
+        "size-2": tokens.size2,
+        "size-3": tokens.size3,
+        "size-4": tokens.size4,
         ink: tokens.ink,
         "ink-muted": tokens.inkMuted,
         // The three semantic hues

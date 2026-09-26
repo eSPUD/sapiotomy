@@ -16,7 +16,7 @@ vi.stubGlobal("matchMedia", mm);
 
 import { Page3 } from "./Page3";
 import { curves } from "@/lib/curves";
-import { trainingTimeModels } from "@/lib/trainingTime";
+import { sizeBin, trainingTimeModels } from "@/lib/trainingTime";
 
 const RUN_M = curves.epochRunCost.fit!.params.usdMillionPerRun;
 
@@ -44,7 +44,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Training-Time Scaling");
     // Section 1's three walls are each their own sub-head, lettered a to c;
     // section 2 is one paragraph with no sub-heads.
-    for (const h of [/a\. Rising cost/i, /b\. Always behind/i, /c\. Not enough text/i]) {
+    for (const h of [/a\. Rising cost/i, /b\. Always behind/i, /c\. Not enough data/i]) {
       expect(screen.getByRole("heading", { level: 3, name: h })).toBeInTheDocument();
     }
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(3);
@@ -161,26 +161,99 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expectClean();
   });
 
-  it("plots every model's Epoch training time in section b, estimates hollow", () => {
+  it("plots every model's Epoch training time in section b, coloured by size, estimates hollow", () => {
     render(<Page3 />);
     const fig = screen.getByRole("figure", { name: /training time of popular LLMs/i });
     // The placeholder is gone; one dot per model, each labelled with its name.
     expect(document.querySelector("[data-placeholder]")).toBeNull();
     const dots = fig.querySelectorAll("g[data-model]");
     expect(dots).toHaveLength(trainingTimeModels.length);
-    for (const m of trainingTimeModels) expect(within(fig).getByText(m.name)).toBeInTheDocument();
+    for (const m of trainingTimeModels)
+      expect(within(fig).getByText(m.label ?? m.name)).toBeInTheDocument();
     // Fill says who measured it: estimates are hollow, the rest solid.
     const hollow = fig.querySelectorAll('g[data-basis="estimate"] circle.fill-surface');
     expect(hollow).toHaveLength(trainingTimeModels.filter((m) => m.basis === "estimate").length);
+    // Colour is the size bin; gray where the size was never disclosed.
+    for (const m of trainingTimeModels) {
+      const dot = fig.querySelector(`g[data-model="${m.name}"] circle[data-size-bin]`)!;
+      const bin = sizeBin(m);
+      expect(dot.getAttribute("data-size-bin")).toBe(bin === null ? "undisclosed" : String(bin));
+    }
+    expect(fig.textContent).toMatch(/model size/);
+    expect(fig.textContent).toMatch(/not disclosed/);
+    // The legend alone says what the colours mean; no sentence above repeats it.
+    expect(document.body.textContent).not.toMatch(/Blue dots show/);
     expect(fig.textContent).toMatch(/reported by the developer/);
     expect(fig.textContent).toMatch(/estimated by Epoch AI/);
     // The chart's accessible name carries every value, so no dot is sight-only.
-    const svg = within(fig).getByRole("img");
-    for (const m of trainingTimeModels) expect(svg.getAttribute("aria-label")).toContain(`${m.name} ${m.days} days`);
+    const svg = within(fig).getByRole("group");
+    for (const m of trainingTimeModels)
+      expect(svg.getAttribute("aria-label")).toContain(`${m.name} ${m.days} days`);
     // The source is cited in the text right above the chart.
-    const lead = screen.getByText(/Each dot is one model.s main training run/);
+    const lead = screen.getByText(/this delay has persisted/);
     expect(lead.querySelector('sup a[href="#ref-3"]')).not.toBeNull();
     expectClean();
+  });
+
+  it("a clicked dot opens a popup with its length and where the number comes from", () => {
+    render(<Page3 />);
+    const fig = screen.getByRole("figure", { name: /training time of popular LLMs/i });
+    // Nothing is open yet, and the figure carries no instructions: the Try it note does.
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fig.textContent).not.toMatch(/Click a dot/);
+    const tryIt = screen.getByText("Try it").closest("aside")!;
+    expect(tryIt.textContent).toMatch(/Clicking a dot shows model training time and data source\./);
+    // An estimate says so, and links Epoch's database.
+    const gpt4 = within(fig).getByRole("button", { name: /^GPT-4, 95 days, estimate$/ });
+    fireEvent.click(gpt4);
+    const pop = screen.getByRole("dialog", { name: /GPT-4 training time/ });
+    expect(pop.textContent).toMatch(/GPT-4 · OpenAI · Mar 2023 · size not disclosed/);
+    expect(pop.textContent).toMatch(/95 days \(about 3 months\)/);
+    expect(pop.textContent).toMatch(/Estimate, from SemiAnalysis\. OpenAI has not said\. Source:/);
+    expect(within(pop).getByRole("link", { name: "Epoch AI" })).toHaveAttribute(
+      "href",
+      "https://epoch.ai/data/ai-models",
+    );
+    expect(gpt4).toHaveAttribute("aria-pressed", "true");
+    // Clicking the same dot again closes it.
+    fireEvent.click(gpt4);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    // A reported value links where the developer said it; the keyboard works too.
+    fireEvent.keyDown(within(fig).getByRole("button", { name: /^LLaMA-65B,/ }), { key: "Enter" });
+    const llama = screen.getByRole("dialog", { name: /LLaMA-65B training time/ });
+    expect(llama.textContent).toMatch(/20\.8 days \(about 3 weeks\)/);
+    expect(llama.textContent).toMatch(/65\.2B parameters/);
+    expect(within(llama).getByRole("link", { name: "LLaMA paper" })).toHaveAttribute(
+      "href",
+      "https://arxiv.org/abs/2302.13971",
+    );
+    // Escape closes it, as does a click elsewhere on the page, or its close button.
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(within(fig).getByRole("button", { name: /^GLM-130B,/ }));
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    fireEvent.click(within(fig).getByRole("button", { name: /^GLM-130B,/ }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expectClean();
+  });
+
+  it("opens the popup at the dot's top right, and top left only at the screen's edge", () => {
+    // jsdom lays nothing out, so give the page a 640px screen with the chart filling it.
+    Object.defineProperty(document.documentElement, "clientWidth", { value: 640, configurable: true });
+    const box = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockReturnValue({ left: 0, width: 640, top: 0, right: 640, bottom: 300, height: 300, x: 0, y: 0, toJSON: () => ({}) });
+    render(<Page3 />);
+    const fig = screen.getByRole("figure", { name: /training time of popular LLMs/i });
+    fireEvent.click(within(fig).getByRole("button", { name: /^RoBERTa,/ }));
+    expect(screen.getByRole("dialog")).toHaveAttribute("data-side", "top-right");
+    fireEvent.click(within(fig).getByRole("button", { name: /^EXAONE 4\.0,/ }));
+    expect(screen.getByRole("dialog")).toHaveAttribute("data-side", "top-left");
+    // Own property shadows jsdom's getter; deleting it restores the getter.
+    delete (document.documentElement as { clientWidth?: number }).clientWidth;
+    box.mockRestore();
   });
 
   it("puts section a's text above the chart, not inside its frame", () => {

@@ -1,16 +1,17 @@
 "use client";
 
 /**
- * Page 4, "Reasoning: Diverse Pathfinding", the Act 1 finale. The lede names
- * the working-out (reasoning) and ties it to inference-time scaling, then one
+ * Page 4, "Reasoning: Diverse Pathfinding", the Act 1 finale. Reasoning is how a
+ * model can emulate System 2 thinking, and any one problem admits more than one
+ * way to reason it through. The lede names the working-out (reasoning), then one
  * problem, 350 × 638, is solved three ways: standard long multiplication,
  * Japanese line multiplication, and Vedic multiplication. A dropdown picks the
  * method; a stepped, animated walkthrough drives it; every method lands on the
  * same 223,300. Step 2 lays the trade-offs side by side: each method costs work
- * of a different kind and has its own common mistakes, which is why trying more
- * than one helps. The page ends on one shaded closing box. House rules: the only
- * Act 2+ term named here is "inference-time scaling" (the lede's), and nothing
- * pops in: the cards and the closing box are on screen from first paint; only
+ * of a different kind and has its own common tradeoffs. The closing box states
+ * the page's claim in one sentence: reasoning is diverse pathfinding from prior
+ * knowledge. The page ends on one shaded closing box, set upright (no italics).
+ * House rules: no Act 2+ term is named here, and nothing pops in: the cards and the closing box are on screen from first paint; only
  * the walkthrough animates, and only when asked.
  *
  * Layout: page 1's per-step grid. The intro paragraph runs full width above a
@@ -409,13 +410,11 @@ export function Page4() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      {/* The lede names reasoning and ties it to inference-time scaling; step 2 owns the
-          convergence and the trade-offs. */}
+      {/* The lede names reasoning; step 2 owns the convergence and the trade-offs. */}
       <p className="max-w-2xl text-lg text-ink-muted">
         Working a problem out, instead of recognizing the answer, has a name:{" "}
-        <strong className="text-ink">reasoning</strong>. Reasoning is what inference-time scaling
-        spends its extra time and compute on. If you&apos;ve ever compared answers with a classmate,
-        you know there is rarely only one way to reason through a problem.
+        <strong className="text-ink">reasoning</strong>. If you&apos;ve ever compared answers with a
+        classmate, you know there is rarely only one way to reason through a problem.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -423,6 +422,11 @@ export function Page4() {
         {/* Step 1: work one method through */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Three ways to work out 350 × 638</h2>
+          {/* The opening statement frames the walkthrough; the Try it note gives the instruction. */}
+          <p className="text-ink">
+            The same multiplication can be worked out in very different ways. Here are three, each
+            from a different tradition.
+          </p>
           <section
             aria-label="Three ways to work out 350 × 638"
             className="flex flex-col gap-4 rounded-lg bg-surface p-4"
@@ -505,6 +509,11 @@ export function Page4() {
             2. The methods and their trade-offs
           </h2>
           <section aria-label="The methods and their trade-offs" className="flex flex-col gap-3">
+            {/* The opening statement: every road arrives, each at its own cost; the cards say what. */}
+            <p className="text-ink">
+              All three methods of reasoning through the problem land on the correct answer. Each
+              trades one kind of effort for another, depending on what it asks you to already know.
+            </p>
             <div className="grid items-stretch gap-3 md:grid-cols-3">
               {([M.standard, M.lines, M.vedic] as const).map((m) => (
                 <div
@@ -520,25 +529,21 @@ export function Page4() {
                 </div>
               ))}
             </div>
-            <p className="text-ink">
-              All three methods of reasoning through the problem land on the correct answer. Some
-              take more work than others, and each has its own common mistakes. Trying more than one
-              costs more effort, but it gives you a way to catch those mistakes.
-            </p>
           </section>
         </section>
         <div aria-hidden="true" />
 
-        {/* The closing box: the handoff out of Act 1 (wording pending; leave as is) */}
+        {/* The closing box: the page's claim, Act 1's open question, and the handoff to Act 2. */}
         <section className="flex min-w-0 flex-col gap-3">
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            <em>
-              Every culture that needed to multiply built its own road from what it already knew:
-              schoolbook columns, line bundles, a memorized sutra. Which leaves Act 1&apos;s open
-              questions: can we <strong>guide a machine down different roads</strong> to the same
-              destination? And why can&apos;t it <strong>chart its own road</strong> (derive its own
-              way to an answer)? Act 2 opens that toolbox.
-            </em>
+            There is more than one path from what we know to an answer, and reasoning is how we walk
+            them. It pays off most on the hardest questions. Act 1 ends on an open question:{" "}
+            <strong>
+              can a large language model learn to reason through a problem instead of answering on
+              reflex?
+            </strong>{" "}
+            Act 2 builds that toolbox, one technique at a time, for getting a model to reason its way
+            to an answer.
           </div>
         </section>
         <div aria-hidden="true" />

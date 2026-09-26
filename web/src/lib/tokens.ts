@@ -46,6 +46,15 @@ export const tokens = {
   computeBright: "#00789c",
   wrongBright: "#c2185b",
   correctBright: "#047857",
+
+  // A four-step sequential ramp in the process cyan, light to dark, for a
+  // magnitude (page 3's model-size bins). One hue, lightness falling every
+  // step, and the light end still clears 2:1 on the surface, checked with the
+  // dataviz palette validator in ordinal mode. Measured in tokens.test.ts.
+  size1: "#4fa6c6",
+  size2: "#1f88ad",
+  size3: "#006a8a",
+  size4: "#003e52",
 } as const;
 
 /** The three semantic hues that carry meaning across every page. */

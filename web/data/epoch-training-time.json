@@ -1,8 +1,52 @@
 {
   "points": [
     {
-      "x": 2022.2548,
-      "y": 64.0
+      "x": 2019.4959,
+      "y": 5.0
+    },
+    {
+      "x": 2019.7096,
+      "y": 13.6
+    },
+    {
+      "x": 2019.8082,
+      "y": 20.1
+    },
+    {
+      "x": 2020.0738,
+      "y": 30.0
+    },
+    {
+      "x": 2020.4044,
+      "y": 14.8
+    },
+    {
+      "x": 2020.4945,
+      "y": 42.0
+    },
+    {
+      "x": 2021.0274,
+      "y": 27.0
+    },
+    {
+      "x": 2021.7753,
+      "y": 32.1
+    },
+    {
+      "x": 2021.9342,
+      "y": 38.3
+    },
+    {
+      "x": 2021.9479,
+      "y": 56.9
+    },
+    {
+      "x": 2022.0877,
+      "y": 6.1
+    },
+    {
+      "x": 2022.1068,
+      "y": 90.0
     },
     {
       "x": 2022.5233,
@@ -18,39 +62,47 @@
     },
     {
       "x": 2023.2,
+      "y": 60.0
+    },
+    {
+      "x": 2023.2,
       "y": 95.0
     },
     {
-      "x": 2023.2411,
-      "y": 52.9
+      "x": 2023.3507,
+      "y": 26.1
     },
     {
-      "x": 2023.5425,
-      "y": 72.0
+      "x": 2023.6795,
+      "y": 180.0
+    },
+    {
+      "x": 2023.7397,
+      "y": 48.0
+    },
+    {
+      "x": 2023.9288,
+      "y": 100.0
     },
     {
       "x": 2024.153,
       "y": 104.2
     },
     {
-      "x": 2024.3087,
-      "y": 23.0
+      "x": 2024.4508,
+      "y": 91.7
     },
     {
-      "x": 2024.9454,
-      "y": 21.0
+      "x": 2024.5574,
+      "y": 89.3
     },
     {
       "x": 2025.1288,
       "y": 90.0
     },
     {
-      "x": 2025.1562,
-      "y": 125.0
-    },
-    {
-      "x": 2025.7452,
-      "y": 120.0
+      "x": 2025.5342,
+      "y": 133.0
     }
   ],
   "citation": {
@@ -59,27 +111,252 @@
     "venue": "Epoch AI database (CC BY 4.0)",
     "preprint": true
   },
-  "provenance": "Training time (hours) field of Epoch AI's all_ai_models.csv, downloaded 2026-09-25 (sha256 in PROVENANCE.md), divided by 24 and rounded to 0.1 day. One point per model: x is the release date as a fractional year (Epoch's Publication date), y is days. The 13 models were chosen by the author for recognizability from every large language model Epoch gives a training time. basis: 'reported' = the developer states the duration; 'derived' = Epoch computes it from the developer's own figures (chip-hours over chip count); 'estimate' = Epoch's own estimate or a third-party figure Epoch records (SemiAnalysis for GPT-4, Emad Mostaque for Mistral Large, correspondence with the lab for GLM-4.6). No value comes from outside Epoch's database.",
+  "provenance": "Training time (hours) field of Epoch AI's all_ai_models.csv, downloaded 2026-09-25 (sha256 in PROVENANCE.md), divided by 24 and rounded half up to 0.1 day; the same values as the author's training_length.csv export. One point per model: x is the release date as a fractional year (Epoch's Publication date), y is days. The 26 language models, 2019 to 2025, were chosen by the author for recognizability. epochParams is Epoch's Parameters field; sizeDisclosed is false where the developer never published a size (GPT-4 and Grok 3, whose Epoch sizes are rumors; Gemini 1.0 Ultra and Mistral Large, which Epoch leaves blank). basis: 'reported' = the developer states the duration; 'derived' = worked out from the developer's own figures; 'estimate' = Epoch's own estimate or a third-party figure Epoch records. Each model's 'how' line summarizes Epoch's note, and 'source' links where the developer stated the figure (reported or derived rows) or Epoch's database (estimates). No value comes from outside Epoch's database.",
   "models": [
     {
-      "name": "PaLM",
-      "epochModel": "PaLM (540B)",
-      "organization": "Google Research",
-      "released": "2022-04-04",
-      "epochHours": 1536.0,
-      "days": 64.0,
+      "name": "RoBERTa",
+      "epochModel": "RoBERTa Large",
+      "organization": "Facebook,University of Washington",
+      "developer": "Facebook",
+      "released": "2019-07-01",
+      "epochHours": 120.0,
+      "days": 5.0,
       "basis": "derived",
+      "how": "Worked out from Facebook's reported steps and GPUs.",
+      "source": {
+        "label": "RoBERTa paper",
+        "url": "https://arxiv.org/abs/1907.11692"
+      },
+      "epochParams": 355000000.0,
+      "sizeDisclosed": true,
       "epochConfidence": "Confident",
-      "epochNote": "6144 TPUv4 for 1200 hours + 3072 TPUv4 for 336 hours. Equivalent to 6144 TPUv4 for 1368 hours."
+      "epochNote": "First the model is pretrained for 100k steps on 1024 GPUs for 1 day, then pretraining is increased to 500k steps, so assuming they used the same number of GPUs, this would have taken 5 days."
+    },
+    {
+      "name": "Megatron-LM",
+      "epochModel": "Megatron-LM (8.3B)",
+      "organization": "Nvidia",
+      "developer": "NVIDIA",
+      "released": "2019-09-17",
+      "epochHours": 327.0,
+      "days": 13.6,
+      "basis": "estimate",
+      "how": "Epoch's estimate, from NVIDIA's reported throughput.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 8300000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Likely",
+      "epochNote": "Reported throughput is 15.1 teraFLOPS per GPU on 512 GPUs Assume total compute is 9.1e21 FLOP. Then training time is 327 hours. https://www.wolframalpha.com/input?i=9.1*10%5E21+FLOP+%2F+%28512*15.1+teraFLOPS%29"
+    },
+    {
+      "name": "T5",
+      "epochModel": "T5-11B",
+      "organization": "Google",
+      "developer": "Google",
+      "released": "2019-10-23",
+      "epochHours": 481.9,
+      "days": 20.1,
+      "basis": "derived",
+      "how": "Worked out from Google's reported compute and chips.",
+      "source": {
+        "label": "Patterson et al. 2021",
+        "url": "https://arxiv.org/abs/2104.10350"
+      },
+      "epochParams": 11000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "4.05*10^22 FLOP at 37.073% utilization on 512 TPU v3 chips (123 TFLOPS) -> 482 hours https://www.wolframalpha.com/input?i=4.05*10%5E22+seconds+%2F+%28512*123*10%5E12%29+*%28123%2F45.6%29"
+    },
+    {
+      "name": "Meena",
+      "epochModel": "Meena",
+      "organization": "Google Brain",
+      "developer": "Google",
+      "released": "2020-01-28",
+      "epochHours": 720.0,
+      "days": 30.0,
+      "basis": "reported",
+      "how": "Reported by Google.",
+      "source": {
+        "label": "Meena paper",
+        "url": "https://arxiv.org/abs/2001.09977"
+      },
+      "epochParams": 2600000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "We trained our best model for 30 days on a TPUv3 Pod (2,048 TPU cores)"
+    },
+    {
+      "name": "GPT-3",
+      "epochModel": "GPT-3 175B (davinci)",
+      "organization": "OpenAI",
+      "developer": "OpenAI",
+      "released": "2020-05-28",
+      "epochHours": 355.2,
+      "days": 14.8,
+      "basis": "reported",
+      "how": "Reported in Patterson et al., from OpenAI's figures.",
+      "source": {
+        "label": "Patterson et al. 2021",
+        "url": "https://arxiv.org/abs/2104.10350"
+      },
+      "epochParams": 174600000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "14.8 days according to https://arxiv.org/ftp/arxiv/papers/2104/2104.10350.pdf"
+    },
+    {
+      "name": "GShard",
+      "epochModel": "GShard (dense)",
+      "organization": "Google",
+      "developer": "Google",
+      "released": "2020-06-30",
+      "epochHours": 1008.0,
+      "days": 42.0,
+      "basis": "reported",
+      "how": "Reported by Google.",
+      "source": {
+        "label": "GShard paper",
+        "url": "https://arxiv.org/abs/2006.16668"
+      },
+      "epochParams": 2300000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "6 weeks = 1008 hours"
+    },
+    {
+      "name": "Switch",
+      "epochModel": "Switch",
+      "organization": "Google",
+      "developer": "Google",
+      "released": "2021-01-11",
+      "epochHours": 648.0,
+      "days": 27.0,
+      "basis": "reported",
+      "how": "Reported by Google.",
+      "source": {
+        "label": "Patterson et al. 2021",
+        "url": "https://arxiv.org/abs/2104.10350"
+      },
+      "epochParams": 1571000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "see table 4 in https://arxiv.org/ftp/arxiv/papers/2104/2104.10350.pdf"
+    },
+    {
+      "name": "MT-NLG",
+      "epochModel": "Megatron-Turing NLG 530B",
+      "organization": "Microsoft,Nvidia",
+      "developer": "Microsoft and NVIDIA",
+      "released": "2021-10-11",
+      "epochHours": 770.0,
+      "days": 32.1,
+      "basis": "estimate",
+      "how": "Epoch's estimate. Microsoft and NVIDIA gave the compute, not the time.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 530000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "Total compute was 1.17*10^24 FLOP. They don't directly report the utilization and training speed when using the full Selene supercomputer with 560 DGX * 8 A100/DGX = 4480 GPUs. See section 2.3 Hardware Setup. At 280 DGX, the utilization is 126/312 = 40% and a batch takes 60 seconds; at 350, it is 39% for 50 seconds; at 420, it is 36% for 44 seconds. The overall utilization was 30.2% and the full c"
+    },
+    {
+      "name": "Gopher",
+      "epochModel": "Gopher (280B)",
+      "organization": "DeepMind",
+      "developer": "DeepMind",
+      "released": "2021-12-08",
+      "epochHours": 920.0,
+      "days": 38.3,
+      "basis": "reported",
+      "how": "Reported by DeepMind.",
+      "source": {
+        "label": "Gopher paper",
+        "url": "https://arxiv.org/abs/2112.11446"
+      },
+      "epochParams": 280000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "\"We trained Gopher for 920 hours in November and December 2020 in Google’s Georgia datacentre. The PUE of the datacenter at this time was 1.08; the net tCO2e per MWh in October 2020 was 0.33. Using an estimate of 283W drawn per chip, this leads to a total of 380 net tCO2e\""
+    },
+    {
+      "name": "GLaM",
+      "epochModel": "GLaM",
+      "organization": "Google",
+      "developer": "Google",
+      "released": "2021-12-13",
+      "epochHours": 1366.0,
+      "days": 56.9,
+      "basis": "derived",
+      "how": "Worked out from Google's reported energy figures.",
+      "source": {
+        "label": "GLaM paper",
+        "url": "https://arxiv.org/abs/2112.06905"
+      },
+      "epochParams": 1200000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "Note that they give several energy estimates. Use the complete training figures for 600B tokens, not the GPT-3 comparison values with 280B tokens. \"326W measured system power per TPU-v4 chip\" \"The complete GLaM training using 600B tokens consumes only 456 MWh\" 1024 TPU v4 chips (456 MWh) / (326W/chip * 1024 chips) = 1366 hours"
+    },
+    {
+      "name": "AlphaCode",
+      "epochModel": "AlphaCode",
+      "organization": "DeepMind",
+      "developer": "DeepMind",
+      "released": "2022-02-02",
+      "epochHours": 147.2,
+      "days": 6.1,
+      "basis": "derived",
+      "how": "Worked out from DeepMind's reported TPU-days and TPU count.",
+      "source": {
+        "label": "AlphaCode paper",
+        "url": "https://arxiv.org/abs/2203.07814"
+      },
+      "epochParams": 41100000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "Figure 7 (a) shows that the models were trained for around 23000 TPU-days. We know they trained on TPUv4s, and in appendix D.1 they say they have 3750 TPUv4 and TPUv4i. Assuming they trained only on the 3750 TPUv4s, that suggests 23000 / 3750 = 6.13 days, or 147.2 hours."
+    },
+    {
+      "name": "GPT-NeoX-20B",
+      "epochModel": "GPT-NeoX-20B",
+      "organization": "EleutherAI",
+      "developer": "EleutherAI",
+      "released": "2022-02-09",
+      "epochHours": 2160.0,
+      "days": 90.0,
+      "basis": "estimate",
+      "how": "Estimate, from the authors in correspondence with Epoch.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 20000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "see other notes"
     },
     {
       "name": "BLOOM",
       "epochModel": "BLOOM-176B",
       "organization": "Hugging Face,BigScience",
+      "developer": "BigScience",
       "released": "2022-07-11",
       "epochHours": 2808.0,
       "days": 117.0,
       "basis": "reported",
+      "how": "Reported by BigScience.",
+      "source": {
+        "label": "BLOOM paper",
+        "url": "https://arxiv.org/abs/2211.05100"
+      },
+      "epochParams": 176247271424.0,
+      "sizeDisclosed": true,
       "epochConfidence": "Confident",
       "epochNote": "117 days * 24 hours/day"
     },
@@ -87,10 +364,18 @@
       "name": "GLM-130B",
       "epochModel": "GLM-130B",
       "organization": "Tsinghua University",
+      "developer": "Tsinghua University",
       "released": "2022-08-04",
       "epochHours": 1440.0,
       "days": 60.0,
       "basis": "reported",
+      "how": "Reported by Tsinghua.",
+      "source": {
+        "label": "GLM-130B paper",
+        "url": "https://arxiv.org/abs/2210.02414"
+      },
+      "epochParams": 130000000000.0,
+      "sizeDisclosed": true,
       "epochConfidence": "Confident",
       "epochNote": "\"During the 60-day access to the cluster, we manage to train GLM-130B for 400 billion tokens\" 60 days * 24 = 1,440 hours"
     },
@@ -98,111 +383,231 @@
       "name": "LLaMA-65B",
       "epochModel": "LLaMA-65B",
       "organization": "Meta AI",
+      "developer": "Meta",
       "released": "2023-02-24",
       "epochHours": 500.0,
       "days": 20.8,
       "basis": "reported",
+      "how": "Reported by Meta.",
+      "source": {
+        "label": "LLaMA paper",
+        "url": "https://arxiv.org/abs/2302.13971"
+      },
+      "epochParams": 65200000000.0,
+      "sizeDisclosed": true,
       "epochConfidence": "Confident",
       "epochNote": "\"When training a 65B-parameter model, our code processes around 380 tokens/sec/GPU on 2048 A100 GPU with 80GB of RAM. This means that training over our dataset containing 1.4T tokens takes approximately 21 days.\""
+    },
+    {
+      "name": "Falcon-40B",
+      "epochModel": "Falcon-40B",
+      "organization": "Technology Innovation Institute",
+      "developer": "TII",
+      "released": "2023-03-15",
+      "epochHours": 1440.0,
+      "days": 60.0,
+      "basis": "reported",
+      "how": "Reported by TII.",
+      "source": {
+        "label": "model card",
+        "url": "https://huggingface.co/tiiuae/falcon-40b"
+      },
+      "epochParams": 40000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "\"Falcon-40B was trained on AWS SageMaker, on 384 A100 40GB GPUs in P4d instances.\" \"Training started in December 2022 and took two months.\""
     },
     {
       "name": "GPT-4",
       "epochModel": "GPT-4 (Mar 2023)",
       "organization": "OpenAI",
+      "developer": "OpenAI",
       "released": "2023-03-15",
       "epochHours": 2280.0,
       "days": 95.0,
       "basis": "estimate",
+      "how": "Estimate, from SemiAnalysis. OpenAI has not said.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 1800000000000.0,
+      "sizeDisclosed": false,
       "epochConfidence": "Likely",
       "epochNote": "(Speculative) SemiAnalysis conjectures that GPT-4 training took 90-100 days with utilization of 32-36%."
     },
     {
-      "name": "BloombergGPT",
-      "epochModel": "BloombergGPT",
-      "organization": "Bloomberg,Johns Hopkins University",
-      "released": "2023-03-30",
-      "epochHours": 1270.0,
-      "days": 52.9,
-      "basis": "reported",
+      "name": "StarCoder",
+      "epochModel": "StarCoder",
+      "organization": "Hugging Face,ServiceNow,Northeastern University,Mila - Quebec AI (originally Montreal Institute for Learning Algorithms),Carnegie Mellon University (CMU),Johns Hopkins University,Leipzig University,ScaDS.AI,Queen Mary University of London,Roblox,Sea AI Lab,Technion - Israel Institute of Technology,Monash University,CSIRO,Data61,McGill University,Saama,University of British Columbia (UBC),Massachusetts Institute of Technology (MIT),Technical University of Munich,IBM,University of Vermont,UnfoldML,SAP,University of Notre Dame,Columbia University,New York University (NYU),University of Allahabad,Discover Dollar,Toloka,Telefonica,Stanford University,Weizmann Institute of Science,Alan Turing Institute,Wellesley College,EleutherAI,Forschungszentrum Julich",
+      "developer": "BigCode",
+      "released": "2023-05-09",
+      "epochHours": 625.5,
+      "days": 26.1,
+      "basis": "derived",
+      "how": "Worked out from the reported GPU-hours and GPU count.",
+      "source": {
+        "label": "StarCoder paper",
+        "url": "https://arxiv.org/abs/2305.06161"
+      },
+      "epochParams": 15500000000.0,
+      "sizeDisclosed": true,
       "epochConfidence": "Confident",
-      "epochNote": "\"~53 days\""
+      "epochNote": "625.5 hours = 320256 /512 512 GPUs from \"We trained our model on a GPU cluster with 512 A100 80 GB GPUs \" 320256 GPU hours from \"Based on the total number of GPU hours that training took (320,256)\" citations from sections 5.6 and 5.7"
     },
     {
-      "name": "Llama 2-70B",
-      "epochModel": "Llama 2-70B",
-      "organization": "Meta AI",
-      "released": "2023-07-18",
-      "epochHours": 1728.0,
-      "days": 72.0,
+      "name": "Falcon-180B",
+      "epochModel": "Falcon-180B",
+      "organization": "Technology Innovation Institute",
+      "developer": "TII",
+      "released": "2023-09-06",
+      "epochHours": 4320.0,
+      "days": 180.0,
       "basis": "estimate",
+      "how": "Epoch's estimate. TII has not said.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 180000000000.0,
+      "sizeDisclosed": true,
       "epochConfidence": "Confident",
-      "epochNote": "Model was trained from January 2023 to July 2023, which is six months. However, the training run duration did not take up this whole period. According to a Meta employee interviewed by Epoch, Llama 2 34B and 70B were trained on different clusters, with overlapping training periods. Based on an estimate of 1000 GPUs, it would have taken 72 days."
+      "epochNote": "Stanford CRFM foundation model ecosystem graph data page https://crfm.stanford.edu/ecosystem-graphs/index.html?asset=Falcon-180B says 9 months, which is the maximum possible amount of time: training began sometime in 2023, and it was released in September. However, 6 months is more realistic. That is the length of the gap between Falcon 40B and Falcon 180B. Additionally, the amount of compute is s"
+    },
+    {
+      "name": "Amazon Titan",
+      "epochModel": "Amazon Titan",
+      "organization": "Amazon",
+      "developer": "Amazon",
+      "released": "2023-09-28",
+      "epochHours": 1152.0,
+      "days": 48.0,
+      "basis": "estimate",
+      "how": "Estimate, from the Import AI newsletter. Amazon has not said.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 200000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Likely",
+      "epochNote": ""
+    },
+    {
+      "name": "Gemini 1.0 Ultra",
+      "epochModel": "Gemini 1.0 Ultra",
+      "organization": "Google DeepMind",
+      "developer": "Google DeepMind",
+      "released": "2023-12-06",
+      "epochHours": 2400.0,
+      "days": 100.0,
+      "basis": "estimate",
+      "how": "Estimate, from SemiAnalysis. Google has not said.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": null,
+      "sizeDisclosed": false,
+      "epochConfidence": "Speculative",
+      "epochNote": "Dylan Patel, author of SemiAnalysis, speculates that the training duration of Gemini may have been 100 days."
     },
     {
       "name": "Mistral Large",
       "epochModel": "Mistral Large",
       "organization": "Mistral AI",
+      "developer": "Mistral AI",
       "released": "2024-02-26",
       "epochHours": 2500.0,
       "days": 104.2,
       "basis": "estimate",
+      "how": "Estimate, from Emad Mostaque. Mistral has not said.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": null,
+      "sizeDisclosed": false,
       "epochConfidence": "Speculative",
       "epochNote": "Speculation by Emad Mostaque: 20M euro spent at Scaleway (1.9 euro per H100-hour) would be around 3 months on 4000 H100s."
     },
     {
-      "name": "Phi-3.5-MoE",
-      "epochModel": "Phi-3.5-MoE",
-      "organization": "Microsoft",
-      "released": "2024-04-23",
-      "epochHours": 552.0,
-      "days": 23.0,
-      "basis": "reported",
+      "name": "Nemotron-4 340B",
+      "label": "Nemotron-4",
+      "epochModel": "Nemotron-4 340B",
+      "organization": "Nvidia",
+      "developer": "NVIDIA",
+      "released": "2024-06-14",
+      "epochHours": 2200.0,
+      "days": 91.7,
+      "basis": "estimate",
+      "how": "Epoch's estimate, from compute. NVIDIA has not said.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 340000000000.0,
+      "sizeDisclosed": true,
       "epochConfidence": "Confident",
-      "epochNote": "GPUs: 512 H100-80G Training time: 23 days 23 days * 24 hours / day = 552 hours"
+      "epochNote": "see training compute notes, this is an inferred estimate"
     },
     {
-      "name": "Phi-4",
-      "epochModel": "Phi-4",
-      "organization": "Microsoft Research",
-      "released": "2024-12-12",
-      "epochHours": 504.0,
-      "days": 21.0,
-      "basis": "reported",
+      "name": "Llama 3.1-405B",
+      "label": "Llama 3.1",
+      "epochModel": "Llama 3.1-405B",
+      "organization": "Meta AI",
+      "developer": "Meta",
+      "released": "2024-07-23",
+      "epochHours": 2142.0,
+      "days": 89.3,
+      "basis": "derived",
+      "how": "Worked out from Meta's reported GPU-hours, at 90% uptime.",
+      "source": {
+        "label": "Llama 3 paper",
+        "url": "https://arxiv.org/abs/2407.21783"
+      },
+      "epochParams": 405000000000.0,
+      "sizeDisclosed": true,
       "epochConfidence": "Confident",
-      "epochNote": "https://huggingface.co/microsoft/phi-4 21 days * 24 hours / day = 504 hours"
+      "epochNote": "Trained on 30.84M GPU hours (https://huggingface.co/blog/llama31) and used \"up to 16K H100 GPU[s]\" so training took at least 30.84M / 16k = 1927.5 hours or ~80 days. Section 3.3.4 gives reliability details over a 54 day period during training, for which they had \"higher than 90% effective training time\" 1927.5 / 0.9 = 2142 hours Probably, full training time is somewhat longer, since it sounds like"
     },
     {
       "name": "Grok 3",
       "epochModel": "Grok 3",
       "organization": "xAI",
+      "developer": "xAI",
       "released": "2025-02-17",
       "epochHours": 2160.0,
       "days": 90.0,
       "basis": "estimate",
+      "how": "Epoch's estimate. xAI has not said.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 3000000000000.0,
+      "sizeDisclosed": false,
       "epochConfidence": "Likely",
       "epochNote": "Estimated to be approximately 3 months. See compute estimate notes for more details."
     },
     {
-      "name": "GPT-4.5",
-      "epochModel": "GPT-4.5",
-      "organization": "OpenAI",
-      "released": "2025-02-27",
-      "epochHours": 3000.0,
-      "days": 125.0,
+      "name": "EXAONE 4.0",
+      "epochModel": "EXAONE 4.0 (32B)",
+      "organization": "LG AI Research",
+      "developer": "LG",
+      "released": "2025-07-15",
+      "epochHours": 3192.0,
+      "days": 133.0,
       "basis": "estimate",
-      "epochConfidence": "Likely",
-      "epochNote": "Likely trained for around 4 months/120 days https://colab.research.google.com/drive/1QBmVPm64Ti0xucN0EsZTgSz_I7Mj9hAZ#scrollTo=NYH1ABJuLJlw"
-    },
-    {
-      "name": "GLM-4.6",
-      "epochModel": "GLM-4.6",
-      "organization": "Z.ai (Zhipu AI),Tsinghua University",
-      "released": "2025-09-30",
-      "epochHours": 2880.0,
-      "days": 120.0,
-      "basis": "estimate",
-      "epochConfidence": "Likely",
-      "epochNote": "4 months (from Jaime's correspondence with the GLM team) 4 months * 30 days * 24 hours = 2880 hours"
+      "how": "Estimate, from LG in correspondence with Epoch.",
+      "source": {
+        "label": "Epoch AI",
+        "url": "https://epoch.ai/data/ai-models"
+      },
+      "epochParams": 32000000000.0,
+      "sizeDisclosed": true,
+      "epochConfidence": "Confident",
+      "epochNote": "from communication with the authors: \"EXAONE 4.0 32B: NVIDIA H200 GPUs x 512 EA for 19 weeks (FP8 mode training)\" 19 weeks = 3192 hours"
     }
   ]
 }
