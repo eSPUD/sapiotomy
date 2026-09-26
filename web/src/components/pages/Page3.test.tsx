@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 // Deterministic reduced-motion: the page takes its instant path.
 const mm = (q: string) => ({
@@ -16,6 +16,7 @@ vi.stubGlobal("matchMedia", mm);
 
 import { Page3 } from "./Page3";
 import { curves } from "@/lib/curves";
+import { trainingTimeModels } from "@/lib/trainingTime";
 
 const RUN_M = curves.epochRunCost.fit!.params.usdMillionPerRun;
 
@@ -160,6 +161,28 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expectClean();
   });
 
+  it("plots every model's Epoch training time in section b, estimates hollow", () => {
+    render(<Page3 />);
+    const fig = screen.getByRole("figure", { name: /training time of popular LLMs/i });
+    // The placeholder is gone; one dot per model, each labelled with its name.
+    expect(document.querySelector("[data-placeholder]")).toBeNull();
+    const dots = fig.querySelectorAll("g[data-model]");
+    expect(dots).toHaveLength(trainingTimeModels.length);
+    for (const m of trainingTimeModels) expect(within(fig).getByText(m.name)).toBeInTheDocument();
+    // Fill says who measured it: estimates are hollow, the rest solid.
+    const hollow = fig.querySelectorAll('g[data-basis="estimate"] circle.fill-surface');
+    expect(hollow).toHaveLength(trainingTimeModels.filter((m) => m.basis === "estimate").length);
+    expect(fig.textContent).toMatch(/reported by the developer/);
+    expect(fig.textContent).toMatch(/estimated by Epoch AI/);
+    // The chart's accessible name carries every value, so no dot is sight-only.
+    const svg = within(fig).getByRole("img");
+    for (const m of trainingTimeModels) expect(svg.getAttribute("aria-label")).toContain(`${m.name} ${m.days} days`);
+    // The source is cited in the text right above the chart.
+    const lead = screen.getByText(/Each dot is one model.s main training run/);
+    expect(lead.querySelector('sup a[href="#ref-3"]')).not.toBeNull();
+    expectClean();
+  });
+
   it("puts section a's text above the chart, not inside its frame", () => {
     render(<Page3 />);
     const bill = screen.getByRole("figure", { name: /problem one/i });
@@ -203,18 +226,18 @@ describe("Page 3 (Training-Time Scaling)", () => {
     const [gaps] = notes;
 
     // The gap section owns every cost and data source.
-    for (const ref of [/Cottier/, /AI Index/, /Hoffmann/, /Villalobos/, /data-stock/]) {
+    for (const ref of [/Cottier/, /AI Index/, /Data on AI Models/, /Hoffmann/, /Villalobos/, /data-stock/]) {
       expect(gaps).toMatch(ref);
     }
     // The cut "Why bias happens" note took WinoBias with it; the trimmed-away
     // challenges' sources are gone from the page entirely.
     expect(document.body.textContent ?? "").not.toMatch(/Why bias happens|Zhao|Shumailov|Askell|Sevilla/);
-    // References stay numbered 1 to 5 in order of first appearance.
+    // References stay numbered 1 to 6 in order of first appearance.
     // Read each linked number (a marker may hold several, comma separated).
     const nums = Array.from(document.querySelectorAll("sup a")).map((a) =>
       Number(a.getAttribute("href")!.replace("#ref-", "")),
     );
-    expect([...new Set(nums)]).toEqual([1, 2, 3, 4, 5]);
+    expect([...new Set(nums)]).toEqual([1, 2, 3, 4, 5, 6]);
     expectClean();
   });
 

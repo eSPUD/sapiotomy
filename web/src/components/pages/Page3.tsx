@@ -51,9 +51,11 @@ import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
+import { TrainingTimeScatter, type LabelPlacement } from "@/components/TrainingTimeScatter";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { frontierCumulativeUSDM, sameModelCumulativeUSDM } from "@/lib/dailyTraining";
+import { trainingTimeModels } from "@/lib/trainingTime";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 3;
@@ -95,10 +97,23 @@ const MONTH_TICKS = Array.from({ length: COMBO_MONTHS + 1 }, (_, i) => i);
 const REF = {
   trainTrend: 1,
   runCost: 2,
-  chinchilla: 3,
-  dataStock: 4,
-  datasetSizes: 5,
+  trainingTime: 3,
+  chinchilla: 4,
+  dataStock: 5,
+  datasetSizes: 6,
 } as const;
+
+/** Section b's year span, read off the data so the title cannot outrun it. */
+const TT_FIRST_YEAR = Math.floor(trainingTimeModels[0].x);
+const TT_LAST_YEAR = Math.floor(trainingTimeModels[trainingTimeModels.length - 1].x);
+/** Name placements where the default (right of the dot) would collide. */
+const TT_LEFT: LabelPlacement = { dx: -8, dy: 3.5, anchor: "end" };
+const TT_PLACEMENTS: Record<string, LabelPlacement> = {
+  PaLM: TT_LEFT,
+  "LLaMA-65B": TT_LEFT,
+  "Phi-4": { dx: 0, dy: -10, anchor: "middle" },
+  "GLM-4.6": TT_LEFT,
+};
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -322,34 +337,39 @@ export function Page3() {
             A training run takes weeks, so by the time a model is finished, its cutoff is already
             behind. The gap shrinks, but it never closes.
           </p>
-          {/* PLACEHOLDER (open item O.12): a scatterplot of training time for 12 to 20
-              popular LLMs, 2022 to 2026, one dot per model (x: release year, y: training
-              time), each dot labelled with its model.
-              Empty on purpose: no values are drawn until each one is grounded in a
-              cited source (model card, paper or lab post). Do not ship with data
-              that has no citation. */}
+          <p className="text-ink">
+            Each dot is one model&apos;s main training run: solid where the developer reported how
+            long it took, hollow where Epoch AI estimated it.
+            <Cite n={REF.trainingTime} />
+          </p>
           <figure
-            aria-label="Training time of popular LLMs, 2022 to 2026 (placeholder, data not yet added)"
-            data-placeholder="training-time"
+            aria-label="Training time of popular LLMs"
             className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
           >
-            <figcaption className="text-sm text-ink">Training time of popular LLMs, 2022 to 2026</figcaption>
-            <div className="flex">
-              <p className="w-6 shrink-0 self-center text-[11px] text-ink-muted [writing-mode:vertical-rl] rotate-180">
-                training time
-              </p>
-              <div className="flex flex-1 flex-col">
-                <div className="flex h-40 items-center justify-center rounded border border-dashed border-grid text-xs text-ink-muted">
-                  Placeholder: scatterplot of 12 to 20 models, one dot per model, from cited sources
-                </div>
-                <div className="mt-1 flex justify-between text-[11px] text-ink-muted">
-                  {[2022, 2023, 2024, 2025, 2026].map((yr) => (
-                    <span key={yr}>{yr}</span>
-                  ))}
-                </div>
-                <p className="text-center text-[11px] text-ink-muted">release year</p>
-              </div>
-            </div>
+            <TrainingTimeScatter
+              title={`Training time of ${trainingTimeModels.length} popular LLMs released ${TT_FIRST_YEAR} to ${TT_LAST_YEAR}, in days, from Epoch AI's database. ${trainingTimeModels
+                .map((m) => `${m.name} ${m.days} days${m.basis === "estimate" ? " (estimate)" : ""}`)
+                .join("; ")}.`}
+              models={trainingTimeModels}
+              xDomain={[TT_FIRST_YEAR, TT_LAST_YEAR + 1]}
+              yDomain={[0, 135]}
+              placements={TT_PLACEMENTS}
+            />
+            {/* The legend, in the figure's own words: fill says who measured it. */}
+            <figcaption className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-ink-muted">
+              <span className="flex items-center gap-1.5">
+                <svg width="10" height="10" aria-hidden="true">
+                  <circle cx="5" cy="5" r="4" className="fill-compute-bright" />
+                </svg>
+                reported by the developer
+              </span>
+              <span className="flex items-center gap-1.5">
+                <svg width="10" height="10" aria-hidden="true">
+                  <circle cx="5" cy="5" r="3.5" className="fill-surface stroke-ink-muted" strokeWidth={1.5} />
+                </svg>
+                estimated by Epoch AI
+              </span>
+            </figcaption>
           </figure>
 
           <h3 className="text-lg font-semibold text-ink">
@@ -424,6 +444,9 @@ export function Page3() {
           </RefItem>
           <RefItem n={REF.runCost} href="https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf" preprint>
             Epoch AI via the Stanford HAI <em>AI Index Report 2024</em>.
+          </RefItem>
+          <RefItem n={REF.trainingTime} href="https://epoch.ai/data/ai-models" preprint>
+            Epoch AI, <em>Data on AI Models</em>, Training time field (accessed Sep 2026; CC BY).
           </RefItem>
           <RefItem n={REF.chinchilla} href="https://arxiv.org/abs/2203.15556">
             Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS

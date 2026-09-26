@@ -1,0 +1,208 @@
+{
+  "points": [
+    {
+      "x": 2022.2548,
+      "y": 64.0
+    },
+    {
+      "x": 2022.5233,
+      "y": 117.0
+    },
+    {
+      "x": 2022.589,
+      "y": 60.0
+    },
+    {
+      "x": 2023.1479,
+      "y": 20.8
+    },
+    {
+      "x": 2023.2,
+      "y": 95.0
+    },
+    {
+      "x": 2023.2411,
+      "y": 52.9
+    },
+    {
+      "x": 2023.5425,
+      "y": 72.0
+    },
+    {
+      "x": 2024.153,
+      "y": 104.2
+    },
+    {
+      "x": 2024.3087,
+      "y": 23.0
+    },
+    {
+      "x": 2024.9454,
+      "y": 21.0
+    },
+    {
+      "x": 2025.1288,
+      "y": 90.0
+    },
+    {
+      "x": 2025.1562,
+      "y": 125.0
+    },
+    {
+      "x": 2025.7452,
+      "y": 120.0
+    }
+  ],
+  "citation": {
+    "ref": "Epoch AI, Data on AI Models",
+    "url": "https://epoch.ai/data/ai-models",
+    "venue": "Epoch AI database (CC BY 4.0)",
+    "preprint": true
+  },
+  "provenance": "Training time (hours) field of Epoch AI's all_ai_models.csv, downloaded 2026-09-25 (sha256 in PROVENANCE.md), divided by 24 and rounded to 0.1 day. One point per model: x is the release date as a fractional year (Epoch's Publication date), y is days. The 13 models were chosen by the author for recognizability from every large language model Epoch gives a training time. basis: 'reported' = the developer states the duration; 'derived' = Epoch computes it from the developer's own figures (chip-hours over chip count); 'estimate' = Epoch's own estimate or a third-party figure Epoch records (SemiAnalysis for GPT-4, Emad Mostaque for Mistral Large, correspondence with the lab for GLM-4.6). No value comes from outside Epoch's database.",
+  "models": [
+    {
+      "name": "PaLM",
+      "epochModel": "PaLM (540B)",
+      "organization": "Google Research",
+      "released": "2022-04-04",
+      "epochHours": 1536.0,
+      "days": 64.0,
+      "basis": "derived",
+      "epochConfidence": "Confident",
+      "epochNote": "6144 TPUv4 for 1200 hours + 3072 TPUv4 for 336 hours. Equivalent to 6144 TPUv4 for 1368 hours."
+    },
+    {
+      "name": "BLOOM",
+      "epochModel": "BLOOM-176B",
+      "organization": "Hugging Face,BigScience",
+      "released": "2022-07-11",
+      "epochHours": 2808.0,
+      "days": 117.0,
+      "basis": "reported",
+      "epochConfidence": "Confident",
+      "epochNote": "117 days * 24 hours/day"
+    },
+    {
+      "name": "GLM-130B",
+      "epochModel": "GLM-130B",
+      "organization": "Tsinghua University",
+      "released": "2022-08-04",
+      "epochHours": 1440.0,
+      "days": 60.0,
+      "basis": "reported",
+      "epochConfidence": "Confident",
+      "epochNote": "\"During the 60-day access to the cluster, we manage to train GLM-130B for 400 billion tokens\" 60 days * 24 = 1,440 hours"
+    },
+    {
+      "name": "LLaMA-65B",
+      "epochModel": "LLaMA-65B",
+      "organization": "Meta AI",
+      "released": "2023-02-24",
+      "epochHours": 500.0,
+      "days": 20.8,
+      "basis": "reported",
+      "epochConfidence": "Confident",
+      "epochNote": "\"When training a 65B-parameter model, our code processes around 380 tokens/sec/GPU on 2048 A100 GPU with 80GB of RAM. This means that training over our dataset containing 1.4T tokens takes approximately 21 days.\""
+    },
+    {
+      "name": "GPT-4",
+      "epochModel": "GPT-4 (Mar 2023)",
+      "organization": "OpenAI",
+      "released": "2023-03-15",
+      "epochHours": 2280.0,
+      "days": 95.0,
+      "basis": "estimate",
+      "epochConfidence": "Likely",
+      "epochNote": "(Speculative) SemiAnalysis conjectures that GPT-4 training took 90-100 days with utilization of 32-36%."
+    },
+    {
+      "name": "BloombergGPT",
+      "epochModel": "BloombergGPT",
+      "organization": "Bloomberg,Johns Hopkins University",
+      "released": "2023-03-30",
+      "epochHours": 1270.0,
+      "days": 52.9,
+      "basis": "reported",
+      "epochConfidence": "Confident",
+      "epochNote": "\"~53 days\""
+    },
+    {
+      "name": "Llama 2-70B",
+      "epochModel": "Llama 2-70B",
+      "organization": "Meta AI",
+      "released": "2023-07-18",
+      "epochHours": 1728.0,
+      "days": 72.0,
+      "basis": "estimate",
+      "epochConfidence": "Confident",
+      "epochNote": "Model was trained from January 2023 to July 2023, which is six months. However, the training run duration did not take up this whole period. According to a Meta employee interviewed by Epoch, Llama 2 34B and 70B were trained on different clusters, with overlapping training periods. Based on an estimate of 1000 GPUs, it would have taken 72 days."
+    },
+    {
+      "name": "Mistral Large",
+      "epochModel": "Mistral Large",
+      "organization": "Mistral AI",
+      "released": "2024-02-26",
+      "epochHours": 2500.0,
+      "days": 104.2,
+      "basis": "estimate",
+      "epochConfidence": "Speculative",
+      "epochNote": "Speculation by Emad Mostaque: 20M euro spent at Scaleway (1.9 euro per H100-hour) would be around 3 months on 4000 H100s."
+    },
+    {
+      "name": "Phi-3.5-MoE",
+      "epochModel": "Phi-3.5-MoE",
+      "organization": "Microsoft",
+      "released": "2024-04-23",
+      "epochHours": 552.0,
+      "days": 23.0,
+      "basis": "reported",
+      "epochConfidence": "Confident",
+      "epochNote": "GPUs: 512 H100-80G Training time: 23 days 23 days * 24 hours / day = 552 hours"
+    },
+    {
+      "name": "Phi-4",
+      "epochModel": "Phi-4",
+      "organization": "Microsoft Research",
+      "released": "2024-12-12",
+      "epochHours": 504.0,
+      "days": 21.0,
+      "basis": "reported",
+      "epochConfidence": "Confident",
+      "epochNote": "https://huggingface.co/microsoft/phi-4 21 days * 24 hours / day = 504 hours"
+    },
+    {
+      "name": "Grok 3",
+      "epochModel": "Grok 3",
+      "organization": "xAI",
+      "released": "2025-02-17",
+      "epochHours": 2160.0,
+      "days": 90.0,
+      "basis": "estimate",
+      "epochConfidence": "Likely",
+      "epochNote": "Estimated to be approximately 3 months. See compute estimate notes for more details."
+    },
+    {
+      "name": "GPT-4.5",
+      "epochModel": "GPT-4.5",
+      "organization": "OpenAI",
+      "released": "2025-02-27",
+      "epochHours": 3000.0,
+      "days": 125.0,
+      "basis": "estimate",
+      "epochConfidence": "Likely",
+      "epochNote": "Likely trained for around 4 months/120 days https://colab.research.google.com/drive/1QBmVPm64Ti0xucN0EsZTgSz_I7Mj9hAZ#scrollTo=NYH1ABJuLJlw"
+    },
+    {
+      "name": "GLM-4.6",
+      "epochModel": "GLM-4.6",
+      "organization": "Z.ai (Zhipu AI),Tsinghua University",
+      "released": "2025-09-30",
+      "epochHours": 2880.0,
+      "days": 120.0,
+      "basis": "estimate",
+      "epochConfidence": "Likely",
+      "epochNote": "4 months (from Jaime's correspondence with the GLM team) 4 months * 30 days * 24 hours = 2880 hours"
+    }
+  ]
+}
