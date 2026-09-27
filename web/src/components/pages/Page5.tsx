@@ -773,7 +773,7 @@ export function Page5() {
 
         {/* Step 2 — figure 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. Scaling beyond one problem</h2>
+          <h2 className="text-xl font-semibold text-ink">2. System 1 versus System 2 thinking on MATH-500 problems</h2>
           {/* The author's paragraph (2026-09-27). It gives the reasoning side only, with
               the denominator; the switch reveals the rest. Every number is read from the
               run. The Cite marks the problem set, MATH-500. */}
@@ -822,25 +822,22 @@ export function Page5() {
 
         {/* Step 3 — figure 3 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Size against reasoning</h2>
+          <h2 className="text-xl font-semibold text-ink">3. Smaller reasoning models do better than larger non-reasoning models</h2>
+          {/* Rewritten 2026-09-27 (author's brief): the paragraph argues one thing, that a
+              smaller model in System 2 beats a larger one in System 1. Every claim is
+              guarded against the data in Page5.test.tsx: "less than a quarter the size",
+              "twice as well", and "every model in System 2 beats every model in System 1"
+              (the smallest System 2 score is above the largest System 1 score). */}
           <p className="text-ink-muted">
-            {/* The author's sentence, 2026-09-27. The "checkpoint" gloss that used to
-                open this paragraph was cut by the author: the term would not make sense
-                to this reader however it was defined. */}
-            To show that these results are not specific to one model, we ran the same{" "}
-            {F2.bare.n}-problem experiment on a smaller (1.5B) and a larger (7B) model from the same
-            family, and compared the results.
-            {/* The result, moved up from under the figure on 2026-09-27 so every section
-                reads setup, result, then the figure. It replaced two paragraphs (the
-                cross-model callout and the flat-floor close); the author dropped the old
-                hedge ("the thinnest evidence the page has", p = 0.043 on 25 discordant
-                problems). "Less than a quarter the size" and "twice as well" are guarded
-                against the data in Page5.test.tsx. */}{" "}
-            Forced into System&nbsp;1, the 7B solves{" "}
-            <strong className="text-ink">{pct(F3.cross.gagged_large_accuracy)}</strong>. Left in
+            Can a bigger model make up for skipping the steps? We ran the same {F2.bare.n} MATH-500
+            problems (levels {M.items.eval_levels.join(" and ")}) on a smaller (1.5B) and a larger
+            (7B) model from the same family. Forced into
+            System&nbsp;1, the 7B solves{" "}
+            <strong className="text-ink">{pct(F3.cross.gagged_large_accuracy)}</strong>. In
             System&nbsp;2, the 1.5B solves{" "}
-            <strong className="text-ink">{pct(F3.cross.ungagged_small_accuracy)}</strong>. A model
-            less than a quarter the size does twice as well, just by writing out its steps.
+            <strong className="text-ink">{pct(F3.cross.ungagged_small_accuracy)}</strong>: a model
+            less than a quarter the size does twice as well, just by writing out its steps. Every
+            model in System&nbsp;2 beats every model in System&nbsp;1.
           </p>
           <section
             aria-label="The floor is flat"
@@ -876,7 +873,7 @@ export function Page5() {
             never said so where it counted. Six dots say it: which checkpoint,
             under which prompt, wrote how much, and solved how many. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">4. The cost of a chain of thought</h2>
+          <h2 className="text-xl font-semibold text-ink">4. The (token) cost of a chain of thought</h2>
           {/* Reframed around tokens, author, 2026-09-27. "About 100×" and
               "around 570" are checked against the run in Page5.test.tsx. */}
           <p className="text-ink-muted">

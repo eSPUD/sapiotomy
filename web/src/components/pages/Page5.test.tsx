@@ -26,9 +26,9 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
     expect(headings[0]).toBe("1. What is the Chain of Thought (CoT) for LLM reasoning?");
-    expect(headings[1]).toBe("2. Scaling beyond one problem");
-    expect(headings[2]).toBe("3. Size against reasoning");
-    expect(headings[3]).toBe("4. The cost of a chain of thought");
+    expect(headings[1]).toBe("2. System 1 versus System 2 thinking on MATH-500 problems");
+    expect(headings[2]).toBe("3. Smaller reasoning models do better than larger non-reasoning models");
+    expect(headings[3]).toBe("4. The (token) cost of a chain of thought");
     expect(headings).toHaveLength(4);
     expect(body()).toContain(
       "We've previously illustrated what step-by-step reasoning looks like for a couple of real-world problems.",
@@ -263,7 +263,7 @@ describe("Page 5, figure 3: the floor is flat", () => {
   it("says why a third figure exists, in one sentence", () => {
     render(<Page5 />);
     expect(body()).toContain(
-      `To show that these results are not specific to one model, we ran the same ${PAGE5.figure2.bare.n}-problem experiment on a smaller (1.5B) and a larger (7B) model from the same family, and compared the results.`,
+      `Can a bigger model make up for skipping the steps? We ran the same ${PAGE5.figure2.bare.n} MATH-500 problems (levels 4 and 5) on a smaller (1.5B) and a larger (7B) model from the same family.`,
     );
     expect(body()).not.toContain("Watch where the left piece ends instead");
   });
@@ -272,7 +272,7 @@ describe("Page 5, figure 3: the floor is flat", () => {
     render(<Page5 />);
     const t = body().replace(/\u00a0/g, " ");
     expect(t).toContain("Forced into System 1, the 7B solves 11%");
-    expect(t).toContain("Left in System 2, the 1.5B solves 22%");
+    expect(t).toContain("In System 2, the 1.5B solves 22%");
     // The emergence claim and the redrawn PaLM chart left the page with the
     // premise. Our trend is smooth and monotone; a sign flip is not in it.
     expect(body()).not.toMatch(/emergen/i);
@@ -284,12 +284,19 @@ describe("Page 5, figure 3: the floor is flat", () => {
   // data: the 1.5B is under a quarter of the 7B, and it scores at least double.
   it("states the cross-model result, and its words match the data", () => {
     render(<Page5 />);
-    expect(body()).toContain(
-      "A model less than a quarter the size does twice as well, just by writing out its steps.",
+    const t = body().replace(/\u00a0/g, " ");
+    expect(t).toContain(
+      "a model less than a quarter the size does twice as well, just by writing out its steps.",
     );
-    const { cross } = PAGE5.figure3;
+    expect(t).toContain("Every model in System 2 beats every model in System 1.");
+    const { cross, models } = PAGE5.figure3;
     expect(cross.param_ratio).toBeGreaterThan(4);
     expect(cross.ungagged_small_accuracy).toBeGreaterThanOrEqual(2 * cross.gagged_large_accuracy);
+    // "Every model in System 2 beats every model in System 1": the weakest
+    // reasoning score is above the strongest non-reasoning one.
+    expect(Math.min(...models.map((m) => m.bareAccuracy))).toBeGreaterThan(
+      Math.max(...models.map((m) => m.blurtAccuracy)),
+    );
     expect(body()).not.toContain("the flat floor is the finding");
   });
 });
@@ -303,7 +310,7 @@ describe("Page 5, figure 4: what each checkpoint wrote against what it solved", 
   it("opens on the token cost, in words the run still supports", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
-    expect(headings[3]).toBe("4. The cost of a chain of thought");
+    expect(headings[3]).toBe("4. The (token) cost of a chain of thought");
     expect(body().replace(/\u00a0/g, " ")).toContain(
       "A chain of thought is not free. In System 2, every model below writes about 100× as many tokens as in System 1, a median of around 570 per problem against 5 or 6.",
     );
