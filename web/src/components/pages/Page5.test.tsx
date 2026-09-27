@@ -304,9 +304,45 @@ describe("Page 5, figure 3: the floor is flat", () => {
 // The close was three stat cards quoting one unnamed checkpoint, one of them a
 // ×95.5 "trade". It is now a scatter: six cells, every one of them named.
 describe("Page 5, figure 4: what each checkpoint wrote against what it solved", () => {
-  // Reframed around tokens on 2026-09-27. The words are fixed; the data must
-  // keep earning them: every model's System 2 median is roughly a hundred times
-  // its System 1 median, and "around 570" / "5 or 6" are read off the run.
+  // Model size is encoded by marker shape with a legend (author, 2026-09-27;
+  // area-scaled dots came first), so the markers carry only the percentage.
+  it("marks each model with its own shape, with a legend, and labels only the percentage", () => {
+    render(<Page5 />);
+    const legend = screen.getByRole("list", { name: "Model size" });
+    const entries = Array.from(legend.querySelectorAll("li")).slice(1);
+    expect(entries.map((li) => [li.textContent, li.querySelector("[data-shape]")!.getAttribute("data-shape")])).toEqual([
+      ["1.5B", "circle"],
+      ["3B", "square"],
+      ["7B", "triangle"],
+    ]);
+
+    const chart = screen.getByLabelText(/Median tokens written against the share/);
+    const shapes = Array.from(chart.querySelectorAll("[data-shape]")).map((m) => m.getAttribute("data-shape"));
+    // Two markers per model, in model order, one per prompt.
+    expect(shapes).toEqual(["circle", "circle", "square", "square", "triangle", "triangle"]);
+
+    const labels = Array.from(chart.querySelectorAll("[data-shape] + text")).map((t) => t.textContent);
+    expect(labels).toHaveLength(6);
+    for (const l of labels) expect(l).toMatch(/^\d+%$/);
+  });
+
+  // The prompt is named by annotations inside the plot, not by a colour key.
+  it("annotates each prompt's cluster inside the plot, with no colour key", () => {
+    render(<Page5 />);
+    expect(screen.queryByRole("list", { name: "Prompt" })).toBeNull();
+    const chart = screen.getByLabelText(/Median tokens written against the share/);
+    const note = (name: string) =>
+      Array.from(chart.querySelectorAll("text")).find((t) => t.textContent === name)!;
+    const blurt = note("non-reasoning");
+    const bare = note("reasoning");
+    expect(blurt.getAttribute("class")).toContain("fill-wrong");
+    expect(bare.getAttribute("class")).toContain("fill-compute");
+    // Inside the plot: below its top edge, and left of the reasoning cluster.
+    expect(Number(blurt.getAttribute("y"))).toBeGreaterThan(0);
+    expect(Number(bare.getAttribute("y"))).toBeGreaterThan(0);
+    expect(Number(blurt.getAttribute("x"))).toBeLessThan(Number(bare.getAttribute("x")));
+  });
+
   it("opens on the token cost, in words the run still supports", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
@@ -351,12 +387,14 @@ describe("Page 5, figure 4: what each checkpoint wrote against what it solved", 
     expect(title).toContain("Reasoning");
   });
 
-  // The claim the page is not allowed to make, and the words that stop a reader
-  // making it for us.
-  it("does not price the tokens, and says why the dots are not joined", () => {
+  // The claim the page is not allowed to make. The caption that said so in words
+  // ("The dots are not joined…") was cut by the author on 2026-09-27; the markers
+  // themselves must still stand apart, with no line drawn from tokens to accuracy.
+  it("does not price the tokens, and never joins the markers", () => {
     render(<Page5 />);
-    expect(body()).toContain("The dots are not joined");
-    expect(body()).toContain("nothing here says the longer answers are better because they are longer");
+    expect(body()).not.toContain("The dots are not joined");
+    const chart = screen.getByLabelText(/Median tokens written against the share/);
+    expect(chart.querySelector("polyline")).toBeNull();
     expect(body()).not.toContain("the trade");
     expect(body()).not.toContain(`×${PAGE5.close.token_multiple}`);
   });
@@ -456,15 +494,15 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(body()).not.toContain("reasoning-from-scratch");
   });
 
-  // The close hands on a question, not a page number (reviewer plan, CP2).
-  it("closes on the cost, and hands on a question rather than a page number", () => {
+  // The close names the cost, with no page number (reviewer plan, CP2) and, since
+  // 2026-09-27, no handoff question.
+  it("closes on the cost, with no page number and no handoff question", () => {
     render(<Page5 />);
     expect(body()).toContain(
       "A chain of thought makes a model better at hard problems, and it charges for that in tokens.",
     );
-    expect(body()).toContain(
-      "How many tokens does it actually need, and what happens when you cut the chain off mid-sentence?",
-    );
+    // The italic handoff question was cut by the author on 2026-09-27.
+    expect(body()).not.toContain("How many tokens does it actually need");
     expect(body()).not.toContain("Page 6 asks");
   });
 

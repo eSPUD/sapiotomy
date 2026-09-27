@@ -431,7 +431,7 @@ function FloorChart() {
       width={FLOOR_W}
       height={FLOOR_H}
       margin={FLOOR_MARGIN}
-      xLabel="share of the same 100 problems solved (%)"
+      xLabel="percentage of problems solved"
     >
       {/* the floor: every gagged bar ends inside this strip */}
       <rect x={0} y={0} width={x(maxBlurt * 100)} height={FLOOR_INNER_H} className="fill-wrong opacity-10" />
@@ -505,13 +505,69 @@ function FloorChart() {
 
 const COST_W = 700;
 const COST_H = 340;
-const COST_MARGIN = { top: 38, right: 92, bottom: 50, left: 54 };
+const COST_MARGIN = { top: 16, right: 92, bottom: 50, left: 54 };
 const COST_INNER_W = COST_W - COST_MARGIN.left - COST_MARGIN.right;
 const COST_INNER_H = COST_H - COST_MARGIN.top - COST_MARGIN.bottom;
 /** Three decades, because 6 tokens and 573 share no linear axis worth reading. */
 const COST_DECADES = 3;
 /** Percent at the top of the accuracy axis: the reasoning 7B reaches 60. */
 const COST_Y_MAX = 70;
+/** The log axis's minor ticks: 2 to 9 times each decade, 2 to 900. */
+const COST_X_MINOR = Array.from({ length: COST_DECADES }, (_, d) =>
+  [2, 3, 4, 5, 6, 7, 8, 9].map((m) => m * 10 ** d),
+).flat();
+/** A gridline every 10 points, the top of the axis included (author, 2026-09-27). */
+const COST_Y_TICKS = Array.from({ length: COST_Y_MAX / 10 + 1 }, (_, i) => i * 10);
+
+/**
+ * Model size is encoded by marker SHAPE, one per model in size order, with a
+ * legend (author, 2026-09-27; an area-scaled dot was tried first and replaced).
+ * Colour stays on the prompt, so the two encodings never compete.
+ */
+type MarkerShape = "circle" | "square" | "triangle";
+const MARKER_SHAPES: readonly MarkerShape[] = ["circle", "square", "triangle"];
+const shapeOf = (modelId: string): MarkerShape =>
+  MARKER_SHAPES[F3.models.findIndex((m) => m.modelId === modelId)];
+
+/** One marker, centred on (cx, cy), about 11px across whatever its shape. */
+function Marker({
+  shape,
+  cx,
+  cy,
+  className,
+  strokeWidth,
+}: {
+  shape: MarkerShape;
+  cx: number;
+  cy: number;
+  className: string;
+  strokeWidth: number;
+}) {
+  if (shape === "square") {
+    return (
+      <rect
+        data-shape={shape}
+        x={cx - 4.5}
+        y={cy - 4.5}
+        width={9}
+        height={9}
+        className={className}
+        strokeWidth={strokeWidth}
+      />
+    );
+  }
+  if (shape === "triangle") {
+    return (
+      <path
+        data-shape={shape}
+        d={`M ${cx} ${cy - 6} L ${cx + 5.5} ${cy + 4} L ${cx - 5.5} ${cy + 4} Z`}
+        className={className}
+        strokeWidth={strokeWidth}
+      />
+    );
+  }
+  return <circle data-shape={shape} cx={cx} cy={cy} r={5} className={className} strokeWidth={strokeWidth} />;
+}
 
 /** Short enough to sit beside a dot: "Qwen2.5-1.5B-Instruct" is not. */
 const sizeLabel = (params: number) => `${Number((params / 1e9).toFixed(1))}B`;
@@ -533,21 +589,32 @@ function CostChart() {
   const px = (v: number) => Math.round(v * 100) / 100;
   const x = (tokens: number) => px((Math.log10(Math.max(tokens, 1)) / COST_DECADES) * COST_INNER_W);
   const y = (accuracy: number) => px(COST_INNER_H * (1 - (accuracy * 100) / COST_Y_MAX));
-  /** Where a prompt's label goes: over the middle of its three dots. */
-  const clusterX = (tokens: number[]) => tokens.reduce((a, t) => a + x(t), 0) / tokens.length;
+  /** A cluster's annotation: centred over its three markers, a few points above the top one. */
+  const clusterNote = (tokens: number[], accuracies: number[]) => ({
+    x: px(tokens.reduce((a, t) => a + x(t), 0) / tokens.length),
+    y: y(Math.max(...accuracies)) - 16,
+  });
+  const blurtNote = clusterNote(
+    rows.map((m) => m.blurtMedianTokens),
+    rows.map((m) => m.blurtAccuracy),
+  );
+  const bareNote = clusterNote(
+    rows.map((m) => m.bareMedianTokens),
+    rows.map((m) => m.bareAccuracy),
+  );
 
   const points = rows.flatMap((m) => [
     {
       key: `${m.modelId}-blurt`,
       gagged: true,
-      label: sizeLabel(m.params),
+      shape: shapeOf(m.modelId),
       tokens: m.blurtMedianTokens,
       accuracy: m.blurtAccuracy,
     },
     {
       key: `${m.modelId}-bare`,
       gagged: false,
-      label: sizeLabel(m.params),
+      shape: shapeOf(m.modelId),
       tokens: m.bareMedianTokens,
       accuracy: m.bareAccuracy,
     },
@@ -570,9 +637,22 @@ function CostChart() {
       height={COST_H}
       margin={COST_MARGIN}
       xLabel="median tokens written per problem (log scale)"
-      yLabel={`share of the same ${F2.bare.n} problems solved (%)`}
+      yLabel="percentage of problems solved"
     >
-      {/* gridlines: a decade across, twenty points up */}
+      {/* gridlines: a decade across, with dashed unlabelled minor lines at 2 to 9
+          inside each decade (author, 2026-09-27), and ten points up */}
+      {COST_X_MINOR.map((v) => (
+        <line
+          key={`minor-${v}`}
+          x1={x(v)}
+          x2={x(v)}
+          y1={0}
+          y2={COST_INNER_H}
+          className="stroke-ink-muted opacity-25"
+          strokeWidth={1}
+          strokeDasharray="3 3"
+        />
+      ))}
       {[0, 1, 2, 3].map((d) => (
         <g key={d}>
           <line
@@ -593,7 +673,7 @@ function CostChart() {
           </text>
         </g>
       ))}
-      {[0, 20, 40, 60].map((t) => (
+      {COST_Y_TICKS.map((t) => (
         <g key={t}>
           <line x1={0} x2={COST_INNER_W} y1={y(t / 100)} y2={y(t / 100)} className="stroke-grid" strokeWidth={1} />
           <text
@@ -607,30 +687,21 @@ function CostChart() {
         </g>
       ))}
 
-      {/* which prompt each cluster is, above the cluster rather than in a key */}
-      <text
-        x={clusterX(rows.map((m) => m.blurtMedianTokens))}
-        y={-14}
-        textAnchor="middle"
-        className="fill-wrong text-[11px] font-semibold"
-      >
+      {/* which prompt each cluster is, annotated in the plot just above it (author,
+          2026-09-27: no colour key) */}
+      <text x={blurtNote.x} y={blurtNote.y} textAnchor="middle" className="fill-wrong text-[11px] font-semibold">
         non-reasoning
       </text>
-      <text
-        x={clusterX(rows.map((m) => m.bareMedianTokens))}
-        y={-14}
-        textAnchor="middle"
-        className="fill-compute text-[11px] font-semibold"
-      >
+      <text x={bareNote.x} y={bareNote.y} textAnchor="middle" className="fill-compute text-[11px] font-semibold">
         reasoning
       </text>
 
       {points.map((p) => (
         <g key={p.key}>
-          <circle
+          <Marker
+            shape={p.shape}
             cx={x(p.tokens)}
             cy={y(p.accuracy)}
-            r={5}
             className={`${p.gagged ? "fill-wrong" : "fill-compute"} stroke-surface`}
             strokeWidth={1.5}
           />
@@ -639,7 +710,7 @@ function CostChart() {
             y={y(p.accuracy) + 4}
             className={`text-[10px] tabular-nums ${p.gagged ? "fill-wrong" : "fill-compute"}`}
           >
-            {p.label} · {pct(p.accuracy)}
+            {pct(p.accuracy)}
           </text>
         </g>
       ))}
@@ -881,6 +952,15 @@ export function Page5() {
             as many tokens as in System&nbsp;1, a median of around {BARE_MEDIAN_ROUNDED} per
             problem against {BLURT_MEDIAN_RANGE}.
           </p>
+          {/* Moved above the figure, author, 2026-09-27: both paragraphs read before the chart. */}
+          <p className="text-ink-muted">
+            A hundred times more sounds expensive, but each chain is small. Even across a million
+            problems, the {sizeLabel(PRIMARY_ROW.params)}&apos;s chains of thought add up to about a
+            hundred-thousandth of what it cost to train the model.
+            <Cite n={REF.kaplan} />
+            <sup aria-hidden="true" className="text-compute">,</sup>
+            <Cite n={REF.qwenReport} />
+          </p>
           <section
             aria-label="Tokens written against problems solved"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
@@ -911,31 +991,41 @@ export function Page5() {
                 <dd className="text-ink">900 generations</dd>
               </div>
             </dl>
-            <CostChart />
-            <p className="text-xs text-ink-muted">
-              One dot is one model under one prompt. The dots are not joined: the two prompts
-              differ by more than the length of what they produce, so nothing here says the longer
-              answers are better because they are longer.
-            </p>
+            {/* Shape is the model size, keyed in a legend to the right of the chart
+                (author, 2026-09-27). Colour is the prompt, named by annotations inside the
+                plot beside each cluster rather than in a key. */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1">
+                <CostChart />
+              </div>
+              <ul
+                aria-label="Model size"
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted sm:flex-col sm:items-start"
+              >
+                <li className="font-semibold">model size</li>
+                {F3.models.map((m) => (
+                  <li key={m.modelId} className="flex items-center gap-1.5">
+                    <svg aria-hidden="true" width={14} height={14}>
+                      <Marker
+                        shape={shapeOf(m.modelId)}
+                        cx={7}
+                        cy={7.5}
+                        className="fill-none stroke-ink-muted"
+                        strokeWidth={1.5}
+                      />
+                    </svg>
+                    {sizeLabel(m.params)}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </section>
-          <p className="text-ink-muted">
-            A hundred times more sounds expensive, but each chain is small. Even across a million
-            problems, the {sizeLabel(PRIMARY_ROW.params)}&apos;s chains of thought add up to about a
-            hundred-thousandth of what it cost to train the model.
-            <Cite n={REF.kaplan} />
-            <sup aria-hidden="true" className="text-compute">,</sup>
-            <Cite n={REF.qwenReport} />
-          </p>
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             <p className="text-ink">
-              {/* Closing line, author, 2026-09-27: no page number (reviewer plan, CP2); the
-                  handoff is the question page 6 answers. */}
+              {/* Closing line, author, 2026-09-27: no page number (reviewer plan, CP2). The
+                  italic handoff question to page 6 was cut by the author the same day. */}
               A chain of thought makes a model better at hard problems, and it charges for that
-              in tokens.{" "}
-              <em className="text-ink-muted">
-                How many tokens does it actually need, and what happens when you cut the chain off
-                mid-sentence?
-              </em>
+              in tokens.
             </p>
           </div>
         </section>
