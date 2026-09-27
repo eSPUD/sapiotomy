@@ -8,8 +8,10 @@
  * summoning a chain. It is about what the chain is worth, measured the only way
  * left: by taking it away.
  *
- * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED. Nothing is redrawn from a
- * paper and nothing is authored. The source is one run of
+ * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED, with one labelled
+ * exception: section 4's training-cost comparison (2026-09-27) is an estimate
+ * from standard formulas, said so in its margin note and sourced there (see
+ * COST_ESTIMATE). Nothing is redrawn from a paper and nothing is authored. The source is one run of
  * `notebooks/page_05_how_to_reason.ipynb` — Qwen2.5-Instruct at bf16 (1.5B, 3B,
  * 7B; the 3B is the primary), MATH-500 levels 4 and 5, 100 paired items, greedy,
  * 900 generations. Its `derived.json` is committed verbatim to
@@ -23,61 +25,47 @@
  * are meaningless without their denominator: "43" is not a claim, "43 of the
  * same 100 problems" is.
  *
- *   Step 1 — no figure and no card, four sentences. What a chain of thought IS,
- *   told with the reader's OWN numbers: page 1's 17 × 24 and the three results
- *   they built it from, pulled live off `SYSTEMS.slow` so the callback cannot
- *   drift from the page it calls back to. Two clauses are load-bearing and both
- *   are the payload of the step. That for a model the chain is the thinking
- *   rather than a report of it, which is the only unmeasured claim here and what
- *   makes reasoning something you can put a budget on. And that the classic way
- *   to get one is to ASK, quoting Kojima's own trigger ("Let's think step by
- *   step.") because the marker sits on that phrase, and because the whole page
- *   turns on that ask having stopped being necessary, which the reader cannot
- *   feel unless the ask is named first. It used to quote the run's
- *   `zero_shot_cot` suffix, a different string the paper never published; the
- *   run's instruction arm is not on the page, so nothing needed that link. Resist
- *   re-narrating page 1 or page 4 here: the lede already has the road, and page 6
- *   cuts the chain off two clicks later, so a forward-pointer is padding.
+ *   Step 1 — the definition and figure 1, the specimen, merged 2026-09-27 under
+ *   planning/reviewer_response_changes_plan.md (page 5, sections 1 and 2). The
+ *   first paragraph is the author's: tasks that need more than a blurted answer,
+ *   17 × 24 worked in three steps, and the term for those steps written out. No
+ *   "for a model the steps ARE the thinking" contrast: the author cut it
+ *   2026-09-27, since a person's written steps are their thinking too, so there
+ *   is no difference to claim. It ends on the classic way to ASK,
+ *   quoting Kojima's trigger ("Let's think step by step.") because the marker
+ *   sits on that phrase; the run's own `zero_shot_cot` suffix is a different
+ *   string and its arm is not on the page. The same paragraph then says today's
+ *   models no longer need that prompt, since System 2 is their default, and hands
+ *   the reader the stepper: the 3B forced into System 1 against its default.
  *
- *   Wei and Kojima are cited here, in pages 1 to 3's grammar: a numbered marker
- *   on the claim, and the entry itself in a right-hand References sidenote beside
- *   this step. No gloss sits with the references: that would be whitespace a
- *   reader pays for beside a four-line step, since each note sets its own grid
- *   row's height. The provenance plate that used to sit above the steps
- *   ("Every figure below is one measurement of ours...") was removed 2026-08-08
- *   as jargon; the ledger in step 5's figure card and the download at the top
- *   right are all the provenance the page carries in words.
+ *   The token and greedy glosses sit in the margin beside this step, under the
+ *   references, not in the reading column (the plan moved them). One problem,
+ *   one model, one decoding setting, two prompts that differ only by a suffix.
+ *   Tabs are ordered to match figure 2's bars and the reader lands on `bare`. A
+ *   "see the full prompt" disclosure shows the exact strings, with the suffix
+ *   highlighted. Prompt and trace are both set in `font-code`: they are listings
+ *   of what a machine read and wrote. The stepper (Back / Next / Play) walks the
+ *   model's own output using the token ranges the notebook emitted. The
+ *   instruction condition is NOT a third tab: it is measured, and it lives in the
+ *   notebook download (see the load-bearing list below).
  *
- *   Step 2 — figure 1, the specimen, and the step where the page's premise lands:
- *   this model does it NATIVELY, and the figure is a look at what that produces
- *   rather than a demonstration of a technique working. One problem, one model,
- *   one decoding setting, two prompts that differ only by a suffix. Tabs are
- *   ordered to match figure 2's bars and the reader lands on `bare`. A "see the
- *   full prompt"
- *   disclosure shows the exact strings, with the suffix highlighted, so the
- *   reader can confirm that nothing in the bare prompt asks for working. Prompt
- *   and trace are both set in `font-code`: they are listings of what a machine
- *   read and wrote, and the deck's serif makes a 573-token trace unreadable.
- *   The stepper (Back / Next / Play) walks the model's own output using the
- *   token ranges the notebook emitted, so the reveal stops at real token
- *   boundaries rather than faking a typewriter. The instruction condition is NOT
- *   a third tab: it is measured, and it lives in the notebook download, not on
- *   the page (see the load-bearing list below).
- *
- *   Step 3 — figure 2, the page's headline. The McNemar 2x2 drawn as 100 cells,
+ *   Step 2 — figure 2, the page's headline. The McNemar 2x2 drawn as 100 cells,
  *   one per problem, with the gag on a switch. Flip it and 40 solved problems go
  *   out while 4 arrive. The four cell counts are fully determined by the two
  *   discordant counts and the two solve counts the notebook reports, so the
- *   picture is measurement; only the ARRANGEMENT of cells is ours, and the
- *   caption says so. Do not label a cell with a problem id: we do not ship
- *   per-item outcomes to the page.
+ *   picture is measurement; only the ARRANGEMENT of cells is ours. The margin
+ *   note that said so ("How to read it") was cut by the author on 2026-09-27: the
+ *   figure needs no explaining. Do not label a cell with a problem id: we do not
+ *   ship per-item outcomes to the page.
  *
- *   Step 4 — figure 3, three checkpoints. The claim is the FLAT FLOOR, never
+ *   Step 3 — figure 3, three checkpoints. The claim is the FLAT FLOOR, never
  *   scale: three points are not a scaling law, our trend has no sign flip, and
  *   emergence is page 11's subject. No size axis, no line through the points,
  *   and no caption that can be read as either. Section 1 of the spec.
  *
- *   Step 5 — figure 4, and the handoff page 6 opens on. This used to be three
+ *   Step 4 — figure 4, "The cost of a chain of thought" (reframed around tokens
+ *   2026-09-27: System 2 writes about a hundred times the tokens of System 1,
+ *   yet a million chains cost about a hundred-thousandth of training). Before: This used to be three
  *   stat cards, one of which was a "trade": 95.5x the tokens for 36 points. Two
  *   things were wrong with it. It never said which of the three checkpoints it
  *   was quoting (the 3B, and a reader had no way to know), and putting a ratio
@@ -111,8 +99,9 @@
  *     the notebook, `harness.py` and all 900 traces, so a reader who doubts a
  *     figure re-derives it. It sits at the top right of the page, beside the act
  *     kicker; the references sit in right-hand References sidenotes beside the
- *     steps that cite them (Wei and Kojima beside step 1, the model card and the
- *     dataset beside step 5). The run's ledger sits INSIDE step 5's figure card,
+ *     steps that cite them (Wei, Kojima and the model card beside step 1, the
+ *     dataset beside step 2, Kaplan and the Qwen2.5 report beside step 4's
+ *     estimate). The run's ledger sits INSIDE step 4's figure card,
  *     where it has the card's width: the margin column wrapped it mid-hash.
  *   · the conditions are named plainly, "reasoning" and "non-reasoning", on
  *     every surface: buttons, cluster labels, aria titles, prose. No euphemism
@@ -149,19 +138,10 @@ import {
   tidyMath,
   type PairedClass,
 } from "@/lib/page05";
-import { SYSTEMS } from "@/lib/authored";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 5;
 
-/** Page 1's System 2 round, so the callback cannot drift from what it calls back to. */
-const S2 = SYSTEMS.slow;
-/** "17 × 20 = 340" → "340": the three results the reader watched themselves build. */
-// Only the steps that compute a number: page 1's first step splits 24 into 20 + 4,
-// which is a plan, not a result.
-const S2_RESULTS = S2.steps
-  .map((s) => s.slice(s.lastIndexOf("=") + 1).trim())
-  .filter((r) => /^\d+$/.test(r));
 const F1 = PAGE5.figure1;
 const F2 = PAGE5.figure2;
 const F3 = PAGE5.figure3;
@@ -169,6 +149,12 @@ const CLOSE = PAGE5.close;
 const M = PAGE5.manifest;
 /** The checkpoint every figure above the close is measured on. */
 const PRIMARY_ROW = F3.models.find((m) => m.modelId === PAGE5.figure2.modelId)!;
+/** Section 4's intro: "around 570" and "5 or 6", read off the run. */
+const BARE_MEDIAN_ROUNDED =
+  Math.round(F3.models.reduce((a, m) => a + m.bareMedianTokens, 0) / F3.models.length / 10) * 10;
+const BLURT_MIN = Math.min(...F3.models.map((m) => m.blurtMedianTokens));
+const BLURT_MAX = Math.max(...F3.models.map((m) => m.blurtMedianTokens));
+const BLURT_MEDIAN_RANGE = BLURT_MIN === BLURT_MAX ? `${BLURT_MIN}` : `${BLURT_MIN} or ${BLURT_MAX}`;
 
 /** The download: notebook + harness + every generation the page rests on. */
 const NOTEBOOK_ZIP = "/notebooks/page-05-how-to-reason.zip";
@@ -183,7 +169,27 @@ const STEP_MS = 700;
  * instruments the run was made with. Every number on this page is ours, so no
  * entry may carry a figure.
  */
-const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4 } as const;
+const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4, kaplan: 5, qwenReport: 6 } as const;
+
+/**
+ * Section 4's cost comparison, 2026-09-27. These are ESTIMATES, the one
+ * exception to "every number on this page is measured", and the margin note
+ * beside section 4 says so. Standard approximations (Kaplan et al. 2020): about
+ * 2 operations per parameter per token written, and 6 per parameter per token
+ * trained on. The Qwen2.5 report gives the family's pretraining set as 18
+ * trillion tokens; whether every size saw all of it is not stated, so the
+ * training figure is an upper-end estimate. Page5.test.tsx checks that the
+ * words in the prose ("about a hundred-thousandth") still match this maths.
+ */
+const PRETRAIN_TOKENS = 18e12;
+export const COST_ESTIMATE = (() => {
+  const params = PRIMARY_ROW.params;
+  /** Operations for the primary model to write one median chain of thought. */
+  const chainFlops = 2 * params * PRIMARY_ROW.bareMedianTokens;
+  /** Operations to train it. */
+  const trainFlops = 6 * params * PRETRAIN_TOKENS;
+  return { chainFlops, trainFlops, millionChainsShare: (1e6 * chainFlops) / trainFlops };
+})();
 
 /**
  * The trigger Kojima et al. published, quoted as they published it, because the
@@ -591,76 +597,29 @@ export function Page5() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Act 1 ended on a question: can a machine be <strong className="text-ink">walked down a
-        road</strong>? A model you can download in 2026 walks it unasked, so the only way left to
-        measure what the road is worth is to <strong className="text-ink">take it away</strong>.
+        The first tool in the toolbox of reasoning is also the foundation. LLMs can mimic
+        reasoning by taking, and recording, the steps needed to solve a problem. This is known as a{" "}
+        <strong className="text-ink">chain of thought</strong>, and almost every technique that
+        follows is a variation on it.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the definition. No figure: the reader needs the term before
-            any measurement of it means anything, and the deck has already built
-            both halves of it (page 1's two speeds, page 4's roads). */}
+        {/* Step 1 — the definition and the specimen, merged 2026-09-27 under the
+            reviewer-response plan (planning/reviewer_response_changes_plan.md,
+            page 5, sections 1 and 2). The first paragraph is the author's draft. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            1. What a chain of thought is
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              the term, before the measurement
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">1. What a chain of thought is</h2>
           <p className="text-ink">
-            Page 1 handed you <strong className="font-code">{S2.prompt}</strong> and you did not
-            recognise the answer, you built it: {S2_RESULTS.join(", then ")}. A{" "}
-            <strong>chain of thought</strong> is that building written down, a thread of steps
-            running from the question to the goal.
-            <Cite n={REF.wei} /> What is strange in a language model is that the thread is not a
-            report of the thinking, <strong>it is the thinking</strong>: every step is text the
-            model has to write before it can write the next one. The classic way to get one is to
-            ask, by appending{" "}
-            <span className="font-code">{ZERO_SHOT_COT_TRIGGER}</span> to the question.
-            <Cite n={REF.kojima} />
-          </p>
-        </section>
-        <Note kicker="References">
-          <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
-            Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
-            Models</em> (NeurIPS 2022).
-          </RefItem>
-          <RefItem n={REF.kojima} href="https://arxiv.org/abs/2205.11916">
-            Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em> (NeurIPS
-            2022).
-          </RefItem>
-        </Note>
-
-        {/* Step 2 — figure 1 */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. What it looks like
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              one problem · one model · two prompts
-            </span>
-          </h2>
-          {/* The deck's terminology floor. Every measured number from here to page 16 is
-              counted in tokens, taken from a checkpoint, and decoded greedily, and until
-              2026-08-10 none of the three was ever defined: `greedy` reached the reader
-              first inside the provenance chip below, where no gloss fits. Glossed here, at
-              the deck's first measured page, in the inline-parenthetical style page 11
-              already uses for FLOPs. Do not delete these as the page tightens; the audience
-              is first-year undergraduates with no ML background, and the run's own units
-              are not something they can be assumed to arrive with. */}
-          <p className="text-ink-muted">
-            A model you can download in 2026 does this natively. Nothing has to ask it to: given a
-            hard maths question and nothing else, Qwen2.5-3B-Instruct writes{" "}
-            {F1.tabs[bareIndex].tokensGenerated} tokens of chain before it answers. A{" "}
-            <strong className="text-ink">token</strong> is a word-piece, the unit a model writes one
-            at a time, and it is what every length on this page is counted in.
-          </p>
-          <p className="text-ink-muted">
-            Below is one MATH-500 problem put to it twice, on two prompts that are the same string
-            apart from what is appended at the end. Both runs decode{" "}
-            <strong className="text-ink">greedily</strong>: at every step the model takes its single
-            most likely next token, so the same prompt always produces the same chain, and nothing
-            below is a lucky draw. Pick a prompt and step through what it wrote.
+            We&apos;ve established that certain tasks (like double-digit mathematics problems) require
+            thinking beyond blurting the answer. For 17&nbsp;×&nbsp;24, you might work out
+            17&nbsp;×&nbsp;20&nbsp;=&nbsp;340, then 17&nbsp;×&nbsp;4&nbsp;=&nbsp;68, then add them to get 408. A <strong>chain of thought</strong> is that series
+            of steps, written out.
+            <Cite n={REF.wei} /> A common way to ask a model for one is to end the prompt with
+            &ldquo;{ZERO_SHOT_COT_TRIGGER}&rdquo;
+            <Cite n={REF.kojima} /> Today&apos;s models no longer need that phrase, because
+            System&nbsp;2 is their default. Below, we force <strong>Qwen2.5-3B-Instruct</strong>
+            <Cite n={REF.qwen} /> into System&nbsp;1, answering immediately, and compare the two.
           </p>
           <section
             aria-label="One problem, two prompts"
@@ -669,7 +628,6 @@ export function Page5() {
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className={chip}>Qwen2.5-3B-Instruct · bf16 · greedy</span>
               <span className={chip}>MATH-500 level {F1.level}</span>
-              <span className={chip}>picked from {F1.nCandidates} problems that qualified</span>
             </div>
 
             {/* Prompt and trace are listings, so they get the one licensed
@@ -706,8 +664,8 @@ export function Page5() {
               </pre>
               <p className="mt-2 border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
                 {tab.promptAfter
-                  ? "Highlighted: the whole of the manipulation."
-                  : "The prompt ends there. Nothing in it asks for working."}
+                  ? "Highlighted: the only text added to the question."
+                  : "Nothing is added after the question."}
               </p>
             </details>
 
@@ -805,32 +763,54 @@ export function Page5() {
             ) : null}
           </section>
         </section>
-        <Note kicker="One trace only">
-          <p>
-            This is a specimen, not evidence. It is one problem out of {F1.nCandidates} that
-            qualified, and the evidence is the next two figures.
-          </p>
-          <p>Play walks the real token boundaries the run recorded, not a typewriter.</p>
-        </Note>
+        {/* Beside the merged step: its references, then the deck's terminology floor.
+            Every measured number from here to page 16 is counted in tokens and decoded
+            greedily, so both terms are defined here, at the deck's first measured page.
+            They moved out of the reading column into this note on 2026-09-27 (reviewer
+            plan, page 5 section 2); do not delete them as the page tightens, since the
+            audience is first-year undergraduates with no ML background. */}
+        <div className="flex flex-col gap-6">
+          <Note kicker="References">
+            <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
+              Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
+              Models</em> (NeurIPS 2022).
+            </RefItem>
+            <RefItem n={REF.kojima} href="https://arxiv.org/abs/2205.11916">
+              Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em> (NeurIPS
+              2022).
+            </RefItem>
+            <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct">
+              Qwen team 2024, <em>Qwen2.5-3B-Instruct</em> model card (Hugging Face). The 1.5B and
+              7B cards sit alongside it.
+            </RefItem>
+          </Note>
+          <Note kicker="Terms">
+            <p>
+              A <strong className="text-ink">token</strong> is a word-piece, the unit a model writes
+              one at a time. Every length on this page is counted in tokens.
+            </p>
+            <p>
+              Both runs decode <strong className="text-ink">greedily</strong>: at every step the
+              model takes its single most likely next token, so the same prompt always produces the
+              same chain.
+            </p>
+          </Note>
+        </div>
 
-        {/* Step 3 — figure 2 */}
+        {/* Step 2 — figure 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            3. What the chain is worth
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              the same {F2.bare.n} problems, both ways
-            </span>
-          </h2>
-          {/* The denominator and the free-run number only. This paragraph used to give
-              the gagged number too, which left the switch with nothing to deliver: the
-              figure's whole job is to show what leaves when you press it. */}
+          <h2 className="text-xl font-semibold text-ink">2. Scaling beyond one problem</h2>
+          {/* Both sides of the comparison, with the denominator. This paragraph used to
+              withhold the System 1 score so the switch had something to reveal; the author
+              overrode that on 2026-09-27 (reviewer plan, decision D6: give both sides in
+              one place). The switch now shows WHICH problems are lost, not how many. */}
           <p className="text-ink-muted">
-            One trace proves nothing, so both prompts were run across{" "}
-            {F2.bare.n} problems from the same difficulty band. Below is that comparison: the same
-            model, reasoning against non-reasoning. Reasoning, it writes a
-            median of {CLOSE.bare_median_tokens} tokens of working and solves{" "}
-            <strong className="text-ink">{F2.bare.nCorrect} of the {F2.bare.n}</strong>. Each square
-            below is one of those {F2.bare.n} problems; the switch is the same suffix you just read.
+            Was that one problem a fluke? Here is the same model on {F2.bare.n} hard problems from the
+            MATH-500 benchmark.
+            <Cite n={REF.math500} /> In System&nbsp;2 (reasoning) it solved{" "}
+            <strong className="text-ink">{F2.bare.nCorrect}</strong>. In System&nbsp;1 (non-reasoning) it solved{" "}
+            <strong className="text-ink">{F2.blurt.nCorrect}</strong>. Each square below is one
+            problem.
           </p>
           <section
             aria-label="The cost of working with no reasoning"
@@ -913,30 +893,37 @@ export function Page5() {
             </div>
           </section>
         </section>
-        <Note kicker="How to read it">
-          <p>Press &quot;non-reasoning&quot; and count the squares that change colour.</p>
-          <p>
-            One square is one problem and the counts are measured, but which square a problem sits
-            in is arrangement, not data.
-          </p>
+        {/* The author cut "How to read it" on 2026-09-27, since the figure needs no
+            explaining. The dataset's reference moved here from section 4 the same day,
+            beside the first place the page names MATH-500. */}
+        <Note kicker="References">
+          <RefItem n={REF.math500} href="https://huggingface.co/datasets/HuggingFaceH4/MATH-500">
+            <em>MATH-500</em> dataset card (Hugging Face): 500 MATH test problems (Hendrycks et
+            al. 2021), the subset of Lightman et al. 2023.
+          </RefItem>
         </Note>
 
-        {/* Step 4 — figure 3 */}
+        {/* Step 3 — figure 3 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            4. The same test on two more checkpoints
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              three checkpoints · same {F2.bare.n} problems · same harness
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">3. Size against reasoning</h2>
           <p className="text-ink-muted">
-            Maybe the 3B is just an odd <strong className="text-ink">checkpoint</strong>, one saved
-            set of a model&apos;s trained numbers among the many a lab ships. So the same test ran on
-            its smaller and larger siblings, on the same {F2.bare.n} problems. Each bar below is one
-            model&apos;s score,
-            cut in two: on the left, what it still gets right with no reasoning; on the
-            right, what the working adds. Bigger models are better at maths, so the bars get longer
-            going down. Watch where the left piece ends instead.
+            {/* The author's sentence, 2026-09-27. The "checkpoint" gloss that used to
+                open this paragraph was cut by the author: the term would not make sense
+                to this reader however it was defined. */}
+            To show that these results are not specific to one model, we ran the same{" "}
+            {F2.bare.n}-problem experiment on a smaller (1.5B) and a larger (7B) model from the same
+            family, and compared the results.
+            {/* The result, moved up from under the figure on 2026-09-27 so every section
+                reads setup, result, then the figure. It replaced two paragraphs (the
+                cross-model callout and the flat-floor close); the author dropped the old
+                hedge ("the thinnest evidence the page has", p = 0.043 on 25 discordant
+                problems). "Less than a quarter the size" and "twice as well" are guarded
+                against the data in Page5.test.tsx. */}{" "}
+            Forced into System&nbsp;1, the 7B solves{" "}
+            <strong className="text-ink">{pct(F3.cross.gagged_large_accuracy)}</strong>. Left in
+            System&nbsp;2, the 1.5B solves{" "}
+            <strong className="text-ink">{pct(F3.cross.ungagged_small_accuracy)}</strong>. A model
+            less than a quarter the size does twice as well, just by writing out its steps.
           </p>
           <section
             aria-label="The floor is flat"
@@ -962,48 +949,23 @@ export function Page5() {
                 <span className="h-3 w-px bg-compute" /> the 1.5B, reasoning
               </span>
             </div>
-            <div className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-ink">
-              A non-reasoning 7B solves{" "}
-              <strong className="font-mono">{pct(F3.cross.gagged_large_accuracy)}</strong>. A
-              reasoning 1.5B solves{" "}
-              <strong className="font-mono">{pct(F3.cross.ungagged_small_accuracy)}</strong>. On
-              these {F2.bare.n} problems the working is worth more than{" "}
-              {F3.cross.param_ratio.toFixed(1)} times the parameters, on the thinnest evidence the
-              page has: {pLabel(F3.cross.p)}, {F3.cross.fixed} problems one way and{" "}
-              {F3.cross.broken} the other, where working with no reasoning above cost{" "}
-              {F2.suppression.deltaPts} points at {pLabel(F2.suppression.p)}. Take this one as a
-              hint; the flat floor is the finding.
-            </div>
           </section>
-          <p className="text-ink-muted">
-            The right-hand ends fan out with size, the way you would expect. The left-hand ends do
-            not: non-reasoning, all three land in the same narrow strip, and that flat floor
-            is the finding.
-          </p>
         </section>
-        <Note kicker="Limits">
-          <p>
-            Three checkpoints are not a scaling law, and nothing here is plotted against size.
-          </p>
-        </Note>
+        {/* No margin note: the author cut "Limits" on 2026-09-27. This empty cell keeps
+            the grid's step / note pairing. */}
+        <div aria-hidden="true" />
 
         {/* Close — figure 4. Every figure above this one is the 3B, and the page
             never said so where it counted. Six dots say it: which checkpoint,
             under which prompt, wrote how much, and solved how many. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            5. What each checkpoint wrote, and what it solved
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              three checkpoints · both prompts
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">4. The cost of a chain of thought</h2>
+          {/* Reframed around tokens, author, 2026-09-27. "About 100×" and
+              "around 570" are checked against the run in Page5.test.tsx. */}
           <p className="text-ink-muted">
-            Figures 1 and 2 are one checkpoint, the {sizeLabel(PRIMARY_ROW.params)}.
-            <Cite n={REF.qwen} /> Here are all three, each plotted twice. Across is the median
-            number of tokens the model wrote per problem, on a log scale because the two prompts sit
-            two orders of magnitude apart. Up is the share of the same {F2.bare.n} MATH-500 problems
-            <Cite n={REF.math500} />{" "}
-            it solved.
+            A chain of thought is not free. In System&nbsp;2, every model below writes about 100×
+            as many tokens as in System&nbsp;1, a median of around {BARE_MEDIAN_ROUNDED} per
+            problem against {BLURT_MEDIAN_RANGE}.
           </p>
           <section
             aria-label="Tokens written against problems solved"
@@ -1037,45 +999,46 @@ export function Page5() {
             </dl>
             <CostChart />
             <p className="text-xs text-ink-muted">
-              One dot is one checkpoint under one prompt. The dots are not joined: the two prompts
+              One dot is one model under one prompt. The dots are not joined: the two prompts
               differ by more than the length of what they produce, so nothing here says the longer
               answers are better because they are longer.
             </p>
           </section>
           <p className="text-ink-muted">
-            Both numbers rise with the checkpoint, but not together. Reasoning, the three models
-            write almost the same amount, a median of {F3.models.map((m) => m.bareMedianTokens).join(", ")}{" "}
-            tokens, and solve {F3.models.map((m) => pct(m.bareAccuracy)).join(", ")} of the same
-            hundred. Non-reasoning, they write{" "}
-            {F3.models.map((m) => m.blurtMedianTokens).join(", ")} tokens and solve{" "}
-            {F3.models.map((m) => pct(m.blurtAccuracy)).join(", ")}. The tokens move with the
-            prompt; the accuracy moves with the model.
+            A hundred times more sounds expensive, but each chain is small. Even across a million
+            problems, the {sizeLabel(PRIMARY_ROW.params)}&apos;s chains of thought add up to about a
+            hundred-thousandth of what it cost to train the model.
+            <Cite n={REF.kaplan} />
+            <sup aria-hidden="true" className="text-compute">,</sup>
+            <Cite n={REF.qwenReport} />
           </p>
           <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
             <p className="text-ink">
-              You have probably done this before. When telling the model to skip the working and
-              answer, the answer gets worse.{" "}
+              {/* Closing line, author, 2026-09-27: no page number (reviewer plan, CP2); the
+                  handoff is the question page 6 answers. */}
+              A chain of thought makes a model better at hard problems, and it charges for that
+              in tokens.{" "}
               <em className="text-ink-muted">
-                Page 6 asks how much of that working it actually needed, and what happens when you
-                cut it off mid-sentence.
+                How many tokens does it actually need, and what happens when you cut the chain off
+                mid-sentence?
               </em>
             </p>
           </div>
         </section>
-        {/* Beside the close, only the instruments' references. The run's ledger
-            sits inside the figure card itself, where the sidebar's 15rem track
-            wrapped its values mid-hash. The "Also measured" note (the
-            instruction null and the exemplar rungs) went back to the notebook:
-            the page shows what the chain is worth, not how a model that already
-            reasons responds to being asked to. */}
-        <Note kicker="References">
-          <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct">
-            Qwen team 2024, <em>Qwen2.5-3B-Instruct</em> model card (Hugging Face). The 1.5B and
-            7B cards sit alongside it.
+        {/* Beside section 4, the one set of numbers on the page that is estimated
+            rather than measured, and the sources of the estimate. The model card and
+            dataset references moved up to where the page first names them. */}
+        <Note kicker="An estimate">
+          <p>
+            Writing a token takes about 2 operations per parameter; training takes about 6 per
+            parameter for every token trained on. Qwen2.5 was trained on up to 18 trillion
+            tokens.
+          </p>
+          <RefItem n={REF.kaplan} href="https://arxiv.org/abs/2001.08361">
+            Kaplan et al. 2020, <em>Scaling Laws for Neural Language Models</em> (arXiv).
           </RefItem>
-          <RefItem n={REF.math500} href="https://huggingface.co/datasets/HuggingFaceH4/MATH-500">
-            <em>MATH-500</em> dataset card (Hugging Face): 500 MATH test problems (Hendrycks et
-            al. 2021), the subset of Lightman et al. 2023.
+          <RefItem n={REF.qwenReport} href="https://arxiv.org/abs/2412.15115">
+            Qwen team 2024, <em>Qwen2.5 Technical Report</em> (arXiv).
           </RefItem>
         </Note>
       </div>

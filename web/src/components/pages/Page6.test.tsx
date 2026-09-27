@@ -111,20 +111,20 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
     expect(body()).toContain(`Final answer: ${tidyMath(OPENING.byBudget[0].extractedAnswer)}`);
   });
 
-  // The figure opens on a sentence naming what the dial IS and what happens at
-  // the cap, because a starved model still producing a gradeable answer is
-  // otherwise inexplicable. The stem itself is shown where it is applied, in
-  // the trace's tinted band, rather than pasted into the prose as a raw string.
-  it("explains the forcing before the reader touches the dial", () => {
+  // The figure opens on what the dial does and what happens when it bites, in
+  // plain words: the author cut the code variable name from the prose on
+  // 2026-09-27. The counts in the last sentence must match the run.
+  it("explains the dial and the forcing in plain words before the reader touches it", () => {
     render(<Page6 />);
-    expect(body()).toContain("max_new_tokens");
-    expect(body()).toContain("start the answer line for it");
-    expect(body()).toContain(`${PAGE6.manifest.forcing.answer_allowance} more tokens`);
-    // It used to promise that this dial drove the next two figures, which it
-    // did, off screen and without saying so. Each figure holds its own now and
-    // the sentence says that instead.
-    expect(body()).not.toContain("The same dial drives the next two figures.");
-    expect(body()).toContain("nothing you do here moves anything below");
+    const t = body();
+    const intro = screen.getByText(/experiment with that dial/).closest("p")!;
+    expect(intro.textContent).not.toContain("max_new_tokens");
+    expect(t).toContain("so when that happens we stop it and make it answer on the spot.");
+    expect(PAGE6.budgets).toHaveLength(5);
+    expect(t).toContain(
+      `Try it on ${PAGE6.figure3.clickableRowIds.length} problems, at five settings from 128 to 2,048 tokens.`,
+    );
+    expect(t).not.toContain("nothing you do here moves anything below");
   });
 
   // The listing face, as page 5 settled it: the question and the trace are what
@@ -588,5 +588,17 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     const h = PAGE6.handoff;
     expect(body()).toContain(`${h.chains_at_min_budget} chains of ${h.min_budget}`);
     expect(body()).toContain(`what ${h.chains_at_min_budget} voters at ${pct(h.accuracy_at_min)} each are worth`);
+  });
+});
+
+// The lede names the concept, not the previous page (reviewer plan, CP1),
+// rewritten by the author on 2026-09-27.
+describe("Page 6: opening line", () => {
+  it("opens on the chain's length as a dial, with no page number", () => {
+    render(<Page6 />);
+    expect(body()).toContain(
+      "Every chain of thought has a length, and the longer it runs, the more compute it uses. Turn that length into a dial, and you decide how much a model gets to think.",
+    );
+    expect(body()).not.toContain("Page 5 gave the model a chain");
   });
 });

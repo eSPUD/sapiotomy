@@ -17,8 +17,7 @@ const mm = (q: string) => ({
 });
 vi.stubGlobal("matchMedia", mm);
 
-import { Page5 } from "./Page5";
-import { SYSTEMS } from "@/lib/authored";
+import { COST_ESTIMATE, Page5 } from "./Page5";
 import { PAGE5, SUPPRESSION_TABLE, tidyMath } from "@/lib/page05";
 
 const BLURT = PAGE5.figure1.tabs[0];
@@ -38,48 +37,36 @@ function walk(steps: number) {
   for (let i = 0; i < steps; i++) fireEvent.click(nextBtn());
 }
 
-// The page defines its own term before it measures it, and the definition is
-// built out of what the deck already gave the reader (page 1's two speeds, page
-// 4's roads) rather than out of a citation.
+// Sections 1 and 2 merged on 2026-09-27 under the reviewer-response plan: the
+// definition is the author's scratch-paper draft, and the specimen sits under it.
 describe("Page 5, step 1: what a chain of thought is", () => {
   beforeEach(() => {
     reducedMotion = true;
   });
 
-  it("defines the term before any figure", () => {
+  it("defines the term with a worked example, in one merged step", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
-    expect(headings[0]).toContain("What a chain of thought is");
-    expect(body()).toContain("you did not recognise the answer, you built it");
-    expect(body()).toContain("a thread of steps running from the question to the goal");
+    expect(headings[0]).toBe("1. What a chain of thought is");
+    expect(headings[1]).toBe("2. Scaling beyond one problem");
+    expect(headings[2]).toBe("3. Size against reasoning");
+    expect(headings[3]).toBe("4. The cost of a chain of thought");
+    expect(headings).toHaveLength(4);
+    expect(body()).toContain("require thinking beyond blurting the answer");
+    expect(body().replace(/\u00a0/g, " ")).toContain(
+      "For 17 × 24, you might work out 17 × 20 = 340, then 17 × 4 = 68, then add them to get 408",
+    );
+    expect(body()).toContain("that series of steps, written out");
+    // Cut by the author 2026-09-27: a person's written steps are their thinking too.
+    expect(body()).not.toContain("the thinking itself");
   });
 
-  // The callback is page 1's round, read off SYSTEMS rather than retyped, so
-  // editing page 1's worked example cannot leave page 5 quoting numbers the
-  // reader never saw.
-  it("calls back to page 1 with page 1's own numbers", () => {
-    render(<Page5 />);
-    expect(body()).toContain(SYSTEMS.slow.prompt);
-    expect(body()).toContain("you built it: 340, then 68, then 408");
-  });
-
-  // The load-bearing half of the definition, and the only unmeasured claim in
-  // the step: the chain is the thinking, which is what makes it something the
-  // rest of the act can budget, sample, vote on and score.
-  it("says the chain is the thinking rather than a report of it", () => {
-    render(<Page5 />);
-    expect(body()).toContain("the thread is not a report of the thinking");
-    expect(body()).toContain("it is the thinking");
-    expect(body()).toContain("every step is text the model has to write before it can write");
-  });
-
-  // The page turns on the ask having stopped being necessary, which a reader
-  // cannot feel unless the ask is named first. The phrase is the one the cited
-  // paper published, because the marker sits on it; the run's own instruction
-  // suffix is a different string and its arm is not on the page.
+  // The phrase is the one the cited paper published, because the marker sits on
+  // it; the run's own instruction suffix is a different string and its arm is
+  // not on the page.
   it("names the classic ask in the words the cited paper published", () => {
     render(<Page5 />);
-    expect(body()).toContain("The classic way to get one is to ask");
+    expect(body()).toContain("A common way to ask a model for one is to end the prompt with “Let's think step by step.”");
     expect(body()).toContain("Let's think step by step.");
     expect(body()).not.toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
   });
@@ -91,11 +78,13 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     render(<Page5 />);
     expect(screen.queryByText(/cited for the technique/i)).not.toBeInTheDocument();
 
-    // Two markers on the definition step, numbered in order of appearance.
-    const step = screen.getByText(/The classic way to get one is to ask/).closest("p")!;
+    // Markers on the definition, numbered in order of appearance (the third is
+    // the model card, where the paragraph names the model).
+    const step = screen.getByText(/A common way to ask a model for one/).closest("p")!;
     expect(Array.from(step.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
       "reference 1",
       "reference 2",
+      "reference 3",
     ]);
 
     // Both entries live in the first right-hand References sidenote, beside
@@ -124,42 +113,45 @@ describe("Page 5, figure 1: the chain is already there", () => {
 
   /**
    * The terminology floor. Page 5 is the deck's first measured page, and every
-   * number from here to page 16 is counted in tokens, taken from a checkpoint,
-   * and decoded greedily. None of the three was defined anywhere in the deck
-   * until 2026-08-10: `greedy` reached a reader first inside a provenance chip
-   * and `checkpoint` first inside a chart's aria-label, neither of which can
-   * hold a gloss. The audience is first-year undergraduates with no ML
-   * background, so these three carry five later pages and must not be trimmed
-   * away as the page tightens.
+   * number from here to page 16 is counted in tokens and decoded greedily, so
+   * both are defined here. The audience is first-year undergraduates with no ML
+   * background. `checkpoint` used to be glossed here too; the author cut it on
+   * 2026-09-27 as a term that would not make sense to this reader however it was
+   * defined, so the page says "model" instead.
    */
-  it("defines token, greedy and checkpoint, since every later number is denominated in them", () => {
+  it("defines token and greedy, since every later number is denominated in them", () => {
     render(<Page5 />);
     const t = body();
     expect(t).toMatch(/A token is a word-piece, the unit a model writes one at a time/i);
     expect(t).toMatch(/takes its single most likely next token/i);
-    expect(t).toMatch(/one saved set of a model's trained numbers/i);
+    expect(t).not.toMatch(/one saved set of a model's trained numbers/i);
   });
 
-  it("glosses greedy in prose, not only in the provenance chip that cannot hold one", () => {
+  // The glosses moved out of the reading column into a "Terms" note beside the
+  // step on 2026-09-27 (reviewer plan). They must still reach the reader as
+  // sentences, since the chip cannot hold one.
+  it("glosses token and greedy in a Terms note beside the step", () => {
     render(<Page5 />);
-    // The chip is provenance and stays; what matters is that the gloss reaches
-    // the reader somewhere a sentence can actually explain it.
     expect(body()).toContain("bf16");
     const gloss = screen.getByText(/single most likely next token/i);
     expect(gloss.closest("p")).not.toBeNull();
+    const terms = screen.getByText("Terms").closest("aside")!;
+    expect(terms).toContainElement(gloss);
+    expect(terms).toHaveTextContent(/A token is a word-piece/);
     // And it says what greedy buys the reader: the trace below is not a lucky draw.
     expect(gloss.textContent).toMatch(/the same prompt always produces the same chain/i);
   });
 
-  // The step's premise, and the reason its heading is "what it looks like"
-  // rather than a claim: the technique is not being demonstrated here, it is
-  // already in the weights and the figure is a look at what that produces.
-  it("says the model does this natively before showing the trace", () => {
+  // The step's premise: the classic way is to ask, and this model does not need
+  // asking. The figure is a look at what that produces.
+  it("says the model writes a chain unasked before showing the trace", () => {
     render(<Page5 />);
-    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
-    expect(headings[1]).toContain("What it looks like");
-    expect(body()).toContain("does this natively");
-    expect(body()).toContain(`writes ${BARE.tokensGenerated} tokens of chain before it answers`);
+    expect(body().replace(/\u00a0/g, " ")).toContain(
+      "Today's models no longer need that phrase, because System 2 is their default",
+    );
+    expect(body().replace(/\u00a0/g, " ")).toContain(
+      "into System 1, answering immediately, and compare the two",
+    );
   });
 
   // The trace and the prompt are listings of what a machine read and wrote, so
@@ -202,12 +194,12 @@ describe("Page 5, figure 1: the chain is already there", () => {
     render(<Page5 />);
     expect(screen.getByText(/see the full prompt/i)).toBeInTheDocument();
     expect(body()).toContain(PAGE5.figure1.promptStem.trim().slice(0, 40));
-    expect(body()).toContain("The prompt ends there. Nothing in it asks for working.");
+    expect(body()).toContain("Nothing is added after the question.");
     expect(body()).not.toContain(BLURT.promptAfter.trim());
 
     fireEvent.click(blurtTab());
     expect(body()).toContain(BLURT.promptAfter.trim());
-    expect(body()).toContain("Highlighted: the whole of the manipulation.");
+    expect(body()).toContain("Highlighted: the only text added to the question.");
   });
 });
 
@@ -216,18 +208,19 @@ describe("Page 5, figure 2: the cost of working with no reasoning", () => {
     reducedMotion = true;
   });
 
-  // "43" is not a claim. "43 of the same 100" is, so the intro carries the denominator
-  // and the free-run score. It does NOT carry the gagged score: that is what the switch
-  // is for, and an intro that gives both endpoints leaves the figure nothing to deliver.
-  it("sets up the contrast with the denominator, and withholds the gagged score", () => {
+  // "43" is not a claim. "43 of the same 100" is, so the intro carries the denominator.
+  // Since 2026-09-27 it also carries the System 1 score (reviewer plan, decision D6):
+  // both sides of the comparison sit side by side, and the switch shows which problems go.
+  it("gives both sides of the comparison, with the denominator", () => {
     render(<Page5 />);
-    expect(body()).toContain(
-      `solves ${PAGE5.figure2.bare.nCorrect} of the ${PAGE5.figure2.bare.n}`,
+    const intro = (screen.getByText(/Was that one problem a fluke/).textContent ?? "").replace(
+      /\u00a0/g,
+      " ",
     );
-    expect(body()).toContain("the same model, reasoning against non-reasoning");
-    expect(body()).toContain(`Each square below is one of those ${PAGE5.figure2.bare.n} problems`);
-    const intro = screen.getByText(/One trace proves nothing/).textContent ?? "";
-    expect(intro).not.toContain(`solves ${PAGE5.figure2.blurt.nCorrect}`);
+    expect(intro).toContain(`Here is the same model on ${PAGE5.figure2.bare.n} hard problems from the MATH-500 benchmark`);
+    expect(intro).toContain(`In System 2 (reasoning) it solved ${PAGE5.figure2.bare.nCorrect}.`);
+    expect(intro).toContain(`In System 1 (non-reasoning) it solved ${PAGE5.figure2.blurt.nCorrect}.`);
+    expect(intro).toContain("Each square below is one problem.");
   });
 
   it("starts with the model reasoning and flips to the floor", () => {
@@ -274,9 +267,11 @@ describe("Page 5, figure 2: the cost of working with no reasoning", () => {
     expect(body()).toContain("Give only the final answer.");
   });
 
-  it("says the cells are arrangement and the counts are measurement", () => {
+  // Cut by the author 2026-09-27: the figure needs no reading instructions.
+  it("carries no how-to-read note beside the figure", () => {
     render(<Page5 />);
-    expect(body()).toContain("which square a problem sits in is arrangement, not data");
+    expect(screen.queryByText("How to read it")).toBeNull();
+    expect(body()).not.toContain("count the squares that change colour");
   });
 });
 
@@ -285,35 +280,39 @@ describe("Page 5, figure 3: the floor is flat", () => {
     reducedMotion = true;
   });
 
-  // The bars get longer going down for a reason that is not this figure's
-  // subject, so the intro says so and tells the reader what to discount.
-  it("says why a third figure exists and which end of the bars to read", () => {
+  // The author's intro, 2026-09-27: why a third figure exists, in one sentence,
+  // with the two sizes named as the bars label them. No reading instructions.
+  it("says why a third figure exists, in one sentence", () => {
     render(<Page5 />);
-    expect(body()).toContain("Maybe the 3B is just an odd checkpoint");
-    expect(body()).toContain("what it still gets right with no reasoning");
-    expect(body()).toContain("Bigger models are better at maths, so the bars get longer");
-    expect(body()).toContain("Watch where the left piece ends instead");
+    expect(body()).toContain(
+      `To show that these results are not specific to one model, we ran the same ${PAGE5.figure2.bare.n}-problem experiment on a smaller (1.5B) and a larger (7B) model from the same family, and compared the results.`,
+    );
+    expect(body()).not.toContain("Watch where the left piece ends instead");
   });
 
   it("compares named checkpoints and never puts size on an axis", () => {
     render(<Page5 />);
-    expect(body()).toContain("A non-reasoning 7B solves 11%");
-    expect(body()).toContain("A reasoning 1.5B solves 22%");
-    expect(body()).toContain("Three checkpoints are not a scaling law");
+    const t = body().replace(/\u00a0/g, " ");
+    expect(t).toContain("Forced into System 1, the 7B solves 11%");
+    expect(t).toContain("Left in System 2, the 1.5B solves 22%");
     // The emergence claim and the redrawn PaLM chart left the page with the
     // premise. Our trend is smooth and monotone; a sign flip is not in it.
     expect(body()).not.toMatch(/emergen/i);
     expect(body()).not.toMatch(/PaLM/i);
   });
 
-  // The cross-model line is the weakest result on the page (p = 0.043, on 25
-  // discordant problems) and it used to be its boldest sentence. It now hedges
-  // in proportion, next to the suppression result it is weaker than.
-  it("hedges the cross-model claim against the headline it is weaker than", () => {
+  // The author rewrote the two paragraphs under figure 3 into one on 2026-09-27
+  // and dropped the old hedge. What the sentence claims must still hold in the
+  // data: the 1.5B is under a quarter of the 7B, and it scores at least double.
+  it("states the cross-model result, and its words match the data", () => {
     render(<Page5 />);
-    expect(body()).toContain("on the thinnest evidence the page has");
-    expect(body()).toContain("p = 0.043");
-    expect(body()).toContain("Take this one as a hint; the flat floor is the finding.");
+    expect(body()).toContain(
+      "A model less than a quarter the size does twice as well, just by writing out its steps.",
+    );
+    const { cross } = PAGE5.figure3;
+    expect(cross.param_ratio).toBeGreaterThan(4);
+    expect(cross.ungagged_small_accuracy).toBeGreaterThanOrEqual(2 * cross.gagged_large_accuracy);
+    expect(body()).not.toContain("the flat floor is the finding");
   });
 });
 
@@ -324,11 +323,37 @@ describe("Page 5, figure 4: what each checkpoint wrote against what it solved", 
     reducedMotion = true;
   });
 
-  it("names the checkpoint every figure above it was measured on", () => {
+  // Reframed around tokens on 2026-09-27. The words are fixed; the data must
+  // keep earning them: every model's System 2 median is roughly a hundred times
+  // its System 1 median, and "around 570" / "5 or 6" are read off the run.
+  it("opens on the token cost, in words the run still supports", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
-    expect(headings[4]).toContain("What each checkpoint wrote, and what it solved");
-    expect(body()).toContain("Figures 1 and 2 are one checkpoint, the 3B");
+    expect(headings[3]).toBe("4. The cost of a chain of thought");
+    expect(body().replace(/\u00a0/g, " ")).toContain(
+      "A chain of thought is not free. In System 2, every model below writes about 100× as many tokens as in System 1, a median of around 570 per problem against 5 or 6.",
+    );
+    for (const m of PAGE5.figure3.models) {
+      const ratio = m.bareMedianTokens / m.blurtMedianTokens;
+      expect(ratio).toBeGreaterThan(80);
+      expect(ratio).toBeLessThan(125);
+    }
+  });
+
+  // The one estimated (not measured) claim on the page. "About a
+  // hundred-thousandth" must stay within a factor of two of the maths, and the
+  // margin note must say it is an estimate and cite where the inputs come from.
+  it("compares a million chains with training, as a labelled estimate", () => {
+    render(<Page5 />);
+    expect(body()).toContain(
+      "Even across a million problems, the 3B's chains of thought add up to about a hundred-thousandth of what it cost to train the model.",
+    );
+    expect(COST_ESTIMATE.millionChainsShare).toBeGreaterThan(0.5e-5);
+    expect(COST_ESTIMATE.millionChainsShare).toBeLessThan(2e-5);
+    const note = screen.getByText("An estimate").closest("aside")!;
+    expect(within(note).getByRole("link", { name: /Kaplan et al. 2020/ })).toBeInTheDocument();
+    expect(within(note).getByRole("link", { name: /Qwen2.5 Technical Report/ })).toBeInTheDocument();
+    expect(note.textContent).toContain("18 trillion tokens");
   });
 
   // Six dots, and the axes they sit on, in the chart's own accessible title:
@@ -343,15 +368,6 @@ describe("Page 5, figure 4: what each checkpoint wrote against what it solved", 
     }
     expect(title).toContain("Non-reasoning");
     expect(title).toContain("Reasoning");
-  });
-
-  // The reading the figure supports: the horizontal axis is set by the prompt,
-  // the vertical one by the model. Read off the data, so it cannot drift.
-  it("reads the two axes off the run rather than asserting a rate", () => {
-    render(<Page5 />);
-    const rows = PAGE5.figure3.models;
-    expect(body()).toContain(`a median of ${rows.map((m) => m.bareMedianTokens).join(", ")} tokens`);
-    expect(body()).toContain("The tokens move with the prompt; the accuracy moves with the model");
   });
 
   // The claim the page is not allowed to make, and the words that stop a reader
@@ -396,8 +412,8 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(body()).not.toContain(PAGE5.manifest.run_id);
   });
 
-  // The instruments are cited where the close names all three checkpoints: the
-  // model card and the dataset resolve in a References sidenote, on Hugging Face.
+  // The instruments are cited where the page first names them (moved up from
+  // section 4 on 2026-09-27): the model card in step 1, the dataset in step 2.
   it("cites the model card and the dataset, linked to Hugging Face", () => {
     render(<Page5 />);
     const qwen = screen.getByRole("link", { name: /Qwen2\.5-3B-Instruct.*model card/i });
@@ -408,10 +424,16 @@ describe("Page 5: provenance and what the page may claim", () => {
       "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
     );
 
-    // Both markers sit in the close's opening paragraph, numbered after step 1's.
-    const close = screen.getByText(/Figures 1 and 2 are one checkpoint/).closest("p")!;
-    expect(Array.from(close.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
+    // Numbered in order of first appearance: the model card closes step 1's
+    // markers, the dataset opens step 2's.
+    const step1 = screen.getByText(/A common way to ask a model for one/).closest("p")!;
+    expect(Array.from(step1.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
+      "reference 1",
+      "reference 2",
       "reference 3",
+    ]);
+    const step2 = screen.getByText(/Was that one problem a fluke/).closest("p")!;
+    expect(Array.from(step2.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
       "reference 4",
     ]);
   });
@@ -446,31 +468,29 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(body()).not.toContain("replay mode");
   });
 
-  // The three-paragraph footer these came from was doing the notebook's job.
-  // What survives sits in the margin beside the figure it qualifies, and only
-  // what a reader cannot work out from that figure: method went back to the
-  // download, including the grading provenance, which is true and not needed
-  // while looking at 100 squares. Trimmed again on 2026-08-10 to the one line
-  // a reader of this figure cannot supply: the truncation rate and the suffix
-  // caveat are the notebook's, not the margin's.
-  it("carries the limits in the margin rather than in a footer", () => {
+  // The three-paragraph footer these came from was doing the notebook's job, and
+  // the one line that survived it (a "Limits" note beside figure 3) was cut by
+  // the author on 2026-09-27. None of the old footer's caveats may come back.
+  it("carries no limits note and none of the old footer's caveats", () => {
     render(<Page5 />);
-    const limits = screen.getByText(/Three checkpoints are not a scaling law/).closest("aside")!;
-    // Kicker plus one line, and nothing else.
-    expect(limits.textContent).toBe(
-      "LimitsThree checkpoints are not a scaling law, and nothing here is plotted against size.",
-    );
-    expect(limits.textContent).not.toMatch(/\bbare\b|forced_blurt/);
+    expect(screen.queryByText("Limits")).toBeNull();
+    expect(body()).not.toContain("Three checkpoints are not a scaling law");
     expect(body()).not.toContain("hit the token cap");
     expect(body()).not.toContain("is one phrasing and another would move the floor");
     expect(body()).not.toContain("never whether the working was sound");
     expect(body()).not.toContain("reasoning-from-scratch");
   });
 
-  it("hands page 6 the working rather than a size claim", () => {
+  // The close hands on a question, not a page number (reviewer plan, CP2).
+  it("closes on the cost, and hands on a question rather than a page number", () => {
     render(<Page5 />);
-    expect(body()).toContain("You have probably done this before");
-    expect(body()).toContain("cut it off mid-sentence");
+    expect(body()).toContain(
+      "A chain of thought makes a model better at hard problems, and it charges for that in tokens.",
+    );
+    expect(body()).toContain(
+      "How many tokens does it actually need, and what happens when you cut the chain off mid-sentence?",
+    );
+    expect(body()).not.toContain("Page 6 asks");
   });
 
   // Deck-wide copy rule: no em dashes in rendered text.

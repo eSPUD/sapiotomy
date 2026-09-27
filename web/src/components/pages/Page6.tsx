@@ -1163,9 +1163,10 @@ export function Page6() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        Page 5 gave the model a chain. A chain has a{" "}
-        <strong className="text-ink">length</strong>, and that length is compute you pay for, one
-        token at a time. So put the length on a dial and turn it.
+        {/* Opening line, author, 2026-09-27: no page number (reviewer plan, CP1). */}
+        Every chain of thought has a <strong className="text-ink">length</strong>, and the longer it
+        runs, the more compute it uses. Turn that length into a dial, and you decide how much a model
+        gets to think.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -1174,19 +1175,19 @@ export function Page6() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
             1. Cut it off, make it answer
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              one problem · one model · the cap on a dial
-            </span>
           </h2>
           <p className="text-ink-muted">
-            The dial below is <span className="font-code">max_new_tokens</span>, a hard limit on how
-            much the model may write. Turn it down and the chain stops mid-thought, so at the cap we
-            close its working off, start the answer line for it, and allow it{" "}
-            {M.forcing.answer_allowance} more tokens to finish.
-            <Cite n={REF.s1} /> That is why a starved model still
-            produces an answer to grade rather than nothing at all. The tinted band in the trace
-            below is that line, printed as we wrote it. Every figure on this page carries its own
-            copy of this dial, so nothing you do here moves anything below.
+            {/* Rewritten by the author 2026-09-27: no code variable names in reader
+                prose (the dial used to be introduced as `max_new_tokens`). The forcing
+                detail (the answer stem and its token allowance) is shown in the trace's
+                tinted band and lives in the notebook. "8" and the budget range are read
+                off the run; "five" is checked against it in Page6.test.tsx. */}
+            Let&apos;s experiment with that dial, which limits how many tokens the model may use.
+            Turning it up allows the model more tokens, but that doesn&apos;t mean it uses them
+            all. Turning it down can cut the chain off mid-thought, so when that happens we stop it
+            and make it answer on the spot.
+            <Cite n={REF.s1} /> Try it on {F3.clickableRowIds.length} problems, at five settings
+            from {B[0].toLocaleString("en-GB")} to {TOP.toLocaleString("en-GB")} tokens.
           </p>
           <section
             aria-label="The truncation view"
