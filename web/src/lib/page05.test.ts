@@ -6,6 +6,7 @@ import {
   pLabel,
   pairedTable,
   pct,
+  reasoningSteps,
   solvedIn,
   tidyMath,
   type Contrast,
@@ -81,6 +82,20 @@ describe("page 5 figure 1: the specimen", () => {
     const bare = tabs[1];
     expect(bare.steps.length).toBeGreaterThan(1);
     expect(bare.tokensGenerated).toBeGreaterThan(tabs[0].tokensGenerated * 10);
+  });
+  // Page 5 reveals intermediate steps, not lines: an instruction ending on a
+  // colon travels with the working it announces.
+  it("groups the bare chain into intermediate steps that still tile the tokens", () => {
+    const bare = tabs[1];
+    const grouped = reasoningSteps(bare.steps);
+    expect(grouped.map((g) => g.parts.length)).toEqual([1, 2, 2, 2, 3, 2, 1]);
+    expect(grouped[2].parts[0]).toMatch(/^First, eliminate the fraction/);
+    expect(grouped.flatMap((g) => g.parts)).toEqual(bare.steps.map((s) => s.text));
+    grouped.forEach((g, i) => {
+      expect(g.tokenStart).toBe(i === 0 ? 0 : grouped[i - 1].tokenEnd);
+    });
+    expect(grouped[grouped.length - 1].tokenEnd).toBe(bare.tokens.length);
+    expect(reasoningSteps(tabs[0].steps)).toHaveLength(1);
   });
 });
 

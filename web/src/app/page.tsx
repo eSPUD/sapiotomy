@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CiteBlock } from "@/components/CiteBlock";
 import { Reveal } from "@/components/Reveal";
-import { ACTS, PAGES, pageHref, type Act } from "@/lib/pages";
+import { ACTS, GLOSSARY, STORY_PAGES, pageHref, type Act } from "@/lib/pages";
 
 const CITATION = `@misc{bangalorelakshman2026its,
   title  = {The Story of Inference-Time Scaling and the Training-Time loop behind it},
@@ -61,7 +61,7 @@ export default function Home() {
                 Act {act} · {ACTS[act].title}
               </h2>
               <ol className="flex flex-col gap-2.5">
-                {PAGES.filter((p) => p.act === act).map((p) => (
+                {STORY_PAGES.filter((p) => p.act === act).map((p) => (
                   <li key={p.n}>
                     <Link
                       href={pageHref(p.n)}
@@ -77,6 +77,24 @@ export default function Home() {
               </ol>
             </div>
           ))}
+        </div>
+
+        {/* The glossary is page 17 but belongs to no act, so it sits apart from
+            the three columns rather than at the foot of Act 3. */}
+        <div className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-ink-muted">
+            Appendix
+          </h2>
+          <ol className="flex flex-col gap-2.5">
+            <li>
+              <Link href={pageHref(GLOSSARY.n)} className="group flex items-baseline gap-2 text-sm">
+                <span className="tabular-nums text-ink-muted">
+                  {String(GLOSSARY.n).padStart(2, "0")}
+                </span>
+                <span className="text-ink group-hover:underline">{GLOSSARY.title}</span>
+              </Link>
+            </li>
+          </ol>
         </div>
 
         <div className="h-px w-full bg-ink" />

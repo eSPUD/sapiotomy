@@ -179,6 +179,37 @@ for (const flag of REQUIRED_CLAIMS) {
   }
 }
 
+/** One reasoning move: an instruction and the working it announces, as one reveal. */
+export interface ReasoningStep {
+  /** The trace segments it joins, in order. */
+  parts: string[];
+  tokenStart: number;
+  tokenEnd: number;
+}
+
+/**
+ * Groups the notebook's line-level segments into intermediate steps for
+ * display. A segment that ends on a colon ("First, eliminate the fraction by
+ * multiplying both sides by 2:") announces the working after it, so it joins
+ * the next segment, and so on down a chain of colons. Token ranges stay
+ * contiguous, so every generated token is still revealed exactly once.
+ */
+export function reasoningSteps(steps: SpecimenTab["steps"]): ReasoningStep[] {
+  const out: ReasoningStep[] = [];
+  let open = false;
+  for (const s of steps) {
+    const last = out[out.length - 1];
+    if (open && last) {
+      last.parts.push(s.text);
+      last.tokenEnd = s.tokenEnd;
+    } else {
+      out.push({ parts: [s.text], tokenStart: s.tokenStart, tokenEnd: s.tokenEnd });
+    }
+    open = s.text.trimEnd().endsWith(":");
+  }
+  return out;
+}
+
 function tab(raw: Record<string, unknown>): SpecimenTab {
   const steps = (raw.steps as { text: string; token_start: number; token_end: number }[]).map(
     (s) => ({ text: s.text, tokenStart: s.token_start, tokenEnd: s.token_end }),

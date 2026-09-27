@@ -6,7 +6,7 @@
  * per-page manipulation rate, the "did they touch this sim" flag, and the
  * completion signal — plus the 50%-manipulation change trigger from the plan.
  */
-import { PAGES } from "./pages";
+import { STORY_PAGES } from "./pages";
 
 export interface EngagementReport {
   pagesManipulated: number;
@@ -27,20 +27,21 @@ export function engagementReport(
   perPageManipulators?: Record<number, number>,
   cohortSize = 1,
 ): EngagementReport {
-  const totalPages = PAGES.length;
-  const manipulated = PAGES.filter((p) => (interactions[p.n] ?? 0) > 0);
+  // The glossary appendix has nothing to manipulate, so only story pages count.
+  const totalPages = STORY_PAGES.length;
+  const manipulated = STORY_PAGES.filter((p) => (interactions[p.n] ?? 0) > 0);
 
   // The plan's change trigger: any simulation manipulated by < 50% of the cohort
   // must be redesigned so its control is the first thing readers touch.
   const underThreshold = perPageManipulators
-    ? PAGES.filter((p) => (perPageManipulators[p.n] ?? 0) / cohortSize < 0.5).map((p) => p.n)
+    ? STORY_PAGES.filter((p) => (perPageManipulators[p.n] ?? 0) / cohortSize < 0.5).map((p) => p.n)
     : [];
 
   return {
     pagesManipulated: manipulated.length,
     totalPages,
     manipulationRate: manipulated.length / totalPages,
-    reachedEnd: (interactions[PAGES[PAGES.length - 1].n] ?? 0) > 0,
+    reachedEnd: (interactions[STORY_PAGES[STORY_PAGES.length - 1].n] ?? 0) > 0,
     underThresholdPages: underThreshold,
   };
 }

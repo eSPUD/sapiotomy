@@ -1,62 +1,43 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
-
-// Reduced motion is ON by default so the chain steps deterministically via the
-// Next button (Play is hidden under reduced motion). The animated block at the
-// bottom flips it OFF to cover Play's step-by-step streaming.
-let reducedMotion = true;
-const mm = (q: string) => ({
-  matches: reducedMotion && q.includes("prefers-reduced-motion"),
-  media: q,
-  addEventListener: () => {},
-  removeEventListener: () => {},
-  addListener: () => {},
-  removeListener: () => {},
-  onchange: null,
-  dispatchEvent: () => false,
-});
-vi.stubGlobal("matchMedia", mm);
+import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { COST_ESTIMATE, Page5 } from "./Page5";
-import { PAGE5, SUPPRESSION_TABLE, tidyMath } from "@/lib/page05";
+import { PAGE5, SUPPRESSION_TABLE, reasoningSteps, tidyMath } from "@/lib/page05";
 
 const BLURT = PAGE5.figure1.tabs[0];
 const BARE = PAGE5.figure1.tabs[1];
+/** What the page reveals: intermediate steps, not the notebook's lines. */
+const BARE_STEPS = reasoningSteps(BARE.steps);
 
 const body = () => document.body.textContent ?? "";
-const nextBtn = () => screen.getByRole("button", { name: /next ▸/i });
-// Both conditions are named "non-reasoning" wherever they appear, so figure 1's
-// prompt tabs and figure 2's switch share a label; scope each to its own group.
-const promptTabs = () => within(screen.getByRole("group", { name: "Prompt" }));
-const conditionSwitch = () => within(screen.getByRole("group", { name: "Reasoning condition" }));
-const bareTab = () => promptTabs().getByRole("button", { name: /the question alone/i });
-const blurtTab = () => promptTabs().getByRole("button", { name: /non-reasoning/i });
+const playBtn = () => screen.getByRole("button", { name: /▶ play/i });
+const resetBtn = () => screen.getByRole("button", { name: /reset/i });
+// Figure 1 is a split: one chat per condition, side by side, one shared stepper.
+const system1 = () => within(screen.getByRole("region", { name: "System 1" }));
+const system2 = () => within(screen.getByRole("region", { name: "System 2" }));
 
-/** Walk the whole trace via Next presses (reduced motion → no Play). */
-function walk(steps: number) {
-  for (let i = 0; i < steps; i++) fireEvent.click(nextBtn());
-}
+/** Play shows both whole replies at once. */
+const playAll = () => fireEvent.click(playBtn());
 
 // Sections 1 and 2 merged on 2026-09-27 under the reviewer-response plan: the
 // definition is the author's scratch-paper draft, and the specimen sits under it.
 describe("Page 5, step 1: what a chain of thought is", () => {
-  beforeEach(() => {
-    reducedMotion = true;
-  });
-
-  it("defines the term with a worked example, in one merged step", () => {
+  it("defines the term as each step feeding the next, in one merged step", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
-    expect(headings[0]).toBe("1. What a chain of thought is");
+    expect(headings[0]).toBe("1. What is the Chain of Thought (CoT) for LLM reasoning?");
     expect(headings[1]).toBe("2. Scaling beyond one problem");
     expect(headings[2]).toBe("3. Size against reasoning");
     expect(headings[3]).toBe("4. The cost of a chain of thought");
     expect(headings).toHaveLength(4);
-    expect(body()).toContain("require thinking beyond blurting the answer");
-    expect(body().replace(/\u00a0/g, " ")).toContain(
-      "For 17 × 24, you might work out 17 × 20 = 340, then 17 × 4 = 68, then add them to get 408",
+    expect(body()).toContain(
+      "We've previously illustrated what step-by-step reasoning looks like for a couple of real-world problems.",
     );
-    expect(body()).toContain("that series of steps, written out");
+    expect(body()).toContain(
+      "Chain-of-thought prompting simulates human reasoning by using each intermediate step as part of the LLM prompt to generate the next intermediate step.",
+    );
+    // The 17 × 24 example went with the author's 2026-09-27 rewrite.
+    expect(body()).not.toContain("17 × 24");
     // Cut by the author 2026-09-27: a person's written steps are their thinking too.
     expect(body()).not.toContain("the thinking itself");
   });
@@ -78,12 +59,15 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     render(<Page5 />);
     expect(screen.queryByText(/cited for the technique/i)).not.toBeInTheDocument();
 
-    // Markers on the definition, numbered in order of appearance (the third is
-    // the model card, where the paragraph names the model).
+    // Markers on the definition, numbered in order of appearance; the third is
+    // the model card, in the next paragraph where it names the model.
     const step = screen.getByText(/A common way to ask a model for one/).closest("p")!;
     expect(Array.from(step.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
       "reference 1",
       "reference 2",
+    ]);
+    const model = screen.getByText(/Today's models no longer need that phrase/).closest("p")!;
+    expect(Array.from(model.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
       "reference 3",
     ]);
 
@@ -96,50 +80,40 @@ describe("Page 5, step 1: what a chain of thought is", () => {
 });
 
 describe("Page 5, figure 1: the chain is already there", () => {
-  beforeEach(() => {
-    reducedMotion = true;
-  });
-
-  it("lands on the bare prompt with nothing revealed yet", () => {
+  it("puts both conditions side by side, with nothing revealed yet and no mode buttons", () => {
     render(<Page5 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Chain of Thought: Reasoning Out Loud",
     );
-    expect(bareTab()).toHaveAttribute("aria-pressed", "true");
-    expect(blurtTab()).toHaveAttribute("aria-pressed", "false");
-    expect(body()).toContain(`0 of ${BARE.tokensGenerated} tokens written`);
+    expect(screen.queryByRole("group", { name: "Prompt" })).toBeNull();
+    // Play and Reset are the only controls: no Back, no Next.
+    expect(screen.queryByRole("button", { name: /back/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /next/i })).toBeNull();
+    // No progress bar, and no step counter: the replies are not streamed.
+    expect(body()).not.toMatch(/of \d+ tokens written/);
+    expect(body()).not.toMatch(/step \d+ of \d+/);
+    expect(system2().getAllByText("press Play to see its reply")).toHaveLength(1);
     expect(screen.queryByText(tidyMath(BARE.steps[0].text))).toBeNull();
   });
 
-  /**
-   * The terminology floor. Page 5 is the deck's first measured page, and every
-   * number from here to page 16 is counted in tokens and decoded greedily, so
-   * both are defined here. The audience is first-year undergraduates with no ML
-   * background. `checkpoint` used to be glossed here too; the author cut it on
-   * 2026-09-27 as a term that would not make sense to this reader however it was
-   * defined, so the page says "model" instead.
-   */
-  it("defines token and greedy, since every later number is denominated in them", () => {
+  // A chat, like page 2's: each turn is marked by its speaker's icon.
+  it("sets each side as a chat, the user's question and the model's reply marked by icons", () => {
     render(<Page5 />);
-    const t = body();
-    expect(t).toMatch(/A token is a word-piece, the unit a model writes one at a time/i);
-    expect(t).toMatch(/takes its single most likely next token/i);
-    expect(t).not.toMatch(/one saved set of a model's trained numbers/i);
+    for (const side of [system1(), system2()]) {
+      expect(side.getByRole("img", { name: "User" })).toBeInTheDocument();
+      expect(side.getByRole("img", { name: "Model" })).toBeInTheDocument();
+      expect(side.getByTestId("user-question")).toHaveTextContent(tidyMath(PAGE5.figure1.question));
+    }
   });
 
-  // The glosses moved out of the reading column into a "Terms" note beside the
-  // step on 2026-09-27 (reviewer plan). They must still reach the reader as
-  // sentences, since the chip cannot hold one.
-  it("glosses token and greedy in a Terms note beside the step", () => {
+  // The Terms note (token, greedy decoding) moved to the glossary appendix on
+  // 2026-09-27; Glossary.test.tsx now holds the definitions. `checkpoint` was cut
+  // earlier as a term this reader could not use, and stays out.
+  it("carries no Terms note: the definitions live in the glossary", () => {
     render(<Page5 />);
-    expect(body()).toContain("bf16");
-    const gloss = screen.getByText(/single most likely next token/i);
-    expect(gloss.closest("p")).not.toBeNull();
-    const terms = screen.getByText("Terms").closest("aside")!;
-    expect(terms).toContainElement(gloss);
-    expect(terms).toHaveTextContent(/A token is a word-piece/);
-    // And it says what greedy buys the reader: the trace below is not a lucky draw.
-    expect(gloss.textContent).toMatch(/the same prompt always produces the same chain/i);
+    expect(screen.queryByText("Terms")).toBeNull();
+    expect(body()).not.toMatch(/A token is a word-piece/i);
+    expect(body()).not.toMatch(/one saved set of a model's trained numbers/i);
   });
 
   // The step's premise: the classic way is to ask, and this model does not need
@@ -147,124 +121,132 @@ describe("Page 5, figure 1: the chain is already there", () => {
   it("says the model writes a chain unasked before showing the trace", () => {
     render(<Page5 />);
     expect(body().replace(/\u00a0/g, " ")).toContain(
-      "Today's models no longer need that phrase, because System 2 is their default",
+      "Today's models no longer need that phrase, because System 2 thinking is their default mode.",
     );
     expect(body().replace(/\u00a0/g, " ")).toContain(
-      "into System 1, answering immediately, and compare the two",
+      "into System 1, answering immediately, and compare against System 2 results.",
     );
   });
 
   // The trace and the prompt are listings of what a machine read and wrote, so
   // they take the deck's one licensed non-serif face. The broadsheet serif is
   // unreadable at 573 tokens of half-LaTeX.
-  it("sets the prompt and the revealed trace in mono", () => {
+  it("sets the question and the revealed trace in mono", () => {
     const { container } = render(<Page5 />);
     expect(container.querySelector("p.font-code")?.textContent).toBe(tidyMath(PAGE5.figure1.question));
-    walk(1);
-    const revealed = container.querySelector("ol > li");
-    expect(revealed?.textContent).toContain(tidyMath(BARE.steps[0].text));
+    playAll();
+    const revealed = system2().getByText(tidyMath(BARE.steps[0].text)).closest("li");
     expect(revealed?.className).toContain("font-code");
-    expect(container.querySelector("pre")?.className).toContain("font-code");
   });
 
-  it("walks the model's own output to a correct answer it was never asked to work for", () => {
+  it("plays System 2's own output to a correct answer it was never asked to work for", () => {
     render(<Page5 />);
-    walk(BARE.steps.length);
-    expect(screen.getByText(tidyMath(BARE.steps[0].text))).toBeInTheDocument();
-    expect(screen.getByText(tidyMath(BARE.steps[BARE.steps.length - 1].text))).toBeInTheDocument();
-    expect(body()).toContain(`it answered ${BARE.extractedAnswer}`);
-    expect(body()).toContain(`${BARE.tokensGenerated} tokens · ${BARE.steps.length} steps`);
-    expect(body()).toContain(`${BARE.tokensGenerated} of ${BARE.tokensGenerated} tokens written`);
+    playAll();
+    expect(system2().getByText(tidyMath(BARE.steps[0].text))).toBeInTheDocument();
+    expect(
+      system2().getByText(tidyMath(BARE.steps[BARE.steps.length - 1].text)),
+    ).toBeInTheDocument();
+    // Each reveal is an intermediate step: the instruction and its working together.
+    const eliminate = system2().getByText(/^First, eliminate the fraction/).closest("li")!;
+    expect(eliminate).toHaveTextContent(tidyMath(BARE_STEPS[2].parts[1]).trim());
+    expect(system2().getAllByRole("listitem")).toHaveLength(BARE_STEPS.length);
+    const s2 = system2().getByTestId("model-reply").textContent ?? "";
+    expect(s2).toContain(`Final answer: ${BARE.extractedAnswer}.`);
+    expect(s2).toContain(`${BARE.tokensGenerated} tokens · ${BARE_STEPS.length} steps`);
   });
 
-  it("switching to the non-reasoning prompt resets the walk and lands wrong", () => {
+  it("System 1 lands wrong in a single step, and Reset clears both replies", () => {
     render(<Page5 />);
-    walk(BARE.steps.length);
-    fireEvent.click(blurtTab());
-    expect(screen.queryByText(tidyMath(BARE.steps[0].text))).toBeNull();
-    walk(BLURT.steps.length);
-    expect(body()).toContain(`it answered ${BLURT.extractedAnswer}`);
-    expect(body()).toContain(`and the answer is ${PAGE5.figure1.groundTruth}`);
-    expect(body()).toContain(`${BLURT.tokensGenerated} tokens · 1 step`);
+    playAll();
+    const s1 = system1().getByTestId("model-reply").textContent ?? "";
+    expect(s1).toContain(`Final answer: ${BLURT.extractedAnswer}.`);
+    // The ✗ marks it wrong; the correction is not spelled out (author, 2026-09-27).
+    expect(s1).not.toContain("the answer is");
+    expect(s1).toContain(`${BLURT.tokensGenerated} tokens · 1 step`);
+    fireEvent.click(resetBtn());
+    expect(screen.queryByText(/Final answer/)).toBeNull();
+    expect(resetBtn()).toBeDisabled();
+    expect(playBtn()).toBeEnabled();
   });
 
-  // The disclosure is the page's evidence that only the prompt moved: the stem
-  // is shared and the whole manipulation is the highlighted suffix.
-  it("shows the exact prompt of whichever condition is selected", () => {
+  // The author took the suffix off the page on 2026-09-27: both sides show the
+  // question alone.
+  it("shows the question alone on both sides, without System 1's appended instruction", () => {
     render(<Page5 />);
-    expect(screen.getByText(/see the full prompt/i)).toBeInTheDocument();
-    expect(body()).toContain(PAGE5.figure1.promptStem.trim().slice(0, 40));
-    expect(body()).toContain("Nothing is added after the question.");
     expect(body()).not.toContain(BLURT.promptAfter.trim());
-
-    fireEvent.click(blurtTab());
-    expect(body()).toContain(BLURT.promptAfter.trim());
-    expect(body()).toContain("Highlighted: the only text added to the question.");
   });
 });
 
 describe("Page 5, figure 2: the cost of working with no reasoning", () => {
-  beforeEach(() => {
-    reducedMotion = true;
-  });
-
-  // "43" is not a claim. "43 of the same 100" is, so the intro carries the denominator.
-  // Since 2026-09-27 it also carries the System 1 score (reviewer plan, decision D6):
-  // both sides of the comparison sit side by side, and the switch shows which problems go.
-  it("gives both sides of the comparison, with the denominator", () => {
+  // The author's paragraph (2026-09-27): the reasoning side with its denominator,
+  // every number read from the run.
+  it("gives the reasoning side, with the denominator, in the author's words", () => {
     render(<Page5 />);
-    const intro = (screen.getByText(/Was that one problem a fluke/).textContent ?? "").replace(
+    const F2 = PAGE5.figure2;
+    const intro = (screen.getByText(/One trace proves nothing/).textContent ?? "").replace(
       /\u00a0/g,
       " ",
     );
-    expect(intro).toContain(`Here is the same model on ${PAGE5.figure2.bare.n} hard problems from the MATH-500 benchmark`);
-    expect(intro).toContain(`In System 2 (reasoning) it solved ${PAGE5.figure2.bare.nCorrect}.`);
-    expect(intro).toContain(`In System 1 (non-reasoning) it solved ${PAGE5.figure2.blurt.nCorrect}.`);
-    expect(intro).toContain("Each square below is one problem.");
+    expect(intro).toContain(
+      `One trace proves nothing, so both prompts were run across ${F2.bare.n} problems from the same difficulty band.`,
+    );
+    expect(intro).toContain("Below is that comparison: the same model, reasoning against non-reasoning.");
+    expect(intro).toContain(
+      `Reasoning, it writes a median of ${F2.bare.medianTokens} tokens of working and solves ${F2.bare.nCorrect} of the ${F2.bare.n}.`,
+    );
+    // The grid it pointed at became a table, so the "Each square below" sentence went too.
+    expect(intro).not.toContain("Each square below");
+    // The suffix is no longer shown in section 1, so the paragraph does not point back to it.
+    expect(intro).not.toContain("the same suffix you just read");
   });
 
-  it("starts with the model reasoning and flips to the floor", () => {
+  // Figure 2 is two stacked bars since 2026-09-27 (author), replacing a 2x2 matrix
+  // and, before that, a grid grouped by outcome that read as problem order.
+  it("stacks each system's 100 problems: solved by both, solved only by it, not solved", () => {
     render(<Page5 />);
-    const fig2 = screen.getByLabelText("The cost of working with no reasoning");
-    expect(body()).toContain(`solved, of the same ${PAGE5.figure2.bare.n} problems`);
-    expect(within(fig2).getByText(String(PAGE5.figure2.bare.nCorrect))).toBeInTheDocument();
-    expect(body()).toContain(`median ${PAGE5.figure2.bare.medianTokens} tokens written`);
-
-    fireEvent.click(conditionSwitch().getByRole("button", { name: "non-reasoning" }));
-    expect(within(fig2).getByText(String(PAGE5.figure2.blurt.nCorrect))).toBeInTheDocument();
-    expect(body()).toContain(`median ${PAGE5.figure2.blurt.medianTokens} tokens written`);
-    expect(body()).toContain(
-      `${SUPPRESSION_TABLE.afterOnly} problems it had are gone. ${SUPPRESSION_TABLE.beforeOnly} it did not have arrive.`,
-    );
+    const T = SUPPRESSION_TABLE;
+    const F2 = PAGE5.figure2;
+    const seg = (bar: string, key: string) =>
+      screen.getByTestId(`bar-${bar}-${key}`).querySelector("title")!.textContent;
+    expect(seg("System 1", "both")).toBe(`System 1: ${T.both} solved by both`);
+    expect(seg("System 1", "only")).toBe(`System 1: ${T.beforeOnly} solved only by this system`);
+    expect(seg("System 1", "unsolved")).toBe(`System 1: ${T.n - F2.blurt.nCorrect} not solved`);
+    expect(seg("System 2", "both")).toBe(`System 2: ${T.both} solved by both`);
+    expect(seg("System 2", "only")).toBe(`System 2: ${T.afterOnly} solved only by this system`);
+    expect(seg("System 2", "unsolved")).toBe(`System 2: ${T.n - F2.bare.nCorrect} not solved`);
+    expect(body()).toContain(`${F2.blurt.nCorrect} solved`);
+    expect(body()).toContain(`${F2.bare.nCorrect} solved`);
+    // The orientation guard: each bar's solved segments add up to its solve count.
+    expect(T.both + T.beforeOnly).toBe(F2.blurt.nCorrect);
+    expect(T.both + T.afterOnly).toBe(F2.bare.nCorrect);
   });
 
-  // Paired, and printed as such: the discordant counts sit beside the contrast
-  // so a reader never reads a paired result as two independent bars.
-  // ...once the switch has been pressed. The figure's job is to show what leaves, so
-  // the cost and its test arrive with the reveal rather than above an untouched control.
-  it("prints the paired contrast with its discordant count and p-value", () => {
+  it("carries a legend above and a centred title below, and labels every segment", () => {
     render(<Page5 />);
-    expect(body()).not.toContain("Working with no reasoning costs");
-    fireEvent.click(conditionSwitch().getByRole("button", { name: "non-reasoning" }));
-    expect(body()).toContain(
-      `Working with no reasoning costs ${PAGE5.figure2.suppression.deltaPts} points`,
+    const fig = screen.getByLabelText("The cost of working with no reasoning");
+    for (const name of ["solved by both", "solved only by this system", "not solved"]) {
+      expect(within(fig).getByText(name)).toBeInTheDocument();
+    }
+    const caption = fig.querySelector("figcaption")!;
+    // The title names the model and the benchmark (author, 2026-09-27).
+    expect(caption).toHaveTextContent(
+      "System 1 vs System 2: Qwen2.5-3B-Instruct on 100 MATH-500 problems (levels 4 and 5)",
     );
-    expect(body()).toContain("exact McNemar");
-    expect(body()).toContain("p < 0.0001");
-    // The discordant count is the whole basis of the test, so it stays on the page.
-    // The name is now a citation and the sentence beside it says what was compared.
-    expect(body()).toContain(
-      `looks only at the ${SUPPRESSION_TABLE.afterOnly + SUPPRESSION_TABLE.beforeOnly} where they differ`,
-    );
-    expect(body()).toContain(
-      `reasoning wins ${SUPPRESSION_TABLE.afterOnly} of those and loses ${SUPPRESSION_TABLE.beforeOnly}`,
-    );
+    expect(caption.className).toContain("text-center");
+    expect(screen.queryByRole("table")).toBeNull();
+    // Every segment carries its count, the thin "3" and "4" included.
+    for (const bar of ["System 1", "System 2"]) {
+      for (const key of ["both", "only", "unsolved"]) {
+        expect(screen.getByTestId(`bar-${bar}-${key}`).querySelector("text")).not.toBeNull();
+      }
+    }
   });
 
-  it("shows the exact gag string, since one phrasing is all it is", () => {
+  it("has no grid and no switch any more", () => {
     render(<Page5 />);
-    fireEvent.click(conditionSwitch().getByRole("button", { name: "non-reasoning" }));
-    expect(body()).toContain("Give only the final answer.");
+    expect(screen.queryByRole("group", { name: "Reasoning condition" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "System 1" })).toBeNull();
+    expect(body()).not.toContain("watch what leaves");
   });
 
   // Cut by the author 2026-09-27: the figure needs no reading instructions.
@@ -276,10 +258,6 @@ describe("Page 5, figure 2: the cost of working with no reasoning", () => {
 });
 
 describe("Page 5, figure 3: the floor is flat", () => {
-  beforeEach(() => {
-    reducedMotion = true;
-  });
-
   // The author's intro, 2026-09-27: why a third figure exists, in one sentence,
   // with the two sizes named as the bars label them. No reading instructions.
   it("says why a third figure exists, in one sentence", () => {
@@ -319,10 +297,6 @@ describe("Page 5, figure 3: the floor is flat", () => {
 // The close was three stat cards quoting one unnamed checkpoint, one of them a
 // ×95.5 "trade". It is now a scatter: six cells, every one of them named.
 describe("Page 5, figure 4: what each checkpoint wrote against what it solved", () => {
-  beforeEach(() => {
-    reducedMotion = true;
-  });
-
   // Reframed around tokens on 2026-09-27. The words are fixed; the data must
   // keep earning them: every model's System 2 median is roughly a hundred times
   // its System 1 median, and "around 570" / "5 or 6" are read off the run.
@@ -382,10 +356,6 @@ describe("Page 5, figure 4: what each checkpoint wrote against what it solved", 
 });
 
 describe("Page 5: provenance and what the page may claim", () => {
-  beforeEach(() => {
-    reducedMotion = true;
-  });
-
   // The pipeline's whole claim: a reader who doubts a figure re-derives it.
   // The link sits at the top right of the page, on the act kicker's row.
   it("links the notebook, the harness and the traces as one download, at the top", () => {
@@ -426,13 +396,11 @@ describe("Page 5: provenance and what the page may claim", () => {
 
     // Numbered in order of first appearance: the model card closes step 1's
     // markers, the dataset opens step 2's.
-    const step1 = screen.getByText(/A common way to ask a model for one/).closest("p")!;
+    const step1 = screen.getByText(/Today's models no longer need that phrase/).closest("p")!;
     expect(Array.from(step1.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
-      "reference 1",
-      "reference 2",
       "reference 3",
     ]);
-    const step2 = screen.getByText(/Was that one problem a fluke/).closest("p")!;
+    const step2 = screen.getByText(/One trace proves nothing/).closest("p")!;
     expect(Array.from(step2.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
       "reference 4",
     ]);
@@ -500,32 +468,19 @@ describe("Page 5: provenance and what the page may claim", () => {
   });
 });
 
-// The animated path: reduced motion OFF, fake timers; Play streams the trace
-// one step at a time and lands exactly once.
-describe("Page 5 animated chain (no reduced motion)", () => {
-  beforeEach(() => {
-    reducedMotion = false;
-    vi.useFakeTimers();
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    reducedMotion = true;
-  });
-
-  it("Play streams the trace step by step to the landing", () => {
+// No streaming (author, 2026-09-27): one press of Play lands both whole replies
+// in the same render, with no timer involved.
+describe("Page 5 figure 1: no step-by-step animation", () => {
+  it("Play shows every step of both replies at once", () => {
     render(<Page5 />);
-    fireEvent.click(screen.getByRole("button", { name: /▶ play/i }));
-    expect(screen.queryByText(tidyMath(BARE.steps[0].text))).toBeNull();
-    act(() => {
-      vi.advanceTimersByTime(720);
-    });
-    expect(screen.getByText(tidyMath(BARE.steps[0].text))).toBeInTheDocument();
-    expect(body()).not.toContain(`it answered ${BARE.extractedAnswer}`);
-    for (let i = 1; i < BARE.steps.length; i++) {
-      act(() => {
-        vi.advanceTimersByTime(720);
-      });
-    }
-    expect(body()).toContain(`it answered ${BARE.extractedAnswer}`);
+    playAll();
+    expect(system2().getAllByRole("listitem")).toHaveLength(BARE_STEPS.length);
+    expect(system1().getByTestId("model-reply").textContent).toContain(
+      `Final answer: ${BLURT.extractedAnswer}.`,
+    );
+    expect(system2().getByTestId("model-reply").textContent).toContain(
+      `Final answer: ${BARE.extractedAnswer}.`,
+    );
+    expect(playBtn()).toBeDisabled();
   });
 });

@@ -55,9 +55,8 @@ describe("Page 16 (wrap-up) component", () => {
     render(<Page16 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Wrap-Up");
     expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
-    // Last page: PageNav offers no next link and says so.
-    expect(screen.queryByRole("link", { name: /^Page 17 →/ })).toBeNull();
-    expect(screen.getByText("The End")).toBeInTheDocument();
+    // The story's last page: the next page is the glossary appendix, page 17.
+    expect(screen.getByRole("link", { name: "Page 17 →" })).toHaveAttribute("href", "/p/17");
   });
 
   // ---- section 1: the ladder ----

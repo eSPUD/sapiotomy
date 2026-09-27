@@ -25,11 +25,8 @@ test.describe("Act 3 (pages 12–16)", () => {
     await first.getByRole("radio").first().check();
     await expect(first.getByText(/Right\.|Not quite\./)).toBeVisible();
 
-    // Last page: PageNav offers no next link. `exact` matters here: two of the
-    // quiz options open with "The end of..." and Playwright's default text
-    // match is a case-insensitive substring.
-    await expect(page.getByRole("link", { name: /^Page 17 →/ })).toHaveCount(0);
-    await expect(page.getByText("The End", { exact: true })).toBeVisible();
+    // The story's last page: the next page is the glossary appendix, page 17.
+    await expect(page.getByRole("link", { name: "Page 17 →" })).toHaveAttribute("href", "/p/17");
   });
 
   /**

@@ -29,7 +29,14 @@
  * 15. Page 16 ("Wrap-Up") was written the same day to close the deck the cut
  * had left ending on a caveat: it is the only page that draws every lever on
  * one axis, plus a ten-question concept check. Every cross-page reference in
- * the app is written against the 1-16 numbering. docs/ and planning/ predate
+ * the app is written against the 1-16 numbering.
+ *
+ * Page 17 is the glossary (added 2026-09-27, author): an appendix, and only
+ * ever the glossary. It belongs to NO act (the author: never show it as part
+ * of Act 3, on the landing page or anywhere else), so its entry has no `act`
+ * and the type forbids one. The story is still pages 1-16: `getPage` and
+ * `STORY_PAGES` return story pages only, analytics count only those, and the
+ * glossary is reached through `GLOSSARY`. docs/ and planning/ predate
  * the cut and still speak in the old numbers.
  *
  * Titles/concepts are drawn from InferenceTimeScaling_Explainable.md §C.
@@ -37,15 +44,28 @@
  */
 export type Act = 1 | 2 | 3;
 
-export interface PageMeta {
+interface PageBase {
   n: number;
   slug: string;
   title: string;
-  act: Act;
   concept: string;
   /** Milestone in which this page's simulation is built. */
   milestone: string;
 }
+
+/** Pages 1-16: each sits in exactly one act. */
+export interface StoryPage extends PageBase {
+  act: Act;
+  appendix?: undefined;
+}
+
+/** The glossary: after the story and outside every act, so it has no act. */
+export interface AppendixPage extends PageBase {
+  act?: undefined;
+  appendix: true;
+}
+
+export type PageMeta = StoryPage | AppendixPage;
 
 export const ACTS: Record<Act, { title: string; range: string }> = {
   1: { title: "Building Intuition", range: "Pages 1–4" },
@@ -70,10 +90,18 @@ export const PAGES: PageMeta[] = [
   { n: 14, slug: "frontier-reasoners-deepseek-r1", title: "Frontier Reasoners II: DeepSeek-R1, GRPO, and the “Aha Moment”", act: 3, concept: "Open weights answer the black box: reward only verifiable right answers (GRPO) and the pausing and self-correcting emerge on their own — then get distilled into models 1.5B–70B.", milestone: "M4" },
   { n: 15, slug: "when-reasoning-breaks", title: "When Reasoning Breaks: Self-Correction, Verifier Reliability, Overthinking", act: 3, concept: "More thinking can make things worse: unaided self-correction degrades answers, longer reasoning can subtract, and the verifiers doing the rescuing are fallible themselves.", milestone: "M5" },
   { n: 16, slug: "wrap-up", title: "Wrap-Up: What You Now Know", act: 3, concept: "Every lever in the deck on one axis for the first time, measured on the same hundred problems, and ten questions that check the mechanisms rather than the magnitudes.", milestone: "M5" },
+  { n: 17, slug: "glossary", title: "Glossary", concept: "The terms the deck uses, defined once.", milestone: "—", appendix: true },
 ];
 
-export function getPage(n: number): PageMeta | undefined {
-  return PAGES.find((p) => p.n === n);
+/** The story proper: every page but the glossary appendix. */
+export const STORY_PAGES: StoryPage[] = PAGES.filter((p): p is StoryPage => !p.appendix);
+
+/** The glossary, page 17: the last page, in no act. */
+export const GLOSSARY: AppendixPage = PAGES.find((p): p is AppendixPage => p.appendix === true)!;
+
+/** A story page by number. The glossary is not one: use GLOSSARY. */
+export function getPage(n: number): StoryPage | undefined {
+  return STORY_PAGES.find((p) => p.n === n);
 }
 
 export function pageHref(n: number): string {

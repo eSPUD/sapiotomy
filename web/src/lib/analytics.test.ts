@@ -5,7 +5,8 @@ describe("engagement analytics (M8 instrumentation)", () => {
   it("computes manipulation rate over the 16 pages", () => {
     // reachedEnd keys off the last page in PAGES, which is 16: 20 and 21 were
     // cut in 2026-07, then 15, 16, 18 and 19 in 2026-08, and the wrap-up was
-    // added as the new 16. The count is derived from PAGES, never hardcoded.
+    // added as the new 16. Page 17 is the glossary appendix, which has nothing
+    // to manipulate, so the count is the story pages (STORY_PAGES), never hardcoded.
     const r = engagementReport({ 1: 3, 6: 1, 16: 2 });
     expect(r.totalPages).toBe(16);
     expect(r.pagesManipulated).toBe(3);

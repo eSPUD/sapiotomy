@@ -27,36 +27,39 @@
  *
  *   Step 1 — the definition and figure 1, the specimen, merged 2026-09-27 under
  *   planning/reviewer_response_changes_plan.md (page 5, sections 1 and 2). The
- *   first paragraph is the author's: tasks that need more than a blurted answer,
- *   17 × 24 worked in three steps, and the term for those steps written out. No
+ *   two paragraphs are the author's (rewritten 2026-09-27): chain-of-thought
+ *   prompting as each step feeding the next, then the classic ask. The 17 × 24
+ *   worked example went with that rewrite. No
  *   "for a model the steps ARE the thinking" contrast: the author cut it
  *   2026-09-27, since a person's written steps are their thinking too, so there
  *   is no difference to claim. It ends on the classic way to ASK,
  *   quoting Kojima's trigger ("Let's think step by step.") because the marker
  *   sits on that phrase; the run's own `zero_shot_cot` suffix is a different
- *   string and its arm is not on the page. The same paragraph then says today's
+ *   string and its arm is not on the page. The second paragraph says today's
  *   models no longer need that prompt, since System 2 is their default, and hands
- *   the reader the stepper: the 3B forced into System 1 against its default.
+ *   the reader the split: the 3B forced into System 1 beside its default.
  *
- *   The token and greedy glosses sit in the margin beside this step, under the
- *   references, not in the reading column (the plan moved them). One problem,
+ *   The token and greedy glosses moved to the glossary, page 17, on
+ *   2026-09-27; only the references sit in the margin beside this step. One problem,
  *   one model, one decoding setting, two prompts that differ only by a suffix.
- *   Tabs are ordered to match figure 2's bars and the reader lands on `bare`. A
- *   "see the full prompt" disclosure shows the exact strings, with the suffix
- *   highlighted. Prompt and trace are both set in `font-code`: they are listings
- *   of what a machine read and wrote. The stepper (Back / Next / Play) walks the
- *   model's own output using the token ranges the notebook emitted. The
+ *   Since 2026-09-27 the figure is a split of two chats set like page 2's (user
+ *   and model icons, no bubbles), System 1 beside System 2, with no mode buttons.
+ *   Each shows the question alone; the suffix is not on the page. Play shows
+ *   both whole replies at once, grouped into intermediate steps, and Reset
+ *   clears them. Question and trace are set in `font-code`: they are listings
+ *   of what a machine read and wrote. The
  *   instruction condition is NOT a third tab: it is measured, and it lives in the
  *   notebook download (see the load-bearing list below).
  *
- *   Step 2 — figure 2, the page's headline. The McNemar 2x2 drawn as 100 cells,
- *   one per problem, with the gag on a switch. Flip it and 40 solved problems go
- *   out while 4 arrive. The four cell counts are fully determined by the two
- *   discordant counts and the two solve counts the notebook reports, so the
- *   picture is measurement; only the ARRANGEMENT of cells is ours. The margin
- *   note that said so ("How to read it") was cut by the author on 2026-09-27: the
- *   figure needs no explaining. Do not label a cell with a problem id: we do not
- *   ship per-item outcomes to the page.
+ *   Step 2 — figure 2, the page's headline: the McNemar 2x2 as two stacked
+ *   bars of the same 100 problems, one per system: solved by both, solved only
+ *   by that system, not solved. It replaced a 2x2 matrix, and before that a
+ *   100-square grid with a
+ *   System 1 / System 2 switch on 2026-09-27 (author): the grid was grouped by
+ *   outcome, and readers took its first squares for the first problems. The
+ *   four counts are fully determined by the two discordant counts and the two
+ *   solve counts the notebook reports. We do not ship per-item outcomes to the
+ *   page, so no row may name a problem.
  *
  *   Step 3 — figure 3, three checkpoints. The claim is the FLAT FLOOR, never
  *   scale: three points are not a scaling law, our trend has no sign flip, and
@@ -122,9 +125,9 @@
  *     from a paper.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { ChartFrame } from "@/components/ChartFrame";
-import { PairedGrid } from "@/components/PairedGrid";
+import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
@@ -132,11 +135,10 @@ import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE5,
   SUPPRESSION_TABLE,
-  pLabel,
   pct,
-  solvedIn,
+  reasoningSteps,
   tidyMath,
-  type PairedClass,
+  type SpecimenTab,
 } from "@/lib/page05";
 import { useStore } from "@/store/useStore";
 
@@ -145,6 +147,9 @@ const PAGE_N = 5;
 const F1 = PAGE5.figure1;
 const F2 = PAGE5.figure2;
 const F3 = PAGE5.figure3;
+/** Figure 1's two sides: the forced blurt (System 1) and the bare prompt (System 2). */
+const BLURT_TAB = F1.tabs.find((t) => t.condition === "forced_blurt")!;
+const BARE_TAB = F1.tabs.find((t) => t.condition === "bare")!;
 const CLOSE = PAGE5.close;
 const M = PAGE5.manifest;
 /** The checkpoint every figure above the close is measured on. */
@@ -159,9 +164,6 @@ const BLURT_MEDIAN_RANGE = BLURT_MIN === BLURT_MAX ? `${BLURT_MIN}` : `${BLURT_M
 /** The download: notebook + harness + every generation the page rests on. */
 const NOTEBOOK_ZIP = "/notebooks/page-05-how-to-reason.zip";
 const NOTEBOOK_SIZE = "0.8 MB";
-
-/** Milliseconds a chain step lingers before the next appears (Play). */
-const STEP_MS = 700;
 
 /**
  * Numbered in order of first appearance. Wei and Kojima are cited for the
@@ -208,60 +210,198 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 const chip = "rounded-full border border-grid px-2 py-0.5 text-ink-muted";
-const seg = (active: boolean) =>
-  `rounded px-3 py-1.5 text-sm font-semibold ${
-    active ? "bg-compute text-canvas" : "border border-grid bg-surface-raised text-ink-muted"
-  }`;
 
 /* ------------------------------------------------------------------ figure 1 */
 
-/** How much of the model's output on this tab has been revealed so far. */
-function TokenMeter({ written, total }: { written: number; total: number }) {
-  const w = Math.max(0, Math.min(1, written / total)) * 100;
+/**
+ * One side of figure 1's split: a chat set like page 2's, the user's turn on the
+ * right and the model's on the left, each marked by an icon, as plain monospace
+ * with no bubbles. Both sides show the question alone. Each reveal is one
+ * intermediate step (an instruction with the working it announces), not one
+ * line. Play shows both replies whole, at once; there is no streaming.
+ */
+function ChatColumn({
+  title,
+  tab,
+  shown,
+}: {
+  title: string;
+  tab: SpecimenTab;
+  shown: boolean;
+}) {
+  const steps = reasoningSteps(tab.steps);
   return (
-    <div className="flex flex-col gap-1">
-      <div className="relative h-2 w-full overflow-hidden rounded-sm border border-grid bg-surface-raised">
-        <div
-          className="h-full bg-compute motion-safe:transition-[width] motion-safe:duration-500"
-          style={{ width: `${w}%` }}
-        />
+    <section aria-label={title} className="flex min-w-0 flex-col gap-3">
+      <h3 className="text-sm font-semibold text-ink">{title}</h3>
+      <div className="flex flex-1 flex-col gap-5 rounded-lg border border-grid bg-canvas p-3">
+        <div className="flex max-w-[95%] items-start gap-2 self-end">
+          <p data-testid="user-question" className="text-right font-code text-sm text-ink">
+            {tidyMath(F1.question)}
+          </p>
+          <UserIcon />
+        </div>
+
+        <div className="flex max-w-[95%] items-start gap-2 self-start">
+          <ModelIcon />
+          <div data-testid="model-reply" className="flex min-w-0 flex-col gap-2">
+            {!shown ? (
+              <p className="flex items-center gap-2 text-sm text-ink-muted">
+                <span aria-hidden="true" className="animate-pulse text-compute">
+                  ▍
+                </span>
+                press Play to see its reply
+              </p>
+            ) : (
+              <ol className="flex flex-col gap-2">
+                {steps.map((s, i) => (
+                  <li key={i} className="flex gap-2 font-code text-sm leading-relaxed text-ink">
+                    {steps.length > 1 ? <span className="shrink-0 text-compute">{i + 1}</span> : null}
+                    <span className="flex min-w-0 flex-col gap-1">
+                      {s.parts.map((part, j) => (
+                        <span key={j} className="whitespace-pre-wrap break-words">
+                          {tidyMath(part)}
+                        </span>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            {shown ? (
+              <p
+                className={`rounded border-l-4 px-3 py-2 ${
+                  tab.correct ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
+                }`}
+              >
+                <span className={`font-semibold ${tab.correct ? "text-correct" : "text-wrong"}`}>
+                  {tab.correct ? "✓" : "✗"} Final answer: {tab.extractedAnswer}.
+                </span>{" "}
+                <span className="font-mono text-xs tabular-nums text-ink-muted">
+                  {tab.tokensGenerated} tokens · {steps.length} {steps.length === 1 ? "step" : "steps"}
+                </span>
+              </p>
+            ) : null}
+          </div>
+        </div>
       </div>
-      <p className="font-mono text-xs tabular-nums text-ink-muted">
-        {written} of {total} tokens written
-      </p>
-    </div>
+    </section>
   );
 }
 
 /* ------------------------------------------------------------------ figure 2 */
 
 /**
- * The gag is the baseline and the chain is the change, so `afterOnly` is a
- * problem solved only when the model reasons: blue while the switch is
- * off, magenta once the gag takes it away.
- *
- * Blue, not the deck's `correct` green, because this figure asks the reader to
- * tell two fills apart and green against magenta is the pair red-green colour
- * blindness collapses: simulated, the green and the magenta land 9.9 apart in
- * Lab under deuteranopia, which is no distance at all.
- *
- * The BRIGHT step, not `compute`, because the dark blue only moved the failure
- * to protanopia (13.0) — both fills are dark, so once hue collapses there is
- * nothing left. `compute-bright` clears every axis (protan 33.2, deutan 42.8)
- * and carries a 2.14:1 luminance gap, so the squares also survive greyscale.
- * It is a fill and never text here; on a pale tint it would miss AA.
+ * Figure 2's bars: the notebook's paired table as two stacked bars of the same
+ * 100 problems. The gag is the baseline and the chain is the change, so
+ * `beforeOnly` is solved only in System 1 and `afterOnly` only in System 2.
+ * Getting that backwards swaps 4 and 40, so Page5.test.tsx checks each bar's
+ * solved segments against its solve count.
  */
-const cellTone = (cell: PairedClass, gagged: boolean): string => {
-  if (solvedIn(cell, gagged ? "before" : "after")) return "border-compute-bright bg-compute-bright";
-  if (gagged && cell === "afterOnly") return "border-wrong bg-wrong";
-  return "border-grid bg-surface-raised";
-};
+const SOLVED_BARS = [
+  {
+    label: "System 1",
+    solved: PAGE5.figure2.blurt.nCorrect,
+    segments: [
+      { key: "both", count: SUPPRESSION_TABLE.both },
+      { key: "only", count: SUPPRESSION_TABLE.beforeOnly },
+      { key: "unsolved", count: SUPPRESSION_TABLE.n - PAGE5.figure2.blurt.nCorrect },
+    ],
+  },
+  {
+    label: "System 2",
+    solved: PAGE5.figure2.bare.nCorrect,
+    segments: [
+      { key: "both", count: SUPPRESSION_TABLE.both },
+      { key: "only", count: SUPPRESSION_TABLE.afterOnly },
+      { key: "unsolved", count: SUPPRESSION_TABLE.n - PAGE5.figure2.bare.nCorrect },
+    ],
+  },
+] as const;
+
+/**
+ * Two steps of the cyan size ramp for the two kinds of solved (validated as an
+ * ordinal pair, and both carry paper text at AA), and the neutral grid for not
+ * solved, which reads as absence rather than as a third category.
+ */
+const SEGMENT_STYLE = {
+  both: { fill: "fill-size-4", text: "fill-canvas", name: "solved by both" },
+  only: { fill: "fill-size-3", text: "fill-canvas", name: "solved only by this system" },
+  unsolved: { fill: "fill-grid", text: "fill-ink", name: "not solved" },
+} as const;
+
+const SOLVED_W = 660;
+const SOLVED_H = 150;
+const SOLVED_MARGIN = { top: 12, right: 84, bottom: 40, left: 74 };
+const SOLVED_INNER_W = SOLVED_W - SOLVED_MARGIN.left - SOLVED_MARGIN.right;
+const SOLVED_INNER_H = SOLVED_H - SOLVED_MARGIN.top - SOLVED_MARGIN.bottom;
+/**
+ * Every segment carries its count, the thin "3" and "4" included (author,
+ * 2026-09-27). At text-xs a digit is about 7px, and the 3 is about 13px wide
+ * after its gap, so a single digit fits; the check only guards a future run
+ * whose counts outgrow their segment.
+ */
+const segmentFits = (count: number, w: number) => w >= String(count).length * 7 + 2;
+
+function SolvedChart() {
+  const n = SUPPRESSION_TABLE.n;
+  const x = (v: number) => (v / n) * SOLVED_INNER_W;
+  const rowH = SOLVED_INNER_H / SOLVED_BARS.length;
+  const barH = 28;
+  return (
+    <ChartFrame
+      title={`The same ${n} problems, stacked for each system. System 1 solves ${SOLVED_BARS[0].solved}: ${SUPPRESSION_TABLE.both} solved by both and ${SUPPRESSION_TABLE.beforeOnly} only by System 1. System 2 solves ${SOLVED_BARS[1].solved}: the same ${SUPPRESSION_TABLE.both} and ${SUPPRESSION_TABLE.afterOnly} only by System 2.`}
+      width={SOLVED_W}
+      height={SOLVED_H}
+      margin={SOLVED_MARGIN}
+      xLabel={`problems, of the same ${n}`}
+    >
+      {[0, 25, 50, 75, 100].map((t) => (
+        <text key={t} x={x(t)} y={SOLVED_INNER_H + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
+          {t}
+        </text>
+      ))}
+      {SOLVED_BARS.map((bar, i) => {
+        const y = i * rowH + rowH / 2 - barH / 2;
+        let start = 0;
+        return (
+          <g key={bar.label}>
+            <text x={-10} y={y + barH / 2 + 4} textAnchor="end" className="fill-ink text-sm font-semibold">
+              {bar.label}
+            </text>
+            {bar.segments.map((seg) => {
+              const x0 = x(start);
+              start += seg.count;
+              // A 2px paper gap between segments, taken from the segment's own width.
+              const w = Math.max(0, x(seg.count) - (start < n ? 2 : 0));
+              const style = SEGMENT_STYLE[seg.key];
+              return (
+                <g key={seg.key} data-testid={`bar-${bar.label}-${seg.key}`}>
+                  <rect x={x0} y={y} width={w} height={barH} className={style.fill}>
+                    <title>{`${bar.label}: ${seg.count} ${style.name}`}</title>
+                  </rect>
+                  {segmentFits(seg.count, w) ? (
+                    <text
+                      x={x0 + w / 2}
+                      y={y + barH / 2 + 4}
+                      textAnchor="middle"
+                      className={`${style.text} pointer-events-none text-xs font-semibold tabular-nums`}
+                    >
+                      {seg.count}
+                    </text>
+                  ) : null}
+                </g>
+              );
+            })}
+            <text x={SOLVED_INNER_W + 8} y={y + barH / 2 + 4} className="fill-ink text-xs tabular-nums">
+              {bar.solved} solved
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
+  );
+}
 
 /* ------------------------------------------------------------------ figure 3 */
 
@@ -389,8 +529,10 @@ const sizeLabel = (params: number) => `${Number((params / 1e9).toFixed(1))}B`;
  */
 function CostChart() {
   const rows = F3.models;
-  const x = (tokens: number) => (Math.log10(Math.max(tokens, 1)) / COST_DECADES) * COST_INNER_W;
-  const y = (accuracy: number) => COST_INNER_H * (1 - (accuracy * 100) / COST_Y_MAX);
+  /** Rounded so the server and client log10 emit the same string (hydration). */
+  const px = (v: number) => Math.round(v * 100) / 100;
+  const x = (tokens: number) => px((Math.log10(Math.max(tokens, 1)) / COST_DECADES) * COST_INNER_W);
+  const y = (accuracy: number) => px(COST_INNER_H * (1 - (accuracy * 100) / COST_Y_MAX));
   /** Where a prompt's label goes: over the middle of its three dots. */
   const clusterX = (tokens: number[]) => tokens.reduce((a, t) => a + x(t), 0) / tokens.length;
 
@@ -511,76 +653,27 @@ export function Page5() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
 
-  const [reducedMotion, setReducedMotion] = useState(false);
-  useEffect(() => {
-    setReducedMotion(prefersReducedMotion());
-  }, []);
   const [announce, setAnnounce] = useState("");
 
   // ---- Step 1: the specimen -------------------------------------------
-  const bareIndex = useMemo(() => F1.tabs.findIndex((t) => t.condition === "bare"), []);
-  const [tabIndex, setTabIndex] = useState(bareIndex);
-  const [step, setStep] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
-  const tab = F1.tabs[tabIndex];
-  const maxStep = tab.steps.length;
-  const done = step >= maxStep;
-  const written = step === 0 ? 0 : tab.steps[step - 1].tokenEnd;
-  /** Placeholder width for a step still to come, scaled by the tokens it holds. */
-  const longestStep = Math.max(...tab.steps.map((s) => s.tokenEnd - s.tokenStart));
-  const barPct = (tokens: number) => Math.max(14, Math.round((tokens / longestStep) * 90));
-
-  const pickTab = (i: number) => {
+  const play = () => {
     recordInteraction(PAGE_N);
-    setTabIndex(i);
-    setStep(0);
-    setPlaying(false);
+    setRevealed(true);
     setAnnounce(
-      F1.tabs[i].condition === "bare"
-        ? "Bare prompt: nothing in it asks for working. Press Next or Play to walk what the model wrote anyway."
-        : "The same question with no reasoning. Press Next to see the whole answer.",
+      `System 1 answered ${BLURT_TAB.extractedAnswer} in ${BLURT_TAB.tokensGenerated} tokens; System 2 answered ${BARE_TAB.extractedAnswer} in ${BARE_TAB.tokensGenerated}. The answer is ${F1.groundTruth}.`,
     );
   };
 
-  const go = (next: number) => {
+  const reset = () => {
     recordInteraction(PAGE_N);
-    setPlaying(false);
-    const clamped = Math.min(maxStep, Math.max(0, next));
-    setStep(clamped);
-    setAnnounce(
-      clamped >= maxStep
-        ? `${tab.correct ? "Correct" : "Wrong"}: the model answered ${tab.extractedAnswer} in ${tab.tokensGenerated} tokens, and the answer is ${F1.groundTruth}.`
-        : clamped === 0
-          ? "Back to the start of the output."
-          : tidyMath(tab.steps[clamped - 1].text),
-    );
+    setRevealed(false);
+    setAnnounce("Both replies cleared.");
   };
 
-  useEffect(() => {
-    if (!playing || reducedMotion) return;
-    if (step >= maxStep) {
-      setPlaying(false);
-      return;
-    }
-    const t = setTimeout(() => setStep((s) => Math.min(maxStep, s + 1)), STEP_MS);
-    return () => clearTimeout(t);
-  }, [playing, reducedMotion, step, maxStep]);
-
-  // ---- Step 2: the gag -------------------------------------------------
-  const [gagged, setGagged] = useState(false);
+  // ---- Step 2: the summary table -------------------------------------
   const T = SUPPRESSION_TABLE;
-  const shown = gagged ? F2.blurt : F2.bare;
-
-  const setGag = (on: boolean) => {
-    recordInteraction(PAGE_N);
-    setGagged(on);
-    setAnnounce(
-      on
-        ? `Non-reasoning, the model solves ${F2.blurt.nCorrect} of ${F2.blurt.n}: ${T.afterOnly} problems it had are gone and ${T.beforeOnly} it did not have arrive.`
-        : `Reasoning, the model solves ${F2.bare.nCorrect} of ${F2.bare.n}.`,
-    );
-  };
 
   return (
     <article className="flex flex-col gap-6">
@@ -597,10 +690,10 @@ export function Page5() {
         {page.title}
       </h1>
       <p className="max-w-2xl text-lg text-ink-muted">
-        The first tool in the toolbox of reasoning is also the foundation. LLMs can mimic
-        reasoning by taking, and recording, the steps needed to solve a problem. This is known as a{" "}
-        <strong className="text-ink">chain of thought</strong>, and almost every technique that
-        follows is a variation on it.
+        Humans solve complex problems by taking a series of small steps towards the solution. This
+        step-by-step approach helps us apply our System&nbsp;2 thinking to problem-solving. It is
+        very similar to solving a quadratic equation in clear and simple steps, rather than trying
+        to blurt out its solutions.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -609,166 +702,58 @@ export function Page5() {
             reviewer-response plan (planning/reviewer_response_changes_plan.md,
             page 5, sections 1 and 2). The first paragraph is the author's draft. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. What a chain of thought is</h2>
+          <h2 className="text-xl font-semibold text-ink">1. What is the Chain of Thought (CoT) for LLM reasoning?</h2>
           <p className="text-ink">
-            We&apos;ve established that certain tasks (like double-digit mathematics problems) require
-            thinking beyond blurting the answer. For 17&nbsp;×&nbsp;24, you might work out
-            17&nbsp;×&nbsp;20&nbsp;=&nbsp;340, then 17&nbsp;×&nbsp;4&nbsp;=&nbsp;68, then add them to get 408. A <strong>chain of thought</strong> is that series
-            of steps, written out.
+            We&apos;ve previously illustrated what step-by-step reasoning looks like for a couple of real-world
+            problems. <strong>Chain-of-thought prompting</strong> simulates human reasoning by using
+            each intermediate step as part of the LLM prompt to generate the next intermediate step.
             <Cite n={REF.wei} /> A common way to ask a model for one is to end the prompt with
             &ldquo;{ZERO_SHOT_COT_TRIGGER}&rdquo;
-            <Cite n={REF.kojima} /> Today&apos;s models no longer need that phrase, because
-            System&nbsp;2 is their default. Below, we force <strong>Qwen2.5-3B-Instruct</strong>
-            <Cite n={REF.qwen} /> into System&nbsp;1, answering immediately, and compare the two.
+            <Cite n={REF.kojima} />
           </p>
+          <p className="text-ink">
+            Today&apos;s models no longer need that phrase, because System&nbsp;2 thinking is their
+            default mode. Below, we force <strong>Qwen2.5-3B-Instruct</strong>
+            <Cite n={REF.qwen} /> into System&nbsp;1, answering immediately, and compare against
+            System&nbsp;2 results.
+          </p>
+          {/* Figure 1 is a split: the same question put to the same model twice, side
+              by side, System 1 on the left and System 2 on the right. No mode buttons;
+              Play shows both whole replies at once, with no streaming and no progress
+              bar (author, 2026-09-27); Reset clears them. System 1's
+              appended instruction is not shown in its question (author, 2026-09-27). */}
           <section
             aria-label="One problem, two prompts"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className={chip}>Qwen2.5-3B-Instruct · bf16 · greedy</span>
-              <span className={chip}>MATH-500 level {F1.level}</span>
-            </div>
-
-            {/* Prompt and trace are listings, so they get the one licensed
-                non-serif face. A 573-token trace in the broadsheet serif is a
-                wall; in mono the reader can see where a step starts and ends. */}
-            <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(F1.question)}</p>
-
-            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Prompt">
-              <span className="text-sm font-semibold text-ink">Prompt:</span>
-              {F1.tabs.map((t, i) => (
-                <button
-                  key={t.condition}
-                  type="button"
-                  aria-pressed={i === tabIndex}
-                  onClick={() => pickTab(i)}
-                  className={seg(i === tabIndex)}
-                >
-                  {t.condition === "bare" ? "the question alone" : "non-reasoning"}
-                </button>
-              ))}
-            </div>
-
-            <details className="group rounded border border-dashed border-grid bg-surface-raised p-3">
-              <summary className="flex cursor-pointer list-none items-center gap-2 text-xs text-compute focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-compute">
-                <span aria-hidden="true" className="font-mono transition-transform group-open:rotate-90">
-                  ▸
-                </span>
-                see the full prompt
-              </summary>
-              <pre className="mt-2 whitespace-pre-wrap break-words font-code text-xs leading-relaxed text-ink-muted">
-                {tab.promptBefore}
-                {F1.promptStem}
-                {tab.promptAfter ? <span className="bg-wrong/25 text-ink">{tab.promptAfter}</span> : null}
-              </pre>
-              <p className="mt-2 border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-                {tab.promptAfter
-                  ? "Highlighted: the only text added to the question."
-                  : "Nothing is added after the question."}
-              </p>
-            </details>
-
-            {/* the model's own output, revealed at real token boundaries */}
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                what the model wrote back →
-              </p>
-              <div className="mt-1 flex flex-col gap-2 rounded-lg border-l-4 border-compute bg-surface-raised p-3">
-                {/* Unrevealed steps stay on the page as bars scaled by how many
-                    tokens they hold, so the length of what is coming is visible
-                    before the first press. */}
-                <ol className="flex flex-col gap-2">
-                  {tab.steps.map((s, i) =>
-                    i < step ? (
-                      <li
-                        key={i}
-                        className="flex gap-2 font-code text-xs leading-relaxed text-ink motion-safe:animate-fade-in"
-                      >
-                        <span className="shrink-0 text-compute">{i + 1}</span>
-                        <span className="whitespace-pre-wrap">{tidyMath(s.text)}</span>
-                      </li>
-                    ) : (
-                      <li key={i} className="flex items-center gap-2" aria-hidden="true">
-                        <span className="font-code text-xs text-ink-muted">{i + 1}</span>
-                        <span
-                          className="h-2 rounded-sm bg-grid"
-                          style={{ width: `${barPct(s.tokenEnd - s.tokenStart)}%` }}
-                        />
-                      </li>
-                    ),
-                  )}
-                </ol>
-                {step === 0 ? (
-                  <p className="flex items-center gap-2 text-sm text-ink-muted">
-                    <span aria-hidden="true" className="animate-pulse text-compute">
-                      ▍
-                    </span>
-                    press Next{reducedMotion ? "" : " or Play"} to walk what it wrote
-                  </p>
-                ) : null}
-                <TokenMeter written={written} total={tab.tokensGenerated} />
-              </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ChatColumn title="System 1" tab={BLURT_TAB} shown={revealed} />
+              <ChatColumn title="System 2" tab={BARE_TAB} shown={revealed} />
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => go(step - 1)}
-                disabled={step === 0}
-                className="rounded border border-grid bg-surface-raised px-3 py-2 text-sm text-ink disabled:opacity-50"
+                onClick={play}
+                disabled={revealed}
+                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
               >
-                ◂ Back
+                ▶ Play
               </button>
               <button
                 type="button"
-                onClick={() => go(step + 1)}
-                disabled={done}
-                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                onClick={reset}
+                disabled={!revealed}
+                className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
               >
-                Next ▸
+                ↺ Reset
               </button>
-              {!reducedMotion ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    recordInteraction(PAGE_N);
-                    setPlaying(true);
-                  }}
-                  disabled={playing || done}
-                  className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute disabled:opacity-50"
-                >
-                  ▶ Play
-                </button>
-              ) : null}
-              <span className="font-mono text-xs tabular-nums text-ink-muted">
-                step {step} of {maxStep}
-              </span>
             </div>
-
-            {done ? (
-              <div
-                className={`rounded-lg border-l-4 p-3 text-ink ${
-                  tab.correct ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
-                }`}
-              >
-                <span className={`font-semibold ${tab.correct ? "text-correct" : "text-wrong"}`}>
-                  {tab.correct ? "✓" : "✗"} it answered {tab.extractedAnswer}
-                  {tab.correct ? "" : `, and the answer is ${F1.groundTruth}`}.
-                </span>{" "}
-                <span className="font-mono text-sm tabular-nums text-ink-muted">
-                  {tab.tokensGenerated} tokens · {maxStep} {maxStep === 1 ? "step" : "steps"}
-                </span>
-              </div>
-            ) : null}
           </section>
         </section>
-        {/* Beside the merged step: its references, then the deck's terminology floor.
-            Every measured number from here to page 16 is counted in tokens and decoded
-            greedily, so both terms are defined here, at the deck's first measured page.
-            They moved out of the reading column into this note on 2026-09-27 (reviewer
-            plan, page 5 section 2); do not delete them as the page tightens, since the
-            audience is first-year undergraduates with no ML background. */}
+        {/* Beside the merged step: its references. The "Terms" note that defined token
+            and greedy decoding moved to the glossary, page 17, on 2026-09-27
+            (author); do not bring it back here. */}
         <div className="flex flex-col gap-6">
           <Note kicker="References">
             <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
@@ -784,113 +769,45 @@ export function Page5() {
               7B cards sit alongside it.
             </RefItem>
           </Note>
-          <Note kicker="Terms">
-            <p>
-              A <strong className="text-ink">token</strong> is a word-piece, the unit a model writes
-              one at a time. Every length on this page is counted in tokens.
-            </p>
-            <p>
-              Both runs decode <strong className="text-ink">greedily</strong>: at every step the
-              model takes its single most likely next token, so the same prompt always produces the
-              same chain.
-            </p>
-          </Note>
         </div>
 
         {/* Step 2 — figure 2 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">2. Scaling beyond one problem</h2>
-          {/* Both sides of the comparison, with the denominator. This paragraph used to
-              withhold the System 1 score so the switch had something to reveal; the author
-              overrode that on 2026-09-27 (reviewer plan, decision D6: give both sides in
-              one place). The switch now shows WHICH problems are lost, not how many. */}
+          {/* The author's paragraph (2026-09-27). It gives the reasoning side only, with
+              the denominator; the switch reveals the rest. Every number is read from the
+              run. The Cite marks the problem set, MATH-500. */}
           <p className="text-ink-muted">
-            Was that one problem a fluke? Here is the same model on {F2.bare.n} hard problems from the
-            MATH-500 benchmark.
-            <Cite n={REF.math500} /> In System&nbsp;2 (reasoning) it solved{" "}
-            <strong className="text-ink">{F2.bare.nCorrect}</strong>. In System&nbsp;1 (non-reasoning) it solved{" "}
-            <strong className="text-ink">{F2.blurt.nCorrect}</strong>. Each square below is one
-            problem.
+            One trace proves nothing, so both prompts were run across {F2.bare.n} problems from the
+            same difficulty band.
+            <Cite n={REF.math500} /> Below is that comparison: the same model, reasoning against
+            non-reasoning. Reasoning, it writes a median of {F2.bare.medianTokens} tokens of working
+            and solves <strong className="text-ink">{F2.bare.nCorrect}</strong> of the {F2.bare.n}.
           </p>
-          <section
-            aria-label="The cost of working with no reasoning"
-            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
-          >
-            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Reasoning condition">
-              <span className="text-sm font-semibold text-ink">Qwen2.5-3B-Instruct:</span>
-              <button type="button" aria-pressed={!gagged} onClick={() => setGag(false)} className={seg(!gagged)}>
-                reasoning
-              </button>
-              <button type="button" aria-pressed={gagged} onClick={() => setGag(true)} className={seg(gagged)}>
-                non-reasoning
-              </button>
-            </div>
-            <p className="font-code text-xs text-ink-muted">
-              {gagged
-                ? `appended to the prompt:${M.conditions.forced_blurt}`
-                : "appended to the prompt: nothing at all"}
-            </p>
-
-            {/* The grid is the figure and gets the card's width. An earlier
-                build sized its track `auto`, which collapsed 100 problems into a
-                110px smudge; keep it on an fr track. */}
-            <div className="grid gap-5 sm:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] sm:items-center">
-              <PairedGrid cells={SUPPRESSION_TABLE.cells} tone={(c) => cellTone(c, gagged)} />
-              <div className="flex flex-col gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    solved, of the same {shown.n} problems
-                  </p>
-                  <p className="font-mono text-5xl tabular-nums text-ink">{shown.nCorrect}</p>
-                  <p className="font-mono text-xs tabular-nums text-ink-muted">
-                    95% interval {pct(shown.ci[0])} to {pct(shown.ci[1])} · median{" "}
-                    {shown.medianTokens} tokens written
-                  </p>
-                </div>
-                <ul className="flex flex-col gap-1 text-xs text-ink-muted">
-                  <li className="flex items-center gap-2">
-                    <span className="h-3 w-3 shrink-0 rounded-sm border border-compute-bright bg-compute-bright" />
-                    solved here
+          {/* Figure 2 is two stacked bars of the same problems (author, 2026-09-27),
+              replacing a 2x2 matrix, which replaced a 100-square grid that read as if
+              its first squares were the first problems. Legend above, title below. */}
+          <section aria-label="The cost of working with no reasoning">
+            <figure className="flex flex-col gap-2">
+              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                {(Object.keys(SEGMENT_STYLE) as (keyof typeof SEGMENT_STYLE)[]).map((k) => (
+                  <li key={k} className="flex items-center gap-1.5">
+                    <svg aria-hidden="true" width="12" height="12">
+                      <rect width="12" height="12" rx="2" className={SEGMENT_STYLE[k].fill} />
+                    </svg>
+                    {SEGMENT_STYLE[k].name}
                   </li>
-                  {/* The discordant counts ARE the reveal, so the legend keeps them
-                      until the reader has pressed the switch. */}
-                  <li className="flex items-center gap-2">
-                    <span className="h-3 w-3 shrink-0 rounded-sm border border-wrong bg-wrong" />
-                    solved when reasoning, lost without it{gagged ? ` (${T.afterOnly})` : ""}
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="h-3 w-3 shrink-0 rounded-sm border border-grid bg-surface-raised" />
-                    unsolved either way
-                    {gagged
-                      ? ` (${T.neither}), plus the ${T.beforeOnly} that only non-reasoning gets right`
-                      : ", plus the few that only non-reasoning gets right"}
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <div
-              className={`rounded-lg border-l-4 px-3 py-2 text-sm ${
-                gagged ? "border-wrong bg-wrong/15" : "border-compute bg-compute/15"
-              }`}
-            >
-              <p className={`font-semibold ${gagged ? "text-wrong" : "text-compute"}`}>
-                {gagged
-                  ? `✗ ${T.afterOnly} problems it had are gone. ${T.beforeOnly} it did not have arrive.`
-                  : `✓ press "non-reasoning" and watch what leaves.`}
-              </p>
-              {/* The cost, and the test behind it, arrive with the reveal. Rendering them
-                  under an unpressed switch spends the figure before it is touched. */}
-              {gagged ? (
-                <p className="text-ink">
-                  Working with no reasoning costs {F2.suppression.deltaPts} points. The two conditions
-                  score the same on most of these problems, so the test looks only at the{" "}
-                  {T.afterOnly + T.beforeOnly} where they differ: reasoning wins {T.afterOnly} of
-                  those and loses {T.beforeOnly}. A split that lopsided is unlikely to be luck (
-                  {pLabel(F2.suppression.p)}, exact McNemar).
-                </p>
-              ) : null}
-            </div>
+                ))}
+              </ul>
+              <SolvedChart />
+              <figcaption className="text-center text-base font-semibold text-ink">
+                System 1 vs System 2: Qwen2.5-3B-Instruct on {T.n} MATH-500 problems (levels{" "}
+                {M.items.eval_levels.join(" and ")})
+                <span className="block text-sm font-normal text-ink-muted">
+                  How many problems each system solved, and which ones they agree on
+                </span>
+              </figcaption>
+            </figure>
           </section>
         </section>
         {/* The author cut "How to read it" on 2026-09-27, since the figure needs no
