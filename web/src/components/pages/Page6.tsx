@@ -480,6 +480,71 @@ function BudgetCurve({
         );
       })}
 
+      {/* What each doubling bought the primary, printed on the axis between the
+          two budgets it sits between, so the shrinking returns are read rather
+          than subtracted and nothing on the plot is covered. Fainter as the gain
+          shrinks. 2026-10-07. */}
+      {F2.primary.gains.map((g) => {
+        const pts = Math.round(g.gain_pts);
+        const maxGain = Math.max(...F2.primary.gains.map((x) => Math.abs(x.gain_pts)));
+        return (
+          <text
+            key={g.from_budget}
+            x={(cx(g.from_budget) + cx(g.to_budget)) / 2}
+            y={C_IH + 16}
+            textAnchor="middle"
+            className="fill-compute text-[11px] font-semibold tabular-nums"
+            opacity={Math.max(0.45, Math.abs(g.gain_pts) / maxGain)}
+          >
+            {pts > 0 ? `+${pts}` : pts < 0 ? `−${-pts}` : "+0"}
+          </text>
+        );
+      })}
+
+      {/* Where the budget line crosses each curve: the readout lives on the
+          chart, so dragging the line visibly reads the curves. Labels are
+          stacked so two curves at the same height never print on top of each
+          other, and flip to the left of the line at the last stop. */}
+      {(() => {
+        const bx = cx(B[budgetIndex]);
+        const atTop = budgetIndex === B.length - 1;
+        const marks = F2.curves
+          .map((c) => ({ c, p: c.points[budgetIndex] }))
+          .sort((m, n) => n.p.accuracy - m.p.accuracy);
+        let lastY = -Infinity;
+        const stacked = marks.map((m) => {
+          const y = Math.max(cy(m.p.accuracy) + 4, lastY + 13);
+          lastY = y;
+          return { ...m, ly: y };
+        });
+        // A stack that would run under the axis slides up as one block.
+        const overflow = Math.max(0, lastY - (C_IH - 3));
+        const placed = stacked.map((m) => ({ ...m, ly: m.ly - overflow }));
+        return placed.map(({ c, p, ly }) => (
+          <g key={`x-${c.model_id}`} pointerEvents="none">
+            <circle
+              cx={bx}
+              cy={cy(p.accuracy)}
+              r={isPrimary(c.model_id) ? 6 : 4.5}
+              className={`${curveStroke(c.model_id)} fill-surface`}
+              strokeWidth={2}
+            />
+            <text
+              x={atTop ? bx - 10 : bx + 10}
+              y={ly}
+              textAnchor={atTop ? "end" : "start"}
+              className={`${curveFill(c.model_id)} stroke-surface text-[11px] tabular-nums ${
+                isPrimary(c.model_id) ? "font-semibold" : ""
+              }`}
+              strokeWidth={3}
+              paintOrder="stroke"
+            >
+              {isPrimary(c.model_id) ? `${p.n_correct} of ${p.n}` : p.n_correct}
+            </text>
+          </g>
+        ));
+      })()}
+
       {/* Last, so the drag surface sits over the curves and the handle over
           everything: this figure's dial is its own, and it is on the chart. */}
       <BudgetLine
