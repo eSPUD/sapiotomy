@@ -44,7 +44,7 @@ from huggingface_hub.utils import (
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-__version__ = "1.3"
+__version__ = "1.4"
 
 _HERE = Path(__file__).resolve()
 
@@ -727,6 +727,117 @@ class TraceStore:
 
 
 # --------------------------------------------------------------------------
+# generation from token ids, and forced answers
+# --------------------------------------------------------------------------
+# Moved here from page 6, which defined these inline; pages 7, 11 and 14 carry
+# identical copies of `cut_at_boxed_close` and can point here instead.
+
+def generation_stop_ids(model):
+    """The ids `generate` actually stops on, read from the model's own generation
+    config. Used to strip the end-of-turn token from what the model wrote."""
+    eos = model.generation_config.eos_token_id
+    ids = set(eos) if isinstance(eos, (list, tuple)) else {eos}
+    ids.discard(None)
+    return ids
+
+
+@torch.inference_mode()
+def continue_ids(ids, model, tok, max_new_tokens):
+    """Greedy continuation of an explicit list of token ids. Returns only the new ids.
+
+    Taking ids rather than text is what lets a notebook append its own tokens to
+    what the model wrote and carry on from exactly there (budget forcing, injected
+    words). Sampling parameters are cleared as well as `do_sample`, because some
+    checkpoints ship sampling defaults in their generation config.
+    """
+    inp = torch.tensor([ids], device=model.device)
+    out = model.generate(
+        input_ids=inp,
+        attention_mask=torch.ones_like(inp),
+        max_new_tokens=max_new_tokens,
+        do_sample=False, temperature=None, top_p=None, top_k=None,
+        pad_token_id=tok.pad_token_id if tok.pad_token_id is not None else tok.eos_token_id,
+    )
+    return out[0][inp.shape[1]:].tolist()
+
+
+def cut_at_boxed_close(pieces):
+    """Keep a forced answer up to the brace that closes "\\boxed{".
+
+    The caller has already written one open brace. Walks the model's token strings,
+    tracking depth so nested LaTeX such as \\frac{1}{2} is not cut in half. Returns
+    (kept token strings, whether the brace closed). The last kept string may end
+    mid-token, on purpose.
+    """
+    depth, kept = 1, []
+    for p in pieces:
+        out = ""
+        for ch in p:
+            out += ch
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    kept.append(out)
+                    return kept, True
+        kept.append(out)
+    return kept, False
+
+
+def prefix_len(a, b):
+    """How many leading elements two sequences share."""
+    n = 0
+    for x, y in zip(a, b):
+        if x != y:
+            break
+        n += 1
+    return n
+
+
+def median_midpoint(xs):
+    """The textbook median: the mean of the two middle values when the count is even.
+    (`median` above returns the upper middle value and is kept for the pages that use it.)"""
+    xs = sorted(xs)
+    if not xs:
+        return 0
+    m = len(xs) // 2
+    return xs[m] if len(xs) % 2 else (xs[m - 1] + xs[m]) / 2
+
+
+def check_grader(checks, extract, grade):
+    """Run (raw text, ground truth, expected verdict) cases through a grader.
+
+    Prints one line on success; prints every case and raises if any verdict differs.
+    """
+    rows = [(raw, gt, want, bool(grade(extract(raw), gt))) for raw, gt, want in checks]
+    bad = [r for r in rows if r[3] != r[2]]
+    if bad:
+        for raw, gt, want, got in rows:
+            shown = raw if len(raw) < 58 else raw[:30] + " … " + raw[-25:]
+            print(f"{'ok ' if got == want else '!! '}{shown:<60} -> "
+                  f"{extract(raw)!r:<22} vs {gt!r:<20} {got}")
+        raise AssertionError(f"{len(bad)} grader check(s) behaved unexpectedly")
+    print(f"grader check: {len(rows)}/{len(rows)} cases graded as expected")
+    return len(rows)
+
+
+def assert_same_gpu(manifest_path, gpu_name):
+    """Refuse to resume a run that was started on a different GPU.
+
+    Greedy decoding is deterministic only up to floating-point reduction order,
+    which differs between architectures, so records from two cards must not be
+    mixed into one curve.
+    """
+    p = Path(manifest_path)
+    if p.exists():
+        was = json.loads(p.read_text()).get("versions", {}).get("gpu")
+        assert was in (None, gpu_name), (
+            f"{p.parent} holds a run made on {was!r}, and this is {gpu_name!r}. Move the "
+            f"old folder aside to start fresh, or finish the run on the card it started on.")
+
+
+# --------------------------------------------------------------------------
 # self-test
 # --------------------------------------------------------------------------
 
@@ -752,6 +863,9 @@ def selftest(tok, verbose=True):
     lo, hi = wilson(1, 24)
     assert lo < 1 / 24 < hi and hi < 0.25, "wilson interval looks wrong"
     assert median([3, 1, 2]) == 2 and mean([1, 2]) == 1.5
+    assert median_midpoint([4, 1, 3, 2]) == 2.5 and prefix_len("abcd", "abxd") == 2
+    assert cut_at_boxed_close(["1", "2}", " tail"]) == (["1", "2}"], True)
+    assert cut_at_boxed_close(["\\frac{1", "}{2}", "}x"]) == (["\\frac{1", "}{2}", "}"], True)
 
     if verbose:
         print(f"harness {__version__} ({fingerprint()['sha256'][:12]}): "
