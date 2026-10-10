@@ -61,10 +61,6 @@
  *     draws the measured points, so the wobble is visible and un-smoothed, and
  *     the prose does not dress a single problem as the overthinking result.
  *     Page 15 owns that finding; this page owns the flattening.
- *   · the inset measures RELIABILITY, not overshoot. Asking for brevity held
- *     the mean under the line and missed it on a quarter of items; the cap
- *     missed on none. Do not caption it as "the soft request overspends" — that
- *     was the expectation, and it is not what the run says.
  *   · budget forcing gets an author-year cite with NO numbers attached. We show
  *     our curve, not theirs.
  *   · one control per figure. The three budgets were one, and a reader who
@@ -1430,17 +1426,6 @@ export function Page6() {
           </Note>
           <Note kicker="Try it" tight>
             <p>Step to {F1.flipBudget} tokens and back.</p>
-            {/* The two arms cannot be scored against each other: the capped one
-                was capped, so an overrun of its own cap is arithmetically
-                impossible and reads as a result it is not. Only the request arm
-                measures anything, and the line says what the cap is instead. */}
-            <p>
-              A cap, not a request: asked in the prompt for a sentence or two and left free to run,
-              the model ran past {F1.inset.nominal_budget} tokens on{" "}
-              {pct(F1.inset.soft.over_budget_rate)} of items. Every length on this page is set with{" "}
-              <span className="font-code">max_new_tokens</span> instead, where the number holds
-              because generation stops there.
-            </p>
           </Note>
         </div>
 

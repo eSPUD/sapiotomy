@@ -111,15 +111,6 @@ interface RawFlipItem {
   truncated_at_max: boolean;
 }
 
-interface RawInsetArm {
-  mean_own_tokens: number;
-  median_own_tokens: number;
-  /** Share of items whose own thinking ran past the nominal budget. */
-  over_budget_rate: number;
-  measured_at_budget: number;
-  accuracy: number;
-}
-
 interface RawWaitPoint {
   waits: number;
   n: number;
@@ -189,14 +180,6 @@ const D = rawDerived as unknown as {
     flip_budget: number | null;
     n_candidate_specimens: number;
     rows: RawRow[];
-    inset: {
-      nominal_budget: number;
-      n: number;
-      request: string;
-      soft: RawInsetArm;
-      hard: RawInsetArm;
-      overshoot_multiple: number;
-    };
   };
   figure_2: { curves: RawCurve[] };
   figure_3: {
@@ -620,14 +603,6 @@ export const PAGE6 = {
      */
     openingId: OPENING_ID,
     rows,
-    /**
-     * Asked nicely against cut off. Read the token columns, not the accuracies:
-     * the soft arm was free to run to the top of the grid and the hard arm was
-     * capped, so their scores are not comparable and the page does not compare
-     * them. What the arms share is a nominal budget, and what separates them is
-     * whether that budget held.
-     */
-    inset: D.figure_1.inset,
   },
   figure2: {
     curves: D.figure_2.curves,

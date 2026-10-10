@@ -67,7 +67,7 @@ phases of its own experiment and are documented in its section 0.
 | `page_14_distill_dividend.ipynb` | 14 — DeepSeek-R1 | **authored, not yet run (step 1 awaits a GPU).** Puts `DeepSeek-R1-Distill-Qwen-1.5B` and `-7B` on pages 6 and 7's own hundred L4/5 items against `Qwen2.5-1.5B-Instruct` and `-7B-Instruct` under best-of-16: the distill at one chain with nothing selecting between chains, the instructs read as majority vote and as coverage, all of it plotted against tokens spent. Four modes rather than three — `PLAN` (the default: no GPU, no network), `SMOKE`, `FULL`, `REPLAY` — because there is nothing published to replay yet. Gates, thresholds and both branches of the page's payoff sentence are declared before the run, and the truncation gate blocks: the distills write long chains, and a capped arm would measure our budget rather than the model. The finding this answers is F33 in `docs/review/pages_1_through_14_analysis.md` |
 
 **Page 6 carries two arms of one technique.** Budget forcing can cut a chain short or refuse to let
-it end; the sweep does the first and section 11 does the second. They share the prompt, the items,
+it end; the sweep does the first and section 12 does the second. They share the prompt, the items,
 the decoding and the grader, and `k` = 0 of the second reproduced all 94 untruncated traces of
 the first, so the two are one experiment. The second arm is the ablation s1 leaves
 implicit: that paper's model is this family *after* reasoning fine-tuning, and ours is the family

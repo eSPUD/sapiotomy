@@ -38,11 +38,11 @@ const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const PAGES = [
   { n: 5, slug: "page-05-how-to-reason", notebook: "page_05_how_to_reason.ipynb",
     declared: "0.8 MB", extras: [], repoNotebookIsTheShippedOne: false },
-  // Page 6's repo copy has moved ahead: it carries RUN_MODE = "POWER", which reruns
-  // section 11's arm over the whole MATH-500 level 4+5 pool with a wider injection
-  // allowance. The shipped bundle still carries the run that produced the numbers
-  // the page plots, and re-bundling waits on that run finishing. Flip this back to
-  // true in the same commit that re-bundles; see notebooks/RUNBOOK_page6_power.md.
+  // Page 6's repo copy has moved ahead: it lets a chain stop at its cap with no forced
+  // answer, and its grid runs to 4,096 tokens. The shipped bundle still carries the
+  // run that produced the numbers the page plots, and re-bundling waits on the new
+  // FULL run. Flip this back to true in the same commit that re-bundles; see
+  // notebooks/RUNBOOK_page6_full.md.
   { n: 6, slug: "page-06-thinking-longer", notebook: "page_06_thinking_longer.ipynb",
     declared: "2.0 MB", extras: [], repoNotebookIsTheShippedOne: false },
   { n: 7, slug: "page-07-frequency-voting", notebook: "page_07_frequency_voting.ipynb",

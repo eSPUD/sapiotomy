@@ -134,24 +134,6 @@ describe("Page 6, figure 1: cut it off, make it answer", () => {
     const q = container.querySelector("p.font-code");
     expect(q?.textContent).toBe(tidyMath(OPENING.question));
   });
-
-  // The inset was a two-bar chart with one bar at zero, defending a method
-  // choice nobody had questioned, for a third of the figure's height. The
-  // reliability fact survives as one line in the margin. The soft arm asked for
-  // brevity in words, never for a token count, so the line may not say it did.
-  it("keeps the cap-versus-request fact without spending a chart on it", () => {
-    render(<Page6 />);
-    expect(body()).toContain(
-      `ran past ${F1.inset.nominal_budget} tokens on ${pct(F1.inset.soft.over_budget_rate)} of items`,
-    );
-    // The capped arm cannot overrun its own cap, and it was measured at 512
-    // against the request arm's 2048, so the line may not score one against the
-    // other. It states what the cap is; only the request arm reports a rate.
-    expect(body()).not.toContain("overran on none");
-    expect(body()).toContain("where the number holds because generation stops there");
-    expect(body()).not.toContain(`asking for ${F1.inset.nominal_budget} tokens in the prompt`);
-    expect(body()).not.toContain("A prompt is a preference, not a cap.");
-  });
 });
 
 describe("Page 6, figure 2: the same dial, every problem", () => {
