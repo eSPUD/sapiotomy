@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 838 506" width="838" height="506" font-family="'Source Serif 4', Georgia, serif" role="img" aria-label="Which of 10 problems each model solves at each token budget">
+<rect width="838" height="506" fill="#f3f2f2"/>
+<rect x="0.5" y="0.5" width="837" height="505" rx="4" fill="#eae9e9" stroke="#d7d3d3"/>
+<text x="24" y="34" font-size="12" fill="#444141" text-anchor="start" font-weight="400">Greedy decoding · MATH-500, levels 4 and 5 · 10 problems</text>
+<rect x="24" y="49" width="16" height="14" rx="2" fill="#00789c"/>
+<text x="46" y="60" font-size="13" fill="#201e1d" text-anchor="start" font-weight="400">Solved</text>
+<rect x="111.0" y="49" width="16" height="14" rx="2" fill="#c2185b"/>
+<text x="133.0" y="60" font-size="13" fill="#201e1d" text-anchor="start" font-weight="400">Answered, but wrong</text>
+<rect x="282.5" y="49" width="16" height="14" rx="2" fill="#e6c9d4"/>
+<text x="304.5" y="60" font-size="13" fill="#201e1d" text-anchor="start" font-weight="400">Cut off: the budget ran out before it answered</text>
+<text x="24" y="82" font-size="13" fill="#444141" text-anchor="start" font-weight="400">The number in a cell is how many tokens the model wrote.</text>
+<text x="369.0" y="104" font-size="16" fill="#201e1d" text-anchor="middle" font-weight="600">Qwen2.5-3B-Instruct</text>
+<text x="369.0" y="123" font-size="12" fill="#444141" text-anchor="middle" font-weight="400">Token budget: the most it may write</text>
+<text x="257.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">128</text>
+<text x="313.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">256</text>
+<text x="369.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">512</text>
+<text x="425.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">1,024</text>
+<text x="481.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">2,048</text>
+<rect x="230" y="154" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="172.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="154" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="172.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="154" width="54" height="28" rx="2" fill="#00789c"/><text x="369.0" y="172.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">354</text>
+<rect x="398" y="154" width="54" height="28" rx="2" fill="#00789c"/><text x="425.0" y="172.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">354</text>
+<rect x="454" y="154" width="54" height="28" rx="2" fill="#00789c"/><text x="481.0" y="172.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">354</text>
+<rect x="230" y="184" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="202.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="184" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="202.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="184" width="54" height="28" rx="2" fill="#00789c"/><text x="369.0" y="202.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">411</text>
+<rect x="398" y="184" width="54" height="28" rx="2" fill="#00789c"/><text x="425.0" y="202.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">411</text>
+<rect x="454" y="184" width="54" height="28" rx="2" fill="#00789c"/><text x="481.0" y="202.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">411</text>
+<rect x="230" y="214" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="232.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="214" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="232.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="214" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="369.0" y="232.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="398" y="214" width="54" height="28" rx="2" fill="#00789c"/><text x="425.0" y="232.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">774</text>
+<rect x="454" y="214" width="54" height="28" rx="2" fill="#00789c"/><text x="481.0" y="232.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">774</text>
+<rect x="230" y="244" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="262.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="244" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="262.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="244" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="369.0" y="262.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="398" y="244" width="54" height="28" rx="2" fill="#00789c"/><text x="425.0" y="262.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">716</text>
+<rect x="454" y="244" width="54" height="28" rx="2" fill="#00789c"/><text x="481.0" y="262.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">716</text>
+<rect x="230" y="274" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="292.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="274" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="292.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="274" width="54" height="28" rx="2" fill="#c2185b"/><text x="369.0" y="292.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">479</text>
+<rect x="398" y="274" width="54" height="28" rx="2" fill="#c2185b"/><text x="425.0" y="292.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">479</text>
+<rect x="454" y="274" width="54" height="28" rx="2" fill="#c2185b"/><text x="481.0" y="292.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">479</text>
+<rect x="230" y="304" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="322.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="304" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="322.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="304" width="54" height="28" rx="2" fill="#c2185b"/><text x="369.0" y="322.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">428</text>
+<rect x="398" y="304" width="54" height="28" rx="2" fill="#c2185b"/><text x="425.0" y="322.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">428</text>
+<rect x="454" y="304" width="54" height="28" rx="2" fill="#c2185b"/><text x="481.0" y="322.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">428</text>
+<rect x="230" y="334" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="352.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="334" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="352.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="334" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="369.0" y="352.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="398" y="334" width="54" height="28" rx="2" fill="#c2185b"/><text x="425.0" y="352.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">791</text>
+<rect x="454" y="334" width="54" height="28" rx="2" fill="#c2185b"/><text x="481.0" y="352.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">791</text>
+<rect x="230" y="364" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="382.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="364" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="382.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="364" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="369.0" y="382.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="398" y="364" width="54" height="28" rx="2" fill="#c2185b"/><text x="425.0" y="382.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">664</text>
+<rect x="454" y="364" width="54" height="28" rx="2" fill="#c2185b"/><text x="481.0" y="382.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">664</text>
+<rect x="230" y="394" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="412.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="394" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="412.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="394" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="369.0" y="412.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="398" y="394" width="54" height="28" rx="2" fill="#c2185b"/><text x="425.0" y="412.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">655</text>
+<rect x="454" y="394" width="54" height="28" rx="2" fill="#c2185b"/><text x="481.0" y="412.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">655</text>
+<rect x="230" y="424" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="257.0" y="442.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="286" y="424" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="313.0" y="442.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="342" y="424" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="369.0" y="442.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="398" y="424" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="425.0" y="442.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="454" y="424" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="481.0" y="442.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<text x="257.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">0</text>
+<text x="313.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">0</text>
+<text x="369.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">2</text>
+<text x="425.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">4</text>
+<text x="481.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">4</text>
+<text x="675.0" y="104" font-size="16" fill="#201e1d" text-anchor="middle" font-weight="600">Qwen2.5-1.5B-Instruct</text>
+<text x="675.0" y="123" font-size="12" fill="#444141" text-anchor="middle" font-weight="400">Token budget: the most it may write</text>
+<text x="563.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">128</text>
+<text x="619.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">256</text>
+<text x="675.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">512</text>
+<text x="731.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">1,024</text>
+<text x="787.0" y="142" font-size="13" fill="#201e1d" text-anchor="middle" font-weight="600">2,048</text>
+<rect x="536" y="154" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="563.0" y="172.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="592" y="154" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="619.0" y="172.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="648" y="154" width="54" height="28" rx="2" fill="#00789c"/><text x="675.0" y="172.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">280</text>
+<rect x="704" y="154" width="54" height="28" rx="2" fill="#00789c"/><text x="731.0" y="172.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">280</text>
+<rect x="760" y="154" width="54" height="28" rx="2" fill="#00789c"/><text x="787.0" y="172.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">280</text>
+<rect x="536" y="184" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="563.0" y="202.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="592" y="184" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="619.0" y="202.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="648" y="184" width="54" height="28" rx="2" fill="#c2185b"/><text x="675.0" y="202.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">353</text>
+<rect x="704" y="184" width="54" height="28" rx="2" fill="#c2185b"/><text x="731.0" y="202.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">353</text>
+<rect x="760" y="184" width="54" height="28" rx="2" fill="#c2185b"/><text x="787.0" y="202.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">353</text>
+<rect x="536" y="214" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="563.0" y="232.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="592" y="214" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="619.0" y="232.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="648" y="214" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="675.0" y="232.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="704" y="214" width="54" height="28" rx="2" fill="#00789c"/><text x="731.0" y="232.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">893</text>
+<rect x="760" y="214" width="54" height="28" rx="2" fill="#00789c"/><text x="787.0" y="232.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">893</text>
+<rect x="536" y="244" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="563.0" y="262.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="592" y="244" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="619.0" y="262.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="648" y="244" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="675.0" y="262.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="704" y="244" width="54" height="28" rx="2" fill="#00789c"/><text x="731.0" y="262.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">516</text>
+<rect x="760" y="244" width="54" height="28" rx="2" fill="#00789c"/><text x="787.0" y="262.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">516</text>
+<rect x="536" y="274" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="563.0" y="292.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="592" y="274" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="619.0" y="292.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="648" y="274" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="675.0" y="292.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="704" y="274" width="54" height="28" rx="2" fill="#c2185b"/><text x="731.0" y="292.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">873</text>
+<rect x="760" y="274" width="54" height="28" rx="2" fill="#c2185b"/><text x="787.0" y="292.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">873</text>
+<rect x="536" y="304" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="563.0" y="322.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="592" y="304" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="619.0" y="322.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="648" y="304" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="675.0" y="322.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="704" y="304" width="54" height="28" rx="2" fill="#c2185b"/><text x="731.0" y="322.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">722</text>
+<rect x="760" y="304" width="54" height="28" rx="2" fill="#c2185b"/><text x="787.0" y="322.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">722</text>
+<rect x="536" y="334" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="563.0" y="352.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="592" y="334" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="619.0" y="352.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="648" y="334" width="54" height="28" rx="2" fill="#c2185b"/><text x="675.0" y="352.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">320</text>
+<rect x="704" y="334" width="54" height="28" rx="2" fill="#c2185b"/><text x="731.0" y="352.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">320</text>
+<rect x="760" y="334" width="54" height="28" rx="2" fill="#c2185b"/><text x="787.0" y="352.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">320</text>
+<rect x="536" y="364" width="54" height="28" rx="2" fill="#c2185b"/><text x="563.0" y="382.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">9</text>
+<rect x="592" y="364" width="54" height="28" rx="2" fill="#c2185b"/><text x="619.0" y="382.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">9</text>
+<rect x="648" y="364" width="54" height="28" rx="2" fill="#c2185b"/><text x="675.0" y="382.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">9</text>
+<rect x="704" y="364" width="54" height="28" rx="2" fill="#c2185b"/><text x="731.0" y="382.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">9</text>
+<rect x="760" y="364" width="54" height="28" rx="2" fill="#c2185b"/><text x="787.0" y="382.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">9</text>
+<rect x="536" y="394" width="54" height="28" rx="2" fill="#c2185b"/><text x="563.0" y="412.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">15</text>
+<rect x="592" y="394" width="54" height="28" rx="2" fill="#c2185b"/><text x="619.0" y="412.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">15</text>
+<rect x="648" y="394" width="54" height="28" rx="2" fill="#c2185b"/><text x="675.0" y="412.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">15</text>
+<rect x="704" y="394" width="54" height="28" rx="2" fill="#c2185b"/><text x="731.0" y="412.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">15</text>
+<rect x="760" y="394" width="54" height="28" rx="2" fill="#c2185b"/><text x="787.0" y="412.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">15</text>
+<rect x="536" y="424" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="563.0" y="442.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="592" y="424" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="619.0" y="442.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="648" y="424" width="54" height="28" rx="2" fill="#e6c9d4"/><text x="675.0" y="442.5" font-size="14" fill="#790e3d" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">✂</text>
+<rect x="704" y="424" width="54" height="28" rx="2" fill="#c2185b"/><text x="731.0" y="442.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">806</text>
+<rect x="760" y="424" width="54" height="28" rx="2" fill="#c2185b"/><text x="787.0" y="442.5" font-size="12.5" fill="#f3f2f2" text-anchor="middle" font-weight="600" style="font-variant-numeric:tabular-nums">806</text>
+<text x="563.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">0</text>
+<text x="619.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">0</text>
+<text x="675.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">1</text>
+<text x="731.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">3</text>
+<text x="787.0" y="474" font-size="14" fill="#201e1d" text-anchor="middle" font-weight="600">3</text>
+<text x="220" y="142" font-size="12" fill="#444141" text-anchor="end" font-weight="400">Problem</text>
+<text x="220" y="172.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">1  Geometry · level 4</text>
+<text x="220" y="202.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">2  Counting & Probability · level 5</text>
+<text x="220" y="232.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">3  Algebra · level 4</text>
+<text x="220" y="262.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">4  Algebra · level 5</text>
+<text x="220" y="292.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">5  Intermediate Algebra · level 5</text>
+<text x="220" y="322.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">6  Intermediate Algebra · level 5</text>
+<text x="220" y="352.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">7  Geometry · level 5</text>
+<text x="220" y="382.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">8  Counting & Probability · level 4</text>
+<text x="220" y="412.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">9  Intermediate Algebra · level 5</text>
+<text x="220" y="442.5" font-size="13" fill="#201e1d" text-anchor="end" font-weight="400">10  Intermediate Algebra · level 4</text>
+<text x="220" y="474" font-size="13" fill="#444141" text-anchor="end" font-weight="400">Problems solved, of 10</text>
+</svg>
