@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<!-- Filled in by build_trace_report.py, which replaces __TITLE__ and __DATA__. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]],displayMath:[["$$","$$"],["\\[","\\]"]]},svg:{fontCache:"global"},startup:{typeset:false,pageReady(){return MathJax.startup.defaultPageReady().then(()=>window.typesetView&&window.typesetView());}}};</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js" async></script>
+<style>
+:root{
+  --ground:#f3f5f4; --panel:#fff; --ink:#1a1e1c; --muted:#5b6562; --rule:#d7dcd9; --soft:#edf0ee;
+  --accent:#1f5f8b; --accent-bg:#e2edf5; --ok:#2b7a4b; --ok-bg:#e3f2e8; --bad:#a8322d; --bad-bg:#f8e5e3;
+  --cut:#7a4d0f; --cut-bg:#f6ecd9; --tie:#5a4a8a; --tie-bg:#ebe7f5; --inj:#f3e08a;
+  --serif:"Newsreader",Georgia,serif; --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --ground:#121614; --panel:#1a1f1c; --ink:#e5eae6; --muted:#9ba6a1; --rule:#2e3632; --soft:#202624;
+  --accent:#7ab6e2; --accent-bg:#15293a; --ok:#6cc790; --ok-bg:#14301f; --bad:#f08a82; --bad-bg:#3a1b19;
+  --cut:#e2b866; --cut-bg:#33281a; --tie:#b9a8ef; --tie-bg:#2a2440; --inj:#5a4b12;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:15px/1.55 var(--sans);padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;line-height:1.2;text-wrap:balance}
+h1{font-size:2rem} h2{font-size:1.4rem} h3{font-size:1.05rem}
+p{margin:0}
+.muted{color:var(--muted)} .mono{font-family:var(--mono);font-size:.88em}
+.eyebrow{font:600 11px/1.4 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.meta{display:flex;flex-wrap:wrap;gap:4px 18px;font:13px var(--mono);color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+.flag{background:var(--cut-bg);color:var(--cut);border-radius:6px;padding:8px 11px;font-size:13.5px;max-width:80ch}
+.bar{position:sticky;top:0;z-index:5;background:var(--ground);padding-block:10px;border-bottom:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+button,select{font:500 13px var(--sans);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:6px 11px;cursor:pointer}
+select{max-width:260px}
+button:hover,select:hover{border-color:var(--muted)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+button:focus-visible,summary:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 4px;border-radius:4px;font:600 12px var(--sans);text-decoration:none;white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.cut{background:var(--cut-bg);color:var(--cut)}
+.chip.tie{background:var(--tie-bg);color:var(--tie)} .chip.warn{background:var(--cut-bg);color:var(--cut)} .chip.none{color:var(--muted)}
+.chip.wide{min-width:40px;font-family:var(--mono);font-weight:600}
+.overview{overflow:auto;max-height:70vh;background:var(--panel);border:1px solid var(--rule);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:5px 7px;text-align:center;white-space:nowrap}
+.overview thead th{position:sticky;background:var(--panel);font:600 11px var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);z-index:1}
+.overview thead tr:first-child th{top:0} .overview thead tr:nth-child(2) th{top:27px}
+.overview tbody tr+tr td{border-top:1px solid var(--soft)}
+.overview tbody tr.current td{background:var(--accent-bg)}
+.overview tfoot td{border-top:1px solid var(--rule)}
+td.p{text-align:left} td.p a{color:var(--ink);text-decoration:none;font:600 13px var(--mono)} td.p a:hover{text-decoration:underline}
+td.p .lv{font:12px var(--sans);color:var(--muted);margin-left:6px}
+th.first,td.first{border-left:1px solid var(--rule)}
+.problem{display:flex;flex-direction:column;gap:18px;scroll-margin-top:64px}
+.phead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.note{border-radius:6px;padding:7px 11px;font-size:13.5px} .note.ok{background:var(--ok-bg)} .note.bad{background:var(--bad-bg)}
+.prompt{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.role{font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.prose{white-space:pre-wrap;overflow-wrap:anywhere}
+.sysrow{display:grid;grid-template-columns:max-content 1fr;gap:2px 12px;font-size:14px}
+.group{display:flex;flex-direction:column;gap:10px;scroll-margin-top:64px}
+.group>h3{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.group>h3 .sub{font:13px var(--sans);color:var(--muted)}
+.group.target>h3{color:var(--accent)}
+.side{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:12px}
+.chain{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0;scroll-margin-top:64px}
+.chain.target,.row.target{outline:2px solid var(--accent)}
+.chead{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.chead .model{font:600 14px var(--sans)}
+.small{font-size:13px;color:var(--muted)}
+.output{border-radius:6px;padding:9px 11px;display:flex;flex-direction:column;gap:4px}
+.output.ok{background:var(--ok-bg)} .output.bad{background:var(--bad-bg)} .output.cut{background:var(--cut-bg)}
+.output .k{font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase}
+.output.ok .k{color:var(--ok)} .output.bad .k{color:var(--bad)} .output.cut .k{color:var(--cut)}
+.output .forced{font-size:12.5px;color:var(--muted)}
+.stated{font-size:14px;overflow-wrap:anywhere}
+details.reason>summary{cursor:pointer;color:var(--accent);font-size:13px;list-style:none}
+details>summary::-webkit-details-marker{display:none}
+details.reason>summary::before{content:"▸ ";font-family:var(--mono)}
+details.reason[open]>summary::before{content:"▾ "}
+.trace{margin-top:8px;max-height:560px;overflow:auto;background:var(--soft);border-radius:6px;padding:10px 12px;font-size:13.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.raw .tex,.trace.raw{font:12.5px/1.55 var(--mono)}
+mark.inj{background:var(--inj);color:inherit;border-radius:3px;padding:0 2px;font-weight:600}
+.cutmark{display:block;margin-top:8px;color:var(--cut);font:600 12px var(--sans)}
+.pile{background:var(--panel);border:1px solid var(--rule);border-radius:8px;display:flex;flex-direction:column}
+.pilehead{padding:12px 14px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--rule)}
+.tally{display:grid;grid-template-columns:minmax(0,max-content) minmax(80px,220px) max-content max-content;gap:3px 10px;align-items:center;font-size:13px}
+.tally .a{font:13px var(--mono);overflow-wrap:anywhere}
+.tally .barbg{height:8px;background:var(--soft);border-radius:4px;overflow:hidden}
+.tally .barfg{height:100%;background:var(--muted)} .tally .ok .barfg{background:var(--ok)} .tally .bad .barfg{background:var(--bad)} .tally .cut .barfg{background:var(--cut)}
+.tally .n{font:600 13px var(--mono)}
+.tools{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:13px}
+.tops{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
+.tops a{color:var(--ink);text-decoration:none} .tops a:hover{text-decoration:underline}
+.row{border-top:1px solid var(--soft);scroll-margin-top:64px}
+.row:first-of-type{border-top:0}
+.row>summary{cursor:pointer;list-style:none;padding:7px 14px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}
+.row>summary:hover{background:var(--soft)}
+.row>summary .idx{font:600 13px var(--mono);min-width:34px}
+.row>summary .ans{font:13px var(--mono);max-width:38ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .body{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+.row[open]>summary{background:var(--soft)}
+.badges{display:flex;flex-wrap:wrap;gap:4px 8px;font:12px var(--mono);color:var(--muted)}
+.badges .top{color:var(--accent);font-weight:600}
+.badges .flag-bad{color:var(--bad);font-weight:600} .badges .flag-warn{color:var(--cut);font-weight:600}
+ol.steps{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:640px;overflow:auto}
+ol.steps li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:10px;background:var(--soft);border-radius:4px;padding:6px 10px}
+ol.steps li.chk-false{background:var(--bad-bg)} ol.steps li.prm-false{box-shadow:inset 3px 0 0 var(--cut)}
+ol.steps .sg{display:flex;flex-direction:column;gap:2px;font:11.5px var(--mono);color:var(--muted)}
+ol.steps .sg b{color:var(--ink)} ol.steps .chk-f{color:var(--bad);font-weight:600} ol.steps .chk-t{color:var(--ok)} ol.steps .prm-f{color:var(--cut);font-weight:600}
+ol.steps .st{font-size:13.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.pager{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+@media (max-width:760px){.side{grid-template-columns:1fr} ol.steps li{grid-template-columns:1fr} .tally{grid-template-columns:minmax(0,1fr) 60px max-content max-content}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1 id="h1"></h1>
+    <p class="muted" id="intro" style="max-width:76ch"></p>
+    <div class="meta" id="meta"></div>
+    <div id="extras" style="display:flex;flex-direction:column;gap:8px"></div>
+  </header>
+
+  <div class="bar">
+    <button type="button" id="prev" aria-label="Previous problem">←</button>
+    <select id="pick" aria-label="Problem"></select>
+    <button type="button" id="next" aria-label="Next problem">→</button>
+    <button type="button" id="hide-all" aria-pressed="false">Hide side-by-side reasoning</button>
+    <button type="button" id="raw" aria-pressed="false">Show maths as raw LaTeX</button>
+    <span class="legend"><span><span class="chip ok">✓</span> correct</span><span><span class="chip bad">✗</span> finished, wrong</span><span><span class="chip cut">✂</span> cut off, no answer</span><span id="legend-tie" hidden><span class="chip tie">=</span> tied vote</span></span>
+  </div>
+
+  <section style="display:flex;flex-direction:column;gap:10px">
+    <h2>Overview</h2>
+    <p class="muted" id="ov-help">Select a problem, or a mark to jump to that chain. ← and → step through problems.</p>
+    <div class="overview"><table id="overview"></table></div>
+  </section>
+
+  <main id="view"></main>
+</div>
+
+<script type="application/octet-stream" id="data">__DATA__</script>
+<script>
+// The data is gzipped JSON in base64 (see build_trace_report.py).
+(async () => {
+  const b64 = document.getElementById("data").textContent.trim();
+  const bin = atob(b64), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  start(await new Response(stream).json());
+})().catch(err => {
+  document.getElementById("view").innerHTML = `<p class="flag">This page could not unpack its data (${String(err)}). It needs a browser from 2023 or later.</p>`;
+});
+
+function start({meta, problems}) {
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const MARK = {ok: "✓", bad: "✗", cut: "✂", tie: "="};
+const $ = id => document.getElementById(id);
+const view = $("view");
+const state = {cur: -1, hide: false, raw: false};
+
+// ---- header -------------------------------------------------------------------------------
+$("eyebrow").textContent = `Page ${meta.page} · ${meta.title} · every chain`;
+$("h1").textContent = `Page ${meta.page} chains`;
+$("intro").textContent = meta.intro || "";
+$("meta").innerHTML = [...meta.facts, ["source", meta.source]]
+  .map(([k, v]) => `<span>${esc(k)} <b>${esc(v)}</b></span>`).join("");
+const extras = [];
+if (meta.forced_note) extras.push(`<p class="flag">This run appended a forced “Final answer: \\boxed{” after the cap. Each cut chain here shows only what the model wrote, with the forced answer noted beside it; tallies count such chains as cut off, so they can differ from the page's own vote.</p>`);
+(meta.extras || []).forEach(x => extras.push(`<details class="reason prompt"><summary>${esc(x.title)}</summary><pre class="trace" style="font:12.5px/1.55 var(--mono)">${esc(x.text)}</pre></details>`));
+$("extras").innerHTML = extras.join("");
+
+// ---- overview -----------------------------------------------------------------------------
+const cols = meta.columns;
+const firstOfGroup = cols.map((c, j) => j === 0 || cols[j - 1].group !== c.group);
+const spans = [];
+cols.forEach((c, j) => { if (firstOfGroup[j]) spans.push([c.group, 1]); else spans[spans.length - 1][1]++; });
+const plabel = (p, i) => `${i + 1}. ${meta.bands ? p.band + " · " : ""}${p.label}`;
+function cellHTML(c, i, j) {
+  const cls = firstOfGroup[j] ? "first" : "";
+  if (!c) return `<td class="${cls} muted">·</td>`;
+  const href = `#p${i + 1}-${c.href}`;
+  const txt = c.text != null ? c.text : MARK[c.kind];
+  return `<td class="${cls}"><a class="chip ${c.kind}${c.text != null ? " wide" : ""}" href="${href}" title="${esc(cols[j].group + " · " + cols[j].label)}">${esc(txt)}</a></td>`;
+}
+const foot = cols.map((_, j) => {
+  const cs = problems.map(p => p.cells[j]).filter(Boolean);
+  const judged = cs.some(c => ["ok", "bad", "cut", "tie"].includes(c.kind));
+  return judged ? cs.filter(c => c.kind === "ok").length : cs.filter(c => c.kind !== "none").length;
+});
+$("overview").innerHTML = `<thead><tr><th></th>${spans.map(([g, n]) => `<th class="first" colspan="${n}">${esc(g)}</th>`).join("")}</tr>
+<tr><th style="text-align:left">problem</th>${cols.map((c, j) => `<th class="${firstOfGroup[j] ? "first" : ""}">${esc(c.label)}</th>`).join("")}</tr></thead>
+<tbody>${problems.map((p, i) => `<tr data-i="${i}"><td class="p"><a href="#p${i + 1}">${esc(plabel(p, i))}</a><span class="lv">L${esc(p.level)}</span></td>${p.cells.map((c, j) => cellHTML(c, i, j)).join("")}</tr>`).join("")}</tbody>
+<tfoot><tr><td class="p muted" title="green marks per column; for a column of flags, how many problems have one">total</td>${foot.map((n, j) => `<td class="${firstOfGroup[j] ? "first" : ""} muted">${n}</td>`).join("")}</tr></tfoot>`;
+if (problems.some(p => p.cells.some(c => c && c.kind === "tie"))) $("legend-tie").hidden = false;
+$("pick").innerHTML = problems.map((p, i) => `<option value="${i}">${esc(plabel(p, i))}</option>`).join("");
+
+// ---- text helpers -------------------------------------------------------------------------
+function lastBoxedLine(text) {
+  const i = text.lastIndexOf("\\boxed{");
+  if (i < 0) return "";
+  const s = Math.max(text.lastIndexOf("\n\n", i), 0), e = text.indexOf("\n\n", i);
+  return text.slice(s, e > 0 ? e : text.length).trim();
+}
+function lastLines(text, chars = 280) {
+  const tail = text.slice(-chars), nl = tail.indexOf("\n");
+  return nl >= 0 && nl < tail.length - 1 ? tail.slice(nl + 1) : tail;
+}
+function withMarks(text, marks) {
+  if (!marks || !marks.length) return esc(text);
+  let out = "", at = 0;
+  for (const [a, b] of marks) { out += esc(text.slice(at, a)) + `<mark class="inj">${esc(text.slice(a, b))}</mark>`; at = b; }
+  return out + esc(text.slice(at));
+}
+const tokInfo = c => c.wrote == null ? "" : c.cap ? `wrote ${c.wrote} of ${c.cap} tokens` : `wrote ${c.wrote} tokens`;
+
+// ---- chains -------------------------------------------------------------------------------
+function traceHTML(c) {
+  const end = c.cut ? `<span class="cutmark">✂ out of tokens</span>` : "";
+  if (c.steps) {
+    return `<ol class="steps">${c.steps.map(([a, b, chk, prm, lab], k) => {
+      const cls = [chk === "false" ? "chk-false" : "", lab === "false" ? "prm-false" : ""].join(" ");
+      const ck = chk === "true" ? `<span class="chk-t">checker ✓</span>` : chk === "false" ? `<span class="chk-f">checker ✗</span>` : "";
+      const pm = prm == null ? "" : `<span class="${lab === "false" ? "prm-f" : ""}">PRM ${prm.toFixed(3)}</span>`;
+      return `<li class="${cls}"><div class="sg"><b>step ${k + 1}</b>${ck}${pm}</div><div class="st tex">${esc(c.trace.slice(a, b).trim())}</div></li>`;
+    }).join("")}</ol>${end}`;
+  }
+  return `<div class="trace tex">${withMarks(c.trace, c.marks)}${end}</div>`;
+}
+function outputHTML(c) {
+  const forced = c.forced ? `<span class="forced">The run then forced an answer after the cap: <span class="mono">${esc(c.forced[0] || "nothing")}</span> ${c.forced[1] ? "✓" : "✗"}. It is not the model's own and is not counted here.</span>` : "";
+  if (c.kind === "cut") {
+    return `<div class="output cut"><span class="k">✂ No answer: cut off${c.cap ? ` at ${c.cap} tokens` : ""}</span>
+      <span class="small">Where it stopped:</span><span class="stated tex">${esc(lastLines(c.trace))}</span>${forced}</div>`;
+  }
+  const stated = lastBoxedLine(c.trace);
+  return `<div class="output ${c.kind}"><span class="k">${c.kind === "ok" ? "✓ Correct" : "✗ Wrong"}: answered <span class="mono" style="text-transform:none">${esc(c.answer || "nothing")}</span>${c.cut ? " (then cut off)" : ""}</span>
+    ${stated ? `<span class="stated tex">${esc(stated)}</span>` : ""}</div>`;
+}
+function infoHTML(c) {
+  return [tokInfo(c) + (tokInfo(c) ? " · " : "") + (c.cut ? "cut off" : "finished"),
+          c.same_as ? `(${esc(c.same_as)})` : "", c.note ? esc(c.note) : ""].filter(Boolean)
+    .map(s => `<span class="small">${s}</span>`).join("");
+}
+function sideChain(i, gi, ci, c) {
+  return `<article class="chain" id="p${i + 1}-g${gi}c${ci}">
+    <div class="chead"><span class="model">${esc(c.title)}</span><span class="chip ${c.kind}">${MARK[c.kind]}</span>${infoHTML(c)}</div>
+    <details class="reason"${state.hide ? "" : " open"}><summary>Reasoning trace</summary>${traceHTML(c)}</details>
+    ${outputHTML(c)}
+  </article>`;
+}
+function badges(c, tops) {
+  const b = [];
+  if (c.scores) for (const [j, v] of Object.entries(c.scores)) b.push(`<span class="${tops.has(j) ? "top" : ""}">${tops.has(j) ? "★ " : ""}${esc(j)} ${Number(v).toFixed(2)}</span>`);
+  if (c.flags) {
+    const f = c.flags;
+    if (f.checker) b.push(`<span class="flag-bad">checker ✗ ${f.checker} step${f.checker > 1 ? "s" : ""}, first ${f.checker_first + 1}</span>`);
+    else if (f.checkable) b.push(`<span>checker: ${f.checkable} checked, all hold</span>`);
+    if (f.prm) b.push(`<span class="flag-warn">PRM doubts ${f.prm} step${f.prm > 1 ? "s" : ""}, first ${f.prm_first + 1}</span>`);
+  }
+  return b.length ? `<span class="badges">${b.join("")}</span>` : "";
+}
+function pileRow(i, gi, ci, c, tops) {
+  const ans = c.kind === "cut" ? "cut off" : (c.answer || "nothing");
+  return `<details class="row" id="p${i + 1}-g${gi}c${ci}" data-ci="${ci}">
+    <summary><span class="chip ${c.kind}">${MARK[c.kind]}</span><span class="idx">${esc(c.title)}</span>
+      <span class="ans" title="${esc(ans)}">${esc(ans)}</span><span class="small">${tokInfo(c)}</span>${badges(c, tops)}</summary>
+    <div class="body">${c.same_as || c.note ? `<div class="chead">${[c.same_as && `(${esc(c.same_as)})`, c.note && esc(c.note)].filter(Boolean).map(s => `<span class="small">${s}</span>`).join("")}</div>` : ""}${traceHTML(c)}${outputHTML(c)}</div>
+  </details>`;
+}
+function tallyHTML(t) {
+  const max = Math.max(1, ...t.rows.map(r => r.n), t.cut);
+  const lead = t.rows[0], tie = t.rows.length > 1 && t.rows[1].n === lead.n;
+  const head = `${t.right} of ${t.n} chains right` + (lead ? ` · most common answer: ${tie ? "a tie" : `<span class="mono">${esc(lead.answer)}</span> (${lead.n}) ${lead.correct ? "✓" : "✗"}`}` : "");
+  const row = (label, n, kind, mark) => `<span class="a">${label}</span><span class="${kind}"><span class="barbg" style="display:block"><span class="barfg" style="display:block;width:${100 * n / max}%"></span></span></span><span class="n">${n}</span><span class="chip ${kind}">${mark}</span>`;
+  const answer = r => row(esc(r.answer), r.n, r.correct ? "ok" : "bad", r.correct ? "✓" : "✗");
+  // A hot pile can write dozens of answers once each; past the first few, those fold away.
+  const shown = t.rows.filter((r, k) => k < 6 || r.n > 1), rest = t.rows.slice(shown.length);
+  const fold = rest.length ? `<details class="reason"><summary>${rest.length} more answer${rest.length > 1 ? "s" : ""}, each written by one chain${rest.some(r => r.correct) ? `, ${rest.filter(r => r.correct).length} of them right` : ""}</summary><div class="tally" style="margin-top:6px">${rest.map(answer).join("")}</div></details>` : "";
+  return `<p style="font-size:14px">${head}</p><div class="tally">${shown.map(answer).join("")}${t.cut ? row("cut off, no answer", t.cut, "cut", "✂") : ""}</div>${fold}`;
+}
+const sortLabel = k => k === "checker" ? "checker flags first" : k === "prm" ? "PRM doubts first" : `${k}'s score, high first`;
+function pileHTML(i, gi, g) {
+  const topsBy = new Map();
+  (g.tops || []).forEach(t => { if (!topsBy.has(t.chain)) topsBy.set(t.chain, new Set()); topsBy.get(t.chain).add(t.judge); });
+  const tops = g.tops && g.tops.length ? `<div class="tops"><span class="small">Highest-scored of these ${g.chains.length}:</span>${g.tops.map(t => `<a href="#p${i + 1}-g${gi}c${t.chain}">${esc(t.judge)} → ${esc(g.chains[t.chain].title)} <span class="chip ${t.kind}">${MARK[t.kind]}</span></a>`).join("")}</div>` : "";
+  const sorts = g.sorts ? `<label>Order <select data-sort="${gi}"><option value="">sample order</option>${g.sorts.map(k => `<option value="${esc(k)}">${esc(sortLabel(k))}</option>`).join("")}</select></label>` : "";
+  return `<div class="pile"><div class="pilehead">${g.tally ? tallyHTML(g.tally) : ""}${tops}
+      <div class="tools"><button type="button" data-openall="${gi}">Open every chain</button>${sorts}</div></div>
+    <div class="rows" id="rows-${gi}">${g.chains.map((c, ci) => pileRow(i, gi, ci, c, topsBy.get(ci) || new Set())).join("")}</div></div>`;
+}
+function promptHTML(pr) {
+  if (!pr) return "";
+  let sys = "";
+  if (Array.isArray(pr.system)) sys = `<div><p class="role">System message</p><div class="sysrow">${pr.system.map(([w, t]) => `<span class="mono">${esc(w)}</span><span class="prose">${esc(t)}</span>`).join("")}</div></div>`;
+  else if (pr.system) sys = `<div><p class="role">System message</p><p class="prose">${esc(pr.system)}</p></div>`;
+  return `<div class="prompt">${sys}<div><p class="role">User message (the prompt)</p><div class="prose tex">${esc(pr.user)}</div></div>
+    ${pr.raw ? `<details class="reason"><summary>Exactly as sent, with the chat markup</summary><pre class="trace" style="font:12.5px/1.55 var(--mono)">${esc(pr.raw)}</pre></details>` : ""}</div>`;
+}
+function groupHTML(i, gi, g) {
+  const body = g.layout === "pile" ? pileHTML(i, gi, g)
+    : `<div class="side" style="--cols:${Math.min(g.chains.length, 3)}">${g.chains.map((c, ci) => sideChain(i, gi, ci, c)).join("")}</div>`;
+  return `<section class="group" id="p${i + 1}-g${gi}"><h3>${esc(g.title)}${g.sub ? `<span class="sub">${esc(g.sub)}</span>` : ""}</h3>${promptHTML(g.prompt)}${body}</section>`;
+}
+function problemHTML(i) {
+  const p = problems[i];
+  const notes = (p.notes || []).map(n => `<p class="note ${n.kind}">${esc(n.text)} <span class="mono">${esc(n.answer)}</span> ${n.kind === "ok" ? "✓" : "✗"}</p>`).join("");
+  return `<section class="problem" id="p${i + 1}">
+    <div class="phead"><h2>${esc(plabel(p, i))}</h2><span class="eyebrow">level ${esc(p.level)} · ${esc(p.subject)}</span>
+      <span class="eyebrow">reference answer <span class="mono" style="text-transform:none">${esc(p.reference)}</span></span></div>
+    ${notes}${promptHTML(p.prompt)}
+    ${p.groups.map((g, gi) => groupHTML(i, gi, g)).join("")}
+    <div class="pager"><button type="button" data-go="${i - 1}"${i === 0 ? " disabled" : ""}>← ${i > 0 ? esc(plabel(problems[i - 1], i - 1)) : ""}</button>
+      <button type="button" data-go="${i + 1}"${i === problems.length - 1 ? " disabled" : ""}>${i < problems.length - 1 ? esc(plabel(problems[i + 1], i + 1)) : ""} →</button></div>
+  </section>`;
+}
+
+// ---- maths: typeset only what is on screen, and only once -------------------------------
+const src = new WeakMap();
+let queue = Promise.resolve();
+function typeset(root) {
+  if (state.raw || !window.MathJax || !MathJax.typesetPromise) return;
+  const els = [...root.querySelectorAll(".tex")].filter(e => !e.dataset.done && !e.closest("details:not([open])"));
+  if (!els.length) return;
+  els.forEach(e => { src.set(e, e.innerHTML); e.dataset.done = "1"; });
+  queue = queue.then(() => MathJax.typesetPromise(els)).catch(() => {});
+}
+window.typesetView = () => typeset(view);
+view.addEventListener("toggle", e => { if (e.target.open) typeset(e.target); }, true);
+
+// ---- navigation ---------------------------------------------------------------------------
+function show(i) {
+  if (i === state.cur) return;
+  if (window.MathJax && MathJax.typesetClear) MathJax.typesetClear([view]);
+  state.cur = i;
+  view.innerHTML = problemHTML(i);
+  $("pick").value = String(i);
+  $("prev").disabled = i === 0; $("next").disabled = i === problems.length - 1;
+  document.querySelectorAll("#overview tbody tr").forEach(tr => tr.classList.toggle("current", +tr.dataset.i === i));
+  typeset(view);
+}
+function route() {
+  const m = /^#p(\d+)(?:-(g\d+(?:c\d+)?))?$/.exec(location.hash);
+  const i = m ? Math.min(Math.max(+m[1] - 1, 0), problems.length - 1) : 0;
+  const fresh = i !== state.cur;
+  show(i);
+  document.querySelectorAll(".target").forEach(e => e.classList.remove("target"));
+  const el = m && m[2] ? document.getElementById(`p${i + 1}-${m[2]}`) : (m && fresh ? view : null);
+  if (!el) return;
+  if (el.tagName === "DETAILS") el.open = true;
+  if (el !== view) el.classList.add("target");
+  el.scrollIntoView({block: "start"});
+}
+const go = i => { if (i >= 0 && i < problems.length) location.hash = `#p${i + 1}`; };
+addEventListener("hashchange", route);
+$("pick").addEventListener("change", e => go(+e.target.value));
+$("prev").addEventListener("click", () => go(state.cur - 1));
+$("next").addEventListener("click", () => go(state.cur + 1));
+addEventListener("keydown", e => {
+  if (e.altKey || e.ctrlKey || e.metaKey || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if (e.key === "ArrowLeft") go(state.cur - 1);
+  if (e.key === "ArrowRight") go(state.cur + 1);
+});
+view.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.go != null) go(+b.dataset.go);
+  if (b.dataset.openall != null) {
+    const rows = [...document.querySelectorAll(`#rows-${b.dataset.openall} > details`)];
+    const open = !rows.every(d => d.open);
+    rows.forEach(d => { d.open = open; });
+    b.textContent = open ? "Close every chain" : "Open every chain";
+  }
+});
+view.addEventListener("change", e => {
+  const s = e.target.closest("select[data-sort]");
+  if (!s) return;
+  const gi = +s.dataset.sort, g = problems[state.cur].groups[gi], k = s.value;
+  const val = c => !k ? 0 : k === "checker" ? -(c.flags?.checker || 0) : k === "prm" ? -(c.flags?.prm || 0)
+    : -((c.scores || {})[k] ?? -Infinity);
+  const box = $(`rows-${gi}`);
+  [...box.children].sort((a, b) => val(g.chains[+a.dataset.ci]) - val(g.chains[+b.dataset.ci]) || a.dataset.ci - b.dataset.ci)
+    .forEach(el => box.appendChild(el));
+});
+
+// ---- controls -----------------------------------------------------------------------------
+$("hide-all").addEventListener("click", e => {
+  state.hide = !state.hide;
+  e.target.setAttribute("aria-pressed", String(state.hide));
+  e.target.textContent = state.hide ? "Show side-by-side reasoning" : "Hide side-by-side reasoning";
+  view.querySelectorAll(".chain details.reason").forEach(d => { d.open = !state.hide; });
+});
+$("raw").addEventListener("click", e => {
+  state.raw = !state.raw;
+  e.target.setAttribute("aria-pressed", String(state.raw));
+  document.body.classList.toggle("raw", state.raw);
+  if (state.raw) {
+    if (window.MathJax && MathJax.typesetClear) MathJax.typesetClear([view]);
+    view.querySelectorAll(".tex[data-done]").forEach(el => { if (src.has(el)) el.innerHTML = src.get(el); delete el.dataset.done; });
+  } else typeset(view);
+});
+if (!problems.some(p => p.groups.some(g => g.layout === "side"))) $("hide-all").hidden = true;
+
+route();
+}
+</script>
+</body>
+</html>
