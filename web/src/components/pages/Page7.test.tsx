@@ -11,6 +11,12 @@ import { PAGE7, chainsFor, foldTrace, tidyMath } from "@/lib/page07";
  * spec's way.
  */
 describe("Page 7 (frequency voting) component", () => {
+  /** Figure 2's N control is a rule on the chart, moved here with its own keys. */
+  const nControl = () => screen.getByRole("slider", { name: /# of sampled chains/ });
+  const setVoters = (i: number) => {
+    fireEvent.keyDown(nControl(), { key: "Home" });
+    for (let k = 0; k < i; k++) fireEvent.keyDown(nControl(), { key: "ArrowRight" });
+  };
   it("quotes the headline against BARE CHAIN OF THOUGHT, not against a sampled chain", () => {
     render(<Page7 />);
     // 43% is page 5's `bare` and page 6's top rung. If the page ever quotes the
@@ -34,9 +40,7 @@ describe("Page 7 (frequency voting) component", () => {
     const one = PAGE7.figure2.hot.points[0];
     expect(one.n).toBe(1);
     expect(one.accuracy).toBeGreaterThan(PAGE7.figure2.cold.points[0].accuracy);
-    fireEvent.change(screen.getByRole("slider", { name: /chains the vote may see/i }), {
-      target: { value: "0" },
-    });
+    setVoters(0);
     const live = document.querySelector("p[aria-live='polite']")!;
     expect(live.textContent).toMatch(/no vote yet/);
     expect(live.textContent).toMatch(/above one greedy chain/);
@@ -187,7 +191,7 @@ describe("Page 7 (frequency voting) component", () => {
     // "in the pile" / "the vote" / "T = 0" is how the notebook talks. A reader needs
     // to be told which line is what the model produced and which is what the vote kept.
     const chart = () => screen.getByRole("region", { name: /Accuracy against the number/ });
-    expect(chart().textContent).toMatch(/the vote returns\s*the answer/i);
+    expect(chart().textContent).toMatch(/majority\s*voting/i);
     expect(chart().textContent).toMatch(/one greedy\s*chain/i);
     fireEvent.click(screen.getByRole("button", { name: /Show what the vote threw away/ }));
     expect(chart().textContent).toMatch(/at least one\s*chain is right/i);
@@ -224,7 +228,7 @@ describe("Page 7 (frequency voting) component", () => {
   it("names the drawn lines the same way in the intro and on the chart", () => {
     render(<Page7 />);
     const intro = screen.getByText(/is the flat line, and the/).closest("p")!;
-    expect(intro.textContent).toMatch(/The vote returns the answer/);
+    expect(intro.textContent).toMatch(/Majority voting/);
     expect(intro.textContent).toMatch(/One greedy chain/);
     expect(intro.textContent).not.toMatch(/In the pile/);
   });
@@ -288,9 +292,7 @@ describe("Page 7 (frequency voting) component", () => {
     const widget = screen.getByRole("region", { name: /Accuracy against the number/ });
     expect(widget.textContent).toMatch(/ties/);
     const two = PAGE7.figure2.hot.points.findIndex((p) => p.n === 2);
-    fireEvent.change(screen.getByRole("slider", { name: /chains the vote may see/i }), {
-      target: { value: String(two) },
-    });
+    setVoters(two);
     const live = document.querySelector("p[aria-live='polite']")!;
     expect(live.textContent).toMatch(
       new RegExp(`${Math.round(PAGE7.figure2.hot.points[two].tie_rate * 100)}% of these votes tie`),
@@ -443,23 +445,37 @@ describe("Page 7 (frequency voting) component", () => {
    * axis. An interpolated readout here would be a simulation on a page whose
    * whole claim is that every number is measured.
    */
-  it("lets the reader set how many chains the vote sees", () => {
+  // The control lives on the chart and speaks the axis's own numbers. It used to be a
+  // separate slider whose labels were its positions (0 to 4) under an axis reading
+  // 1 to 16.
+  it("lets the reader set how many chains the vote sees, on the chart itself", () => {
     render(<Page7 />);
-    const dial = screen.getByRole("slider", { name: /chains the vote may see/i });
-    expect(dial).toHaveAttribute("min", "0");
-    expect(dial).toHaveAttribute("max", String(PAGE7.figure2.hot.points.length - 1));
+    const pts = PAGE7.figure2.hot.points;
+    const chart = screen.getByRole("region", { name: /Accuracy against the number/ });
+    expect(within(chart).getByRole("slider", { name: /# of sampled chains/ })).toBe(nControl());
+    expect(nControl()).toHaveAttribute("aria-valuemin", String(pts[0].n));
+    expect(nControl()).toHaveAttribute("aria-valuemax", String(pts[pts.length - 1].n));
     // opens on the finished result the prose above the chart quotes
-    expect(dial).toHaveValue(String(PAGE7.figure2.hot.points.length - 1));
+    expect(nControl()).toHaveAttribute("aria-valuenow", String(pts[pts.length - 1].n));
+    expect(chart.textContent).toContain("# of sampled chains");
+    // and the old separate slider is gone
+    expect(screen.getAllByRole("slider")).toHaveLength(1);
+    // every key lands on a measured N, never between two
+    for (const [i, p] of pts.entries()) {
+      setVoters(i);
+      expect(nControl()).toHaveAttribute("aria-valuenow", String(p.n));
+    }
+    fireEvent.keyDown(nControl(), { key: "End" });
+    expect(nControl()).toHaveAttribute("aria-valuenow", String(pts[pts.length - 1].n));
   });
 
   it("reads out only measured points of the run's own N axis", () => {
     render(<Page7 />);
     // Coverage is read out only while its line is drawn.
     fireEvent.click(screen.getByRole("button", { name: /Show what the vote threw away/ }));
-    const dial = screen.getByRole("slider", { name: /chains the vote may see/i });
     const live = document.querySelector("p[aria-live='polite']")!;
     for (const [i, p] of PAGE7.figure2.hot.points.entries()) {
-      fireEvent.change(dial, { target: { value: String(i) } });
+      setVoters(i);
       const text = live.textContent ?? "";
       expect(text).toMatch(new RegExp(`${Math.round(p.accuracy * 100)}%`));
       expect(text).toMatch(new RegExp(`${Math.round(p.coverage * 100)}%`));
@@ -474,16 +490,15 @@ describe("Page 7 (frequency voting) component", () => {
     render(<Page7 />);
     const pts = PAGE7.figure2.hot.points;
     const greedy = PAGE7.figure2.cold.points[0].accuracy;
-    const dial = screen.getByRole("slider", { name: /chains the vote may see/i });
     const live = document.querySelector("p[aria-live='polite']")!;
     const behind = pts.findIndex((p, i) => i > 0 && p.accuracy < greedy);
     expect(behind).toBeGreaterThan(0);
-    fireEvent.change(dial, { target: { value: String(behind) } });
+    setVoters(behind);
     expect(live.textContent).toMatch(/below one greedy chain/i);
     expect(live.textContent).toMatch(/tie/);
     const ahead = pts.findIndex((p, i) => i > 0 && p.accuracy > greedy);
-    fireEvent.change(dial, { target: { value: String(ahead) } });
+    setVoters(ahead);
     expect(live.textContent).toMatch(/above one greedy chain/i);
-    expect(live.textContent).not.toMatch(/sampled chain/);
+    expect(live.textContent).not.toMatch(/one sampled chain/);
   });
 });

@@ -120,13 +120,12 @@
  *     numbers.
  */
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
-import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE7,
@@ -159,6 +158,8 @@ const NOTEBOOK_SIZE = "3.1 MB";
    download on the top line. */
 const BENCHMARK = "MATH-500";
 const LEVELS = "levels 4 and 5";
+/** Figure 2's x axis, and the control that moves along it. */
+const N_LABEL = "# of sampled chains";
 
 /** Cited for the technique. Every number on this page is ours. */
 const REF = { wang: 1 } as const;
@@ -378,8 +379,24 @@ const IH = HGT - MARGIN.top - MARGIN.bottom;
  *
  * The handle steps in index, not in N: the axis is log-spaced and the reader
  * should get one measured point per step, never an interpolated one.
+ *
+ * The control is ON the chart: a rule the reader drags along the x axis, page 6's
+ * BudgetLine idiom. It used to be a separate slider under the chart whose tick
+ * labels were its indices (0 to 4) while the axis above read 1 to 16, so the two
+ * disagreed about the one thing they both showed. Grab anywhere on the plot; the
+ * rule snaps to a measured N. The handle is the keyboard target (arrows, Home,
+ * End), and KeyboardNav leaves a focused role="slider" alone.
  */
-function PileChart({ at, showLost }: { at: number; showLost: boolean }) {
+function PileChart({
+  at,
+  showLost,
+  onAt,
+}: {
+  at: number;
+  showLost: boolean;
+  onAt: (i: number) => void;
+}) {
+  const svgRef = useRef<SVGSVGElement | null>(null);
   const pts = F2.hot.points;
   const ns = pts.map((p) => p.n);
   const sel = pts[at];
@@ -389,6 +406,32 @@ function PileChart({ at, showLost }: { at: number; showLost: boolean }) {
     pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(get(p) * 100)}`).join(" ");
   const cold = F2.cold.points[0].accuracy;
   const last = pts[pts.length - 1];
+  // Snap a pointer to the nearest measured N, through the svg's own coordinates,
+  // because the chart scales to fit its column.
+  const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
+    if (e.type === "pointerdown") e.currentTarget.setPointerCapture?.(e.pointerId);
+    else if (!(e.buttons & 1)) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    const r = svg.getBoundingClientRect();
+    const local = (e.clientX - r.left) / ((r.width || W) / W) - MARGIN.left;
+    let best = 0;
+    for (let i = 1; i < ns.length; i++) {
+      if (Math.abs(x(ns[i]) - local) < Math.abs(x(ns[best]) - local)) best = i;
+    }
+    if (best !== at) onAt(best);
+  };
+  const onKey = (e: React.KeyboardEvent<SVGGElement>) => {
+    const by: Record<string, number> = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 };
+    let next: number | null = null;
+    if (e.key in by) next = at + by[e.key];
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = ns.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    next = Math.min(ns.length - 1, Math.max(0, next));
+    if (next !== at) onAt(next);
+  };
   // The shaded band: coverage along the top, the vote back along the bottom.
   const band =
     pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(p.coverage * 100)}`).join(" ") +
@@ -398,12 +441,14 @@ function PileChart({ at, showLost }: { at: number; showLost: boolean }) {
 
   return (
     <ChartFrame
-      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of chains the vote sees. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. The vote returns the answer on ${pct(last.accuracy)} over sixteen sampled chains.${showLost ? ` At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.` : ""}`}
+      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of sampled chains. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. Majority voting solves ${pct(last.accuracy)} over sixteen sampled chains.${showLost ? ` At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.` : ""}`}
       width={W}
       height={HGT}
       margin={MARGIN}
-      xLabel="chains the vote may see"
+      xLabel={N_LABEL}
       yLabel="solved (%)"
+      role="group"
+      svgRef={svgRef}
     >
       {[0, 25, 50, 75, 100].map((t) => (
         <g key={t}>
@@ -445,8 +490,8 @@ function PileChart({ at, showLost }: { at: number; showLost: boolean }) {
         <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy * 100)} r={3.4} className="fill-compute" />
       ))}
       <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute-ink text-[10px] font-semibold">
-        <tspan x={IW + 6} dy="0">the vote returns</tspan>
-        <tspan x={IW + 6} dy="11">the answer</tspan>
+        <tspan x={IW + 6} dy="0">majority</tspan>
+        <tspan x={IW + 6} dy="11">voting</tspan>
       </text>
 
       <line x1={0} x2={IW} y1={y(cold * 100)} y2={y(cold * 100)} className="stroke-ink-muted" strokeWidth={1.4} strokeDasharray="2 3" />
@@ -461,31 +506,50 @@ function PileChart({ at, showLost }: { at: number; showLost: boolean }) {
         </text>
       ) : null}
 
-      {/* The reader's position on the axis. Drawn last so it sits above the band
-          and both lines, and drawn as a rule plus two rings rather than a
-          highlight, so it reads as "here" and not as a sixth quantity. */}
-      <line
-        x1={x(sel.n)}
-        x2={x(sel.n)}
-        y1={0}
-        y2={IH}
-        className="stroke-ink"
-        strokeWidth={1}
-        strokeDasharray="3 3"
-        data-testid="voters-marker"
+      {/* Grab anywhere on the plot rather than having to hit the rule. It sits over
+          the marks, so a drag that starts on a datum still moves N. */}
+      <rect
+        x={0}
+        y={0}
+        width={IW}
+        height={IH}
+        fill="transparent"
+        className="cursor-ew-resize"
+        onPointerDown={onPointer}
+        onPointerMove={onPointer}
       />
-      {showLost ? (
-        <circle cx={x(sel.n)} cy={y(sel.coverage * 100)} r={5} className="fill-none stroke-wrong" strokeWidth={2} />
-      ) : null}
-      <circle cx={x(sel.n)} cy={y(sel.accuracy * 100)} r={5} className="fill-none stroke-compute" strokeWidth={2} />
-      <text
-        x={x(sel.n)}
-        y={-8}
-        textAnchor="middle"
-        className="fill-ink text-[10px] font-semibold"
+      {/* The reader's position on the axis, and the control that moves it. Drawn last
+          so it sits above the band and both lines; a rule plus rings, so it reads as
+          "here" and not as another quantity. */}
+      <g
+        role="slider"
+        tabIndex={0}
+        aria-label={N_LABEL}
+        aria-valuemin={ns[0]}
+        aria-valuemax={ns[ns.length - 1]}
+        aria-valuenow={sel.n}
+        aria-valuetext={sel.n === 1 ? "1 sampled chain" : `${sel.n} sampled chains`}
+        onKeyDown={onKey}
+        className="cursor-ew-resize focus:outline-none [&:focus-visible>rect]:stroke-ink [&:focus-visible>rect]:stroke-2"
+        data-testid="voters-marker"
       >
-        {sel.n === 1 ? "1 chain" : `${sel.n} chains`}
-      </text>
+        <line x1={x(sel.n)} x2={x(sel.n)} y1={-6} y2={IH} className="stroke-compute" strokeWidth={1.5} />
+        {showLost ? (
+          <circle cx={x(sel.n)} cy={y(sel.coverage * 100)} r={5} className="fill-none stroke-wrong" strokeWidth={2} />
+        ) : null}
+        <circle cx={x(sel.n)} cy={y(sel.accuracy * 100)} r={5} className="fill-none stroke-compute" strokeWidth={2} />
+        {/* The handle says "this moves", and it is the focus target, so keyboard and
+            pointer readers look at one object. */}
+        <rect x={x(sel.n) - 5} y={-14} width={10} height={10} rx={2} className="fill-compute" />
+        <text
+          x={sel.n === ns[ns.length - 1] ? x(sel.n) - 9 : x(sel.n) + 9}
+          y={-5}
+          textAnchor={sel.n === ns[ns.length - 1] ? "end" : "start"}
+          className="fill-compute text-[10px] font-semibold tabular-nums"
+        >
+          {sel.n === 1 ? "1 chain" : `${sel.n} chains`}
+        </text>
+      </g>
     </ChartFrame>
   );
 }
@@ -895,7 +959,7 @@ export function Page7() {
             sampling is off, which is pure chain-of-thought, also known as greedy decoding: what
             pages 5 and 6 ran. Then every chain is the same chain, so asking {F1.n_chains} times is
             asking the same person {F1.n_chains} times, and you have only heard one opinion.{" "}
-            <strong className="text-ink">The vote returns the answer</strong> is the line that
+            <strong className="text-ink">Majority voting</strong> is the line that
             climbs: the answer the most chains agreed on, sampled at T = {F2.hot.temperature}.
           </p>
           {/* The widget is the chart and its controls. Every sentence that used to sit
@@ -905,23 +969,17 @@ export function Page7() {
             aria-label="Accuracy against the number of chains"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <PileChart at={voterIx} showLost={showLost} />
+            <PileChart
+              at={voterIx}
+              showLost={showLost}
+              onAt={(i) => {
+                recordInteraction(PAGE_N);
+                setVoterIx(i);
+              }}
+            />
             {/* Every value below is a measured point on the run's own N axis; the
-                handle steps between them and never lands off one. */}
+                rule on the chart steps between them and never lands off one. */}
             <div className="flex flex-col gap-2">
-              <Slider
-                label="chains the vote may see"
-                min={0}
-                max={F2.hot.points.length - 1}
-                step={1}
-                value={voterIx}
-                ticks={F2.hot.points.map((_, i) => i)}
-                format={(i) => `${F2.hot.points[i].n}`}
-                onChange={(i) => {
-                  recordInteraction(PAGE_N);
-                  setVoterIx(i);
-                }}
-              />
               {/* One sentence, measured against the line the reader can see. It used
                   to compare against one SAMPLED chain, which the chart does not draw. */}
               <p aria-live="polite" className="text-sm text-ink">
@@ -933,7 +991,7 @@ export function Page7() {
                   </>
                 ) : (
                   <>
-                    With {voters.n} chains, the vote solves{" "}
+                    With {voters.n} sampled chains, majority voting solves{" "}
                     <strong className="font-mono">{pct(voters.accuracy)}</strong>,{" "}
                     <strong>{pointsVsGreedy(voters.accuracy)}</strong>
                     {voters.accuracy < cold ? `: ${pct(voters.tie_rate)} of these votes tie.` : "."}
