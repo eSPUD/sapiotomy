@@ -54,12 +54,13 @@ export default function Home() {
           {acts.map((act) => (
             <div
               key={act}
-              className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-5 shadow-lg shadow-ink/10 transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-ink/15"
+              className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface shadow-xl shadow-ink/15"
             >
-              <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-ink">
+              {/* The act's name on a band of the accent, across the card's top. */}
+              <h2 className="bg-compute px-5 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-canvas">
                 Act {act} · {ACTS[act].title}
               </h2>
-              <ol className="flex flex-col gap-2.5">
+              <ol className="flex flex-col gap-2.5 p-5">
                 {STORY_PAGES.filter((p) => p.act === act).map((p) => (
                   <li key={p.n}>
                     <Link
@@ -69,7 +70,7 @@ export default function Home() {
                       <span className="tabular-nums text-ink-muted">
                         {String(p.n).padStart(2, "0")}
                       </span>
-                      <span className="text-ink group-hover:underline">{p.title}</span>
+                      <span className="text-ink group-hover:font-semibold group-focus-visible:font-semibold">{p.title}</span>
                     </Link>
                   </li>
                 ))}
