@@ -211,74 +211,87 @@ export function Page1() {
           <p className="leading-relaxed text-ink">
             Let&apos;s take the example of multiplication to illustrate the two systems.
           </p>
+          {/* One terminal per system, side by side: a dark pane in the code face,
+              like the console under section 2's grid. Each has a title bar (the
+              system and its clock), the problem as a prompt, one line per step,
+              and the answer at the foot. */}
           <div className="grid gap-4 md:grid-cols-2">
             {/* System 1 — fast */}
-            <section aria-label="System 1" className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-              <div className="flex items-baseline justify-between gap-2">
-                <h3 className="text-sm font-semibold font-eyebrow uppercase tracking-wide text-compute-ink">System 1 · fast</h3>
-                <span role="timer" aria-label="System 1 time" className="rounded-full border border-grid px-2.5 py-0.5 font-mono text-xs tabular-nums text-ink-muted">
+            <section aria-label="System 1" className="flex flex-col overflow-hidden rounded-lg bg-ink font-code">
+              <div className="flex items-center justify-between gap-2 border-b border-canvas/10 px-4 py-2">
+                <h3 className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-compute">System 1 · fast</h3>
+                <span role="timer" aria-label="System 1 time" className="text-xs tabular-nums text-canvas/60">
                   {started ? fmt(s1Ms) : "not started"}
                 </span>
               </div>
-              <p className="font-mono text-3xl text-ink">{ex.fast.prompt}</p>
-              {/* System 1's whole workings: one step, in the same slot where
-                  System 2 stacks three, so the counts sit side by side. */}
-              <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
-                {s1Step >= 1 ? (
-                  <li className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">Step #1</span>
-                    <span>
-                      {ex.fast.prompt} = {ex.fast.answer}
-                    </span>
-                  </li>
-                ) : (
-                  <StepSlot />
-                )}
-                {/* Blank rows hold the height of System 2's extra steps, so the two
-                    panels keep the same vertical rhythm. */}
-                {ex.slow.steps.slice(1).map((_, i) => (
-                  <StepSlot key={`spacer-${i}`} />
-                ))}
-              </ol>
-              {/* The answer slot keeps its height before the reveal, so the panels do not jump. */}
-              <p
-                className={`mt-auto font-mono text-5xl font-bold tabular-nums text-compute-ink ${s1Done ? "" : "invisible"}`}
-                aria-hidden={!s1Done}
-              >
-                {ex.fast.answer}
-              </p>
+              <div className="flex flex-1 flex-col gap-3 px-4 py-3">
+                <p className="text-2xl text-canvas">
+                  <span aria-hidden="true" className="mr-2 text-canvas/40">&gt;</span>
+                  {ex.fast.prompt}
+                </p>
+                {/* System 1's whole workings: one step, in the same slot where
+                    System 2 stacks three, so the counts sit side by side. */}
+                <ol className="flex flex-col gap-1.5 text-sm text-canvas">
+                  {s1Step >= 1 ? (
+                    <li className="flex flex-wrap items-baseline gap-2">
+                      <span className="text-xs text-canvas/50">› step 1</span>
+                      <span>
+                        {ex.fast.prompt} = {ex.fast.answer}
+                      </span>
+                    </li>
+                  ) : (
+                    <StepSlot />
+                  )}
+                  {/* Blank rows hold the height of System 2's extra steps, so the two
+                      panels keep the same vertical rhythm. */}
+                  {ex.slow.steps.slice(1).map((_, i) => (
+                    <StepSlot key={`spacer-${i}`} />
+                  ))}
+                </ol>
+                {/* The answer slot keeps its height before the reveal, so the panels
+                    do not jump. The "=" is drawn by CSS, so the text is the answer alone. */}
+                <p
+                  className={`mt-auto text-4xl font-semibold tabular-nums text-compute before:mr-2 before:text-canvas/40 before:content-['='] ${s1Done ? "" : "invisible"}`}
+                  aria-hidden={!s1Done}
+                >
+                  {ex.fast.answer}
+                </p>
+              </div>
             </section>
 
             {/* System 2 — slow */}
-            <section aria-label="System 2" className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-              <div className="flex items-baseline justify-between gap-2">
-                <h3 className="text-sm font-semibold font-eyebrow uppercase tracking-wide text-wrong-ink">System 2 · slow</h3>
-                <span role="timer" aria-label="System 2 time" className="rounded-full border border-grid px-2.5 py-0.5 font-mono text-xs tabular-nums text-ink-muted">
+            <section aria-label="System 2" className="flex flex-col overflow-hidden rounded-lg bg-ink font-code">
+              <div className="flex items-center justify-between gap-2 border-b border-canvas/10 px-4 py-2">
+                <h3 className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-wrong">System 2 · slow</h3>
+                <span role="timer" aria-label="System 2 time" className="text-xs tabular-nums text-canvas/60">
                   {started ? fmt(s2Ms) : "not started"}
                 </span>
               </div>
-              <p className="font-mono text-3xl text-ink">{ex.slow.prompt}</p>
-              <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
-                {/* Every row is laid out from the start, so the widget never grows. */}
-                {ex.slow.steps.map((line, i) =>
-                  i < s2Step ? (
-                    <li key={i} className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
-                        Step #{i + 1}
-                      </span>
-                      <span>{line}</span>
-                    </li>
-                  ) : (
-                    <StepSlot key={i} />
-                  ),
-                )}
-              </ol>
-              <p
-                className={`mt-auto font-mono text-5xl font-bold tabular-nums text-wrong-ink ${s2Done ? "" : "invisible"}`}
-                aria-hidden={!s2Done}
-              >
-                {ex.slow.answer}
-              </p>
+              <div className="flex flex-1 flex-col gap-3 px-4 py-3">
+                <p className="text-2xl text-canvas">
+                  <span aria-hidden="true" className="mr-2 text-canvas/40">&gt;</span>
+                  {ex.slow.prompt}
+                </p>
+                <ol className="flex flex-col gap-1.5 text-sm text-canvas">
+                  {/* Every row is laid out from the start, so the widget never grows. */}
+                  {ex.slow.steps.map((line, i) =>
+                    i < s2Step ? (
+                      <li key={i} className="flex flex-wrap items-baseline gap-2">
+                        <span className="text-xs text-canvas/50">› step {i + 1}</span>
+                        <span>{line}</span>
+                      </li>
+                    ) : (
+                      <StepSlot key={i} />
+                    ),
+                  )}
+                </ol>
+                <p
+                  className={`mt-auto text-4xl font-semibold tabular-nums text-wrong before:mr-2 before:text-canvas/40 before:content-['='] ${s2Done ? "" : "invisible"}`}
+                  aria-hidden={!s2Done}
+                >
+                  {ex.slow.answer}
+                </p>
+              </div>
             </section>
           </div>
           <div className="flex items-center justify-between gap-2">

@@ -165,7 +165,7 @@ export function SystemSort() {
                 }`}
               >
                 <span aria-hidden="true" className="shrink-0 text-canvas/40">
-                  {l.tone === "idle" ? "$" : "›"}
+                  {l.tone === "idle" ? ">" : "›"}
                 </span>
                 <span className="min-w-0">{l.text}</span>
               </li>
