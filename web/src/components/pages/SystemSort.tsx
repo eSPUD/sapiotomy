@@ -4,19 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { SORTING_ITEMS, type SortItem } from "@/lib/authored";
 import { useStore } from "@/store/useStore";
 
-type Zone = "fast" | "slow";
-const TOTAL = SORTING_ITEMS.length;
-const label = (z: Zone) => (z === "fast" ? "System 1 · fast" : "System 2 · slow");
-const byId = (id: string) => SORTING_ITEMS.find((x) => x.id === id);
+const SLOW_TOTAL = SORTING_ITEMS.filter((x) => x.system === "slow").length;
+
+type LogLine = { tone: "idle" | "right" | "wrong" | "done" | "note"; text: string };
+const START: LogLine = { tone: "idle", text: "pick a task to see whether it needs System 2" };
 
 /**
- * Sort six everyday tasks into System 1 vs System 2. Drag a chip into a bin, or
- * select it and press "Place here" (keyboard path). Correct drops lock in green;
- * wrong drops flash red and bounce back. A reward lands at 6/6.
+ * Pick the System 2 tasks out of nine everyday ones. The reader only clicks.
+ * Every box starts gray; a System 2 task turns brown (the accent) and a System 1
+ * task turns dark gray, each marked with its system, so every click teaches and
+ * nothing is retried.
+ * The reader is never told how many System 2 tasks there are (no counter):
+ * deciding when you are done is part of the exercise. The reward lands when
+ * every System 2 task is found.
  */
 export function SystemSort() {
   const recordInteraction = useStore((s) => s.recordInteraction);
-  // The pool is shuffled once per visit. It has to start in the authored order:
+  // The tasks are shuffled once per visit. They start in the authored order:
   // randomising during render would make the server and client markup differ and
   // trip hydration, so the shuffle waits for the effect.
   const [order, setOrder] = useState<readonly SortItem[]>(SORTING_ITEMS);
@@ -31,136 +35,176 @@ export function SystemSort() {
     });
   }, []);
 
-  const [placed, setPlaced] = useState<Record<string, Zone>>({});
-  const [selected, setSelected] = useState<string | null>(null);
-  const [wrongId, setWrongId] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState<Zone | null>(null);
-  const [announce, setAnnounce] = useState("");
-  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [picked, setPicked] = useState<Record<string, true>>({});
+  // The output console under the grid, set as a terminal: a running log of every
+  // pick, newest at the bottom. It is the live region, so each line is read out.
+  const [log, setLog] = useState<LogLine[]>([START]);
+  const logRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = logRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [log]);
 
-  useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
+  const found = SORTING_ITEMS.filter((x) => x.system === "slow" && picked[x.id]).length;
+  const done = found === SLOW_TOTAL;
 
-  const done = Object.keys(placed).length === TOTAL;
-  const pool = order.filter((x) => !placed[x.id]);
+  // Start over: clear every pick and reshuffle, so a second try is a fresh grid.
+  // Always available, even before a pick (it then just reshuffles the tasks).
+  const reset = () => {
+    setPicked({});
+    setOrder((items) => {
+      const next = [...items];
+      for (let i = next.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [next[i], next[j]] = [next[j], next[i]];
+      }
+      return next;
+    });
+    setLog([START]);
+  };
 
-  const attempt = (id: string, zone: Zone) => {
-    const item = byId(id);
-    if (!item || placed[id]) return;
+  const pick = (item: SortItem) => {
+    if (picked[item.id] || done) return;
     recordInteraction(1);
-    setSelected(null);
-    if (item.system === zone) {
-      setPlaced((p) => ({ ...p, [id]: zone }));
-      setAnnounce(`Correct. "${item.text}" is ${label(zone)}.`);
-    } else {
-      setWrongId(id);
-      setAnnounce(`Not quite. Try the other side.`);
-      if (flashTimer.current) clearTimeout(flashTimer.current);
-      flashTimer.current = setTimeout(() => setWrongId(null), 800);
-    }
+    setPicked((p) => ({ ...p, [item.id]: true }));
+    const right = item.system === "slow";
+    setLog((l) => {
+      const next: LogLine[] = [
+        ...l,
+        right
+          ? { tone: "right", text: `${item.text} → System 2 ✓` }
+          : { tone: "wrong", text: `${item.text} → System 1, not this one` },
+      ];
+      if (right && found + 1 === SLOW_TOTAL) {
+        next.push(
+          { tone: "done", text: "That is every System 2 task." },
+          { tone: "note", text: "You just ran System 2 to tell System 1 from System 2." },
+        );
+      }
+      return next;
+    });
   };
 
   return (
-    <section aria-label="Sort the questions into System 1 or System 2" className="flex flex-col gap-4">
-      <div className="flex justify-end">
-        <span className="font-mono text-sm text-ink-muted">
-          {Object.keys(placed).length} / {TOTAL} sorted
-        </span>
-      </div>
+    <section aria-label="Pick the System 2 tasks" className="flex flex-col gap-4">
+      <p className="text-ink">
+        Click every task that needs <strong>System 2</strong>, the slow, deliberate one.
+      </p>
 
-      {/* The pool */}
-      <div className="flex min-h-[2.5rem] flex-wrap gap-2" aria-label="Questions still to sort">
-        {pool.length === 0 ? (
-          <p className="text-sm text-ink-muted">All sorted.</p>
-        ) : (
-          pool.map((x) => {
-            const isSel = selected === x.id;
-            const isWrong = wrongId === x.id;
+      {/* The grid and its output console share one box. */}
+      <div className="flex flex-col gap-3 rounded-xl border border-grid p-2.5 sm:p-4">
+        {/* Three rows of three (two columns on a phone). Every box is the same
+          height: auto-rows-fr sizes all rows to the tallest, and the minimum height
+          already has room for a picked box's label line, so a pick never changes
+          the grid. Text sits centred, with the label joining it under it. */}
+        <div className="grid auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3">
+          {order.map((x) => {
+            const isPicked = !!picked[x.id];
+            const right = isPicked && x.system === "slow";
+            // Once every System 2 task is found, the System 1 tasks show their colour
+            // too, picked or not, so the finished grid is the full answer.
+            const missed = (isPicked || done) && x.system === "fast";
             return (
               <button
                 key={x.id}
                 type="button"
-                draggable
-                aria-pressed={isSel}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("text/plain", x.id);
-                  setSelected(x.id);
-                }}
-                onClick={() => setSelected(isSel ? null : x.id)}
-                className={`rounded-full border border-compute px-3 py-1.5 text-sm text-canvas ${
-                  isWrong
-                    ? "border-wrong bg-wrong"
-                    : isSel
-                      ? "bg-compute ring-2 ring-ink"
-                      : "bg-compute hover:opacity-90"
+                onClick={() => pick(x)}
+                disabled={isPicked || done}
+                aria-pressed={isPicked}
+                className={`relative flex h-full min-h-[6rem] flex-col items-center justify-center rounded-lg border px-6 py-2 sm:px-8 text-center text-sm transition-colors sm:min-h-[4.75rem] ${
+                  right
+                    ? "border-compute bg-compute text-ink"
+                    : missed
+                      ? "border-ink-muted bg-ink-muted text-canvas"
+                      : "border-grid bg-surface-raised text-ink hover:border-ink-faint hover:bg-grid"
                 }`}
               >
-                {x.text}
+                {/* A right pick carries a check in a circle at its top-left corner. */}
+                {right ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute left-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-canvas text-[10px] font-bold text-compute-ink sm:left-2 sm:top-2 sm:h-5 sm:w-5 sm:text-xs"
+                  >
+                    ✓
+                  </span>
+                ) : null}
+                <span>{x.text}</span>
+                {right ? <span className="text-xs">System 2</span> : null}
+                {missed ? <span className="text-xs">System 1</span> : null}
               </button>
             );
-          })
-        )}
-      </div>
-
-      {/* The two bins */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {(["fast", "slow"] as Zone[]).map((z) => {
-          const here = SORTING_ITEMS.filter((x) => placed[x.id] === z);
-          const accentText = z === "fast" ? "text-compute" : "text-wrong";
-          const accentBtn = z === "fast" ? "bg-compute" : "bg-wrong";
-          return (
-            <div
-              key={z}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(z);
-              }}
-              onDragLeave={() => setDragOver((d) => (d === z ? null : d))}
-              onDrop={(e) => {
-                e.preventDefault();
-                const id = e.dataTransfer.getData("text/plain");
-                setDragOver(null);
-                if (id) attempt(id, z);
-              }}
-              className={`flex min-h-[7rem] flex-col gap-2 rounded-lg border border-grid bg-surface p-4 ${
-                dragOver === z ? "outline outline-2 outline-compute" : ""
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <h3 className={`text-sm font-semibold uppercase tracking-wide ${accentText}`}>{label(z)}</h3>
-                {selected ? (
-                  <button
-                    type="button"
-                    onClick={() => attempt(selected, z)}
-                    className={`rounded ${accentBtn} px-2 py-1 text-xs font-semibold text-canvas`}
-                  >
-                    Place here
-                  </button>
-                ) : null}
-              </div>
-              <ul className="flex flex-wrap gap-2">
-                {here.map((x) => (
-                  <li key={x.id} className="rounded-full border border-correct bg-correct px-3 py-1.5 text-sm text-canvas">
-                    <span aria-hidden="true">✓ </span>
-                    {x.text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
-
-      {done ? (
-        <div className="rounded-lg border-l-4 border-correct bg-correct/10 p-4">
-          <p className="font-semibold text-correct">All six sorted.</p>
-          <p className="text-sm text-ink-muted">
-            You just ran System 2 to tell System 1 from System 2.
-          </p>
+          })}
         </div>
-      ) : null}
 
-      <div aria-live="polite" className="sr-only">
-        {announce}
+        {/* Output console, terminal style: a dark pane, monospace, one log line per
+            pick. A fixed height that scrolls to the newest line, so the box never
+            jumps as the log grows. */}
+        {/* The log role sits on the scrolling pane, not the list, so the list keeps
+            its list semantics; tabIndex lets keyboard users scroll it. */}
+        <div
+          ref={logRef}
+          role="log"
+          aria-live="polite"
+          aria-label="Output console"
+          tabIndex={0}
+          className="h-28 overflow-y-auto rounded-lg bg-ink px-4 py-3 font-code text-xs leading-relaxed"
+        >
+          <ol>
+            {log.map((l, i) => (
+              <li
+                key={i}
+                // The prompt keeps its own column, so a wrapped line hangs under the text.
+                className={`flex gap-2 ${
+                  l.tone === "right"
+                    ? "text-size-1"
+                    : l.tone === "done"
+                      ? "font-bold text-size-1"
+                      : l.tone === "wrong" || l.tone === "note"
+                        ? "text-canvas"
+                        : "text-canvas/60"
+                }`}
+              >
+                <span aria-hidden="true" className="shrink-0 text-canvas/40">
+                  {l.tone === "idle" ? "$" : "›"}
+                </span>
+                <span className="min-w-0">{l.text}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      {/* Reset on the left, as in section 1's widget; the colour key on the right. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2">
+        <button
+          type="button"
+          onClick={reset}
+          aria-label="Reset picks"
+          title="Reset picks: start over with a fresh grid"
+          className="rounded bg-grid px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-ink-faint hover:text-canvas"
+        >
+          Reset
+        </button>
+        {/* What each colour means, in the boxes' own fills. */}
+        <ul
+          aria-label="Colour key"
+          className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-ink-muted"
+        >
+          <li className="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="h-3 w-3 rounded-sm border border-compute bg-compute"
+            />
+            System 2
+          </li>
+          <li className="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="h-3 w-3 rounded-sm border border-ink-muted bg-ink-muted"
+            />
+            System 1
+          </li>
+        </ul>
       </div>
     </section>
   );

@@ -32,7 +32,7 @@ function Note({
 }) {
   return (
     <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${flush ? "" : "lg:pt-9"}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -43,7 +43,7 @@ function Note({
 function StepSlot() {
   return (
     <li aria-hidden="true" className="invisible flex flex-wrap items-baseline gap-2">
-      <span className="text-xs uppercase tracking-wide">&nbsp;</span>
+      <span className="text-xs font-eyebrow uppercase tracking-wide">&nbsp;</span>
       <span>&nbsp;</span>
     </li>
   );
@@ -70,13 +70,13 @@ export function Page1() {
 
   const [announce, setAnnounce] = useState("");
   // Which example the figure shows. The first render is always example 0 (so the
-  // server and client agree). Calculate runs the example on screen if it has not
-  // been run since the page loaded or since Reset; otherwise it draws a new one at
-  // random, never repeating the one just shown.
+  // server and client agree). Calculate only ever runs the example on screen, once:
+  // when both systems have finished it greys out. Reset is the one way to a new
+  // problem: it draws one at random, never the one just shown, and clears the panels.
   const [exIdx, setExIdx] = useState(0);
   const ex = SYSTEM_EXAMPLES[exIdx];
-  const replayRef = useRef(true);
   const nSteps = ex.slow.steps.length;
+  const finished = s1Done && s2Done;
 
   const clearTimers = () => {
     if (tickRef.current) clearInterval(tickRef.current);
@@ -92,6 +92,9 @@ export function Page1() {
 
   const reset = () => {
     clearTimers();
+    const options = SYSTEM_EXAMPLES.map((_, i) => i).filter((i) => i !== exIdx);
+    const next = options[Math.floor(Math.random() * options.length)];
+    setExIdx(next);
     setStarted(false);
     setRunning(false);
     setS1Step(0);
@@ -101,21 +104,15 @@ export function Page1() {
     setS2Done(false);
     setS2Ms(0);
     startRef.current = null;
-    replayRef.current = true;
-    setAnnounce("Reset.");
+    setAnnounce(
+      `New problem: ${SYSTEM_EXAMPLES[next].fast.prompt} and ${SYSTEM_EXAMPLES[next].slow.prompt}.`,
+    );
   };
 
   const calculate = () => {
-    if (running) return;
+    if (running || finished) return;
     clearTimers();
-    let next = exIdx;
-    if (!replayRef.current) {
-      const options = SYSTEM_EXAMPLES.map((_, i) => i).filter((i) => i !== exIdx);
-      next = options[Math.floor(Math.random() * options.length)];
-      setExIdx(next);
-    }
-    replayRef.current = false;
-    const run = SYSTEM_EXAMPLES[next];
+    const run = SYSTEM_EXAMPLES[exIdx];
     const steps = run.slow.steps.length;
     recordInteraction(PAGE_N);
     setStarted(true);
@@ -160,7 +157,7 @@ export function Page1() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">
@@ -218,7 +215,7 @@ export function Page1() {
             {/* System 1 — fast */}
             <section aria-label="System 1" className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
               <div className="flex items-baseline justify-between gap-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-compute">System 1 · fast</h3>
+                <h3 className="text-sm font-semibold font-eyebrow uppercase tracking-wide text-compute-ink">System 1 · fast</h3>
                 <span role="timer" aria-label="System 1 time" className="rounded-full border border-grid px-2.5 py-0.5 font-mono text-xs tabular-nums text-ink-muted">
                   {started ? fmt(s1Ms) : "not started"}
                 </span>
@@ -229,7 +226,7 @@ export function Page1() {
               <ol className="flex flex-col gap-1.5 font-mono text-sm text-ink">
                 {s1Step >= 1 ? (
                   <li className="flex flex-wrap items-baseline gap-2">
-                    <span className="text-xs uppercase tracking-wide text-ink-muted">Step #1</span>
+                    <span className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">Step #1</span>
                     <span>
                       {ex.fast.prompt} = {ex.fast.answer}
                     </span>
@@ -245,7 +242,7 @@ export function Page1() {
               </ol>
               {/* The answer slot keeps its height before the reveal, so the panels do not jump. */}
               <p
-                className={`mt-auto font-mono text-5xl font-bold tabular-nums text-compute ${s1Done ? "" : "invisible"}`}
+                className={`mt-auto font-mono text-5xl font-bold tabular-nums text-compute-ink ${s1Done ? "" : "invisible"}`}
                 aria-hidden={!s1Done}
               >
                 {ex.fast.answer}
@@ -255,7 +252,7 @@ export function Page1() {
             {/* System 2 — slow */}
             <section aria-label="System 2" className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
               <div className="flex items-baseline justify-between gap-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-wrong">System 2 · slow</h3>
+                <h3 className="text-sm font-semibold font-eyebrow uppercase tracking-wide text-wrong-ink">System 2 · slow</h3>
                 <span role="timer" aria-label="System 2 time" className="rounded-full border border-grid px-2.5 py-0.5 font-mono text-xs tabular-nums text-ink-muted">
                   {started ? fmt(s2Ms) : "not started"}
                 </span>
@@ -266,7 +263,7 @@ export function Page1() {
                 {ex.slow.steps.map((line, i) =>
                   i < s2Step ? (
                     <li key={i} className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-xs uppercase tracking-wide text-ink-muted">
+                      <span className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
                         Step #{i + 1}
                       </span>
                       <span>{line}</span>
@@ -277,7 +274,7 @@ export function Page1() {
                 )}
               </ol>
               <p
-                className={`mt-auto font-mono text-5xl font-bold tabular-nums text-wrong ${s2Done ? "" : "invisible"}`}
+                className={`mt-auto font-mono text-5xl font-bold tabular-nums text-wrong-ink ${s2Done ? "" : "invisible"}`}
                 aria-hidden={!s2Done}
               >
                 {ex.slow.answer}
@@ -288,22 +285,24 @@ export function Page1() {
             <button
               type="button"
               onClick={reset}
-              disabled={!started}
-              aria-label="Reset"
-              title="Reset"
-              className="rounded bg-wrong p-2 text-canvas hover:opacity-90 disabled:opacity-50"
+              title="Reset: a new problem"
+              className="rounded bg-grid px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-ink-faint hover:text-canvas"
             >
-              {/* counter-clockwise arrow */}
-              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 1 0 3-6.7" />
-                <path d="M3 4v5h5" />
-              </svg>
+              Reset
             </button>
+            {/* The clocks are a fixed pace, not a measurement: say so where they are read. */}
+            <p className="text-center text-xs text-ink-muted">
+              The clocks run at a fixed pace: one step every {STEP_MS / 1000} s.
+            </p>
             <button
               type="button"
               onClick={calculate}
-              disabled={running}
-              className="w-fit rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+              disabled={running || finished}
+              className={`w-fit rounded px-4 py-2 text-sm font-semibold ${
+                finished
+                  ? "cursor-not-allowed bg-grid text-ink-faint"
+                  : "bg-compute text-ink disabled:opacity-50"
+              }`}
             >
               {running ? "Calculating…" : "Calculate"}
             </button>
@@ -316,17 +315,17 @@ export function Page1() {
           </p>
         </section>
         <Note kicker="Try it">
-          <p>Press Calculate again for a new example, or the arrow to replay the same one.</p>
+          <p>Press Calculate to watch both systems work. Reset gives you a new problem.</p>
         </Note>
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. Sort six of your own</h2>
+          <h2 className="text-xl font-semibold text-ink">2. Which tasks need System 2?</h2>
           <SystemSort />
         </section>
-        <Note kicker="Sort it">
-          <p>Drag a chip into a system, or select it and press &ldquo;Place here.&rdquo;</p>
-          <p>Correct drops are green, and wrong drops show up as red.</p>
+        <Note kicker="Pick them">
+          <p>Click each task you would have to stop and think about. The console under the
+            grid tells you whether each pick was right.</p>
         </Note>
 
         {/* Step 3 */}

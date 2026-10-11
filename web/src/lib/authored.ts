@@ -90,9 +90,9 @@ export const SYSTEM_EXAMPLES = [
 ] as const;
 
 /**
- * Six everyday tasks across different topics (perception, language, emotion,
- * arithmetic, motor, deliberation) for the reader to sort into System 1 vs
- * System 2. `system: "fast"` = System 1 (the answer arrives); `"slow"` =
+ * Nine everyday tasks across different topics (perception, reflex, language,
+ * emotion, arithmetic, motor, deliberation, paperwork) for the reader to sort
+ * into System 1 vs System 2: five System 1, four System 2. `system: "fast"` = System 1 (the answer arrives); `"slow"` =
  * System 2 (you have to work for it). Authored/illustrative, after Kahneman.
  */
 export interface SortItem {
@@ -111,6 +111,9 @@ export const SORTING_ITEMS: SortItem[] = [
   { id: "salt", text: "Finish the phrase 'salt and ___'", system: "fast" },
   { id: "compare", text: "Compare two laptop specs", system: "slow" },
   { id: "anger", text: "Hear that a voice is angry", system: "fast" },
+  { id: "tax", text: "Fill in a tax form", system: "slow" },
+  { id: "noise", text: "Turn toward a sudden loud noise", system: "fast" },
+  { id: "stove", text: "Withdraw your hand when you touch a hot stove", system: "fast" },
 ];
 
 // --- Page 2: Two Systems (the "how many World Cups?" question) ------------

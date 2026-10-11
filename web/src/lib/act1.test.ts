@@ -74,11 +74,11 @@ describe("Page 1 System 1 / System 2 (authored multiplication contrast)", () => 
     expect(SYSTEM_EXAMPLES[0]).toBe(SYSTEMS);
   });
 
-  it("offers six sort items, three per system, with unique ids", () => {
-    expect(SORTING_ITEMS).toHaveLength(6);
-    expect(SORTING_ITEMS.filter((x) => x.system === "fast")).toHaveLength(3);
-    expect(SORTING_ITEMS.filter((x) => x.system === "slow")).toHaveLength(3);
-    expect(new Set(SORTING_ITEMS.map((x) => x.id)).size).toBe(6);
+  it("offers nine sort items, five System 1 and four System 2, with unique ids", () => {
+    expect(SORTING_ITEMS).toHaveLength(9);
+    expect(SORTING_ITEMS.filter((x) => x.system === "fast")).toHaveLength(5);
+    expect(SORTING_ITEMS.filter((x) => x.system === "slow")).toHaveLength(4);
+    expect(new Set(SORTING_ITEMS.map((x) => x.id)).size).toBe(9);
     for (const x of SORTING_ITEMS) expect(["fast", "slow"]).toContain(x.system);
   });
 });

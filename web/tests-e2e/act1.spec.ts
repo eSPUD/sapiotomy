@@ -123,12 +123,12 @@ test.describe("Act 1 (pages 1–4)", () => {
     }
   });
 
-  test("Page 1: sorting a question into the correct system locks it in", async ({ page }) => {
+  test("Page 1: picking a System 2 task locks it in", async ({ page }) => {
     await page.goto("/p/1");
-    await page.getByRole("button", { name: "Recognize a friend's face" }).click();
-    // Two "Place here" buttons appear; the first is the System 1 (fast) bin.
-    await page.getByRole("button", { name: "Place here" }).first().click();
-    await expect(page.getByText("1 / 6 sorted")).toBeVisible();
+    const task = page.getByRole("button", { name: /Divide 156 by 12 in your head/ });
+    await task.click();
+    await expect(task).toContainText("System 2");
+    await expect(task).toBeDisabled();
   });
 
   for (const n of [1, 2, 3, 4]) {

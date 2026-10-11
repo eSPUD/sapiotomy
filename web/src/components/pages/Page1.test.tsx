@@ -5,7 +5,7 @@ import { SYSTEMS, SYSTEM_EXAMPLES } from "@/lib/authored";
 
 // Page 1 is a System 1 / System 2 contrast: one "Calculate" press reveals the
 // fast side at once and plays the slow side one step per beat, then a
-// drag-or-select sorting game. The Calculate tests drive the beats with fake timers.
+// click-to-pick game (find the System 2 tasks). The Calculate tests drive the beats with fake timers.
 const mm = (q: string) => ({
   matches: false,
   media: q,
@@ -75,51 +75,53 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
       if (i < rest.length - 1) expect(answer(s2, SYSTEMS.slow.answer)).toMatch(/invisible/);
     });
     expect(answer(s2, SYSTEMS.slow.answer)).not.toMatch(/invisible/);
-    expect(screen.getByRole("button", { name: "Calculate" })).toBeEnabled();
+    // With both systems done, Calculate greys out: only Reset brings a new problem.
+    expect(screen.getByRole("button", { name: "Calculate" })).toBeDisabled();
   });
 
-  it("reruns the example on screen first, then shuffles; Reset replays the same one", () => {
+  it("Calculate runs the problem on screen once; only Reset brings a new one", () => {
     vi.useFakeTimers();
     const random = vi.spyOn(Math, "random").mockReturnValue(0);
     render(<Page1 />);
+    const calc = () => screen.getByRole("button", { name: "Calculate" });
     const run = () => {
-      fireEvent.click(screen.getByRole("button", { name: "Calculate" }));
+      fireEvent.click(calc());
       act(() => vi.advanceTimersByTime(800 * SYSTEMS.slow.steps.length));
     };
     const reset = screen.getByRole("button", { name: "Reset" });
-    expect(reset).toBeDisabled();
-    expect(reset.textContent).toBe(""); // icon only
+    expect(reset).toBeEnabled();
+    expect(reset).toHaveTextContent("Reset"); // a word, not an icon
 
     // Reset sits left of Calculate.
     const buttons = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent);
     expect(buttons.indexOf("Reset")).toBeLessThan(buttons.indexOf("Calculate"));
 
-    // The first press runs the example already on screen, without shuffling.
-    // (With Math.random pinned to 0, a shuffle would have picked example 1.)
+    // Calculate runs the example already on screen, without shuffling.
     run();
     expect(screen.getByText(SYSTEM_EXAMPLES[0].slow.prompt)).toBeInTheDocument();
-    // A later press draws a new one, never the example just shown.
-    run();
+    // Once both systems are done it greys out, and pressing it changes nothing.
+    expect(calc()).toBeDisabled();
+    fireEvent.click(calc());
+    expect(screen.getByText(SYSTEM_EXAMPLES[0].slow.prompt)).toBeInTheDocument();
+
+    // Reset draws a new problem (never the one just shown), clears the panels and
+    // re-enables Calculate. (With Math.random pinned to 0, it picks example 1.)
+    fireEvent.click(reset);
+    expect(screen.getAllByText("not started")).toHaveLength(2);
     expect(screen.queryByText(SYSTEM_EXAMPLES[0].slow.prompt)).toBeNull();
     expect(screen.getByText(SYSTEM_EXAMPLES[1].slow.prompt)).toBeInTheDocument();
+    expect(calc()).toBeEnabled();
     // The closing sentence follows the example on screen.
     expect(document.body.textContent ?? "").toMatch(
       new RegExp(`${SYSTEM_EXAMPLES[1].fast.prompt} is familiar`),
     );
-
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    expect(screen.getAllByText("not started")).toHaveLength(2);
-    // After Reset, Calculate replays the same example; the press after that shuffles.
-    // (A shuffle from example 1 would have picked example 0.)
     run();
     expect(screen.getByText(SYSTEM_EXAMPLES[1].slow.prompt)).toBeInTheDocument();
-    run();
-    expect(screen.queryByText(SYSTEM_EXAMPLES[1].slow.prompt)).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(calc()).toBeDisabled();
+
     expect(
-      screen.getByText("Press Calculate again for a new example, or the arrow to replay the same one."),
+      screen.getByText("Press Calculate to watch both systems work. Reset gives you a new problem."),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reset" })).toBeDisabled();
     random.mockRestore();
   });
 
@@ -137,6 +139,11 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     expect(body).toMatch(/1\.\s*Daniel Kahneman/);
     expect(body).toMatch(/2\.\s*Stanovich & West/);
     expect(body).toMatch(/3\.\s*Shane Frederick/);
+  });
+
+  it("labels the clocks as a fixed pace, not a measurement", () => {
+    render(<Page1 />);
+    expect(screen.getByText("The clocks run at a fixed pace: one step every 0.8 s.")).toBeInTheDocument();
   });
 
   it("follows System 2's scaling with the language-model analogy in section 3", () => {
@@ -171,29 +178,89 @@ describe("Page 1 sorting game (SystemSort)", () => {
     vi.stubGlobal("matchMedia", mm);
   });
 
-  it("select-then-place locks a correct answer in", () => {
+  it("a System 2 pick locks in green; a System 1 pick is marked and cannot be retried", () => {
     render(<Page1 />);
-    const game = screen.getByRole("region", {
-      name: /Sort the questions into System 1 or System 2/i,
-    });
-    // Select the first pool chip, then place it in System 1.
-    const chip = within(game).getByRole("button", { name: /Recognize a friend's face/i });
-    fireEvent.click(chip);
-    const placeBtns = within(game).getAllByRole("button", { name: /place here/i });
-    fireEvent.click(placeBtns[0]); // System 1 bin comes first
-    // It now shows locked-in as a list item and left the clickable pool.
-    expect(within(game).getByRole("listitem")).toHaveTextContent(/Recognize a friend's face/);
-    expect(
-      within(game).queryByRole("button", { name: /Recognize a friend's face/i }),
-    ).not.toBeInTheDocument();
+    const game = screen.getByRole("region", { name: /Pick the System 2 tasks/i });
+    // No drag and drop and no "Place here": the reader only clicks.
+    expect(within(game).queryByRole("button", { name: /place here/i })).toBeNull();
+    // No counter: the reader is not told how many System 2 tasks there are.
+    expect(within(game).queryByText(/found|\d+ \/ \d+/)).toBeNull();
+
+    const slow = within(game).getByRole("button", { name: /Divide 156 by 12 in your head/i });
+    fireEvent.click(slow);
+    expect(slow).toBeDisabled();
+    expect(slow).toHaveTextContent(/System 2/);
+
+    const fast = within(game).getByRole("button", { name: /Recognize a friend's face/i });
+    fireEvent.click(fast);
+    expect(fast).toBeDisabled();
+    expect(fast).toHaveTextContent(/System 1/);
+    // A wrong pick does not end the game.
+    expect(within(game).queryByText("That is every System 2 task.")).toBeNull();
   });
 
-  it("counts up as items are sorted", () => {
+  it("shows a colour key for the boxes", () => {
     render(<Page1 />);
-    const game = screen.getByRole("region", {
-      name: /Sort the questions into System 1 or System 2/i,
-    });
-    expect(within(game).getByText(/0 \/ 6 sorted/)).toBeInTheDocument();
+    const game = screen.getByRole("region", { name: /Pick the System 2 tasks/i });
+    const key = within(game).getByRole("list", { name: "Colour key" });
+    expect(key).not.toHaveTextContent(/Not picked yet/);
+    expect(key).toHaveTextContent(/System 2/);
+    expect(key).toHaveTextContent(/System 1/);
+    expect(key.querySelectorAll("li")).toHaveLength(2);
+  });
+
+  it("resets every pick with its own Reset button", () => {
+    render(<Page1 />);
+    const game = screen.getByRole("region", { name: /Pick the System 2 tasks/i });
+    const reset = within(game).getByRole("button", { name: "Reset picks" });
+    expect(reset).toBeEnabled(); // always available, even before a pick
+    const slow = within(game).getByRole("button", { name: /Divide 156 by 12/i });
+    const fast = within(game).getByRole("button", { name: /Recognize a friend's face/i });
+    fireEvent.click(slow);
+    fireEvent.click(fast);
+    expect(reset).toBeEnabled();
+    fireEvent.click(reset);
+    for (const name of [/Divide 156 by 12/i, /Recognize a friend's face/i]) {
+      const b = within(game).getByRole("button", { name });
+      expect(b).toBeEnabled();
+      expect(b).not.toHaveTextContent(/System [12]/);
+    }
+    expect(reset).toBeEnabled();
+  });
+
+  it("logs each pick in the terminal-style output console under the grid", () => {
+    render(<Page1 />);
+    const game = screen.getByRole("region", { name: /Pick the System 2 tasks/i });
+    const out = within(game).getByRole("log", { name: "Output console" });
+    expect(out.querySelectorAll("li")).toHaveLength(1);
+    expect(out).toHaveTextContent("pick a task to see whether it needs System 2");
+    fireEvent.click(within(game).getByRole("button", { name: /Fill in a tax form/i }));
+    fireEvent.click(within(game).getByRole("button", { name: /Recognize a friend's face/i }));
+    // A running log: every pick stays, newest last.
+    const lines = Array.from(out.querySelectorAll("li")).map((li) => li.textContent);
+    expect(lines).toHaveLength(3);
+    expect(lines[1]).toMatch(/Fill in a tax form → System 2 ✓/);
+    expect(lines[2]).toMatch(/Recognize a friend's face → System 1, not this one/);
+    fireEvent.click(within(game).getByRole("button", { name: "Reset picks" }));
+    expect(out.querySelectorAll("li")).toHaveLength(1);
+  });
+
+  it("rewards the reader once every System 2 task is found", () => {
+    render(<Page1 />);
+    const game = screen.getByRole("region", { name: /Pick the System 2 tasks/i });
+    for (const t of [/Divide 156 by 12/i, /Park a car in a tight space/i, /Compare two laptop specs/i, /Fill in a tax form/i]) {
+      fireEvent.click(within(game).getByRole("button", { name: t }));
+    }
+    expect(within(game).getByText("That is every System 2 task.")).toBeInTheDocument();
+    expect(within(game).getByText(/You just ran System 2 to tell System 1 from System 2\./)).toBeInTheDocument();
+    // The game is over: the System 1 tasks left unpicked turn their colour, are
+    // marked System 1, and can no longer be clicked.
+    for (const t of [/Hear that a voice is angry/i, /Recognize a friend's face/i, /hot stove/i]) {
+      const b = within(game).getByRole("button", { name: t });
+      expect(b).toBeDisabled();
+      expect(b).toHaveTextContent(/System 1/);
+      expect(b.className).toMatch(/bg-ink-muted/);
+    }
   });
 
   // The definition comes after the widgets, so the reader feels both systems
