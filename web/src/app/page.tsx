@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CiteBlock } from "@/components/CiteBlock";
 import { Reveal } from "@/components/Reveal";
-import { ACTS, GLOSSARY, STORY_PAGES, pageHref, type Act } from "@/lib/pages";
+import { ACTS, STORY_PAGES, pageHref, type Act } from "@/lib/pages";
 
 const CITATION = `@misc{bangalorelakshman2026its,
   title  = {The Story of Inference-Time Scaling and the Training-Time loop behind it},
@@ -15,8 +15,8 @@ export default function Home() {
   const acts: Act[] = [1, 2, 3];
   return (
     <div className="flex flex-col">
-      {/* Hero, with How to explore beside it on wide screens (below it otherwise) */}
-      <section className="xl:grid xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start xl:gap-10">
+      {/* Hero */}
+      <section>
         <Reveal>
           <div className="flex flex-col gap-5 pb-6">
             {/* The venue line the story-page masthead carries, which the landing has none of.
@@ -32,40 +32,32 @@ export default function Home() {
                 <span className="text-compute">Inference-Time Scaling</span>
               </h1>
               <p className="mt-2 text-2xl text-ink-muted sm:text-3xl">
-                and the training-time loop behind it
+                &hellip;and the training-time loop behind it
               </p>
             </div>
 
-            <p className="text-lg text-ink-muted">
+            <p className="max-w-4xl italic leading-relaxed text-ink-muted">
               Same model, same weights, better answers: just let it{" "}
-              <span className="italic text-ink">think longer</span>. How far can that go, and when
-              does it backfire?
+              <span className="not-italic text-ink">think longer</span>. Have it reason out loud,
+              sample many answers and vote, let a judge pick the best, or search through its options:
+              each one trades compute at answer time for accuracy. Then the frontier labs trained
+              models to do this on their own. How far can thinking take a model, and when does more of
+              it make things worse?
             </p>
           </div>
         </Reveal>
-
-        <aside
-          aria-labelledby="how-to-explore"
-          className="mt-6 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-5 xl:mt-0"
-        >
-          <h2 id="how-to-explore" className="text-lg font-bold text-ink">
-            How to explore
-          </h2>
-          <ul className="flex list-disc flex-col gap-2 pl-4 text-sm text-ink-muted">
-            <li>Read in order, or jump to any chapter.</li>
-            <li>Every figure is interactive: drag the sliders, click the diagrams.</li>
-            <li>Some chapters come with a Python notebook of their code and data.</li>
-          </ul>
-        </aside>
       </section>
 
       {/* Contents */}
       <section aria-label="Contents" className="mt-8 flex flex-col gap-6">
-        {/* three columns, one per Act */}
-        <div className="grid gap-8 md:grid-cols-3">
+        {/* three cards, one per Act */}
+        <div className="grid gap-6 md:grid-cols-3">
           {acts.map((act) => (
-            <div key={act} className="flex flex-col gap-3">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-ink-muted">
+            <div
+              key={act}
+              className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-5 shadow-lg shadow-ink/10 transition duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-ink/15"
+            >
+              <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-ink">
                 Act {act} · {ACTS[act].title}
               </h2>
               <ol className="flex flex-col gap-2.5">
@@ -87,25 +79,6 @@ export default function Home() {
           ))}
         </div>
 
-        {/* The glossary is page 17 but belongs to no act, so it sits apart from
-            the three columns rather than at the foot of Act 3. */}
-        <div className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-ink-muted">
-            Appendix
-          </h2>
-          <ol className="flex flex-col gap-2.5">
-            <li>
-              <Link href={pageHref(GLOSSARY.n)} className="group flex items-baseline gap-2 text-sm">
-                <span className="tabular-nums text-ink-muted">
-                  {String(GLOSSARY.n).padStart(2, "0")}
-                </span>
-                <span className="text-ink group-hover:underline">{GLOSSARY.title}</span>
-              </Link>
-            </li>
-          </ol>
-        </div>
-
-        <div className="h-px w-full bg-ink" />
       </section>
 
       {/* About the series */}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ACTS, GLOSSARY, STORY_PAGES, pageHref, type Act, type PageMeta } from "@/lib/pages";
+import { ACTS, STORY_PAGES, pageHref, type Act, type StoryPage } from "@/lib/pages";
 
 const acts: Act[] = [1, 2, 3];
 
@@ -10,15 +10,15 @@ const acts: Act[] = [1, 2, 3];
  * The act-page index as a left menu beside every story page, set like the
  * landing's three-column index. It sticks under the masthead and scrolls on its
  * own when it is taller than the window. The current page is marked with
- * aria-current and a rule in the compute hue. The glossary sits apart under
- * Appendix, never inside Act 3.
+ * aria-current and a rule in the compute hue. The glossary is not listed: it is
+ * reached from inside the pages (and from page 16's next link).
  */
 export function ChapterMenu() {
   const pathname = usePathname();
   const match = pathname.match(/^\/p\/(\d+)/);
   const current = match ? Number(match[1]) : 0;
 
-  const item = (p: PageMeta) => {
+  const item = (p: StoryPage) => {
     const here = p.n === current;
     return (
       <li key={p.n}>
@@ -57,12 +57,6 @@ export function ChapterMenu() {
           </ol>
         </div>
       ))}
-      <div className="flex flex-col gap-2">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-ink-muted">
-          Appendix
-        </h2>
-        <ol className="flex flex-col gap-1">{item(GLOSSARY)}</ol>
-      </div>
     </nav>
   );
 }
