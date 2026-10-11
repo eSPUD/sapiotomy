@@ -26,7 +26,7 @@ export function KeyboardHint() {
               <Kbd>←</Kbd> / <Kbd>Page Up</Kbd>: previous page
             </li>
             <li>
-              <Kbd>Tab</Kbd> then <Kbd>Enter</Kbd>: jump to any chapter via the progress bar
+              <Kbd>Tab</Kbd> then <Kbd>Enter</Kbd>: jump to any chapter via the chapter menu
             </li>
           </ul>
         </div>

@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { ScrollProgress } from "@/components/ScrollProgress";
 
 /**
  * Slim masthead — the app title on every page (Broadsheet nav-brand). The
- * numbered page index was removed; readers move with the prev/next links at the
- * foot of each page.
+ * scroll progress bar that sat under it was removed; readers move with the
+ * chapter menu beside story pages and the prev/next links at each page's foot.
  */
 export function ProgressRail() {
   return (
@@ -12,8 +11,7 @@ export function ProgressRail() {
       aria-label="Story progress"
       className="sticky top-0 z-10 border-b border-grid bg-compute"
     >
-      <ScrollProgress />
-      <div className="mx-auto flex max-w-[80%] items-center justify-between gap-3 px-4 pt-3 pb-5">
+      <div className="mx-auto flex max-w-[90%] items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="group flex flex-col leading-tight">
           <span className="text-lg font-semibold text-canvas group-hover:underline">
             The Story of Inference-Time Scaling
