@@ -15,44 +15,52 @@ export default function Home() {
   const acts: Act[] = [1, 2, 3];
   return (
     <div className="flex flex-col">
-      {/* Hero */}
-      <section>
+      {/* Hero, with How to explore beside it on wide screens (below it otherwise) */}
+      <section className="xl:grid xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start xl:gap-10">
         <Reveal>
-          <div className="flex max-w-3xl flex-col gap-5 pt-12 pb-6">
+          <div className="flex flex-col gap-5 pt-4 pb-6">
+            {/* The venue line the story-page masthead carries, which the landing has none of.
+                Equal visible space above it and below it, down to the title's capitals (~48px). */}
+            <p className="mb-6 text-sm text-ink-faint">
+              An interactive AI explainable.
+              <br />
+              The 9th Workshop on Visualization for AI Explainability (VISxAI), IEEE VIS 2026.
+            </p>
             <div>
-              <h1 className="text-4xl font-bold leading-[1.05] text-ink sm:text-6xl">
+              <h1 className="text-3xl font-bold leading-[1.05] text-ink sm:text-5xl">
                 The Story of{" "}
-                <span className="block whitespace-nowrap text-compute">Inference-Time Scaling</span>
+                <span className="text-compute">Inference-Time Scaling</span>
               </h1>
-              <p className="mt-2 text-2xl italic text-ink-muted sm:text-3xl">
+              <p className="mt-2 text-2xl text-ink-muted sm:text-3xl">
                 and the training-time loop behind it
               </p>
             </div>
 
-            <p className="max-w-xl text-lg text-ink-muted">
+            <p className="text-lg text-ink-muted">
               A language model can get dramatically better answers by{" "}
               <span className="italic text-ink">thinking longer at answer time</span>, not only by
               being retrained or made larger.
             </p>
-
-            <Link
-              href={pageHref(1)}
-              className="w-fit rounded bg-compute px-8 py-3 text-lg font-semibold text-canvas shadow-md transition-opacity hover:opacity-90"
-            >
-              Begin the story →
-            </Link>
           </div>
         </Reveal>
+
+        <aside
+          aria-labelledby="how-to-explore"
+          className="mt-6 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-5 xl:mt-4"
+        >
+          <h2 id="how-to-explore" className="text-lg font-bold text-ink">
+            How to explore
+          </h2>
+          <ul className="flex list-disc flex-col gap-2 pl-4 text-sm text-ink-muted">
+            <li>Read in order, or jump to any chapter.</li>
+            <li>Every figure is interactive: drag the sliders, click the diagrams.</li>
+            <li>Some chapters come with a Python notebook of their code and data.</li>
+          </ul>
+        </aside>
       </section>
 
       {/* Contents */}
       <section aria-label="Contents" className="mt-8 flex flex-col gap-6">
-        {/* thick–thin rule pair (newspaper furniture) */}
-        <div>
-          <div className="h-[3px] w-full bg-ink" />
-          <div className="mt-1 h-px w-full bg-ink" />
-        </div>
-
         {/* three columns, one per Act */}
         <div className="grid gap-8 md:grid-cols-3">
           {acts.map((act) => (
@@ -102,24 +110,6 @@ export default function Home() {
 
       {/* About the series */}
       <section className="mt-16 flex flex-col gap-8">
-        <div className="flex flex-col gap-3">
-          <h2 className="text-2xl font-bold text-ink">How to explore</h2>
-          <p className="text-justify text-sm hyphens-auto text-ink-muted">
-            Chapters stand alone but build in order. Every figure is live: sliders re-derive the
-            curves, diagrams answer clicks, and the demos sample from a real model when one is
-            available; canned transcripts otherwise.
-          </p>
-          <p className="text-justify text-sm hyphens-auto text-ink-muted">
-            Several chapters ship a downloadable Python notebook, linked at the top of the page: the
-            harness, the model&apos;s own generations, and the data behind the figures, so you can
-            re-derive every plot yourself.
-          </p>
-          <p className="text-justify text-sm hyphens-auto text-ink-muted">
-            It is written for undergraduate students and other learners meeting these ideas for the
-            first time; no prior machine-learning background is assumed.
-          </p>
-        </div>
-
         <div className="grid gap-10 md:grid-cols-2">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Authors</h2>
