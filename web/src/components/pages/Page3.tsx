@@ -47,6 +47,7 @@
  */
 
 import { useMemo, useRef, useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
@@ -593,12 +594,12 @@ export function Page3() {
         <div aria-hidden="true" />
         {/* Both sections in two sentences, in the content column so it does not
             run under the sidenotes. */}
-        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+        <Handoff>
           Training-time scaling buys more knowledge, narrowing the knowledge gap, but at a compounding
           cost. It can also make the knowledge bias worse. The problem is that retraining spends its
           compute before anyone asks. Thinking it through spends compute at answer time, on the
           question actually asked.
-        </div>
+        </Handoff>
         <div aria-hidden="true" />
       </div>
 

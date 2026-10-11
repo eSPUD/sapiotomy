@@ -54,6 +54,7 @@
  */
 
 import { useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { scaleLinear, scaleLog } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -1377,7 +1378,7 @@ export function Page11() {
         {/* The hand-off to page 12 — deliberately its own block, not section
             4's job: better search still spends everything at answer time. */}
         <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+          <Handoff>
             <strong className="text-ink">So why did the crossing not appear for us?</strong> The
             law lives in a narrow window, where the model reaches the answer sometimes but not
             reliably, and on a 2026 post-trained model that window has shrunk toward the hardest
@@ -1388,7 +1389,7 @@ export function Page11() {
             <em>Act 3 stops selecting at inference time and trains the reasoning into the weights.
             Page 12 keeps the winning chains and fine-tunes on them. Pages 13 and 14 reward only
             correct answers, until the reasoning emerges on its own.</em>
-          </div>
+          </Handoff>
         </div>
       </div>
 

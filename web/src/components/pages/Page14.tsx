@@ -138,6 +138,7 @@
  */
 
 import { useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { scaleLinear } from "d3";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -1174,14 +1175,14 @@ export function Page14() {
               curriculum for everyone else.
             </p>
 
-            <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+            <Handoff>
               Two pages of frontier claims, and every one of them arrived as a benchmark score:
               71.0% on AIME, level with o1-0912, a 14B crossing o1-mini&apos;s line. Every one of
               them is also a number for thinking longer.{" "}
               <em className="text-ink-muted">
                 Next: the side of that dial where thinking longer makes the answer worse.
               </em>
-            </div>
+            </Handoff>
           </div>
         </section>
 

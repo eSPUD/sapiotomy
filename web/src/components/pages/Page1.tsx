@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Cite, RefItem } from "@/components/Cite";
+import { Handoff } from "@/components/Handoff";
 import { PageNav } from "@/components/PageNav";
 import { SystemSort } from "@/components/pages/SystemSort";
 import { ACTS, getPage } from "@/lib/pages";
@@ -215,84 +216,87 @@ export function Page1() {
               like the console under section 2's grid. Each has a title bar (the
               system and its clock), the problem as a prompt, one line per step,
               and the answer at the foot. */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {/* System 1 — fast */}
-            <section aria-label="System 1" className="flex flex-col overflow-hidden rounded-lg bg-ink font-code">
-              <div className="flex items-center justify-between gap-2 border-b border-canvas/10 px-4 py-2">
-                <h3 className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-compute">System 1 · fast</h3>
-                <span role="timer" aria-label="System 1 time" className="text-xs tabular-nums text-canvas/60">
-                  {started ? fmt(s1Ms) : "not started"}
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 px-4 py-3">
-                <p className="text-2xl text-canvas">
-                  <span aria-hidden="true" className="mr-2 text-canvas/40">&gt;</span>
-                  {ex.fast.prompt}
-                </p>
-                {/* System 1's whole workings: one step, in the same slot where
-                    System 2 stacks three, so the counts sit side by side. */}
-                <ol className="flex flex-col gap-1.5 text-sm text-canvas">
-                  {s1Step >= 1 ? (
-                    <li className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-xs text-canvas/50">› step 1</span>
-                      <span>
-                        {ex.fast.prompt} = {ex.fast.answer}
-                      </span>
-                    </li>
-                  ) : (
-                    <StepSlot />
-                  )}
-                  {/* Blank rows hold the height of System 2's extra steps, so the two
-                      panels keep the same vertical rhythm. */}
-                  {ex.slow.steps.slice(1).map((_, i) => (
-                    <StepSlot key={`spacer-${i}`} />
-                  ))}
-                </ol>
-                {/* The answer slot keeps its height before the reveal, so the panels
-                    do not jump. The "=" is drawn by CSS, so the text is the answer alone. */}
-                <p
-                  className={`mt-auto text-4xl font-semibold tabular-nums text-compute before:mr-2 before:text-canvas/40 before:content-['='] ${s1Done ? "" : "invisible"}`}
-                  aria-hidden={!s1Done}
-                >
-                  {ex.fast.answer}
-                </p>
-              </div>
-            </section>
-
-            {/* System 2 — slow */}
-            <section aria-label="System 2" className="flex flex-col overflow-hidden rounded-lg bg-ink font-code">
-              <div className="flex items-center justify-between gap-2 border-b border-canvas/10 px-4 py-2">
-                <h3 className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-wrong">System 2 · slow</h3>
-                <span role="timer" aria-label="System 2 time" className="text-xs tabular-nums text-canvas/60">
-                  {started ? fmt(s2Ms) : "not started"}
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 px-4 py-3">
-                <p className="text-2xl text-canvas">
-                  <span aria-hidden="true" className="mr-2 text-canvas/40">&gt;</span>
-                  {ex.slow.prompt}
-                </p>
-                <ol className="flex flex-col gap-1.5 text-sm text-canvas">
-                  {/* Every row is laid out from the start, so the widget never grows. */}
-                  {ex.slow.steps.map((line, i) =>
-                    i < s2Step ? (
-                      <li key={i} className="flex flex-wrap items-baseline gap-2">
-                        <span className="text-xs text-canvas/50">› step {i + 1}</span>
-                        <span>{line}</span>
+          {/* Boxed like section 2's grid: the two terminals share one frame. */}
+          <div className="rounded-xl border border-grid p-2.5 sm:p-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* System 1 — fast */}
+              <section aria-label="System 1" className="flex flex-col overflow-hidden rounded-lg bg-ink font-code">
+                <div className="flex items-center justify-between gap-2 border-b border-canvas/10 px-4 py-2">
+                  <h3 className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-compute">System 1 · fast</h3>
+                  <span role="timer" aria-label="System 1 time" className="text-xs tabular-nums text-canvas/60">
+                    {started ? fmt(s1Ms) : "not started"}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col gap-3 px-4 py-3">
+                  <p className="text-2xl text-canvas">
+                    <span aria-hidden="true" className="mr-2 text-canvas/40">&gt;</span>
+                    {ex.fast.prompt}
+                  </p>
+                  {/* System 1's whole workings: one step, in the same slot where
+                      System 2 stacks three, so the counts sit side by side. */}
+                  <ol className="flex flex-col gap-1.5 text-sm text-canvas">
+                    {s1Step >= 1 ? (
+                      <li className="flex flex-wrap items-baseline gap-2">
+                        <span className="text-xs text-canvas/50">› step 1</span>
+                        <span>
+                          {ex.fast.prompt} = {ex.fast.answer}
+                        </span>
                       </li>
                     ) : (
-                      <StepSlot key={i} />
-                    ),
-                  )}
-                </ol>
-                <p
-                  className={`mt-auto text-4xl font-semibold tabular-nums text-wrong before:mr-2 before:text-canvas/40 before:content-['='] ${s2Done ? "" : "invisible"}`}
-                  aria-hidden={!s2Done}
-                >
-                  {ex.slow.answer}
-                </p>
-              </div>
-            </section>
+                      <StepSlot />
+                    )}
+                    {/* Blank rows hold the height of System 2's extra steps, so the two
+                        panels keep the same vertical rhythm. */}
+                    {ex.slow.steps.slice(1).map((_, i) => (
+                      <StepSlot key={`spacer-${i}`} />
+                    ))}
+                  </ol>
+                  {/* The answer slot keeps its height before the reveal, so the panels
+                      do not jump. The "=" is drawn by CSS, so the text is the answer alone. */}
+                  <p
+                    className={`mt-auto text-4xl font-semibold tabular-nums text-compute before:mr-2 before:text-canvas/40 before:content-['='] ${s1Done ? "" : "invisible"}`}
+                    aria-hidden={!s1Done}
+                  >
+                    {ex.fast.answer}
+                  </p>
+                </div>
+              </section>
+
+              {/* System 2 — slow */}
+              <section aria-label="System 2" className="flex flex-col overflow-hidden rounded-lg bg-ink font-code">
+                <div className="flex items-center justify-between gap-2 border-b border-canvas/10 px-4 py-2">
+                  <h3 className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-wrong">System 2 · slow</h3>
+                  <span role="timer" aria-label="System 2 time" className="text-xs tabular-nums text-canvas/60">
+                    {started ? fmt(s2Ms) : "not started"}
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col gap-3 px-4 py-3">
+                  <p className="text-2xl text-canvas">
+                    <span aria-hidden="true" className="mr-2 text-canvas/40">&gt;</span>
+                    {ex.slow.prompt}
+                  </p>
+                  <ol className="flex flex-col gap-1.5 text-sm text-canvas">
+                    {/* Every row is laid out from the start, so the widget never grows. */}
+                    {ex.slow.steps.map((line, i) =>
+                      i < s2Step ? (
+                        <li key={i} className="flex flex-wrap items-baseline gap-2">
+                          <span className="text-xs text-canvas/50">› step {i + 1}</span>
+                          <span>{line}</span>
+                        </li>
+                      ) : (
+                        <StepSlot key={i} />
+                      ),
+                    )}
+                  </ol>
+                  <p
+                    className={`mt-auto text-4xl font-semibold tabular-nums text-wrong before:mr-2 before:text-canvas/40 before:content-['='] ${s2Done ? "" : "invisible"}`}
+                    aria-hidden={!s2Done}
+                  >
+                    {ex.slow.answer}
+                  </p>
+                </div>
+              </section>
+            </div>
           </div>
           <div className="flex items-center justify-between gap-2">
             <button
@@ -311,7 +315,9 @@ export function Page1() {
               type="button"
               onClick={calculate}
               disabled={running || finished}
-              className={`w-fit rounded px-4 py-2 text-sm font-semibold ${
+              // A fixed width (wider than "Calculating…"), so the label swap never
+              // shifts the button or the caption beside it.
+              className={`w-32 shrink-0 rounded px-4 py-2 text-center text-sm font-semibold ${
                 finished
                   ? "cursor-not-allowed bg-grid text-ink-faint"
                   : "bg-compute text-ink disabled:opacity-50"
@@ -353,12 +359,15 @@ export function Page1() {
             model that answers in a single pass is closest to System 1, and letting it write out its
             steps first is the nearest thing it has to System 2.
           </p>
-          {/* The hand-off: hints at training (what you have learned) versus
-              inference-time scaling (how long you think) without naming either. */}
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
-            Sometimes it is worth waiting for a more reliable answer than a quick one. People switch to
-            System 2 when a problem is long or unfamiliar, and it is usually worth the wait.
-          </div>
+          {/* The hand-off: points forward rather than recapping. It keeps the "worth
+              the wait" intuition, bounds it by the price named just above, and names
+              the trade the rest of the story measures (how much thinking to buy). */}
+          <Handoff>
+            <p>
+              A slower, more reliable answer is often worth the wait, but only up to a point. The rest
+              of this story is about that trade: how much thinking to buy, and where it stops paying.
+            </p>
+          </Handoff>
         </section>
         {/* The economics behind "worth taking only while it still pays", kept in the
             margin so the main text stays plain. Simon is cited for bounded rationality

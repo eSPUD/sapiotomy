@@ -126,6 +126,7 @@
  */
 
 import { useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import { Cite, RefItem } from "@/components/Cite";
@@ -1020,14 +1021,14 @@ export function Page5() {
               </ul>
             </div>
           </section>
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+          <Handoff>
             <p className="text-ink">
               {/* Closing line, author, 2026-09-27: no page number (reviewer plan, CP2). The
                   italic handoff question to page 6 was cut by the author the same day. */}
               A chain of thought makes a model better at hard problems, and it charges for that
               in tokens.
             </p>
-          </div>
+          </Handoff>
         </section>
         {/* Beside section 4, the one set of numbers on the page that is estimated
             rather than measured, and the sources of the estimate. The model card and

@@ -35,6 +35,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
@@ -785,14 +786,14 @@ export function Page10() {
             page's last word rather than the last word of its last step and still
             keeps the measure. The seam page 11 opens on is the price, in the one
             currency both sides of it are denominated in. */}
-        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink lg:col-start-1">
+        <Handoff className="lg:col-start-1">
           <em>
             Everything on pages 5 to 10 spends the same thing: arithmetic at answer time, bought by
             the token and paid for once per question. Parameters are bought with the same currency,
             in bulk, before any question arrives. So which is the better buy at a matched bill? Turn
             the page.
           </em>
-        </div>
+        </Handoff>
       </div>
 
       <PageNav n={PAGE_N} />

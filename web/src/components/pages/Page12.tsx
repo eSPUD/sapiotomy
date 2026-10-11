@@ -69,6 +69,7 @@
  */
 
 import { useEffect, useRef } from "react";
+import { Handoff } from "@/components/Handoff";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
@@ -602,7 +603,7 @@ export function Page12() {
             model becomes.
           </p>
 
-          <div className="flex flex-col gap-2 rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+          <Handoff>
             <p>
               <strong className="text-ink">There are now two ways to buy reasoning:</strong> spend
               the compute when the question arrives, or spend it long before, building the reasoning
@@ -627,7 +628,7 @@ export function Page12() {
               training set. Next comes the frontier, where one lab turns both kinds of spending at
               once and bills you for each. <em>Page 13 picks it up from there.</em>
             </p>
-          </div>
+          </Handoff>
         </div>
 
         <Note kicker="References">

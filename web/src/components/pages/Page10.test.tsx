@@ -333,7 +333,7 @@ describe("Page 10 — step 3 and house style", () => {
     expect(grid.querySelector('aside a[href*="arxiv"]')).toBeTruthy();
     const handoff = screen
       .getByText(/Everything on pages 5 to 10 spends the same thing/)
-      .closest("div")!;
+      .closest("aside")!;
     expect([...grid.children].at(-1)).toBe(handoff);
     expect(handoff.textContent).toMatch(/Turn the page\./);
     expect(handoff.querySelector("a")).toBeNull();

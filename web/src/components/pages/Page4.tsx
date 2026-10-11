@@ -26,6 +26,7 @@
  */
 
 import { useEffect, useId, useMemo, useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { MULT_METHODS, type MultMethodKey } from "@/lib/authored";
@@ -535,7 +536,7 @@ export function Page4() {
 
         {/* The closing box: the page's claim, Act 1's open question, and the handoff to Act 2. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+          <Handoff>
             There is more than one path from what we know to an answer, and reasoning is how we walk
             them. It pays off most on the hardest questions. Act 1 ends on an open question:{" "}
             <strong>
@@ -544,7 +545,7 @@ export function Page4() {
             </strong>{" "}
             Act 2 builds that toolbox, one technique at a time, for getting a model to reason its way
             to an answer.
-          </div>
+          </Handoff>
         </section>
         <div aria-hidden="true" />
       </div>

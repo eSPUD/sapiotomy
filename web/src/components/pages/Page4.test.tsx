@@ -260,12 +260,13 @@ describe("Page 4 layout and copy (Act 1 revisions)", () => {
     ).toBeTruthy();
   });
 
-  it("ends on one teal-barred box: the closing box is the only border-l-4 compute box", () => {
+  it("ends on one closing box, the shared 'Where this leaves us' hand-off", () => {
     const { container } = render(<Page4 />);
-    const shaded = Array.from(container.querySelectorAll(".border-l-4.border-compute"));
     // The walkthrough panel is shaded but unbarred; the takeaway is plain text.
-    expect(shaded).toHaveLength(1);
-    const closing = shaded[0];
+    expect(container.querySelectorAll(".border-l-4.border-compute")).toHaveLength(0);
+    const boxes = screen.getAllByRole("complementary", { name: "Where this leaves us" });
+    expect(boxes).toHaveLength(1);
+    const closing = boxes[0].lastElementChild!; // the text, after the eyebrow
     expect(closing.textContent?.replace(/\s+/g, " ").trim()).toBe(
       "There is more than one path from what we know to an answer, and reasoning is how we walk them. It pays off most on the hardest questions. Act 1 ends on an open question: can a large language model learn to reason through a problem instead of answering on reflex? Act 2 builds that toolbox, one technique at a time, for getting a model to reason its way to an answer.",
     );
@@ -274,7 +275,7 @@ describe("Page 4 layout and copy (Act 1 revisions)", () => {
     );
     // Set upright: the closing box carries no italics.
     expect(closing.querySelector("em, i")).toBeNull();
-    expect(screen.getByText(/land on the correct answer/).closest(".border-l-4")).toBeNull();
+    expect(screen.getByText(/land on the correct answer/).closest("aside")).toBeNull();
   });
 
   it("has no em dash in its rendered text on any method at any step", () => {

@@ -79,6 +79,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
@@ -1032,7 +1033,7 @@ export function Page15() {
             In the content column, page 3's shape for a handoff: outside the grid
             on its own max-w-2xl it was the one block on the page set narrower
             than everything above it. */}
-        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink lg:col-start-1">
+        <Handoff className="lg:col-start-1">
           Notice what every repair on this page assumed. The verifier reads the chain, the reviser
           reads the chain, and the reader reads the chain, and all three take it for what it says
           it is: the working that produced the answer.{" "}
@@ -1040,7 +1041,7 @@ export function Page15() {
             Hold that. Next: every lever in this story on one axis, and ten questions on the
             mechanisms rather than the magnitudes.
           </em>
-        </div>
+        </Handoff>
       </div>
 
       <PageNav n={PAGE_N} />

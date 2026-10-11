@@ -72,6 +72,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
@@ -887,11 +888,11 @@ export function Page8() {
               <Cite n={REF.stroebl} />
             </p>
           ) : null}
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+          <Handoff>
             So the question is not how many candidates, nor even how good the judge is, but{" "}
             <em>what the judge is reading</em>. Every rule here grades the final answer and none of
             them looks at whether step three followed from step two. <em>Turn the page.</em>
-          </div>
+          </Handoff>
         </section>
         <Note kicker="References">
           <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>

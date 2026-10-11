@@ -60,6 +60,7 @@
  */
 
 import { useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
@@ -879,14 +880,14 @@ export function Page9() {
         <div aria-hidden="true" />
 
         {/* The hand-off, in the content column so it does not run under the notes. */}
-        <div className="min-w-0 rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+        <Handoff className="min-w-0">
           A step-level grader can do what the others cannot: judge a chain{" "}
           <em>while it is still being written</em>. Once you can score a half-finished chain, you
           need not finish the ones going badly.{" "}
           <em className="text-ink-muted">
             You can branch, look ahead, and back out. Turn the page.
           </em>
-        </div>
+        </Handoff>
         <div aria-hidden="true" />
       </div>
 

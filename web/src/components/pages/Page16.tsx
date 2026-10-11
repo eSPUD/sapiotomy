@@ -56,6 +56,7 @@
  */
 
 import { ChartFrame } from "@/components/ChartFrame";
+import { Handoff } from "@/components/Handoff";
 import { PageNav } from "@/components/PageNav";
 import { Quiz } from "@/components/Quiz";
 import {
@@ -430,13 +431,13 @@ export function Page16() {
       </div>
 
 
-      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+      <Handoff>
         The one sentence to leave with: a model can get dramatically better answers by thinking
         longer at answer time, the gains are real and measured and each one has a price and a
         ceiling, and every one of them is paid in text that nobody has yet shown is the reason for
         the answer.{" "}
         <em className="text-ink-muted">That is where the field is, and where you now are.</em>
-      </div>
+      </Handoff>
 
       <PageNav n={PAGE_N} />
     </article>

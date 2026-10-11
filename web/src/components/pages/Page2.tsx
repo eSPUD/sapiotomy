@@ -28,6 +28,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
@@ -371,11 +372,11 @@ export function Page2() {
             gap and then fix it with a lookup.
           </p>
 
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+          <Handoff>
             The model itself never changed between the two answers. It had the same training data
             and the same cutoff. The only difference is that it spent more time to reason and
             reference. <strong>Why not just retrain the model on newer data instead?</strong>
-          </div>
+          </Handoff>
         </section>
         <div aria-hidden="true" />
       </div>

@@ -267,12 +267,13 @@ describe("Page 1 sorting game (SystemSort)", () => {
 
   // The definition comes after the widgets, so the reader feels both systems
   // first; the close hints at training versus thinking time without naming either.
-  it("defines the two systems plainly, then closes on waiting for a reliable answer", () => {
+  it("defines the two systems plainly, then hands off to the trade the story measures", () => {
     render(<Page1 />);
     const body = document.body.textContent ?? "";
     expect(body).not.toMatch(/A good rule of thumb/);
     expect(body).toMatch(/System 2 scales its effort with the problem, spending more time on harder ones\s*to get them right\./);
-    expect(body).toMatch(/Sometimes it is worth waiting for a more reliable answer than a quick one\. People switch to\s*System 2 when a problem is long or unfamiliar, and it is usually worth the wait\./);
+    expect(body).toMatch(/A slower, more reliable answer is often worth the wait, but only up to a point\. The rest\s*of this story is about that trade: how much thinking to buy, and where it stops paying\./);
+    expect(body).not.toMatch(/it is usually worth the wait/);
   });
 });
 

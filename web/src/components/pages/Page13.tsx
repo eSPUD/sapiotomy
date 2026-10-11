@@ -155,6 +155,7 @@
  */
 
 import { useState } from "react";
+import { Handoff } from "@/components/Handoff";
 import { scaleLinear, scaleLog } from "d3";
 import { BigNumber } from "@/components/BigNumber";
 import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
@@ -818,12 +819,12 @@ export function Page13() {
             sell you the curve; it will not show you the machine that makes it.
           </p>
 
-          <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+          <Handoff>
             Four months later an open lab answered every one of them: the algorithm in full, a chain
             you can read token by token, a training curve that shows where the extra thinking comes
             from, and the whole thing distilled small enough to run yourself.{" "}
             <em className="text-ink-muted">Turn the page.</em>
-          </div>
+          </Handoff>
         </section>
       </div>
 
