@@ -322,15 +322,12 @@ export function Page2() {
           <h2 className="text-xl font-semibold text-ink">2. Answering a question with (data) bias</h2>
 
           <p className="text-ink">
-            The question never said men&apos;s.
+            The question never said men&apos;s. Every answer above counted only the men&apos;s
+            tournament. We call this a <strong>knowledge bias</strong>, a different problem from the
+            knowledge gap.
           </p>
 
           <IdealAnswer />
-
-          <p className="text-ink">
-            Every answer above counted only the men&apos;s tournament. We call this a{" "}
-            <strong>knowledge bias</strong>, a different problem from the knowledge gap.
-          </p>
 
           <p className="text-ink">
             The women&apos;s 2023 win came before the cutoff and was widely covered, so the model
