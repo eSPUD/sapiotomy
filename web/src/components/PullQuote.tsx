@@ -1,11 +1,14 @@
+import { Callout } from "@/components/Handoff";
+
 /**
- * A line set apart from the running prose: a question posed to the reader, or a
- * page's closing statement. Shared so Act 1's pages set them identically.
+ * A question posed to the reader, set apart from the running prose. It wears the
+ * same Manilla card as each page's closing box, titled "Open question", so the
+ * questions a page raises and the hand-off it ends on read as one family.
  */
 export function PullQuote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-lg bg-compute/10 px-4 py-3 text-center text-lg italic text-compute-ink">
-      {children}
-    </p>
+    <Callout title="Open question">
+      <p>{children}</p>
+    </Callout>
   );
 }
