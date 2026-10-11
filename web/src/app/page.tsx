@@ -18,10 +18,10 @@ export default function Home() {
       {/* Hero, with How to explore beside it on wide screens (below it otherwise) */}
       <section className="xl:grid xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start xl:gap-10">
         <Reveal>
-          <div className="flex flex-col gap-5 pt-4 pb-6">
+          <div className="flex flex-col gap-5 pb-6">
             {/* The venue line the story-page masthead carries, which the landing has none of.
-                Equal visible space above it and below it, down to the title's capitals (~48px). */}
-            <p className="mb-6 text-sm text-ink-faint">
+                Equal visible space above it and below it, down to the title's capitals (~34px). */}
+            <p className="mb-2 text-sm text-ink-faint">
               An interactive AI explainable.
               <br />
               The 9th Workshop on Visualization for AI Explainability (VISxAI), IEEE VIS 2026.
@@ -37,16 +37,16 @@ export default function Home() {
             </div>
 
             <p className="text-lg text-ink-muted">
-              A language model can get dramatically better answers by{" "}
-              <span className="italic text-ink">thinking longer at answer time</span>, not only by
-              being retrained or made larger.
+              Same model, same weights, better answers: just let it{" "}
+              <span className="italic text-ink">think longer</span>. How far can that go, and when
+              does it backfire?
             </p>
           </div>
         </Reveal>
 
         <aside
           aria-labelledby="how-to-explore"
-          className="mt-6 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-5 xl:mt-4"
+          className="mt-6 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-5 xl:mt-0"
         >
           <h2 id="how-to-explore" className="text-lg font-bold text-ink">
             How to explore
