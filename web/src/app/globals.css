@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  /* Broadsheet: the serif is the chrome. --font-serif is provided by next/font
+  /* Manuscript: the serif is the chrome. --font-serif is provided by next/font
      in layout.tsx (Source Serif 4, with the true italic). */
   --font-sans: var(--font-serif), "Source Serif 4", Georgia, serif;
   --font-mono: var(--font-serif), "Source Serif 4", Georgia, serif;
@@ -44,7 +44,7 @@ body {
   overscroll-behavior: none;
 }
 
-/* Broadsheet headings: the serif scale carries the hierarchy. */
+/* Manuscript headings: the serif scale carries the hierarchy. */
 h1, h2, h3, h4, h5, h6 {
   line-height: 1.12;
   letter-spacing: -0.015em;
@@ -55,7 +55,7 @@ em, i, cite {
   font-style: italic;
 }
 
-/* Accent-tinted selection (Broadsheet interaction state). */
+/* Accent-tinted selection (clay, at a quarter strength). */
 ::selection {
   background-color: color-mix(in srgb, theme("colors.compute") 24%, transparent);
 }
@@ -72,7 +72,7 @@ em, i, cite {
   }
 }
 
-/* Themed keyboard focus — the 2px accent ring, never the default blue. */
+/* Themed keyboard focus — the 2px clay ring, never the default blue. */
 :focus-visible {
   outline: 2px solid theme("colors.compute");
   outline-offset: 2px;
