@@ -21,19 +21,36 @@ const serif = Source_Serif_4({
 // route, and none of them override `other`). An array value for
 // citation_author emits one <meta> per author, as Highwire expects. The full
 // text of the work is one canonical URL (the landing), so every page points
-// citation_fulltext_html_url there rather than at itself.
+// citation_fulltext_html_url there rather than at itself. The work was accepted
+// at a workshop, so its venue is a citation_conference_title (Highwire's tag
+// for proceedings), not a journal. No canonical or og:url here: this layout
+// covers every route, and pointing them all at the landing would mark the
+// chapters as duplicates of it.
+const SITE_URL = "https://inferencetimescaling.espud.org";
+const TITLE = "The Story of Inference-Time Scaling — and the training-time loop behind it";
+const DESCRIPTION =
+  "An interactive explorable explanation: how a language model gets better answers by thinking longer at inference time, and where that stops working.";
+const VENUE = "9th Workshop on Visualization for AI Explainability (VISxAI), IEEE VIS 2026";
+
 const CITATION_META = {
   citation_title: "The Story of Inference-Time Scaling and the Training-Time loop behind it",
   citation_author: ["Bangalore Lakshman, Shashank", "Eiers, Scott Lawrence"],
   citation_publication_date: "2026/08/10",
-  citation_journal_title: "Preprint (submitted to the VISxAI Workshop at IEEE VIS)",
-  citation_fulltext_html_url: "https://sapiotomy.vercel.app/",
+  citation_conference_title: VENUE,
+  citation_fulltext_html_url: `${SITE_URL}/`,
 };
 
 export const metadata: Metadata = {
-  title: "The Story of Inference-Time Scaling — and the training-time loop behind it",
-  description:
-    "An interactive explorable explanation: how a language model gets better answers by thinking longer at inference time, and where that stops working.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "The Story of Inference-Time Scaling",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: { card: "summary", title: TITLE, description: DESCRIPTION },
   other: CITATION_META,
 };
 
