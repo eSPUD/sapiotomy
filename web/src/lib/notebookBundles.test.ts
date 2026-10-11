@@ -33,22 +33,24 @@ const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 /**
  * `declared` is the size the page prints beside the link, or null where the
  * page prints none. `extras` are run artifacts beyond the three every bundle
- * carries.
+ * carries. `siteData` names the script that builds `derived.json` from the
+ * notebook's `results.json`, on pages whose notebook stops at its results.
  */
 const PAGES = [
   { n: 5, slug: "page-05-how-to-reason", notebook: "page_05_how_to_reason.ipynb",
-    declared: "0.8 MB", extras: [], repoNotebookIsTheShippedOne: false },
+    declared: "0.8 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
   // Page 6's repo copy has moved ahead: it lets a chain stop at its cap with no forced
   // answer, and its grid runs to 4,096 tokens. The shipped bundle still carries the
   // run that produced the numbers the page plots, and re-bundling waits on the new
   // FULL run. Flip this back to true in the same commit that re-bundles; see
   // notebooks/RUNBOOK_page6_full.md.
   { n: 6, slug: "page-06-thinking-longer", notebook: "page_06_thinking_longer.ipynb",
-    declared: "2.0 MB", extras: [], repoNotebookIsTheShippedOne: false },
+    declared: "2.0 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
   { n: 7, slug: "page-07-frequency-voting", notebook: "page_07_frequency_voting.ipynb",
-    declared: "3.1 MB", extras: [], repoNotebookIsTheShippedOne: true },
+    declared: "3.1 MB", extras: ["results.json"], siteData: "page_07_site_data.py",
+    repoNotebookIsTheShippedOne: true },
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
-    declared: "10.1 MB", extras: ["scores.jsonl", "judge_solves.jsonl"],
+    declared: "10.1 MB", extras: ["scores.jsonl", "judge_solves.jsonl"], siteData: null,
     repoNotebookIsTheShippedOne: false },
   // Page 9 was absent from this list until 2026-08-09, and it had drifted in the two
   // ways the list exists to catch: it unpacked flat instead of into a folder, and its
@@ -57,9 +59,9 @@ const PAGES = [
   // aggregate from them and writes the artifacts), which is only possible now that
   // REPLAY can adopt this page's own scores instead of needing a GPU for them.
   { n: 9, slug: "page-09-outcome-vs-process", notebook: "page_09_outcome_vs_process.ipynb",
-    declared: "1.6 MB", extras: [], repoNotebookIsTheShippedOne: true },
+    declared: "1.6 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: true },
   { n: 11, slug: "page-11-training-vs-scale", notebook: "page_11_training_vs_scale.ipynb",
-    declared: "2.8 MB", extras: [], repoNotebookIsTheShippedOne: true },
+    declared: "2.8 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: true },
 ] as const;
 
 const NOTEBOOKS = resolve(WEB, "../notebooks");
@@ -77,7 +79,7 @@ const member = (slug: string, name: string) =>
   execFileSync("unzip", ["-p", zipPath(slug), name], { maxBuffer: 1 << 28 });
 
 describe.each(PAGES)("page $n's notebook bundle", ({
-  n, slug, notebook, declared, extras, repoNotebookIsTheShippedOne,
+  n, slug, notebook, declared, extras, siteData, repoNotebookIsTheShippedOne,
 }) => {
   const pad = String(n).padStart(2, "0");
 
@@ -106,6 +108,7 @@ describe.each(PAGES)("page $n's notebook bundle", ({
         `${slug}/README.md`,
         `${slug}/harness.py`,
         `${slug}/${notebook}`,
+        ...(siteData ? [`${slug}/${siteData}`] : []),
         `${slug}/out/page_${pad}/derived.json`,
         `${slug}/out/page_${pad}/manifest.json`,
         `${slug}/out/page_${pad}/traces.jsonl`,
@@ -137,6 +140,20 @@ describe.each(PAGES)("page $n's notebook bundle", ({
     expect(sha(member(slug, `${slug}/out/page_${pad}/derived.json`))).toBe(
       sha(readFileSync(resolve(WEB, `data/page-${pad}-derived.json`))),
     );
+  });
+
+  // A page whose notebook stops at results.json ships the script that lays those
+  // results out for the page, and derived.json names the exact pair it was built
+  // from. Without this, "re-derive it yourself" would end one step short of the
+  // file the page plots.
+  it.runIf(siteData !== null)("builds its derived.json from the results it ships", () => {
+    const sha = (b: Buffer | Uint8Array) => createHash("sha256").update(b).digest("hex");
+    const derived = JSON.parse(member(slug, `${slug}/out/page_${pad}/derived.json`).toString());
+    expect(derived.source.builder).toBe(siteData);
+    expect(derived.source.results_sha256).toBe(
+      sha(member(slug, `${slug}/out/page_${pad}/results.json`)),
+    );
+    expect(derived.source.builder_sha256).toBe(sha(member(slug, `${slug}/${siteData}`)));
   });
 
   // `notebooks/README.md`: "The manifest records the notebook's sha256, so 'this file

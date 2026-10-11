@@ -54,17 +54,25 @@ Budget **3 to 5 hours**; the 8-bit 7B is the slow part.
 
 ## What comes back
 
-From `notebooks/out/page_06/`: `traces.jsonl`, `manifest.json`, `derived.json`, and
+From `notebooks/out/page_06/`: `traces.jsonl`, `manifest.json`, `results.json`, and
 `out/page_06_FULL_run.ipynb` (the executed copy). Copy those back to the same paths in
-the main checkout.
+the main checkout, then build the website's data from them:
+
+```bash
+cd notebooks && python page_06_site_data.py
+```
+
+That writes `out/page_06/derived.json`, which pages 11 and 14 also read from there.
 
 ## After the run
 
 1. **Check the 7B.** In the executed copy, figure 2's table gives each doubling's gain. If the
    7B still gains 2 points or more at 2,048 → 4,096, the gate still refuses it. Stop and
    decide, rather than loosening the gate.
-2. **Notebook clean-up.** The new chains carry no forced text, so remove `as_cut_off`'s
-   forced branch, `ADDED_AT_CAP`, and the "About the published chains" paragraph in section 4.
+2. **Leftover fields.** `derived.json` still carries fields from the forced-answer run, kept
+   only because the page reads them: `tokens_generated` (now always `own_tokens`), `pilot`
+   (check 5 on 30 problems instead of 100), and handoff names ending `_at_max` that hold the
+   2,048 values. Drop or rename them in `page_06_site_data.py` and `page06.ts` together.
 3. **Page 6.** Take forcing out of the page: `web/src/lib/page06.ts` (raw types without
    `forced`, `cut_index`, `answer_start`, `answer_*`, `forced_rate`; the gates key on
    `truncated`; `traceZones` returns only `own` and `unwritten`; the run-mode gate reads
@@ -72,9 +80,11 @@ the main checkout.
    band in `Page6.tsx`, the step 1 copy ("make it answer on the spot"), and the tests that
    pin the old run's specimen, counts and dip.
 4. **The download.** Rebuild `web/public/notebooks/page-06-thinking-longer.zip` with the
-   notebook, `harness.py`, `requirements.txt`, a README without the forced-answer
-   paragraph, and the new `out/page_06/` files. Then set page 6's
-   `repoNotebookIsTheShippedOne` back to `true` in `web/src/lib/notebookBundles.test.ts`
+   notebook, `harness.py`, `page_06_site_data.py`, `requirements.txt`, a README without the
+   forced-answer paragraph, and the new `out/page_06/` files (`results.json` among them, which
+   the bundle test checks against `derived.json`'s `source` stamp, as it does for page 7). Then
+   set page 6's `siteData` and `repoNotebookIsTheShippedOne` (back to `true`) in
+   `web/src/lib/notebookBundles.test.ts`
    and update the size label (`NOTEBOOK_SIZE` in `Page6.tsx`, page 16's download list).
 5. **Downstream.** Pages 11 and 15 (`page_17_when_reasoning_breaks.ipynb`) reproduce page 6's
    accuracy cells bit-exactly, and page 16 reads `PAGE6` directly, so all three need

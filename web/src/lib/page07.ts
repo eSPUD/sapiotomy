@@ -208,7 +208,7 @@ for (const gate of BLOCKING) {
     throw new Page07DataError(
       `page-07-derived.json fails the blocking claim '${gate}'. The notebook decides what ` +
         `this page may say; a run that does not pass must not be translated. See ` +
-        `docs/page_7_refactor.md and notebooks/page_07_frequency_voting.ipynb section 16.`,
+        `docs/page_7_refactor.md and notebooks/page_07_frequency_voting.ipynb section 15.`,
     );
   }
 }

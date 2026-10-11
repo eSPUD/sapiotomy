@@ -49,6 +49,13 @@ Two tiers of artifact, applied uniformly so page 7's much larger sweep does not 
 
 The page ships what it draws and links what it drew it from.
 
+**Pages 6 and 7 keep the website out of the notebook.** Their notebooks stop at `results.json`,
+every number they compute, and a `manifest.json` written by `harness.write_manifest`.
+`page_06_site_data.py` and `page_07_site_data.py` build `derived.json` from those: which chains to
+embed, the examples the page shows, and the layout `web/src/lib/page0N.ts` reads. They compute
+nothing the notebook did not, and `derived.json` records the sha256 of the results and of the
+script it was built from. The other pages still write `derived.json` from the notebook.
+
 ## Contents
 
 **The page notebooks.** Pages 5 to 7 share the three run modes below; page 8's modes are the
@@ -139,8 +146,9 @@ the afternoon should open.
 
 - **`REPLAY`** loads no model and downloads no weights. It is not a shortcut past the evidence: it
   adopts the published run's `RUN_ID`, asserts the traces cover the item set the notebook draws,
-  and then runs every gate, assertion and figure the generating run did — including the
-  independent verification that recomputes the headline numbers from the trace file. What it
+  and then runs every gate, assertion and figure the generating run did — including, where a
+  page carries one, the independent verification that recomputes the headline numbers from the
+  trace file. What it
   cannot tell you is whether *your* hardware reproduces ours.
 - **`QUICK`** is a genuine preview rather than a different experiment: the same checkpoint is
   primary in `QUICK` and `FULL`, on half the items. It wants a GPU. A 2026 instruction-tuned model
@@ -159,6 +167,8 @@ Runs are resumable: delete `out/<page>/traces.jsonl` to start over.
 ```
 notebooks/
   harness.py
+  page_06_site_data.py                 # results.json -> derived.json, for pages 6 and 7
+  page_07_site_data.py
   page_05_how_to_reason.ipynb          # REPLAY / QUICK / FULL
   page_06_thinking_longer.ipynb        # REPLAY / QUICK / FULL
   page_07_frequency_voting.ipynb       # REPLAY / QUICK / FULL
@@ -173,9 +183,9 @@ notebooks/
       manifest.json    # model revision, hashes, versions, seed, date
       figure_*.png     # reference renders; the page redraws these in the browser
     page_06/
-      …same four
+      …same four, plus results.json; derived.json comes from page_06_site_data.py
     page_07/
-      …same four. Its traces.jsonl is also page 8's input
+      …as page 6. Its traces.jsonl is also page 8's input
     page_08/
       traces.jsonl     # its own pool, written only in GENERATE
       scores.jsonl     # one verifier score per candidate, per tier
@@ -218,7 +228,7 @@ not, and never did: the artifact and the page footer both name page 7's pile, wh
 above says too. The claim was a plan that the implementation replaced with the filter.)*
 
 `out/` and `data/` are gitignored. Promoting a run to the page means copying its `derived.json`
-and `manifest.json` into `web/data/` as part of step 4, which is also where the cross-language
+(on pages 6 and 7, after running `page_0N_site_data.py`) and `manifest.json` into `web/data/` as part of step 4, which is also where the cross-language
 agreement test lives: TypeScript recomputes the same aggregates from `traces.jsonl` and asserts
 they match the notebook's `derived.json`. That test is where translation bugs would otherwise
 hide.

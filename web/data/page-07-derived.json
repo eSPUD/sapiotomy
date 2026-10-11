@@ -2,10 +2,10 @@
   "manifest": {
     "run_id": "full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
     "notebook": "page_07_frequency_voting.ipynb",
-    "notebook_sha256": "504216a0cbae1418c890b44a57ff581f2a75271073ad94f9503430c83f8e07b1",
+    "notebook_sha256": "7215fb69114706558e66461444a965e3869c17bbae5aec43015f409518517b6f",
     "harness": {
-      "version": "1.3",
-      "sha256": "7076c1218c6345ec9202087a98a2bd0c71ae47d6e406a81dc1901a0c7c78d6d8"
+      "version": "1.5",
+      "sha256": "c1d6d5b18d642be62bcc0ce5764498bac250ea1f8472f6560c681448b24fa1f4"
     },
     "page": 7,
     "run_mode": "REPLAY",
@@ -219,6 +219,11 @@
       "n_uncountable_correct": 0,
       "t0_identical_rate": 1.0
     }
+  },
+  "source": {
+    "results_sha256": "5a6682178de170846cab30a46c1656e7947bf45a77ae0f0b272c3e2c42e35c19",
+    "builder": "page_07_site_data.py",
+    "builder_sha256": "b6bead7b0e6010d289309d2bc6890541b10756959221ffbe6d568412a5210a9c"
   },
   "claims": {
     "vote_beats_bare_cot": true,
@@ -2532,8 +2537,8 @@
   "pool": {
     "config_id": "t0.30-c2048",
     "n_chains": 16,
-    "chain_cap": 2048,
     "temperature": 0.3,
+    "chain_cap": 2048,
     "note": "this page's candidate pile; page 8 re-runs the same protocol on its own chains"
   }
 }

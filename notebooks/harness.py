@@ -30,6 +30,7 @@ import re
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from pathlib import Path
 
 import torch
@@ -44,7 +45,7 @@ from huggingface_hub.utils import (
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-__version__ = "1.4"
+__version__ = "1.5"
 
 _HERE = Path(__file__).resolve()
 
@@ -127,6 +128,40 @@ def tokenizer_fingerprint(tok):
 
 def kb(path):
     return Path(path).stat().st_size / 1024
+
+
+def write_json(path, obj):
+    Path(path).write_text(json.dumps(obj, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+# What a manifest says about one execution of a notebook, rather than about the run it
+# describes. A replay rewrites these and keeps the generating run's under `generated_by`.
+RUN_PROVENANCE = ("run_mode", "replayed", "timestamp_utc", "notebook_git_sha",
+                  "notebook_sha256", "harness")
+MANIFEST_OWN = ("run_id", "notebook", "page", "generated_by") + RUN_PROVENANCE
+
+
+def write_manifest(path, *, page, notebook, run_id, run_mode, generated_by=None, **fields):
+    """Write a run's manifest.json and return it.
+
+    `fields` are the page's own record of what was run (models, decoding, items, ...);
+    this adds who ran it, when, and with which notebook and harness. `generated_by` is
+    for a replay: the provenance of the run that generated the chains.
+    """
+    clash = set(fields) & set(MANIFEST_OWN)
+    assert not clash, f"{sorted(clash)} are written by write_manifest, not passed to it"
+    manifest = {
+        "run_id": run_id, "notebook": notebook, "page": page,
+        "run_mode": run_mode, "replayed": run_mode == "REPLAY",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "notebook_git_sha": git_sha(), "notebook_sha256": file_sha256(notebook),
+        "harness": fingerprint(),
+        **fields,
+    }
+    if generated_by is not None:
+        manifest["generated_by"] = generated_by
+    write_json(path, manifest)
+    return manifest
 
 
 # --------------------------------------------------------------------------
@@ -729,8 +764,8 @@ class TraceStore:
 # --------------------------------------------------------------------------
 # generation from token ids, and forced answers
 # --------------------------------------------------------------------------
-# Moved here from page 6, which defined these inline; pages 7, 11 and 14 carry
-# identical copies of `cut_at_boxed_close` and can point here instead.
+# Moved here from page 6, which defined these inline. Page 7 uses `cut_at_boxed_close`
+# from here; pages 11 and 14 still carry identical copies and can point here instead.
 
 def generation_stop_ids(model):
     """The ids `generate` actually stops on, read from the model's own generation
