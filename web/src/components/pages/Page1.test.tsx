@@ -123,14 +123,25 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     random.mockRestore();
   });
 
-  it("numbers the Kahneman citation inline and in the references note", () => {
+  it("numbers the Kahneman and Stanovich & West citations inline and in the references note", () => {
     const { container } = render(<Page1 />);
-    // The two-systems framing carries an inline marker...
+    // The two-systems framing carries Kahneman's marker, the System 1 / System 2
+    // names carry Stanovich & West's...
     const marks = Array.from(container.querySelectorAll("sup"));
-    expect(marks).toHaveLength(1);
+    expect(marks).toHaveLength(2);
     expect(marks[0].textContent).toMatch(/1$/);
-    // ...matching a numbered entry in the References note.
-    expect(document.body.textContent ?? "").toMatch(/1\.\s*Daniel Kahneman/);
+    expect(marks[1].textContent).toMatch(/2$/);
+    // ...each matching a numbered entry in the References note.
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/1\.\s*Daniel Kahneman/);
+    expect(body).toMatch(/2\.\s*Stanovich & West/);
+  });
+
+  it("states the System 1 / System 2 caveat under the intro", () => {
+    render(<Page1 />);
+    expect(document.body.textContent ?? "").toMatch(
+      /Caveat:\s*System 1\/System 2 is a metaphor for compute\s*regimes, not a claim about cognition or about transformer internals\./,
+    );
   });
 
   it("keeps the Page 2 → nav link the e2e traversal follows", () => {
@@ -201,7 +212,7 @@ describe("Page 1 copy", () => {
     render(<Page1 />);
     const body = document.body.textContent ?? "";
     expect(body).toMatch(
-      /Your mind runs two systems\.(reference 1)?\s*System 1 is fast,\s*automatic, and effortless\. System 2 is slow,\s*deliberate, and effortful\. Each is important in its own way, and neither can replace the\s*other\./,
+      /Your mind runs two systems\.(reference 1)?\s*System 1 is fast,\s*automatic, and effortless\. System 2 is slow,\s*deliberate, and effortful\.(reference 2)?\s*Each is important in its own way, and neither can replace the\s*other\./,
     );
     expect(body).not.toMatch(/The human mind runs two systems|One operation, multiplication/);
   });

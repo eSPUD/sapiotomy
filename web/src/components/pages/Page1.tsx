@@ -11,7 +11,7 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 1;
 
 /** Page 1's references, numbered in order of first appearance. */
-const REF = { kahneman: 1 } as const;
+const REF = { kahneman: 1, stanovich: 2 } as const;
 const fmt = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 /** Both systems run in lockstep on one clock, one step per beat, and step 1
  *  appears in both panels on the same beat. Each answer lands with its last
@@ -170,19 +170,31 @@ export function Page1() {
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* The intro is a grid row of its own so its citation can sit beside it. */}
-        <p className="max-w-2xl text-lg text-ink-muted">
-          Your mind runs two systems.
-          <Cite n={REF.kahneman} /> <strong className="text-ink">System 1</strong> is fast,
-          automatic, and effortless. <strong className="text-ink">System 2</strong> is slow,
-          deliberate, and effortful. Each is important in its own way, and neither can replace the
-          other.
-        </p>
+        <div className="flex max-w-2xl flex-col gap-3">
+          <p className="text-lg text-ink-muted">
+            Your mind runs two systems.
+            <Cite n={REF.kahneman} /> <strong className="text-ink">System 1</strong> is fast,
+            automatic, and effortless. <strong className="text-ink">System 2</strong> is slow,
+            deliberate, and effortful.
+            <Cite n={REF.stanovich} /> Each is important in its own way, and neither can replace the
+            other.
+          </p>
+          <p className="text-sm text-ink-muted">
+            <strong className="text-ink">Caveat:</strong> System 1/System 2 is a metaphor for compute
+            regimes, not a claim about cognition or about transformer internals.
+          </p>
+        </div>
         <Note kicker="References" flush>
           <RefItem
             n={REF.kahneman}
             href="https://en.wikipedia.org/wiki/Thinking,_Fast_and_Slow"
           >
             Daniel Kahneman, <em>Thinking, Fast and Slow</em> (2011).
+          </RefItem>
+          <RefItem n={REF.stanovich} href="https://doi.org/10.1017/S0140525X00003435">
+            Stanovich &amp; West, &ldquo;Individual Differences in Reasoning: Implications for the
+            Rationality Debate?&rdquo; (<em>Behavioral and Brain Sciences</em>, 2000). The source
+            of the System 1 / System 2 names.
           </RefItem>
         </Note>
 
