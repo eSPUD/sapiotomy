@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Page7 } from "./Page7";
-import { PAGE7 } from "@/lib/page07";
+import { PAGE7, chainsFor, foldTrace, tidyMath } from "@/lib/page07";
 
 /**
  * The page renders from a committed run and nothing streams or simulates, so
@@ -16,62 +16,225 @@ describe("Page 7 (frequency voting) component", () => {
     // 43% is page 5's `bare` and page 6's top rung. If the page ever quotes the
     // sampled baseline here instead, the gain silently becomes 4 points and stops
     // being significant.
-    expect(screen.getByText(/One chain of chain-of-thought, decoded greedily/i)).toBeInTheDocument();
-    const callout = screen.getByText(/decoded greedily/i).closest("div")!;
-    expect(within(callout).getByText("43%")).toBeInTheDocument();
-    expect(within(callout).getByText("55%")).toBeInTheDocument();
-    expect(callout.textContent).toMatch(/\+12 points/);
-    expect(callout.textContent).toMatch(/p = 0\.0075/);
+    const headline = screen.getByText(/One greedy chain solves/i).closest("p")!;
+    expect(within(headline).getByText("43%")).toBeInTheDocument();
+    expect(headline.textContent).toMatch(
+      /12 points\s+less than majority voting with 16 sampled chains/,
+    );
+    // and the 12 is the gap the run tested, against the greedy chain
+    expect(PAGE7.figure2.gain.gain_pts).toBeCloseTo(12, 6);
+    expect(PAGE7.figure2.gain.p).toBeLessThan(0.05);
   });
 
-  it("keeps the unresolved sampled-chain contrast in the footnote, not the headline", () => {
+  // The guard on the +12 (some of it is sampling, not counting) is carried by the
+  // figure now. The vote line starts at ONE sampled chain, which already sits above
+  // the flat greedy line before any vote is taken, and the readout there says so.
+  it("shows in figure 2 that sampling alone is part of the gain", () => {
     render(<Page7 />);
-    const body = document.body.textContent ?? "";
-    expect(body).toMatch(/sampled.* chain rather than a greedy one/i);
-    expect(body).toMatch(/p = 0\.388/);
+    const one = PAGE7.figure2.hot.points[0];
+    expect(one.n).toBe(1);
+    expect(one.accuracy).toBeGreaterThan(PAGE7.figure2.cold.points[0].accuracy);
+    fireEvent.change(screen.getByRole("slider", { name: /chains the vote may see/i }), {
+      target: { value: "0" },
+    });
+    const live = document.querySelector("p[aria-live='polite']")!;
+    expect(live.textContent).toMatch(/no vote yet/);
+    expect(live.textContent).toMatch(/above one greedy chain/);
   });
+
+  const tallyRows = () =>
+    within(screen.getByRole("list", { name: /Answers to this problem/i })).getAllByRole("button");
+  const chainPosition = () => screen.getByText(/^chain \d+ of \d+$/).textContent;
 
   it("draws the tally with one row per distinct answer and no 'other' bucket", () => {
     render(<Page7 />);
     const s = PAGE7.figure1.specimen;
-    const rows = screen.getAllByRole("button", { expanded: false });
-    expect(rows).toHaveLength(s.ranked.length);
+    expect(tallyRows()).toHaveLength(s.ranked.length);
     expect(s.ranked.filter((r) => r.votes === 1).length).toBeGreaterThan(0);
   });
 
   it("opens a row and shows the chains that landed there", () => {
     render(<Page7 />);
-    const top = PAGE7.figure1.specimen.ranked[0];
-    const rows = screen.getAllByRole("button", { expanded: false });
-    fireEvent.click(rows[0]);
-    expect(screen.getByRole("button", { expanded: true })).toBeInTheDocument();
+    const second = PAGE7.figure1.specimen.ranked[1];
+    fireEvent.click(tallyRows()[1]);
+    expect(tallyRows()[1]).toHaveAttribute("aria-expanded", "true");
     expect(
-      screen.getByText(new RegExp(`${top.votes} of ${PAGE7.figure1.n_chains} chains`)),
+      screen.getByText(new RegExp(`${second.votes} of ${PAGE7.figure1.n_chains} chains`)),
     ).toBeInTheDocument();
+  });
+
+  // A row is a place in the tally, not a switch. Clicking the open row a second time
+  // used to close it, which hid the chain the reader was in the middle of.
+  it("keeps a row open when it is clicked again", () => {
+    render(<Page7 />);
+    fireEvent.click(tallyRows()[1]);
+    const before = screen.getByTestId("chain-trace").textContent;
+    fireEvent.click(tallyRows()[1]);
+    fireEvent.doubleClick(tallyRows()[1]);
+    expect(tallyRows()[1]).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByTestId("chain-trace").textContent).toBe(before);
+  });
+
+  it("offers three problems, one for each way a vote can end", () => {
+    render(<Page7 />);
+    const picker = screen.getByRole("radiogroup", { name: /Pick a problem/i });
+    const choices = within(picker).getAllByRole("radio");
+    expect(choices.map((b) => b.getAttribute("aria-label"))).toEqual([
+      "the vote is right",
+      "the vote is wrong",
+      "the vote ties",
+    ]);
+    expect(choices[0]).toBeChecked();
+    for (const [i, { problem }] of PAGE7.figure1.showcase.entries()) {
+      fireEvent.click(choices[i]);
+      expect(tallyRows()).toHaveLength(problem.ranked.length);
+      expect(tallyRows()[0]).toHaveAttribute("aria-expanded", "true");
+      expect(chainPosition()).toBe(`chain 1 of ${problem.ranked[0].votes}`);
+    }
+  });
+
+  // The arrows belong to the open answer: "64" has eight chains to step through and
+  // "128" has two. They never wander into another row.
+  it("steps only through the chains of the open answer", () => {
+    render(<Page7 />);
+    const s = PAGE7.figure1.specimen;
+    for (const [r, row] of s.ranked.entries()) {
+      fireEvent.click(tallyRows()[r]);
+      const next = screen.getByRole("button", { name: "Next chain" });
+      expect(screen.getByRole("button", { name: "Previous chain" })).toBeDisabled();
+      const want = chainsFor(s, row.answer).map((c) => String(c.sample_index));
+      const seen: string[] = [];
+      for (let k = 0; k < row.votes; k++) {
+        expect(chainPosition()).toBe(`chain ${k + 1} of ${row.votes}`);
+        seen.push(screen.getByTestId("chain-trace").getAttribute("data-chain")!);
+        if (k < row.votes - 1) fireEvent.click(next);
+      }
+      expect(next).toBeDisabled();
+      expect(seen).toEqual(want);
+      expect(tallyRows()[r]).toHaveAttribute("aria-expanded", "true");
+    }
+  });
+
+  // Every chain of every problem is readable, the wrong ones as much as the right ones.
+  // The reader used to see at most two chains per answer.
+  it("puts every chain of every problem within reach, wrong ones included", () => {
+    render(<Page7 />);
+    const choices = within(screen.getByRole("radiogroup", { name: /Pick a problem/i })).getAllByRole(
+      "radio",
+    );
+    for (const [i, { problem }] of PAGE7.figure1.showcase.entries()) {
+      fireEvent.click(choices[i]);
+      const seen = new Set<string>();
+      for (const [r, row] of problem.ranked.entries()) {
+        fireEvent.click(tallyRows()[r]);
+        for (let k = 0; k < row.votes; k++) {
+          seen.add(screen.getByTestId("chain-trace").getAttribute("data-chain")!);
+          fireEvent.click(screen.getByRole("button", { name: "Next chain" }));
+        }
+      }
+      expect(problem.chains.some((c) => !c.correct)).toBe(true);
+      expect([...seen].sort()).toEqual(problem.chains.map((c) => String(c.sample_index)).sort());
+    }
+  });
+
+  // Chains run to 272 lines. The reader sees the opening and the ending, which is
+  // where the chain commits to its answer, and opens the middle on request.
+  it("folds a long chain to its opening and its ending", () => {
+    render(<Page7 />);
+    const chain = chainsFor(PAGE7.figure1.specimen, PAGE7.figure1.specimen.ranked[0].answer)[0];
+    const { head, middle, tail } = foldTrace(tidyMath(chain.trace));
+    expect(middle.length).toBeGreaterThan(0);
+    const trace = () => screen.getByTestId("chain-trace").textContent ?? "";
+    expect(trace()).toContain(head[0]);
+    expect(trace()).toContain(tail[tail.length - 1]);
+    expect(trace()).not.toContain(middle[Math.floor(middle.length / 2)]);
+    fireEvent.click(screen.getByRole("button", { name: "Show reasoning traces" }));
+    expect(trace()).toContain(middle[Math.floor(middle.length / 2)]);
+    // the next chain opens folded again
+    fireEvent.click(screen.getByRole("button", { name: "Next chain" }));
+    expect(
+      screen.getByRole("button", { name: "Show reasoning traces" }),
+    ).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("cuts a chain only at paragraph breaks and loses nothing", () => {
+    for (const { problem } of PAGE7.figure1.showcase) {
+      for (const c of problem.chains) {
+        const text = tidyMath(c.trace);
+        const { head, middle, tail } = foldTrace(text);
+        const norm = (t: string) => t.replace(/\s+/g, " ").trim();
+        expect(norm([...head, ...middle, ...tail].join("\n\n"))).toBe(norm(text));
+      }
+    }
+  });
+
+  it("steps with the arrow keys inside the card instead of turning the page", () => {
+    render(<Page7 />);
+    expect(PAGE7.figure1.specimen.ranked[0].votes).toBeGreaterThan(1);
+    const next = screen.getByRole("button", { name: "Next chain" });
+    const pageTurn = vi.fn();
+    window.addEventListener("keydown", pageTurn);
+    fireEvent.keyDown(next, { key: "ArrowRight" });
+    expect(chainPosition()).toMatch(/^chain 2 of/);
+    fireEvent.keyDown(next, { key: "ArrowLeft" });
+    expect(chainPosition()).toMatch(/^chain 1 of/);
+    expect(pageTurn).not.toHaveBeenCalled();
+    window.removeEventListener("keydown", pageTurn);
   });
 
   it("names the three lines in plain English, not in the notebook's vocabulary", () => {
     render(<Page7 />);
     // "in the pile" / "the vote" / "T = 0" is how the notebook talks. A reader needs
     // to be told which line is what the model produced and which is what the vote kept.
-    const body = document.body.textContent ?? "";
-    expect(body).toMatch(/at least one\s*chain is right/i);
-    expect(body).toMatch(/the vote returns\s*the answer/i);
-    expect(body).toMatch(/one greedy\s*chain/i);
+    const chart = () => screen.getByRole("region", { name: /Accuracy against the number/ });
+    expect(chart().textContent).toMatch(/the vote returns\s*the answer/i);
+    expect(chart().textContent).toMatch(/one greedy\s*chain/i);
+    fireEvent.click(screen.getByRole("button", { name: /Show what the vote threw away/ }));
+    expect(chart().textContent).toMatch(/at least one\s*chain is right/i);
     // and the band between the last two must be named, because it is page 8
-    expect(body).toMatch(/generated, then thrown away/i);
+    expect(chart().textContent).toMatch(/generated, then thrown away/i);
+  });
+
+  // The figure opens on its claim, the vote rising off the flat line. What the vote
+  // threw away is step 5's subject, so it is drawn on request rather than from the
+  // start, and the toggle takes it away again.
+  it("opens figure 2 on two lines and draws the third on request", () => {
+    render(<Page7 />);
+    expect(screen.queryByTestId("thrown-away")).toBeNull();
+    const toggle = screen.getByRole("button", { name: /Show what the vote threw away/ });
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(toggle);
+    expect(screen.getByTestId("thrown-away")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Hide what the vote threw away/ }));
+    expect(screen.queryByTestId("thrown-away")).toBeNull();
+  });
+
+  // The widget is the chart and its controls. The headline, the band note and two
+  // footnotes used to sit inside it; the figure has to carry the step on its own.
+  it("keeps the headline and the explanations outside the figure 2 widget", () => {
+    render(<Page7 />);
+    const widget = screen.getByRole("region", { name: /Accuracy against the number/ });
+    expect(widget.textContent).not.toMatch(/sampling alone|majority voting with|p = 0\./);
+    expect(widget.textContent).not.toMatch(/The band widens/);
   });
 
   // The intro is the reading key for the central figure, so it has to use the chart's
   // own names. It named them "The vote / In the pile / T = 0" while the chart said
   // something else, because the chart was renamed and the intro was not.
-  it("names the three lines the same way in the intro and on the chart", () => {
+  it("names the drawn lines the same way in the intro and on the chart", () => {
     render(<Page7 />);
-    const intro = screen.getByText(/is what counting actually gets you/).closest("p")!;
+    const intro = screen.getByText(/is the flat line, and the/).closest("p")!;
     expect(intro.textContent).toMatch(/The vote returns the answer/);
-    expect(intro.textContent).toMatch(/At least one chain is right/);
     expect(intro.textContent).toMatch(/One greedy chain/);
     expect(intro.textContent).not.toMatch(/In the pile/);
+  });
+
+  // The flat line, in step 1's terms: identical chains are one opinion heard sixteen times.
+  it("reads the flat line as asking the same person again", () => {
+    render(<Page7 />);
+    const intro = screen.getByText(/is the flat line, and the/).closest("p")!;
+    expect(intro.textContent).toMatch(/asking the same person/);
+    expect(intro.textContent).toMatch(/only heard one opinion/);
   });
 
   // "Greedy" is load-bearing here and first explained on page 10. The fix is to tie the
@@ -79,7 +242,7 @@ describe("Page 7 (frequency voting) component", () => {
   // which docs/page_7_refactor.md:225-234 forbids at this altitude.
   it("ties the word greedy to the definition it already gives", () => {
     render(<Page7 />);
-    const intro = screen.getByText(/is what counting actually gets you/).closest("p")!;
+    const intro = screen.getByText(/is the flat line, and the/).closest("p")!;
     // Greedy is the secondary name now: the reader is told what the setting IS before
     // being told what it is called.
     expect(intro.textContent).toMatch(
@@ -107,24 +270,10 @@ describe("Page 7 (frequency voting) component", () => {
   // tokens and probability distributions off this page.
   it("glosses temperature without importing page 10's mechanism", () => {
     render(<Page7 />);
-    const intro = screen.getByText(/Here is one box/).textContent ?? "";
+    const intro = screen.getByText(/Here are three problems/).textContent ?? "";
     expect(intro).toMatch(/which is what temperature does/);
     expect(intro).toMatch(/at zero every chain comes back identical/);
     expect(intro).not.toMatch(/likel|distribution|logit/i);
-  });
-
-  // The +12 is voting AND sampling. The decomposition used to sit in a margin note
-  // that the box pointed at; it is now the box's own last sentence, because a reader
-  // who stops at the headline credits all 12 points to counting.
-  it("does not let the headline box own sampling's contribution", () => {
-    render(<Page7 />);
-    const callout = screen.getByText(/decoded greedily/i).closest("div")!;
-    const text = callout.textContent ?? "";
-    expect(text).toMatch(/sampling plus counting/);
-    expect(text).toMatch(
-      new RegExp(`gains ${PAGE7.figure2.gainVsOneSample.pts.toFixed(0)} points`),
-    );
-    expect(text).toMatch(/cannot tell from chance/);
   });
 
   it("explains the flat temperature-zero line rather than hiding it", () => {
@@ -132,10 +281,20 @@ describe("Page 7 (frequency voting) component", () => {
     expect(screen.getByText(/every chain is the same chain/i)).toBeInTheDocument();
   });
 
+  // The dip is explained where the reader meets it: labelled on the chart, and the
+  // readout at two chains names the ties. The prose sentence under the widget was cut.
   it("explains the dip at N = 2 as the tie rule", () => {
     render(<Page7 />);
-    // The phrase appears in the figure caption and again in the footnote, deliberately.
-    expect(screen.getAllByText(/a tie returns no answer/i).length).toBeGreaterThan(0);
+    const widget = screen.getByRole("region", { name: /Accuracy against the number/ });
+    expect(widget.textContent).toMatch(/ties/);
+    const two = PAGE7.figure2.hot.points.findIndex((p) => p.n === 2);
+    fireEvent.change(screen.getByRole("slider", { name: /chains the vote may see/i }), {
+      target: { value: String(two) },
+    });
+    const live = document.querySelector("p[aria-live='polite']")!;
+    expect(live.textContent).toMatch(
+      new RegExp(`${Math.round(PAGE7.figure2.hot.points[two].tie_rate * 100)}% of these votes tie`),
+    );
   });
 
   it("blames the CAP rather than the split, which is what the data says", () => {
@@ -161,8 +320,7 @@ describe("Page 7 (frequency voting) component", () => {
   });
 
   // The sweep does not single out one temperature: plurality accuracy ties at the top.
-  // Both places that describe the sweep have to carry the tie, or the readout claims a
-  // falloff the data does not show and the caveat claims a rule that does not decide.
+  // The card has to carry the tie, or it claims a falloff the data does not show.
   it("reports the temperature sweep's tie rather than a falloff it does not show", () => {
     render(<Page7 />);
     const best = Math.max(...PAGE7.figure2.diversity.map((d) => d.plurality_accuracy));
@@ -174,12 +332,28 @@ describe("Page 7 (frequency voting) component", () => {
     expect(body).not.toMatch(/past T = 0\.3 each chain gets worse/);
     for (const d of tied) expect(body).toContain(`T = ${d.temperature}`);
     expect(body).toMatch(/the vote comes out the same\s+at T = /);
-    // "voted exactly as well" lived in the limitations block under section 5,
-    // which was cut on 2026-08-10. The fact it carried is not lost: it is the
-    // same tie, stated here as a finding about the sweep rather than as a
-    // confession about the setting. What must not come back is a falloff claim
-    // the run does not support, which the assertion above still guards.
-    expect(body).not.toMatch(/does not say/i);
+  });
+
+  // The headline leads into the temperature card, and the sentence that does it makes
+  // two claims the run has to keep true: at T = 0 there is exactly one answer, and the
+  // vote's gain over the greedy chain vanishes there (the flat line).
+  it("leads from the headline into the temperature card on claims the run supports", () => {
+    render(<Page7 />);
+    const headline = screen.getByText(/One greedy chain solves/i).closest("p")!;
+    expect(headline.textContent).toMatch(/exist only\s+because the chains disagree/);
+    expect(headline.textContent?.trimEnd()).toMatch(/Here is by\s+how much:$/);
+    expect(headline.nextElementSibling?.textContent).toMatch(/distinct answers among/);
+    const cold = PAGE7.figure2.diversity.find((d) => d.temperature === 0)!;
+    expect(cold.mean_distinct).toBe(1);
+    for (const p of PAGE7.figure2.cold.points) {
+      expect(p.accuracy).toBeCloseTo(PAGE7.figure2.gain.bare_cot, 9);
+    }
+  });
+
+  it("labels the diversity readout as a count on its own smaller item set", () => {
+    render(<Page7 />);
+    expect(screen.getByText(/count of answers, not an\s+accuracy/i)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`Measured on ${PAGE7.figure2.diversity[0].n_items} items`))).toBeInTheDocument();
   });
 
   it("shows capped against uncapped at the SAME number of chains", () => {
@@ -212,11 +386,6 @@ describe("Page 7 (frequency voting) component", () => {
     expect(handoff.textContent).toMatch(/23%/);
   });
 
-  it("labels the diversity readout as a count on its own smaller item set", () => {
-    render(<Page7 />);
-    expect(screen.getByText(/count of answers, not an\s+accuracy/i)).toBeInTheDocument();
-  });
-
   // There is no provenance plate. The instrument used to open the page as a mono
   // specimen label above step 1, apparatus before idea. The download carries the
   // run now, and the two facts a reader needs from it are on the figures.
@@ -224,7 +393,7 @@ describe("Page 7 (frequency voting) component", () => {
     render(<Page7 />);
     expect(screen.getByRole("link", { name: /Download the notebook/i })).toBeInTheDocument();
     const text = document.body.textContent ?? "";
-    // figure 1's specimen card and figure 2's heading, both visible copy.
+    // figure 1's specimen card and figure 2's intro, both visible copy.
     expect(text).toContain(PAGE7.primary.label);
     expect(text).toContain("MATH-500");
     expect(text).toContain("levels 4 and 5");
@@ -285,8 +454,10 @@ describe("Page 7 (frequency voting) component", () => {
 
   it("reads out only measured points of the run's own N axis", () => {
     render(<Page7 />);
+    // Coverage is read out only while its line is drawn.
+    fireEvent.click(screen.getByRole("button", { name: /Show what the vote threw away/ }));
     const dial = screen.getByRole("slider", { name: /chains the vote may see/i });
-    const live = document.querySelector("[aria-live='polite']")!;
+    const live = document.querySelector("p[aria-live='polite']")!;
     for (const [i, p] of PAGE7.figure2.hot.points.entries()) {
       fireEvent.change(dial, { target: { value: String(i) } });
       const text = live.textContent ?? "";
@@ -296,19 +467,23 @@ describe("Page 7 (frequency voting) component", () => {
   });
 
   // The question F64 says the reader could not ask. At N = 2 the tie rule puts the
-  // vote BELOW one sampled chain, and the readout has to say so rather than
-  // describing every position as a gain.
-  it("owns the positions where the vote is behind one chain", () => {
+  // vote BELOW the flat line, and the readout has to say so rather than describing
+  // every position as a gain. The baseline is the greedy chain the chart draws; the
+  // readout used to measure against one sampled chain, which the chart does not draw.
+  it("owns the positions where the vote is behind the greedy chain", () => {
     render(<Page7 />);
     const pts = PAGE7.figure2.hot.points;
+    const greedy = PAGE7.figure2.cold.points[0].accuracy;
     const dial = screen.getByRole("slider", { name: /chains the vote may see/i });
-    const live = document.querySelector("[aria-live='polite']")!;
-    const behind = pts.findIndex((p, i) => i > 0 && p.accuracy < pts[0].accuracy);
+    const live = document.querySelector("p[aria-live='polite']")!;
+    const behind = pts.findIndex((p, i) => i > 0 && p.accuracy < greedy);
     expect(behind).toBeGreaterThan(0);
     fireEvent.change(dial, { target: { value: String(behind) } });
-    expect(live.textContent).toMatch(/below/i);
-    const ahead = pts.findIndex((p, i) => i > 0 && p.accuracy > pts[0].accuracy);
+    expect(live.textContent).toMatch(/below one greedy chain/i);
+    expect(live.textContent).toMatch(/tie/);
+    const ahead = pts.findIndex((p, i) => i > 0 && p.accuracy > greedy);
     fireEvent.change(dial, { target: { value: String(ahead) } });
-    expect(live.textContent).toMatch(/above/i);
+    expect(live.textContent).toMatch(/above one greedy chain/i);
+    expect(live.textContent).not.toMatch(/sampled chain/);
   });
 });

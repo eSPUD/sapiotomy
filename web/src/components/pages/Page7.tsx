@@ -26,11 +26,13 @@
  * chain the same vote gains only 4 points and does not resolve (p = 0.39),
  * because sampling at T=0.3 is already worth something on its own. The page
  * leads on the greedy contrast because that is what "improves on chain of
- * thought" means here, and the sampled contrast is the guard on it. The guard
- * used to be a margin note; it is now the last sentence of step 3's callout, so
- * the +12 and the thing that qualifies it are read in one pass. THE TWO MUST
- * STAY TOGETHER: a reader who takes the 12 without the 4 credits all of it to
- * counting, which is the one misreading this page exists to prevent.
+ * thought" means here, and the sampled contrast is the guard on it: a reader
+ * who takes the 12 without it credits all of it to counting. The guard was a
+ * margin note, then a sentence beside the +12; since 2026-10-11 the FIGURE
+ * carries it. Figure 2's vote line starts at one sampled chain, above the flat
+ * greedy line before any vote is taken, and the readout at one chain says so.
+ * The p = 0.39 that says the rest does not resolve is in the download. Keep the
+ * vote line starting at N = 1 and keep that readout, or the guard is gone.
  *
  * Layout: pages 5 and 6's shell. One reading column of numbered steps, each
  * beside its own margin note. Every step that carries a figure opens on a
@@ -42,21 +44,28 @@
  * label from a lab the reader has not visited, and it front-loaded the apparatus
  * before the idea. The two facts a reader actually needs, WHICH MODEL and WHICH
  * PROBLEMS, now sit on the figures that are pictures of them: figure 1's
- * specimen card carries the benchmark and the specimen's level, step 3's heading
- * carries the item count, the benchmark and the model, and step 2's intro names
+ * specimen card carries the benchmark and the specimen's level, step 3's intro
+ * carries the item count, the benchmark and the levels, and step 2's intro names
  * the model in prose. Everything else the run recorded is in the download on the
  * top line, which is the honest place for it.
  *
- *   Step 1 — no figure. The idea, in slips of paper: you do not know whose taste
- *   to trust, so you do not pick a taster. You collect everyone's favourite,
- *   drop them in a box and count. The load-bearing clause is that nobody had to
- *   be right alone, the crowd only had to be wrong in UNCORRELATED ways, which
- *   is the mechanism the whole page then measures and the reason step 3's T = 0
- *   line is flat. Name the technique here, and cite Wang in the margin beside
- *   it, where the TECHNIQUE is the subject.
+ *   Step 1 — no figure. The idea, as asking around a new town for the best ice
+ *   cream: three people reach Shop 2 by three different reasons, the misses
+ *   land on different shops. That is Wang's intuition (many ways of thinking,
+ *   one correct answer). The load-bearing clause is that agreement only counts
+ *   when the reasons are DIFFERENT ("if they all gave the same reason, you've
+ *   really only heard one opinion"), which is the mechanism the whole page then
+ *   measures and the reason step 3's T = 0 line is flat. Name the technique
+ *   here, and cite Wang in the margin beside it, where the TECHNIQUE is the
+ *   subject.
  *
- *   Step 2 — figure 1, the pile. One problem, 16 chains, tallied into a ranked
- *   histogram. Truth concentrates (the modal answer holds 9.9 of 16 votes on
+ *   Step 2 — figure 1, the pile. Three problems, one per way a vote ends (right,
+ *   wrong with the truth among the chains, tied), each with 16 chains
+ *   tallied into a ranked histogram. A row click opens that answer's chains and
+ *   never closes the reader; the arrows step only within the open answer, so
+ *   every chain, wrong ones included, is a row click and some arrow presses away.
+ *   Each chain shows its opening and its ending with the middle folded, because
+ *   chains run to 272 lines and the ending is what a reader is looking for. Truth concentrates (the modal answer holds 9.9 of 16 votes on
  *   average) and the tail is real (41% of answer classes appear exactly once).
  *   Lead with the CONCENTRATION: the run's `errors_are_diffuse` gate is FALSE at
  *   a 50% threshold, so "wrong answers all disagree" overstates it. Opening a bar
@@ -64,15 +73,17 @@
  *   usually made different mistakes. Do not bucket the singletons.
  *
  *   Step 3 — figure 2, what the vote buys. Accuracy against N, built by
- *   subsampling one pile so chain length is fixed. Its three lines each get a
- *   name in the intro, because none of them is self-evident: "the vote" is what
- *   counting returns, "in the pile" is how often the right answer was on SOME
- *   slip whether or not counting picked it (so the gap between them is what the
- *   rule discards, and it is page 8's ceiling arriving early), and T = 0 turns
- *   sampling off. The temperature-0 line is FLAT by construction and that is the
- *   page's cleanest proof that the vote needs diversity. THE DIP AT N=2 IS REAL
- *   AND MUST BE EXPLAINED, not smoothed: with two chains a disagreement is a
- *   tie, a tie is not a vote, and 52% of N=2 votes tie.
+ *   subsampling one pile so chain length is fixed. The figure opens on two lines,
+ *   the vote rising off the flat greedy chain, and the intro names both. The
+ *   third, "at least one chain is right", and the band between it and the vote
+ *   (what the rule discards, page 8's ceiling arriving early) are behind a
+ *   toggle. The widget holds the chart, its slider, a one-sentence readout and
+ *   that toggle, and nothing else: the figure carries the step. The temperature-0
+ *   line is FLAT by construction and that is the page's cleanest proof that the
+ *   vote needs diversity; the intro reads it as asking one person sixteen times,
+ *   which is step 1's "only heard one opinion". THE DIP AT N=2 IS REAL AND MUST
+ *   BE EXPLAINED, not smoothed: with two chains a disagreement is a tie, a tie is
+ *   not a vote, and 52% of N=2 votes tie.
  *
  *   Step 4 — the split, and it is the honest half. At a FIXED budget, splitting
  *   loses: 46% / 35% / 8% at N = 1 / 4 / 16. `splitting_a_fixed_budget_pays` is
@@ -98,7 +109,7 @@
  * notes were guards on how to read a figure — how much of the +12 is counting,
  * and that the fork is two lines rather than two experiments — which is the
  * reader's first question about the figure and not a footnote to it. Both are
- * now in the reading column: step 3's closes its headline callout, step 4's sets
+ * now in the reading column: step 3's follows its headline sentence, step 4's sets
  * up its chart before the reader sees it. A section with no note beside it MUST
  * carry `lg:col-start-1`, or the next one flows into the note column.
  *
@@ -109,7 +120,7 @@
  *     numbers.
  */
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -117,7 +128,18 @@ import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
-import { PAGE7, chainsFor, pLabel, pct, tidyMath, tokens } from "@/lib/page07";
+import {
+  PAGE7,
+  chainsFor,
+  foldTrace,
+  pLabel,
+  pct,
+  tidyMath,
+  tokens,
+  type Outcome,
+  type Problem,
+  type SpecimenChain,
+} from "@/lib/page07";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 7;
@@ -132,7 +154,7 @@ const NOTEBOOK_SIZE = "3.1 MB";
 /* The instrument used to sit in a provenance plate above step 1, which read as a
    specimen label from a lab the reader has not visited. What a reader needs is
    which model and which problems, and they need it beside the figure that is a
-   picture of them: figure 1's specimen card and figure 2's heading. The rest of
+   picture of them: figure 1's specimen card and figure 2's intro. The rest of
    the apparatus — precision, top-p, run id, date, the item hash — is in the
    download on the top line. */
 const BENCHMARK = "MATH-500";
@@ -166,16 +188,117 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
 
 /* ------------------------------------------------------------------ figure 1 */
 
+const OUTCOME_LABEL: Record<Outcome, string> = {
+  right: "the vote is right",
+  wrong: "the vote is wrong",
+  tie: "the vote ties",
+};
+
+/** The three problems, one per way a vote can end. Page 6's radio idiom. */
+function ProblemPicker({ value, onChange }: { value: number; onChange: (i: number) => void }) {
+  const name = useId();
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="text-sm text-ink-muted">Pick a problem</span>
+      <div role="radiogroup" aria-label="Pick a problem" className="flex flex-wrap gap-1">
+        {F1.showcase.map(({ outcome }, i) => (
+          <label key={outcome} className="cursor-pointer">
+            <input
+              type="radio"
+              name={name}
+              className="peer sr-only"
+              checked={value === i}
+              aria-label={OUTCOME_LABEL[outcome]}
+              onChange={() => onChange(i)}
+            />
+            <span className="block rounded border border-grid px-2 py-0.5 text-xs text-ink peer-focus-visible:ring-2 peer-focus-visible:ring-compute peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas">
+              {OUTCOME_LABEL[outcome]}
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** How this problem's vote came out, read off the run, for the specimen card. */
+function outcomeLine(outcome: Outcome, p: Problem): string {
+  const top = p.ranked[0];
+  const chains = (n: number) => (n === 1 ? "1 chain" : `${n} chains`);
+  const truth = p.ranked.find((r) => r.correct)?.votes ?? 0;
+  if (outcome === "right") {
+    return `the vote returns ${tidyMath(top.answer)} on ${top.votes} of ${p.chains.length} chains and it is right · picked from ${F1.n_candidates} problems that qualified`;
+  }
+  if (outcome === "tie") {
+    const tied = p.ranked.filter((r) => r.votes === top.votes).length;
+    return `${tied} answers tie at ${chains(top.votes)} each, so the vote returns nothing · the right answer came back from ${chains(truth)}`;
+  }
+  return `the vote returns ${tidyMath(top.answer)} on ${top.votes} of ${p.chains.length} chains · the right answer came back from ${chains(truth)}`;
+}
+
+/**
+ * One chain, folded to its opening and its ending. The ending is where the chain
+ * commits to its answer, which is what a reader comparing wrong chains is looking
+ * for; the reasoning in between is one click away rather than a scroll.
+ */
+function ChainText({ chain }: { chain: SpecimenChain }) {
+  const [unfolded, setUnfolded] = useState(false);
+  const { head, middle, tail } = foldTrace(tidyMath(chain.trace));
+  const para = (p: string, i: number) => (
+    <p key={i} className="whitespace-pre-wrap font-code">
+      {p}
+    </p>
+  );
+  const fold = (label: string) => (
+    <button
+      type="button"
+      aria-expanded={unfolded}
+      onClick={() => setUnfolded((u) => !u)}
+      className="inline-flex items-center gap-1.5 self-start rounded border border-compute bg-compute/10 px-2.5 py-1 text-xs font-semibold text-compute transition-colors hover:bg-compute hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-compute focus-visible:ring-offset-1"
+    >
+      <span aria-hidden="true">{unfolded ? "▾" : "▸"}</span>
+      {label}
+    </button>
+  );
+  return (
+    <div
+      data-testid="chain-trace"
+      data-chain={chain.sample_index}
+      className="flex max-h-[32rem] flex-col gap-3 overflow-y-auto rounded bg-surface-raised p-2 text-xs leading-relaxed text-ink-muted"
+    >
+      {head.map(para)}
+      {middle.length > 0
+        ? unfolded
+          ? [
+              ...middle.map((p, i) => para(p, head.length + i)),
+              <div key="fold">{fold("Hide reasoning traces")}</div>,
+            ]
+          : fold("Show reasoning traces")
+        : null}
+      {tail.map((p, i) => para(p, head.length + middle.length + i))}
+    </div>
+  );
+}
+
 /**
  * The pile as a ranked tally. One row per distinct answer, the correct one
  * marked, and the singletons kept as their own rows because that row IS the
- * argument.
+ * argument. The open row is the one the chain being read landed on, so clicking
+ * it again leaves it open: a row is a place in the tally, not a switch.
  */
-function Tally({ onOpen, open }: { onOpen: (a: string) => void; open: string | null }) {
-  const s = F1.specimen;
+function Tally({
+  problem,
+  onOpen,
+  open,
+}: {
+  problem: Problem;
+  onOpen: (a: string) => void;
+  open: string | null;
+}) {
+  const s = problem;
   const max = s.ranked[0]?.votes ?? 1;
   return (
-    <ol className="flex flex-col gap-1">
+    <ol aria-label="Answers to this problem" className="flex flex-col gap-1">
       {s.ranked.map((row) => {
         const isOpen = open === row.answer;
         return (
@@ -224,7 +347,13 @@ const IH = HGT - MARGIN.top - MARGIN.bottom;
 /**
  * The page's main figure, and the one a reader can most easily misread.
  *
- * Three lines, and the SPACE BETWEEN TWO OF THEM is the point:
+ * It opens on TWO lines, the vote rising off the flat greedy chain, because that
+ * is the step's claim. The third line and the band between it and the vote are
+ * behind `showLost`: they are what the vote threw away, which is step 5's and
+ * page 8's subject, and drawn from the start they made the reader decode three
+ * lines and a band before the one comparison the step is about.
+ *
+ * With all three drawn, the SPACE BETWEEN TWO OF THEM is the point:
  *   · the flat one is bare chain of thought, one greedy chain, and it is flat
  *     because sixteen copies of one chain is one chain;
  *   · the solid one is what the vote actually returns;
@@ -250,7 +379,7 @@ const IH = HGT - MARGIN.top - MARGIN.bottom;
  * The handle steps in index, not in N: the axis is log-spaced and the reader
  * should get one measured point per step, never an interpolated one.
  */
-function PileChart({ at }: { at: number }) {
+function PileChart({ at, showLost }: { at: number; showLost: boolean }) {
   const pts = F2.hot.points;
   const ns = pts.map((p) => p.n);
   const sel = pts[at];
@@ -269,7 +398,7 @@ function PileChart({ at }: { at: number }) {
 
   return (
     <ChartFrame
-      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of chains the vote sees. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. The vote returns the answer on ${pct(last.accuracy)} over sixteen sampled chains. At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.`}
+      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of chains the vote sees. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. The vote returns the answer on ${pct(last.accuracy)} over sixteen sampled chains.${showLost ? ` At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.` : ""}`}
       width={W}
       height={HGT}
       margin={MARGIN}
@@ -291,13 +420,25 @@ function PileChart({ at }: { at: number }) {
       ))}
 
       {/* what was generated and then discarded: page 8's whole subject */}
-      <path d={band} className="fill-wrong opacity-10" />
-
-      <path d={line((p) => p.coverage)} fill="none" className="stroke-wrong" strokeWidth={1.4} strokeDasharray="4 3" />
-      <text x={IW + 6} y={y(last.coverage * 100) - 2} className="fill-wrong-ink text-[10px]">
-        <tspan x={IW + 6} dy="0">at least one</tspan>
-        <tspan x={IW + 6} dy="11">chain is right</tspan>
-      </text>
+      {showLost ? (
+        <g data-testid="thrown-away">
+          <path d={band} className="fill-wrong opacity-10" />
+          <path d={line((p) => p.coverage)} fill="none" className="stroke-wrong" strokeWidth={1.4} strokeDasharray="4 3" />
+          <text x={IW + 6} y={y(last.coverage * 100) - 2} className="fill-wrong-ink text-[10px]">
+            <tspan x={IW + 6} dy="0">at least one</tspan>
+            <tspan x={IW + 6} dy="11">chain is right</tspan>
+          </text>
+          {/* name the band in the middle of the chart, where the eye already is */}
+          <text
+            x={x(pts[Math.max(pts.length - 2, 0)].n)}
+            y={(y(last.coverage * 100) + y(last.accuracy * 100)) / 2}
+            textAnchor="middle"
+            className="fill-wrong-ink text-[10px] font-semibold"
+          >
+            generated, then thrown away
+          </text>
+        </g>
+      ) : null}
 
       <path d={line((p) => p.accuracy)} fill="none" className="stroke-compute" strokeWidth={2.4} />
       {pts.map((p) => (
@@ -312,16 +453,6 @@ function PileChart({ at }: { at: number }) {
       <text x={IW + 6} y={y(cold * 100) + 4} className="fill-ink-muted text-[10px]">
         <tspan x={IW + 6} dy="0">one greedy</tspan>
         <tspan x={IW + 6} dy="11">chain (T = 0)</tspan>
-      </text>
-
-      {/* name the band in the middle of the chart, where the eye already is */}
-      <text
-        x={x(pts[Math.max(pts.length - 2, 0)].n)}
-        y={(y(last.coverage * 100) + y(last.accuracy * 100)) / 2}
-        textAnchor="middle"
-        className="fill-wrong-ink text-[10px] font-semibold"
-      >
-        generated, then thrown away
       </text>
 
       {pts[1] ? (
@@ -343,7 +474,9 @@ function PileChart({ at }: { at: number }) {
         strokeDasharray="3 3"
         data-testid="voters-marker"
       />
-      <circle cx={x(sel.n)} cy={y(sel.coverage * 100)} r={5} className="fill-none stroke-wrong" strokeWidth={2} />
+      {showLost ? (
+        <circle cx={x(sel.n)} cy={y(sel.coverage * 100)} r={5} className="fill-none stroke-wrong" strokeWidth={2} />
+      ) : null}
       <circle cx={x(sel.n)} cy={y(sel.accuracy * 100)} r={5} className="fill-none stroke-compute" strokeWidth={2} />
       <text
         x={x(sel.n)}
@@ -522,18 +655,35 @@ function ForkChart() {
 export function Page7() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-  const [open, setOpen] = useState<string | null>(null);
+  // Which of the three problems, which answer to it is open, and which of that answer's
+  // chains is being read. A problem opens on the top row's first chain, so the reader
+  // sees a solution before clicking anything. The arrows only ever step within the
+  // open answer: "64" has eight chains to read, "128" has two.
+  const [problemIx, setProblemIx] = useState(0);
+  const [open, setOpen] = useState(F1.showcase[0].problem.ranked[0].answer);
+  const [chainIx, setChainIx] = useState(0);
   // Index into the measured N axis, not N itself. Opens at the top of the axis,
   // so the reader's first sight of the chart is the finished result the prose
   // above it quotes, and adding a voter is something they take away rather than
   // something they build up to.
   const [voterIx, setVoterIx] = useState(F2.hot.points.length - 1);
   const voters = F2.hot.points[voterIx];
-  const oneChain = F2.hot.points[0];
+  // The third line and its band, what the vote threw away, are drawn on request.
+  const [showLost, setShowLost] = useState(false);
+  // The readout's baseline is the flat line the chart draws: one greedy chain.
+  const cold = F2.cold.points[0].accuracy;
+  const pointsVsGreedy = (acc: number) => {
+    const d = Math.round((acc - cold) * 100);
+    return d === 0
+      ? "level with one greedy chain"
+      : `${Math.abs(d)} point${Math.abs(d) === 1 ? "" : "s"} ${d > 0 ? "above" : "below"} one greedy chain`;
+  };
 
-  const s = F1.specimen;
-  const openChains = open ? chainsFor(s, open) : [];
-  const openRow = open ? s.ranked.find((r) => r.answer === open) : null;
+  const shown = F1.showcase[problemIx];
+  const s = shown.problem;
+  const openRow = s.ranked.find((r) => r.answer === open) ?? s.ranked[0];
+  const rowChains = chainsFor(s, openRow.answer);
+  const chain = rowChains[chainIx];
   const last = F2.hot.points[F2.hot.points.length - 1];
   // What one chain spends against what the pile spends. The gap between them is what
   // "just give one chain more" would have to beat, and page 6 measured that arm: the
@@ -541,9 +691,33 @@ export function Page7() {
   const oneChainTokens = F2.hot.points[0].mean_tokens;
   const pileTokens = last.mean_tokens;
 
+  // Clicking a row opens its first chain, unless that row is already open, in which
+  // case nothing moves: a second click must not close it or lose the reader's place.
   const pick = (answer: string) => {
     recordInteraction(PAGE_N);
-    setOpen((cur) => (cur === answer ? null : answer));
+    if (answer === openRow.answer) return;
+    setOpen(answer);
+    setChainIx(0);
+  };
+  const step = (by: number) => {
+    recordInteraction(PAGE_N);
+    setChainIx((i) => Math.min(rowChains.length - 1, Math.max(0, i + by)));
+  };
+  const pickProblem = (i: number) => {
+    recordInteraction(PAGE_N);
+    setProblemIx(i);
+    setOpen(F1.showcase[i].problem.ranked[0].answer);
+    setChainIx(0);
+  };
+  // The arrow keys step through the open answer while focus is in the card. Everywhere else
+  // they turn the page (KeyboardNav), and a reader who has just clicked "next chain"
+  // and reaches for the arrow key must not be sent to page 8.
+  const onCardKey = (e: React.KeyboardEvent) => {
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    e.stopPropagation();
+    step(e.key === "ArrowRight" ? 1 : -1);
   };
 
   return (
@@ -572,25 +746,20 @@ export function Page7() {
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            1. Put it to a vote
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              the idea, before the measurement
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">1. Many reasons, one answer</h2>
           <p className="text-ink">
-            You are new in town and want the best pizza. You do not know whose taste to trust, so
-            you do not pick a person: you hand out slips of paper, ask everyone to write down their
-            favourite place, and drop them in a box. Then you count. One enthusiast&apos;s odd
-            favourite gets one slip and stays there. The place that is actually good keeps turning
-            up, on slips written by people who have nothing in common.
+            You&apos;re on holiday in a new town, looking for the best ice cream. So you ask around
+            at your hotel. Three people send you to Shop 2: one for the line out the door, one for
+            the homemade cones, one for a new honey-lavender flavour. One says Shop 1, because
+            it&apos;s the closest. Another says Shop 3, because it&apos;s the cheapest.
           </p>
           <p className="text-ink">
-            Nobody had to be right on their own. The crowd only had to be wrong in{" "}
-            <em>uncorrelated</em> ways, so the mistakes scatter and the good answer stacks. Done to
-            a model, by sampling the same question many times and keeping the answer that comes up
-            most, that is <strong>majority voting</strong>, or{" "}
-            <strong>self-consistency</strong>.
+            Nobody needed perfect taste. Three people got to Shop 2 for three different reasons,
+            while the others couldn&apos;t even agree with each other. If three people pick the same
+            shop for completely different reasons, it&apos;s probably a good shop. But if they all
+            gave the same reason, you&apos;ve really only heard one opinion. Ask a model the same
+            question many times, keep the answer that comes up most, and that&apos;s{" "}
+            <strong>majority voting</strong>, also called <strong>self-consistency</strong>.
             <Cite n={REF.wang} />
           </p>
         </section>
@@ -603,67 +772,92 @@ export function Page7() {
 
         {/* Step 2 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. One box of slips
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              one problem · {F1.n_chains} chains · {s.distinct_answers} distinct answers
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">2. Sixteen answers to the same question</h2>
           <p className="text-ink-muted">
             {/* Temperature glossed operationally, which is all this page is allowed to
                 say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens and
                 probability distributions, off this page and on page 10. */}
-            Here is one box. The problem below went to {PAGE7.primary.label} {F1.n_chains} times
-            with sampling turned on, which is what <strong className="text-ink">temperature</strong>{" "}
-            does. Temperature is a dial, written <span className="font-mono text-ink">T</span> on
-            every chart on this page: at zero every chain comes back identical, and turning it up
-            makes them disagree more.
-            Every answer it came back with is tallied. Click a row to read the chains that landed
-            there.
+            Now the model does the asking around. Here are three problems, one for each way a vote
+            can end. Each one went to {PAGE7.primary.label} {F1.n_chains} times with sampling
+            turned on, which is what <strong className="text-ink">temperature</strong> does.
+            Temperature is a dial, written <span className="font-mono text-ink">T</span> on every
+            chart on this page: at zero every chain comes back identical, and turning it up makes
+            them disagree more.
+            Every answer it came back with is tallied, like the shops people named. Click a row to
+            read the chains that landed there, wrong answers included, and use the arrows to step
+            between them.
           </p>
+          <ProblemPicker value={problemIx} onChange={pickProblem} />
+          {/* onKeyDown: the arrow keys step chains while focus is in the card, rather
+              than turning the page. */}
           <section
-            aria-label="One problem, sixteen chains, tallied"
+            aria-label={`One problem, ${F1.n_chains} chains, tallied`}
+            onKeyDown={onCardKey}
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(s.question)}</p>
             <p className="font-mono text-xs text-ink-muted">
-              {BENCHMARK}, level {s.level} · the answer is {tidyMath(s.ground_truth)} · picked from{" "}
-              {F1.n_candidates} problems that qualified
+              {BENCHMARK}, level {s.level} · the answer is {tidyMath(s.ground_truth)} ·{" "}
+              {outcomeLine(shown.outcome, s)}
             </p>
 
             {/* The invitation is the last line of the step's intro, directly above this
                 card. It used to be repeated here, near-verbatim. */}
-            <Tally onOpen={pick} open={open} />
+            <Tally problem={s} onOpen={pick} open={open} />
 
-            {openRow ? (
-              <div
-                className={`flex flex-col gap-3 rounded-lg border-l-4 p-3 ${
-                  openRow.correct ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
-                }`}
-              >
+            <div
+              className={`flex flex-col gap-3 rounded-lg border-l-4 p-3 ${
+                chain.correct ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm text-ink">
                   <strong className={openRow.correct ? "text-correct-ink" : "text-wrong-ink"}>
                     {tidyMath(openRow.answer)}
                   </strong>{" "}
                   · {openRow.votes} of {F1.n_chains} chains ·{" "}
+                  {/* No claim about HOW a row's chains went wrong. "They got there by
+                      different routes" used to be appended to every wrong row with more
+                      than one chain, unchecked; on algebra 224 all fifteen chains that
+                      say 7 make the same slip (they stop listing at 11). */}
                   {openRow.correct ? "correct" : "wrong"}
-                  {!openRow.correct && openRow.votes > 1
-                    ? ", and they got there by different routes"
-                    : ""}
                 </p>
-                {openChains.slice(0, 2).map((c) => (
-                  <div key={c.sample_index} className="flex flex-col gap-1">
-                    <p className="font-mono text-xs text-ink-muted">
-                      chain {c.sample_index} · {tokens(c.own_tokens)} tokens
-                      {c.truncated ? " · hit its cap and was made to commit" : ""}
-                    </p>
-                    <p className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded bg-surface-raised p-2 font-code text-xs leading-relaxed text-ink-muted">
-                      {tidyMath(c.trace)}
-                    </p>
-                  </div>
-                ))}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Previous chain"
+                    disabled={chainIx === 0}
+                    onClick={() => step(-1)}
+                    className="h-7 w-7 rounded border border-grid bg-surface text-ink hover:bg-surface-raised disabled:opacity-40"
+                  >
+                    ‹
+                  </button>
+                  <span
+                    aria-live="polite"
+                    className="w-24 text-center font-mono text-xs tabular-nums text-ink"
+                  >
+                    chain {chainIx + 1} of {rowChains.length}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Next chain"
+                    disabled={chainIx === rowChains.length - 1}
+                    onClick={() => step(1)}
+                    className="h-7 w-7 rounded border border-grid bg-surface text-ink hover:bg-surface-raised disabled:opacity-40"
+                  >
+                    ›
+                  </button>
+                </div>
               </div>
-            ) : null}
+              <div className="flex flex-col gap-1">
+                <p className="font-mono text-xs text-ink-muted">
+                  {tokens(chain.own_tokens)} tokens
+                  {chain.truncated ? " · hit its cap and was made to commit" : ""}
+                </p>
+                {/* Keyed on the chain so the next one opens folded again. */}
+                <ChainText key={`${problemIx}-${chain.sample_index}`} chain={chain} />
+              </div>
+            </div>
           </section>
           <p className="text-sm text-ink-muted">
             The winning answer holds {F1.shape.mean_top_votes.toFixed(1)} of {F1.shape.n_chains}{" "}
@@ -675,51 +869,45 @@ export function Page7() {
         </section>
         <Note kicker="Read it as">
           <p>
-            One slip is one chain. Two chains landing on the same wrong answer usually got there by
-            different mistakes, which is why the tail stays a scatter.
+            Each chain is one person you asked, and each answer is a shop. Two chains landing on the
+            same wrong answer usually got there by different mistakes, which is why the tail stays a
+            scatter.
           </p>
         </Note>
 
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            3. What the vote buys
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              the same {M.items.n} {BENCHMARK} problems, {LEVELS} · {PAGE7.primary.label} · one
-              pile, subsampled
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">3. What the vote buys</h2>
           <p className="text-ink-muted">
-            That was one problem. Now all {M.items.n} of them, with the box holding{" "}
+            That was one problem at a time. Now all {M.items.n} of them, the {BENCHMARK} problems
+            at {LEVELS}, with the vote seeing{" "}
             {F2.hot.points
               .map((p) => p.n)
               .slice(0, -1)
               .join(", ")}{" "}
-            and finally {F2.hot.points[F2.hot.points.length - 1].n} slips. The chart below draws
-            three lines, and each one answers a different question.
+            and finally {last.n} chains for each.
           </p>
-          {/* Named exactly as the chart names them. The intro used to say "The vote /
-              In the pile / T = 0" while the chart said something else, so a reader
-              scanning for a line called "T = 0" had to supply the equivalence. */}
+          {/* Named exactly as the chart names them. The third line is not named here:
+              it is behind the chart's toggle and names itself when drawn. */}
           <p className="text-ink-muted">
-            <strong className="text-ink">The vote returns the answer</strong> is what counting
-            actually gets you: the answer the most chains agreed on.{" "}
-            <strong className="text-ink">At least one chain is right</strong> is the easier
-            question. Did the right answer turn up on any slip in the box, whether or not counting
-            picked it? The gap between those two lines is the right answer being written down and
-            then thrown away. <strong className="text-ink">One greedy chain</strong> is the baseline
-            to beat: at T = 0, with the temperature dial turned all the way down, sampling is off,
-            which is <em>pure chain-of-thought</em>, also known as <em>greedy decoding</em>. That is
-            what pages 5 and 6 ran, and it makes all {F1.n_chains} chains the same chain.
+            <strong className="text-ink">One greedy chain</strong> is the flat line, and the
+            baseline to beat. At T = 0, with the temperature dial turned all the way down,
+            sampling is off, which is pure chain-of-thought, also known as greedy decoding: what
+            pages 5 and 6 ran. Then every chain is the same chain, so asking {F1.n_chains} times is
+            asking the same person {F1.n_chains} times, and you have only heard one opinion.{" "}
+            <strong className="text-ink">The vote returns the answer</strong> is the line that
+            climbs: the answer the most chains agreed on, sampled at T = {F2.hot.temperature}.
           </p>
+          {/* The widget is the chart and its controls. Every sentence that used to sit
+              in here (the band note, the headline, two footnotes) is outside it now or
+              gone: the figure has to carry the step on its own. */}
           <section
             aria-label="Accuracy against the number of chains"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <PileChart at={voterIx} />
-            {/* The act's one page about adding voters, with a control that adds
-                one. Every value below is a measured point on the run's own N
-                axis; the handle steps between them and never lands off one. */}
+            <PileChart at={voterIx} showLost={showLost} />
+            {/* Every value below is a measured point on the run's own N axis; the
+                handle steps between them and never lands off one. */}
             <div className="flex flex-col gap-2">
               <Slider
                 label="chains the vote may see"
@@ -734,74 +922,57 @@ export function Page7() {
                   setVoterIx(i);
                 }}
               />
+              {/* One sentence, measured against the line the reader can see. It used
+                  to compare against one SAMPLED chain, which the chart does not draw. */}
               <p aria-live="polite" className="text-sm text-ink">
-                On {voters.n === 1 ? "one chain" : `${voters.n} chains`}, the vote returns the
-                answer on <strong className="font-mono">{pct(voters.accuracy)}</strong>{" "}
                 {voters.n === 1 ? (
                   <>
-                    of problems, which is where the count starts. One sampled chain is not a vote
-                    yet.
-                  </>
-                ) : voters.accuracy > oneChain.accuracy ? (
-                  <>
-                    of problems, <strong>{pct(voters.accuracy - oneChain.accuracy)} above</strong>{" "}
-                    one sampled chain.
+                    With one chain there is no vote yet: that one sampled chain solves{" "}
+                    <strong className="font-mono">{pct(voters.accuracy)}</strong>,{" "}
+                    {pointsVsGreedy(voters.accuracy)}.
                   </>
                 ) : (
                   <>
-                    of problems, <strong>{pct(oneChain.accuracy - voters.accuracy)} below</strong>{" "}
-                    one sampled chain: the tie rule is still costing more than the count is
-                    buying.
+                    With {voters.n} chains, the vote solves{" "}
+                    <strong className="font-mono">{pct(voters.accuracy)}</strong>,{" "}
+                    <strong>{pointsVsGreedy(voters.accuracy)}</strong>
+                    {voters.accuracy < cold ? `: ${pct(voters.tie_rate)} of these votes tie.` : "."}
                   </>
-                )}{" "}
-                <span className="text-ink-muted">
-                  The right answer was somewhere in the box on {pct(voters.coverage)}, so{" "}
-                  {pct(voters.coverage - voters.accuracy)} of problems had it written down and
-                  thrown away. {pct(voters.tie_rate)} of these votes tie. The bill is{" "}
-                  {tokens(voters.mean_tokens)} tokens a problem.
-                </span>
+                )}
+                {showLost ? (
+                  <span className="text-ink-muted">
+                    {" "}
+                    The right answer was among the chains on {pct(voters.coverage)}.
+                  </span>
+                ) : null}
               </p>
-            </div>
-            {/* The band was explained three times: here, in the intro, and by its own
-                in-chart label. The intro now carries the definition and the chart names
-                itself, so this is down to the one fact neither of them has. */}
-            <p className="text-xs text-ink-muted">The band widens as you add chains.</p>
-            <div className="rounded-lg border-l-4 border-compute bg-surface-raised px-3 py-2 text-ink">
-              One chain of chain-of-thought, decoded greedily, solves{" "}
-              <strong className="font-mono">{pct(F2.gain.bare_cot)}</strong>. The vote over{" "}
-              {F1.n_chains} sampled chains solves{" "}
-              <strong className="font-mono">{pct(F2.gain.vote)}</strong>:{" "}
-              <strong>+{F2.gain.gain_pts.toFixed(0)} points</strong>.{" "}
-              {/* "exact McNemar" was the whole justification, and it is a name most
-                  readers do not have. The test is simple enough to just describe: throw
-                  away the problems both methods score the same, then ask whether the
-                  ones left over split evenly. The name stays, in the position of a
-                  citation rather than an argument. */}
-              <span className="text-ink-muted">
-                The two methods score the same on most of these problems, so the test looks only at
-                the {F2.gain.fixed + F2.gain.broken} where they differ: the vote wins{" "}
-                {F2.gain.fixed} of those and loses {F2.gain.broken}. A split that lopsided is
-                unlikely to be luck ({pLabel(F2.gain.p)}, exact McNemar). Read the +
-                {F2.gain.gain_pts.toFixed(0)} as sampling plus counting: against one{" "}
-                <em>sampled</em> chain rather than a greedy one, the vote gains{" "}
-                {F2.gainVsOneSample.pts.toFixed(0)} points, which this run cannot tell from chance (
-                {pLabel(F2.gainVsOneSample.p)}).
-              </span>
-            </div>
-            <div className="grid gap-3 text-xs text-ink-muted sm:grid-cols-2">
-              <p>
-                <strong className="text-ink">The flat line is the point.</strong> At temperature 0
-                every chain is the same chain, so the vote is one voter answering{" "}
-                {F1.n_chains} times and nothing is gained. Diversity is the whole mechanism.
-              </p>
-              <p>
-                <strong className="text-ink">The dip at N = 2 is the tie rule.</strong> Two chains
-                that disagree are a tie, and a tie returns no answer, so it grades wrong.{" "}
-                {pct(F2.hot.points[1]?.tie_rate ?? 0)} of two-chain votes tie; by sixteen it is{" "}
-                {pct(last.tie_rate)}.
-              </p>
+              <button
+                type="button"
+                aria-pressed={showLost}
+                onClick={() => {
+                  recordInteraction(PAGE_N);
+                  setShowLost((v) => !v);
+                }}
+                className="inline-flex items-center gap-1.5 self-start rounded border border-compute bg-compute/10 px-2.5 py-1 text-xs font-semibold text-compute transition-colors hover:bg-compute hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-compute focus-visible:ring-offset-1"
+              >
+                <span aria-hidden="true">{showLost ? "▾" : "▸"}</span>
+                {showLost ? "Hide what the vote threw away" : "Show what the vote threw away"}
+              </button>
             </div>
           </section>
+          {/* The headline, and the bridge into the temperature card below it. Its guard
+              (some of the 12 is sampling, not counting) is carried by the figure: the vote
+              line starts above the greedy line at one chain, and the readout there says
+              so. See the file header. "Every chain gives the same answer" at T = 0 is the
+              card's own first number, 1.0, and the tests hold it there. */}
+          <p className="text-ink">
+            One greedy chain solves <strong className="font-mono">{pct(F2.gain.bare_cot)}</strong>,
+            which is <strong>{F2.gain.gain_pts.toFixed(0)} points</strong> less than majority voting
+            with {F1.n_chains} sampled chains. Those {F2.gain.gain_pts.toFixed(0)} points exist only
+            because the chains disagree. At T = 0 every chain gives the same answer, so there is
+            nothing to vote on; turn the temperature up and the answers start to differ. Here is by
+            how much:
+          </p>
           <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-3">
             <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
               distinct answers among {F2.diversity[0].n_chains} chains, by temperature
@@ -894,8 +1065,8 @@ export function Page7() {
               that survives the artifact. */}
           <Handoff>
             The counting rule is the weakest part of the method: it picks by popularity, and the
-            popular answer is not always the right one when the right one is already sitting in the
-            box. It also only ever looks at the answer, never at the reasoning that reached it, so a
+            popular answer is not always the right one when the right one is already among the
+            chains. It also only ever looks at the answer, never at the reasoning that reached it, so a
             chain can agree with the majority for bad reasons and be counted anyway.{" "}
             <em>
               Page 8 re-runs this protocol, lands where this page landed, then changes one rule for

@@ -321,26 +321,94 @@ if (!SPECIMEN) {
   );
 }
 
-// The tally must account for every chain the specimen ships: the votes plus the chains
-// that produced nothing usable. If these disagree the histogram is drawing a different
-// pile than the one the reader can open.
-{
-  const votes = SPECIMEN.ranked.reduce((s, r) => s + r.votes, 0);
-  const noAnswer = Math.round(SPECIMEN.no_answer_rate * SPECIMEN.chains.length);
-  if (votes + noAnswer !== SPECIMEN.chains.length) {
+/**
+ * The three boxes figure 1 lets the reader switch between, one for each way a vote
+ * can end. The notebook's specimen is the vote coming out right; the other two are
+ * bundled problems picked for the outcome they show, and that outcome is checked
+ * below rather than trusted, because the reader is told it in a label.
+ */
+export type Outcome = "right" | "wrong" | "tie";
+
+const SHOWCASE_PICKS: { id: string; outcome: Outcome }[] = [
+  { id: D.figure_1.specimen_id, outcome: "right" },
+  // Picked for being short and easy to follow; notebooks/page_07_site_data.py bundles
+  // them under the same names. 15 chains say 7; the one that says 8 is right.
+  { id: "test/algebra/224.json", outcome: "wrong" },
+  // 7 chains say 5, which is right, and 7 say 4, so the vote returns nothing.
+  { id: "test/algebra/1837.json", outcome: "tie" },
+];
+
+const outcomeOf = (p: Problem): Outcome =>
+  p.tie ? "tie" : p.plurality_correct ? "right" : "wrong";
+
+export const SHOWCASE = SHOWCASE_PICKS.map(({ id, outcome }) => {
+  const problem = PROBLEMS.find((p) => p.problem_id === id);
+  if (!problem) {
+    throw new Page07DataError(`figure 1 shows ${id} but that problem is not bundled.`);
+  }
+  if (outcomeOf(problem) !== outcome) {
     throw new Page07DataError(
-      `the specimen tallies ${votes} votes plus ${noAnswer} non-answers, but ships ` +
-        `${SPECIMEN.chains.length} chains`,
+      `figure 1 labels ${id} as a vote that comes out '${outcome}', but the run says ` +
+        `'${outcomeOf(problem)}'.`,
     );
   }
-  if (SPECIMEN.ranked.length !== SPECIMEN.distinct_answers) {
-    throw new Page07DataError("the specimen's ranked tally and distinct_answers disagree");
+  // The non-specimen boxes are there to show the right answer being lost, so it has
+  // to be in the box for the reader to find.
+  if (outcome !== "right" && !problem.any_correct) {
+    throw new Page07DataError(`figure 1's '${outcome}' box ${id} has no correct chain in it.`);
+  }
+  return { outcome, problem };
+});
+
+// Each tally must account for every chain the box ships: the votes plus the chains
+// that produced nothing usable. If these disagree the histogram is drawing a different
+// pile than the one the reader can open.
+for (const { problem } of SHOWCASE) {
+  const votes = problem.ranked.reduce((s, r) => s + r.votes, 0);
+  const noAnswer = Math.round(problem.no_answer_rate * problem.chains.length);
+  if (votes + noAnswer !== problem.chains.length) {
+    throw new Page07DataError(
+      `${problem.problem_id} tallies ${votes} votes plus ${noAnswer} non-answers, but ships ` +
+        `${problem.chains.length} chains`,
+    );
+  }
+  if (problem.ranked.length !== problem.distinct_answers) {
+    throw new Page07DataError(
+      `${problem.problem_id}'s ranked tally and distinct_answers disagree`,
+    );
   }
 }
 
 /** The chains that landed on one answer, in the order they were sampled. */
 export function chainsFor(problem: Problem, answer: string): SpecimenChain[] {
   return problem.chains.filter((c) => c.extracted_answer === answer);
+}
+
+/**
+ * A chain cut for reading: its opening paragraph (how it read the problem), its
+ * last two (where it committed to an answer), and everything between folded away
+ * for the reader to open. Chains run 31 to 272 lines, and the question a reader
+ * brings to a wrong one is where it ended up, not every step of getting there.
+ *
+ * A cut at paragraph breaks, never inside one, so every word shown is still the
+ * model's own and in its own order. A chain short enough that folding would hide
+ * almost nothing is returned whole, with an empty middle.
+ */
+export function foldTrace(
+  text: string,
+  head = 1,
+  tail = 2,
+): { head: string[]; middle: string[]; tail: string[] } {
+  const paras = text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (paras.length <= head + tail + 1) return { head: paras, middle: [], tail: [] };
+  return {
+    head: paras.slice(0, head),
+    middle: paras.slice(head, paras.length - tail),
+    tail: paras.slice(paras.length - tail),
+  };
 }
 
 /** The share of the tally one row holds, for a bar width. */
@@ -360,6 +428,8 @@ export const PAGE7 = {
     ...D.figure_1,
     specimen: SPECIMEN,
     problems: PROBLEMS,
+    /** The three boxes the reader switches between, specimen first. */
+    showcase: SHOWCASE,
   },
 
   /** Figure 2: what the vote buys, and what it costs at a fixed budget. */
