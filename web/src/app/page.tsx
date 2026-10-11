@@ -67,7 +67,7 @@ export default function Home() {
                       href={pageHref(p.n)}
                       className="group flex items-baseline gap-2 text-sm"
                     >
-                      <span className="tabular-nums text-ink-muted">
+                      <span className="tabular-nums text-ink-muted group-hover:font-semibold group-hover:text-ink group-focus-visible:font-semibold group-focus-visible:text-ink">
                         {String(p.n).padStart(2, "0")}
                       </span>
                       <span className="text-ink group-hover:font-semibold group-focus-visible:font-semibold">{p.title}</span>
