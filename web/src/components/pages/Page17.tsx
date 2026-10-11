@@ -37,7 +37,7 @@ export function Page17() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <dl className="flex max-w-2xl flex-col gap-5">
+      <dl className="flex flex-col gap-5">
         {TERMS.map((t) => (
           <div key={t.id} id={t.id} className="flex flex-col gap-1 border-l-4 border-grid pl-3">
             <dt className="font-semibold text-ink">{t.term}</dt>

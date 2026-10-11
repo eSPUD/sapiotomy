@@ -20,7 +20,7 @@ export function PageScaffold({ n }: { n: number }) {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">{page.concept}</p>
+      <p className="text-lg text-ink-muted">{page.concept}</p>
 
       <div className="rounded-lg border border-dashed border-grid bg-surface p-6 text-ink-muted">
         <p>

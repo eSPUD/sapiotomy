@@ -430,7 +430,7 @@ export function Page12() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         A model writes its own reasoning, an answer key discards what&apos;s wrong, and the
         survivors become its next training set.{" "}
         <strong className="text-ink">What happens when you take the answer key away?</strong>

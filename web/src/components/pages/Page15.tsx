@@ -702,7 +702,7 @@ export function Page15() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         For fourteen pages the dial has mostly pointed one way: more samples, deeper search, longer
         chains, more accuracy. This page is the fine print. Left alone, models{" "}
         <strong className="text-ink">cannot reliably fix their own mistakes</strong>, thinking

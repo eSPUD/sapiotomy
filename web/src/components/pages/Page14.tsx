@@ -868,7 +868,7 @@ export function Page14() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         Page 13 closed with four questions about what sits behind the thinking dial, and no way to
         answer any of them from outside. In January 2025, DeepSeek published all of it: algorithm,
         weights, training curve, and a chain that stops mid-solution to re-check its own work.{" "}

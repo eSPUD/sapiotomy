@@ -297,7 +297,7 @@ export function Page16() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         The past fifteen pages are a small but mighty snapshot of what inference-time scaling is
         under the hood. Reasoning turned out to be{" "}
         <strong className="text-ink">one knob that can be turned many different ways</strong>, and
@@ -313,7 +313,7 @@ export function Page16() {
             our runs · {ITEM_COUNT} problems · pages 5 to 11
           </span>
         </h2>
-        <p className="max-w-2xl text-ink">
+        <p className="text-ink">
           Each page measured its own lever against its own baseline, so none of them could draw
           this. Now that all of them are behind you, they go on one axis, priced in the compute
           they actually spent.
@@ -328,7 +328,7 @@ export function Page16() {
             The clause about a 128-token chain scoring what no chain scores went
             with the rung it described. Do not reinstate it: there is no longer a
             bar on this chart behind it. */}
-        <p className="max-w-2xl border-l-2 border-grid pl-3 text-sm text-ink-muted">
+        <p className="border-l-2 border-grid pl-3 text-sm text-ink-muted">
           Read it top to bottom as steps that keep getting smaller. Writing the reasoning at all is
           the largest single move on the chart, and being made to write more of it is the only step
           that goes backwards.
@@ -338,7 +338,7 @@ export function Page16() {
             nothing else. The downloads used to sit here and were moved to the top
             line on 2026-08-10: they are provenance, and a list of five zips between
             the chart and the conclusions interrupted the argument at its seam. */}
-        <p className="max-w-2xl border-l-2 border-grid pl-3 text-sm text-ink-muted">
+        <p className="border-l-2 border-grid pl-3 text-sm text-ink-muted">
           <strong className="text-ink">Every chain above was written by {WRITER}.</strong> One model
           wrote all of it. What changes down the chart is how many chains it was allowed to write
           and what got to pick between them, never who was writing; where a judge appears it scores
@@ -363,7 +363,7 @@ export function Page16() {
             six things the chart is evidence for
           </span>
         </h2>
-        <div className="flex max-w-2xl flex-col gap-3">
+        <div className="flex flex-col gap-3">
           <Takeaway n={1} title="Letting the model reason wins, every time">
             Ask for the answer on its own and it mostly gets it wrong. Let it write its working
             first, on the same problems, and it gets far more of them right. But making it write{" "}
@@ -420,7 +420,7 @@ export function Page16() {
             concepts, not numbers
           </span>
         </h2>
-        <p className="max-w-2xl text-ink">
+        <p className="text-ink">
           In the deck&apos;s order. Each answers itself as soon as you pick, and says which page it
           came from. The options are shuffled on every visit, so where an answer sat last time tells
           you nothing. Nothing here needs a number memorised: where a figure appears it is the
@@ -430,7 +430,7 @@ export function Page16() {
       </div>
 
 
-      <div className="max-w-2xl rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+      <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
         The one sentence to leave with: a model can get dramatically better answers by thinking
         longer at answer time, the gains are real and measured and each one has a price and a
         ceiling, and every one of them is paid in text that nobody has yet shown is the reason for

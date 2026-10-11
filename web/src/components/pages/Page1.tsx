@@ -170,7 +170,7 @@ export function Page1() {
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* The intro is a grid row of its own so its citation can sit beside it. */}
-        <div className="flex max-w-2xl flex-col gap-3">
+        <div className="flex flex-col gap-3">
           <p className="text-lg text-ink-muted">
             Your mind runs two systems.
             <Cite n={REF.kahneman} /> <strong className="text-ink">System 1</strong> is fast,

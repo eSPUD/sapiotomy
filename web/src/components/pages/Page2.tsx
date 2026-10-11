@@ -285,7 +285,7 @@ export function Page2() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         What happens when an LLM answers with System 1 thinking in the real world? A single question
         about the World Cup shows at least two ways it can go wrong.
       </p>

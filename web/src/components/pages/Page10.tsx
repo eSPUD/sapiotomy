@@ -337,7 +337,7 @@ export function Page10() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         A model writes one word at a time. At every word it has a few candidates and a hunch about
         how likely each is, and it picks one. Always pick the likeliest and you have a{" "}
         <strong className="text-ink">chain</strong>: a single line, written forward, with no way
@@ -349,7 +349,7 @@ export function Page10() {
           and beside the one it says least about. It sits here because it is the
           caveat the reader needs before the first tap, and because it is what the
           top line's unrun download is promising. */}
-      <p className="max-w-2xl text-ink-muted">
+      <p className="text-ink-muted">
         <strong className="text-ink">Nothing here is a measurement of ours.</strong> Pages 5 to 9
         each ship the run their numbers come from. This page ships none. The 29-word tree below is
         written by hand, chosen so the five behaviours are legible, and the crossword bars in step 3

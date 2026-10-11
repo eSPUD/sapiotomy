@@ -318,7 +318,7 @@ export function Page9() {
         {page.title}
       </h1>
 
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         Two ways to grade a student: mark the final answer, or mark{" "}
         <strong className="text-ink">every line of the working</strong>. Where they disagree is
         where the interesting failures live. Every maths teacher who said{" "}

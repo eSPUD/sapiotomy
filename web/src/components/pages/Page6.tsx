@@ -1223,7 +1223,7 @@ export function Page6() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         {/* Opening line, author, 2026-09-27: no page number (reviewer plan, CP1). */}
         Every chain of thought has a <strong className="text-ink">length</strong>, and the longer it
         runs, the more compute it uses. Turn that length into a dial, and you decide how much a model

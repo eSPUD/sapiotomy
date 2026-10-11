@@ -276,7 +276,7 @@ export function Page3() {
         {page.title}
       </h1>
 
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         A missing fact needs new knowledge, and the obvious way to supply it is to{" "}
         <strong className="text-ink">train the model again</strong>.
       </p>

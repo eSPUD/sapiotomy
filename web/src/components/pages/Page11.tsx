@@ -1037,7 +1037,7 @@ export function Page11() {
           along in the claim rather than taking a sentence of its own, and the
           once/every-question contrast carries the pretraining split in one line —
           step 2's R panel is where that split gets its full airing. */}
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         A bigger model and more thinking are{" "}
         <strong className="text-ink">two ways to spend the same FLOPs</strong> (floating-point
         operations, the raw count of arithmetic a chip does). Pretraining burns them once, into the

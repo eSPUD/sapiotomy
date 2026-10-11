@@ -760,7 +760,7 @@ export function Page5() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         Humans solve complex problems by taking a series of small steps towards the solution. This
         step-by-step approach helps us apply our System&nbsp;2 thinking to problem-solving. It is
         very similar to solving a quadratic equation in clear and simple steps, rather than trying

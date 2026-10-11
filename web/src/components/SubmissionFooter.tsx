@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation";
 export function SubmissionFooter() {
   const landing = usePathname() === "/";
   return (
-    <footer className={`mx-auto max-w-[90%] px-4 ${landing ? "pb-4" : "pb-10"}`}>
+    <footer className={`mx-auto max-w-[min(90%,2048px)] px-4 ${landing ? "pb-4" : "pb-10"}`}>
       {/* The landing's note sits centred with no rule; story pages keep the rule above
           their acceptance line. */}
       <div

@@ -16,7 +16,7 @@ export function ProgressRail() {
       aria-label="Story progress"
       className="sticky top-0 z-10 border-b border-grid bg-compute"
     >
-      <div className="mx-auto flex max-w-[90%] items-center justify-between gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-[min(90%,2048px)] items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="group flex flex-col leading-tight">
           <span className="text-lg font-semibold text-canvas group-hover:underline">
             The Story of Inference-Time Scaling

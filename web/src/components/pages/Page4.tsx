@@ -411,7 +411,7 @@ export function Page4() {
         {page.title}
       </h1>
       {/* The lede names reasoning; step 2 owns the convergence and the trade-offs. */}
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         Working a problem out, instead of recognizing the answer, has a name:{" "}
         <strong className="text-ink">reasoning</strong>. If you&apos;ve ever compared answers with a
         classmate, you know there is rarely only one way to reason through a problem.

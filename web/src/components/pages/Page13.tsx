@@ -521,7 +521,7 @@ export function Page13() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="max-w-2xl text-lg text-ink-muted">
+      <p className="text-lg text-ink-muted">
         By page 12, compute had split in two: the compute spent at answer time (pages 5 to 11:
         votes, judges, search) and the compute already sunk into the weights (page 12: the reasoning
         trained in). <strong className="text-ink">o1</strong> is the first commercial model to
