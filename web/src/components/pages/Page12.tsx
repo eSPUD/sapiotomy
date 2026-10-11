@@ -431,7 +431,9 @@ export function Page12() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         A model writes its own reasoning, an answer key discards what&apos;s wrong, and the
         survivors become its next training set.{" "}
         <strong className="text-ink">What happens when you take the answer key away?</strong>

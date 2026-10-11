@@ -703,7 +703,9 @@ export function Page15() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         For fourteen pages the dial has mostly pointed one way: more samples, deeper search, longer
         chains, more accuracy. This page is the fine print. Left alone, models{" "}
         <strong className="text-ink">cannot reliably fix their own mistakes</strong>, thinking

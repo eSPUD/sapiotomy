@@ -522,7 +522,9 @@ export function Page13() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         By page 12, compute had split in two: the compute spent at answer time (pages 5 to 11:
         votes, judges, search) and the compute already sunk into the weights (page 12: the reasoning
         trained in). <strong className="text-ink">o1</strong> is the first commercial model to

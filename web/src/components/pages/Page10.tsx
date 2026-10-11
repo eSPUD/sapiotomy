@@ -338,7 +338,9 @@ export function Page10() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         A model writes one word at a time. At every word it has a few candidates and a hunch about
         how likely each is, and it picks one. Always pick the likeliest and you have a{" "}
         <strong className="text-ink">chain</strong>: a single line, written forward, with no way

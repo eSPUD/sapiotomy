@@ -1038,7 +1038,9 @@ export function Page11() {
           along in the claim rather than taking a sentence of its own, and the
           once/every-question contrast carries the pretraining split in one line —
           step 2's R panel is where that split gets its full airing. */}
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         A bigger model and more thinking are{" "}
         <strong className="text-ink">two ways to spend the same FLOPs</strong> (floating-point
         operations, the raw count of arithmetic a chip does). Pretraining burns them once, into the

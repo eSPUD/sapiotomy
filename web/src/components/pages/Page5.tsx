@@ -761,7 +761,9 @@ export function Page5() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         Humans solve complex problems by taking a series of small steps towards the solution. This
         step-by-step approach helps us apply our System&nbsp;2 thinking to problem-solving. It is
         very similar to solving a quadratic equation in clear and simple steps, rather than trying

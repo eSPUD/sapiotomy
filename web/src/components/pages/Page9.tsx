@@ -319,7 +319,9 @@ export function Page9() {
         {page.title}
       </h1>
 
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         Two ways to grade a student: mark the final answer, or mark{" "}
         <strong className="text-ink">every line of the working</strong>. Where they disagree is
         where the interesting failures live. Every maths teacher who said{" "}

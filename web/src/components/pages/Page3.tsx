@@ -277,9 +277,13 @@ export function Page3() {
         {page.title}
       </h1>
 
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         A missing fact needs new knowledge, and the obvious way to supply it is to{" "}
-        <strong className="text-ink">train the model again</strong>.
+        <strong className="text-ink">train the model again</strong>. Retraining looks like the fix
+        for a <strong className="text-ink">knowledge bias</strong> too: show the model more text,
+        and the reading it overlooked should get its due.
       </p>
 
       {/* Each step (left) sits beside its margin notes (right); section 2 cites nothing. */}

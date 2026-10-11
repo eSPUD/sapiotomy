@@ -631,7 +631,9 @@ export function Page8() {
         {page.title}
       </h1>
 
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         Counting asks what is most common. Judging asks what is best. They are not the same
         question, and on {PAGE8.run.items} problems{" "}
         <strong className="text-ink">

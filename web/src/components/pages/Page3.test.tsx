@@ -272,7 +272,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("opens on the original lede and closes on the plain verdict", () => {
     render(<Page3 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/A missing fact needs new knowledge, and the obvious way to supply it is to\s*train the model again\./);
+    expect(body).toMatch(/A missing fact needs new knowledge, and the obvious way to supply it is to\s*train the model again\. Retraining looks like the fix\s*for a knowledge bias too: show the model more text,\s*and the reading it overlooked should get its due\./);
     expect(body).not.toMatch(/The bill says no/);
     expect(body).toMatch(/Retraining runs into three problems: what it costs, how long it takes, and how much text\s*there is to train on\./);
     expect(body).toMatch(/buys more knowledge, narrowing the knowledge gap, but at a compounding\s*cost/i);

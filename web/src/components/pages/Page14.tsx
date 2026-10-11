@@ -869,7 +869,9 @@ export function Page14() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         Page 13 closed with four questions about what sits behind the thinking dial, and no way to
         answer any of them from outside. In January 2025, DeepSeek published all of it: algorithm,
         weights, training curve, and a chain that stops mid-solution to re-check its own work.{" "}

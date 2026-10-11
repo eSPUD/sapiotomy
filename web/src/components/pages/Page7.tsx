@@ -561,7 +561,9 @@ export function Page7() {
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}
       </h1>
-      <p className="text-lg text-ink-muted">
+      {/* Held to the content column: the margin is the notes column (15rem) plus the
+          grid's column gap (2rem), so its right edge meets the body text's. */}
+      <p className="text-lg text-ink-muted lg:mr-[17rem]">
         Page 6 made <strong className="text-ink">one chain longer</strong>, and ran out of road. So
         stop asking once: ask the <em>same</em> question many times, and keep the answer that comes
         up <strong className="text-ink">most often</strong>.
