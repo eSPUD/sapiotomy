@@ -123,10 +123,7 @@ function CiteNumber({ k }: { k: number }) {
             >
               <span className="font-semibold text-compute">{k}.</span>
               {/* The page's own References entry, cloned: app-authored markup, not user input. */}
-              <div
-                className="flex min-w-0 flex-wrap gap-1.5"
-                dangerouslySetInnerHTML={{ __html: popover.html }}
-              />
+              <div className="min-w-0" dangerouslySetInnerHTML={{ __html: popover.html }} />
             </div>,
             document.body,
           )
@@ -162,26 +159,33 @@ export function RefItem({
       id={`ref-${n}`}
       // scroll-mt clears the sticky header when jumped to; the -mx/px pair
       // reserves room for the :target tint so nothing shifts when it appears.
-      className="flex flex-wrap gap-1.5 scroll-mt-24 -mx-1.5 rounded px-1.5 py-0.5 transition-colors target:bg-compute/10"
+      // The number keeps its own column and the entry wraps beside it (a hanging
+      // indent), so the two always start on the same line.
+      className="flex gap-1.5 scroll-mt-24 -mx-1.5 rounded px-1.5 py-0.5 transition-colors target:bg-compute/10"
     >
-      <span className="font-semibold text-compute">{n}.</span>
-      {href ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline decoration-grid underline-offset-2 hover:text-ink"
-        >
-          {children}
-        </a>
-      ) : (
-        <span>{children}</span>
-      )}
-      {preprint ? (
-        <span className="rounded bg-wrong/20 px-1.5 text-[10px] font-semibold text-wrong">
-          preprint
-        </span>
-      ) : null}
+      <span className="shrink-0 font-semibold text-compute">{n}.</span>
+      <span className="min-w-0 break-words">
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline decoration-grid underline-offset-2 hover:text-ink"
+          >
+            {children}
+          </a>
+        ) : (
+          <span>{children}</span>
+        )}
+        {preprint ? (
+          <>
+            {" "}
+            <span className="inline-block rounded bg-wrong/20 px-1.5 text-[10px] font-semibold text-wrong">
+              preprint
+            </span>
+          </>
+        ) : null}
+      </span>
     </p>
   );
 }
