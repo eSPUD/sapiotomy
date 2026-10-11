@@ -8,8 +8,12 @@ import { usePathname } from "next/navigation";
 export function SubmissionFooter() {
   const landing = usePathname() === "/";
   return (
-    <footer className="mx-auto max-w-[90%] px-4 pb-10">
-      <div className="border-t border-grid pt-4 text-sm text-ink-muted">
+    <footer className={`mx-auto max-w-[90%] px-4 ${landing ? "pb-4" : "pb-10"}`}>
+      {/* The landing's note sits centred with no rule; story pages keep the rule above
+          their acceptance line. */}
+      <div
+        className={`text-sm text-ink-muted ${landing ? "-mt-4 text-center" : "border-t border-grid pt-4"}`}
+      >
         {landing ? (
           <p>
             Read in order, or jump to any chapter. Every figure is interactive: drag the sliders,

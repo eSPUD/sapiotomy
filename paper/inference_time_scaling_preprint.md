@@ -3,7 +3,7 @@
 **Shashank Bangalore Lakshman**, **Scott Lawrence Eiers**
 Western Governors University
 
-*Preprint. The explainable this paper describes was accepted to the 9th Workshop on Visualization for AI Explainability (VISxAI) at IEEE VIS 2026. Live at https://sapiotomy.vercel.app.*
+*Preprint. The explainable this paper describes was accepted to the 9th Workshop on Visualization for AI Explainability (VISxAI) at IEEE VIS 2026. Live at https://inferencetimescaling.espud.org.*
 
 > **Draft status, 2026-09-20, second structure.** Restructured against the GAN Lab skeleton per `planning/acm_paper_plan.md` revision four. Sections 1, 2, 6, 7, 10 and 11 carry prose drafted from the repository's own measurements and documents. Sections 3, 4, 5, 8 and 9 are newly drafted against the plan's briefs and want an author pass: section 3 from `paper/related_works_final_report.md`, sections 4 and 5 as the paper's C-to-G chain, section 8 as the two usage scenarios, section 9 as the design history. Bracketed notes mark numbers still to be pinned. Word counts per section are printed at the end.
 
@@ -34,7 +34,7 @@ It is still worth understanding, because the gains are large where they matter. 
 
 Building a learning tool for this family turned out to be constrained in five specific ways, which Section 4 states as design challenges and Section 5 answers as design goals. They concern the incomparability of published numbers, the absence of a GPU where a web page is served, the mathematics a first-year reader actually has, a technique that did not replicate when we measured it, and the risk that a summary page drifts from the pages it summarizes.
 
-This paper describes *The Story of Inference-Time Scaling*, a sixteen-page interactive explainable that takes a reader with no machine-learning background from "a model can only blurt an answer" to the levers' own failure modes. We contribute: the explainable itself, with a live control on every page and one idea per page; a single measured instrument, on which pages 5 to 9 and 11 run their own experiments over the same hundred problems with the same grader, so that the levers can be compared on one axis for the first time; a notebook shipped beside every measured page that re-derives that page's figures on a laptop with no GPU; and the design history in Sections 8 and 9, including the decisions we got wrong first. The explainable is live at https://sapiotomy.vercel.app and the source, notebooks and run artifacts are open at [repository URL].
+This paper describes *The Story of Inference-Time Scaling*, a sixteen-page interactive explainable that takes a reader with no machine-learning background from "a model can only blurt an answer" to the levers' own failure modes. We contribute: the explainable itself, with a live control on every page and one idea per page; a single measured instrument, on which pages 5 to 9 and 11 run their own experiments over the same hundred problems with the same grader, so that the levers can be compared on one axis for the first time; a notebook shipped beside every measured page that re-derives that page's figures on a laptop with no GPU; and the design history in Sections 8 and 9, including the decisions we got wrong first. The explainable is live at https://inferencetimescaling.espud.org and the source, notebooks and run artifacts are open at [repository URL].
 
 ---
 
