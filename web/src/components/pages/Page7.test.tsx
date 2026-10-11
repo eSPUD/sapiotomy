@@ -79,20 +79,25 @@ describe("Page 7 (frequency voting) component", () => {
     expect(screen.getByTestId("chain-trace").textContent).toBe(before);
   });
 
-  it("offers three problems, one for each way a vote can end", () => {
+  // The vote coming out wrong was a third choice until the author cut it (2026-10-11).
+  it("offers two problems: the vote right, and the vote tied", () => {
     render(<Page7 />);
     const picker = screen.getByRole("radiogroup", { name: /Pick a problem/i });
     const choices = within(picker).getAllByRole("radio");
     expect(choices.map((b) => b.getAttribute("aria-label"))).toEqual([
       "the vote is right",
-      "the vote is wrong",
       "the vote ties",
     ]);
+    // Scoped to the picker and its card: the heat map below names wrong votes, and should.
+    expect(picker.textContent).not.toMatch(/wrong/);
+    expect(
+      screen.getByRole("region", { name: /One problem, \d+ chains, tallied/ }).textContent,
+    ).not.toMatch(/the vote is wrong/);
     expect(choices[0]).toBeChecked();
     for (const [i, { problem }] of PAGE7.figure1.showcase.entries()) {
       fireEvent.click(choices[i]);
       expect(tallyRows()).toHaveLength(problem.ranked.length);
-      // Each problem opens on its correct answer, even where the vote picked a wrong one.
+      // Each problem opens on its correct answer, even where the vote did not return it.
       const right = problem.ranked.findIndex((r) => r.correct);
       expect(right).toBeGreaterThanOrEqual(0);
       expect(tallyRows()[right]).toHaveAttribute("aria-expanded", "true");
@@ -267,7 +272,7 @@ describe("Page 7 (frequency voting) component", () => {
   // tokens and probability distributions off this page.
   it("glosses temperature without importing page 10's mechanism", () => {
     render(<Page7 />);
-    const intro = screen.getByText(/Here are three problems/).textContent ?? "";
+    const intro = screen.getByText(/Here are two problems/).textContent ?? "";
     expect(intro).toMatch(/which is what temperature does/);
     expect(intro).toMatch(/at zero every chain comes back identical/);
     expect(intro).not.toMatch(/likel|distribution|logit/i);
@@ -449,8 +454,14 @@ describe("Page 7 (frequency voting) component", () => {
     expect(document.body.textContent).not.toContain("\u2013");
   });
 
+  // Step 1's classroom is the one figure allowed to say "illustrative": it is an
+  // analogy, not a stand-in for the run, and it says so. Everywhere else the word
+  // would mean a simulated number had come back.
   it("does not reintroduce the simulation the refactor removed", () => {
     render(<Page7 />);
+    const classroom = screen.getByRole("region", { name: "Four ways to the same answer" });
+    expect(classroom.textContent).toMatch(/This is an illustrative example/);
+    classroom.remove();
     const body = document.body.textContent ?? "";
     expect(body).not.toMatch(/modelled/i);
     expect(body).not.toMatch(/illustrative/i);

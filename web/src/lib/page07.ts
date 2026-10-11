@@ -37,6 +37,7 @@
  * wrong figure.
  */
 import rawDerived from "@data/page-07-derived.json";
+import rawHeatmap from "@data/page-07-heatmap.json";
 import { pct, tidyMath } from "./traceText";
 
 export { pct, tidyMath };
@@ -124,9 +125,11 @@ interface RawDiversity {
   single_chain_accuracy: number;
   plurality_accuracy: number;
   coverage: number;
+  tie_rate: number;
 }
 
 interface RawDerived {
+  source: { results_sha256: string };
   manifest: {
     run_id: string;
     timestamp_utc: string;
@@ -322,19 +325,19 @@ if (!SPECIMEN) {
 }
 
 /**
- * The three boxes figure 1 lets the reader switch between, one for each way a vote
- * can end. The notebook's specimen is the vote coming out right; the other two are
- * bundled problems picked for the outcome they show, and that outcome is checked
- * below rather than trusted, because the reader is told it in a label.
+ * The two boxes figure 1 lets the reader switch between: the vote coming out right
+ * (the notebook's specimen) and the vote tying (a bundled problem picked for it,
+ * checked below rather than trusted, because the reader is told it in a label).
+ * A third box, the vote coming out wrong (test/algebra/224, still bundled by
+ * notebooks/page_07_site_data.py), was cut from the page on 2026-10-11 by the author.
  */
 export type Outcome = "right" | "wrong" | "tie";
+export type ShowcaseOutcome = Exclude<Outcome, "wrong">;
 
-const SHOWCASE_PICKS: { id: string; outcome: Outcome }[] = [
+const SHOWCASE_PICKS: { id: string; outcome: ShowcaseOutcome }[] = [
   { id: D.figure_1.specimen_id, outcome: "right" },
-  // Picked for being short and easy to follow; notebooks/page_07_site_data.py bundles
-  // them under the same names. 15 chains say 7; the one that says 8 is right.
-  { id: "test/algebra/224.json", outcome: "wrong" },
-  // 7 chains say 5, which is right, and 7 say 4, so the vote returns nothing.
+  // Picked for being short and easy to follow. 7 chains say 5, which is right, and
+  // 7 say 4, so the vote returns nothing.
   { id: "test/algebra/1837.json", outcome: "tie" },
 ];
 
@@ -378,6 +381,54 @@ for (const { problem } of SHOWCASE) {
     );
   }
 }
+
+/* ----------------------------------------------------------- the heat map */
+
+/**
+ * The diversity family per problem: one cell per problem and temperature, how many
+ * of its chains are right and how the vote came out. The notebook saves this family
+ * only as one aggregate per temperature; `notebooks/page_07_heatmap.py` re-tallies
+ * the same chains with the notebook's own vote and refuses to write unless it
+ * reproduces those aggregates. It is checked again here, against the derived file
+ * the rest of the page reads, so a heat map from another run fails the build.
+ */
+export interface HeatCell {
+  temperature: number;
+  n_correct: number;
+  outcome: Outcome;
+}
+
+interface RawHeatmap {
+  source: { run_id: string; results_sha256: string };
+  n_chains: number;
+  temperatures: number[];
+  problems: { problem_id: string; level: number; subject: string; cells: HeatCell[] }[];
+}
+
+const HM = rawHeatmap as unknown as RawHeatmap;
+
+if (HM.source.run_id !== D.manifest.run_id || HM.source.results_sha256 !== D.source.results_sha256) {
+  throw new Page07DataError("the heat map was built from a different run than derived.json");
+}
+D.figure_2.diversity.forEach((d, j) => {
+  const cells = HM.problems.map((p) => p.cells[j]);
+  const close = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+  const avg = (f: (c: HeatCell) => number) => cells.reduce((s, c) => s + f(c), 0) / cells.length;
+  if (
+    HM.temperatures[j] !== d.temperature ||
+    HM.n_chains !== d.n_chains ||
+    HM.problems.length !== d.n_items ||
+    cells.some((c) => c.temperature !== d.temperature) ||
+    !close(avg((c) => +(c.outcome === "right")), d.plurality_accuracy) ||
+    !close(avg((c) => +(c.outcome === "tie")), d.tie_rate) ||
+    !close(avg((c) => c.n_correct / HM.n_chains), d.single_chain_accuracy) ||
+    !close(avg((c) => +(c.n_correct > 0)), d.coverage)
+  ) {
+    throw new Page07DataError(`the heat map's T = ${d.temperature} column disagrees with derived.json`);
+  }
+});
+
+export const HEATMAP = HM;
 
 /** The chains that landed on one answer, in the order they were sampled. */
 export function chainsFor(problem: Problem, answer: string): SpecimenChain[] {
@@ -428,8 +479,10 @@ export const PAGE7 = {
     ...D.figure_1,
     specimen: SPECIMEN,
     problems: PROBLEMS,
-    /** The three boxes the reader switches between, specimen first. */
+    /** The two boxes the reader switches between, specimen first. */
     showcase: SHOWCASE,
+    /** Every problem of the diversity family at every temperature, one cell each. */
+    heatmap: HEATMAP,
   },
 
   /** Figure 2: what the vote buys, and what it costs at a fixed budget. */

@@ -49,19 +49,25 @@
  * the model in prose. Everything else the run recorded is in the download on the
  * top line, which is the honest place for it.
  *
- *   Step 1 — no figure. The idea, as asking around a new town for the best ice
- *   cream: three people reach Shop 2 by three different reasons, the misses
- *   land on different shops. That is Wang's intuition (many ways of thinking,
- *   one correct answer). The load-bearing clause is that agreement only counts
- *   when the reasons are DIFFERENT ("if they all gave the same reason, you've
- *   really only heard one opinion"), which is the mechanism the whole page then
+ *   Step 1 — the idea, as a classroom solving the chickens-and-cows puzzle:
+ *   sixteen of twenty-five students reach 4 by four different methods, the nine
+ *   misses scatter across six numbers. Its one figure is the four methods behind
+ *   the most common answer, worked, each card carrying its head count and ending
+ *   on the same answer; it is an illustration, the only thing on the page that is
+ *   not measured. That is Wang's intuition (many
+ *   ways of thinking, one correct answer). The load-bearing clause is that
+ *   agreement only counts when the methods are DIFFERENT ("if everyone had
+ *   copied one student's working, you'd only have one answer, which could
+ *   be right or wrong"), which is
+ *   the mechanism the whole page then
  *   measures and the reason step 3's T = 0 line is flat. Name the technique
  *   here, and cite Wang in the margin beside it, where the TECHNIQUE is the
  *   subject.
  *
- *   Step 2 — figure 1, the pile. Three problems, one per way a vote ends (right,
- *   wrong with the truth among the chains, tied), each with 16 chains
- *   tallied into a ranked histogram. A row click opens that answer's chains and
+ *   Step 2 — figure 1, the pile. Two problems, the vote coming out right and the
+ *   vote tying with the truth among the chains (the author cut a third, the vote
+ *   coming out wrong, on 2026-10-11), each with 16 chains tallied into a ranked
+ *   histogram. A row click opens that answer's chains and
  *   never closes the reader; the arrows step only within the open answer, so
  *   every chain, wrong ones included, is a row click and some arrow presses away.
  *   Each chain shows its opening and its ending with the middle folded, because
@@ -80,8 +86,8 @@
  *   toggle. The widget holds the chart, its slider, a one-sentence readout and
  *   that toggle, and nothing else: the figure carries the step. The temperature-0
  *   line is FLAT by construction and that is the page's cleanest proof that the
- *   vote needs diversity; the intro reads it as asking one person sixteen times,
- *   which is step 1's "only heard one opinion". THE DIP AT N=2 IS REAL AND MUST
+ *   vote needs diversity: sixteen identical chains are step 1's class that
+ *   "copied one student's working". THE DIP AT N=2 IS REAL AND MUST
  *   BE EXPLAINED, not smoothed: with two chains a disagreement is a tie, a tie is
  *   not a vote, and 52% of N=2 votes tie.
  *
@@ -135,8 +141,9 @@ import {
   pct,
   tidyMath,
   tokens,
-  type Outcome,
+  type HeatCell,
   type Problem,
+  type ShowcaseOutcome,
   type SpecimenChain,
 } from "@/lib/page07";
 import { useStore } from "@/store/useStore";
@@ -164,6 +171,42 @@ const N_LABEL = "# of sampled chains";
 /** Cited for the technique. Every number on this page is ours. */
 const REF = { wang: 1 } as const;
 
+/* Step 1's figure: the four methods the 16 students who said 4 used on the farmyard
+   puzzle (10 heads, 28 legs), each worked in a few lines. The per-method head counts
+   are illustrative and must sum to the prose's "Sixteen say 4". */
+const FARMYARD_METHODS: { name: string; students: number; lines: string[] | string[][] }[] = [
+  {
+    name: "Guess and check",
+    students: 5,
+    lines: ["5 cows, 5 chickens", "20 + 10 = 30 legs, too many", "4 cows, 6 chickens", "16 + 12 = 28 legs ✓"],
+  },
+  {
+    // A table's lines are its rows, header first.
+    name: "A table",
+    students: 4,
+    lines: [
+      ["cows", "chickens", "legs"],
+      ["1", "9", "22"],
+      ["2", "8", "24"],
+      ["3", "7", "26"],
+      ["4", "6", "28 ✓"],
+    ],
+  },
+  {
+    name: "Two equations",
+    students: 4,
+    lines: ["c + h = 10", "4c + 2h = 28", "take away 2 × the first:", "2c = 8, so c = 4"],
+  },
+  {
+    name: "Everyone on two legs",
+    students: 3,
+    lines: ["10 animals × 2 legs = 20", "28 − 20 = 8 legs left over", "each cow has 2 of them", "8 ÷ 2 = 4"],
+  },
+];
+
+/** The students who said 4: the four methods' head counts together. */
+const FARMYARD_RIGHT = FARMYARD_METHODS.reduce((n, m) => n + m.students, 0);
+
 /* The pile's temperature is the best the sweep found, but it is not the only one:
    the run votes to the same accuracy at more than one setting. Both places that
    talk about the sweep have to say so, so the tie is read out of the data here
@@ -187,15 +230,89 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
+/* ------------------------------------------------------------- step 1 figure */
+
+/** The four routes behind the class's most common answer. Framed like step 2's card:
+    the puzzle on top (the prose above only points at it), then one card per method,
+    each with its head count and ending on the same answer. */
+function FarmyardMethods() {
+  return (
+    <section
+      aria-label="Four ways to the same answer"
+      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+    >
+      <p className="font-code text-sm leading-relaxed text-ink">
+        A farmyard has chickens and cows, with 10 heads and 28 legs between them. How many
+        cows?
+      </p>
+      <p className="text-sm text-ink">
+        <strong>4 cows</strong> was the most common answer that {FARMYARD_RIGHT} of the 25
+        students arrived at. Between them, they used four different reasoning approaches.
+      </p>
+      <div className="grid items-stretch gap-3 sm:grid-cols-2">
+        {FARMYARD_METHODS.map((m) => (
+          <div
+            key={m.name}
+            className="flex flex-col gap-2 rounded-lg border-l-4 border-correct bg-surface-raised p-4"
+          >
+            <p className="flex items-baseline justify-between gap-2 text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+              <span>{m.name}</span>
+              <span className="font-mono font-normal normal-case tabular-nums">
+                {m.students} students
+              </span>
+            </p>
+            {typeof m.lines[0] === "string" ? (
+              <div className="flex flex-col gap-0.5 font-mono text-sm text-ink">
+                {(m.lines as string[]).map((l) => (
+                  <p key={l}>{l}</p>
+                ))}
+              </div>
+            ) : (
+              <table className="w-fit font-mono text-sm text-ink">
+                <thead>
+                  <tr>
+                    {(m.lines as string[][])[0].map((h) => (
+                      <th key={h} scope="col" className="pr-4 text-left font-normal text-ink-muted">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(m.lines as string[][]).slice(1).map((r) => (
+                    <tr key={r[0]}>
+                      {r.map((c, i) => (
+                        <td key={i} className="pr-4">
+                          {c}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <p className="mt-auto border-t border-grid pt-2 font-mono text-sm font-bold text-correct-ink">
+              Answer = 4 cows
+            </p>
+          </div>
+        ))}
+      </div>
+      {/* Every other figure on the page is measured, so this one says it is not. */}
+      <p className="font-mono text-xs text-ink-muted">
+        This is an illustrative example.
+      </p>
+    </section>
+  );
+}
+
 /* ------------------------------------------------------------------ figure 1 */
 
-const OUTCOME_LABEL: Record<Outcome, string> = {
+const OUTCOME_LABEL: Record<ShowcaseOutcome, string> = {
   right: "the vote is right",
-  wrong: "the vote is wrong",
   tie: "the vote ties",
 };
 
-/** The three problems, one per way a vote can end. Page 6's radio idiom. */
+/** The two problems: the vote coming out right, and the vote tying. Page 6's radio idiom. */
 function ProblemPicker({ value, onChange }: { value: number; onChange: (i: number) => void }) {
   const name = useId();
   return (
@@ -226,18 +343,15 @@ function ProblemPicker({ value, onChange }: { value: number; onChange: (i: numbe
 const firstOpen = (p: Problem): string => (p.ranked.find((r) => r.correct) ?? p.ranked[0]).answer;
 
 /** How this problem's vote came out, read off the run, for the specimen card. */
-function outcomeLine(outcome: Outcome, p: Problem): string {
+function outcomeLine(outcome: ShowcaseOutcome, p: Problem): string {
   const top = p.ranked[0];
   const chains = (n: number) => (n === 1 ? "1 chain" : `${n} chains`);
   const truth = p.ranked.find((r) => r.correct)?.votes ?? 0;
   if (outcome === "right") {
     return `the vote returns ${tidyMath(top.answer)} on ${top.votes} of ${p.chains.length} chains and it is right · picked from ${F1.n_candidates} problems that qualified`;
   }
-  if (outcome === "tie") {
-    const tied = p.ranked.filter((r) => r.votes === top.votes).length;
-    return `${tied} answers tie at ${chains(top.votes)} each, so the vote returns nothing · the right answer came back from ${chains(truth)}`;
-  }
-  return `the vote returns ${tidyMath(top.answer)} on ${top.votes} of ${p.chains.length} chains · the right answer came back from ${chains(truth)}`;
+  const tied = p.ranked.filter((r) => r.votes === top.votes).length;
+  return `${tied} answers tie at ${chains(top.votes)} each, so the vote returns nothing · the right answer came back from ${chains(truth)}`;
 }
 
 /**
@@ -337,6 +451,133 @@ function Tally({
         );
       })}
     </ol>
+  );
+}
+
+/* --------------------------------------------------------- the heat map */
+
+const HM = F1.heatmap;
+const OUTCOME_SAYS: Record<HeatCell["outcome"], string> = {
+  right: "the vote is right",
+  wrong: "the vote is wrong",
+  tie: "the vote ties",
+};
+
+/**
+ * The fill for one cell. Hue says how the vote came out: Cactus where it is right,
+ * Sky where it is not (wrong or tied, which the readout tells apart). Strength says how
+ * many chains are right, from a 30% tint at none to the full hue at all of them, so a
+ * cell with no right chain still shows its hue: at 12% the two hues read as one grey.
+ * Ink stays AA on both hues at full.
+ */
+const heatFill = (c: HeatCell) =>
+  `color-mix(in srgb, var(${c.outcome === "right" ? "--correct" : "--wrong"}) ${Math.round(
+    30 + (70 * c.n_correct) / HM.n_chains,
+  )}%, transparent)`;
+
+/**
+ * Every problem of the temperature sweep at every temperature: a row per problem, a
+ * column per temperature. The ratio is its chains right over its chains run; the colour
+ * is whether the vote is. A table, so it reads as one without a separate table view.
+ */
+function TemperatureHeatmap() {
+  const [at, setAt] = useState<{ q: number; j: number } | null>(null);
+  const shown = at ? HM.problems[at.q].cells[at.j] : null;
+  const legend = (outcome: HeatCell["outcome"], label: string) => (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-xs text-ink-muted">{label}</span>
+      <span className="flex gap-px" aria-hidden="true">
+        {Array.from({ length: HM.n_chains + 1 }, (_, k) => (
+          <span
+            key={k}
+            className="flex h-4 w-4 items-center justify-center rounded-sm font-mono text-[10px] tabular-nums text-ink"
+            style={{ background: heatFill({ temperature: 0, n_correct: k, outcome }) }}
+          >
+            {k}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+  // Compact: fixed narrow columns rather than the full width, and the legend and
+  // readout beside the table from sm up (above it on a phone, first in reading order).
+  return (
+    <section
+      aria-label="Chains right and the vote, at every temperature"
+      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4 sm:flex-row-reverse sm:justify-end sm:gap-6"
+    >
+      <div className="flex flex-col gap-2 sm:w-48">
+        {legend("right", "the vote is right")}
+        {legend("wrong", "the vote is wrong or ties")}
+        <p className="text-xs text-ink-muted">Each cell reads chains right / chains run.</p>
+        {/* The hover readout; it holds its lines so the panel does not jump. */}
+        <p aria-hidden="true" className="min-h-[3rem] font-mono text-xs text-ink">
+          {shown && at
+            ? `problem ${at.q + 1} · T = ${shown.temperature} · ${shown.n_correct} of ${HM.n_chains} chains right · ${OUTCOME_SAYS[shown.outcome]}`
+            : ""}
+        </p>
+      </div>
+      <table
+        className="w-auto shrink-0 border-separate self-start font-mono text-[10px] tabular-nums"
+        style={{ borderSpacing: "1px" }}
+        onMouseLeave={() => setAt(null)}
+      >
+        <caption className="sr-only">
+          Chains right out of {HM.n_chains}, and the vote, for {HM.problems.length} problems at{" "}
+          {HM.temperatures.length} temperatures
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col" className="pb-1 pr-1 text-left align-bottom font-normal text-ink-muted">
+              problem
+            </th>
+            {HM.temperatures.map((t) => (
+              <th key={t} scope="col" className="w-9 pb-1 align-bottom font-normal text-ink-muted">
+                {/* Set vertically, reading bottom to top. */}
+                <span className="inline-block rotate-180 whitespace-nowrap [writing-mode:vertical-rl]">
+                  T = {t}
+                </span>
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {HM.problems.map((p, q) => (
+            <tr key={p.problem_id}>
+              <th scope="row" className="text-left font-normal text-ink-muted">
+                {q + 1}
+              </th>
+              {p.cells.map((c, j) => (
+                <td
+                  key={c.temperature}
+                  onMouseEnter={() => setAt({ q, j })}
+                  className={`h-4 w-9 rounded-sm text-center leading-none text-ink ${
+                    at?.q === q && at.j === j ? "outline outline-2 outline-ink" : ""
+                  }`}
+                  style={{ background: heatFill(c) }}
+                >
+                  {c.n_correct}/{HM.n_chains}
+                  <span className="sr-only"> chains right, {OUTCOME_SAYS[c.outcome]}</span>
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row" className="pt-1 text-left font-normal text-ink-muted">
+              vote right
+            </th>
+            {HM.temperatures.map((t, j) => (
+              <td key={t} className="pt-1 text-center text-correct-ink">
+                {HM.problems.filter((p) => p.cells[j].outcome === "right").length}/
+                {HM.problems.length}
+              </td>
+            ))}
+          </tr>
+        </tfoot>
+      </table>
+    </section>
   );
 }
 
@@ -722,9 +963,9 @@ function ForkChart() {
 export function Page7() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-  // Which of the three problems, which answer to it is open, and which of that answer's
+  // Which of the two problems, which answer to it is open, and which of that answer's
   // chains is being read. A problem opens on its CORRECT answer's first chain, so the
-  // reader starts on a right solution, even when the vote picked a wrong one; every
+  // reader starts on a right solution, even when the vote did not return it; every
   // other answer is a row click away. The arrows only ever step within the open
   // answer: "64" has eight chains to read, "128" has two.
   const [problemIx, setProblemIx] = useState(0);
@@ -816,18 +1057,18 @@ export function Page7() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Many reasons, one answer</h2>
           <p className="text-ink">
-            You&apos;re on holiday in a new town, looking for the best ice cream. So you ask around
-            at your hotel. Three people send you to Shop 2: one for the line out the door, one for
-            the homemade cones, one for a new honey-lavender flavour. One says Shop 1, because
-            it&apos;s the closest. Another says Shop 3, because it&apos;s the cheapest.
+            A teacher writes the puzzle below on the board. Twenty-five students solve it alone,
+            each in their own way, and the teacher collects only the final answers. Sixteen say 4.
+            The other nine are scattered across incorrect answers.
           </p>
+          <FarmyardMethods />
           <p className="text-ink">
-            Nobody needed perfect taste. Three people got to Shop 2 for three different reasons,
-            while the others couldn&apos;t even agree with each other. If three people pick the same
-            shop for completely different reasons, it&apos;s probably a good shop. But if they all
-            gave the same reason, you&apos;ve really only heard one opinion. Asking a model the same
-            question many times, and keeping the answer that comes up most, is{" "}
-            <strong>majority voting</strong>, also called <strong>self-consistency</strong>.
+            When different methods land on the same answer, it&apos;s probably right, and the nine
+            students who got it wrong couldn&apos;t even agree with each other. But if everyone had
+            copied one student&apos;s working, you&apos;d only have one answer, which could be right
+            or wrong. Asking a model the same question many times, letting it take different
+            reasoning approaches and keeping the most common answer is <strong>majority voting</strong>, also called{" "}
+            <strong>self-consistency</strong>.
             <Cite n={REF.wang} />
           </p>
         </section>
@@ -845,13 +1086,13 @@ export function Page7() {
             {/* Temperature glossed operationally, which is all this page is allowed to
                 say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens and
                 probability distributions, off this page and on page 10. */}
-            Now the model does the asking around. Here are three problems, one for each way a vote
-            can end. Each one went to {PAGE7.primary.label} {F1.n_chains} times with sampling
+            Now the model is the whole class. Here are two problems: on one the vote is right,
+            and on the other it ties. Each one went to {PAGE7.primary.label} {F1.n_chains} times with sampling
             turned on, which is what <strong className="text-ink">temperature</strong> does.
             Temperature is a dial, written <span className="font-mono text-ink">T</span> on every
             chart on this page: at zero every chain comes back identical, and turning it up makes
             them disagree more.
-            Every answer it came back with is tallied, like the shops people named. Click a row to
+            Every answer it came back with is tallied, like the answers on the board. Click a row to
             read the chains that landed there, wrong answers included, and use the arrows to step
             between them.
           </p>
@@ -934,10 +1175,15 @@ export function Page7() {
             is a scatter of near-misses, {pct(F1.shape.singleton_share)} of which are said exactly
             once.
           </p>
+          <p className="text-ink-muted">
+            Here is the vote on {HM.problems.length} of these problems at all{" "}
+            {HM.temperatures.length} temperatures, {HM.n_chains} chains each.
+          </p>
+          <TemperatureHeatmap />
         </section>
         <Note kicker="Read it as">
           <p>
-            Each chain is one person you asked, and each answer is a shop. Two chains landing on the
+            Each chain is one student, and each answer is a number on the board. Two chains landing on the
             same wrong answer usually got there by different mistakes, which is why the tail stays a
             scatter.
           </p>
@@ -946,12 +1192,12 @@ export function Page7() {
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. Greedy decoding against majority voting</h2>
-          {/* Step 2 showed the vote on three problems; this asks how it compares with one
+          {/* Step 2 showed the vote on two problems; this asks how it compares with one
               plain chain at scale. Majority voting is not re-explained: step 1's analogy
               does that. The flat line's meaning (every greedy chain is the same chain) is
               said under the chart, where the headline leads into the temperature card. */}
           <p className="text-ink-muted">
-            Just now, we saw majority voting on three separate problems, and how different
+            Just now, we saw majority voting on two separate problems, and how different
             reasoning across many chains of thought can lead to many different answers. But how
             does majority voting compare with a single, pure chain of thought? Below, we compare
             majority voting against greedy decoding on all {M.items.n} {BENCHMARK} problems at{" "}
