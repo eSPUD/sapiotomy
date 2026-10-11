@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 
 // Reduced motion is ON by default: no Play button, the walkthrough is a manual
 // stepper, and every assertion is timer-free. The animated block below flips
@@ -23,10 +23,17 @@ import { MULT_METHODS } from "@/lib/authored";
 const M = MULT_METHODS;
 
 // Act 1's hard rule: the Act 2+ jargon never appears. The lede's one mention of
-// "inference-time scaling" was cut, so any "inference" talk is banned again.
+// "Inference" is named only in the page title, the closing box, which defines
+// inference-time scaling for Act 2, and the note beside it; everywhere else on
+// the page it stays banned.
 const BANNED = /inference/i;
 const expectClean = () => {
-  expect(document.body.textContent ?? "").not.toMatch(BANNED);
+  const body = document.body.cloneNode(true) as HTMLElement;
+  body.querySelector("h1")?.remove();
+  body.querySelector('[aria-label="Where this leaves us"]')?.remove();
+  // ...and the "Also called" note beside it, which lists the term's other names.
+  [...body.querySelectorAll("aside")].find((a) => a.textContent?.startsWith("Also called"))?.remove();
+  expect(body.textContent ?? "").not.toMatch(BANNED);
 };
 
 const methodSelect = () => screen.getByRole("combobox", { name: /method/i });
@@ -36,7 +43,7 @@ const walk = (n: number) => {
   for (let i = 0; i < n; i++) next();
 };
 
-describe("Page 4 (Reasoning: Diverse Pathfinding)", () => {
+describe("Page 4 (From Reasoning to Inference-Time Scaling)", () => {
   beforeEach(() => {
     reducedMotion = true;
   });
@@ -44,7 +51,7 @@ describe("Page 4 (Reasoning: Diverse Pathfinding)", () => {
   it("shows everything up front: dropdown, panel, trade-off cards, closing box", () => {
     render(<Page4 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Reasoning: Diverse Pathfinding",
+      "From Reasoning to Inference-Time Scaling",
     );
     // The dropdown carries all three methods.
     expect(methodSelect()).toBeInTheDocument();
@@ -236,6 +243,7 @@ describe("Page 4 layout and copy (Act 1 revisions)", () => {
     const h2s = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
     expect(h2s[0]).toBe("1. Three ways to work out 350 × 638");
     expect(h2s[1]).toMatch(/^2\. The methods and their trade-offs/);
+    expect(h2s[2]).toBe("3. Reasoning beyond mathematics");
     expect(h2s.some((t) => /Where this leaves us/.test(t ?? ""))).toBe(false);
     expect(screen.queryByText(/authored walkthroughs/)).toBeNull();
     expect(screen.getByText("Pick a method, work it through, then try another.")).toBeInTheDocument();
@@ -267,15 +275,40 @@ describe("Page 4 layout and copy (Act 1 revisions)", () => {
     const boxes = screen.getAllByRole("complementary", { name: "Where this leaves us" });
     expect(boxes).toHaveLength(1);
     const closing = boxes[0].lastElementChild!; // the text, after the eyebrow
-    expect(closing.textContent?.replace(/\s+/g, " ").trim()).toBe(
-      "There is more than one path from what we know to an answer, and reasoning is how we walk them. It pays off most on the hardest questions. Act 1 ends on an open question: can a large language model learn to reason through a problem instead of answering on reflex? Act 2 builds that toolbox, one technique at a time, for getting a model to reason its way to an answer.",
+    const paras = [...closing.querySelectorAll("p")].map((q) => q.textContent ?? "");
+    expect(paras.join(" ").replace(/\s+/g, " ").trim()).toBe(
+      "There is more than one path from what we know to an answer, and reasoning is how we walk them. It pays off most on the hardest questions. Running a trained model to get an answer is called inference. Giving it more computation at that moment, to reason for longer, try more than one path, or check its work, is inference-time scaling: the model itself stays the same, and only the work spent on each answer grows. Act 1 ends on an open question: can a large language model learn to reason through a problem instead of answering on reflex? Act 2 builds that toolbox, one technique at a time, for getting a model to reason its way to an answer.",
     );
-    expect(closing.querySelector("strong")?.textContent).toBe(
+    // The two defined terms, then Act 1's open question, are the box's bold.
+    expect([...closing.querySelectorAll("strong")].map((b) => b.textContent?.replace(/\s+/g, " ").trim())).toEqual([
+      "inference",
+      "inference-time scaling",
       "can a large language model learn to reason through a problem instead of answering on reflex?",
-    );
+    ]);
     // Set upright: the closing box carries no italics.
     expect(closing.querySelector("em, i")).toBeNull();
     expect(screen.getByText(/land on the correct answer/).closest("aside")).toBeNull();
+  });
+
+  it("generalises reasoning beyond mathematics in step 3", () => {
+    render(<Page4 />);
+    const cases = screen.getByRole("region", { name: "Reasoning beyond mathematics" });
+    for (const d of ["Planning", "Diagnosis", "Debugging"]) {
+      expect(within(cases).getByText(d)).toBeInTheDocument();
+    }
+    expect(within(cases).getAllByText("Two routes:")).toHaveLength(3);
+    expect(document.body.textContent ?? "").toMatch(
+      /The multiplication was a stand-in\. Any problem you cannot answer on sight/,
+    );
+    expectClean();
+  });
+
+  it("lists inference-time scaling's other names in the note beside the closing box", () => {
+    render(<Page4 />);
+    const note = screen.getByText("Also called").closest("aside")!;
+    for (const name of ["test-time scaling", "test-time compute", "inference-time compute", "reasoning models"]) {
+      expect(note.textContent).toContain(name);
+    }
   });
 
   it("has no em dash in its rendered text on any method at any step", () => {

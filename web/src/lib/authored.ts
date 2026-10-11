@@ -172,7 +172,7 @@ export const SPAIN_WORLD_CUPS = {
    * that answers on reflex never reaches for the check, even when it could.
    * Authored placeholder EXAMPLE; a live reasoning model replaces it later.
    * (Currently unused by any page: the old Page 4 that rendered it was replaced
-   * by "Reasoning: Diverse Pathfinding". Kept, with its guard test, for the
+   * by "From Reasoning to Inference-Time Scaling" (formerly "Reasoning: Diverse Pathfinding"). Kept, with its guard test, for the
    * planned live-model return.) It names the newest year the blurt omits
    * (2026) and lands on the true count.
    */
@@ -266,7 +266,7 @@ export const SPAIN_MACHINE_REPLIES: string[] = [
   "Spain has won the FIFA World Cup twice, in 2010 and 2026.",
 ];
 
-// --- Page 4: Reasoning: Diverse Pathfinding (three roads, one destination) ----
+// --- Page 4: From Reasoning to Inference-Time Scaling (three roads, one destination)
 /**
  * Page 1's hardest round (GAME_ROUNDS[2], 350 × 638) solved three ways:
  * standard long multiplication, Japanese line multiplication, and Indian

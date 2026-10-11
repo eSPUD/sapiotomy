@@ -1,17 +1,20 @@
 "use client";
 
 /**
- * Page 4, "Reasoning: Diverse Pathfinding", the Act 1 finale. Reasoning is how a
+ * Page 4, "From Reasoning to Inference-Time Scaling", the Act 1 finale. Reasoning is how a
  * model can emulate System 2 thinking, and any one problem admits more than one
  * way to reason it through. The lede names the working-out (reasoning), then one
  * problem, 350 × 638, is solved three ways: standard long multiplication,
  * Japanese line multiplication, and Vedic multiplication. A dropdown picks the
  * method; a stepped, animated walkthrough drives it; every method lands on the
  * same 223,300. Step 2 lays the trade-offs side by side: each method costs work
- * of a different kind and has its own common tradeoffs. The closing box states
+ * of a different kind and has its own common tradeoffs. Step 3 generalises:
+ * planning, diagnosis and debugging take the same shape (a start, a goal, steps
+ * between, more than one route), so reasoning is not just mathematics. The closing box states
  * the page's claim in one sentence: reasoning is diverse pathfinding from prior
  * knowledge. The page ends on one shaded closing box, set upright (no italics).
- * House rules: no Act 2+ term is named here, and nothing pops in: the cards and the closing box are on screen from first paint; only
+ * House rules: no Act 2+ term is named here except in the closing box, which
+ * defines inference-time scaling for the acts that follow; and nothing pops in: the cards and the closing box are on screen from first paint; only
  * the walkthrough animates, and only when asked.
  *
  * Layout: page 1's per-step grid. The intro paragraph runs full width above a
@@ -34,6 +37,28 @@ import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 4;
+
+/** Step 3's everyday cases: the same start, goal and steps, outside mathematics. */
+const REASONING_CASES = [
+  {
+    domain: "Planning",
+    question: "Will you make a 10 a.m. flight?",
+    start: "the drive takes 40 minutes, traffic doubles it at rush hour, and security takes 30.",
+    routes: "work backwards from the gate, or forwards from leaving home. Both should land on the same time to go.",
+  },
+  {
+    domain: "Diagnosis",
+    question: "Why won't the car start?",
+    start: "the lights come on, but the engine only clicks.",
+    routes: "rule out the likeliest cause first, or the cheapest to check. Either way, each test narrows the list.",
+  },
+  {
+    domain: "Debugging",
+    question: "Why does the program crash on one input?",
+    start: "it works on small inputs and fails on large ones.",
+    routes: "trace the input forward through the code, or work back from the error. Each step keeps or rules out a suspect.",
+  },
+] as const;
 const M = MULT_METHODS;
 const P = M.problem;
 
@@ -536,20 +561,79 @@ export function Page4() {
         </section>
         <div aria-hidden="true" />
 
+        {/* Step 3: the same shape outside mathematics. The multiplication was a stand-in:
+            any problem worked out rather than recognised has a start (what you know), a
+            goal, and steps between them, with more than one route. Three everyday cases,
+            set like step 2's cards. */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. Reasoning beyond mathematics</h2>
+          <p className="text-ink">
+            The multiplication was a stand-in. Any problem you cannot answer on sight, but can work
+            out from what you already know, has the same shape: a starting point, a goal, and steps
+            in between, with more than one route from one to the other.
+          </p>
+          <section aria-label="Reasoning beyond mathematics" className="grid items-stretch gap-3 md:grid-cols-3">
+            {REASONING_CASES.map((c) => (
+              <div key={c.domain} className="flex flex-col gap-2 rounded-lg border-l-4 border-grid bg-surface p-4">
+                <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+                  {c.domain}
+                </p>
+                <p className="text-sm font-semibold text-ink">{c.question}</p>
+                <p className="text-sm text-ink-muted">
+                  <strong className="text-ink">Start from:</strong> {c.start}
+                </p>
+                <p className="text-sm text-ink-muted">
+                  <strong className="text-ink">Two routes:</strong> {c.routes}
+                </p>
+              </div>
+            ))}
+          </section>
+          <p className="text-ink">
+            In each, a quick guess can sound right and still be wrong. Working it through one
+            checkable step at a time is what makes the answer worth trusting. Only the knowledge each
+            step draws on changes; the shape of the work stays the same.
+          </p>
+        </section>
+        <div aria-hidden="true" />
+
         {/* The closing box: the page's claim, Act 1's open question, and the handoff to Act 2. */}
         <section className="flex min-w-0 flex-col gap-3">
           <Handoff>
-            There is more than one path from what we know to an answer, and reasoning is how we walk
-            them. It pays off most on the hardest questions. Act 1 ends on an open question:{" "}
-            <strong>
-              can a large language model learn to reason through a problem instead of answering on
-              reflex?
-            </strong>{" "}
-            Act 2 builds that toolbox, one technique at a time, for getting a model to reason its way
-            to an answer.
+            <p>
+              There is more than one path from what we know to an answer, and reasoning is how we
+              walk them. It pays off most on the hardest questions.
+            </p>
+            {/* The one place Act 1 names the term: defined here, used from Act 2 on. */}
+            <p>
+              Running a trained model to get an answer is called <strong>inference</strong>. Giving it
+              more computation at that moment, to reason for longer, try more than one path, or check
+              its work, is <strong>inference-time scaling</strong>: the model itself stays the same,
+              and only the work spent on each answer grows.
+            </p>
+            <p>
+              Act 1 ends on an open question:{" "}
+              <strong>
+                can a large language model learn to reason through a problem instead of answering on
+                reflex?
+              </strong>{" "}
+              Act 2 builds that toolbox, one technique at a time, for getting a model to reason its
+              way to an answer.
+            </p>
           </Handoff>
         </section>
-        <div aria-hidden="true" />
+        {/* Beside the definition: the other names the same idea goes by, so a reader
+            meeting them elsewhere knows they are one thing. */}
+        <Note kicker="Also called">
+          <p>
+            You will also see inference-time scaling called <em>test-time scaling</em>,{" "}
+            <em>test-time compute</em>, or <em>inference-time compute</em>. All name the same idea:
+            spending more computation on each answer, not on training.
+          </p>
+          <p>
+            Models built to do this are often called <em>reasoning models</em>, and the extra work
+            they write out, <em>thinking</em> or <em>reasoning tokens</em>.
+          </p>
+        </Note>
       </div>
 
       <div aria-live="polite" className="sr-only">
