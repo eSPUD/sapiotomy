@@ -62,7 +62,7 @@ export function ScrollProgress() {
           >
             <div className="h-full overflow-hidden bg-grid transition-colors group-hover:bg-wrong">
               <div
-                className="h-full bg-compute transition-colors group-hover:bg-wrong"
+                className="h-full bg-compute-bright transition-colors group-hover:bg-wrong"
                 style={{ width: `${fill * 100}%` }}
               />
             </div>
