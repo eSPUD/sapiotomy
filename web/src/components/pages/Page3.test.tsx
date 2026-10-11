@@ -275,10 +275,13 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(body).toMatch(/A missing fact needs new knowledge, and the obvious way to supply it is to\s*train the model again\. Retraining looks like the fix\s*for a knowledge bias too: show the model more text,\s*and the reading it overlooked should get its due\./);
     expect(body).not.toMatch(/The bill says no/);
     expect(body).toMatch(/Retraining runs into three problems: what it costs, how long it takes, and how much text\s*there is to train on\./);
-    expect(body).toMatch(/buys more knowledge, narrowing the knowledge gap, but at a compounding\s*cost/i);
+    expect(body).toMatch(/Training-time scaling has real limits\./);
+    expect(body).toMatch(/buys more knowledge, narrowing the knowledge\s*gap, but at a compounding cost/i);
+    expect(body).toMatch(/And some problems do not turn on knowing the answer at all, but on reasoning to it\.\s*Mathematics is the classic case/);
+    expect(body).toMatch(/Retraining alone cannot keep a model current or fair, so we need other ways to improve\s*its answers\./);
     expect(body).toMatch(/It can also make the knowledge bias worse\./);
-    // the hand-off, and the page's standing rule that it never names the sequel
-    expect(body).toMatch(/spends compute at answer time, on the\s*question actually asked/i);
+    // the page's standing rule: it never names the sequel
+    expect(body).not.toMatch(/answer time, on the question actually asked/i);
     expectClean();
   });
 

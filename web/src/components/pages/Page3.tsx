@@ -673,10 +673,22 @@ export function Page3() {
         {/* Both sections in two sentences, in the content column so it does not
             run under the sidenotes. */}
         <Handoff>
-          Training-time scaling buys more knowledge, narrowing the knowledge gap, but at a compounding
-          cost. It can also make the knowledge bias worse. The problem is that retraining spends its
-          compute before anyone asks. Thinking it through spends compute at answer time, on the
-          question actually asked.
+          <p>
+            Training-time scaling has real limits. It buys more knowledge, narrowing the knowledge
+            gap, but at a compounding cost, always weeks behind, and against a finite supply of text.
+            It can also make the knowledge bias worse.
+          </p>
+          <p>
+            And some problems do not turn on knowing the answer at all, but on reasoning to it.
+            Mathematics is the classic case: no amount of extra text holds the answer to a problem
+            nobody has worked out before, or written down anywhere a model could train on.
+          </p>
+          <p>
+            <strong>
+              Retraining alone cannot keep a model current or fair, so we need other ways to improve
+              its answers.
+            </strong>
+          </p>
         </Handoff>
         <div aria-hidden="true" />
       </div>
