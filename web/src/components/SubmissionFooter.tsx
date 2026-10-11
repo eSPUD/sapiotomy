@@ -1,7 +1,7 @@
 /** The workshop submission line, shown at the foot of every page. */
 export function SubmissionFooter() {
   return (
-    <footer className="mx-auto max-w-5xl px-4 pb-10">
+    <footer className="mx-auto max-w-[80%] px-4 pb-10">
       <p className="border-t border-grid pt-4 text-sm text-ink-muted">
         Submitted to the Workshop on Visualization for AI Explainability (
         <a

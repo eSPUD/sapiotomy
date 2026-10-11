@@ -21,6 +21,7 @@ const config: Config = {
         "size-4": tokens.size4,
         ink: tokens.ink,
         "ink-muted": tokens.inkMuted,
+        "ink-faint": tokens.inkFaint,
         // The three semantic hues
         compute: tokens.compute,
         correct: tokens.correct,

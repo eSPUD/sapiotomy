@@ -32,6 +32,7 @@ export const tokens = {
   quote: "#f5f0e4", // warm cream stock for pull quotes (ink and ink-muted stay AA on it)
   ink: "#201e1d", // --color-text (near-black)
   inkMuted: "#444141", // --color-neutral-800 (muted text; AA on colored tints too)
+  inkFaint: "#6b6767", // lighter gray for secondary chrome (5.0:1 on canvas, AA)
 
   // The semantic hues (700 ramp steps — AA text on the paper ground)
   // 800-step depth so text passes AA even on the pale /15–/20 tinted pills

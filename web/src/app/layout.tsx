@@ -43,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-canvas text-ink antialiased">
         <KeyboardNav />
         <ProgressRail />
-        <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+        <main className="mx-auto max-w-[80%] px-4 py-8">{children}</main>
         <SubmissionFooter />
         <KeyboardHint />
       </body>
