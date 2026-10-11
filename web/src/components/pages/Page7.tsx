@@ -222,6 +222,9 @@ function ProblemPicker({ value, onChange }: { value: number; onChange: (i: numbe
   );
 }
 
+/** The row a problem opens on: its correct answer, or the top row if none is right. */
+const firstOpen = (p: Problem): string => (p.ranked.find((r) => r.correct) ?? p.ranked[0]).answer;
+
 /** How this problem's vote came out, read off the run, for the specimen card. */
 function outcomeLine(outcome: Outcome, p: Problem): string {
   const top = p.ranked[0];
@@ -720,11 +723,12 @@ export function Page7() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
   // Which of the three problems, which answer to it is open, and which of that answer's
-  // chains is being read. A problem opens on the top row's first chain, so the reader
-  // sees a solution before clicking anything. The arrows only ever step within the
-  // open answer: "64" has eight chains to read, "128" has two.
+  // chains is being read. A problem opens on its CORRECT answer's first chain, so the
+  // reader starts on a right solution, even when the vote picked a wrong one; every
+  // other answer is a row click away. The arrows only ever step within the open
+  // answer: "64" has eight chains to read, "128" has two.
   const [problemIx, setProblemIx] = useState(0);
-  const [open, setOpen] = useState(F1.showcase[0].problem.ranked[0].answer);
+  const [open, setOpen] = useState(firstOpen(F1.showcase[0].problem));
   const [chainIx, setChainIx] = useState(0);
   // Index into the measured N axis, not N itself. Opens at the top of the axis,
   // so the reader's first sight of the chart is the finished result the prose
@@ -770,7 +774,7 @@ export function Page7() {
   const pickProblem = (i: number) => {
     recordInteraction(PAGE_N);
     setProblemIx(i);
-    setOpen(F1.showcase[i].problem.ranked[0].answer);
+    setOpen(firstOpen(F1.showcase[i].problem));
     setChainIx(0);
   };
   // The arrow keys step through the open answer while focus is in the card. Everywhere else
@@ -821,8 +825,8 @@ export function Page7() {
             Nobody needed perfect taste. Three people got to Shop 2 for three different reasons,
             while the others couldn&apos;t even agree with each other. If three people pick the same
             shop for completely different reasons, it&apos;s probably a good shop. But if they all
-            gave the same reason, you&apos;ve really only heard one opinion. Ask a model the same
-            question many times, keep the answer that comes up most, and that&apos;s{" "}
+            gave the same reason, you&apos;ve really only heard one opinion. Asking a model the same
+            question many times, and keeping the answer that comes up most, is{" "}
             <strong>majority voting</strong>, also called <strong>self-consistency</strong>.
             <Cite n={REF.wang} />
           </p>
@@ -941,26 +945,17 @@ export function Page7() {
 
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. What the vote buys</h2>
+          <h2 className="text-xl font-semibold text-ink">3. Greedy decoding against majority voting</h2>
+          {/* Step 2 showed the vote on three problems; this asks how it compares with one
+              plain chain at scale. Majority voting is not re-explained: step 1's analogy
+              does that. The flat line's meaning (every greedy chain is the same chain) is
+              said under the chart, where the headline leads into the temperature card. */}
           <p className="text-ink-muted">
-            That was one problem at a time. Now all {M.items.n} of them, the {BENCHMARK} problems
-            at {LEVELS}, with the vote seeing{" "}
-            {F2.hot.points
-              .map((p) => p.n)
-              .slice(0, -1)
-              .join(", ")}{" "}
-            and finally {last.n} chains for each.
-          </p>
-          {/* Named exactly as the chart names them. The third line is not named here:
-              it is behind the chart's toggle and names itself when drawn. */}
-          <p className="text-ink-muted">
-            <strong className="text-ink">One greedy chain</strong> is the flat line, and the
-            baseline to beat. At T = 0, with the temperature dial turned all the way down,
-            sampling is off, which is pure chain-of-thought, also known as greedy decoding: what
-            pages 5 and 6 ran. Then every chain is the same chain, so asking {F1.n_chains} times is
-            asking the same person {F1.n_chains} times, and you have only heard one opinion.{" "}
-            <strong className="text-ink">Majority voting</strong> is the line that
-            climbs: the answer the most chains agreed on, sampled at T = {F2.hot.temperature}.
+            Just now, we saw majority voting on three separate problems, and how different
+            reasoning across many chains of thought can lead to many different answers. But how
+            does majority voting compare with a single, pure chain of thought? Below, we compare
+            majority voting against greedy decoding on all {M.items.n} {BENCHMARK} problems at{" "}
+            {LEVELS}. <strong className="text-ink">One greedy chain</strong> is the baseline to beat.
           </p>
           {/* The widget is the chart and its controls. Every sentence that used to sit
               in here (the band note, the headline, two footnotes) is outside it now or
@@ -1031,43 +1026,60 @@ export function Page7() {
             nothing to vote on; turn the temperature up and the answers start to differ. Here is by
             how much:
           </p>
-          <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-3">
+          {/* The temperature sweep as a small figure, not a second boxed widget: the
+              chart above is the step's one framed panel, and this is what the paragraph's
+              "Here is by how much:" points at. Bars run on a fixed 0 to n_chains scale,
+              the most different answers that many chains can give, so a full bar would be
+              every chain disagreeing. The pile's temperature is drawn in the majority-
+              voting line's colour, because those are the chains the chart above votes on. */}
+          <figure
+            aria-label={`Different answers among ${F2.diversity[0].n_chains} chains, by temperature`}
+            className="flex max-w-md flex-col gap-1.5"
+          >
             <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
-              distinct answers among {F2.diversity[0].n_chains} chains, by temperature
+              different answers among {F2.diversity[0].n_chains} chains, by temperature
             </p>
-            <p className="text-xs text-ink-muted">
-              How many <em>different</em> answers those {F2.diversity[0].n_chains} chains came back
-              with, averaged per problem.
-            </p>
-            <div className="flex flex-wrap items-end gap-3">
-              {[...F2.diversity]
-                .sort((a, b) => a.temperature - b.temperature)
-                .map((d) => (
-                  <div key={d.temperature} className="flex flex-col items-center gap-1">
-                    <span className="font-mono text-lg tabular-nums text-ink">
-                      {d.mean_distinct.toFixed(1)}
+            {[...F2.diversity]
+              .sort((a, b) => a.temperature - b.temperature)
+              .map((d) => {
+                const pile = d.temperature === F2.hot.temperature;
+                return (
+                  <div
+                    key={d.temperature}
+                    data-testid="diversity-bar"
+                    data-value={d.mean_distinct}
+                    className="flex items-center gap-2 text-xs"
+                  >
+                    <span
+                      className={`w-14 shrink-0 font-mono tabular-nums ${pile ? "font-semibold text-compute" : "text-ink-muted"}`}
+                    >
+                      T = {d.temperature}
                     </span>
-                    <span className="font-mono text-[10px] text-ink-muted">T {d.temperature}</span>
+                    <span className="flex h-3 flex-1 items-center">
+                      <span
+                        className={`h-full rounded-sm ${pile ? "bg-compute" : "bg-ink-faint/40"}`}
+                        style={{ width: `${(d.mean_distinct / d.n_chains) * 100}%` }}
+                      />
+                      <span
+                        className={`ml-1.5 font-mono tabular-nums ${pile ? "font-semibold text-compute" : "text-ink"}`}
+                      >
+                        {d.mean_distinct.toFixed(1)}
+                      </span>
+                    </span>
                   </div>
-                ))}
-            </div>
-            <p className="text-xs text-ink-muted">
-              Measured on {F2.diversity[0].n_items} items. This is a count of answers, not an
-              accuracy. Disagreement is necessary and not sufficient: the vote comes out the same
-              at T = {F2.hot.temperature} and {TIED_WITH_HOT}, and past that each chain gets worse
-              faster than the vote recovers it.
-            </p>
-          </div>
+                );
+              })}
+            <figcaption className="pt-1 text-xs text-ink-muted">
+              Averaged over {F2.diversity[0].n_items} problems; a count of answers, not an
+              accuracy. More is not better: the vote comes out the same at T = {F2.hot.temperature}{" "}
+              and {TIED_WITH_HOT}, and worse above that.
+            </figcaption>
+          </figure>
         </section>
         {/* Step 4. Starts a new grid row explicitly: step 3 has no margin note, so
             without this the section would flow into the note column. */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">
-            4. And what it costs
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              one budget of {tokens(M.split.budget_total)} tokens, split N ways
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">4. Sharing a fixed budget between chains</h2>
           <p className="text-ink-muted">
             Sixteen chains cost sixteen times the tokens. So what if you do not have sixteen times
             the budget? Below, one fixed budget of {tokens(M.split.budget_total)} tokens is divided

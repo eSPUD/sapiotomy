@@ -92,8 +92,12 @@ describe("Page 7 (frequency voting) component", () => {
     for (const [i, { problem }] of PAGE7.figure1.showcase.entries()) {
       fireEvent.click(choices[i]);
       expect(tallyRows()).toHaveLength(problem.ranked.length);
-      expect(tallyRows()[0]).toHaveAttribute("aria-expanded", "true");
-      expect(chainPosition()).toBe(`chain 1 of ${problem.ranked[0].votes}`);
+      // Each problem opens on its correct answer, even where the vote picked a wrong one.
+      const right = problem.ranked.findIndex((r) => r.correct);
+      expect(right).toBeGreaterThanOrEqual(0);
+      expect(tallyRows()[right]).toHaveAttribute("aria-expanded", "true");
+      expect(chainPosition()).toBe(`chain 1 of ${problem.ranked[right].votes}`);
+      expect(screen.getByText(/of 16 chains · correct$/)).toBeInTheDocument();
     }
   });
 
@@ -222,35 +226,26 @@ describe("Page 7 (frequency voting) component", () => {
     expect(widget.textContent).not.toMatch(/The band widens/);
   });
 
-  // The intro is the reading key for the central figure, so it has to use the chart's
-  // own names. It named them "The vote / In the pile / T = 0" while the chart said
-  // something else, because the chart was renamed and the intro was not.
+  // The intro names the two drawn lines by the chart's own names, and does not explain
+  // majority voting again: step 1's analogy does that.
   it("names the drawn lines the same way in the intro and on the chart", () => {
     render(<Page7 />);
-    const intro = screen.getByText(/is the flat line, and the/).closest("p")!;
-    expect(intro.textContent).toMatch(/Majority voting/);
+    const intro = screen.getByText(/Just now, we saw majority voting/).closest("p")!;
+    expect(intro.textContent).toMatch(/majority voting/);
     expect(intro.textContent).toMatch(/One greedy chain/);
-    expect(intro.textContent).not.toMatch(/In the pile/);
-  });
-
-  // The flat line, in step 1's terms: identical chains are one opinion heard sixteen times.
-  it("reads the flat line as asking the same person again", () => {
-    render(<Page7 />);
-    const intro = screen.getByText(/is the flat line, and the/).closest("p")!;
-    expect(intro.textContent).toMatch(/asking the same person/);
-    expect(intro.textContent).toMatch(/only heard one opinion/);
+    expect(intro.textContent).toMatch(/all 100 MATH-500 problems at\s+levels 4 and 5/);
+    expect(intro.textContent).not.toMatch(/In the pile|the answer the most chains agreed on/);
   });
 
   // "Greedy" is load-bearing here and first explained on page 10. The fix is to tie the
-  // word to the definition this page already gives, not to import page 10's mechanism,
+  // word to what this page already says it is, not to import page 10's mechanism,
   // which docs/page_7_refactor.md:225-234 forbids at this altitude.
-  it("ties the word greedy to the definition it already gives", () => {
+  it("ties the word greedy to the plain description it already gives", () => {
     render(<Page7 />);
-    const intro = screen.getByText(/is the flat line, and the/).closest("p")!;
-    // Greedy is the secondary name now: the reader is told what the setting IS before
-    // being told what it is called.
+    const intro = screen.getByText(/Just now, we saw majority voting/).closest("p")!;
+    // the reader is told what it IS (one plain chain) before what it is called
     expect(intro.textContent).toMatch(
-      /sampling is off, which is pure chain-of-thought, also known as greedy decoding/,
+      /a single, pure chain of thought\?[\s\S]*against greedy decoding/,
     );
     expect(document.body.textContent).not.toMatch(/likeliest|probability distribution/i);
   });
@@ -265,8 +260,6 @@ describe("Page 7 (frequency voting) component", () => {
     // 2's intro, said once. It may not also sit above the diversity numbers, where it
     // pre-narrated exactly what they show.
     expect(body.match(/makes them disagree more/g) ?? []).toHaveLength(1);
-    const readout = screen.getByText(/How many .*answers those/).textContent ?? "";
-    expect(readout.trimEnd()).toMatch(/averaged per problem\.$/);
   });
 
   // Load-bearing on this page and first explained on page 10, so it gets an
@@ -282,7 +275,10 @@ describe("Page 7 (frequency voting) component", () => {
 
   it("explains the flat temperature-zero line rather than hiding it", () => {
     render(<Page7 />);
-    expect(screen.getByText(/every chain is the same chain/i)).toBeInTheDocument();
+    // said under the chart, in the sentence that leads into the temperature card
+    expect(screen.getByText(/One greedy chain solves/i).closest("p")!.textContent).toMatch(
+      /At T = 0 every\s+chain gives the same answer, so there is\s+nothing to vote on/,
+    );
   });
 
   // The dip is explained where the reader meets it: labelled on the chart, and the
@@ -333,7 +329,12 @@ describe("Page 7 (frequency voting) component", () => {
     const body = document.body.textContent ?? "";
     expect(body).not.toMatch(/past T = 0\.3 each chain gets worse/);
     for (const d of tied) expect(body).toContain(`T = ${d.temperature}`);
-    expect(body).toMatch(/the vote comes out the same\s+at T = /);
+    expect(body).toMatch(/the vote comes out the same at T = \S+\s+and T = /);
+    // "and worse above that" has to be true of every hotter setting
+    const hottestTied = Math.max(...tied.map((d) => d.temperature));
+    for (const d of PAGE7.figure2.diversity.filter((d) => d.temperature > hottestTied)) {
+      expect(d.plurality_accuracy).toBeLessThan(best);
+    }
   });
 
   // The headline leads into the temperature card, and the sentence that does it makes
@@ -344,7 +345,7 @@ describe("Page 7 (frequency voting) component", () => {
     const headline = screen.getByText(/One greedy chain solves/i).closest("p")!;
     expect(headline.textContent).toMatch(/exist only\s+because the chains disagree/);
     expect(headline.textContent?.trimEnd()).toMatch(/Here is by\s+how much:$/);
-    expect(headline.nextElementSibling?.textContent).toMatch(/distinct answers among/);
+    expect(headline.nextElementSibling?.textContent).toMatch(/different answers among/);
     const cold = PAGE7.figure2.diversity.find((d) => d.temperature === 0)!;
     expect(cold.mean_distinct).toBe(1);
     for (const p of PAGE7.figure2.cold.points) {
@@ -352,10 +353,29 @@ describe("Page 7 (frequency voting) component", () => {
     }
   });
 
+  // A small unboxed figure under the paragraph, not a second card: one bar per
+  // temperature on a fixed 0 to n_chains scale, so the widths are comparable counts.
+  it("draws the temperature sweep as bars on a fixed scale, outside any card", () => {
+    render(<Page7 />);
+    const fig = screen.getByRole("figure", { name: /Different answers among 8 chains/ });
+    expect(fig.className).not.toMatch(/border|bg-surface/);
+    const bars = within(fig).getAllByTestId("diversity-bar");
+    const sweep = [...PAGE7.figure2.diversity].sort((a, b) => a.temperature - b.temperature);
+    expect(bars).toHaveLength(sweep.length);
+    for (const [i, d] of sweep.entries()) {
+      expect(Number(bars[i].getAttribute("data-value"))).toBe(d.mean_distinct);
+      expect(bars[i].textContent).toContain(`T = ${d.temperature}`);
+      expect(bars[i].textContent).toContain(d.mean_distinct.toFixed(1));
+    }
+  });
+
   it("labels the diversity readout as a count on its own smaller item set", () => {
     render(<Page7 />);
     expect(screen.getByText(/count of answers, not an\s+accuracy/i)).toBeInTheDocument();
-    expect(screen.getByText(new RegExp(`Measured on ${PAGE7.figure2.diversity[0].n_items} items`))).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`Averaged over ${PAGE7.figure2.diversity[0].n_items} problems`)),
+    ).toBeInTheDocument();
+    expect(PAGE7.figure2.diversity[0].n_items).toBeLessThan(PAGE7.manifest.items.n);
   });
 
   it("shows capped against uncapped at the SAME number of chains", () => {
@@ -476,7 +496,7 @@ describe("Page 7 (frequency voting) component", () => {
     const live = document.querySelector("p[aria-live='polite']")!;
     for (const [i, p] of PAGE7.figure2.hot.points.entries()) {
       setVoters(i);
-      const text = live.textContent ?? "";
+      const text = live.textContent;
       expect(text).toMatch(new RegExp(`${Math.round(p.accuracy * 100)}%`));
       expect(text).toMatch(new RegExp(`${Math.round(p.coverage * 100)}%`));
     }
