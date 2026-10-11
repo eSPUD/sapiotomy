@@ -4,8 +4,17 @@ import { useState } from "react";
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
-/** The BibTeX block with Copy and Download-.bib actions. */
-export function CiteBlock({ citation, filename = "citation.bib" }: { citation: string; filename?: string }) {
+/** The BibTeX block under its heading, with the Copy and Download-.bib actions
+ *  at the top right, on the heading's row. */
+export function CiteBlock({
+  citation,
+  filename = "citation.bib",
+  heading,
+}: {
+  citation: string;
+  filename?: string;
+  heading: string;
+}) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -31,29 +40,32 @@ export function CiteBlock({ citation, filename = "citation.bib" }: { citation: s
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-2xl font-bold text-ink">{heading}</h2>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={copy}
+            className="rounded bg-compute px-3 py-1.5 text-xs font-semibold text-canvas transition-opacity hover:opacity-90"
+          >
+            {copied ? "Copied ✓" : "Copy citation"}
+          </button>
+          <button
+            type="button"
+            onClick={download}
+            className="rounded border border-compute px-3 py-1.5 text-xs font-semibold text-compute transition-colors hover:bg-compute/10"
+          >
+            Download .bib
+          </button>
+        </div>
+      </div>
       <pre
-        className="whitespace-pre-wrap break-words rounded bg-surface p-4 text-xs leading-relaxed text-ink"
+        className="whitespace-pre-wrap break-words rounded bg-surface p-4 text-[0.65rem] leading-relaxed text-ink"
         style={{ fontFamily: MONO }}
       >
         <code>{citation}</code>
       </pre>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={copy}
-          className="rounded bg-compute px-3 py-1.5 text-xs font-semibold text-canvas transition-opacity hover:opacity-90"
-        >
-          {copied ? "Copied ✓" : "Copy citation"}
-        </button>
-        <button
-          type="button"
-          onClick={download}
-          className="rounded border border-compute px-3 py-1.5 text-xs font-semibold text-compute transition-colors hover:bg-compute/10"
-        >
-          Download .bib
-        </button>
-      </div>
     </div>
   );
 }

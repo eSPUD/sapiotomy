@@ -7,8 +7,8 @@ const CITATION = `@misc{bangalorelakshman2026its,
   title  = {The Story of Inference-Time Scaling and the Training-Time loop behind it},
   author = {Bangalore Lakshman, Shashank and Eiers, Scott Lawrence},
   year   = {2026},
-  note   = {Preprint. Submitted to the VISxAI Workshop at IEEE VIS; not yet peer-reviewed.},
-  url    = {https://sapiotomy.vercel.app}
+  note   = {Accepted at the 9th Workshop on Visualization for AI Explainability (VISxAI), IEEE VIS 2026.},
+  url    = {https://inferencetimescaling.espud.org}
 }`;
 
 export default function Home() {
@@ -19,9 +19,8 @@ export default function Home() {
       <section>
         <Reveal>
           <div className="flex flex-col gap-5 pb-6">
-            {/* The venue line the story-page masthead carries, which the landing has none of.
-                Equal visible space above it and below it, down to the title's capitals (~34px). */}
-            <p className="mb-2 text-sm text-ink-faint">
+            {/* The venue line the story-page masthead carries, which the landing has none of. */}
+            <p className="-mb-2 text-sm text-ink-faint">
               An interactive AI explainable.
               <br />
               The 9th Workshop on Visualization for AI Explainability (VISxAI), IEEE VIS 2026.
@@ -49,7 +48,7 @@ export default function Home() {
       </section>
 
       {/* Contents */}
-      <section aria-label="Contents" className="mt-8 flex flex-col gap-6">
+      <section aria-label="Contents" className="mt-2 flex flex-col gap-6">
         {/* three cards, one per Act */}
         <div className="grid gap-6 md:grid-cols-3">
           {acts.map((act) => (
@@ -82,7 +81,7 @@ export default function Home() {
       </section>
 
       {/* About the series */}
-      <section className="mt-16 flex flex-col gap-8">
+      <section className="mt-8 flex flex-col gap-8">
         <div className="grid gap-10 md:grid-cols-2">
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-bold text-ink">Authors</h2>
@@ -90,34 +89,31 @@ export default function Home() {
               <li className="flex flex-col gap-0.5">
                 <span className="font-semibold text-ink">
                   Shashank Bangalore Lakshman
-                  <sup aria-hidden="true" className="text-compute">*&dagger;</sup>
+                  <sup aria-hidden="true" className="text-compute">*</sup>
                 </span>
-                <span>Graduate Student, M.S. in Artificial Intelligence</span>
-                <span>Department of Computer Science, The University of Texas at Austin</span>
+                <span>
+                  Graduate Student, Department of Computer Science, The University of Texas at Austin
+                </span>
               </li>
               <li className="flex flex-col gap-0.5">
                 <span className="font-semibold text-ink">
                   Scott Lawrence Eiers
-                  <sup aria-hidden="true" className="text-compute">&dagger;</sup>
                 </span>
-                <span>Undergraduate Student, B.S. in Computer Science</span>
-                <span>Western Governors University</span>
+                <span>Undergraduate Student, Computer Science, Western Governors University</span>
               </li>
             </ol>
             <div className="flex flex-col gap-1 text-xs text-ink-muted">
               <p>
                 <span className="text-compute">*</span> Corresponding author.
               </p>
-              <p>
-                <span className="text-compute">&dagger;</span> These authors contributed equally.
-              </p>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-bold text-ink">Cite this work</h2>
-            <CiteBlock citation={CITATION} filename="inference-time-scaling.bib" />
-          </div>
+          <CiteBlock
+            citation={CITATION}
+            filename="inference-time-scaling.bib"
+            heading="Cite this work"
+          />
         </div>
       </section>
     </div>
