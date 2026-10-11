@@ -1,3 +1,8 @@
+"use client";
+
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
 /**
  * Numbered citations, shared by the story pages.
  *
@@ -16,7 +21,8 @@
  *
  * Each number is an in-page anchor to its References entry (`#ref-{n}`): clicking
  * or activating it jumps to that entry in the margin note, which lights up via
- * the `:target` highlight RefItem carries. Pure anchor behaviour, no script.
+ * the `:target` highlight RefItem carries. Hovering or focusing a number also
+ * shows that entry in a popover, so the reader need not leave the sentence.
  */
 export function Cite({ n }: { n: number | readonly number[] }) {
   const ns = typeof n === "number" ? [n] : n;
@@ -25,17 +31,107 @@ export function Cite({ n }: { n: number | readonly number[] }) {
       {ns.map((k, i) => (
         <span key={k}>
           {i > 0 ? <span aria-hidden="true">,</span> : null}
-          <a
-            href={`#ref-${k}`}
-            className="text-compute no-underline hover:underline focus-visible:underline"
-          >
-            {/* Without this a screen reader announces a bare digit mid-sentence. */}
-            <span className="sr-only">reference </span>
-            {k}
-          </a>
+          <CiteNumber k={k} />
         </span>
       ))}
     </sup>
+  );
+}
+
+const POPOVER_WIDTH = 320;
+const EDGE = 12;
+
+/**
+ * One number in a marker, with its popover. The popover's content is read from
+ * the page's own References entry (`#ref-{k}`) at the moment it opens, so the
+ * text a reader sees on hover is exactly the entry the margin note shows, and
+ * no page has to pass its references twice. It is placed under the number,
+ * clamped to the viewport, and stays open while the pointer moves into it.
+ */
+function CiteNumber({ k }: { k: number }) {
+  const anchor = useRef<HTMLAnchorElement>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [popover, setPopover] = useState<{ html: string; top: number; left: number } | null>(null);
+  const id = useId();
+
+  const cancelClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  };
+
+  const open = useCallback(() => {
+    cancelClose();
+    const entry = document.getElementById(`ref-${k}`);
+    const a = anchor.current;
+    if (!entry || !a) return;
+    // The entry minus its leading "k." label: the popover carries the number itself.
+    const body = entry.cloneNode(true) as HTMLElement;
+    body.firstElementChild?.remove();
+    const r = a.getBoundingClientRect();
+    const left = Math.min(
+      Math.max(EDGE, r.left + r.width / 2 - POPOVER_WIDTH / 2),
+      window.innerWidth - POPOVER_WIDTH - EDGE,
+    );
+    setPopover({ html: body.innerHTML, top: r.bottom + 6, left });
+  }, [k]);
+
+  const close = useCallback(() => {
+    cancelClose();
+    closeTimer.current = setTimeout(() => setPopover(null), 120);
+  }, []);
+
+  // Escape dismisses; scrolling would leave a fixed popover behind, so it closes too.
+  useEffect(() => {
+    if (!popover) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPopover(null);
+    const onScroll = () => setPopover(null);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [popover]);
+
+  useEffect(() => cancelClose, []);
+
+  return (
+    <>
+      <a
+        ref={anchor}
+        href={`#ref-${k}`}
+        aria-describedby={popover ? id : undefined}
+        onMouseEnter={open}
+        onMouseLeave={close}
+        onFocus={open}
+        onBlur={close}
+        className="text-compute no-underline hover:underline focus-visible:underline"
+      >
+        {/* Without this a screen reader announces a bare digit mid-sentence. */}
+        <span className="sr-only">reference </span>
+        {k}
+      </a>
+      {popover
+        ? createPortal(
+            <div
+              id={id}
+              role="tooltip"
+              onMouseEnter={cancelClose}
+              onMouseLeave={close}
+              style={{ top: popover.top, left: popover.left, width: POPOVER_WIDTH }}
+              className="fixed z-50 flex gap-2 rounded-lg border border-grid bg-canvas p-3 text-left text-sm font-normal leading-snug text-ink-muted shadow-xl shadow-ink/15"
+            >
+              <span className="font-semibold text-compute">{k}.</span>
+              {/* The page's own References entry, cloned: app-authored markup, not user input. */}
+              <div
+                className="flex min-w-0 flex-wrap gap-1.5"
+                dangerouslySetInnerHTML={{ __html: popover.html }}
+              />
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }
 
