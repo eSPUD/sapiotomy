@@ -11,7 +11,7 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 1;
 
 /** Page 1's references, numbered in order of first appearance. */
-const REF = { kahneman: 1, stanovich: 2 } as const;
+const REF = { kahneman: 1, stanovich: 2, frederick: 3 } as const;
 const fmt = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 /** Both systems run in lockstep on one clock, one step per beat, and step 1
  *  appears in both panels on the same beat. Each answer lands with its last
@@ -176,8 +176,14 @@ export function Page1() {
             <Cite n={REF.kahneman} /> <strong className="text-ink">System 1</strong> is fast,
             automatic, and effortless. <strong className="text-ink">System 2</strong> is slow,
             deliberate, and effortful.
-            <Cite n={REF.stanovich} /> Each is important in its own way, and neither can replace the
-            other.
+            <Cite n={REF.stanovich} />
+          </p>
+          <p className="text-lg text-ink-muted">
+            You need System 1 to get through the day, and System 2 to get
+            things right. Try this: a bat and a ball cost $1.10 together, and the bat costs $1.00
+            more than the ball. How much is the ball? The answer that jumps out, 10 cents, is wrong;
+            it&apos;s 5 cents.
+            <Cite n={REF.frederick} />
           </p>
           <p className="text-sm text-ink-muted">
             <strong className="text-ink">Caveat:</strong> System 1/System 2 is a metaphor for compute
@@ -195,6 +201,10 @@ export function Page1() {
             Stanovich &amp; West, &ldquo;Individual Differences in Reasoning: Implications for the
             Rationality Debate?&rdquo; (<em>Behavioral and Brain Sciences</em>, 2000). The source
             of the System 1 / System 2 names.
+          </RefItem>
+          <RefItem n={REF.frederick} href="https://doi.org/10.1257/089533005775196732">
+            Shane Frederick, &ldquo;Cognitive Reflection and Decision Making&rdquo; (<em>Journal of
+            Economic Perspectives</em>, 2005). The bat-and-ball question.
           </RefItem>
         </Note>
 
@@ -326,7 +336,8 @@ export function Page1() {
             <strong>System 1</strong> recognizes or reacts as things happen, by reflex.{" "}
             <strong>System 2</strong> spends more time to solve a problem you cannot recognize
             instantly. System 2 scales its effort with the problem, spending more time on harder ones
-            to get them right.
+            to get them right. A language model that answers in a single pass is closest to System 1,
+            and letting it write out its steps first is the nearest thing it has to System 2.
           </p>
           {/* The hand-off: hints at training (what you have learned) versus
               inference-time scaling (how long you think) without naming either. */}

@@ -123,18 +123,28 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     random.mockRestore();
   });
 
-  it("numbers the Kahneman and Stanovich & West citations inline and in the references note", () => {
+  it("numbers the Kahneman, Stanovich & West and Frederick citations inline and in the references note", () => {
     const { container } = render(<Page1 />);
     // The two-systems framing carries Kahneman's marker, the System 1 / System 2
-    // names carry Stanovich & West's...
+    // names carry Stanovich & West's, the bat-and-ball question Frederick's...
     const marks = Array.from(container.querySelectorAll("sup"));
-    expect(marks).toHaveLength(2);
+    expect(marks).toHaveLength(3);
     expect(marks[0].textContent).toMatch(/1$/);
     expect(marks[1].textContent).toMatch(/2$/);
+    expect(marks[2].textContent).toMatch(/3$/);
     // ...each matching a numbered entry in the References note.
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/1\.\s*Daniel Kahneman/);
     expect(body).toMatch(/2\.\s*Stanovich & West/);
+    expect(body).toMatch(/3\.\s*Shane Frederick/);
+  });
+
+  it("follows System 2's scaling with the language-model analogy in section 3", () => {
+    render(<Page1 />);
+    const section = screen.getByRole("heading", { name: "3. The difference" }).closest("section")!;
+    expect(section.textContent).toMatch(
+      /harder ones\s*to get them right\. A language model that answers in a single pass is closest to System 1,\s*and letting it write out its steps first is the nearest thing it has to System 2\./,
+    );
   });
 
   it("states the System 1 / System 2 caveat under the intro", () => {
@@ -212,7 +222,7 @@ describe("Page 1 copy", () => {
     render(<Page1 />);
     const body = document.body.textContent ?? "";
     expect(body).toMatch(
-      /Your mind runs two systems\.(reference 1)?\s*System 1 is fast,\s*automatic, and effortless\. System 2 is slow,\s*deliberate, and effortful\.(reference 2)?\s*Each is important in its own way, and neither can replace the\s*other\./,
+      /Your mind runs two systems\.(reference 1)?\s*System 1 is fast,\s*automatic, and effortless\. System 2 is slow,\s*deliberate, and effortful\.(reference 2)?\s*You need System 1 to get through the day, and System 2 to get\s*things right\. Try this: a bat and a ball cost \$1\.10 together, and the bat costs \$1\.00\s*more than the ball\. How much is the ball\? The answer that jumps out, 10 cents, is wrong;\s*it's 5 cents\.(reference 3)?/,
     );
     expect(body).not.toMatch(/The human mind runs two systems|One operation, multiplication/);
   });
