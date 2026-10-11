@@ -1,11 +1,16 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 /**
- * Slim masthead — the app title on every page (Broadsheet nav-brand). The
- * scroll progress bar that sat under it was removed; readers move with the
- * chapter menu beside story pages and the prev/next links at each page's foot.
+ * Slim masthead — the app title on every story page. The landing has none: its
+ * own hero carries the title. The scroll progress bar that sat under it was
+ * removed; readers move with the chapter menu beside story pages and the
+ * prev/next links at each page's foot.
  */
 export function ProgressRail() {
+  if (usePathname() === "/") return null;
   return (
     <nav
       aria-label="Story progress"
