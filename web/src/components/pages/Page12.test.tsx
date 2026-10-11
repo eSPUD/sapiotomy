@@ -151,8 +151,8 @@ describe("Page 12 (STaR and self-improvement)", () => {
     for (const href of hrefs) {
       expect(document.querySelector(`a[href="${href}"]`)).toBeInTheDocument();
     }
-    // RFT and GVM are preprints and must carry the flag; ExIt and STaR are not.
-    expect(screen.getAllByText("preprint").length).toBe(2);
+    // References carry no preprint tag.
+    expect(screen.queryByText("preprint")).toBeNull();
     // Section 1 and 2 are merged now: STaR, ExIt and RFT share one References
     // note beside that section; GVM sits last, beside the closing blocks.
     const gvmRef = document.querySelector('a[href="https://arxiv.org/abs/2505.02391"]')!;

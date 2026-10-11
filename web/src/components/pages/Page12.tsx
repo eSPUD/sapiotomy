@@ -506,7 +506,7 @@ export function Page12() {
               Anthony, Tian &amp; Barber 2017, <em>Thinking Fast and Slow with Deep Learning and
               Tree Search</em>, NeurIPS 2017.
             </RefItem>
-            <RefItem n={REF.rft} href="https://arxiv.org/abs/2308.01825" preprint>
+            <RefItem n={REF.rft} href="https://arxiv.org/abs/2308.01825">
               Yuan et al. 2023, <em>Scaling Relationship on Learning Mathematical Reasoning with
               Large Language Models</em>.
             </RefItem>
@@ -634,7 +634,7 @@ export function Page12() {
         </div>
 
         <Note kicker="References">
-          <RefItem n={REF.gvm} href="https://arxiv.org/abs/2505.02391" preprint>
+          <RefItem n={REF.gvm} href="https://arxiv.org/abs/2505.02391">
             Yao et al. 2025, <em>Optimizing Chain-of-Thought Reasoners via Gradient Variance
             Minimization in Rejection Sampling and RL</em>.
           </RefItem>

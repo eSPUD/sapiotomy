@@ -906,10 +906,10 @@ export function Page15() {
               Zeng et al. 2025, <em>Revisiting the Test-Time Scaling of o1-like Models</em> (ACL
               2025).
             </RefItem>
-            <RefItem n={REF.wang} href="https://arxiv.org/abs/2501.18585" preprint>
+            <RefItem n={REF.wang} href="https://arxiv.org/abs/2501.18585">
               Wang et al. 2025, <em>Thoughts Are All Over the Place</em>.
             </RefItem>
-            <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
+            <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
               Stroebl et al. 2024, <em>Inference Scaling fLaws</em>: the verifier ceiling, from
               page 8.
             </RefItem>

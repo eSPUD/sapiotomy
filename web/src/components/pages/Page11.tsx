@@ -1268,7 +1268,7 @@ export function Page11() {
             Snell et al. 2024, <em>Scaling LLM Test-Time Compute Optimally can be More Effective
             than Scaling Model Parameters</em>.
           </RefItem>
-          <RefItem n={REF.monkeys} href="https://arxiv.org/abs/2407.21787" preprint>
+          <RefItem n={REF.monkeys} href="https://arxiv.org/abs/2407.21787">
             Brown et al. 2024, <em>Large Language Monkeys: Scaling Inference Compute with
             Repeated Sampling</em>.
           </RefItem>
@@ -1371,7 +1371,7 @@ export function Page11() {
           </figure>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.resample} href="https://arxiv.org/abs/2411.17501" preprint>
+          <RefItem n={REF.resample} href="https://arxiv.org/abs/2411.17501">
             Stroebl et al. 2024, <em>Inference Scaling fLaws: The Limits of LLM Resampling with
             Imperfect Verifiers</em>.
           </RefItem>

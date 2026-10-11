@@ -56,6 +56,7 @@ export function TrainingTimeScatter({
   selected = null,
   onSelect,
   renderDetail,
+  focusBin = null,
   width = 640,
   height = 300,
 }: {
@@ -71,6 +72,9 @@ export function TrainingTimeScatter({
   onSelect?: (name: string | null) => void;
   /** The popup's content for the chosen model. */
   renderDetail?: (m: TrainingTimeModelPoint) => ReactNode;
+  /** A size bin to highlight (its index, or -1 for "not disclosed"): every other
+   *  model fades back. null shows them all. */
+  focusBin?: number | null;
   width?: number;
   height?: number;
 }) {
@@ -217,11 +221,16 @@ export function TrainingTimeScatter({
           const cx = x(m.x);
           const cy = y(m.days);
           const p = placements[m.name] ?? RIGHT;
+          // Faded when a size is highlighted and this model is not that size.
+          const faded = focusBin !== null && (bin ?? -1) !== focusBin;
           return (
             <g
               key={m.name}
               data-model={m.name}
               data-basis={m.basis}
+              data-faded={faded || undefined}
+              opacity={faded ? 0.15 : 1}
+              style={{ transition: "opacity 150ms" }}
               {...(onSelect
                 ? {
                     role: "button",

@@ -144,14 +144,10 @@ function CiteNumber({ k }: { k: number }) {
 export function RefItem({
   n,
   href,
-  preprint = false,
   children,
 }: {
   n: number;
   href?: string;
-  /** Flag non-peer-reviewed sources, the guardrail the citation chips carried
-   *  before references moved into the sidenotes. */
-  preprint?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -177,14 +173,6 @@ export function RefItem({
         ) : (
           <span>{children}</span>
         )}
-        {preprint ? (
-          <>
-            {" "}
-            <span className="inline-block rounded bg-wrong/20 px-1.5 text-[10px] font-semibold text-wrong-ink">
-              preprint
-            </span>
-          </>
-        ) : null}
       </span>
     </p>
   );

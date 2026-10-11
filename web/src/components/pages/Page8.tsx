@@ -748,7 +748,7 @@ export function Page8() {
             reader meets it before the figure rather than beside it. The margin
             keeps the reference and nothing else. */}
         <Note kicker="References">
-          <RefItem n={REF.cobbe} href="https://arxiv.org/abs/2110.14168" preprint>
+          <RefItem n={REF.cobbe} href="https://arxiv.org/abs/2110.14168">
             Cobbe et al. 2021, <em>Training Verifiers to Solve Math Word Problems</em> (arXiv
             2110.14168).
           </RefItem>
@@ -897,7 +897,7 @@ export function Page8() {
           </Handoff>
         </section>
         <Note kicker="References">
-          <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501" preprint>
+          <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
             Stroebl et al. 2024, <em>Inference Scaling fLaws: The Limits of LLM Resampling with
             Imperfect Verifiers</em> (arXiv 2411.17501).
           </RefItem>

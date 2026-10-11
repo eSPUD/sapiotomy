@@ -435,7 +435,7 @@ describe("Page 9 (outcome vs process supervision) component", () => {
     render(<Page9 />);
     const link = screen.getByRole("link", { name: /Let's Verify Step by Step/ });
     expect(link).toHaveAttribute("href", "https://arxiv.org/abs/2305.20050");
-    expect(screen.getByText("preprint")).toBeInTheDocument();
+    expect(screen.queryByText("preprint")).toBeNull(); // references carry no preprint tag
     expect(document.querySelector("a[href='#ref-1']")).not.toBeNull();
     expect(document.getElementById("ref-1")).not.toBeNull();
   });

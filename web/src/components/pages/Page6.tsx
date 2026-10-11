@@ -1423,7 +1423,7 @@ export function Page6() {
               paragraph, so the citation lands level with the sentence that
               raised it rather than a screen below. */}
           <Note kicker="References" tight>
-            <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393" preprint>
+            <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393">
               Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
             </RefItem>
           </Note>

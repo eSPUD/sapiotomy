@@ -377,7 +377,7 @@ export function Page9() {
             it. The marker is in this beat, so the entry is too. */}
         <Note kicker="References">
           <p>Cited for the technique. The numbers here are our own model&apos;s, not theirs.</p>
-          <RefItem n={REF.lightman} href="https://arxiv.org/abs/2305.20050" preprint>
+          <RefItem n={REF.lightman} href="https://arxiv.org/abs/2305.20050">
             Lightman et al. 2023, <em>Let&apos;s Verify Step by Step</em> (arXiv 2305.20050).
           </RefItem>
         </Note>

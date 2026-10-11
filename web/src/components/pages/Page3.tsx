@@ -27,9 +27,10 @@
  * margin cell. Citations
  * follow the page-2 house style: numbered inline markers (Cite) at the claim
  * they support, a References margin note (RefItem) beside the step that uses
- * each source. References live only in those margin notes; non-peer-reviewed
- * sources carry a preprint flag there. Section 1's References note sits beside
- * it; section 2 cites nothing, so its margin cell is empty. There is still no
+ * each source. References live only in those margin notes, with no preprint
+ * tag. Section 1 has one References note beside each part that first cites its
+ * sources (a: 1-2, b: 3, c: 4-6); section 2 cites nothing, so its margin cell is
+ * empty. There is still no
  * "how to read this page" rail (a slider, a dial and a text box need no instructions).
  * What is cited vs derived is said inline in each step's h2 annotation
  * ("derived from the two Epoch trends", "cited stock, derived demand"), and the
@@ -46,7 +47,7 @@
  * there is nothing there for a reader to drag.
  */
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
@@ -126,18 +127,45 @@ const fmtRelease = (iso: string) => `${MONTHS_SHORT[Number(iso.slice(5, 7)) - 1]
 /** Name placements where the default (right of the dot) would run off the plot or into a dot. */
 const TT_LEFT: LabelPlacement = { dx: -12, dy: 3.5, anchor: "end" };
 const TT_ABOVE: LabelPlacement = { dx: 0, dy: -11, anchor: "middle" };
+// Tuned for the chart at its fixed 280px height, from 1280px windows up: every
+// name clear of every other name (checked by measuring the rendered labels).
 const TT_PLACEMENTS: Record<string, LabelPlacement> = {
   RoBERTa: TT_LEFT,
-  "Megatron-LM": { dx: 8, dy: 15, anchor: "start" },
+  GShard: TT_ABOVE,
+  "Megatron-LM": { dx: -6, dy: -8, anchor: "end" },
   "MT-NLG": { dx: -6, dy: -8, anchor: "end" },
   "GLM-130B": TT_ABOVE,
   "LLaMA-65B": TT_LEFT,
+  BLOOM: TT_LEFT,
   "Gemini 1.0 Ultra": { dx: -6, dy: -8, anchor: "end" },
-  "Mistral Large": TT_ABOVE,
   "Nemotron-4 340B": { dx: -4, dy: 16, anchor: "end" },
   "Llama 3.1-405B": { dx: 4, dy: 17, anchor: "start" },
   "EXAONE 4.0": TT_LEFT,
 };
+
+/**
+ * Section 1's three charts (a, b, c) share one fixed height in pixels. Each is
+ * drawn at its container's measured width, so its viewBox is 1:1 with the screen:
+ * the height stays put and the text keeps its size, whatever the width.
+ */
+const SECTION1_CHART_H = 280;
+function useChartWidth(): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [w, setW] = useState(640); // the server's guess, until measured
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    // On a phone (under 480px) the chart is drawn 640 wide and scales down, as all
+    // charts did before, so labels keep their spacing instead of piling up.
+    const ro = new ResizeObserver(([e]) => {
+      const px = Math.round(e.contentRect.width);
+      setW(px < 480 ? 640 : px);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w];
+}
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({
@@ -185,6 +213,11 @@ export function Page3() {
 
   const [months, setMonths] = useState(6); // mid-range: room to drag either way
   /** Section b: the model whose dot was clicked, or none yet. */
+  // A model size picked in the legend: only that size stays bright on the plot.
+  const [sizeFocus, setSizeFocus] = useState<number | null>(null);
+  const [costRef, costW] = useChartWidth();
+  const [timeRef, timeW] = useChartWidth();
+  const [dataRef, dataW] = useChartWidth();
   const [ttPick, setTtPick] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const monthsTouchedRef = useRef(false);
@@ -312,71 +345,83 @@ export function Page3() {
               about &times;{tp.perYear} more expensive each year, and one GPT-4-class run costs an
               estimated ${RUN_M}M.
               <Cite n={[REF.trainTrend, REF.runCost]} /> Drag the slider to run the plan forward. For
-              a few missing facts, that bill is not economically feasible.
+              a few missing facts, that bill is not economically feasible, and it is hard even to say
+              what it buys: which facts are missing, or what changed from one retraining to the next.
             </p>
             <figure
               aria-label="Problem one: rising cost"
-              className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+              // On a wide screen the running totals sit to the chart's right; narrower,
+              // they drop below it. Keyed to the window (1440px), where the content
+              // column first has room for both.
+              className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4 min-[1440px]:flex-row min-[1440px]:items-center"
             >
-              <LineChart
-                title={`The first year: retraining the same GPT-4-class model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
-                points={comboSame}
-                secondary={{
-                  points: comboFrontier,
-                  label: "newest model",
-                }}
-                primaryLabel="same model"
-                // The extra spend of chasing the newest model, shaded between the lines.
-                fillBetween
-                fillTone="wrong-bright"
-                fillOpacity={0.15}
-                // Always shown: the month the newest model has spent more than a full
-                // year of the same model, and everything after it.
-                referenceX={flatYearCrossMonth}
-                referenceXLabel="newest > 1 year of same model"
-                shadeRightOfX="wrong-bright"
-                primaryTone="compute-bright"
-                secondaryTone="wrong-bright"
-                markerX={months}
-                onMarkerChange={onMonths}
-                markerLabel="Drag through the first year of keeping the plan up"
-                markerStep={1}
-                markerValueText={(m) => `${m} ${m === 1 ? "month" : "months"}`}
-                markerFormat={(bn) => fmtM(bn * 1000)}
-                xLabel="time (months)"
-                yLabel="cumulative cost of training ($ billions)"
-                yDomain={[0, 52]}
-                xTicks={MONTH_TICKS}
-                width={640}
-                height={300}
-              />
+              <div ref={costRef} className="min-w-0 flex-1">
+                <LineChart
+                  title={`The first year: retraining the same GPT-4-class model daily accumulates linearly to about ${fmtM(sameModelCumulativeUSDM(DAYS))}, while retraining the frontier model of the day daily compounds at Epoch's times ${tp.perYear} per year cost trend to about ${fmtM(frontierCumulativeUSDM(COMBO_MONTHS))}. Derived from the cited anchors.`}
+                  points={comboSame}
+                  secondary={{
+                    points: comboFrontier,
+                    label: "newest model",
+                  }}
+                  primaryLabel="same model"
+                  // The extra spend of chasing the newest model, shaded between the lines.
+                  fillBetween
+                  fillTone="wrong-bright"
+                  fillOpacity={0.15}
+                  // Always shown: the month the newest model has spent more than a full
+                  // year of the same model, and everything after it.
+                  referenceX={flatYearCrossMonth}
+                  referenceXLabel="newest > 1 year of same model"
+                  // The bar that crossing is measured against: a full year of the
+                  // same model, drawn level, so the newest-model curve visibly meets it
+                  // where the vertical line stands.
+                  referenceY={sameModelCumulativeUSDM(DAYS) / 1000}
+                  referenceLabel={`1 year of the same model: ${fmtM(sameModelCumulativeUSDM(DAYS))}`}
+                  referenceLabelAlign="start"
+                  shadeRightOfX="wrong-bright"
+                  primaryTone="compute-bright"
+                  secondaryTone="wrong-bright"
+                  markerX={months}
+                  onMarkerChange={onMonths}
+                  markerLabel="Drag through the first year of keeping the plan up"
+                  markerStep={1}
+                  markerValueText={(m) => `${m} ${m === 1 ? "month" : "months"}`}
+                  markerFormat={(bn) => fmtM(bn * 1000)}
+                  xLabel="time (months)"
+                  yLabel="cumulative cost of training ($ billions)"
+                  yDomain={[0, 52]}
+                  xTicks={MONTH_TICKS}
+                  width={costW}
+                  height={SECTION1_CHART_H}
+                />
+              </div>
               {/* The two curves read at the slider's month. Both are running
                   totals, which the heading has to say: a bare "$17.9B" reads just
                   as easily as a daily or per-run price. */}
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5 min-[1440px]:w-44 min-[1440px]:shrink-0">
                 <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                   total spent after {months} {months === 1 ? "month" : "months"}
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="flex flex-col gap-1 rounded-lg border border-grid bg-canvas p-3">
-                    <p className="text-sm font-semibold text-ink">
+                <div className="grid gap-2 sm:grid-cols-2 min-[1440px]:grid-cols-1">
+                  <div className="flex flex-col gap-0.5 rounded-lg border border-grid bg-canvas p-2.5">
+                    <p className="text-xs font-semibold text-ink">
                       Retrain the <em>newest</em> model each day
                     </p>
-                    <p className="text-xs text-ink-muted">
+                    <p className="text-[11px] leading-snug text-ink-muted">
                       its price climbs ×{tp.perYear} a year, so the total curves upward
                     </p>
-                    <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-wrong-ink">
+                    <p className="mt-auto font-mono text-lg font-bold tabular-nums text-wrong-ink">
                       {fmtM(frontierAtM)}
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1 rounded-lg border border-grid bg-canvas p-3">
-                    <p className="text-sm font-semibold text-ink">
+                  <div className="flex flex-col gap-0.5 rounded-lg border border-grid bg-canvas p-2.5">
+                    <p className="text-xs font-semibold text-ink">
                       Retrain the <em>same</em> model each day
                     </p>
-                    <p className="text-xs text-ink-muted">
+                    <p className="text-[11px] leading-snug text-ink-muted">
                       a flat ${RUN_M}M a run, so the total climbs in a straight line
                     </p>
-                    <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-compute-ink">
+                    <p className="mt-auto font-mono text-lg font-bold tabular-nums text-compute-ink">
                       {fmtM(sameAtM)}
                     </p>
                   </div>
@@ -385,34 +430,16 @@ export function Page3() {
             </figure>
           </div>
 
-          {/* References last on a phone, beside the section's top on a wide screen. */}
+          {/* Each References note sits beside the part that first cites its sources
+              (a: 1-2, b: 3, c: 4-6); on a phone they all fall to the end of the section. */}
           <div className="order-last lg:order-none">
             <Note kicker="References">
-              <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models" preprint>
+              <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models">
                 Cottier et al. 2024, <em>How Much Does It Cost to Train Frontier AI Models?</em>{" "}
                 (Epoch AI).
               </RefItem>
-              <RefItem n={REF.runCost} href="https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf" preprint>
+              <RefItem n={REF.runCost} href="https://hai.stanford.edu/assets/files/hai_ai-index-report-2024_chapter1.pdf">
                 Epoch AI via the Stanford HAI <em>AI Index Report 2024</em>.
-              </RefItem>
-              <RefItem n={REF.trainingTime} href="https://epoch.ai/data/ai-models" preprint>
-                Epoch AI, <em>Data on AI Models</em>, Training time field (accessed Sep 2026; CC BY).
-              </RefItem>
-              <RefItem n={REF.chinchilla} href="https://arxiv.org/abs/2203.15556">
-                Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS
-                2022).
-              </RefItem>
-              <RefItem n={REF.dataStock} href="https://arxiv.org/abs/2211.04325" preprint>
-                Villalobos et al. 2024, <em>Will We Run Out of Data? Limits of LLM Scaling Based on
-                Human-Generated Data</em> (Epoch AI &middot; arXiv 2211.04325).
-              </RefItem>
-              <RefItem
-                n={REF.datasetSizes}
-                href="https://github.com/epoch-research/data-stock"
-                preprint
-              >
-                Epoch AI, <em>data-stock</em> repository, <code>data/dataset_sizes.csv</code> (the
-                training-set table behind Villalobos et al. 2024).
               </RefItem>
             </Note>
           </div>
@@ -425,75 +452,99 @@ export function Page3() {
               <Cite n={REF.trainingTime} />
             </p>
           </div>
-          <div aria-hidden="true" className="hidden lg:block" />
+          <div className="order-last lg:order-none">
+            <Note kicker="References">
+              <RefItem n={REF.trainingTime} href="https://epoch.ai/data/ai-models">
+                Epoch AI, <em>Data on AI Models</em>, Training time field (accessed Sep 2026; CC BY).
+              </RefItem>
+            </Note>
+          </div>
 
           <figure
             aria-label="Training time of popular LLMs"
-            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+            // On a wide screen the legend sits to the plot's right; narrower, it
+            // drops below. Keyed to the window (1440px), like section a's readout.
+            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4 min-[1440px]:flex-row min-[1440px]:items-center min-[1440px]:gap-4"
           >
-            <TrainingTimeScatter
-              title={`Training time of ${trainingTimeModels.length} popular LLMs released ${TT_FIRST_YEAR} to ${TT_LAST_YEAR}, in days, from Epoch AI's database. ${trainingTimeModels
-                .map(
-                  (m) =>
-                    `${m.name} ${m.days} days, ${m.sizeDisclosed && m.epochParams ? `${fmtParams(m.epochParams)} parameters` : "size not disclosed"}${m.basis === "estimate" ? " (estimate)" : ""}`,
-                )
-                .join("; ")}.`}
-              models={trainingTimeModels}
-              // Half a year of room on the left, for the first labels.
-              xDomain={[TT_FIRST_YEAR - 0.5, TT_LAST_YEAR + 1]}
-              yDomain={[0, 190]}
-              placements={TT_PLACEMENTS}
-              height={380}
-              selected={ttPick}
-              onSelect={onTtPick}
-              // The clicked dot, in three short lines: which model, how long, how it is known.
-              renderDetail={(m) => (
-                <div className="flex flex-col gap-0.5 pr-4">
-                  <p className="text-xs text-ink-muted">
-                    <strong className="text-ink">{m.name}</strong> · {m.developer} ·{" "}
-                    {fmtRelease(m.released)} ·{" "}
-                    {m.sizeDisclosed && m.epochParams
-                      ? `${fmtParams(m.epochParams)} parameters`
-                      : "size not disclosed"}
-                  </p>
-                  <p className="text-xl font-bold tabular-nums text-ink">
-                    {fmtDays(m.days)}{" "}
-                    <span className="text-xs font-normal text-ink-muted">({fmtSpan(m.days)})</span>
-                  </p>
-                  <p className="text-xs text-ink-muted">
-                    {m.how} Source:{" "}
-                    <a
-                      href={m.source.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-compute-ink underline"
-                    >
-                      {m.source.label}
-                    </a>
-                  </p>
-                </div>
-              )}
-            />
+            <div ref={timeRef} className="min-w-0 flex-1">
+              <TrainingTimeScatter
+                title={`Training time of ${trainingTimeModels.length} popular LLMs released ${TT_FIRST_YEAR} to ${TT_LAST_YEAR}, in days, from Epoch AI's database. ${trainingTimeModels
+                  .map(
+                    (m) =>
+                      `${m.name} ${m.days} days, ${m.sizeDisclosed && m.epochParams ? `${fmtParams(m.epochParams)} parameters` : "size not disclosed"}${m.basis === "estimate" ? " (estimate)" : ""}`,
+                  )
+                  .join("; ")}.`}
+                models={trainingTimeModels}
+                // Half a year of room on the left, for the first labels.
+                xDomain={[TT_FIRST_YEAR - 0.5, TT_LAST_YEAR + 1]}
+                yDomain={[0, 190]}
+                placements={TT_PLACEMENTS}
+                focusBin={sizeFocus}
+                width={timeW}
+                height={SECTION1_CHART_H}
+                selected={ttPick}
+                onSelect={onTtPick}
+                // The clicked dot, in three short lines: which model, how long, how it is known.
+                renderDetail={(m) => (
+                  <div className="flex flex-col gap-0.5 pr-4">
+                    <p className="text-xs text-ink-muted">
+                      <strong className="text-ink">{m.name}</strong> · {m.developer} ·{" "}
+                      {fmtRelease(m.released)} ·{" "}
+                      {m.sizeDisclosed && m.epochParams
+                        ? `${fmtParams(m.epochParams)} parameters`
+                        : "size not disclosed"}
+                    </p>
+                    <p className="text-xl font-bold tabular-nums text-ink">
+                      {fmtDays(m.days)}{" "}
+                      <span className="text-xs font-normal text-ink-muted">({fmtSpan(m.days)})</span>
+                    </p>
+                    <p className="text-xs text-ink-muted">
+                      {m.how} Source:{" "}
+                      <a
+                        href={m.source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-compute-ink underline"
+                      >
+                        {m.source.label}
+                      </a>
+                    </p>
+                  </div>
+                )}
+              />
+            </div>
             {/* The legend: colour is the model's size, fill says who measured it. */}
-            <figcaption className="flex flex-col gap-1.5 text-xs text-ink-muted">
-              <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <figcaption className="flex flex-col gap-1.5 text-xs text-ink-muted min-[1440px]:w-40 min-[1440px]:shrink-0 min-[1440px]:gap-3">
+              <span className="flex flex-wrap items-center gap-x-4 gap-y-1 min-[1440px]:flex-col min-[1440px]:items-start">
                 <span className="font-semibold">model size</span>
-                {SIZE_BINS.map((b, k) => (
-                  <span key={b.label} className="flex items-center gap-1.5">
-                    <svg width="10" height="10" aria-hidden="true">
-                      <circle cx="5" cy="5" r="4.5" className={SIZE_FILL[k]} />
-                    </svg>
-                    {b.label}
-                  </span>
-                ))}
-                <span className="flex items-center gap-1.5">
-                  <svg width="10" height="10" aria-hidden="true">
-                    <circle cx="5" cy="5" r="4.5" className={SIZE_FILL[-1]} fillOpacity={UNDISCLOSED_OPACITY} />
-                  </svg>
-                  not disclosed
-                </span>
+                {/* Each size is a toggle: pick one to highlight only those models;
+                    pick it again to show them all. */}
+                {[...SIZE_BINS.map((b, k) => ({ k, label: b.label })), { k: -1, label: "not disclosed" }].map(
+                  ({ k, label }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      aria-pressed={sizeFocus === k}
+                      onClick={() => setSizeFocus(sizeFocus === k ? null : k)}
+                      className={`flex items-center gap-1.5 rounded px-1 -mx-1 hover:text-ink ${
+                        sizeFocus === k ? "bg-ink/10 font-semibold text-ink" : ""
+                      } ${sizeFocus !== null && sizeFocus !== k ? "opacity-50" : ""}`}
+                    >
+                      <svg width="10" height="10" aria-hidden="true">
+                        <circle
+                          cx="5"
+                          cy="5"
+                          r="4.5"
+                          className={SIZE_FILL[k]}
+                          fillOpacity={k === -1 ? UNDISCLOSED_OPACITY : 1}
+                        />
+                      </svg>
+                      {label}
+                    </button>
+                  ),
+                )}
               </span>
-              <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+              <span className="flex flex-wrap items-center gap-x-4 gap-y-1 min-[1440px]:flex-col min-[1440px]:items-start">
                 <span className="flex items-center gap-1.5">
                   <svg width="10" height="10" aria-hidden="true">
                     <circle cx="5" cy="5" r="4.5" className="fill-ink-muted" />
@@ -523,60 +574,83 @@ export function Page3() {
               <p className="text-ink">
                 {/* First load-bearing use of "parameter" in the deck, and pages 5 and 11 are
                     both denominated in it. Defined once, at the altitude of this page. */}
-                Suppose money were no object. Bigger models need more text: a{" "}
-                <strong>scaling law</strong>, measured across hundreds of models, calls for about{" "}
-                {cp.tokensPerParam} <strong>tokens</strong> (pieces of text, roughly a word each) for
-                every <strong>parameter</strong> (a number training adjusts).
-                <Cite n={REF.chinchilla} /> Only about {STOCK_T} trillion tokens of quality writing
-                exist, and no budget buys tokens that do not exist.
-                <Cite n={REF.dataStock} /> Epoch projects the largest training sets growing about
-                &times;{PP.growthPerYearMedian.toFixed(1)} a year, likely between &times;
+                Say money is no object. Bigger models still need more text to learn from: a{" "}
+                <strong>scaling law</strong>, measured across hundreds of models, puts the sweet spot
+                at about {cp.tokensPerParam} <strong>tokens</strong> of text (a token is roughly a
+                word) for every <strong>parameter</strong>, the numbers training adjusts.
+                <Cite n={REF.chinchilla} /> But people have only ever written about {STOCK_T} trillion
+                tokens of good-quality text, and no budget can buy text that does not exist.
+                <Cite n={REF.dataStock} /> Meanwhile, Epoch finds the biggest training sets growing
+                about &times;{PP.growthPerYearMedian.toFixed(1)} a year, somewhere between &times;
                 {PP.growthPerYearLow.toFixed(1)} and &times;{PP.growthPerYearHigh.toFixed(1)} (the
-                shading).
-                <Cite n={REF.datasetSizes} /> The largest training set in{" "}
-                <strong className="text-ink">{fmtYM(proj.t)}</strong>:{" "}
+                shaded band).
+                <Cite n={REF.datasetSizes} /> Follow that trend to{" "}
+                <strong className="text-ink">{fmtYM(proj.t)}</strong> and the largest set is{" "}
                 <strong className="text-ink">≈{fmtT(proj.med)}</strong> tokens,{" "}
                 {proj.med >= PP.stockTrillionTokens ? (
-                  <strong className="text-wrong-ink">more than all quality text</strong>
+                  <strong className="text-wrong-ink">more than all the good-quality text there is</strong>
                 ) : (
-                  <>{((100 * proj.med) / PP.stockTrillionTokens).toFixed(0)}% of all quality text</>
+                  <>
+                    already {((100 * proj.med) / PP.stockTrillionTokens).toFixed(0)}% of all the
+                    good-quality text there is
+                  </>
                 )}
-                . At this pace it runs out around {PP.medianCrossesStockMonth <= 6 ? "mid-" : "late "}
-                {PP.medianCrossesStockYear} (Epoch&apos;s range: {ds.windowStartYear} to{" "}
-                {ds.windowEndYear}).
+                . At this pace we run out around {PP.medianCrossesStockMonth <= 6 ? "mid-" : "late "}
+                {PP.medianCrossesStockYear}; Epoch puts it anywhere from {ds.windowStartYear} to{" "}
+                {ds.windowEndYear}.
                 <Cite n={REF.dataStock} />
               </p>
               <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface-raised p-4">
-                <LineChart
-                  title={`Projected largest training set, ${PROJ.points[0].x} to ${PP.lastProjectedYear}, on a log scale in trillions of tokens, with a ${PP.bandCredibility}% band, against the ${PP.stockTrillionTokens}T effective stock. Reproduced from Epoch's historical projection.`}
-                  points={PROJ.points}
-                  band={PROJ.band}
-                  bandLabel={`likely range (×${PP.growthPerYearLow.toFixed(1)} to ×${PP.growthPerYearHigh.toFixed(1)} a year)`}
-                  primaryTone="wrong-bright"
-                  primaryLabel="projected largest training set"
-                  logY
-                  yDomain={[1, 5000]}
-                  yTickFormat={(t) => (t >= 1000 ? `${t / 1000}Q` : `${t}T`)}
-                  xTickFormat={(t) => String(Math.round(t))}
-                  xTicks={PROJ.points.map((p) => p.x)}
-                  xLabel="projected year"
-                  yLabel="largest training set (tokens)"
-                  referenceY={PP.stockTrillionTokens}
-                  // The cap: all the quality text that exists today. Everything above it is
-                  // text that would have to be written first.
-                  referenceLabel={`Total quality tokens that exist = ${PP.stockTrillionTokens}T tokens`}
-                  shadeAboveY="ink"
-                  referenceLabelAlign="start"
-                  // A fixed "today" marker: the reader cannot move it.
-                  markerX={PROJ_START}
-                  markerInterpolate
-                  markerRuleLabel="Today"
-                  width={640}
-                  height={260}
-                />
+                <div ref={dataRef} className="min-w-0">
+                  <LineChart
+                    title={`Projected largest training set, ${PROJ.points[0].x} to ${PP.lastProjectedYear}, on a log scale in trillions of tokens, with a ${PP.bandCredibility}% band, against the ${PP.stockTrillionTokens}T effective stock. Reproduced from Epoch's historical projection.`}
+                    points={PROJ.points}
+                    band={PROJ.band}
+                    bandLabel={`likely range (×${PP.growthPerYearLow.toFixed(1)} to ×${PP.growthPerYearHigh.toFixed(1)} a year)`}
+                    primaryTone="wrong-bright"
+                    primaryLabel="projected largest training set"
+                    logY
+                    yDomain={[1, 5000]}
+                    yTickFormat={(t) => (t >= 1000 ? `${t / 1000}Q` : `${t}T`)}
+                    xTickFormat={(t) => String(Math.round(t))}
+                    xTicks={PROJ.points.map((p) => p.x)}
+                    xLabel="projected year"
+                    yLabel="largest training set (tokens)"
+                    referenceY={PP.stockTrillionTokens}
+                    // The cap: all the quality text that exists today. Everything above it is
+                    // text that would have to be written first.
+                    referenceLabel={`Total quality tokens that exist = ${PP.stockTrillionTokens}T tokens`}
+                    shadeAboveY="ink"
+                    referenceLabelAlign="start"
+                    // A fixed "today" marker: the reader cannot move it.
+                    markerX={PROJ_START}
+                    markerInterpolate
+                    markerRuleLabel="Today"
+                    width={dataW}
+                    height={SECTION1_CHART_H}
+                  />
+                </div>
               </figure>
-
             </section>
+          </div>
+          <div className="order-last lg:order-none">
+            <Note kicker="References">
+              <RefItem n={REF.chinchilla} href="https://arxiv.org/abs/2203.15556">
+                Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS
+                2022).
+              </RefItem>
+              <RefItem n={REF.dataStock} href="https://arxiv.org/abs/2211.04325">
+                Villalobos et al. 2024, <em>Will We Run Out of Data? Limits of LLM Scaling Based on
+                Human-Generated Data</em> (Epoch AI &middot; arXiv 2211.04325).
+              </RefItem>
+              <RefItem
+                n={REF.datasetSizes}
+                href="https://github.com/epoch-research/data-stock"
+              >
+                Epoch AI, <em>data-stock</em> repository, <code>data/dataset_sizes.csv</code> (the
+                training-set table behind Villalobos et al. 2024).
+              </RefItem>
+            </Note>
           </div>
         </section>
 

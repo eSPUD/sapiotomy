@@ -236,7 +236,7 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
 
   // The two sources moved from CitationBadge chips into numbered RefItem entries
   // in their margin notes, each reachable from an inline Cite superscript in the
-  // prose. Both are non-peer-reviewed, so both keep the preprint flag.
+  // prose. References carry no preprint tag.
   it("cites Cobbe and Stroebl as numbered references with inline markers", () => {
     render(<Page8 />);
     const cobbe = screen.getByRole("link", {
@@ -245,8 +245,8 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(cobbe).toHaveAttribute("href", "https://arxiv.org/abs/2110.14168");
     const stroebl = screen.getByRole("link", { name: /Inference Scaling fLaws/ });
     expect(stroebl).toHaveAttribute("href", "https://arxiv.org/abs/2411.17501");
-    // Three entries now, and the book among them is not a preprint.
-    expect(screen.getAllByText("preprint")).toHaveLength(2);
+    // References carry no preprint tag.
+    expect(screen.queryByText("preprint")).toBeNull();
     // Each source carries an inline superscript marker pointing at its entry.
     for (const n of [1, 2, 3]) {
       expect(document.querySelector(`a[href='#ref-${n}']`)).not.toBeNull();

@@ -314,7 +314,7 @@ describe("Page 13 (frontier reasoners I)", () => {
     expect(follows(open, handoff)).toBe(true);
   });
 
-  it("links both surviving references from the sidenote, all flagged preprint", () => {
+  it("links both surviving references from the sidenote", () => {
     render(<Page13 />);
     const hrefs = [
       "https://openai.com/index/learning-to-reason-with-llms/",
@@ -327,8 +327,8 @@ describe("Page 13 (frontier reasoners I)", () => {
     // card left with the safety essay.
     expect(document.querySelector('a[href*="arcprize.org"]')).not.toBeInTheDocument();
     expect(document.querySelector('a[href*="o1-system-card"]')).not.toBeInTheDocument();
-    // Neither surviving source is peer-reviewed.
-    expect(screen.getAllByText("preprint").length).toBe(2);
+    // References carry no preprint tag.
+    expect(screen.queryByText("preprint")).toBeNull();
   });
 
   it("carries no Simulated/Cited footer — provenance is inline, as on pages 1-3", () => {

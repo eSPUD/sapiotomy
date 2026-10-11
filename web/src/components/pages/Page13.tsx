@@ -598,10 +598,10 @@ export function Page13() {
         </section>
 
         <Note kicker="References">
-          <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/" preprint>
+          <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/">
             OpenAI 2024, <em>Learning to Reason with LLMs</em>.
           </RefItem>
-          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807" preprint>
+          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807">
             El-Kishky et al. 2025, <em>Competitive Programming with Large Reasoning Models</em>.
           </RefItem>
         </Note>

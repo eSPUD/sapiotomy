@@ -70,7 +70,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // Step 3: the guess, under the same numbered spine as pages 1 and 4.
     // The scaling-law spine: bigger models only pay off if they read more, in step.
     expect(document.body.textContent).toMatch(
-      /a\s*scaling law, measured across hundreds of models, calls for about\s*20 tokens \(pieces of text, roughly a word each\) for\s*every parameter/i,
+      /a\s*scaling law, measured across hundreds of models, puts the sweet spot\s*at about 20 tokens of text \(a token is roughly a\s*word\) for every parameter, the numbers training adjusts\./i,
     );
     // The stock card and the window meter are cut: the prose carries 300T and the
     // token gloss, the chart carries the stock line, the readout carries the window.
@@ -80,7 +80,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // The projection's marker is fixed: no slider for the reader to move.
     expect(screen.queryByRole("slider", { name: /projected years/i })).toBeNull();
     expect(document.body.textContent).toMatch(
-      /Only about 300 trillion tokens of quality writing\s*exist, and no budget buys tokens that do not exist/i,
+      /But people have only ever written about 300 trillion\s*tokens of good-quality text, and no budget can buy text that does not exist/i,
     );
     // The flat per-run rate still anchors the legend, caption, and footer.
     expect(screen.getAllByText(new RegExp(`\\$${RUN_M}M`)).length).toBeGreaterThan(0);
@@ -124,7 +124,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("glosses parameter where it first carries weight", () => {
     render(<Page3 />);
     expect(document.body.textContent).toMatch(
-      /parameter \(a number training adjusts\)/,
+      /parameter, the numbers training adjusts/,
     );
   });
 
@@ -139,9 +139,9 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("the projection reads out today's value on a fixed marker", () => {
     render(<Page3 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/The largest training set in\s*Sep 2026:\s*≈\d+T tokens, \d+% of all quality text\./);
-    expect(body).toMatch(/At this pace it runs out around (mid-|late )\s*\d{4}/);
-    expect(body).toMatch(/Epoch's range: \d{4} to\s*\d{4}/);
+    expect(body).toMatch(/Follow that trend to\s*Sep 2026 and the largest set is\s*≈\d+T tokens,\s*already \d+% of all the\s*good-quality text there is\./);
+    expect(body).toMatch(/At this pace we run out around (mid-|late )\s*\d{4}/);
+    expect(body).toMatch(/Epoch puts it anywhere from \d{4} to\s*\d{4}/);
     expect(body).not.toMatch(/Drag the year/);
     // The fixed marker is labelled "Today".
     expect(screen.getByText("Today")).toBeInTheDocument();
@@ -151,11 +151,11 @@ describe("Page 3 (Training-Time Scaling)", () => {
   it("captions the projection by where it meets the stock, with no footnote", () => {
     render(<Page3 />);
     const body = document.body.textContent ?? "";
-    expect(body).toMatch(/Epoch projects the largest training sets growing about\s*×\d\.\d a year/);
-    // The marker opens on the current month, Sep 2026, and moves in 3-month steps.
-    expect(body).toMatch(/The largest training set in\s*Sep 2026:/);
+    expect(body).toMatch(/Epoch finds the biggest training sets growing\s*about ×\d\.\d a year/);
+    // The marker sits on the current month, Sep 2026.
+    expect(body).toMatch(/Follow that trend to\s*Sep 2026/);
     // The shaded band is explained in the caption, now that the readout no longer quotes it.
-    expect(body).toMatch(/likely between ×\s*1\.8 and ×3\.1 \(the\s*shading\)/);
+    expect(body).toMatch(/somewhere between ×\s*1\.8 and ×3\.1 \(the\s*shaded band\)/);
     expect(body).not.toMatch(/compute-based projection/i);
     expect(body).not.toMatch(/inside the window below/i);
     expectClean();
@@ -261,7 +261,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     const bill = screen.getByRole("figure", { name: /problem one/i });
     const body = document.body.textContent ?? "";
     expect(body).toMatch(
-      /For\s*a few missing facts, that bill is not economically feasible\./,
+      /For\s*a few missing facts, that bill is not economically feasible, and it is hard even to say\s*what it buys: which facts are missing, or what changed from one retraining to the next\./,
     );
     expect(body).toMatch(/Drag the slider to run the plan forward\./);
     // The frame holds the chart and its readout only.
@@ -294,14 +294,17 @@ describe("Page 3 (Training-Time Scaling)", () => {
     const notes = Array.from(document.querySelectorAll("aside"))
       .map((a) => a.textContent ?? "")
       .filter((t) => t.startsWith("References"));
-    // Section 1's References note only: section 2 cites nothing.
-    expect(notes).toHaveLength(1);
-    const [gaps] = notes;
-
-    // The gap section owns every cost and data source.
-    for (const ref of [/Cottier/, /AI Index/, /Data on AI Models/, /Hoffmann/, /Villalobos/, /data-stock/]) {
-      expect(gaps).toMatch(ref);
-    }
+    // One References note beside each part of section 1, holding the sources that
+    // part cites first: a (cost) 1-2, b (training time) 3, c (data) 4-6. Section 2
+    // cites nothing.
+    expect(notes).toHaveLength(3);
+    const [cost, time, data] = notes;
+    for (const ref of [/Cottier/, /AI Index/]) expect(cost).toMatch(ref);
+    expect(cost).not.toMatch(/Data on AI Models|Hoffmann|Villalobos|data-stock/);
+    expect(time).toMatch(/Data on AI Models/);
+    expect(time).not.toMatch(/Cottier|Hoffmann|Villalobos/);
+    for (const ref of [/Hoffmann/, /Villalobos/, /data-stock/]) expect(data).toMatch(ref);
+    expect(data).not.toMatch(/Cottier|Data on AI Models/);
     // The cut "Why bias happens" note took WinoBias with it; the trimmed-away
     // challenges' sources are gone from the page entirely.
     expect(document.body.textContent ?? "").not.toMatch(/Why bias happens|Zhao|Shumailov|Askell|Sevilla/);
@@ -321,7 +324,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // The old provenance prose stays gone; the margin holds References notes only.
     expect(screen.queryByText(/where the bill comes from/i)).toBeNull();
     expect(screen.queryByText(/where the wall comes from/i)).toBeNull();
-    expect(screen.getAllByText("References")).toHaveLength(1);
+    expect(screen.getAllByText("References")).toHaveLength(3);
     // The figures carry inline numbered markers; the external reference chips
     // left the steps for a single row at the foot of the page. The markers
     // themselves are in-page anchors to the sidenote (#ref-n), so a figure may

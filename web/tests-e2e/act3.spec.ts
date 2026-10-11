@@ -52,12 +52,11 @@ test.describe("Act 3 (pages 12–16)", () => {
     expect(seen.size).toBeGreaterThan(1);
   });
 
-  test("preprint sources are visibly flagged", async ({ page }) => {
-    for (const n of [15]) {
+  test("references carry no preprint tag", async ({ page }) => {
+    for (const n of [15, 16]) {
       await page.goto(`/p/${n}`);
-      await expect(page.getByText("preprint", { exact: true }).first()).toBeVisible();
+      await expect(page.getByText("preprint", { exact: true })).toHaveCount(0);
     }
-    // Page 16 draws only the deck's own runs, so it carries no preprint chip.
   });
 
   for (const n of [15, 16]) {
