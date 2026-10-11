@@ -11,7 +11,7 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 1;
 
 /** Page 1's references, numbered in order of first appearance. */
-const REF = { kahneman: 1, stanovich: 2, frederick: 3 } as const;
+const REF = { kahneman: 1, stanovich: 2, frederick: 3, simon: 4 } as const;
 const fmt = (ms: number) => `${(ms / 1000).toFixed(1)} s`;
 /** Both systems run in lockstep on one clock, one step per beat, and step 1
  *  appears in both panels on the same beat. Each answer lands with its last
@@ -348,8 +348,10 @@ export function Page1() {
             <strong>System 1</strong> recognizes or reacts as things happen, by reflex.{" "}
             <strong>System 2</strong> spends more time to solve a problem you cannot recognize
             instantly. System 2 scales its effort with the problem, spending more time on harder ones
-            to get them right. A language model that answers in a single pass is closest to System 1,
-            and letting it write out its steps first is the nearest thing it has to System 2.
+            to get them right. Thinking longer is not free, though: every step costs time and effort,
+            so it is worth taking only while it still buys more accuracy than it costs. A language
+            model that answers in a single pass is closest to System 1, and letting it write out its
+            steps first is the nearest thing it has to System 2.
           </p>
           {/* The hand-off: hints at training (what you have learned) versus
               inference-time scaling (how long you think) without naming either. */}
@@ -358,7 +360,21 @@ export function Page1() {
             System 2 when a problem is long or unfamiliar, and it is usually worth the wait.
           </div>
         </section>
-        <div aria-hidden="true" />
+        {/* The economics behind "worth taking only while it still pays", kept in the
+            margin so the main text stays plain. Simon is cited for bounded rationality
+            only; the marginal rule is the budget reading of it, not his claim. */}
+        <Note kicker="Going deeper">
+          <p>
+            Herbert Simon called this <em>bounded rationality</em>: real minds decide under limits
+            of time and attention.
+            <Cite n={REF.simon} /> Treat those limits as a budget, and the best number of steps is
+            where the accuracy one more step adds equals what it costs.
+          </p>
+          <RefItem n={REF.simon} href="https://doi.org/10.2307/1884852">
+            Herbert A. Simon, &ldquo;A Behavioral Model of Rational Choice&rdquo; (<em>Quarterly
+            Journal of Economics</em>, 1955).
+          </RefItem>
+        </Note>
       </div>
 
       <div aria-live="polite" className="sr-only">

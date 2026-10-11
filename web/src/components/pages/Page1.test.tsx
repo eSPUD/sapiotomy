@@ -130,15 +130,17 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     // The two-systems framing carries Kahneman's marker, the System 1 / System 2
     // names carry Stanovich & West's, the bat-and-ball question Frederick's...
     const marks = Array.from(container.querySelectorAll("sup"));
-    expect(marks).toHaveLength(3);
+    expect(marks).toHaveLength(4);
     expect(marks[0].textContent).toMatch(/1$/);
     expect(marks[1].textContent).toMatch(/2$/);
     expect(marks[2].textContent).toMatch(/3$/);
+    expect(marks[3].textContent).toMatch(/4$/);
     // ...each matching a numbered entry in the References note.
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/1\.\s*Daniel Kahneman/);
     expect(body).toMatch(/2\.\s*Stanovich & West/);
     expect(body).toMatch(/3\.\s*Shane Frederick/);
+    expect(body).toMatch(/4\.\s*Herbert A\. Simon, “A Behavioral Model of Rational Choice”/);
   });
 
   it("labels the clocks as a fixed pace, not a measurement", () => {
@@ -150,7 +152,7 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     render(<Page1 />);
     const section = screen.getByRole("heading", { name: "3. The difference" }).closest("section")!;
     expect(section.textContent).toMatch(
-      /harder ones\s*to get them right\. A language model that answers in a single pass is closest to System 1,\s*and letting it write out its steps first is the nearest thing it has to System 2\./,
+      /harder ones\s*to get them right\. Thinking longer is not free, though: every step costs time and effort,\s*so it is worth taking only while it still buys more accuracy than it costs\. A language\s*model that answers in a single pass is closest to System 1, and letting it write out its\s*steps first is the nearest thing it has to System 2\./,
     );
   });
 
