@@ -119,7 +119,7 @@ const PARENT = (() => {
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -127,7 +127,7 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
 
 /** The couplet as written so far. */
 function Line({ words, tone }: { words: readonly string[]; tone: "plain" | "good" | "bad" }) {
-  const last = tone === "good" ? "text-correct" : tone === "bad" ? "text-wrong" : "text-ink";
+  const last = tone === "good" ? "text-correct-ink" : tone === "bad" ? "text-wrong-ink" : "text-ink";
   return (
     <div className="flex flex-col gap-1">
       <p className="text-lg italic text-ink-muted">{SPEC.given}</p>
@@ -322,7 +322,7 @@ export function Page10() {
           page keeps the position and changes the promise, because there is no
           run here to re-derive. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
         <a
@@ -377,7 +377,7 @@ export function Page10() {
 
             {!myDone ? (
               <div className="flex flex-col gap-2">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
+                <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
                   what the model thinks comes next
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -392,7 +392,7 @@ export function Page10() {
                       className="flex items-baseline gap-2 rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink hover:border-compute"
                     >
                       <span className="font-semibold">{c.word}</span>
-                      <span className="font-mono text-xs text-compute">{pct(c.p)}</span>
+                      <span className="font-mono text-xs text-compute-ink">{pct(c.p)}</span>
                     </button>
                   ))}
                 </div>
@@ -404,7 +404,7 @@ export function Page10() {
                 }`}
                 role="status"
               >
-                <p className={`font-semibold ${mine.rhymed ? "text-correct" : "text-wrong"}`}>
+                <p className={`font-semibold ${mine.rhymed ? "text-correct-ink" : "text-wrong-ink"}`}>
                   {mine.rhymed
                     ? `✓ "${mine.words[SPEC.length - 1]}" rhymes with "${SPEC.rhymesWith}"`
                     : `✗ "${mine.words[SPEC.length - 1]}" does not rhyme with "${SPEC.rhymesWith}"`}
@@ -480,7 +480,7 @@ export function Page10() {
                   }}
                   className={`rounded border px-3 py-1.5 text-sm ${
                     strategy === s.key
-                      ? "border-compute bg-compute font-semibold text-canvas"
+                      ? "border-compute bg-compute font-semibold text-ink"
                       : "border-grid bg-surface-raised text-ink hover:border-compute"
                   }`}
                 >
@@ -512,7 +512,7 @@ export function Page10() {
                   setPlaying((p) => !p);
                   recordInteraction(PAGE_N);
                 }}
-                className="rounded bg-compute px-4 py-1.5 text-sm font-semibold text-canvas"
+                className="rounded bg-compute px-4 py-1.5 text-sm font-semibold text-ink"
               >
                 {playing ? "Pause" : done ? "Replay" : "Play"}
               </button>
@@ -626,7 +626,7 @@ export function Page10() {
                       : seen
                         ? "fill-compute"
                         : "fill-surface";
-                  const ink = root || onEnd || seen ? "fill-canvas" : "fill-ink-muted";
+                  const ink = root ? "fill-canvas" : onEnd || seen ? "fill-ink" : "fill-ink-muted";
                   return (
                     <g key={s.id} opacity={root || seen || onEnd ? 1 : 0.55}>
                       <rect
@@ -673,7 +673,7 @@ export function Page10() {
                 role="status"
                 aria-label={`The compute bill: ${scoredCount} of ${TREE_WORDS} words scored`}
               >
-                <p className="font-mono text-3xl font-bold tabular-nums text-compute">
+                <p className="font-mono text-3xl font-bold tabular-nums text-compute-ink">
                   {scoredCount}
                   <span className="text-base font-normal text-ink-muted"> / {TREE_WORDS}</span>
                 </p>
@@ -686,7 +686,7 @@ export function Page10() {
                     trace.solved ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
                   }`}
                 >
-                  <p className={`font-semibold ${trace.solved ? "text-correct" : "text-wrong"}`}>
+                  <p className={`font-semibold ${trace.solved ? "text-correct-ink" : "text-wrong-ink"}`}>
                     {trace.solved ? "✓ it rhymes" : "✗ no rhyme"}
                   </p>
                   <p className="mt-1 text-lg italic text-ink">{NW_.line(modelLine)}</p>

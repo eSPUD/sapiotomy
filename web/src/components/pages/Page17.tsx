@@ -32,7 +32,7 @@ export function Page17() {
   const page = GLOSSARY;
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">Appendix</p>
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">Appendix</p>
       <h1 className="text-3xl font-bold text-ink">
         <span className="font-mono text-ink-muted">{page.n}. </span>
         {page.title}

@@ -20,7 +20,7 @@ export default function Home() {
         <Reveal>
           <div className="flex flex-col gap-5 pb-6">
             {/* The venue line the story-page masthead carries, which the landing has none of. */}
-            <p className="-mb-2 text-sm text-ink-faint">
+            <p className="-mb-2 font-eyebrow text-xs uppercase leading-relaxed tracking-wide text-ink-faint">
               An interactive AI explainable.
               <br />
               The 9th Workshop on Visualization for AI Explainability (VISxAI), IEEE VIS 2026.
@@ -28,7 +28,7 @@ export default function Home() {
             <div>
               <h1 className="text-3xl font-bold leading-[1.05] text-ink sm:text-5xl">
                 The Story of{" "}
-                <span className="text-compute">Inference-Time Scaling</span>
+                <span className="text-compute-ink">Inference-Time Scaling</span>
               </h1>
               <p className="mt-2 text-2xl text-ink-muted sm:text-3xl">
                 &hellip;and the training-time loop behind it
@@ -57,7 +57,7 @@ export default function Home() {
               className="flex flex-col overflow-hidden rounded-lg border border-grid bg-surface shadow-xl shadow-ink/15"
             >
               {/* The act's name on a band of the accent, across the card's top. */}
-              <h2 className="bg-compute px-5 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-canvas">
+              <h2 className="bg-compute px-5 py-3 text-sm font-semibold font-eyebrow uppercase tracking-[0.15em] text-ink">
                 Act {act} · {ACTS[act].title}
               </h2>
               <ol className="flex flex-col gap-2.5 p-5">
@@ -90,7 +90,7 @@ export default function Home() {
               <li className="flex flex-col gap-0.5">
                 <span className="font-semibold text-ink">
                   Shashank Bangalore Lakshman
-                  <sup aria-hidden="true" className="text-compute">*</sup>
+                  <sup aria-hidden="true" className="text-compute-ink">*</sup>
                 </span>
                 <span>
                   Graduate Student, Department of Computer Science, The University of Texas at Austin
@@ -105,7 +105,7 @@ export default function Home() {
             </ol>
             <div className="flex flex-col gap-1 text-xs text-ink-muted">
               <p>
-                <span className="text-compute">*</span> Corresponding author.
+                <span className="text-compute-ink">*</span> Corresponding author.
               </p>
             </div>
           </div>

@@ -52,7 +52,7 @@ export function LiveDemo({ prompt, fallbackTrace }: LiveDemoProps) {
 
   return (
     <section className="rounded-lg border border-compute/40 bg-surface p-4">
-      <p className="mb-2 text-sm font-semibold text-compute">Experimental: run a real model live</p>
+      <p className="mb-2 text-sm font-semibold text-compute-ink">Experimental: run a real model live</p>
       {mode === "precomputed" ? (
         <p className="text-sm text-ink-muted">
           Your browser doesn&apos;t support WebGPU, so this shows the pre-computed trace instead:
@@ -62,7 +62,7 @@ export function LiveDemo({ prompt, fallbackTrace }: LiveDemoProps) {
           type="button"
           disabled={status === "loading"}
           onClick={runLive}
-          className="mb-2 rounded bg-compute px-3 py-1.5 text-sm font-semibold text-canvas disabled:opacity-50"
+          className="mb-2 rounded bg-compute px-3 py-1.5 text-sm font-semibold text-ink disabled:opacity-50"
         >
           {status === "loading" ? "Loading model…" : "Run live in your browser"}
         </button>

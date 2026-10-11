@@ -177,7 +177,7 @@ function BudgetStops({
                 onChange={() => onChange(i)}
               />
               <span
-                className={`block rounded border px-2 py-0.5 font-mono text-xs tabular-nums peer-focus-visible:ring-2 peer-focus-visible:ring-compute peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas ${
+                className={`block rounded border px-2 py-0.5 font-mono text-xs tabular-nums peer-focus-visible:ring-2 peer-focus-visible:ring-compute-ink peer-checked:border-compute peer-checked:bg-compute peer-checked:text-ink ${
                   dead ? "border-dashed border-grid text-ink-muted" : "border-grid text-ink"
                 }`}
               >
@@ -315,7 +315,7 @@ function BudgetLine({
           x={atTop ? bx - 8 : bx + 8}
           y={-3}
           textAnchor={atTop ? "end" : "start"}
-          className="fill-compute text-[10px] font-semibold tabular-nums"
+          className="fill-compute-ink text-[10px] font-semibold tabular-nums"
         >
           {budget}
         </text>
@@ -342,7 +342,7 @@ function Note({
 }) {
   return (
     <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${tight ? "" : "lg:pt-9"}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -489,7 +489,7 @@ function BudgetCurve({
             x={(cx(g.from_budget) + cx(g.to_budget)) / 2}
             y={C_IH + 16}
             textAnchor="middle"
-            className="fill-compute text-[11px] font-semibold tabular-nums"
+            className="fill-compute-ink text-[11px] font-semibold tabular-nums"
             opacity={Math.max(0.45, Math.abs(g.gain_pts) / maxGain)}
           >
             {pts > 0 ? `+${pts}` : pts < 0 ? `−${-pts}` : "+0"}
@@ -706,7 +706,7 @@ function LengthStrip({
           they cannot clip off the left edge when the dial is at its lowest stop
           or collide with each other when it is near an end. Only the budget tag
           tracks the line, and it flips side at the midpoint. */}
-      <text x={0} y={-14} className="fill-compute text-[10px] font-semibold tabular-nums">
+      <text x={0} y={-14} className="fill-compute-ink text-[10px] font-semibold tabular-nums">
         {inside} finished on their own
       </text>
       <text
@@ -842,13 +842,13 @@ function WaitCrossing() {
         {WAIT_TABLE.waits} injections
       </text>
 
-      <text x={COL_X0 - 8} y={(solvedBefore * u) / 2 + 4} textAnchor="end" className="fill-correct text-[11px] font-semibold tabular-nums">
+      <text x={COL_X0 - 8} y={(solvedBefore * u) / 2 + 4} textAnchor="end" className="fill-correct-ink text-[11px] font-semibold tabular-nums">
         {solvedBefore} right
       </text>
       <text x={COL_X0 - 8} y={wrongTopL + ((t.n - solvedBefore) * u) / 2 + 4} textAnchor="end" className="fill-ink-muted text-[11px] tabular-nums">
         {t.n - solvedBefore} wrong
       </text>
-      <text x={COL_X1 + COL_WIDTH + 8} y={(solvedAfter * u) / 2 + 4} className="fill-correct text-[11px] font-semibold tabular-nums">
+      <text x={COL_X1 + COL_WIDTH + 8} y={(solvedAfter * u) / 2 + 4} className="fill-correct-ink text-[11px] font-semibold tabular-nums">
         {solvedAfter} right
       </text>
       <text x={COL_X1 + COL_WIDTH + 8} y={wrongTopR + ((t.n - solvedAfter) * u) / 2 + 4} className="fill-ink-muted text-[11px] tabular-nums">
@@ -866,7 +866,7 @@ function WaitCrossing() {
         paintOrder="stroke"
         strokeWidth={3}
         strokeLinejoin="round"
-        className="fill-wrong stroke-surface text-[11px] font-semibold tabular-nums"
+        className="fill-wrong-ink stroke-surface text-[11px] font-semibold tabular-nums"
       >
         {t.beforeOnly} right → wrong
       </text>
@@ -876,7 +876,7 @@ function WaitCrossing() {
         paintOrder="stroke"
         strokeWidth={3}
         strokeLinejoin="round"
-        className="fill-correct stroke-surface text-[11px] font-semibold tabular-nums"
+        className="fill-correct-ink stroke-surface text-[11px] font-semibold tabular-nums"
       >
         {t.afterOnly} wrong → right
       </text>
@@ -923,7 +923,7 @@ function WaitLedger() {
           {rows.map((r) => (
             <tr key={r.label} className="border-t border-grid">
               <td className="py-1.5 pr-3 whitespace-nowrap">{r.label}</td>
-              <td className="py-1.5 pr-2 text-right text-wrong">{r.paired.broken}</td>
+              <td className="py-1.5 pr-2 text-right text-wrong-ink">{r.paired.broken}</td>
               {/* One cell, split down the middle: the centre line is zero, and
                   the two halves are the same scale. */}
               {/* A fixed width rather than a percentage: the summary column
@@ -944,7 +944,7 @@ function WaitLedger() {
                   <span className="absolute inset-y-0 left-1/2 w-px bg-ink-muted" />
                 </div>
               </td>
-              <td className="py-1.5 pl-2 text-correct">{r.paired.fixed}</td>
+              <td className="py-1.5 pl-2 text-correct-ink">{r.paired.fixed}</td>
               <td className="py-1.5 pl-6 text-ink-muted">
                 {pct(r.first.accuracy)} → {pct(r.last.accuracy)} · {pct(r.last.churn)} of answers
                 moved · ×{(r.last.mean_tokens / r.first.mean_tokens).toFixed(1)} the tokens ·{" "}
@@ -1006,7 +1006,7 @@ function ReallocationChart() {
       <text
         x={RA_IW + 8}
         y={longY + rowH / 2 + 4}
-        className="fill-compute text-[12px] font-semibold tabular-nums"
+        className="fill-compute-ink text-[12px] font-semibold tabular-nums"
       >
         {pct(H.accuracy_at_max)} solved
       </text>
@@ -1214,7 +1214,7 @@ export function Page6() {
           line used to sit here as a colophon; it belongs to the notebook and is
           left to it. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
         <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
@@ -1294,7 +1294,7 @@ export function Page6() {
                 not allowed to, then our intervention, then what it committed
                 to. Four zones, four tints, and the greyed one is the point. */}
             <div className="flex flex-col rounded-lg border border-grid bg-surface-raised">
-              <p className="border-b border-dashed border-grid px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide text-ink-muted">
+              <p className="border-b border-dashed border-grid px-3 py-1.5 font-mono text-[10px] font-eyebrow uppercase tracking-wide text-ink-muted">
                 the model →
               </p>
               <div
@@ -1304,7 +1304,7 @@ export function Page6() {
                 <span className="whitespace-pre-wrap text-ink">{tidyMath(zones.own)}</span>
                 {zones.wasCut ? (
                   <>
-                    <span ref={cutRef} aria-hidden="true" className="font-semibold text-compute">
+                    <span ref={cutRef} aria-hidden="true" className="font-semibold text-compute-ink">
                       ▌
                     </span>
                     <span className="whitespace-pre-wrap text-ink-muted opacity-40">
@@ -1315,7 +1315,7 @@ export function Page6() {
               </div>
               {zones.wasCut ? (
                 <div className="border-t border-dashed border-grid bg-compute/10 px-3 py-2">
-                  <p className="font-mono text-[10px] uppercase tracking-wide text-compute">
+                  <p className="font-mono text-[10px] font-eyebrow uppercase tracking-wide text-compute-ink">
                     budget spent · we close the block and make it commit
                   </p>
                   {/* The stem is ours and stays verbatim, because it is the
@@ -1328,7 +1328,7 @@ export function Page6() {
                 </div>
               ) : (
                 <div className="border-t border-dashed border-grid px-3 py-2">
-                  <p className="font-mono text-[10px] uppercase tracking-wide text-ink-muted">
+                  <p className="font-mono text-[10px] font-eyebrow uppercase tracking-wide text-ink-muted">
                     it stopped at {run.ownTokens} tokens, inside the budget · nothing was cut and
                     nothing was forced
                   </p>
@@ -1339,7 +1339,7 @@ export function Page6() {
             <div className="flex flex-wrap items-center gap-3">
               <span
                 className={`rounded-lg border-l-4 px-3 py-1.5 text-sm font-semibold ${
-                  run.correct ? "border-correct bg-correct/15 text-correct" : "border-wrong bg-wrong/15 text-wrong"
+                  run.correct ? "border-correct bg-correct/15 text-correct-ink" : "border-wrong bg-wrong/15 text-wrong-ink"
                 }`}
               >
                 {run.correct ? "✓ graded correct" : "✗ graded wrong"}
@@ -1364,7 +1364,7 @@ export function Page6() {
                 index into a sort the reader cannot see, which is what the old
                 strip's buttons did. */}
             <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                 or run a different problem · {F3.clickableRowIds.length} of these ship with their
                 full traces
               </p>
@@ -1388,7 +1388,7 @@ export function Page6() {
                       onClick={() => onRow(id)}
                       className={`rounded border px-2 py-1 text-xs ${
                         active
-                          ? "border-compute bg-compute text-canvas"
+                          ? "border-compute bg-compute text-ink"
                           : "border-grid bg-surface-raised text-ink-muted"
                       }`}
                     >
@@ -1455,7 +1455,7 @@ export function Page6() {
             <BudgetCurve budgetIndex={curveBudget} onBudget={onCurveBudget} />
             <div className="flex flex-wrap items-end gap-x-6 gap-y-2">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                   at {B[curveBudget]} tokens, {F2.primary.label.replace("Qwen2.5-", "")} solves
                 </p>
                 <p className="font-mono text-3xl tabular-nums text-ink">
@@ -1464,7 +1464,7 @@ export function Page6() {
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                   tokens generated to get there
                 </p>
                 <p className="font-mono text-3xl tabular-nums text-ink">
@@ -1476,7 +1476,7 @@ export function Page6() {
               </p>
             </div>
             <p className="border-t border-dashed border-grid pt-3 text-xs text-ink-muted">
-              <span className="font-semibold uppercase tracking-wide">the procedure</span> ·{" "}
+              <span className="font-semibold font-eyebrow uppercase tracking-wide">the procedure</span> ·{" "}
               {PAGE6.procedure}
             </p>
           </section>
@@ -1544,7 +1544,7 @@ export function Page6() {
                 question from the strip above (how much do problems DIFFER in
                 what they need) and it deserves to be legible. */}
             <div className="flex flex-col gap-1.5 border-t border-dashed border-grid pt-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+              <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                 and where each problem first grades correct
               </p>
               {[...B.map((b) => [String(b), F3.histogram[String(b)] ?? 0] as const), ["never", F3.neverFlipCount] as const].map(
@@ -1647,7 +1647,7 @@ export function Page6() {
                 {/* What the three accuracy lines were for, drawn as the widths
                     of the two things that crossed. */}
                 <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                     and the same crossing on all three checkpoints
                   </p>
                   <WaitLedger />

@@ -625,7 +625,7 @@ export function LineChart({
             <text
               x={x(markerPoint.x) + 4}
               y={12}
-              className="fill-compute text-[10px] font-semibold"
+              className="fill-compute-ink text-[10px] font-semibold"
             >
               {markerRuleLabel}
             </text>
@@ -706,7 +706,7 @@ export function LineChart({
                       x={bx + w / 2}
                       y={by + h / 2 + 4}
                       textAnchor="middle"
-                      className="fill-canvas text-[11px] font-semibold"
+                      className="fill-ink text-[11px] font-semibold"
                     >
                       {label}
                     </text>
@@ -741,7 +741,7 @@ export function LineChart({
                   y={(y1 + y2) / 2}
                   dy="0.32em"
                   textAnchor={atRightEdge ? "end" : "start"}
-                  className={`${up ? "fill-correct" : "fill-wrong"} text-[10px] font-semibold`}
+                  className={`${up ? "fill-correct-ink" : "fill-wrong-ink"} text-[10px] font-semibold`}
                 >
                   {up ? "+" : ""}
                   {delta} pts

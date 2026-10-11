@@ -109,7 +109,7 @@ function andList(items: string[]): string {
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -232,7 +232,7 @@ function SpecimenPanel({ onOpen }: { onOpen: (sampleIndex: number) => void }) {
               x={-8}
               y={y + 4}
               textAnchor="end"
-              className={`text-[11px] ${correct ? "fill-correct" : "fill-ink-muted"}`}
+              className={`text-[11px] ${correct ? "fill-correct-ink" : "fill-ink-muted"}`}
             >
               {(() => {
                 const t = tidyMath(cls);
@@ -376,7 +376,7 @@ function CurvePanel() {
           <text
             x={x(dip.n) + 7}
             y={y(dip.accuracy) + 11}
-            className="fill-compute text-[9px]"
+            className="fill-compute-ink text-[9px]"
           >
             ties
           </text>
@@ -424,10 +424,10 @@ function PairedFigure() {
         `build on is the only rule that broke more than it fixed.`
       }
     >
-      <text x={innerW / 2 + 40} y={-10} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
+      <text x={innerW / 2 + 40} y={-10} textAnchor="middle" className="fill-correct-ink text-[11px] font-semibold">
         fixed
       </text>
-      <text x={innerW / 2 - 40} y={-10} textAnchor="middle" className="fill-wrong text-[11px] font-semibold">
+      <text x={innerW / 2 - 40} y={-10} textAnchor="middle" className="fill-wrong-ink text-[11px] font-semibold">
         broke
       </text>
       {rows.map((r, i) => {
@@ -529,7 +529,7 @@ function JudgeFigure() {
         strokeWidth={1.25}
         strokeDasharray="4 3"
       />
-      <text x={x(PAGE8.bar.mean)} y={-8} textAnchor="middle" className="fill-compute text-[10px]">
+      <text x={x(PAGE8.bar.mean)} y={-8} textAnchor="middle" className="fill-compute-ink text-[10px]">
         majority vote, {pct(PAGE8.bar.mean)}
       </text>
       {[0.5, 0.6, 0.7, 0.8].map((g) => (
@@ -541,7 +541,7 @@ function JudgeFigure() {
         const y = cy(i);
         // Written out rather than interpolated: Tailwind only ships classes it
         // can find whole in the source.
-        const tone = j.trained ? "fill-correct" : "fill-ink-muted";
+        const tone = j.trained ? "fill-correct-ink" : "fill-ink-muted";
         return (
           <g key={j.name}>
             {/* A hairline from the name to its range, so the eye does not have
@@ -620,7 +620,7 @@ export function Page8() {
           the first thing on the page after the title row is the way to
           re-derive all of it. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
         <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
@@ -675,13 +675,13 @@ export function Page8() {
             <p className="text-sm text-ink">{tidyMath(s.question)}</p>
             <p className="text-xs text-ink-muted">
               {s.n} chains. The vote takes the longest row:{" "}
-              <strong className="text-wrong">
+              <strong className="text-wrong-ink">
                 {tidyMath(s.vote.answer ?? "no answer")} on {s.vote.votes} of {s.n}
               </strong>
               , and it is wrong. The <strong className="text-ink">verifier</strong>, a second model
               trained to score finished solutions rather than to write them
               <Cite n={REF.cobbe} />, takes the rightmost dot:{" "}
-              <strong className="text-correct">{tidyMath(s.verifier.answer ?? "")}</strong>, which
+              <strong className="text-correct-ink">{tidyMath(s.verifier.answer ?? "")}</strong>, which
               is right. The answer is {tidyMath(s.ground_truth)}.
             </p>
             <div className="grid gap-4 lg:grid-cols-2">
@@ -726,7 +726,7 @@ export function Page8() {
               <div className="rounded border border-grid bg-surface-raised p-3">
                 <p className="text-xs text-ink-muted">
                   chain {chain.sample_index} · answer{" "}
-                  <span className={chain.correct ? "text-correct" : "text-wrong"}>
+                  <span className={chain.correct ? "text-correct-ink" : "text-wrong-ink"}>
                     {tidyMath(chain.answer ?? "none")}
                   </span>{" "}
                   · {chain.chars.toLocaleString()} characters · the verifier scored it{" "}
@@ -832,7 +832,7 @@ export function Page8() {
               </strong>
               . This run shows that the best solver on the ladder (the {bestSolver?.label}) ranked
               last as a judge, and the only judge whose mean sits above the vote is the{" "}
-              <strong className="text-correct">{trained?.label}</strong>, which ironically cannot
+              <strong className="text-correct-ink">{trained?.label}</strong>, which ironically cannot
               solve any of these problems on its own.
             </figcaption>
             {/* The confound the ladder cannot show, and the run keeps a gate

@@ -72,8 +72,8 @@ const REF = { winobias: 1 } as const;
  * question.
  */
 const PAIR_STYLES = {
-  country: "bg-correct/15 text-correct",
-  count: "bg-compute/15 text-compute",
+  country: "bg-correct/15 text-correct-ink",
+  count: "bg-compute/15 text-compute-ink",
   cup: "bg-ink/10 text-ink",
 } as const;
 const PAIR_PATTERN = /(\bSpain\b|How many|\bnot\b|\bonce\b|\btwice\b|\bthree\b|FIFA World Cups?)/;
@@ -248,7 +248,7 @@ function IdealAnswer() {
       aria-label="The ideal answer"
       className="flex flex-col gap-2 rounded-lg border border-grid bg-canvas p-3"
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
         the ideal answer
       </p>
       {/* Set like the chat reply in section 1: model icon, monospace, paired highlights. */}
@@ -267,7 +267,7 @@ function IdealAnswer() {
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -278,7 +278,7 @@ export function Page2() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">

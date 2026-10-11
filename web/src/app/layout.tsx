@@ -1,18 +1,33 @@
 import type { Metadata } from "next";
-import { Source_Serif_4 } from "next/font/google";
+import { IBM_Plex_Mono, Lora, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ProgressRail } from "@/components/ProgressRail";
 import { KeyboardNav } from "@/components/KeyboardNav";
 import { KeyboardHint } from "@/components/KeyboardHint";
 import { SubmissionFooter } from "@/components/SubmissionFooter";
 
-// Broadsheet's typeface — self-hosted by next/font (runtime stays offline-capable),
-// with the true italic loaded for emphasis and pull quotes.
+// The style guide's type stack, all self-hosted by next/font (the runtime stays
+// offline-capable). Body: Source Serif 4, a long-form serif, with the true
+// italic for emphasis and pull quotes. Headings: Lora, the guide's free
+// editorial serif (Anthropic Serif and Tiempos are not freely licensed).
+// Eyebrows, metadata and code: IBM Plex Mono, standing in for Anthropic Mono.
 const serif = Source_Serif_4({
   subsets: ["latin"],
   weight: ["400", "600", "700"],
   style: ["normal", "italic"],
   variable: "--font-serif",
+  display: "swap",
+});
+const heading = Lora({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-heading",
+  display: "swap",
+});
+const mono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-eyebrow",
   display: "swap",
 });
 
@@ -56,7 +71,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={serif.variable}>
+    <html lang="en" className={`${serif.variable} ${heading.variable} ${mono.variable}`}>
       <body className="min-h-screen bg-canvas text-ink antialiased">
         <KeyboardNav />
         <ProgressRail />

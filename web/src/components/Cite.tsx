@@ -105,7 +105,7 @@ function CiteNumber({ k }: { k: number }) {
         onMouseLeave={close}
         onFocus={open}
         onBlur={close}
-        className="text-compute no-underline hover:underline focus-visible:underline"
+        className="text-compute-ink no-underline hover:underline focus-visible:underline"
       >
         {/* Without this a screen reader announces a bare digit mid-sentence. */}
         <span className="sr-only">reference </span>
@@ -121,7 +121,7 @@ function CiteNumber({ k }: { k: number }) {
               style={{ top: popover.top, left: popover.left, width: POPOVER_WIDTH }}
               className="fixed z-50 flex gap-2 rounded-lg border border-grid bg-canvas p-3 text-left text-sm font-normal leading-snug text-ink-muted shadow-xl shadow-ink/15"
             >
-              <span className="font-semibold text-compute">{k}.</span>
+              <span className="font-semibold text-compute-ink">{k}.</span>
               {/* The page's own References entry, cloned: app-authored markup, not user input. */}
               <div className="min-w-0" dangerouslySetInnerHTML={{ __html: popover.html }} />
             </div>,
@@ -163,7 +163,7 @@ export function RefItem({
       // indent), so the two always start on the same line.
       className="flex gap-1.5 scroll-mt-24 -mx-1.5 rounded px-1.5 py-0.5 transition-colors target:bg-compute/10"
     >
-      <span className="shrink-0 font-semibold text-compute">{n}.</span>
+      <span className="shrink-0 font-semibold text-compute-ink">{n}.</span>
       <span className="min-w-0 break-words">
         {href ? (
           <a
@@ -180,7 +180,7 @@ export function RefItem({
         {preprint ? (
           <>
             {" "}
-            <span className="inline-block rounded bg-wrong/20 px-1.5 text-[10px] font-semibold text-wrong">
+            <span className="inline-block rounded bg-wrong/20 px-1.5 text-[10px] font-semibold text-wrong-ink">
               preprint
             </span>
           </>

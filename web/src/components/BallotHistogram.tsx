@@ -23,7 +23,7 @@ export function BallotHistogram({ ballot }: { ballot: Ballot }) {
             <div className="relative h-5 flex-1 rounded bg-surface-raised">
               <div
                 className={`h-5 rounded ${isCorrect ? "bg-correct" : "bg-grid"} ${
-                  isWinner ? "ring-2 ring-compute" : ""
+                  isWinner ? "ring-2 ring-compute-ink" : ""
                 }`}
                 style={{ width: `${(count / total) * 100}%` }}
               />

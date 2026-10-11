@@ -32,7 +32,7 @@ export function ChapterMenu() {
           <span className="tabular-nums text-ink-muted">{String(p.n).padStart(2, "0")}</span>
           <span
             className={
-              here ? "font-semibold text-compute" : "text-ink group-hover:underline"
+              here ? "font-semibold text-compute-ink" : "text-ink group-hover:underline"
             }
           >
             {p.title}
@@ -49,7 +49,7 @@ export function ChapterMenu() {
     >
       {acts.map((act) => (
         <div key={act} className="flex flex-col gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.15em] text-ink-muted">
+          <h2 className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
             Act {act} · {ACTS[act].title}
           </h2>
           <ol className="flex flex-col gap-1">

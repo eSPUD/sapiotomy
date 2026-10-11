@@ -73,7 +73,7 @@ const REF = { snell: 1, monkeys: 2, wu: 3, resample: 4 } as const;
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -123,14 +123,14 @@ function ArtFourX() {
         strokeWidth="1"
         strokeDasharray="3 2"
       />
-      <circle cx="26" cy="14" r="3" className="fill-current text-correct" />
-      <circle cx="70" cy="14" r="3" className="fill-current text-correct" />
+      <circle cx="26" cy="14" r="3" className="fill-current text-correct-ink" />
+      <circle cx="70" cy="14" r="3" className="fill-current text-correct-ink" />
       {/* the samples each run drew to get there: 16 dots vs 4, the same 4:1 */}
       {cluster(26, 4, 4).map((d) => (
-        <circle key={`a${d.x}-${d.y}`} cx={d.x} cy={d.y} r="2" className="fill-current text-compute" />
+        <circle key={`a${d.x}-${d.y}`} cx={d.x} cy={d.y} r="2" className="fill-current text-compute-ink" />
       ))}
       {cluster(70, 2, 2).map((d) => (
-        <circle key={`b${d.x}-${d.y}`} cx={d.x} cy={d.y} r="2" className="fill-current text-compute" />
+        <circle key={`b${d.x}-${d.y}`} cx={d.x} cy={d.y} r="2" className="fill-current text-compute-ink" />
       ))}
       <text x="26" y="54" textAnchor="middle" fontSize="7" className="fill-current text-ink">
         256 samples
@@ -152,7 +152,7 @@ function ArtFourteenX() {
         the same FLOPs bill
       </text>
       {/* left: paid in samples — 14 thin slices of thinking from the 1× model */}
-      <rect x="17" y={barY} width="18" height={barH} className="fill-current text-compute/25" />
+      <rect x="17" y={barY} width="18" height={barH} className="fill-current text-compute-ink/25" />
       {Array.from({ length: 13 }, (_, i) => (
         <line
           key={i}
@@ -164,7 +164,7 @@ function ArtFourteenX() {
           strokeWidth="0.8"
         />
       ))}
-      <rect x="17" y={barY} width="18" height={barH} className="stroke-current text-compute" fill="none" strokeWidth="1.2" />
+      <rect x="17" y={barY} width="18" height={barH} className="stroke-current text-compute-ink" fill="none" strokeWidth="1.2" />
       <text x="26" y="53" textAnchor="middle" fontSize="6.5" className="fill-current text-ink">
         1× + thinking
       </text>
@@ -185,7 +185,7 @@ function ArtFourteenX() {
 function ArtRatioR() {
   return (
     <svg viewBox="0 0 128 56" className="h-full w-full" aria-hidden="true">
-      <text x="64" y="14" textAnchor="middle" fontSize="10" className="fill-current text-wrong">
+      <text x="64" y="14" textAnchor="middle" fontSize="10" className="fill-current text-wrong-ink">
         R
       </text>
       <line x1="14" y1="26" x2="114" y2="26" className="stroke-current text-ink-muted" strokeWidth="1" />
@@ -197,7 +197,7 @@ function ArtRatioR() {
       <text x="114" y="20" textAnchor="end" fontSize="7" className="fill-current text-ink-muted">
         → ∞
       </text>
-      <text x="4" y="38" fontSize="7" className="fill-current text-correct">
+      <text x="4" y="38" fontSize="7" className="fill-current text-correct-ink">
         thinking wins
       </text>
       <text x="124" y="38" textAnchor="end" fontSize="7" className="fill-current text-ink">
@@ -388,7 +388,7 @@ function MeasuredGame({ band, model, nIdx }: { band: Band; model: SmallModel; nI
 
       {/* coverage: the answer was reachable this often, the ceiling selection cannot hit */}
       <path d={covPath} fill="none" className="stroke-correct" strokeWidth={1.5} strokeDasharray="1 3" opacity={0.85} />
-      <text x={x(last.xTarget) - 3} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct text-[10px] font-semibold">
+      <text x={x(last.xTarget) - 3} y={y(last.coverage) - 6} textAnchor="end" className="fill-correct-ink text-[10px] font-semibold">
         coverage {PAGE11.pct(last.coverage)}%
       </text>
 
@@ -422,7 +422,7 @@ function MeasuredGame({ band, model, nIdx }: { band: Band; model: SmallModel; nI
           x={x(last.xTarget) + 8}
           y={px((y(last.accuracy) + y(last.coverage)) / 2) - 4}
           textAnchor="start"
-          className="fill-correct text-[9px] font-semibold"
+          className="fill-correct-ink text-[9px] font-semibold"
         >
           found, not selected
         </text>
@@ -430,7 +430,7 @@ function MeasuredGame({ band, model, nIdx }: { band: Band; model: SmallModel; nI
           x={x(last.xTarget) + 8}
           y={px((y(last.accuracy) + y(last.coverage)) / 2) + 6}
           textAnchor="start"
-          className="fill-correct text-[9px]"
+          className="fill-correct-ink text-[9px]"
         >
           {gapPts} points
         </text>
@@ -599,7 +599,7 @@ function PythiaChart() {
       stroke: "stroke-correct-bright",
       fill: "fill-correct-bright",
       band: "fill-correct-bright",
-      text: "fill-correct",
+      text: "fill-correct-ink",
     },
     {
       label: "2.8B",
@@ -607,7 +607,7 @@ function PythiaChart() {
       stroke: "stroke-compute-bright",
       fill: "fill-compute-bright",
       band: "fill-compute-bright",
-      text: "fill-compute",
+      text: "fill-compute-ink",
     },
     {
       label: "12B",
@@ -615,7 +615,7 @@ function PythiaChart() {
       stroke: "stroke-wrong-bright",
       fill: "fill-wrong-bright",
       band: "fill-wrong-bright",
-      text: "fill-wrong",
+      text: "fill-wrong-ink",
     },
   ];
 
@@ -1018,7 +1018,7 @@ export function Page11() {
       {/* The download shares the top line with the act kicker, as on page 5:
           the first thing after the title row is the way to re-derive all of it. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
         <a
@@ -1156,7 +1156,7 @@ export function Page11() {
             </div>
 
             <div className="rounded border-l-4 border-wrong bg-wrong/15 p-3 text-sm" role="status">
-              <p className="font-semibold text-wrong">
+              <p className="font-semibold text-wrong-ink">
                 {model} {marker.greedy ? "greedy" : `vote@${marker.n}`}:{" "}
                 {PAGE11.pct(marker.accuracy)}%, still {gapPts} point
                 {gapPts === 1 ? "" : "s"} under the {band.target.label}&rsquo;s{" "}
@@ -1234,16 +1234,16 @@ export function Page11() {
           </p>
           <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              <LawPanel head="4×" headTone="text-correct" title="fewer samples than best-of-N" art={<ArtFourX />}>
+              <LawPanel head="4×" headTone="text-correct-ink" title="fewer samples than best-of-N" art={<ArtFourX />}>
                 best-of-N spends 256 samples on every question, easy or hard. Guess the difficulty
                 first and spend accordingly, and 64 samples buy the same accuracy
               </LawPanel>
-              <LawPanel head="14×" headTone="text-correct" title="the parameters, matched on FLOPs" art={<ArtFourteenX />}>
+              <LawPanel head="14×" headTone="text-correct-ink" title="the parameters, matched on FLOPs" art={<ArtFourteenX />}>
                 give both sides the same FLOPs bill: the 1× model buys 14 answers&rsquo; worth of
                 thinking, the 14× model buys one greedy answer. The thinker scores higher, on
                 problems it can already sometimes solve
               </LawPanel>
-              <LawPanel head="R" headTone="text-wrong" title="decides the regime" art={<ArtRatioR />}>
+              <LawPanel head="R" headTone="text-wrong-ink" title="decides the regime" art={<ArtRatioR />}>
                 R = tokens you will serve ÷ tokens you trained on. Pretraining is bought once, and
                 its cost is spread over every query you ever answer. Thinking is a surcharge on each
                 one. Serve little (R → 0) and thinking wins; serve billions (R → ∞) and parameters

@@ -15,9 +15,9 @@ export interface BigNumberProps {
 }
 
 const toneClass: Record<NonNullable<BigNumberProps["tone"]>, string> = {
-  compute: "text-compute",
-  correct: "text-correct",
-  wrong: "text-wrong",
+  compute: "text-compute-ink",
+  correct: "text-correct-ink",
+  wrong: "text-wrong-ink",
   ink: "text-ink",
 };
 

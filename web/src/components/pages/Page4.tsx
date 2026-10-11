@@ -48,7 +48,7 @@ const fmt = (n: number) => n.toLocaleString("en-US");
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -96,7 +96,7 @@ function StandardPanel({ step }: { step: number }) {
             <div
               key={r.partial}
               className={`flex items-baseline justify-between gap-4 ${
-                shown ? (current ? "text-compute" : "") : "text-ink-muted"
+                shown ? (current ? "text-compute-ink" : "") : "text-ink-muted"
               }`}
             >
               <span className="text-xs text-ink-muted">
@@ -108,7 +108,7 @@ function StandardPanel({ step }: { step: number }) {
         })}
         <div
           className={`flex items-baseline justify-between gap-4 border-t border-ink pt-1 ${
-            done ? "font-bold text-correct" : "text-ink-muted"
+            done ? "font-bold text-correct-ink" : "text-ink-muted"
           }`}
         >
           <span className="text-xs text-ink-muted">sum</span>
@@ -243,7 +243,7 @@ function LinesPanel({ step }: { step: number }) {
               y={LG.H - 8}
               textAnchor="middle"
               className={`text-[13px] font-semibold ${
-                revealed ? (currentK === kk ? "fill-compute" : "fill-ink") : "fill-ink-muted"
+                revealed ? (currentK === kk ? "fill-compute-ink" : "fill-ink") : "fill-ink-muted"
               }`}
             >
               {revealed ? d.sum : "?"}
@@ -251,7 +251,7 @@ function LinesPanel({ step }: { step: number }) {
           );
         })}
       </svg>
-      <p className={`font-mono text-lg ${done ? "font-bold text-correct" : "text-ink-muted"}`}>
+      <p className={`font-mono text-lg ${done ? "font-bold text-correct-ink" : "text-ink-muted"}`}>
         {done ? `carry the columns → ${P.display}` : "carry the columns → ?"}
       </p>
     </div>
@@ -306,7 +306,7 @@ function VedicPanel({ step }: { step: number }) {
           {col.pairs.map(([x, y]) => `${x}×${y}`).join(" + ")} = {col.sum}
           {col.carryIn > 0 ? ` · +carry ${col.carryIn} = ${col.sum + col.carryIn}` : ""}
           {col.carryOut > 0 ? (
-            <span className="ml-2 rounded-full border border-compute px-2 py-0.5 text-xs text-compute">
+            <span className="ml-2 rounded-full border border-compute px-2 py-0.5 text-xs text-compute-ink">
               carry {col.carryOut}
             </span>
           ) : null}
@@ -328,7 +328,7 @@ function VedicPanel({ step }: { step: number }) {
           </span>
         ))}
       </div>
-      <p className={`font-mono text-lg ${done ? "font-bold text-correct" : "sr-only"}`}>
+      <p className={`font-mono text-lg ${done ? "font-bold text-correct-ink" : "sr-only"}`}>
         {done ? `= ${P.display}` : ""}
       </p>
     </div>
@@ -403,7 +403,7 @@ export function Page4() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">
@@ -466,7 +466,7 @@ export function Page4() {
                 type="button"
                 onClick={() => go(step + 1)}
                 disabled={step >= maxStep}
-                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
               >
                 Next ▸
               </button>
@@ -475,7 +475,7 @@ export function Page4() {
                   type="button"
                   onClick={play}
                   disabled={playing || step >= maxStep}
-                  className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute disabled:opacity-50"
+                  className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute-ink disabled:opacity-50"
                 >
                   ▶ Play
                 </button>
@@ -486,7 +486,7 @@ export function Page4() {
             </div>
 
             <p className="min-h-[1.5rem] text-ink">
-              {step >= maxStep ? <span aria-hidden="true" className="text-correct">✓ </span> : null}
+              {step >= maxStep ? <span aria-hidden="true" className="text-correct-ink">✓ </span> : null}
               {narration}
             </p>
 
@@ -520,11 +520,11 @@ export function Page4() {
                   key={m.key}
                   className="flex flex-col rounded-lg border-l-4 border-grid bg-surface p-4"
                 >
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                     {m.name}
                   </p>
                   <p className="mt-2 text-sm text-ink-muted">
-                    <strong className="text-wrong">Trade-off:</strong> {m.limitation}
+                    <strong className="text-wrong-ink">Trade-off:</strong> {m.limitation}
                   </p>
                 </div>
               ))}

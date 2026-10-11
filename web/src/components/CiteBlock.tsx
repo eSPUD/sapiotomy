@@ -47,14 +47,14 @@ export function CiteBlock({
           <button
             type="button"
             onClick={copy}
-            className="rounded bg-compute px-3 py-1.5 text-xs font-semibold text-canvas transition-opacity hover:opacity-90"
+            className="rounded bg-compute px-3 py-1.5 text-xs font-semibold text-ink transition-opacity hover:opacity-90"
           >
             {copied ? "Copied ✓" : "Copy citation"}
           </button>
           <button
             type="button"
             onClick={download}
-            className="rounded border border-compute px-3 py-1.5 text-xs font-semibold text-compute transition-colors hover:bg-compute/10"
+            className="rounded border border-compute px-3 py-1.5 text-xs font-semibold text-compute-ink transition-colors hover:bg-compute/10"
           >
             Download .bib
           </button>

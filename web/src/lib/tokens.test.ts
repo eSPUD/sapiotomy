@@ -35,12 +35,51 @@ describe("design tokens", () => {
     expect(tokens.ink).toMatch(HEX);
   });
 
-  it("the bright chart hues stay AA against the paper ground", () => {
-    // Chart lines are drawn in these, and the readouts beside them reuse the
-    // same hue as text, so 4.5:1 is the bar to hold, not the 3:1 graphics floor.
+  it("uses the style guide's colours for the neutrals and the three accents", () => {
+    expect(tokens.ink).toBe("#141413"); // Slate Dark
+    expect(tokens.canvas).toBe("#faf9f5"); // Ivory Light
+    expect(tokens.surface).toBe("#f0eee6"); // Ivory Medium
+    expect(tokens.grid).toBe("#cccbc8"); // Cloud
+    expect(tokens.compute).toBe("#d97757"); // Clay
+    expect(tokens.correct).toBe("#788c5d"); // Cactus
+    expect(tokens.wrong).toBe("#6a9bcc"); // Sky
+    expect(tokens.computeBright).toBe("#c6613f"); // Clay deep
+  });
+
+  it("each accent's ink step is AA text on canvas, Ivory Medium, Oat and its own pale tint", () => {
+    const tint = (hex: string, t: number) =>
+      "#" +
+      [1, 3, 5]
+        .map((i) =>
+          Math.round(parseInt(hex.slice(i, i + 2), 16) * t + parseInt(tokens.canvas.slice(i, i + 2), 16) * (1 - t))
+            .toString(16)
+            .padStart(2, "0"),
+        )
+        .join("");
+    const pairs = [
+      [tokens.computeInk, tokens.compute],
+      [tokens.correctInk, tokens.correct],
+      [tokens.wrongInk, tokens.wrong],
+    ] as const;
+    for (const [ink, fill] of pairs) {
+      expect(ink).toMatch(HEX);
+      for (const ground of [tokens.canvas, tokens.surface, tokens.surfaceRaised, tint(fill, 0.2)]) {
+        expect(contrast(ink, ground)).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+
+  it("Slate Dark text stays AA on every accent fill", () => {
+    for (const fill of [tokens.compute, tokens.correct, tokens.wrong]) {
+      expect(contrast(tokens.ink, fill)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("the chart line steps clear the 3:1 graphics floor on canvas and Ivory Medium", () => {
     for (const hue of [tokens.computeBright, tokens.wrongBright, tokens.correctBright]) {
       expect(hue).toMatch(HEX);
-      expect(contrast(hue, tokens.canvas)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(hue, tokens.canvas)).toBeGreaterThanOrEqual(3);
+      expect(contrast(hue, tokens.surface)).toBeGreaterThanOrEqual(3);
     }
   });
 
@@ -52,14 +91,16 @@ describe("design tokens", () => {
     expect(contrast(tokens.size1, tokens.surface)).toBeGreaterThanOrEqual(2);
   });
 
-  it("each bright hue is brighter than the ink-weight one it stands in for", () => {
-    expect(relativeLuminance(tokens.computeBright)).toBeGreaterThan(
-      relativeLuminance(tokens.compute),
-    );
-    expect(relativeLuminance(tokens.wrongBright)).toBeGreaterThan(relativeLuminance(tokens.wrong));
-    expect(relativeLuminance(tokens.correctBright)).toBeGreaterThan(
-      relativeLuminance(tokens.correct),
-    );
+  it("each line step sits between its fill and its ink step", () => {
+    const pairs = [
+      [tokens.compute, tokens.computeBright, tokens.computeInk],
+      [tokens.correct, tokens.correctBright, tokens.correctInk],
+      [tokens.wrong, tokens.wrongBright, tokens.wrongInk],
+    ] as const;
+    for (const [fill, line, ink] of pairs) {
+      expect(relativeLuminance(line)).toBeLessThan(relativeLuminance(fill));
+      expect(relativeLuminance(line)).toBeGreaterThan(relativeLuminance(ink));
+    }
   });
 });
 

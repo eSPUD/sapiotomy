@@ -151,7 +151,7 @@ function Note({
 }) {
   return (
     <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${tight ? "" : "lg:pt-9"}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -268,7 +268,7 @@ export function Page3() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">
@@ -349,7 +349,7 @@ export function Page3() {
                   totals, which the heading has to say: a bare "$17.9B" reads just
                   as easily as a daily or per-run price. */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                   total spent after {months} {months === 1 ? "month" : "months"}
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -360,7 +360,7 @@ export function Page3() {
                     <p className="text-xs text-ink-muted">
                       its price climbs ×{tp.perYear} a year, so the total curves upward
                     </p>
-                    <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-wrong-bright">
+                    <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-wrong-ink">
                       {fmtM(frontierAtM)}
                     </p>
                   </div>
@@ -371,7 +371,7 @@ export function Page3() {
                     <p className="text-xs text-ink-muted">
                       a flat ${RUN_M}M a run, so the total climbs in a straight line
                     </p>
-                    <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-compute-bright">
+                    <p className="mt-auto font-mono text-2xl font-bold tabular-nums text-compute-ink">
                       {fmtM(sameAtM)}
                     </p>
                   </div>
@@ -461,7 +461,7 @@ export function Page3() {
                       href={m.source.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-compute underline"
+                      className="text-compute-ink underline"
                     >
                       {m.source.label}
                     </a>
@@ -532,7 +532,7 @@ export function Page3() {
                 <strong className="text-ink">{fmtYM(proj.t)}</strong>:{" "}
                 <strong className="text-ink">≈{fmtT(proj.med)}</strong> tokens,{" "}
                 {proj.med >= PP.stockTrillionTokens ? (
-                  <strong className="text-wrong-bright">more than all quality text</strong>
+                  <strong className="text-wrong-ink">more than all quality text</strong>
                 ) : (
                   <>{((100 * proj.med) / PP.stockTrillionTokens).toFixed(0)}% of all quality text</>
                 )}

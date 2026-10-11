@@ -157,7 +157,7 @@ const TIED_WITH_HOT = [...F2.diversity]
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -189,7 +189,7 @@ function Tally({ onOpen, open }: { onOpen: (a: string) => void; open: string | n
             >
               <span
                 className={`w-24 shrink-0 truncate font-mono text-xs ${
-                  row.correct ? "text-correct" : "text-ink-muted"
+                  row.correct ? "text-correct-ink" : "text-ink-muted"
                 }`}
                 title={row.answer}
               >
@@ -293,7 +293,7 @@ function PileChart({ at }: { at: number }) {
       <path d={band} className="fill-wrong opacity-10" />
 
       <path d={line((p) => p.coverage)} fill="none" className="stroke-wrong" strokeWidth={1.4} strokeDasharray="4 3" />
-      <text x={IW + 6} y={y(last.coverage * 100) - 2} className="fill-wrong text-[10px]">
+      <text x={IW + 6} y={y(last.coverage * 100) - 2} className="fill-wrong-ink text-[10px]">
         <tspan x={IW + 6} dy="0">at least one</tspan>
         <tspan x={IW + 6} dy="11">chain is right</tspan>
       </text>
@@ -302,7 +302,7 @@ function PileChart({ at }: { at: number }) {
       {pts.map((p) => (
         <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy * 100)} r={3.4} className="fill-compute" />
       ))}
-      <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute text-[10px] font-semibold">
+      <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute-ink text-[10px] font-semibold">
         <tspan x={IW + 6} dy="0">the vote returns</tspan>
         <tspan x={IW + 6} dy="11">the answer</tspan>
       </text>
@@ -318,7 +318,7 @@ function PileChart({ at }: { at: number }) {
         x={x(pts[Math.max(pts.length - 2, 0)].n)}
         y={(y(last.coverage * 100) + y(last.accuracy * 100)) / 2}
         textAnchor="middle"
-        className="fill-wrong text-[10px] font-semibold"
+        className="fill-wrong-ink text-[10px] font-semibold"
       >
         generated, then thrown away
       </text>
@@ -459,13 +459,13 @@ function ForkChart() {
         </text>
       ) : null}
 
-      <text x={FIW + 8} y={y((lastFree?.accuracy ?? 0) * 100) - 3} className="fill-compute text-[10px] font-semibold">
+      <text x={FIW + 8} y={y((lastFree?.accuracy ?? 0) * 100) - 3} className="fill-compute-ink text-[10px] font-semibold">
         <tspan x={FIW + 8} dy="0">allowed to finish</tspan>
         <tspan x={FIW + 8} dy="11" className="fill-ink-muted font-normal">
           {tokens(lastFree?.mean_tokens ?? 0)} tokens
         </tspan>
       </text>
-      <text x={FIW + 8} y={y(lastCapped.accuracy * 100) + 3} className="fill-wrong text-[10px] font-semibold">
+      <text x={FIW + 8} y={y(lastCapped.accuracy * 100) + 3} className="fill-wrong-ink text-[10px] font-semibold">
         <tspan x={FIW + 8} dy="0">capped to share</tspan>
         <tspan x={FIW + 8} dy="11" className="fill-ink-muted font-normal">
           {tokens(M.split.budget_total)} tokens
@@ -551,7 +551,7 @@ export function Page7() {
           the first thing on the page after the title row is the way to
           re-derive all of it. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
         <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
@@ -639,7 +639,7 @@ export function Page7() {
                 }`}
               >
                 <p className="text-sm text-ink">
-                  <strong className={openRow.correct ? "text-correct" : "text-wrong"}>
+                  <strong className={openRow.correct ? "text-correct-ink" : "text-wrong-ink"}>
                     {tidyMath(openRow.answer)}
                   </strong>{" "}
                   · {openRow.votes} of {F1.n_chains} chains ·{" "}
@@ -800,7 +800,7 @@ export function Page7() {
             </div>
           </section>
           <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+            <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
               distinct answers among {F2.diversity[0].n_chains} chains, by temperature
             </p>
             <p className="text-xs text-ink-muted">

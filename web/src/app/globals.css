@@ -44,8 +44,9 @@ body {
   overscroll-behavior: none;
 }
 
-/* Headings: the serif scale carries the hierarchy. */
+/* Headings: Lora, the style guide's editorial serif, carries the hierarchy. */
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), Lora, Georgia, serif;
   line-height: 1.12;
   letter-spacing: -0.015em;
 }
@@ -74,6 +75,6 @@ em, i, cite {
 
 /* Themed keyboard focus — the 2px orange ring, never the default blue. */
 :focus-visible {
-  outline: 2px solid theme("colors.compute");
+  outline: 2px solid theme("colors.compute-ink");
   outline-offset: 2px;
 }

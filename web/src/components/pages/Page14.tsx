@@ -223,7 +223,7 @@ const DISTILLS: Distill[] = [
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -323,7 +323,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
                   dy="0.32em"
                   textAnchor="start"
                   stroke="none"
-                  className={`font-mono text-[11px] font-semibold ${up ? "fill-correct" : "fill-wrong"}`}
+                  className={`font-mono text-[11px] font-semibold ${up ? "fill-correct-ink" : "fill-wrong-ink"}`}
                 >
                   {fmtPush(adv)}
                 </text>
@@ -339,7 +339,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
               className={`${right ? "fill-correct" : "fill-wrong"} stroke-canvas`}
               strokeWidth={1.5}
             />
-            <text x={px} y={innerH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] uppercase tracking-wide">
+            <text x={px} y={innerH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] font-eyebrow uppercase tracking-wide">
               sample {i + 1}
             </text>
             <text x={px} y={innerH + 31} textAnchor="middle" className="fill-ink font-mono text-[13px] font-semibold">
@@ -349,7 +349,7 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
               x={px}
               y={innerH + 45}
               textAnchor="middle"
-              className={i === 0 ? "fill-compute text-[10px] font-semibold" : "fill-ink-muted text-[10px]"}
+              className={i === 0 ? "fill-compute-ink text-[10px] font-semibold" : "fill-ink-muted text-[10px]"}
             >
               {i === 0 ? "watch this one" : right ? "" : wrong.slip}
             </text>
@@ -430,7 +430,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
           y={yLen(t)}
           dy="0.32em"
           textAnchor="start"
-          className="fill-compute text-[10px]"
+          className="fill-compute-ink text-[10px]"
         >
           {t === 0 ? "0" : `${t / 1000}k`}
         </text>
@@ -445,7 +445,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
       <text
         transform={`translate(-32,${innerH / 2}) rotate(-90)`}
         textAnchor="middle"
-        className="fill-correct text-xs"
+        className="fill-correct-ink text-xs"
       >
         pass@1 (%)
       </text>
@@ -454,7 +454,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
       <text
         transform={`translate(${innerW + 36},${innerH / 2}) rotate(90)`}
         textAnchor="middle"
-        className="fill-compute text-xs"
+        className="fill-compute-ink text-xs"
       >
         avg response (tokens) · page 11&apos;s test-time compute
       </text>
@@ -481,7 +481,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
         x={innerW * 0.42}
         y={innerH - 24}
         textAnchor="middle"
-        className="fill-compute text-[10px]"
+        className="fill-compute-ink text-[10px]"
       >
         no term in the reward mentions length
       </text>
@@ -489,7 +489,7 @@ function TrainingChart({ step, pass, length }: { step: number; pass: number; len
         x={innerW * 0.42}
         y={innerH - 11}
         textAnchor="middle"
-        className="fill-compute text-[10px] font-semibold"
+        className="fill-compute-ink text-[10px] font-semibold"
       >
         nobody is turning this dial
       </text>
@@ -581,7 +581,7 @@ function SkeletonRow({
             y={mid}
             dy="0.32em"
             textAnchor="middle"
-            className={`text-[9px] ${answerCorrect ? "fill-correct" : "fill-ink-muted"}`}
+            className={`text-[9px] ${answerCorrect ? "fill-correct-ink" : "fill-ink-muted"}`}
           >
             answer
           </text>
@@ -619,7 +619,7 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
         </marker>
       </defs>
 
-      <text x={8} y={14} className="fill-ink-muted text-[9px] uppercase tracking-wide">
+      <text x={8} y={14} className="fill-ink-muted text-[9px] font-eyebrow uppercase tracking-wide">
         {stage === "aha" ? "first pass" : "one pass"}
       </text>
 
@@ -658,7 +658,7 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
             markerEnd="url(#skel-fwd)"
           />
           <rect x={skX(4)} y={22} width={64} height={SK_BLOCK_H} rx={3} fill="none" className="stroke-correct" strokeWidth={1.5} />
-          <text x={skX(4) + 32} y={30} dy="0.32em" textAnchor="middle" className="fill-correct text-[9px] font-semibold">
+          <text x={skX(4) + 32} y={30} dy="0.32em" textAnchor="middle" className="fill-correct-ink text-[9px] font-semibold">
             interrupt
           </text>
 
@@ -670,13 +670,13 @@ function TraceSkeleton({ stage }: { stage: Stage }) {
             strokeWidth={1.5}
             markerEnd="url(#skel-loop)"
           />
-          <text x={160} y={82} textAnchor="middle" className="fill-correct text-[9px]">
+          <text x={160} y={82} textAnchor="middle" className="fill-correct-ink text-[9px]">
             back to line 1
           </text>
 
           {/* second pass: re-derivation, ending in the answer */}
           <SkeletonRow y={96} count={5} dashed answer answerCorrect />
-          <text x={8} y={130} className="fill-ink-muted text-[9px] uppercase tracking-wide">
+          <text x={8} y={130} className="fill-ink-muted text-[9px] font-eyebrow uppercase tracking-wide">
             second pass
           </text>
         </g>
@@ -761,7 +761,7 @@ function DistillDotPlot({ picked, onPick }: { picked: number; onPick: (size: num
         strokeWidth={1}
         strokeDasharray="2 3"
       />
-      <text x={x(P.r1Aime) - 4} y={-8} textAnchor="end" className="fill-correct text-[10px]">
+      <text x={x(P.r1Aime) - 4} y={-8} textAnchor="end" className="fill-correct-ink text-[10px]">
         R1 teacher · {P.r1Aime}%
       </text>
 
@@ -861,7 +861,7 @@ export function Page14() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">
@@ -901,7 +901,7 @@ export function Page14() {
                   <div key={i} className="flex flex-wrap items-baseline gap-x-3">
                     <code className="whitespace-pre text-ink">{line.code}</code>
                     {line.note ? (
-                      <span className="text-xs text-compute">{`# ${line.note}`}</span>
+                      <span className="text-xs text-compute-ink">{`# ${line.note}`}</span>
                     ) : null}
                   </div>
                 ))}
@@ -1016,13 +1016,13 @@ export function Page14() {
               />
               <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
                 <div>
-                  <p className="font-mono text-5xl font-bold tabular-nums text-correct">
+                  <p className="font-mono text-5xl font-bold tabular-nums text-correct-ink">
                     {pass.toFixed(1)}%
                   </p>
                   <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
                 </div>
                 <div>
-                  <p className="font-mono text-2xl font-bold tabular-nums text-compute">
+                  <p className="font-mono text-2xl font-bold tabular-nums text-compute-ink">
                     ≈{length.toLocaleString()}
                   </p>
                   <p className="text-xs text-ink-muted">avg response tokens</p>
@@ -1047,10 +1047,10 @@ export function Page14() {
             {/* the trace, as a shape */}
             <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="text-xs uppercase tracking-wide text-ink-muted">
+                <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
                   the trace, as a shape · {STAGE_CHIP[stage]}
                 </p>
-                <p className="font-mono text-xs tabular-nums text-compute">
+                <p className="font-mono text-xs tabular-nums text-compute-ink">
                   ≈{length.toLocaleString()} tokens
                 </p>
               </div>

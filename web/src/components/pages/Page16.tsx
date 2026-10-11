@@ -232,7 +232,7 @@ function Ladder() {
                   x={x(base) - 4}
                   y={y + h - 3}
                   textAnchor="end"
-                  className="fill-canvas text-[10px] font-semibold"
+                  className="fill-ink text-[10px] font-semibold"
                 >
                   {pct(base)}
                 </text>
@@ -246,7 +246,7 @@ function Ladder() {
               x={x(r.accuracy) + 6}
               y={y + h - 3}
               className={`text-[11px] font-semibold tabular-nums ${
-                r.ceiling ? "fill-wrong" : "fill-ink"
+                r.ceiling ? "fill-wrong-ink" : "fill-ink"
               }`}
             >
               {pct(r.accuracy)}
@@ -275,7 +275,7 @@ export function Page16() {
           This page draws five runs rather than one, so it carries five, but they
           belong in the same place rather than buried under the figure they source. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
         <div className="flex flex-wrap items-center gap-1.5">

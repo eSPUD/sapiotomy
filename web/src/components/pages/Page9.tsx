@@ -107,7 +107,7 @@ const ROLES: { key: string; label: string; kind: string; specimen: Specimen }[] 
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -197,7 +197,7 @@ function BreakCounts() {
               x={i * bw + bw / 2}
               y={B_IH - h - 5}
               textAnchor="middle"
-              className={`text-[11px] font-semibold ${hot ? "fill-compute" : "fill-ink-muted"}`}
+              className={`text-[11px] font-semibold ${hot ? "fill-compute-ink" : "fill-ink-muted"}`}
             >
               {b.count}
             </text>
@@ -308,7 +308,7 @@ export function Page9() {
           re-derive all of it. Full run conditions (decoding, dates, step
           segmentation) are the notebook's to state. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
         <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
@@ -401,12 +401,12 @@ export function Page9() {
                 }}
                 className={`rounded px-3 py-1.5 text-sm ${
                   roleKey === r.key
-                    ? "bg-compute text-canvas"
+                    ? "bg-compute text-ink"
                     : "border border-grid bg-surface text-ink-muted"
                 }`}
               >
                 {r.label}
-                <span className="ml-2 text-xs opacity-80">{r.kind}</span>
+                <span className="ml-2 text-xs">{r.kind}</span>
               </button>
             ))}
           </div>
@@ -439,12 +439,12 @@ export function Page9() {
                     }}
                     className={`flex flex-col rounded px-3 py-1.5 text-left text-sm ${
                       mode === m.key
-                        ? "bg-compute text-canvas"
+                        ? "bg-compute text-ink"
                         : "border border-grid bg-surface-raised text-ink-muted"
                     }`}
                   >
                     <span className="font-semibold">{m.label}</span>
-                    <span className="text-xs opacity-80">{m.sub}</span>
+                    <span className="text-xs">{m.sub}</span>
                   </button>
                 ))}
               </div>
@@ -479,7 +479,7 @@ export function Page9() {
                       }`}
                     >
                       <div className="flex items-start gap-2">
-                        <span className="mt-0.5 font-mono text-xs text-compute">{i + 1}</span>
+                        <span className="mt-0.5 font-mono text-xs text-compute-ink">{i + 1}</span>
                         {mode === "outcome" ? (
                           <span className="flex flex-1 items-center gap-2">
                             <span
@@ -516,7 +516,7 @@ export function Page9() {
                         {shown ? (
                           <span className="flex shrink-0 flex-col items-end gap-1">
                             {myPick === i ? (
-                              <span className="rounded border border-compute px-2 py-0.5 text-xs text-compute">
+                              <span className="rounded border border-compute px-2 py-0.5 text-xs text-compute-ink">
                                 your pick
                               </span>
                             ) : null}
@@ -525,8 +525,8 @@ export function Page9() {
                               <span
                                 className={`rounded px-2 py-0.5 text-xs font-semibold ${
                                   step.check === "true"
-                                    ? "bg-correct/25 text-correct"
-                                    : "bg-wrong/25 text-wrong"
+                                    ? "bg-correct/25 text-correct-ink"
+                                    : "bg-wrong/25 text-wrong-ink"
                                 }`}
                               >
                                 {step.check === "true" ? "checked: true" : "checked: FALSE"}
@@ -537,8 +537,8 @@ export function Page9() {
                               <span
                                 className={`rounded border px-2 py-0.5 text-xs ${
                                   step.prmVerdict === "true"
-                                    ? "border-correct/50 text-correct"
-                                    : "border-wrong/50 text-wrong"
+                                    ? "border-correct/50 text-correct-ink"
+                                    : "border-wrong/50 text-wrong-ink"
                                 }`}
                               >
                                 PRM {step.prm.toFixed(2)} ·{" "}
@@ -554,7 +554,7 @@ export function Page9() {
                             onClick={() => pick(i)}
                             className={`shrink-0 rounded px-2 py-0.5 text-xs ${
                               myPick === i
-                                ? "bg-wrong text-canvas"
+                                ? "bg-wrong text-ink"
                                 : "border border-grid text-ink-muted"
                             }`}
                           >
@@ -577,7 +577,7 @@ export function Page9() {
                     onClick={() => pick("none")}
                     className={`rounded px-3 py-1.5 text-sm ${
                       myPick === "none"
-                        ? "bg-correct text-canvas"
+                        ? "bg-correct text-ink"
                         : "border border-grid text-ink-muted"
                     }`}
                   >
@@ -590,7 +590,7 @@ export function Page9() {
                       setRevealed((r) => ({ ...r, [roleKey]: true }));
                       recordInteraction(PAGE_N);
                     }}
-                    className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                    className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
                   >
                     {hasPicked ? "Reveal what the graders found ▸" : "Pick a line first"}
                   </button>
@@ -600,7 +600,7 @@ export function Page9() {
               {mode === "process" && isRevealed ? (
                 <div className="flex flex-col gap-2 text-sm text-ink-muted">
                   <p>
-                    <strong className={foundIt ? "text-correct" : "text-ink"}>
+                    <strong className={foundIt ? "text-correct-ink" : "text-ink"}>
                       {breakAt !== null
                         ? foundIt
                           ? `You pointed at line ${breakAt + 1}, and that is the line the checker proves false.`
@@ -658,7 +658,7 @@ export function Page9() {
               <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
                 <p className="text-sm text-ink">
                   <span className="font-mono text-ink-muted">final answer → </span>
-                  <strong className={trace.outcomeCorrect ? "text-correct" : "text-wrong"}>
+                  <strong className={trace.outcomeCorrect ? "text-correct-ink" : "text-wrong-ink"}>
                     {trace.answer ? tidyMath(trace.answer) : "not extracted"}
                   </strong>
                   <span className="text-ink-muted">
@@ -677,7 +677,7 @@ export function Page9() {
                     <p className="text-ink">
                       <span
                         className={`font-semibold ${
-                          trace.outcomeCorrect ? "text-correct" : "text-wrong"
+                          trace.outcomeCorrect ? "text-correct-ink" : "text-wrong-ink"
                         }`}
                       >
                         {trace.outcomeCorrect
@@ -696,7 +696,7 @@ export function Page9() {
                 ) : isRevealed ? (
                   <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-3 text-sm">
                     <p className="text-ink">
-                      <span className="font-semibold text-compute">Process grader:</span>{" "}
+                      <span className="font-semibold text-compute-ink">Process grader:</span>{" "}
                       {breakAt !== null
                         ? `${
                             breakAt === 0

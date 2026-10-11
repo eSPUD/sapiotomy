@@ -22,10 +22,13 @@ const config: Config = {
         ink: tokens.ink,
         "ink-muted": tokens.inkMuted,
         "ink-faint": tokens.inkFaint,
-        // The three semantic hues
+        // The three semantic hues (fills, marks, borders) and their text steps
         compute: tokens.compute,
         correct: tokens.correct,
         wrong: tokens.wrong,
+        "compute-ink": tokens.computeInk,
+        "correct-ink": tokens.correctInk,
+        "wrong-ink": tokens.wrongInk,
       },
       fontFamily: {
         // Broadsheet: "the serif is the chrome" — Source Serif 4 for heading
@@ -36,7 +39,11 @@ const config: Config = {
         // The one licensed exception to the broadsheet rule: actual code
         // listings (a newspaper sets code samples in mono too). Use font-code
         // for pseudocode/diff listings only, never for numerals or labels.
-        code: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", "monospace"],
+        code: ["var(--font-eyebrow)", "IBM Plex Mono", "ui-monospace", "Menlo", "monospace"],
+        // Style guide: headings in an editorial serif (Lora), and eyebrows /
+        // metadata in an uppercase mono (IBM Plex Mono, for Anthropic Mono).
+        heading: ["var(--font-heading)", "Lora", "Georgia", "serif"],
+        eyebrow: ["var(--font-eyebrow)", "IBM Plex Mono", "ui-monospace", "Menlo", "monospace"],
       },
       borderRadius: {
         // Broadsheet print-crisp radii (--radius-sm/md/lg = 1/2/4px)

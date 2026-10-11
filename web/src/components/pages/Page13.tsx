@@ -190,10 +190,10 @@ const O1_DOT = { x: 10 ** ((P.o1Pass1 - P.intercept) / P.slopePerDecade), y: P.o
  * its own end label, so identity is never colour alone.
  */
 const TRAIN_STOPS = [0, 1, 2] as const;
-const RUN_HUES: Record<number, { stroke: string; fill: string; label: string }> = {
-  0: { stroke: "stroke-wrong", fill: "fill-wrong", label: "×1" },
-  1: { stroke: "stroke-compute", fill: "fill-compute", label: "×10" },
-  2: { stroke: "stroke-correct", fill: "fill-correct", label: "×100 RL" },
+const RUN_HUES: Record<number, { stroke: string; fill: string; text: string; label: string }> = {
+  0: { stroke: "stroke-wrong", fill: "fill-wrong", text: "fill-wrong-ink", label: "×1" },
+  1: { stroke: "stroke-compute", fill: "fill-compute", text: "fill-compute-ink", label: "×10" },
+  2: { stroke: "stroke-correct", fill: "fill-correct", text: "fill-correct-ink", label: "×100 RL" },
 };
 
 /*
@@ -326,7 +326,7 @@ function RunFamilyChart({
               x={innerW - 4}
               y={y(end.y) - 6}
               textAnchor="end"
-              className={`text-[10px] ${hue.fill} ${selected ? "font-semibold" : ""}`}
+              className={`text-[10px] ${hue.text} ${selected ? "font-semibold" : ""}`}
             >
               {hue.label}
             </text>
@@ -351,7 +351,7 @@ function RunFamilyChart({
             y={(y(acc) + y(full)) / 2}
             dy="0.32em"
             textAnchor={bracketLeft ? "end" : "start"}
-            className="fill-compute text-[10px] font-semibold"
+            className="fill-compute-ink text-[10px] font-semibold"
           >
             the missing RL: +{gap.toFixed(1)}
           </text>
@@ -466,7 +466,7 @@ function Reading({
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -514,7 +514,7 @@ export function Page13() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">
@@ -742,7 +742,7 @@ export function Page13() {
                 tone="bg-grid"
               />
               <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
                   o1, one model read three ways
                 </p>
                 {readings.map((r) => (

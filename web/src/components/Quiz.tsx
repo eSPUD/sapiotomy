@@ -96,7 +96,7 @@ export function Quiz({ questions, onAnswer }: QuizProps) {
           otherwise off screen exactly when the reader wants it. */}
       <div className="sticky top-20 z-[5] flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-grid bg-surface-raised px-4 py-3">
         <p className="text-sm text-ink">
-          <span className="font-mono text-lg font-bold tabular-nums text-compute">
+          <span className="font-mono text-lg font-bold tabular-nums text-compute-ink">
             {right.length}
           </span>
           <span className="text-ink-muted">
@@ -147,7 +147,7 @@ export function Quiz({ questions, onAnswer }: QuizProps) {
               <span className="font-mono text-sm text-ink-muted">
                 {qi + 1} of {questions.length}
               </span>
-              <span className="text-xs uppercase tracking-wide text-ink-muted">
+              <span className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
                 page {q.page} · {q.concept}
               </span>
             </legend>
@@ -189,10 +189,10 @@ export function Quiz({ questions, onAnswer }: QuizProps) {
                     />
                     <span className="flex-1">{o.text}</span>
                     {resolved && answer ? (
-                      <span className="shrink-0 font-semibold text-correct">correct</span>
+                      <span className="shrink-0 font-semibold text-correct-ink">correct</span>
                     ) : null}
                     {resolved && chosen && !answer ? (
-                      <span className="shrink-0 font-semibold text-wrong">your answer</span>
+                      <span className="shrink-0 font-semibold text-wrong-ink">your answer</span>
                     ) : null}
                   </label>
                 );
@@ -202,7 +202,7 @@ export function Quiz({ questions, onAnswer }: QuizProps) {
             <p aria-live="polite" className="text-sm">
               {resolved ? (
                 <>
-                  <strong className={got ? "text-correct" : "text-wrong"}>
+                  <strong className={got ? "text-correct-ink" : "text-wrong-ink"}>
                     {got ? "Right." : "Not quite."}
                   </strong>{" "}
                   <span className="text-ink-muted">{q.why}</span>

@@ -97,7 +97,7 @@ const REF = { huang: 1, zeng: 2, wang: 3, stroebl: 4 } as const;
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -212,7 +212,7 @@ function RungLedger({ active }: { active: number }) {
               x={cx}
               y={L_ZERO + down + 12}
               textAnchor="middle"
-              className="fill-wrong text-[11px] font-semibold"
+              className="fill-wrong-ink text-[11px] font-semibold"
             >
               &minus;{r.lost}
             </text>
@@ -325,12 +325,12 @@ function SpecimenChain({ budgetIndex }: { budgetIndex: number }) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
           {isEnd
             ? `its own ending, ${row.own_tokens} tokens`
             : `cut at ${row.budget} tokens, then made to commit`}
         </p>
-        <p className={`text-sm font-semibold ${row.correct ? "text-correct" : "text-wrong"}`}>
+        <p className={`text-sm font-semibold ${row.correct ? "text-correct-ink" : "text-wrong-ink"}`}>
           answered <span className="font-mono">{tidyMath(row.extracted_answer ?? "")}</span>,{" "}
           {row.correct ? "right" : "wrong"}
         </p>
@@ -359,7 +359,7 @@ function SpecimenChain({ budgetIndex }: { budgetIndex: number }) {
       </p>
       {written ? (
         <p className="text-xs text-ink-muted">
-          Lit in red: {SP.zones.why}.
+          Lit in blue: {SP.zones.why}.
           {!isEnd
             ? " It is already written, and the forced commit below ignores it."
             : " The box at the end is what it carries the assumption to."}
@@ -509,9 +509,9 @@ function ReliabilitySweep({ tempIndex }: { tempIndex: number }) {
 
   const entries = REL.lines.flatMap((l) => {
     const tone = l.trained
-      ? "fill-compute font-semibold"
+      ? "fill-compute-ink font-semibold"
       : l.selector === NO_JUDGE
-        ? "fill-wrong font-semibold"
+        ? "fill-wrong-ink font-semibold"
         : "fill-ink-muted";
     const leader = l.trained
       ? "stroke-compute"
@@ -603,7 +603,7 @@ function ReliabilitySweep({ tempIndex }: { tempIndex: number }) {
               x={gx + (leftHalf ? 8 : -8)}
               y={(yT + yO) / 2 + 3}
               textAnchor={leftHalf ? "start" : "end"}
-              className={`text-[10px] font-semibold ${gap >= 0 ? "fill-compute" : "fill-wrong"}`}
+              className={`text-[10px] font-semibold ${gap >= 0 ? "fill-compute-ink" : "fill-wrong-ink"}`}
             >
               {gap >= 0
                 ? `${gap.toFixed(0)} ${pointsWord(gap)} clear`
@@ -695,7 +695,7 @@ export function Page15() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">
@@ -863,7 +863,7 @@ export function Page15() {
             <div className="flex items-end gap-6">
               {PAGE17.affected.byModel.map((m) => (
                 <div key={m.model} className="flex flex-col items-center gap-1">
-                  <span className="font-mono text-2xl font-bold tabular-nums text-wrong">
+                  <span className="font-mono text-2xl font-bold tabular-nums text-wrong-ink">
                     {m.rescued}
                   </span>
                   <span className="text-xs text-ink-muted">
@@ -881,7 +881,7 @@ export function Page15() {
           <p className="text-ink-muted">
             <strong className="text-ink">Length alone is worth something.</strong> Guess right from
             wrong by how long the chain is and you score{" "}
-            <span className="font-mono font-bold tabular-nums text-compute">
+            <span className="font-mono font-bold tabular-nums text-compute-ink">
               {PAGE17.length.auc.toFixed(2)}
             </span>{" "}
             over page 8&apos;s whole pile, because a correct candidate is the longer one only about
@@ -947,7 +947,7 @@ export function Page15() {
             <p className="text-sm text-ink-muted">
               At <strong className="text-ink">{REL.temperatures[tempIndex].toFixed(2)}</strong>, the
               trained scorer is{" "}
-              <strong className={gapAt(tempIndex) >= 0 ? "text-ink" : "text-wrong"}>
+              <strong className={gapAt(tempIndex) >= 0 ? "text-ink" : "text-wrong-ink"}>
                 {Math.abs(gapAt(tempIndex)).toFixed(0)} {pointsWord(gapAt(tempIndex))}{" "}
                 {gapAt(tempIndex) >= 0 ? "clear of" : "behind"}
               </strong>{" "}

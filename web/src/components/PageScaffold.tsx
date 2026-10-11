@@ -9,11 +9,11 @@ import { PageNav } from "./PageNav";
 export function PageScaffold({ n }: { n: number }) {
   const page = getPage(n);
   if (!page) {
-    return <p className="text-wrong">Unknown page: {n}</p>;
+    return <p className="text-wrong-ink">Unknown page: {n}</p>;
   }
   return (
     <article className="flex flex-col gap-4">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">
@@ -25,7 +25,7 @@ export function PageScaffold({ n }: { n: number }) {
       <div className="rounded-lg border border-dashed border-grid bg-surface p-6 text-ink-muted">
         <p>
           Simulation for this page is built in milestone{" "}
-          <span className="font-mono text-compute">{page.milestone}</span>.
+          <span className="font-mono text-compute-ink">{page.milestone}</span>.
         </p>
       </div>
 

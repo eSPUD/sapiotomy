@@ -2,38 +2,39 @@
 
 import { usePathname } from "next/navigation";
 
-/** The foot of every page. Story pages carry the workshop acceptance line; the
- *  landing carries the how-to-explore note instead, since its hero already
- *  names the venue. */
+/** The foot of every page. Story pages carry the workshop acceptance line and,
+ *  right-aligned, the "Built with Claude Code" credit; the landing carries only
+ *  the how-to-explore note, since its hero already names the venue. */
 export function SubmissionFooter() {
   const landing = usePathname() === "/";
   return (
     <footer className={`mx-auto max-w-[min(90%,2048px)] px-4 ${landing ? "pb-4" : "pb-10"}`}>
-      {/* The landing's note sits centred with no rule; story pages keep the rule above
-          their acceptance line. */}
-      <div
-        className={`text-sm text-ink-muted ${landing ? "-mt-4 text-center" : "border-t border-grid pt-4"}`}
-      >
-        {landing ? (
+      {landing ? (
+        // The landing's note sits centred, with no rule and no credit.
+        <div className="-mt-4 text-center text-sm text-ink-muted">
           <p>
             Read in order, or jump to any chapter. Every figure is interactive: drag the sliders,
             click the diagrams. Some chapters come with a Python notebook of their code and data.
           </p>
-        ) : (
+        </div>
+      ) : (
+        // Story pages keep the rule above their acceptance line; the credit sits at its right.
+        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-t border-grid pt-4 text-sm text-ink-muted">
           <p>
             Accepted at the 9th Workshop on Visualization for AI Explainability (
             <a
               href="https://visxai.io/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-compute underline"
+              className="text-compute-ink underline"
             >
               VISxAI
             </a>
             ), IEEE VIS 2026.
           </p>
-        )}
-      </div>
+          <p className="whitespace-nowrap">Built with Claude Code</p>
+        </div>
+      )}
     </footer>
   );
 }

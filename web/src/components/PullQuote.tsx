@@ -4,7 +4,7 @@
  */
 export function PullQuote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-lg bg-compute/10 px-4 py-3 text-center text-lg italic text-compute">
+    <p className="rounded-lg bg-compute/10 px-4 py-3 text-center text-lg italic text-compute-ink">
       {children}
     </p>
   );

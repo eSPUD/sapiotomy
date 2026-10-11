@@ -204,7 +204,7 @@ const ZERO_SHOT_COT_TRIGGER = "Let's think step by step.";
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -247,7 +247,7 @@ function ChatColumn({
           <div data-testid="model-reply" className="flex min-w-0 flex-col gap-2">
             {!shown ? (
               <p className="flex items-center gap-2 text-sm text-ink-muted">
-                <span aria-hidden="true" className="animate-pulse text-compute">
+                <span aria-hidden="true" className="animate-pulse text-compute-ink">
                   ▍
                 </span>
                 press Play to see its reply
@@ -256,7 +256,7 @@ function ChatColumn({
               <ol className="flex flex-col gap-2">
                 {steps.map((s, i) => (
                   <li key={i} className="flex gap-2 font-code text-sm leading-relaxed text-ink">
-                    {steps.length > 1 ? <span className="shrink-0 text-compute">{i + 1}</span> : null}
+                    {steps.length > 1 ? <span className="shrink-0 text-compute-ink">{i + 1}</span> : null}
                     <span className="flex min-w-0 flex-col gap-1">
                       {s.parts.map((part, j) => (
                         <span key={j} className="whitespace-pre-wrap break-words">
@@ -274,7 +274,7 @@ function ChatColumn({
                   tab.correct ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
                 }`}
               >
-                <span className={`font-semibold ${tab.correct ? "text-correct" : "text-wrong"}`}>
+                <span className={`font-semibold ${tab.correct ? "text-correct-ink" : "text-wrong-ink"}`}>
                   {tab.correct ? "✓" : "✗"} Final answer: {tab.extractedAnswer}.
                 </span>{" "}
                 <span className="font-mono text-xs tabular-nums text-ink-muted">
@@ -444,7 +444,7 @@ function FloorChart() {
         strokeWidth={1}
         strokeDasharray="3 3"
       />
-      <text x={x(maxBlurt * 100) + 6} y={-10} className="fill-wrong text-[11px] font-semibold">
+      <text x={x(maxBlurt * 100) + 6} y={-10} className="fill-wrong-ink text-[11px] font-semibold">
         the floor: non-reasoning, all three land in here
       </text>
 
@@ -490,7 +490,7 @@ function FloorChart() {
               x={kept + added / 2}
               y={y + barH / 2 + 4}
               textAnchor="middle"
-              className="fill-canvas text-[11px] font-semibold tabular-nums"
+              className="fill-ink text-[11px] font-semibold tabular-nums"
             >
               +{m.deltaPts}
             </text>
@@ -689,10 +689,10 @@ function CostChart() {
 
       {/* which prompt each cluster is, annotated in the plot just above it (author,
           2026-09-27: no colour key) */}
-      <text x={blurtNote.x} y={blurtNote.y} textAnchor="middle" className="fill-wrong text-[11px] font-semibold">
+      <text x={blurtNote.x} y={blurtNote.y} textAnchor="middle" className="fill-wrong-ink text-[11px] font-semibold">
         non-reasoning
       </text>
-      <text x={bareNote.x} y={bareNote.y} textAnchor="middle" className="fill-compute text-[11px] font-semibold">
+      <text x={bareNote.x} y={bareNote.y} textAnchor="middle" className="fill-compute-ink text-[11px] font-semibold">
         reasoning
       </text>
 
@@ -708,7 +708,7 @@ function CostChart() {
           <text
             x={x(p.tokens) + 11}
             y={y(p.accuracy) + 4}
-            className={`text-[10px] tabular-nums ${p.gagged ? "fill-wrong" : "fill-compute"}`}
+            className={`text-[10px] tabular-nums ${p.gagged ? "fill-wrong-ink" : "fill-compute-ink"}`}
           >
             {pct(p.accuracy)}
           </text>
@@ -751,7 +751,7 @@ export function Page5() {
       {/* The download shares the top line with the act kicker: the first thing
           on the page after the title row is the way to re-derive all of it. */}
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs uppercase tracking-wide text-ink-muted">
+        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
           Act {page.act} · {ACTS[page.act].title}
         </p>
         <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
@@ -807,7 +807,7 @@ export function Page5() {
                 type="button"
                 onClick={play}
                 disabled={revealed}
-                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
               >
                 ▶ Play
               </button>
@@ -815,7 +815,7 @@ export function Page5() {
                 type="button"
                 onClick={reset}
                 disabled={!revealed}
-                className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
+                className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
               >
                 ↺ Reset
               </button>
@@ -958,7 +958,7 @@ export function Page5() {
             problems, the {sizeLabel(PRIMARY_ROW.params)}&apos;s chains of thought add up to about a
             hundred-thousandth of what it cost to train the model.
             <Cite n={REF.kaplan} />
-            <sup aria-hidden="true" className="text-compute">,</sup>
+            <sup aria-hidden="true" className="text-compute-ink">,</sup>
             <Cite n={REF.qwenReport} />
           </p>
           <section

@@ -24,7 +24,7 @@ export function CitationBadge({ citation }: CitationBadgeProps) {
       <span className="whitespace-nowrap font-medium text-ink">{citation.ref}</span>
       <span className="whitespace-nowrap text-ink-muted">· {citation.venue}</span>
       {citation.preprint ? (
-        <span className="rounded bg-wrong/20 px-1.5 py-0.5 font-semibold text-wrong">
+        <span className="rounded bg-wrong/20 px-1.5 py-0.5 font-semibold text-wrong-ink">
           preprint
         </span>
       ) : null}

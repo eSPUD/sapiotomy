@@ -18,18 +18,18 @@ export function ProgressRail() {
     >
       <div className="mx-auto flex max-w-[min(90%,2048px)] items-center justify-between gap-3 px-4 py-3">
         <Link href="/" className="group flex flex-col leading-tight">
-          <span className="text-lg font-semibold text-canvas group-hover:underline">
+          <span className="text-lg font-semibold text-ink group-hover:underline">
             The Story of Inference-Time Scaling
           </span>
-          <span className="text-sm text-canvas/80">
+          <span className="text-sm text-ink">
             and the training-time loop behind it
           </span>
         </Link>
         <div className="hidden flex-col items-end text-right leading-tight sm:flex">
-          <span className="text-lg text-canvas/80">
+          <span className="text-lg text-ink">
             An interactive AI explainable
           </span>
-          <span className="text-xs text-canvas/80">
+          <span className="text-xs text-ink">
             9th Workshop on Visualization for AI Explainability (VISxAI) at IEEE VIS 2026
           </span>
         </div>

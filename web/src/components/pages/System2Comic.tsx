@@ -29,12 +29,12 @@ function ArtAmbiguity() {
         strokeWidth="1"
         fill="none"
       />
-      <rect x="6" y="32" width="44" height="16" rx="8" className="fill-current text-compute/15" />
-      <text x="28" y="43" textAnchor="middle" fontSize="8" className="fill-current text-compute">
+      <rect x="6" y="32" width="44" height="16" rx="8" className="fill-current text-compute-ink/15" />
+      <text x="28" y="43" textAnchor="middle" fontSize="8" className="fill-current text-compute-ink">
         men&apos;s
       </text>
-      <rect x="52" y="32" width="44" height="16" rx="8" className="fill-current text-compute/15" />
-      <text x="74" y="43" textAnchor="middle" fontSize="8" className="fill-current text-compute">
+      <rect x="52" y="32" width="44" height="16" rx="8" className="fill-current text-compute-ink/15" />
+      <text x="74" y="43" textAnchor="middle" fontSize="8" className="fill-current text-compute-ink">
         women&apos;s
       </text>
     </svg>
@@ -47,11 +47,11 @@ function ArtCutoff() {
     <svg viewBox="0 0 96 56" className="h-full w-full" aria-hidden="true">
       <line x1="8" y1="34" x2="88" y2="34" className="stroke-current text-ink-muted" strokeWidth="1" />
       {/* inside the cutoff */}
-      <circle cx="22" cy="34" r="3.5" className="fill-current text-compute" />
+      <circle cx="22" cy="34" r="3.5" className="fill-current text-compute-ink" />
       <text x="22" y="48" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
         2010
       </text>
-      <circle cx="44" cy="34" r="3.5" className="fill-current text-compute" />
+      <circle cx="44" cy="34" r="3.5" className="fill-current text-compute-ink" />
       <text x="44" y="48" textAnchor="middle" fontSize="7" className="fill-current text-ink-muted">
         2023
       </text>
@@ -61,11 +61,11 @@ function ArtCutoff() {
         y1="16"
         x2="60"
         y2="42"
-        className="stroke-current text-wrong"
+        className="stroke-current text-wrong-ink"
         strokeWidth="1.5"
         strokeDasharray="3 2"
       />
-      <text x="60" y="12" textAnchor="middle" fontSize="7" className="fill-current text-wrong">
+      <text x="60" y="12" textAnchor="middle" fontSize="7" className="fill-current text-wrong-ink">
         {CUTOFF_LABEL}
       </text>
       {/* beyond it, unseen */}
@@ -73,11 +73,11 @@ function ArtCutoff() {
         cx="78"
         cy="34"
         r="3.5"
-        className="stroke-current text-wrong"
+        className="stroke-current text-wrong-ink"
         strokeWidth="1.5"
         fill="none"
       />
-      <text x="78" y="48" textAnchor="middle" fontSize="7" className="fill-current text-wrong">
+      <text x="78" y="48" textAnchor="middle" fontSize="7" className="fill-current text-wrong-ink">
         2026
       </text>
     </svg>
@@ -91,13 +91,13 @@ function ArtCheckSource() {
       <text x="34" y="20" textAnchor="end" fontSize="8" className="fill-current text-ink-muted">
         memory
       </text>
-      <text x="44" y="21" textAnchor="middle" fontSize="11" className="fill-current text-wrong">
+      <text x="44" y="21" textAnchor="middle" fontSize="11" className="fill-current text-wrong-ink">
         ✗
       </text>
       <text x="34" y="42" textAnchor="end" fontSize="8" className="fill-current text-ink">
         source
       </text>
-      <text x="44" y="43" textAnchor="middle" fontSize="11" className="fill-current text-correct">
+      <text x="44" y="43" textAnchor="middle" fontSize="11" className="fill-current text-correct-ink">
         ✓
       </text>
       {/* the page it goes and fetches */}
@@ -107,13 +107,13 @@ function ArtCheckSource() {
         width="22"
         height="20"
         rx="2"
-        className="stroke-current text-correct"
+        className="stroke-current text-correct-ink"
         strokeWidth="1.2"
         fill="none"
       />
       <path
         d="M62 34 h14 M62 38 h14 M62 42 h9"
-        className="stroke-current text-correct"
+        className="stroke-current text-correct-ink"
         strokeWidth="1"
         fill="none"
       />
@@ -124,13 +124,13 @@ function ArtCheckSource() {
 /** Panel 4: the three titles, counted. */
 function ArtCount() {
   const years = [
-    { label: "2010", tone: "text-compute" },
-    { label: "2023", tone: "text-compute" },
-    { label: "2026", tone: "text-compute" },
+    { label: "2010", tone: "text-compute-ink" },
+    { label: "2023", tone: "text-compute-ink" },
+    { label: "2026", tone: "text-compute-ink" },
   ];
   return (
     <svg viewBox="0 0 96 56" className="h-full w-full" aria-hidden="true">
-      <text x="48" y="16" textAnchor="middle" fontSize="14" className="fill-current text-correct">
+      <text x="48" y="16" textAnchor="middle" fontSize="14" className="fill-current text-correct-ink">
         {SPAIN_SYSTEM2_TRACE.answer}
       </text>
       {years.map((y, i) => (
@@ -172,7 +172,7 @@ export function System2Comic() {
         return (
           <li key={step.name}>
             <figure className="flex h-full flex-col gap-2 rounded-lg border border-grid bg-surface p-3">
-              <span className="text-xs uppercase tracking-wide text-ink-muted">Step #{i + 1}</span>
+              <span className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">Step #{i + 1}</span>
               <div className="flex h-20 items-center justify-center rounded border border-grid bg-canvas px-2">
                 {Art ? <Art /> : null}
               </div>

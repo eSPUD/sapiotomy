@@ -118,7 +118,7 @@ const CODE_LINES: {
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
   );
@@ -168,9 +168,9 @@ const SHORTCUT: Edge = { p0: N_FILTER, p1: [300, 150], p2: [180, 150], p3: N_TUN
 const RECT_BASE = "fill-surface-raised stroke-grid";
 const RECT_HOT = "fill-compute stroke-compute";
 const TITLE_BASE = "fill-ink text-[13px] font-semibold";
-const TITLE_HOT = "fill-canvas text-[13px] font-semibold";
+const TITLE_HOT = "fill-ink text-[13px] font-semibold";
 const SUB_BASE = "fill-ink-muted text-[10px]";
-const SUB_HOT = "fill-grid text-[10px]";
+const SUB_HOT = "fill-ink text-[10px]";
 
 /** A direction chevron at an edge's midpoint, angled along its chord. */
 function Chevron({ e, cls = "fill-ink-muted" }: { e: Edge; cls?: string }) {
@@ -292,7 +292,7 @@ function StarLoop({ filter }: { filter: boolean }) {
       {/* the correct-answer shortcut: dashed, straight from filter to fine-tune */}
       <path d={edgeD(SHORTCUT)} fill="none" strokeWidth={1.6} strokeDasharray="5 4" className="stroke-ink-muted" />
       <Chevron e={SHORTCUT} cls="fill-correct" />
-      <text x={240} y={148} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
+      <text x={240} y={148} textAnchor="middle" className="fill-correct-ink text-[11px] font-semibold">
         correct ✓ keep
       </text>
 
@@ -309,10 +309,10 @@ function StarLoop({ filter }: { filter: boolean }) {
       ))}
 
       {/* branch labels: the wrong-answer path and its hint-driven recovery */}
-      <text x={432} y={214} textAnchor="middle" className="fill-wrong text-[11px] font-semibold">
+      <text x={432} y={214} textAnchor="middle" className="fill-wrong-ink text-[11px] font-semibold">
         wrong ✗
       </text>
-      <text x={104} y={256} textAnchor="middle" className="fill-correct text-[11px] font-semibold">
+      <text x={104} y={256} textAnchor="middle" className="fill-correct-ink text-[11px] font-semibold">
         ✓ kept
       </text>
       <text x={70} y={108} textAnchor="middle" className="fill-ink-muted text-[11px]">
@@ -423,7 +423,7 @@ export function Page12() {
 
   return (
     <article className="flex flex-col gap-6">
-      <p className="text-xs uppercase tracking-wide text-ink-muted">
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
       <h1 className="text-3xl font-bold text-ink">
