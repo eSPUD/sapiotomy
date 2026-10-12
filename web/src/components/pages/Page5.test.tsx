@@ -12,7 +12,7 @@ const BARE_STEPS = reasoningSteps(BARE.steps);
 const body = () => document.body.textContent ?? "";
 const playBtn = () => screen.getByRole("button", { name: /▶ play/i });
 const resetBtn = () => screen.getByRole("button", { name: /reset/i });
-// Figure 1 is a split: one chat per condition, side by side, one shared stepper.
+// Figure 1 is a split: one chat per condition, System 1 above System 2, one shared stepper.
 const system1 = () => within(screen.getByRole("region", { name: "System 1" }));
 const system2 = () => within(screen.getByRole("region", { name: "System 2" }));
 
@@ -21,11 +21,22 @@ const playAll = () => fireEvent.click(playBtn());
 
 // Sections 1 and 2 merged on 2026-09-27 under the reviewer-response plan: the
 // definition is the author's scratch-paper draft, and the specimen sits under it.
+describe("Page 5, the Act 2 opener", () => {
+  it("picks up page 4's question and maps the act, without restating step-by-step reasoning", () => {
+    render(<Page5 />);
+    const body = (document.body.textContent ?? "").replace(/\s+/g, " ");
+    expect(body).toContain(
+      "Act 1 ended on a question: can a language model reason through a problem instead of answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply using a bigger model (page 11). The first tool is the simplest: have the model write out its steps.",
+    );
+    expect(body).not.toMatch(/quadratic/i);
+  });
+});
+
 describe("Page 5, step 1: what a chain of thought is", () => {
   it("defines the term as each step feeding the next, in one merged step", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
-    expect(headings[0]).toBe("1. What is the Chain of Thought (CoT) for LLM reasoning?");
+    expect(headings[0]).toBe("1. Chain of Thought (CoT): System 2, written down");
     expect(headings[1]).toBe("2. System 1 versus System 2 thinking on MATH-500 problems");
     expect(headings[2]).toBe("3. Smaller reasoning models do better than larger non-reasoning models");
     expect(headings[3]).toBe("4. The (token) cost of a chain of thought");
@@ -80,8 +91,14 @@ describe("Page 5, step 1: what a chain of thought is", () => {
 });
 
 describe("Page 5, figure 1: the chain is already there", () => {
-  it("puts both conditions side by side, with nothing revealed yet and no mode buttons", () => {
+  it("stacks System 1 above System 2, with nothing revealed yet and no mode buttons", () => {
     render(<Page5 />);
+    // One column at every width: System 1 first, System 2 under it.
+    const split = screen.getByTestId("split");
+    expect(split).toHaveClass("flex-col");
+    expect(split.className).not.toMatch(/grid-cols/);
+    const sides = [...split.children].map((c) => c.getAttribute("aria-label"));
+    expect(sides).toEqual(["System 1", "System 2"]);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Chain of Thought: Reasoning Out Loud",
     );

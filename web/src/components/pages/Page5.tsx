@@ -761,13 +761,18 @@ export function Page5() {
         </h1>
         <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
       </div>
-      {/* Held to the content column: the margin is the notes column (15rem) plus the
+      {/* Act 2's opener: picks up page 4's open question in its own words and maps the
+          act, as page 11's closing box maps Act 3. Page 4 already covers step-by-step
+          reasoning, so this does not restate it.
+          Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        Humans solve complex problems by taking a series of small steps towards the solution. This
-        step-by-step approach helps us apply our System&nbsp;2 thinking to problem-solving. It is
-        very similar to solving a quadratic equation in clear and simple steps, rather than trying
-        to blurt out its solutions.
+        Act 1 ended on a question: can a language model reason through a problem instead of
+        answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on
+        each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best
+        (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply
+        using a bigger model (page 11). The first tool is the simplest: have the model write out its
+        steps.
       </p>
 
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
@@ -776,7 +781,7 @@ export function Page5() {
             reviewer-response plan (planning/reviewer_response_changes_plan.md,
             page 5, sections 1 and 2). The first paragraph is the author's draft. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. What is the Chain of Thought (CoT) for LLM reasoning?</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Chain of Thought (CoT): System 2, written down</h2>
           <p className="text-ink">
             We&apos;ve previously illustrated what step-by-step reasoning looks like for a couple of real-world
             problems. <strong>Chain-of-thought prompting</strong> simulates human reasoning by using
@@ -791,8 +796,9 @@ export function Page5() {
             <Cite n={REF.qwen} /> into System&nbsp;1, answering immediately, and compare against
             System&nbsp;2 results.
           </p>
-          {/* Figure 1 is a split: the same question put to the same model twice, side
-              by side, System 1 on the left and System 2 on the right. No mode buttons;
+          {/* Figure 1 is a split: the same question put to the same model twice, one
+              above the other, System 1 on top and System 2 below (author, 2026-10-11:
+              stacked, so each reply has the full width). No mode buttons;
               Play shows both whole replies at once, with no streaming and no progress
               bar (author, 2026-09-27); Reset clears them. System 1's
               appended instruction is not shown in its question (author, 2026-09-27). */}
@@ -800,7 +806,7 @@ export function Page5() {
             aria-label="One problem, two prompts"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div data-testid="split" className="flex flex-col gap-4">
               <ChatColumn title="System 1" tab={BLURT_TAB} shown={revealed} />
               <ChatColumn title="System 2" tab={BARE_TAB} shown={revealed} />
             </div>
