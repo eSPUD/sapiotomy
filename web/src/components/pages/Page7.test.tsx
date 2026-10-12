@@ -195,6 +195,45 @@ describe("Page 7 (frequency voting) component", () => {
     window.removeEventListener("keydown", pageTurn);
   });
 
+  // Section 2's heat map: the temperature sweep, 40 problems x 12 temperatures, 16 chains.
+  it("draws the temperature sweep as one cell per problem and temperature", () => {
+    render(<Page7 />);
+    const HM = PAGE7.figure1.heatmap;
+    expect(HM.problems).toHaveLength(40);
+    expect(HM.temperatures).toEqual([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1]);
+    expect(HM.n_chains).toBe(16);
+    const map = screen.getByRole("region", { name: /Chains right and the vote, at every temperature/ });
+    const table = within(map).getByRole("table");
+    // a header row, 40 problem rows, and the footer
+    expect(within(table).getAllByRole("row")).toHaveLength(1 + 40 + 1);
+    expect(within(table).getAllByRole("columnheader")).toHaveLength(1 + 12);
+    // the footer counts the problems the vote got right, which is the summary's accuracy
+    const foot = within(table).getAllByRole("row").at(-1)!;
+    const counts = within(foot).getAllByRole("cell").map((c) => Number(c.textContent));
+    expect(counts).toEqual(HM.summary.map((s) => Math.round(s.vote_accuracy * 40)));
+  });
+
+  it("pins a problem and shows which temperatures got it right", () => {
+    render(<Page7 />);
+    const HM = PAGE7.figure1.heatmap;
+    expect(screen.queryByTestId("heatmap-problem")).toBeNull();
+    const q = HM.problems.findIndex((p) => p.cells.some((c) => c.outcome === "right"));
+    fireEvent.click(screen.getByRole("button", { name: `Problem ${q + 1}: show which temperatures got it right` }));
+    const panel = screen.getByTestId("heatmap-problem");
+    const p = HM.problems[q];
+    const right = p.cells.filter((c) => c.outcome === "right").length;
+    expect(panel.textContent).toContain(`the vote gets it at ${right} of 12 temperatures`);
+    const items = within(panel).getAllByRole("listitem");
+    expect(items).toHaveLength(12);
+    for (const [j, c] of p.cells.entries()) {
+      expect(items[j].textContent).toContain(`T = ${c.temperature === 0 ? "0" : c.temperature.toFixed(1)}`);
+      expect(items[j].textContent).toContain(`${c.n_correct}/16`);
+    }
+    // clicking the same problem again unpins it
+    fireEvent.click(screen.getByRole("button", { name: `Problem ${q + 1}: show which temperatures got it right` }));
+    expect(screen.queryByTestId("heatmap-problem")).toBeNull();
+  });
+
   it("names the three lines in plain English, not in the notebook's vocabulary", () => {
     render(<Page7 />);
     // "in the pile" / "the vote" / "T = 0" is how the notebook talks. A reader needs
@@ -381,6 +420,59 @@ describe("Page 7 (frequency voting) component", () => {
       screen.getByText(new RegExp(`Averaged over ${PAGE7.figure2.diversity[0].n_items} problems`)),
     ).toBeInTheDocument();
     expect(PAGE7.figure2.diversity[0].n_items).toBeLessThan(PAGE7.manifest.items.n);
+  });
+
+  // Section 4 is a fan: three shared budgets and the same chains allowed to finish, which
+  // is section 3's majority-voting line, so the page quotes one number for 16 chains.
+  it("draws three shared budgets and the allowed-to-finish line", () => {
+    render(<Page7 />);
+    const widget = screen.getByRole("region", { name: /A fixed budget shared between chains/ });
+    expect(PAGE7.figure2.budgets.map((b) => b.budget)).toEqual([2048, 4096, 8192]);
+    for (const b of PAGE7.figure2.budgets) {
+      expect(within(widget).getByTestId(`budget-line-${b.budget}`)).toBeInTheDocument();
+      expect(widget.textContent).toContain(`${b.budget.toLocaleString("en-US")} shared`);
+    }
+    expect(within(widget).getByTestId("finish-line")).toBeInTheDocument();
+    expect(widget.textContent).toMatch(/allowed to finish/);
+    // the same chains as section 3: its 16-chain point is the headline's
+    const fin = PAGE7.figure2.uncapped.points;
+    expect(fin[fin.length - 1].accuracy).toBeCloseTo(PAGE7.figure2.gain.vote, 9);
+    // at one chain no cap binds: all four start within two points of each other
+    const starts = [fin[0], ...PAGE7.figure2.budgets.map((b) => b.points[0])].map((p) => p.accuracy);
+    expect(Math.max(...starts) - Math.min(...starts)).toBeLessThan(0.02);
+    // and the fan's order at 16 chains is the finding: more tokens each, higher vote
+    const at16 = PAGE7.figure2.budgets.map((b) => b.points[b.points.length - 1].accuracy);
+    expect([...at16].sort((a, b) => a - b)).toEqual(at16);
+    expect(at16[at16.length - 1]).toBeLessThan(fin[fin.length - 1].accuracy);
+  });
+
+  // The cause of the fall sits behind a toggle, one gauge per budget and N.
+  it("shows how many chains were cut off on request", () => {
+    render(<Page7 />);
+    expect(screen.queryByTestId("cut-off-grid")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Show how many chains were cut off/ }));
+    const grid = screen.getByTestId("cut-off-grid");
+    for (const b of PAGE7.figure2.budgets) {
+      for (const p of b.points) expect(grid.textContent).toContain(`${Math.round(p.truncated_rate * 100)}%`);
+    }
+    fireEvent.click(screen.getByRole("button", { name: /Hide how many chains were cut off/ }));
+    expect(screen.queryByTestId("cut-off-grid")).toBeNull();
+  });
+
+  it("closes section 4 on the smallest and largest budget at the most chains", () => {
+    render(<Page7 />);
+    const p = screen.getByText(/Dividing a budget does two things at once/).closest("p")!;
+    const lo = PAGE7.figure2.budgets[0];
+    const hi = PAGE7.figure2.budgets[PAGE7.figure2.budgets.length - 1];
+    const loTop = lo.points[lo.points.length - 1];
+    const hiTop = hi.points[hi.points.length - 1];
+    expect(p.textContent).toContain(`leaves each chain only ${loTop.chain_budget}`);
+    expect(p.textContent).toContain(`${Math.round(loTop.truncated_rate * 100)}% of them are cut off`);
+    expect(p.textContent).toContain(`leaves ${hiTop.chain_budget} each`);
+    expect(p.textContent).toContain(`${Math.round(hiTop.truncated_rate * 100)}% are cut off`);
+    // the conclusion is outside the widget, as in section 3
+    const widget = screen.getByRole("region", { name: /A fixed budget shared between chains/ });
+    expect(widget.textContent).not.toMatch(/Splitting is not what fails/);
   });
 
   it("shows capped against uncapped at the SAME number of chains", () => {
