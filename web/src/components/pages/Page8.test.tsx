@@ -84,6 +84,12 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(note.textContent).toMatch(/next page/);
   });
 
+  it("states the cost in one sentence", () => {
+    render(<Page8 />);
+    const cost = screen.getByText(/Best-of-N costs what majority voting costs/);
+    expect(cost.textContent).toMatch(/plus a second model that reads each of them once/);
+  });
+
   // The checkpoint had to be rebuilt from its published weights, and that is a
   // fact about the apparatus rather than about selection. It lives in the
   // notebook and the download now; the page does not stop to litigate it.

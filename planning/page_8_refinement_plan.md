@@ -72,9 +72,11 @@ Temperature is not a topic on this page. Page 7 owns it. One sentence carries th
 
 ### Section 4. The cost (no figure)
 
-No figure. One or two sentences: Best-of-N pays what page 7's majority vote pays, N chains, plus a verifier model reading each of them once. The verifier here is a 1.5B model reading a 3B model's chains. Where it helps, the sentence can give the number of chains and that the verifier reads but does not write. Nothing is measured for this section.
+**Built 2026-10-11 as one sentence under figure 3, in section 3; section 4 is now what a judge is worth.** No figure. One sentence: Best-of-N pays what page 7's majority vote pays, N chains, plus a verifier model reading each of them once. The verifier here is a 1.5B model reading a 3B model's chains. Where it helps, the sentence can give the number of chains and that the verifier reads but does not write. Nothing is measured for this section.
 
 ### Section 5. What a judge is worth (cannot be omitted; stays in the 40-problem version)
+
+**On the page as section 4.** The prose outside its figure is cut to what reading the figure needs: five judges scored the same chains, and which one is the trained verifier.
 
 Page 7 shows that the most common answer is not always right. This section shows the same for Best-of-N: the chain the judge rates highest is not always right. It must stay small. No new chart types.
 

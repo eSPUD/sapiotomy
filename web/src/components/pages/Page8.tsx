@@ -1354,6 +1354,11 @@ export function Page8() {
               was written and not picked.
             </figcaption>
           </figure>
+          {/* The cost, in one sentence: nothing here is measured for it. */}
+          <p className="text-ink-muted">
+            Best-of-N costs what majority voting costs, {PILE8.nChains} chains, plus a second model
+            that reads each of them once.
+          </p>
         </section>
 
         {/* Step 4 — what a judge is worth. Pinned to the reading column: step 2
@@ -1361,15 +1366,10 @@ export function Page8() {
             margin. */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">4. What a judge is worth</h2>
-          {/* Which model the winning judge actually is opens the step, because
-              the figure below ranks it against four others and cannot say what
-              it is. */}
           <p className="text-ink-muted">
-            Five judges read the same candidates, and one of them is the trained verifier from the
-            figures above. It is{" "}
-            <span className="font-mono text-xs">{PAGE8.verifierNote?.model ?? trained?.name}</span>,
-            a process reward model read at the final token only: one number for the whole solution.
-            Grading the steps is the next page.
+            Five judges scored the same chains. One is the trained verifier from above, a process
+            reward model read at the final token only, so one number per solution; grading the steps
+            is the next page.
           </p>
           <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
             {/* Each point is an average, so the pill says what it averages over
