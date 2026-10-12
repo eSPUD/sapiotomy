@@ -1003,7 +1003,10 @@ function PairedFigure() {
 
 /* ------------------------------------------------------------------ figure 4 */
 
-const JUDGE_W = 520;
+// The chart stretches to fill its column, which on a wide screen blew its labels
+// up past twice their size. It is drawn a little wider and capped at 1.3 times
+// its own width, so it reads at the same size on any screen.
+const JUDGE_W = 600;
 const JUDGE_H = 246;
 const JUDGE_M = { top: 26, right: 44, bottom: 42, left: 150 };
 
@@ -1378,7 +1381,9 @@ export function Page8() {
                 `${PAGE8.run.temperatures.length} temperatures each`,
               ]}
             />
-            <JudgeFigure />
+            <div className="w-full" style={{ maxWidth: JUDGE_W * 1.3 }}>
+              <JudgeFigure />
+            </div>
             <figcaption className="text-sm text-ink-muted">
               Five judges spanning size, subject and training objective, each averaged over four
               temperatures with the bar spanning its best and worst. As you can see from the graph,{" "}
