@@ -59,7 +59,7 @@ const PAGE_N = 10;
  * That disclosure is a standing line under the intro, not a margin note. As a
  * note beside step 3 it arrived after both figures it governs, next to the one
  * it says least about; it has to be read before the first tap, and it is what
- * the top line's unrun download is promising. It must stay in the reading
+ * the unrun download beside the title is promising. It must stay in the reading
  * column and above step 1.
  */
 const NOTEBOOK_ZIP = "/notebooks/page-10-search-arm.zip";
@@ -319,13 +319,17 @@ export function Page10() {
 
   return (
     <article className="flex flex-col gap-6">
-      {/* Pages 5 to 9 put the way to re-derive the page on its top line. This
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
+        Act {page.act} · {ACTS[page.act].title}
+      </p>
+      {/* Pages 5 to 9 put the way to re-derive the page beside its title. This
           page keeps the position and changes the promise, because there is no
           run here to re-derive. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
-          Act {page.act} · {ACTS[page.act].title}
-        </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="text-3xl font-bold text-ink">
+          <span className="font-mono text-ink-muted">{page.n}. </span>
+          {page.title}
+        </h1>
         <a
           className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
           href={NOTEBOOK_ZIP}
@@ -334,10 +338,6 @@ export function Page10() {
           the search arm, written and not run ↓
         </a>
       </div>
-      <h1 className="text-3xl font-bold text-ink">
-        <span className="font-mono text-ink-muted">{page.n}. </span>
-        {page.title}
-      </h1>
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
@@ -351,7 +351,7 @@ export function Page10() {
           It used to be a margin note beside step 3, which put it after both figures
           and beside the one it says least about. It sits here because it is the
           caveat the reader needs before the first tap, and because it is what the
-          top line's unrun download is promising. */}
+          unrun download beside the title is promising. */}
       <p className="text-ink-muted">
         <strong className="text-ink">Nothing here is a measurement of ours.</strong> Pages 5 to 9
         each ship the run their numbers come from. This page ships none. The 29-word tree below is
