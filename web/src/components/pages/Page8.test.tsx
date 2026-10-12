@@ -8,18 +8,17 @@
  * that rather than against literals, so a re-run that moves the numbers moves
  * the test with it and a re-run that changes the CONCLUSION fails it.
  */
-import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { PAGE8, pValue, pct } from "@/lib/page08";
 import { Page8 } from "./Page8";
 
 describe("Page 8 (best-of-N and verifiers) component", () => {
-  it("leads with the measured gain over one chain", () => {
+  it("opens by naming best-of-N against majority voting", () => {
     render(<Page8 />);
-    const lede = screen.getByText(/Counting asks what is most common/);
-    expect(lede.textContent).toContain(pct(PAGE8.headline.accuracy));
-    expect(lede.textContent).toContain(pct(PAGE8.oneChain));
-    expect(lede.textContent).toContain(pValue(PAGE8.headline.p));
+    const lede = screen.getByText(/Chain of thought lets a model reason through a problem/);
+    expect(lede.textContent).toMatch(/Majority voting/);
+    expect(lede.textContent).toMatch(/Best-of-N sampling/);
   });
 
   it("draws all three beats", () => {
@@ -86,7 +85,7 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
   // its rows be compared at all.
   it("marks every figure as measured, at the figure", () => {
     render(<Page8 />);
-    // Counted over the pills themselves: figure 3's gutter also says "measured
+    // Counted over the pills themselves: figure 4's gutter also says "measured
     // here" under the one solve rate that was, and that is not a figure pill.
     const pills = Array.from(document.querySelectorAll("li")).filter((li) =>
       /^measured/.test(li.textContent ?? ""),
@@ -98,7 +97,38 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(row.textContent).toContain(PAGE8.run.model.split("/").pop());
     expect(row.textContent).toContain(`${PAGE8.run.items} MATH-500 problems`);
     expect(screen.getByText("every rule reads the same chains")).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/illustrative|simulation/i);
+    // The sister's-age demo is the one authored figure, and it is the only
+    // thing on the page allowed to say so.
+    expect(document.body.textContent).not.toMatch(/simulation/i);
+    const illustrative = screen.getByText(/illustrative/i);
+    expect(illustrative.closest("section")).toBe(screen.getByLabelText("Four chains, judged"));
+  });
+
+  it("walks the demo through generate, judge one chain at a time, and keep the best", () => {
+    vi.useFakeTimers();
+    try {
+      render(<Page8 />);
+      const demo = screen.getByLabelText("Four chains, judged");
+      const press = (name: RegExp) => fireEvent.click(within(demo).getByRole("button", { name }));
+      expect(within(demo).queryByText(/Final answer/)).toBeNull();
+      press(/Generate/);
+      expect(within(demo).getAllByText(/^chain \d$/)).toHaveLength(4);
+      press(/Judge/);
+      // The judge reads one chain at a time: the first is being read, none rated.
+      expect(within(demo).getByText("reading…")).toBeInTheDocument();
+      expect(within(demo).queryByText(/% right/)).toBeNull();
+      // One tick per chain, so each rating renders before the next timer is set.
+      for (let i = 0; i < 5; i++) act(() => vi.advanceTimersByTime(1_000));
+      expect(within(demo).getAllByText(/% right/)).toHaveLength(4);
+      press(/Keep the best/);
+      expect(within(demo).getByText(/Best of 4 keeps chain 2/).textContent).toMatch(/67/);
+      // The mechanism only: page 7's vote is not in this figure.
+      expect(demo.textContent).not.toMatch(/vote/i);
+      fireEvent.click(within(demo).getByRole("button", { name: /Reset/ }));
+      expect(within(demo).queryByText(/Final answer/)).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   // The rest of what the plate carried opened the page in the notebook's own
@@ -118,7 +148,7 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
   it("labels every selection rule in English, never a notebook identifier", () => {
     render(<Page8 />);
     for (const r of PAGE8.paired.vsOneChain) {
-      // getAll: "majority vote" is also figure 1's legend and figure 3's bar.
+      // getAll: "majority vote" is also figure 2's legend and figure 4's bar.
       expect(screen.getAllByText(r.label).length).toBeGreaterThan(0);
       expect(r.label).not.toContain("(");
     }

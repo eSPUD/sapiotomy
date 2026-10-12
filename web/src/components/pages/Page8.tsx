@@ -1,7 +1,11 @@
 "use client";
 
 /**
- * Page 8, "Best-of-N and Verifiers" — measured, not simulated.
+ * Page 8, "Best-of-N and Verifiers" — measured, not simulated, with one
+ * labelled exception: figure 1, the sister's-age demo that opens step 1, is an
+ * illustration of the mechanism (generate, judge, keep the best) and says so.
+ * Its chains and ratings are authored, live only in `SISTER`, and no number
+ * from it may appear anywhere else on the page.
  *
  * The old page ran `LILY_PAD_MODEL`: a Monte Carlo with an invented `appeal`
  * vector and a verifier-reliability slider whose units its own footnote
@@ -71,9 +75,10 @@
  * a row reading `best-of-N (qwen1.5b)` is a figure the reader cannot use.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
+import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
@@ -94,7 +99,7 @@ const BENCHMARK = "MATH-500";
 /** Reference numbers, in order of first appearance on the page. */
 const REF = {
   cobbe: 1,
-  /* The source we build on. It owns a row of figure 2 and two sentences of that
+  /* The source we build on. It owns a row of figure 3 and two sentences of that
      figure's caption, and went uncited on the page until now. */
   source: 2,
   stroebl: 3,
@@ -140,7 +145,7 @@ function Pills({ items }: { items: string[] }) {
 /**
  * A legend as HTML rather than SVG text: it wraps, it inherits the page's type,
  * and a screen reader reads it as prose instead of as scattered <text> nodes.
- * Both panels of figure 1 need one, and the curve panel is unreadable without
+ * Both panels of figure 2 need one, and the curve panel is unreadable without
  * it: four lines in four colours and nothing saying which is which.
  */
 function Legend({ items }: { items: { cls: string; label: string; dashed?: boolean; ring?: boolean }[] }) {
@@ -164,7 +169,253 @@ function Legend({ items }: { items: { cls: string; label: string; dashed?: boole
   );
 }
 
-/* ------------------------------------------------------------ figure 1 left */
+/* ------------------------------------------------------------------ figure 1 */
+
+/** The judge, a third speaker beside page 5's user and model: a balance scale. */
+function JudgeIcon() {
+  return (
+    <span role="img" aria-label="Judge" title="Judge" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink/10 text-ink">
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3v18M7 21h10M5 7h14" />
+        <path d="M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z" />
+      </svg>
+    </span>
+  );
+}
+
+const SISTER_QUESTION = "When I was 6, my sister was half my age. Now I'm 70. How old is my sister?";
+
+/**
+ * The sister's-age puzzle, as four chains of thought: two land on the tempting
+ * 35 (halving 70, as if the ratio held), one on the right 67 (the three-year gap
+ * holds), one strays to 64. Authored, not measured, and the figure says so.
+ *
+ * The judge is the kind the rest of the page measures: a second model trained
+ * on solutions marked right or wrong. It reads the question and one whole chain
+ * and returns one number, how likely that chain is right. It never sees the
+ * answer key and gives no reasons, so the figure shows no checks: a line like
+ * "at 6 she was 3, and 3 is half of 6" would show it checking the answer
+ * against the question, which it does not do. One number per chain, never one
+ * per step: grading steps is page 9's subject. Two chains with the same answer
+ * can rate differently, because it reads the chain and not just the answer.
+ */
+const SISTER: { answer: string; rating: number; work: string[] }[] = [
+  { answer: "35", rating: 18, work: ["half of 70 is 35", "so my sister is 35"] },
+  { answer: "67", rating: 96, work: ["at 6, she was half my age: 3", "so she is 3 years younger", "70 − 3 = 67"] },
+  { answer: "35", rating: 21, work: ["she is half my age", "70 ÷ 2 = 35"] },
+  { answer: "64", rating: 9, work: ["the gap is 6 years", "70 − 6 = 64"] },
+];
+
+const SISTER_KEPT = SISTER.reduce((best, c, i) => (c.rating > SISTER[best].rating ? i : best), 0);
+
+/** How long the judge spends on each chain, so the reader sees it read one at a time. */
+const READ_MS = 900;
+
+/** A small box in the judge's input → output strip. */
+function Slot({ children, strong }: { children: React.ReactNode; strong?: boolean }) {
+  return (
+    <span
+      className={`rounded border px-3 py-1.5 text-center text-xs ${
+        strong ? "border-ink-muted text-ink" : "border-grid text-ink-muted"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * Best-of-N in three presses. Generate writes four chains. Judge sends them
+ * through the judge one at a time, so the reader watches what goes in (the
+ * question and one chain) and what comes out (one number). Keep the best keeps
+ * the highest rating and throws the rest away. No vote here: this figure is
+ * the mechanism, and the comparison with page 7 belongs to the steps below.
+ */
+function BestOfNDemo() {
+  // 0 nothing yet · 1 chains written · 2 judging · 3 judged · 4 best kept
+  const [stage, setStage] = useState(0);
+  // Chains the judge has rated so far; while judging, chain `read` is the one being read.
+  const [read, setRead] = useState(0);
+  const n = SISTER.length;
+
+  useEffect(() => {
+    if (stage !== 2) return;
+    if (read >= n) {
+      setStage(3);
+      return;
+    }
+    const t = setTimeout(() => setRead((r) => r + 1), READ_MS);
+    return () => clearTimeout(t);
+  }, [stage, read, n]);
+
+  const judge = () => {
+    // Reduced motion skips the walk-through and rates every chain at once.
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setRead(n);
+      setStage(3);
+    } else {
+      setRead(0);
+      setStage(2);
+    }
+  };
+  const next = () => (stage === 1 ? judge() : setStage((s) => s + 1));
+  const reset = () => {
+    setStage(0);
+    setRead(0);
+  };
+
+  const reading = stage === 2 && read < n ? read : null;
+  const rated = (i: number) => stage >= 3 || (stage === 2 && i < read);
+  const kept = stage >= 4;
+  const best = SISTER[SISTER_KEPT];
+  const action = ["Generate", "Judge", "Judging…", "Keep the best", "Keep the best"][stage];
+
+  return (
+    <section
+      aria-label="Four chains, judged"
+      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+    >
+      <div className="flex max-w-[95%] items-start gap-2 self-end">
+        <p className="text-right font-code text-sm text-ink">{SISTER_QUESTION}</p>
+        <UserIcon />
+      </div>
+
+      <div className="flex items-start gap-2">
+        <ModelIcon />
+        <p className="text-sm text-ink-muted">
+          <strong className="text-ink">Step 1.</strong> The model answers the same question {n} times.
+          Each answer is its own chain of thought, written without seeing the other {n - 1}.
+        </p>
+      </div>
+
+      {stage >= 1 ? (
+        <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
+          {SISTER.map((c, i) => {
+            const isKept = kept && i === SISTER_KEPT;
+            return (
+              <li
+                key={i}
+                className={`flex flex-col gap-2 rounded-lg p-3 transition-opacity ${
+                  isKept
+                    ? "border-2 border-correct bg-correct/10"
+                    : reading === i
+                      ? "border-2 border-compute bg-surface-raised"
+                      : "border-2 border-transparent bg-surface-raised"
+                } ${kept && !isKept ? "opacity-50" : ""}`}
+              >
+                <p className="text-xs text-ink-muted">chain {i + 1}</p>
+                <div className="flex flex-col gap-0.5 font-code text-xs leading-relaxed text-ink-muted">
+                  {c.work.map((l) => (
+                    <p key={l}>{l}</p>
+                  ))}
+                </div>
+                <p className="text-sm text-ink">
+                  Final answer: <strong className="font-mono">{c.answer}</strong>
+                </p>
+                {stage >= 2 ? (
+                  <div className="flex items-center gap-2 border-t border-grid pt-2">
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-grid">
+                      <span
+                        className="block h-full rounded-full bg-compute transition-[width] duration-500"
+                        style={{ width: rated(i) ? `${c.rating}%` : "0%" }}
+                      />
+                    </span>
+                    <span className="w-24 text-right font-mono text-xs tabular-nums text-ink">
+                      {rated(i) ? `${c.rating}% right` : reading === i ? "reading…" : "not read yet"}
+                    </span>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <p className="flex items-center gap-2 text-sm text-ink-muted">
+          <span aria-hidden="true" className="animate-pulse text-compute-ink">
+            ▍
+          </span>
+          Press Generate.
+        </p>
+      )}
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-start gap-2">
+          <JudgeIcon />
+          <p className="text-sm text-ink-muted">
+            <strong className="text-ink">Step 2.</strong> A judge, a second model, reads one chain at
+            a time. Only the outcome is scored.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:pl-8">
+          <Slot>
+            question
+            <br />+ {reading !== null ? `chain ${reading + 1}` : "one chain"}
+          </Slot>
+          <span aria-hidden="true" className="text-ink-muted">→</span>
+          <Slot strong>
+            judge
+            <br />
+            <span className="text-[11px] text-ink-muted">trained on solutions marked right or wrong</span>
+          </Slot>
+          <span aria-hidden="true" className="text-ink-muted">→</span>
+          <Slot>
+            how likely
+            <br />
+            it is right
+            {stage === 2 && read > 0 ? (
+              <>
+                : <span className="font-mono text-ink">{SISTER[read - 1].rating}%</span>
+              </>
+            ) : null}
+          </Slot>
+        </div>
+      </div>
+
+      <div className="flex items-start gap-2">
+        <span
+          aria-hidden="true"
+          className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink/10 text-sm text-ink"
+        >
+          ✓
+        </span>
+        <p className="text-sm text-ink-muted">
+          <strong className="text-ink">Step 3.</strong> Keep the chain the judge rates highest.
+        </p>
+      </div>
+
+      {kept ? (
+        <p aria-live="polite" className="text-sm text-ink">
+          Best of {n} keeps chain {SISTER_KEPT + 1}:{" "}
+          <strong className="font-mono text-correct-ink">{best.answer}</strong>, the judge&apos;s
+          highest rating. The other {n - 1} are thrown away.
+        </p>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={next}
+          disabled={stage === 2 || kept}
+          className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+        >
+          ▶ {action}
+        </button>
+        <button
+          type="button"
+          onClick={reset}
+          disabled={stage === 0}
+          className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+        >
+          ↺ Reset
+        </button>
+      </div>
+      {/* Every other figure on the page is measured, so this one says it is not. */}
+      <p className="font-mono text-xs text-ink-muted">This is an illustrative example.</p>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------ figure 2 left */
 
 const SPEC_W = 430;
 const SPEC_H = 260;
@@ -280,7 +531,7 @@ function SpecimenPanel({ onOpen }: { onOpen: (sampleIndex: number) => void }) {
   );
 }
 
-/* ----------------------------------------------------------- figure 1 right */
+/* ----------------------------------------------------------- figure 2 right */
 
 const CURVE_W = 430;
 const CURVE_H = 260;
@@ -387,7 +638,7 @@ function CurvePanel() {
   );
 }
 
-/* ------------------------------------------------------------------ figure 2 */
+/* ------------------------------------------------------------------ figure 3 */
 
 const PAIR_W = 672;
 const PAIR_ROW = 30;
@@ -467,7 +718,7 @@ function PairedFigure() {
   );
 }
 
-/* ------------------------------------------------------------------ figure 3 */
+/* ------------------------------------------------------------------ figure 4 */
 
 const JUDGE_W = 520;
 const JUDGE_H = 246;
@@ -600,7 +851,7 @@ export function Page8() {
   const s = PAGE8.specimen;
   const chain = open === null ? null : s.candidates.find((c) => c.sample_index === open) ?? null;
   const trained = PAGE8.judges.find((j) => j.trained);
-  // The top of the ladder figure 3 orders by, named from the run rather than
+  // The top of the ladder figure 4 orders by, named from the run rather than
   // typed into the caption: if a re-run changes who solves the most, the
   // sentence that calls it the best solver changes with it.
   const bestSolver = PAGE8.judges.reduce<(typeof PAGE8.judges)[number] | undefined>(
@@ -608,7 +859,7 @@ export function Page8() {
     undefined,
   );
   // The judges that out-solve the model whose candidates they grade. The run
-  // records it per judge and keeps a gate for it, and figure 3's ladder is only
+  // records it per judge and keeps a gate for it, and figure 4's ladder is only
   // readable as evidence about judging once the page has said so.
   const stronger = PAGE8.judges.filter((j) => j.strongerThanWriter);
   // "Qwen/Qwen2.5-3B-Instruct" reads as a file path. What is after the slash is
@@ -634,21 +885,17 @@ export function Page8() {
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        Counting asks what is most common. Judging asks what is best. They are not the same
-        question, and on {PAGE8.run.items} problems{" "}
-        <strong className="text-ink">
-          scoring {PAGE8.paired.n} candidates and keeping the best takes {pct(PAGE8.oneChain)} to{" "}
-          {pct(PAGE8.headline.accuracy)}
-        </strong>
-        : {PAGE8.headline.fixed} problems fixed against {PAGE8.headline.broke} broken,{" "}
-        {pValue(PAGE8.headline.p)}. Then the part nobody promised us: page 7&apos;s vote, reading
-        the same candidates, gets there too.
+        Chain of thought lets a model reason through a problem step by step. Majority voting samples
+        many of those chains and keeps the answer that comes up most often. But what if, instead of
+        counting answers, we checked each one against a clear standard and kept the best? That
+        approach is called <strong className="text-ink">Best-of-N sampling</strong>.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1 — one batch, two rules */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Judge one batch two ways</h2>
+          <BestOfNDemo />
           {/* Pages 5, 6 and 7 open every figure step on a sentence saying what
               the figure is a picture OF. This step went straight from its
               heading into the card, so the reader met two panels with no idea
