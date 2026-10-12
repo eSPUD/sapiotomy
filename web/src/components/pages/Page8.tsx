@@ -444,20 +444,23 @@ function BestOfNDemo() {
 
 /**
  * A cell's fill: page 7's two hues, Cactus for a right chain and Sky for a
- * wrong one, so the two maps read alike. Ink stays AA on both.
+ * wrong one, so the two maps read alike.
  */
 const chainFill = (right: boolean) =>
   `color-mix(in srgb, var(${right ? "--correct" : "--wrong"}) ${right ? 85 : 40}%, transparent)`;
 
 const BAND_LABEL = { all: "every chain right", mixed: "some right", none: "none right" } as const;
-const bandOf = (n: number) => (n === PILE8.nChains ? "all" : n === 0 ? "none" : "mixed");
+type Band = keyof typeof BAND_LABEL;
+const bandOf = (n: number): Band => (n === PILE8.nChains ? "all" : n === 0 ? "none" : "mixed");
 
 /**
- * Every problem as a row of its 16 chains, sorted by the verifier's rating,
- * highest on the left. Column 1 is the chain Best-of-N keeps, set apart by a
- * gap. Rows run from most chains right to fewest, so the map falls into the
- * three bands named down its left edge. Hover a cell to read its rating; click
- * it to read the chain, whose text loads only then.
+ * Every problem as a column of its 16 chains, sorted by the verifier's rating
+ * with the highest at the top. The top row is the chain Best-of-N keeps, set
+ * apart by a gap. Problems run from most chains right to fewest, in three
+ * bands named along the top and split by gaps. Laid on its side so forty
+ * problems sit in one compact block; the ratings are in the readout rather
+ * than the cells. Hover a cell to read it; click it to read the chain, whose
+ * text loads only then.
  */
 function ChainHeatmap() {
   const rows = PILE8.rows;
@@ -482,11 +485,51 @@ function ChainHeatmap() {
     };
   }, [open, rows]);
 
-  // Where each band starts, for the labels down the left edge.
-  const bandStarts = rows
-    .map((r, q) => ({ q, band: bandOf(r.n_correct) }))
-    .filter((b, k, all) => k === 0 || all[k - 1].band !== b.band);
-  const rightIn = (j: number) => rows.filter((r) => r.chains[j].c).length;
+  // The bands, in order, each with the problems it holds.
+  const bands: { band: Band; qs: number[] }[] = [];
+  rows.forEach((r, q) => {
+    const b = bandOf(r.n_correct);
+    if (bands.at(-1)?.band === b) bands.at(-1)!.qs.push(q);
+    else bands.push({ band: b, qs: [q] });
+  });
+  const rightAt = (j: number) => rows.filter((r) => r.chains[j].c).length;
+  const gap = <td aria-hidden="true" className="w-1.5 p-0" />;
+
+  const rankRow = (j: number) => (
+    <tr key={j}>
+      <th
+        scope="row"
+        className={`pr-1.5 text-right font-normal ${j === 0 ? "font-semibold text-ink" : "text-ink-muted"}`}
+      >
+        {j === 0 ? "kept" : j === 1 || j === n - 1 ? `${j + 1}` : ""}
+      </th>
+      {bands.map(({ band, qs }, k) => (
+        <Fragment key={band}>
+          {k > 0 ? gap : null}
+          {qs.map((q) => {
+            const c = rows[q].chains[j];
+            const here = shown?.q === q && shown.j === j;
+            return (
+              <td key={q} className="p-0">
+                <button
+                  type="button"
+                  aria-label={`problem ${q + 1}, ${j === 0 ? "kept chain" : `chain rated ${j + 1} of ${n}`}: rated ${c.r}%, ${c.c ? "right" : "wrong"}`}
+                  onMouseEnter={() => setAt({ q, j })}
+                  onFocus={() => setAt({ q, j })}
+                  onClick={() => setOpen(open?.q === q && open.j === j ? null : { q, j })}
+                  className={`block h-3 w-3 rounded-[2px] ${here ? "outline outline-2 outline-ink" : ""}`}
+                  style={{ background: chainFill(c.c) }}
+                />
+              </td>
+            );
+          })}
+        </Fragment>
+      ))}
+      <td className={`pl-2 text-left ${j === 0 ? "font-semibold text-correct-ink" : "text-ink-muted"}`}>
+        {rightAt(j)}
+      </td>
+    </tr>
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -499,99 +542,50 @@ function ChainHeatmap() {
           <span aria-hidden="true" className="h-3 w-3 rounded-sm" style={{ background: chainFill(false) }} />
           a wrong chain
         </span>
-        <span>each cell shows how likely the judge rated it to be right</span>
+        <span>one column per problem, its chains rated highest at the top</span>
       </div>
       <div className="overflow-x-auto">
         <table
-          className="w-auto border-separate font-mono text-[10px] tabular-nums"
-          style={{ borderSpacing: "1px" }}
+          className="w-auto border-separate font-mono text-[10px] leading-3 tabular-nums [&_td]:py-0 [&_th]:py-0"
+          style={{ borderSpacing: "2px" }}
           onMouseLeave={() => setAt(null)}
         >
           <caption className="sr-only">
-            {rows.length} problems, each with its {n} chains sorted by the judge&apos;s rating; the
-            first column is the chain Best-of-N keeps
+            {rows.length} problems, each a column of its {n} chains sorted by the judge&apos;s rating;
+            the top row is the chain Best-of-N keeps
           </caption>
           <thead>
             <tr>
-              <th scope="col" colSpan={2} className="pb-1 pr-1 text-left align-bottom font-normal text-ink-muted">
-                problem
+              <th scope="col" className="pr-1.5 text-right align-bottom font-normal text-ink-muted">
+                rank
               </th>
-              <th scope="col" className="w-8 pb-1 align-bottom font-semibold text-ink">
-                kept
-              </th>
-              <th aria-hidden="true" className="w-1.5" />
-              <th scope="colgroup" colSpan={n - 1} className="pb-1 text-left align-bottom font-normal text-ink-muted">
-                the other {n - 1}, rated highest to lowest →
+              {bands.map(({ band, qs }, k) => (
+                <Fragment key={band}>
+                  {k > 0 ? <th aria-hidden="true" /> : null}
+                  <th
+                    scope="colgroup"
+                    colSpan={qs.length}
+                    className="whitespace-nowrap border-b border-grid pb-0.5 text-center align-bottom font-normal text-ink-muted"
+                  >
+                    {qs.length > 7 ? BAND_LABEL[band] : BAND_LABEL[band].replace(" chain", "")}
+                  </th>
+                </Fragment>
+              ))}
+              <th scope="col" className="pl-2 text-left align-bottom font-normal text-ink-muted">
+                right
               </th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, q) => {
-              const start = bandStarts.find((b) => b.q === q);
-              const span = start
-                ? (bandStarts[bandStarts.indexOf(start) + 1]?.q ?? rows.length) - q
-                : 0;
-              return (
-                <tr key={r.id}>
-                  {start ? (
-                    <th
-                      scope="rowgroup"
-                      rowSpan={span}
-                      className="w-4 border-r border-grid pr-1 align-middle font-normal text-ink-muted"
-                    >
-                      <span className="inline-block rotate-180 whitespace-nowrap [writing-mode:vertical-rl]">
-                        {BAND_LABEL[start.band as keyof typeof BAND_LABEL]}
-                      </span>
-                    </th>
-                  ) : null}
-                  <th scope="row" className="pl-1 pr-1 text-right font-normal text-ink-muted">
-                    {q + 1}
-                  </th>
-                  {r.chains.map((c, j) => {
-                    const here = shown?.q === q && shown.j === j;
-                    return (
-                      <Fragment key={c.i}>
-                        {j === 1 ? <td aria-hidden="true" /> : null}
-                        <td className="p-0">
-                          <button
-                            type="button"
-                            aria-label={`problem ${q + 1}, ${j === 0 ? "kept chain" : `chain rated ${j + 1} of ${n}`}: rated ${c.r}%, ${c.c ? "right" : "wrong"}`}
-                            onMouseEnter={() => setAt({ q, j })}
-                            onFocus={() => setAt({ q, j })}
-                            onClick={() => setOpen(open?.q === q && open.j === j ? null : { q, j })}
-                            className={`block h-4 w-8 rounded-sm text-center leading-none text-ink ${
-                              here ? "outline outline-2 outline-ink" : ""
-                            }`}
-                            style={{ background: chainFill(c.c) }}
-                          >
-                            {c.r}
-                          </button>
-                        </td>
-                      </Fragment>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr>
-              <th scope="row" colSpan={2} className="pr-1 pt-1 text-right font-normal text-ink-muted">
-                right
-              </th>
-              {Array.from({ length: n }, (_, j) => (
-                <Fragment key={j}>
-                  {j === 1 ? <td aria-hidden="true" /> : null}
-                  <td className={`pt-1 text-center ${j === 0 ? "font-semibold text-correct-ink" : "text-ink-muted"}`}>
-                    {rightIn(j)}
-                  </td>
-                </Fragment>
-              ))}
+            {rankRow(0)}
+            <tr aria-hidden="true">
+              <td className="h-1 p-0" />
             </tr>
-          </tfoot>
+            {Array.from({ length: n - 1 }, (_, k) => rankRow(k + 1))}
+          </tbody>
         </table>
       </div>
-      {/* The hover readout; it holds its line so the figure does not jump. */}
+      {/* The readout; it holds its line so the figure does not jump. */}
       <p aria-hidden="true" className="min-h-[1.25rem] font-mono text-xs text-ink">
         {cell && shown
           ? `problem ${shown.q + 1} · ${shown.j === 0 ? "the kept chain" : `rated ${shown.j + 1} of ${n}`} · judge says ${cell.r}% · answer ${tidyMath(cell.a ?? "none")} · ${cell.c ? "right" : "wrong"}`
@@ -1215,9 +1209,9 @@ export function Page8() {
           <h2 className="text-xl font-semibold text-ink">2. Best-of-N on {PILE8.rows.length} problems</h2>
           <p className="text-ink-muted">
             The same method on {PILE8.rows.length} real problems. For each one the model wrote{" "}
-            {PILE8.nChains} chains of thought and the judge rated every chain. Each row below is one
-            problem, its {PILE8.nChains} chains sorted by the judge&apos;s rating with the highest on
-            the left. Best-of-N keeps the chain in the first column.
+            {PILE8.nChains} chains of thought and the judge rated every chain. Each column below is one
+            problem, its {PILE8.nChains} chains sorted by the judge&apos;s rating with the highest at
+            the top. Best-of-N keeps the chain in the top row.
           </p>
           <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
             <Pills
@@ -1229,18 +1223,20 @@ export function Page8() {
             />
             <ChainHeatmap />
             <figcaption className="text-sm text-ink-muted">
-              The rows fall into three bands. On {PILE8.bands.all} problems every chain is right, so
+              The problems fall into three bands. On {PILE8.bands.all} problems every chain is right, so
               any pick works. On {PILE8.bands.none} none is, so there is nothing for the judge to
               find. The judge matters in the {PILE8.bands.mixed} between: there the kept chain is
               right on <strong className="text-ink">{PILE8.bands.mixedKeptRight}</strong>, the
-              problems where the judge found a right chain. Each row is one cell of page 7&apos;s
+              problems where the judge found a right chain. Each column is one cell of page 7&apos;s
               heat map at its best temperature, opened into its {PILE8.nChains} chains.
             </figcaption>
           </figure>
         </section>
 
-        {/* Step 3 — what a judge is worth */}
-        <section className="flex min-w-0 flex-col gap-3">
+        {/* Step 3 — what a judge is worth. Pinned to the reading column: step 2
+            has no margin note, so without it the grid flows this step into the
+            margin. */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">3. What a judge is worth</h2>
           {/* Which model the winning judge actually is opens the step, because
               the figure below ranks it against four others and cannot say what

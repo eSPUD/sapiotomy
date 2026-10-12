@@ -276,7 +276,7 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(kept.filter((b) => /right$/.test(b.getAttribute("aria-label")!)).length).toBe(
       Math.round(PILE8.bars.best_of_n * PILE8.rows.length),
     );
-    const caption = screen.getByText(/The rows fall into three bands/);
+    const caption = screen.getByText(/The problems fall into three bands/);
     expect(caption.textContent).toContain(`right on ${PILE8.bands.mixedKeptRight}`);
     expect(PILE8.bands.all + PILE8.bands.mixed + PILE8.bands.none).toBe(PILE8.rows.length);
   });
