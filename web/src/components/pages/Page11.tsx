@@ -1016,12 +1016,16 @@ export function Page11() {
 
   return (
     <article className="flex flex-col gap-6">
-      {/* The download shares the top line with the act kicker, as on page 5:
-          the first thing after the title row is the way to re-derive all of it. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
-          Act {page.act} · {ACTS[page.act].title}
-        </p>
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
+        Act {page.act} · {ACTS[page.act].title}
+      </p>
+      {/* The notebook sits right beside the page title: the way to re-derive
+          the page, where the page is named. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="text-3xl font-bold text-ink">
+          <span className="font-mono text-ink-muted">{page.n}. </span>
+          {page.title}
+        </h1>
         <a
           className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
           href={`/notebooks/${PAGE11.download.slug}.zip`}
@@ -1030,10 +1034,6 @@ export function Page11() {
           Download the notebook and traces (zip, {PAGE11.download.sizeLabel}) ↓
         </a>
       </div>
-      <h1 className="text-3xl font-bold text-ink">
-        <span className="font-mono text-ink-muted">{page.n}. </span>
-        {page.title}
-      </h1>
       {/* Four sentences, at pages 8 to 10's opener length. The FLOPs gloss rides
           along in the claim rather than taking a sentence of its own, and the
           once/every-question contrast carries the pretraining split in one line —

@@ -548,19 +548,18 @@ export function Page7() {
 
   return (
     <article className="flex flex-col gap-6">
-      {/* The download shares the top line with the act kicker, page 5's shape:
-          the first thing on the page after the title row is the way to
-          re-derive all of it. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
-          Act {page.act} · {ACTS[page.act].title}
-        </p>
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
+        Act {page.act} · {ACTS[page.act].title}
+      </p>
+      {/* The notebook sits right beside the page title: the way to re-derive
+          the page, where the page is named. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="text-3xl font-bold text-ink">
+          <span className="font-mono text-ink-muted">{page.n}. </span>
+          {page.title}
+        </h1>
         <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
       </div>
-      <h1 className="text-3xl font-bold text-ink">
-        <span className="font-mono text-ink-muted">{page.n}. </span>
-        {page.title}
-      </h1>
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">

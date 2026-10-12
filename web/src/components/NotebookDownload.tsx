@@ -1,7 +1,8 @@
 /**
  * The notebook download, shared by every page that ships a bundle (pages 5-9)
  * so the button is uniform everywhere: one style, one wording, the size in the
- * label. Each page passes its own zip href and size string.
+ * label. Each page passes its own zip href and size string, and places it on the
+ * title's row, right after the page heading.
  */
 export function NotebookDownload({ href, size }: { href: string; size: string }) {
   return (

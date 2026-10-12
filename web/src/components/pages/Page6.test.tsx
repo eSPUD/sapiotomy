@@ -508,19 +508,19 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("puts the notebook download at the top on the act-kicker line, with no run colophon", () => {
+  it("puts the notebook download beside the page title, with no run colophon", () => {
     const { container } = render(<Page6 />);
     // The hairline colophon that used to head the page, naming the run, is gone:
     // its jargon belongs to the notebook and is left to it.
     expect(container.querySelector(".border-y")).toBeNull();
     expect(body()).not.toContain(PAGE6.manifest.run_id);
 
-    // The download is the shared NotebookDownload button, on the top line beside
-    // the act kicker (page 5's shape), not in a footer.
+    // The download is the shared NotebookDownload button, on the title's row right
+    // after the heading (page 5's shape), not in a footer.
     const download = screen.getByRole("link", { name: /download the notebook/i });
     expect(download).toHaveAttribute("href", "/notebooks/page-06-thinking-longer.zip");
     expect(download).toHaveAttribute("download");
-    expect(download.parentElement?.textContent).toContain("Act 2");
+    expect(download.parentElement?.querySelector("h1")).toBe(screen.getByRole("heading", { level: 1 }));
 
     // The reference still lives in the right-hand References sidenote.
     const refs = screen.getByText("References").closest("aside")!;

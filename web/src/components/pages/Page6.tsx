@@ -1208,22 +1208,20 @@ export function Page6() {
 
   return (
     <article className="flex flex-col gap-6">
-      {/* Title and the download share the top line. The page's whole claim is
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
+        Act {page.act} · {ACTS[page.act].title}
+      </p>
+      {/* The notebook sits right beside the page title. The page's whole claim is
           that every figure below replays from committed traces on no GPU, so the
-          file that makes good on it sits top-right, reachable before the reader
-          has scrolled a pixel — not buried in a footer. The run's instrument
-          line used to sit here as a colophon; it belongs to the notebook and is
-          left to it. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
-          Act {page.act} · {ACTS[page.act].title}
-        </p>
+          file that makes good on it is reachable before the reader has scrolled a
+          pixel, not buried in a footer. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="text-3xl font-bold text-ink">
+          <span className="font-mono text-ink-muted">{page.n}. </span>
+          {page.title}
+        </h1>
         <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
       </div>
-      <h1 className="text-3xl font-bold text-ink">
-        <span className="font-mono text-ink-muted">{page.n}. </span>
-        {page.title}
-      </h1>
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">

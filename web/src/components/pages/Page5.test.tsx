@@ -403,12 +403,13 @@ describe("Page 5, figure 4: what each checkpoint wrote against what it solved", 
 describe("Page 5: provenance and what the page may claim", () => {
   // The pipeline's whole claim: a reader who doubts a figure re-derives it.
   // The link sits at the top right of the page, on the act kicker's row.
-  it("links the notebook, the harness and the traces as one download, at the top", () => {
+  it("links the notebook, the harness and the traces as one download, beside the title", () => {
     render(<Page5 />);
     const link = screen.getByRole("link", { name: /download the notebook/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-05-how-to-reason.zip");
     expect(link).toHaveAttribute("download");
-    expect(link.parentElement?.textContent).toContain("Act 2");
+    // It shares the title's row, right after the page heading.
+    expect(link.parentElement?.querySelector("h1")).toBe(screen.getByRole("heading", { level: 1 }));
   });
 
   // The run's vitals moved off the top plate (jargon before the reader has met

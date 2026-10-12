@@ -271,14 +271,18 @@ export function Page16() {
 
   return (
     <article className="flex flex-col gap-6">
-      {/* Pages 5 to 10 each put their run's download here, beside the act kicker,
-          and a reader who has come through Act 2 has learned to look here for it.
-          This page draws five runs rather than one, so it carries five, but they
-          belong in the same place rather than buried under the figure they source. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
-          Act {page.act} · {ACTS[page.act].title}
-        </p>
+      <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
+        Act {page.act} · {ACTS[page.act].title}
+      </p>
+      {/* Pages 5 to 11 each put their run's download beside the page title, and a
+          reader who has come through Act 2 has learned to look there. This page
+          draws five runs rather than one, so it carries five, in the same place
+          rather than buried under the figure they source. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="text-3xl font-bold text-ink">
+          <span className="font-mono text-ink-muted">{page.n}. </span>
+          {page.title}
+        </h1>
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-xs text-ink-muted">the runs behind the chart:</span>
           {NOTEBOOKS.map((n) => (
@@ -294,10 +298,6 @@ export function Page16() {
           ))}
         </div>
       </div>
-      <h1 className="text-3xl font-bold text-ink">
-        <span className="font-mono text-ink-muted">{page.n}. </span>
-        {page.title}
-      </h1>
       <p className="text-lg text-ink-muted">
         The past fifteen pages are a small but mighty snapshot of what inference-time scaling is
         under the hood. Reasoning turned out to be{" "}
