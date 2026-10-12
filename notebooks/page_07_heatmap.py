@@ -3,7 +3,7 @@
 The notebook saves the diversity family only as one aggregate per temperature
 (`results.json` -> `diversity`). This script re-tallies the same chains per problem with the
 notebook's own vote (`vote_key`, `cluster` and `tally` below are copied from
-page_07_frequency_voting.ipynb, cells 12 and 14), and refuses to write unless its rows
+page_07_frequency_voting.ipynb, cells 10 and 12), and refuses to write unless its rows
 reproduce every aggregate the notebook saved. It computes nothing the notebook did not:
 the cells are the rows the notebook averaged.
 
