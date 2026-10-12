@@ -75,7 +75,7 @@
  * a row reading `best-of-N (qwen1.5b)` is a figure the reader cannot use.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { ModelIcon, UserIcon } from "@/components/ChatIcons";
@@ -83,6 +83,7 @@ import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
 import { PAGE8, pValue, pct, tidyMath } from "@/lib/page08";
+import { PILE8, loadChains } from "@/lib/page08Pile";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
@@ -208,8 +209,21 @@ const SISTER: { answer: string; rating: number; work: string[] }[] = [
 
 const SISTER_KEPT = SISTER.reduce((best, c, i) => (c.rating > SISTER[best].rating ? i : best), 0);
 
-/** How long the judge spends on each chain, so the reader sees it read one at a time. */
+/** How long each chain takes to appear, and how long the judge spends on each one. */
+const WRITE_MS = 450;
 const READ_MS = 900;
+/** The beat between judging the last chain and keeping the best. */
+const PAUSE_MS = 600;
+
+type Phase = "idle" | "generating" | "judging" | "done";
+
+/** What the model's response box says while the demo runs. */
+const STATUS: Record<Phase, string> = {
+  idle: "Press Play.",
+  generating: "Generating…",
+  judging: "Judging…",
+  done: "Best candidate selected",
+};
 
 /** A small box in the judge's input → output strip. */
 function Slot({ children, strong }: { children: React.ReactNode; strong?: boolean }) {
@@ -225,50 +239,54 @@ function Slot({ children, strong }: { children: React.ReactNode; strong?: boolea
 }
 
 /**
- * Best-of-N in three presses. Generate writes four chains. Judge sends them
- * through the judge one at a time, so the reader watches what goes in (the
- * question and one chain) and what comes out (one number). Keep the best keeps
- * the highest rating and throws the rest away. No vote here: this figure is
- * the mechanism, and the comparison with page 7 belongs to the steps below.
+ * Best-of-N in one press. Play writes the four chains one after another, sends
+ * them through the judge one at a time, so the reader watches what goes in (the
+ * question and one chain) and what comes out (one number), then keeps the
+ * highest rating and throws the rest away. A status line in the model's box
+ * names the step. No vote here: this figure is the mechanism, and the
+ * comparison with page 7 belongs to the steps below.
  */
 function BestOfNDemo() {
-  // 0 nothing yet · 1 chains written · 2 judging · 3 judged · 4 best kept
-  const [stage, setStage] = useState(0);
-  // Chains the judge has rated so far; while judging, chain `read` is the one being read.
+  const [phase, setPhase] = useState<Phase>("idle");
+  // Chains written so far, and chains the judge has rated so far; while judging,
+  // chain `read` is the one being read.
+  const [written, setWritten] = useState(0);
   const [read, setRead] = useState(0);
   const n = SISTER.length;
 
   useEffect(() => {
-    if (stage !== 2) return;
-    if (read >= n) {
-      setStage(3);
-      return;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    if (phase === "generating") {
+      t = written < n
+        ? setTimeout(() => setWritten((w) => w + 1), WRITE_MS)
+        : setTimeout(() => setPhase("judging"), PAUSE_MS);
+    } else if (phase === "judging") {
+      t = read < n
+        ? setTimeout(() => setRead((r) => r + 1), READ_MS)
+        : setTimeout(() => setPhase("done"), PAUSE_MS);
     }
-    const t = setTimeout(() => setRead((r) => r + 1), READ_MS);
     return () => clearTimeout(t);
-  }, [stage, read, n]);
+  }, [phase, written, read, n]);
 
-  const judge = () => {
-    // Reduced motion skips the walk-through and rates every chain at once.
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-      setRead(n);
-      setStage(3);
-    } else {
-      setRead(0);
-      setStage(2);
-    }
+  // The steps are the content, so they play for everyone. Reduced motion drops
+  // only the decoration: the bars' slide and the pulsing cursor.
+  const play = () => {
+    setWritten(0);
+    setRead(0);
+    setPhase("generating");
   };
-  const next = () => (stage === 1 ? judge() : setStage((s) => s + 1));
   const reset = () => {
-    setStage(0);
+    setPhase("idle");
+    setWritten(0);
     setRead(0);
   };
 
-  const reading = stage === 2 && read < n ? read : null;
-  const rated = (i: number) => stage >= 3 || (stage === 2 && i < read);
-  const kept = stage >= 4;
+  const running = phase === "generating" || phase === "judging";
+  const judged = phase === "judging" || phase === "done";
+  const reading = phase === "judging" && read < n ? read : null;
+  const rated = (i: number) => phase === "done" || i < read;
+  const kept = phase === "done";
   const best = SISTER[SISTER_KEPT];
-  const action = ["Generate", "Judge", "Judging…", "Keep the best", "Keep the best"][stage];
 
   return (
     <section
@@ -288,14 +306,28 @@ function BestOfNDemo() {
         </p>
       </div>
 
-      {stage >= 1 ? (
+      <p
+        aria-live="polite"
+        className={`flex items-center gap-2 font-mono text-sm sm:pl-8 ${kept ? "text-correct-ink" : "text-ink-muted"}`}
+      >
+        {kept ? (
+          <span aria-hidden="true">✓</span>
+        ) : (
+          <span aria-hidden="true" className="text-compute-ink motion-safe:animate-pulse">
+            ▍
+          </span>
+        )}
+        {STATUS[phase]}
+      </p>
+
+      {written > 0 ? (
         <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
-          {SISTER.map((c, i) => {
+          {SISTER.slice(0, written).map((c, i) => {
             const isKept = kept && i === SISTER_KEPT;
             return (
               <li
                 key={i}
-                className={`flex flex-col gap-2 rounded-lg p-3 transition-opacity ${
+                className={`flex flex-col gap-2 rounded-lg p-3 motion-safe:transition-opacity ${
                   isKept
                     ? "border-2 border-correct bg-correct/10"
                     : reading === i
@@ -312,11 +344,11 @@ function BestOfNDemo() {
                 <p className="text-sm text-ink">
                   Final answer: <strong className="font-mono">{c.answer}</strong>
                 </p>
-                {stage >= 2 ? (
+                {judged ? (
                   <div className="flex items-center gap-2 border-t border-grid pt-2">
                     <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-grid">
                       <span
-                        className="block h-full rounded-full bg-compute transition-[width] duration-500"
+                        className="block h-full rounded-full bg-compute motion-safe:transition-[width] motion-safe:duration-500"
                         style={{ width: rated(i) ? `${c.rating}%` : "0%" }}
                       />
                     </span>
@@ -329,14 +361,7 @@ function BestOfNDemo() {
             );
           })}
         </ol>
-      ) : (
-        <p className="flex items-center gap-2 text-sm text-ink-muted">
-          <span aria-hidden="true" className="animate-pulse text-compute-ink">
-            ▍
-          </span>
-          Press Generate.
-        </p>
-      )}
+      ) : null}
 
       <div className="flex flex-col gap-2">
         <div className="flex items-start gap-2">
@@ -362,7 +387,7 @@ function BestOfNDemo() {
             how likely
             <br />
             it is right
-            {stage === 2 && read > 0 ? (
+            {phase === "judging" && read > 0 ? (
               <>
                 : <span className="font-mono text-ink">{SISTER[read - 1].rating}%</span>
               </>
@@ -394,16 +419,16 @@ function BestOfNDemo() {
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={next}
-          disabled={stage === 2 || kept}
+          onClick={play}
+          disabled={running}
           className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
         >
-          ▶ {action}
+          ▶ Play
         </button>
         <button
           type="button"
           onClick={reset}
-          disabled={stage === 0}
+          disabled={phase === "idle"}
           className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
         >
           ↺ Reset
@@ -412,6 +437,182 @@ function BestOfNDemo() {
       {/* Every other figure on the page is measured, so this one says it is not. */}
       <p className="font-mono text-xs text-ink-muted">This is an illustrative example.</p>
     </section>
+  );
+}
+
+/* -------------------------------------------------------- figure 2: heat map */
+
+/**
+ * A cell's fill: page 7's two hues, Cactus for a right chain and Sky for a
+ * wrong one, so the two maps read alike. Ink stays AA on both.
+ */
+const chainFill = (right: boolean) =>
+  `color-mix(in srgb, var(${right ? "--correct" : "--wrong"}) ${right ? 85 : 40}%, transparent)`;
+
+const BAND_LABEL = { all: "every chain right", mixed: "some right", none: "none right" } as const;
+const bandOf = (n: number) => (n === PILE8.nChains ? "all" : n === 0 ? "none" : "mixed");
+
+/**
+ * Every problem as a row of its 16 chains, sorted by the verifier's rating,
+ * highest on the left. Column 1 is the chain Best-of-N keeps, set apart by a
+ * gap. Rows run from most chains right to fewest, so the map falls into the
+ * three bands named down its left edge. Hover a cell to read its rating; click
+ * it to read the chain, whose text loads only then.
+ */
+function ChainHeatmap() {
+  const rows = PILE8.rows;
+  const n = PILE8.nChains;
+  const [at, setAt] = useState<{ q: number; j: number } | null>(null);
+  const [open, setOpen] = useState<{ q: number; j: number } | null>(null);
+  const [text, setText] = useState<string | null>(null);
+  const shown = at ?? open;
+  const cell = shown ? rows[shown.q].chains[shown.j] : null;
+  const openRow = open ? rows[open.q] : null;
+  const openChain = open ? rows[open.q].chains[open.j] : null;
+
+  useEffect(() => {
+    if (!open) return;
+    let live = true;
+    setText(null);
+    loadChains(rows[open.q].file).then((c) => {
+      if (live) setText(c[String(rows[open.q].chains[open.j].i)] ?? "");
+    });
+    return () => {
+      live = false;
+    };
+  }, [open, rows]);
+
+  // Where each band starts, for the labels down the left edge.
+  const bandStarts = rows
+    .map((r, q) => ({ q, band: bandOf(r.n_correct) }))
+    .filter((b, k, all) => k === 0 || all[k - 1].band !== b.band);
+  const rightIn = (j: number) => rows.filter((r) => r.chains[j].c).length;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm" style={{ background: chainFill(true) }} />
+          a right chain
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="h-3 w-3 rounded-sm" style={{ background: chainFill(false) }} />
+          a wrong chain
+        </span>
+        <span>each cell shows how likely the judge rated it to be right</span>
+      </div>
+      <div className="overflow-x-auto">
+        <table
+          className="w-auto border-separate font-mono text-[10px] tabular-nums"
+          style={{ borderSpacing: "1px" }}
+          onMouseLeave={() => setAt(null)}
+        >
+          <caption className="sr-only">
+            {rows.length} problems, each with its {n} chains sorted by the judge&apos;s rating; the
+            first column is the chain Best-of-N keeps
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col" colSpan={2} className="pb-1 pr-1 text-left align-bottom font-normal text-ink-muted">
+                problem
+              </th>
+              <th scope="col" className="w-8 pb-1 align-bottom font-semibold text-ink">
+                kept
+              </th>
+              <th aria-hidden="true" className="w-1.5" />
+              <th scope="colgroup" colSpan={n - 1} className="pb-1 text-left align-bottom font-normal text-ink-muted">
+                the other {n - 1}, rated highest to lowest →
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, q) => {
+              const start = bandStarts.find((b) => b.q === q);
+              const span = start
+                ? (bandStarts[bandStarts.indexOf(start) + 1]?.q ?? rows.length) - q
+                : 0;
+              return (
+                <tr key={r.id}>
+                  {start ? (
+                    <th
+                      scope="rowgroup"
+                      rowSpan={span}
+                      className="w-4 border-r border-grid pr-1 align-middle font-normal text-ink-muted"
+                    >
+                      <span className="inline-block rotate-180 whitespace-nowrap [writing-mode:vertical-rl]">
+                        {BAND_LABEL[start.band as keyof typeof BAND_LABEL]}
+                      </span>
+                    </th>
+                  ) : null}
+                  <th scope="row" className="pl-1 pr-1 text-right font-normal text-ink-muted">
+                    {q + 1}
+                  </th>
+                  {r.chains.map((c, j) => {
+                    const here = shown?.q === q && shown.j === j;
+                    return (
+                      <Fragment key={c.i}>
+                        {j === 1 ? <td aria-hidden="true" /> : null}
+                        <td className="p-0">
+                          <button
+                            type="button"
+                            aria-label={`problem ${q + 1}, ${j === 0 ? "kept chain" : `chain rated ${j + 1} of ${n}`}: rated ${c.r}%, ${c.c ? "right" : "wrong"}`}
+                            onMouseEnter={() => setAt({ q, j })}
+                            onFocus={() => setAt({ q, j })}
+                            onClick={() => setOpen(open?.q === q && open.j === j ? null : { q, j })}
+                            className={`block h-4 w-8 rounded-sm text-center leading-none text-ink ${
+                              here ? "outline outline-2 outline-ink" : ""
+                            }`}
+                            style={{ background: chainFill(c.c) }}
+                          >
+                            {c.r}
+                          </button>
+                        </td>
+                      </Fragment>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colSpan={2} className="pr-1 pt-1 text-right font-normal text-ink-muted">
+                right
+              </th>
+              {Array.from({ length: n }, (_, j) => (
+                <Fragment key={j}>
+                  {j === 1 ? <td aria-hidden="true" /> : null}
+                  <td className={`pt-1 text-center ${j === 0 ? "font-semibold text-correct-ink" : "text-ink-muted"}`}>
+                    {rightIn(j)}
+                  </td>
+                </Fragment>
+              ))}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      {/* The hover readout; it holds its line so the figure does not jump. */}
+      <p aria-hidden="true" className="min-h-[1.25rem] font-mono text-xs text-ink">
+        {cell && shown
+          ? `problem ${shown.q + 1} · ${shown.j === 0 ? "the kept chain" : `rated ${shown.j + 1} of ${n}`} · judge says ${cell.r}% · answer ${tidyMath(cell.a ?? "none")} · ${cell.c ? "right" : "wrong"}`
+          : "Hover a cell to read it; click it to read the chain."}
+      </p>
+      {openRow && openChain ? (
+        <div className="rounded border border-grid bg-surface-raised p-3">
+          <p className="text-sm text-ink">{tidyMath(openRow.question)}</p>
+          <p className="mt-1 text-xs text-ink-muted">
+            {open!.j === 0 ? "The kept chain" : `Rated ${open!.j + 1} of ${n}`} · answer{" "}
+            <span className={openChain.c ? "text-correct-ink" : "text-wrong-ink"}>
+              {tidyMath(openChain.a ?? "none")}
+            </span>{" "}
+            · the right answer is {tidyMath(openRow.answer)} · the judge rated it {openChain.r}%
+          </p>
+          <p className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap font-mono text-xs text-ink">
+            {text === null ? "loading…" : tidyMath(text)}
+          </p>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -891,10 +1092,19 @@ export function Page8() {
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — one batch, two rules */}
+        {/* Step 1 — how Best-of-N works */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. Judge one batch two ways</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Generate, judge, keep the best</h2>
           <BestOfNDemo />
+          {/* The anchor sentence: the formal version of what the demo just showed,
+              from Cobbe et al.'s abstract, cited in the margin beside it. */}
+          <p className="text-ink">
+            That is the whole method. In the words of the paper that introduced it, you{" "}
+            &ldquo;generate many candidate solutions and select the one ranked highest by the
+            verifier.&rdquo;
+            <Cite n={REF.cobbe} /> The verifier is the judge: a second model, trained on solutions
+            marked right or wrong.
+          </p>
           {/* Pages 5, 6 and 7 open every figure step on a sentence saying what
               the figure is a picture OF. This step went straight from its
               heading into the card, so the reader met two panels with no idea
@@ -1000,53 +1210,34 @@ export function Page8() {
           </RefItem>
         </Note>
 
-        {/* Step 2 — what each rule fixed and broke */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. What each rule fixed, and what it broke</h2>
-          {/* One row of the figure is the previous page's rule, which the row
-              label cannot say, and it did not read the previous page's chains,
-              which nothing else on the page says. The rest of the retired note
-              was the close's point made early. */}
+        {/* Step 2 — Best-of-N on the problems */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
+          <h2 className="text-xl font-semibold text-ink">2. Best-of-N on {PILE8.rows.length} problems</h2>
           <p className="text-ink-muted">
-            One row per selection rule, each against the same single chain on the same problems.
-            The majority-vote row is page 7&apos;s counting rule, re-run here on chains this page
-            generated itself.
+            The same method on {PILE8.rows.length} real problems. For each one the model wrote{" "}
+            {PILE8.nChains} chains of thought and the judge rated every chain. Each row below is one
+            problem, its {PILE8.nChains} chains sorted by the judge&apos;s rating with the highest on
+            the left. Best-of-N keeps the chain in the first column.
           </p>
           <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
-            {/* The fact the whole page rests on, and the reason the rows may be
-                compared to each other at all. */}
             <Pills
-              items={["measured", `${PAGE8.paired.items} problems`, "every rule reads the same chains"]}
+              items={[
+                "measured",
+                PILE8.writer.split("/").pop() ?? PILE8.writer,
+                `${PILE8.rows.length} ${PILE8.benchmark} problems, ${PILE8.nChains} chains each`,
+              ]}
             />
-            <PairedFigure />
+            <ChainHeatmap />
             <figcaption className="text-sm text-ink-muted">
-              Every rule against the same fixed chain per problem, which solves{" "}
-              {pct(PAGE8.oneChain)}, on the same {PAGE8.paired.items} problems, tested where the
-              two disagree. The trained verifier fixes{" "}
-              <strong className="text-ink">{PAGE8.headline.fixed}</strong> and breaks{" "}
-              <strong className="text-ink">{PAGE8.headline.broke}</strong>. And{" "}
-              <strong className="text-ink">the heuristic scorer from the source we build on</strong>
-              <Cite n={REF.source} />
-              {PAGE8.heuristic ? (
-                <>
-                  {" "}
-                  breaks {PAGE8.heuristic.broke} and fixes only {PAGE8.heuristic.fixed}: every
-                  candidate here ends in a boxed answer, so its boxed bonus cancels and the rule
-                  reduces to <em>shortest wins</em>. A judge that grades presentation is worse than
-                  not choosing at all.
-                </>
-              ) : null}
+              The rows fall into three bands. On {PILE8.bands.all} problems every chain is right, so
+              any pick works. On {PILE8.bands.none} none is, so there is nothing for the judge to
+              find. The judge matters in the {PILE8.bands.mixed} between: there the kept chain is
+              right on <strong className="text-ink">{PILE8.bands.mixedKeptRight}</strong>, the
+              problems where the judge found a right chain. Each row is one cell of page 7&apos;s
+              heat map at its best temperature, opened into its {PILE8.nChains} chains.
             </figcaption>
           </figure>
         </section>
-        {/* The bars carry the counts, the net and the p value, and the step's
-            opening prose carries which row is page 7's. Nothing is left for the
-            margin but the reference. */}
-        <Note kicker="References">
-          <RefItem n={REF.source} href="https://mng.bz/lZ5B">
-            Raschka 2025, <em>Build a Reasoning Model (From Scratch)</em> (Manning).
-          </RefItem>
-        </Note>
 
         {/* Step 3 — what a judge is worth */}
         <section className="flex min-w-0 flex-col gap-3">
@@ -1143,6 +1334,9 @@ export function Page8() {
           </Handoff>
         </section>
         <Note kicker="References">
+          <RefItem n={REF.source} href="https://mng.bz/lZ5B">
+            Raschka 2025, <em>Build a Reasoning Model (From Scratch)</em> (Manning).
+          </RefItem>
           <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
             Stroebl et al. 2024, <em>Inference Scaling fLaws: The Limits of LLM Resampling with
             Imperfect Verifiers</em> (arXiv 2411.17501).

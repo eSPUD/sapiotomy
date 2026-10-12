@@ -9,8 +9,9 @@
  * the test with it and a re-run that changes the CONCLUSION fails it.
  */
 import { describe, expect, it, vi } from "vitest";
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { PAGE8, pValue, pct } from "@/lib/page08";
+import { PILE8 } from "@/lib/page08Pile";
 import { Page8 } from "./Page8";
 
 describe("Page 8 (best-of-N and verifiers) component", () => {
@@ -23,8 +24,8 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
 
   it("draws all three beats", () => {
     render(<Page8 />);
-    expect(screen.getByRole("heading", { name: /Judge one batch two ways/ })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /fixed, and what it broke/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Generate, judge, keep the best/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Best-of-N on \d+ problems/ })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /What a judge is worth/ })).toBeInTheDocument();
   });
 
@@ -96,7 +97,9 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     // Page 7's two facts: which model, which problems. Named, not implied.
     expect(row.textContent).toContain(PAGE8.run.model.split("/").pop());
     expect(row.textContent).toContain(`${PAGE8.run.items} MATH-500 problems`);
-    expect(screen.getByText("every rule reads the same chains")).toBeInTheDocument();
+    // The heat map names its own model and problem count.
+    const heat = screen.getByText(`${PILE8.rows.length} MATH-500 problems, ${PILE8.nChains} chains each`);
+    expect(heat.closest("ul")!.textContent).toContain(PILE8.writer.split("/").pop());
     // The sister's-age demo is the one authored figure, and it is the only
     // thing on the page allowed to say so.
     expect(document.body.textContent).not.toMatch(/simulation/i);
@@ -104,23 +107,25 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(illustrative.closest("section")).toBe(screen.getByLabelText("Four chains, judged"));
   });
 
-  it("walks the demo through generate, judge one chain at a time, and keep the best", () => {
+  it("plays the demo in one press: generate, judge one chain at a time, keep the best", () => {
     vi.useFakeTimers();
     try {
       render(<Page8 />);
       const demo = screen.getByLabelText("Four chains, judged");
-      const press = (name: RegExp) => fireEvent.click(within(demo).getByRole("button", { name }));
+      const tick = () => act(() => vi.advanceTimersByTime(1_000));
       expect(within(demo).queryByText(/Final answer/)).toBeNull();
-      press(/Generate/);
+      fireEvent.click(within(demo).getByRole("button", { name: /Play/ }));
+      expect(within(demo).getByText("Generating…")).toBeInTheDocument();
+      // One tick per step, so each state renders before the next timer is set.
+      for (let i = 0; i < 5; i++) tick();
       expect(within(demo).getAllByText(/^chain \d$/)).toHaveLength(4);
-      press(/Judge/);
+      expect(within(demo).getByText("Judging…")).toBeInTheDocument();
       // The judge reads one chain at a time: the first is being read, none rated.
       expect(within(demo).getByText("reading…")).toBeInTheDocument();
       expect(within(demo).queryByText(/% right/)).toBeNull();
-      // One tick per chain, so each rating renders before the next timer is set.
-      for (let i = 0; i < 5; i++) act(() => vi.advanceTimersByTime(1_000));
+      for (let i = 0; i < 6; i++) tick();
       expect(within(demo).getAllByText(/% right/)).toHaveLength(4);
-      press(/Keep the best/);
+      expect(within(demo).getByText("Best candidate selected")).toBeInTheDocument();
       expect(within(demo).getByText(/Best of 4 keeps chain 2/).textContent).toMatch(/67/);
       // The mechanism only: page 7's vote is not in this figure.
       expect(demo.textContent).not.toMatch(/vote/i);
@@ -147,11 +152,6 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
   // judge can be named.
   it("labels every selection rule in English, never a notebook identifier", () => {
     render(<Page8 />);
-    for (const r of PAGE8.paired.vsOneChain) {
-      // getAll: "majority vote" is also figure 2's legend and figure 4's bar.
-      expect(screen.getAllByText(r.label).length).toBeGreaterThan(0);
-      expect(r.label).not.toContain("(");
-    }
     for (const j of PAGE8.judges) {
       expect(j.label).not.toMatch(/prm$|^qwen|^math\d/);
     }
@@ -165,10 +165,9 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     render(<Page8 />);
     expect(document.body.textContent).not.toMatch(/ch0\d/);
     expect(document.body.textContent).not.toContain("reasoning-from-scratch");
-    expect(screen.getByText(/heuristic scorer from the source we build on/)).toBeInTheDocument();
     const source = screen.getByRole("link", { name: /Build a Reasoning Model \(From Scratch\)/ });
     expect(source).toHaveAttribute("href", "https://mng.bz/lZ5B");
-    // Reachable from the figcaption that spends two sentences on its scorer.
+    // Reachable from the close, which credits the comparison to us.
     const entry = source.closest("p")!;
     expect(document.querySelector(`a[href='#${entry.id}']`)).not.toBeNull();
   });
@@ -230,19 +229,6 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(line.textContent).toMatch(/still no better than the vote/);
   });
 
-  // "One chain" is two different numbers on this page, three points apart. Each
-  // is labelled where it is drawn rather than left to look like an effect.
-  it("labels the two one-chain numbers apart", () => {
-    render(<Page8 />);
-    expect(PAGE8.chainAverage).not.toBe(PAGE8.oneChain);
-    expect(
-      screen.getByText(`one chain, on average (${pct(PAGE8.chainAverage)})`),
-    ).toBeInTheDocument();
-    expect(screen.getByText("problems, against one fixed chain")).toBeInTheDocument();
-    const caption = screen.getByText(/Every rule against the same fixed chain/);
-    expect(caption.textContent).toContain(pct(PAGE8.oneChain));
-  });
-
   // Page 7 hands over a question. It gets answered in words, not just in a figure.
   it("answers page 7 on what judging recovers", () => {
     render(<Page8 />);
@@ -251,17 +237,6 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(close.textContent).toContain(pct(PAGE8.coverage!));
     expect(close.textContent).toContain(pct(PAGE8.bar.mean));
     expect(close.textContent).toContain(pct(trained.mean));
-  });
-
-  // Page 7 used to claim page 8 reused its chains. It did not, and the margin
-  // note beside the evidence figure says whose chains these are. The three
-  // agreement percentages that used to sit beside it are in the download: the
-  // margin's job is to name the row, not to re-run the comparison.
-  it("names the vote's row as page 7's rule without claiming page 7's chains", () => {
-    render(<Page8 />);
-    expect(PAGE8.agreement.sameCandidates).toBe(false);
-    const note = screen.getByText(/chains this page generated itself/);
-    expect(note.textContent).toMatch(/page 7's counting rule/);
   });
 
   // The two sources moved from CitationBadge chips into numbered RefItem entries
@@ -290,11 +265,29 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(link).toHaveAttribute("href", "/notebooks/page-08-best-of-n.zip");
   });
 
-  it("names ch05's scorer as the rule that makes things worse", () => {
+  // Figure 2: every problem as a row of its chains in the judge's order.
+  it("draws every problem's chains in the judge's order, the kept one first", () => {
     render(<Page8 />);
-    if (!PAGE8.heuristic) return;
-    expect(PAGE8.heuristic.net).toBeLessThan(0);
-    expect(screen.getByText(/shortest wins/)).toBeInTheDocument();
+    const cells = screen.getAllByRole("button", { name: /^problem \d+, / });
+    expect(cells).toHaveLength(PILE8.rows.length * PILE8.nChains);
+    const kept = screen.getAllByRole("button", { name: /kept chain/ });
+    expect(kept).toHaveLength(PILE8.rows.length);
+    // The kept column's right count is Best-of-N's accuracy.
+    expect(kept.filter((b) => /right$/.test(b.getAttribute("aria-label")!)).length).toBe(
+      Math.round(PILE8.bars.best_of_n * PILE8.rows.length),
+    );
+    const caption = screen.getByText(/The rows fall into three bands/);
+    expect(caption.textContent).toContain(`right on ${PILE8.bands.mixedKeptRight}`);
+    expect(PILE8.bands.all + PILE8.bands.mixed + PILE8.bands.none).toBe(PILE8.rows.length);
+  });
+
+  it("opens a chain's text when its cell is clicked", async () => {
+    render(<Page8 />);
+    const row = PILE8.rows[PILE8.rows.length - 1];
+    fireEvent.click(screen.getAllByRole("button", { name: /kept chain/ }).at(-1)!);
+    const head = screen.getByText(/The kept chain · answer/);
+    expect(head.textContent).toContain(`the judge rated it ${row.chains[0].r}%`);
+    await waitFor(() => expect(screen.queryByText("loading…")).toBeNull());
   });
 
   // Deck-wide copy rule. Pages 5, 6 and 7 each carry this assertion; page 8 did
