@@ -80,8 +80,8 @@ the first, so the two are one experiment. The second arm is the ablation s1 leav
 implicit: that paper's model is this family *after* reasoning fine-tuning, and ours is the family
 without it.
 
-Page 7 needs page 6's `out/page_06/` on disk for its grid derivation and its temperature-0
-cross-check. Page 8 used page 7's `traces.jsonl` as the pool for its **phase 0 pilot**, which is
+Page 7 reads page 6's `out/page_06/` when it is on disk, to price its run and to confirm it drew
+the same problems. Page 8 used page 7's `traces.jsonl` as the pool for its **phase 0 pilot**, which is
 what made that pilot free, and then generated its own; it now depends on page 7 only for the
 cross-check that both pages report the same vote on the same candidates. Each degrades to a
 printed skip rather than an exception when the run above it is missing.
@@ -208,9 +208,9 @@ else — `problem_id`, `trace`, `tokens`, `truncated`, `extracted_answer`, `corr
 
 They also share an instrument, the same Qwen2.5 checkpoints over the same items, and that is what
 lets each page check itself against the one before it. Page 5's two endpoints are the ends of the
-segment page 6 sweeps, and page 6's handoff cell overlays them. Page 7's temperature-0 line *is*
-page 6's budget curve, because N copies of one greedy chain of B/N tokens is one greedy chain of
-B/N tokens, and its section 14 asserts the two agree. Page 8's vote must reproduce page 7's on the
+segment page 6 sweeps, and page 6's handoff cell overlays them. Page 7's split axis runs at page
+6's chain lengths, so its vote there should sit close to page 6's greedy curve, and
+`web/src/lib/page07.test.ts` asserts it does. Page 8's vote must reproduce page 7's on the
 same pile, and its section 13 asserts that. Those three cross-checks are where a
 drifting reimplementation would otherwise hide.
 

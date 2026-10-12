@@ -113,7 +113,6 @@ def build(out_dir):
         "figure_2": {
             "pile": R["pile_curves"],
             "split": R["split"],
-            "split_prediction_from_page_6": R["split_prediction"],
             "splitting_pays": R["splitting_pays"],
             "best_split_n": R["best_split_n"],
             # `n_items` here is the diversity family's smaller item set, not the pile's.

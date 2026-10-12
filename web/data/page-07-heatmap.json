@@ -1,9 +1,9 @@
 {
  "source": {
   "run_id": "full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
-  "results_sha256": "5a6682178de170846cab30a46c1656e7947bf45a77ae0f0b272c3e2c42e35c19",
+  "results_sha256": "275c5e2888efd67af3856685a92c9e5a5c8e4f5bd0fe3160fc4f0eea45dc717a",
   "builder": "page_07_heatmap.py",
-  "builder_sha256": "727acc7c6d81a9a824e02bae50e4eee93e71a000e41829374e3030ddbf99479e"
+  "builder_sha256": "3b407bb9b27a721dd2e321400428d208e32fff078f9f9e3c639fa8b636289fde"
  },
  "n_chains": 8,
  "temperatures": [
