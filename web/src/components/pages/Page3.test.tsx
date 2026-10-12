@@ -282,6 +282,10 @@ describe("Page 3 (Training-Time Scaling)", () => {
     const body = document.body.textContent ?? "";
     expect(body).toMatch(/A missing fact needs new knowledge, and the obvious way to supply it is to\s*train the model again\. Retraining looks like the fix\s*for a knowledge bias too: show the model more text,\s*and the reading it overlooked should get its due\./);
     expect(body).not.toMatch(/The bill says no/);
+    // Section 1's bridge: a lower loss is not a missing fact supplied, and the two
+    // plans section a prices are the two things retraining offers.
+    expect(body).toMatch(/But a lower loss\s*does not put a missing fact into a model; only newer text does/);
+    expect(body).toMatch(/newer text narrows the knowledge\s*gap, and a bigger budget lowers the loss\. The next section prices the two plans that\s*follow: retraining the same model each day, and retraining the newest model each day\./);
     expect(body).toMatch(/Retraining runs into three problems: what it costs, how long it takes, and how much text\s*there is to train on\./);
     expect(body).toMatch(/Training-time scaling has real limits\./);
     expect(body).toMatch(/buys more knowledge, narrowing the knowledge\s*gap, but at a compounding cost/i);

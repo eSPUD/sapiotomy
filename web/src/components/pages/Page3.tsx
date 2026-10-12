@@ -363,9 +363,16 @@ export function Page3() {
           >
             <IsoComputeExplorer height={SECTION1_CHART_H} />
           </figure>
+          {/* The bridge to section 2. A lower loss is a better model in general, not a
+              missing fact supplied: only newer text does that. Retraining offers both,
+              and section a's two plans are exactly the two: the same model (newer text)
+              and the newest model (newer text and a bigger budget). */}
           <p className="text-ink">
-            So more compute reliably buys a better model, with diminishing returns. That is the
-            promise behind retraining. The next section is what it costs.
+            So more compute reliably buys a better model, with diminishing returns. But a lower loss
+            does not put a missing fact into a model; only newer text does, such as reports of the
+            2026 World Cup final. Retraining offers both at once: newer text narrows the knowledge
+            gap, and a bigger budget lowers the loss. The next section prices the two plans that
+            follow: retraining the same model each day, and retraining the newest model each day.
           </p>
         </section>
         <div className="order-last flex flex-col gap-6 lg:order-none">
