@@ -200,7 +200,7 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     // Before the figure that plots its scores, and before step 3's caption.
     const body = document.body.textContent ?? "";
     expect(body.indexOf("trained to score finished solutions")).toBeLessThan(
-      body.indexOf("being good at solving the problems"),
+      body.indexOf("Being good at solving the problems"),
     );
   });
 
@@ -212,10 +212,11 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
   it("does not state the judge ranking as resolved", () => {
     render(<Page8 />);
     expect(PAGE8.claims.judge_ranking_resolved).toBe(false);
-    const caption = screen.getByText(/being good at solving the problems/).closest("figcaption");
-    expect(caption?.textContent).toMatch(/This run shows/);
-    const figure = caption?.closest("figure");
-    const chart = within(figure!).getByRole("img");
+    const reading = screen.getByText(/Being good at solving the problems/).closest("p");
+    expect(reading?.textContent).toMatch(/This run shows/);
+    // Nothing interprets the chart from inside its box.
+    expect(reading?.closest("figure")).toBeNull();
+    const chart = screen.getByLabelText(/Five judges, ordered by what each solves/);
     expect(chart.getAttribute("aria-label")).toMatch(/no pair of\s+judges is resolved/);
   });
 

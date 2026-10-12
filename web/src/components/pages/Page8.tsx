@@ -1389,33 +1389,33 @@ export function Page8() {
             <div className="w-full" style={{ maxWidth: JUDGE_W * 1.3 }}>
               <JudgeFigure />
             </div>
-            <figcaption className="text-sm text-ink-muted">
-              Five judges spanning size, subject and training objective, each averaged over four
-              temperatures with the bar spanning its best and worst. As you can see from the graph,{" "}
-              <strong className="text-ink">
-                being good at solving the problems is not the same thing as being good at judging
-                them
-              </strong>
-              . This run shows that the best solver on the ladder (the {bestSolver?.label}) ranked
-              last as a judge, and the only judge whose mean sits above the vote is the{" "}
-              <strong className="text-correct-ink">{trained?.label}</strong>, which ironically cannot
-              solve any of these problems on its own.
-            </figcaption>
-            {/* The confound the ladder cannot show, and the run keeps a gate
-                for: two of these judges are better at the problems than the
-                model whose work they grade. */}
-            {stronger.length > 0 && PAGE8.writerSolves !== null ? (
-              <p className="text-xs text-ink-muted">
-                The {andList(stronger.map((j) => j.label))} solve more of these problems than the
-                model that wrote the candidates, which solves {pct(PAGE8.writerSolves)}. Nothing
-                here separates being a better judge from being a better solver.{" "}
-                {PAGE8.claims.best_of_n_beats_counting_without_a_stronger_generator ? null : (
-                  <>Set them aside and the judge that never answers is still no better than the
-                  vote.</>
-                )}
-              </p>
-            ) : null}
           </figure>
+          {/* What the figure shows sits under it, as the section's prose: the box
+              holds the chart and what explains its rows, nothing else. */}
+          <p className="text-ink-muted">
+            Each dot is one judge averaged over {PAGE8.run.temperatures.length} temperatures, and its
+            bar runs from its best to its worst.{" "}
+            <strong className="text-ink">
+              Being good at solving the problems is not the same thing as being good at judging them
+            </strong>
+            . This run shows that the best solver on the ladder (the {bestSolver?.label}) ranked last
+            as a judge, and the only judge whose mean sits above the vote is the{" "}
+            <strong className="text-correct-ink">{trained?.label}</strong>, which cannot solve any of
+            these problems on its own.
+          </p>
+          {/* The confound the ladder cannot show, and the run keeps a gate
+              for: two of these judges are better at the problems than the
+              model whose work they grade. */}
+          {stronger.length > 0 && PAGE8.writerSolves !== null ? (
+            <p className="text-ink-muted">
+              The {andList(stronger.map((j) => j.label))} solve more of these problems than the model
+              that wrote the candidates, which solves {pct(PAGE8.writerSolves)}, so nothing here
+              separates being a better judge from being a better solver.{" "}
+              {PAGE8.claims.best_of_n_beats_counting_without_a_stronger_generator ? null : (
+                <>Set them aside and the judge that never answers is still no better than the vote.</>
+              )}
+            </p>
+          ) : null}
         </section>
         {/* Step 5 — the handoff. Page 7 and page 12 close the same way: the
             argument in plain prose, and only the sentence that hands the reader
