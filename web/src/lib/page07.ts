@@ -37,6 +37,7 @@
  * wrong figure.
  */
 import rawDerived from "@data/page-07-derived.json";
+import rawHeatmap from "@data/page-07-heatmap.json";
 import { pct, tidyMath } from "./traceText";
 
 export { pct, tidyMath };
@@ -124,9 +125,11 @@ interface RawDiversity {
   single_chain_accuracy: number;
   plurality_accuracy: number;
   coverage: number;
+  tie_rate: number;
 }
 
 interface RawDerived {
+  source: { results_sha256: string };
   manifest: {
     run_id: string;
     timestamp_utc: string;
@@ -208,7 +211,7 @@ for (const gate of BLOCKING) {
     throw new Page07DataError(
       `page-07-derived.json fails the blocking claim '${gate}'. The notebook decides what ` +
         `this page may say; a run that does not pass must not be translated. See ` +
-        `docs/page_7_refactor.md and notebooks/page_07_frequency_voting.ipynb section 15.`,
+        `docs/page_7_refactor.md and notebooks/page_07_frequency_voting.ipynb section 14.`,
     );
   }
 }
@@ -321,26 +324,142 @@ if (!SPECIMEN) {
   );
 }
 
-// The tally must account for every chain the specimen ships: the votes plus the chains
-// that produced nothing usable. If these disagree the histogram is drawing a different
-// pile than the one the reader can open.
-{
-  const votes = SPECIMEN.ranked.reduce((s, r) => s + r.votes, 0);
-  const noAnswer = Math.round(SPECIMEN.no_answer_rate * SPECIMEN.chains.length);
-  if (votes + noAnswer !== SPECIMEN.chains.length) {
+/**
+ * The two boxes figure 1 lets the reader switch between: the vote coming out right
+ * (the notebook's specimen) and the vote tying (a bundled problem picked for it,
+ * checked below rather than trusted, because the reader is told it in a label).
+ * A third box, the vote coming out wrong (test/algebra/224, still bundled by
+ * notebooks/page_07_site_data.py), was cut from the page on 2026-10-11 by the author.
+ */
+export type Outcome = "right" | "wrong" | "tie";
+export type ShowcaseOutcome = Exclude<Outcome, "wrong">;
+
+const SHOWCASE_PICKS: { id: string; outcome: ShowcaseOutcome }[] = [
+  { id: D.figure_1.specimen_id, outcome: "right" },
+  // Picked for being short and easy to follow. 7 chains say 5, which is right, and
+  // 7 say 4, so the vote returns nothing.
+  { id: "test/algebra/1837.json", outcome: "tie" },
+];
+
+const outcomeOf = (p: Problem): Outcome =>
+  p.tie ? "tie" : p.plurality_correct ? "right" : "wrong";
+
+export const SHOWCASE = SHOWCASE_PICKS.map(({ id, outcome }) => {
+  const problem = PROBLEMS.find((p) => p.problem_id === id);
+  if (!problem) {
+    throw new Page07DataError(`figure 1 shows ${id} but that problem is not bundled.`);
+  }
+  if (outcomeOf(problem) !== outcome) {
     throw new Page07DataError(
-      `the specimen tallies ${votes} votes plus ${noAnswer} non-answers, but ships ` +
-        `${SPECIMEN.chains.length} chains`,
+      `figure 1 labels ${id} as a vote that comes out '${outcome}', but the run says ` +
+        `'${outcomeOf(problem)}'.`,
     );
   }
-  if (SPECIMEN.ranked.length !== SPECIMEN.distinct_answers) {
-    throw new Page07DataError("the specimen's ranked tally and distinct_answers disagree");
+  // The non-specimen boxes are there to show the right answer being lost, so it has
+  // to be in the box for the reader to find.
+  if (outcome !== "right" && !problem.any_correct) {
+    throw new Page07DataError(`figure 1's '${outcome}' box ${id} has no correct chain in it.`);
+  }
+  return { outcome, problem };
+});
+
+// Each tally must account for every chain the box ships: the votes plus the chains
+// that produced nothing usable. If these disagree the histogram is drawing a different
+// pile than the one the reader can open.
+for (const { problem } of SHOWCASE) {
+  const votes = problem.ranked.reduce((s, r) => s + r.votes, 0);
+  const noAnswer = Math.round(problem.no_answer_rate * problem.chains.length);
+  if (votes + noAnswer !== problem.chains.length) {
+    throw new Page07DataError(
+      `${problem.problem_id} tallies ${votes} votes plus ${noAnswer} non-answers, but ships ` +
+        `${problem.chains.length} chains`,
+    );
+  }
+  if (problem.ranked.length !== problem.distinct_answers) {
+    throw new Page07DataError(
+      `${problem.problem_id}'s ranked tally and distinct_answers disagree`,
+    );
   }
 }
+
+/* ----------------------------------------------------------- the heat map */
+
+/**
+ * The diversity family per problem: one cell per problem and temperature, how many
+ * of its chains are right and how the vote came out. The notebook saves this family
+ * only as one aggregate per temperature; `notebooks/page_07_heatmap.py` re-tallies
+ * the same chains with the notebook's own vote and refuses to write unless it
+ * reproduces those aggregates. It is checked again here, against the derived file
+ * the rest of the page reads, so a heat map from another run fails the build.
+ */
+export interface HeatCell {
+  temperature: number;
+  n_correct: number;
+  outcome: Outcome;
+}
+
+interface RawHeatmap {
+  source: { run_id: string; results_sha256: string };
+  n_chains: number;
+  temperatures: number[];
+  problems: { problem_id: string; level: number; subject: string; cells: HeatCell[] }[];
+}
+
+const HM = rawHeatmap as unknown as RawHeatmap;
+
+if (HM.source.run_id !== D.manifest.run_id || HM.source.results_sha256 !== D.source.results_sha256) {
+  throw new Page07DataError("the heat map was built from a different run than derived.json");
+}
+D.figure_2.diversity.forEach((d, j) => {
+  const cells = HM.problems.map((p) => p.cells[j]);
+  const close = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+  const avg = (f: (c: HeatCell) => number) => cells.reduce((s, c) => s + f(c), 0) / cells.length;
+  if (
+    HM.temperatures[j] !== d.temperature ||
+    HM.n_chains !== d.n_chains ||
+    HM.problems.length !== d.n_items ||
+    cells.some((c) => c.temperature !== d.temperature) ||
+    !close(avg((c) => +(c.outcome === "right")), d.plurality_accuracy) ||
+    !close(avg((c) => +(c.outcome === "tie")), d.tie_rate) ||
+    !close(avg((c) => c.n_correct / HM.n_chains), d.single_chain_accuracy) ||
+    !close(avg((c) => +(c.n_correct > 0)), d.coverage)
+  ) {
+    throw new Page07DataError(`the heat map's T = ${d.temperature} column disagrees with derived.json`);
+  }
+});
+
+export const HEATMAP = HM;
 
 /** The chains that landed on one answer, in the order they were sampled. */
 export function chainsFor(problem: Problem, answer: string): SpecimenChain[] {
   return problem.chains.filter((c) => c.extracted_answer === answer);
+}
+
+/**
+ * A chain cut for reading: its opening paragraph (how it read the problem), its
+ * last two (where it committed to an answer), and everything between folded away
+ * for the reader to open. Chains run 31 to 272 lines, and the question a reader
+ * brings to a wrong one is where it ended up, not every step of getting there.
+ *
+ * A cut at paragraph breaks, never inside one, so every word shown is still the
+ * model's own and in its own order. A chain short enough that folding would hide
+ * almost nothing is returned whole, with an empty middle.
+ */
+export function foldTrace(
+  text: string,
+  head = 1,
+  tail = 2,
+): { head: string[]; middle: string[]; tail: string[] } {
+  const paras = text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (paras.length <= head + tail + 1) return { head: paras, middle: [], tail: [] };
+  return {
+    head: paras.slice(0, head),
+    middle: paras.slice(head, paras.length - tail),
+    tail: paras.slice(paras.length - tail),
+  };
 }
 
 /** The share of the tally one row holds, for a bar width. */
@@ -360,6 +479,10 @@ export const PAGE7 = {
     ...D.figure_1,
     specimen: SPECIMEN,
     problems: PROBLEMS,
+    /** The two boxes the reader switches between, specimen first. */
+    showcase: SHOWCASE,
+    /** Every problem of the diversity family at every temperature, one cell each. */
+    heatmap: HEATMAP,
   },
 
   /** Figure 2: what the vote buys, and what it costs at a fixed budget. */

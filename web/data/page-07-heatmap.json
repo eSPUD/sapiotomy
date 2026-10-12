@@ -1,0 +1,978 @@
+{
+ "source": {
+  "run_id": "full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
+  "results_sha256": "275c5e2888efd67af3856685a92c9e5a5c8e4f5bd0fe3160fc4f0eea45dc717a",
+  "builder": "page_07_heatmap.py",
+  "builder_sha256": "3b407bb9b27a721dd2e321400428d208e32fff078f9f9e3c639fa8b636289fde"
+ },
+ "n_chains": 8,
+ "temperatures": [
+  0.0,
+  0.3,
+  0.6,
+  0.9,
+  1.2
+ ],
+ "problems": [
+  {
+   "problem_id": "test/algebra/893.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 6,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 6,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 5,
+     "outcome": "right"
+    }
+   ],
+   "level": 4,
+   "subject": "Algebra"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/1279.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/algebra/2277.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 2,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 5,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 1,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 1,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Algebra"
+  },
+  {
+   "problem_id": "test/geometry/615.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 6,
+     "outcome": "right"
+    }
+   ],
+   "level": 4,
+   "subject": "Geometry"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/1063.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "tie"
+    }
+   ],
+   "level": 4,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/geometry/711.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Geometry"
+  },
+  {
+   "problem_id": "test/counting_and_probability/430.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 1,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "tie"
+    }
+   ],
+   "level": 4,
+   "subject": "Counting & Probability"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/2152.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 1,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/counting_and_probability/894.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 6,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 3,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 1,
+     "outcome": "tie"
+    }
+   ],
+   "level": 5,
+   "subject": "Counting & Probability"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/1510.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 1,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 1,
+     "outcome": "tie"
+    }
+   ],
+   "level": 5,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/prealgebra/2057.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 8,
+     "outcome": "right"
+    }
+   ],
+   "level": 4,
+   "subject": "Prealgebra"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/1454.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 1,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 1,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/counting_and_probability/1114.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 3,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 4,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 6,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 1,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 4,
+   "subject": "Counting & Probability"
+  },
+  {
+   "problem_id": "test/geometry/229.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 1,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Geometry"
+  },
+  {
+   "problem_id": "test/algebra/2430.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 6,
+     "outcome": "right"
+    }
+   ],
+   "level": 4,
+   "subject": "Algebra"
+  },
+  {
+   "problem_id": "test/number_theory/911.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 4,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 4,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 2,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 3,
+     "outcome": "right"
+    }
+   ],
+   "level": 4,
+   "subject": "Number Theory"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/102.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 5,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 5,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 4,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/1779.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 4,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/counting_and_probability/803.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 6,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 2,
+     "outcome": "tie"
+    }
+   ],
+   "level": 4,
+   "subject": "Counting & Probability"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/956.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "tie"
+    }
+   ],
+   "level": 5,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/number_theory/753.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 2,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 5,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 2,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 3,
+     "outcome": "right"
+    }
+   ],
+   "level": 4,
+   "subject": "Number Theory"
+  },
+  {
+   "problem_id": "test/precalculus/881.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 1,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 0,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 4,
+   "subject": "Precalculus"
+  },
+  {
+   "problem_id": "test/intermediate_algebra/1994.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 6,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 5,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 5,
+     "outcome": "right"
+    }
+   ],
+   "level": 5,
+   "subject": "Intermediate Algebra"
+  },
+  {
+   "problem_id": "test/geometry/947.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 4,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 3,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 2,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Geometry"
+  },
+  {
+   "problem_id": "test/counting_and_probability/870.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 3,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 2,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 2,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 2,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Counting & Probability"
+  },
+  {
+   "problem_id": "test/prealgebra/1353.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 2,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 1,
+     "outcome": "tie"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 1,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 5,
+   "subject": "Prealgebra"
+  },
+  {
+   "problem_id": "test/algebra/2391.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 6,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 5,
+     "outcome": "right"
+    }
+   ],
+   "level": 4,
+   "subject": "Algebra"
+  },
+  {
+   "problem_id": "test/number_theory/483.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 7,
+     "outcome": "right"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 8,
+     "outcome": "right"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 5,
+     "outcome": "right"
+    }
+   ],
+   "level": 4,
+   "subject": "Number Theory"
+  },
+  {
+   "problem_id": "test/algebra/224.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 1,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 2,
+     "outcome": "wrong"
+    }
+   ],
+   "level": 4,
+   "subject": "Algebra"
+  },
+  {
+   "problem_id": "test/counting_and_probability/1003.json",
+   "cells": [
+    {
+     "temperature": 0.0,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.3,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.6,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 0.9,
+     "n_correct": 0,
+     "outcome": "wrong"
+    },
+    {
+     "temperature": 1.2,
+     "n_correct": 1,
+     "outcome": "tie"
+    }
+   ],
+   "level": 5,
+   "subject": "Counting & Probability"
+  }
+ ]
+}
