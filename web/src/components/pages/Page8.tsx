@@ -610,6 +610,94 @@ function ChainHeatmap() {
   );
 }
 
+/* -------------------------------------------------------- figure 3: the bars */
+
+const CMP_W = 672;
+const CMP_ROW = 46;
+const CMP_M = { top: 34, right: 124, bottom: 38, left: 150 };
+
+/**
+ * The three methods on the same problems and the same chains, as horizontal
+ * bars. The dashed line is the most any way of choosing could reach: a right
+ * chain was among the 16. Past each choosing bar, the faint stretch up to that
+ * line is what was written and not picked.
+ */
+function CompareFigure() {
+  const b = PILE8.bars;
+  const nProblems = PILE8.rows.length;
+  const bars = [
+    { label: "one chain of thought", v: b.one_chain, fill: "fill-ink-muted", text: "fill-ink" },
+    { label: `majority vote over ${PILE8.nChains}`, v: b.vote, fill: "fill-compute", text: "fill-compute-ink" },
+    { label: `Best-of-${PILE8.nChains}`, v: b.best_of_n, fill: "fill-correct", text: "fill-correct-ink" },
+  ];
+  const innerW = CMP_W - CMP_M.left - CMP_M.right;
+  const innerH = bars.length * CMP_ROW;
+  const height = CMP_M.top + CMP_M.bottom + innerH;
+  const x = (v: number) => v * innerW;
+  const solved = (v: number) => Math.round(v * nProblems);
+
+  return (
+    <ChartFrame
+      width={CMP_W}
+      height={height}
+      margin={CMP_M}
+      xLabel={`share of ${nProblems} problems solved`}
+      title={
+        `On the same ${nProblems} problems and the same chains, one chain of thought solves ` +
+        `${pct(b.one_chain)}, majority voting over ${PILE8.nChains} solves ${pct(b.vote)} and ` +
+        `Best-of-${PILE8.nChains} solves ${pct(b.best_of_n, 1)}. A right chain was among the ` +
+        `${PILE8.nChains} on ${pct(b.ceiling, 1)}, the most any way of choosing could reach.`
+      }
+    >
+      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+        <g key={t}>
+          <line x1={x(t)} x2={x(t)} y1={0} y2={innerH} className="stroke-grid" strokeWidth={1} />
+          <text x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+            {t * 100}%
+          </text>
+        </g>
+      ))}
+      {bars.map((bar, i) => {
+        const y = i * CMP_ROW + CMP_ROW / 2;
+        return (
+          <g key={bar.label}>
+            <text x={-10} y={y + 4} textAnchor="end" className="fill-ink text-[12px]">
+              {bar.label}
+            </text>
+            {i > 0 ? (
+              <rect
+                x={x(bar.v)}
+                y={y - 11}
+                width={x(b.ceiling) - x(bar.v)}
+                height={22}
+                className={bar.fill}
+                opacity={0.18}
+              />
+            ) : null}
+            <rect x={0} y={y - 11} width={x(bar.v)} height={22} className={bar.fill} />
+            <text x={innerW + 10} y={y + 4} className={`text-[12px] font-semibold ${bar.text}`}>
+              {pct(bar.v, bar.v * 100 % 1 ? 1 : 0)}
+              <tspan className="fill-ink-muted font-normal"> · {solved(bar.v)} of {nProblems}</tspan>
+            </text>
+          </g>
+        );
+      })}
+      <line
+        x1={x(b.ceiling)}
+        x2={x(b.ceiling)}
+        y1={-14}
+        y2={innerH}
+        className="stroke-ink"
+        strokeWidth={1.5}
+        strokeDasharray="4 3"
+      />
+      <text x={x(b.ceiling)} y={-20} textAnchor="middle" className="fill-ink text-[11px]">
+        a right chain among the {PILE8.nChains}: {pct(b.ceiling, 1)}
+      </text>
+    </ChartFrame>
+  );
+}
+
 /* ------------------------------------------------------------ figure 2 left */
 
 const SPEC_W = 430;
@@ -1233,11 +1321,43 @@ export function Page8() {
           </figure>
         </section>
 
-        {/* Step 3 — what a judge is worth. Pinned to the reading column: step 2
+        {/* Step 3 — the three methods side by side */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
+          <h2 className="text-xl font-semibold text-ink">
+            3. Chain of thought, majority vote, Best-of-N
+          </h2>
+          <p className="text-ink-muted">
+            Three ways to answer the same {PILE8.rows.length} problems from the same chains: take one
+            chain of thought, take the answer most of the {PILE8.nChains} agree on, as page 7 did, or
+            take the chain the judge rates highest. Both ways of choosing need the chains to differ:
+            with no randomness the model writes the same chain {PILE8.nChains} times, and there is
+            nothing to count or to judge.
+          </p>
+          <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
+            <Pills
+              items={["measured", `${PILE8.rows.length} problems`, "all three read the same chains"]}
+            />
+            <CompareFigure />
+            <figcaption className="text-sm text-ink-muted">
+              Both ways of choosing beat one chain. Best-of-N fixes{" "}
+              {PILE8.bars.best_vs_one.best_only} problems one chain got wrong and breaks{" "}
+              {PILE8.bars.best_vs_one.one_only}; the vote fixes {PILE8.bars.vote_vs_one.vote_only} and
+              breaks {PILE8.bars.vote_vs_one.one_only}. Against each other they are{" "}
+              <strong className="text-ink">level</strong>: they disagree on only{" "}
+              {PILE8.bars.best_vs_vote.best_only + PILE8.bars.best_vs_vote.vote_only} problems,{" "}
+              {PILE8.bars.best_vs_vote.best_only} going to Best-of-N and{" "}
+              {PILE8.bars.best_vs_vote.vote_only} to the vote, which is not a difference. And neither
+              reaches the dashed line: the faint stretch past each bar is problems where a right chain
+              was written and not picked.
+            </figcaption>
+          </figure>
+        </section>
+
+        {/* Step 4 — what a judge is worth. Pinned to the reading column: step 2
             has no margin note, so without it the grid flows this step into the
             margin. */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">3. What a judge is worth</h2>
+          <h2 className="text-xl font-semibold text-ink">4. What a judge is worth</h2>
           {/* Which model the winning judge actually is opens the step, because
               the figure below ranks it against four others and cannot say what
               it is. */}
@@ -1287,14 +1407,14 @@ export function Page8() {
             ) : null}
           </figure>
         </section>
-        {/* Step 4 — the handoff. Page 7 and page 12 close the same way: the
+        {/* Step 5 — the handoff. Page 7 and page 12 close the same way: the
             argument in plain prose, and only the sentence that hands the reader
             to the next page inside the compute-bordered box. The whole step used
             to sit in that box, which spent the emphasis on everything at once.
             `col-start-1` because step 3 no longer has a margin note to fill the
             second column. */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">4. Where this leaves us</h2>
+          <h2 className="text-xl font-semibold text-ink">5. Where this leaves us</h2>
           <p className="text-ink">
             Selection works. Against the same candidates, so does counting: the verifier is{" "}
             <strong>{PAGE8.caveat.net > 0 ? `+${PAGE8.caveat.net}` : PAGE8.caveat.net}</strong>{" "}

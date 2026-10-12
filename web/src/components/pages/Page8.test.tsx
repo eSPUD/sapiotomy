@@ -27,6 +27,20 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(screen.getByRole("heading", { name: /Generate, judge, keep the best/ })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Best-of-N on \d+ problems/ })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /What a judge is worth/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Chain of thought, majority vote, Best-of-N/ })).toBeInTheDocument();
+  });
+
+  // Figure 3: the bars are the rows' averages, and the page does not call the
+  // vote-against-Best-of-N gap a difference when it is a handful of problems.
+  it("compares the three methods on the same chains, and calls the two level", () => {
+    render(<Page8 />);
+    const caption = screen.getByText(/Both ways of choosing beat one chain/);
+    const { best_vs_vote: bv } = PILE8.bars;
+    expect(caption.textContent).toContain(`they disagree on only ${bv.best_only + bv.vote_only} problems`);
+    expect(bv.p).toBeGreaterThan(0.05);
+    expect(caption.textContent).toMatch(/not a difference/);
+    const chart = within(caption.closest("figure")!).getByRole("img");
+    expect(chart.getAttribute("aria-label")).toContain(pct(PILE8.bars.vote));
   });
 
   it("shows a real batch where the vote loses and the verifier wins", () => {
@@ -91,7 +105,8 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     const pills = Array.from(document.querySelectorAll("li")).filter((li) =>
       /^measured/.test(li.textContent ?? ""),
     );
-    expect(pills).toHaveLength(3);
+    // Section 1's old card, the heat map, the bars, and the judge ladder.
+    expect(pills).toHaveLength(4);
     const first = screen.getByText(`measured ${PAGE8.run.date}`);
     const row = first.closest("ul")!;
     // Page 7's two facts: which model, which problems. Named, not implied.
