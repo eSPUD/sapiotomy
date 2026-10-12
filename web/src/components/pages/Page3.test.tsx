@@ -54,7 +54,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(screen.getByText("strengthens that bad habit")).toBeInTheDocument();
     // Step 1: the combined cost curve. The old one-year meter stays gone.
     expect(
-      screen.getByRole("heading", { level: 2, name: /1\. Challenges in addressing knowledge gaps/i }),
+      screen.getByRole("heading", { level: 2, name: /2\. Challenges in addressing knowledge gaps/i }),
     ).toBeInTheDocument();
     // The cost chart carries the draggable marker, so its svg is a group: role
     // img forbids interactive descendants (axe: nested-interactive).
@@ -65,7 +65,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(yearSlider()).toBeInTheDocument();
     // Step 2: the data wall, with the two cited anchors.
     expect(
-      screen.getByRole("heading", { level: 2, name: /2\. Challenges in addressing knowledge bias/i }),
+      screen.getByRole("heading", { level: 2, name: /3\. Challenges in addressing knowledge bias/i }),
     ).toBeInTheDocument();
     // Step 3: the guess, under the same numbered spine as pages 1 and 4.
     // The scaling-law spine: bigger models only pay off if they read more, in step.
@@ -128,9 +128,9 @@ describe("Page 3 (Training-Time Scaling)", () => {
     );
   });
 
-  it("the cost chart has the page's only control", () => {
+  it("the cost chart and the scaling-law explorer have the page's only sliders", () => {
     render(<Page3 />);
-    expect(screen.getAllByRole("slider")).toHaveLength(1);
+    expect(screen.getAllByRole("slider")).toHaveLength(2);
     dragMonths(12);
     expect(screen.getAllByText("$45.5B").length).toBeGreaterThan(0);
     expectClean();
@@ -191,7 +191,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
       expect(svg.getAttribute("aria-label")).toContain(`${m.name} ${m.days} days`);
     // The source is cited in the text right above the chart.
     const lead = screen.getByText(/this delay has persisted/);
-    expect(lead.querySelector('sup a[href="#ref-3"]')).not.toBeNull();
+    expect(lead.querySelector('sup a[href="#ref-6"]')).not.toBeNull();
     expectClean();
   });
 
@@ -201,7 +201,10 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // Nothing is open yet, and the figure carries no instructions: the Try it note does.
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(fig.textContent).not.toMatch(/Click a dot/);
-    const tryIt = screen.getByText("Try it").closest("aside")!;
+    const tryIt = screen
+      .getAllByText("Try it")
+      .map((k) => k.closest("aside")!)
+      .find((a) => /Clicking a dot/.test(a.textContent ?? ""))!;
     expect(tryIt.textContent).toMatch(/Clicking a dot shows model training time and data source\./);
     // An estimate says so, and links Epoch's database.
     const gpt4 = within(fig).getByRole("button", { name: /^GPT-4, 95 days, estimate$/ });
@@ -297,26 +300,27 @@ describe("Page 3 (Training-Time Scaling)", () => {
     const notes = Array.from(document.querySelectorAll("aside"))
       .map((a) => a.textContent ?? "")
       .filter((t) => t.startsWith("References"));
-    // One References note beside each part of section 1, holding the sources that
-    // part cites first: a (cost) 1-2, b (training time) 3, c (data) 4-6. Section 2
-    // cites nothing.
-    expect(notes).toHaveLength(3);
-    const [cost, time, data] = notes;
+    // Section 1 (the scaling law) holds 1-3; then one References note beside each
+    // part of section 2, holding the sources that part cites first: a (cost) 4-5,
+    // b (training time) 6, c (data) 7-8. Section 3 cites nothing.
+    expect(notes).toHaveLength(4);
+    const [law, cost, time, data] = notes;
+    for (const ref of [/Kaplan/, /Hoffmann/, /Besiroglu/]) expect(law).toMatch(ref);
     for (const ref of [/Cottier/, /AI Index/]) expect(cost).toMatch(ref);
     expect(cost).not.toMatch(/Data on AI Models|Hoffmann|Villalobos|data-stock/);
     expect(time).toMatch(/Data on AI Models/);
     expect(time).not.toMatch(/Cottier|Hoffmann|Villalobos/);
-    for (const ref of [/Hoffmann/, /Villalobos/, /data-stock/]) expect(data).toMatch(ref);
-    expect(data).not.toMatch(/Cottier|Data on AI Models/);
+    for (const ref of [/Villalobos/, /data-stock/]) expect(data).toMatch(ref);
+    expect(data).not.toMatch(/Cottier|Data on AI Models|Hoffmann/);
     // The cut "Why bias happens" note took WinoBias with it; the trimmed-away
     // challenges' sources are gone from the page entirely.
     expect(document.body.textContent ?? "").not.toMatch(/Why bias happens|Zhao|Shumailov|Askell|Sevilla/);
-    // References stay numbered 1 to 6 in order of first appearance.
+    // References stay numbered 1 to 8 in order of first appearance.
     // Read each linked number (a marker may hold several, comma separated).
     const nums = Array.from(document.querySelectorAll("sup a")).map((a) =>
       Number(a.getAttribute("href")!.replace("#ref-", "")),
     );
-    expect([...new Set(nums)]).toEqual([1, 2, 3, 4, 5, 6]);
+    expect([...new Set(nums)]).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     expectClean();
   });
 
@@ -327,7 +331,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // The old provenance prose stays gone; the margin holds References notes only.
     expect(screen.queryByText(/where the bill comes from/i)).toBeNull();
     expect(screen.queryByText(/where the wall comes from/i)).toBeNull();
-    expect(screen.getAllByText("References")).toHaveLength(3);
+    expect(screen.getAllByText("References")).toHaveLength(4);
     // The figures carry inline numbered markers; the external reference chips
     // left the steps for a single row at the foot of the page. The markers
     // themselves are in-page anchors to the sidenote (#ref-n), so a figure may
@@ -343,15 +347,15 @@ describe("Page 3 (Training-Time Scaling)", () => {
     // Every citation marker in a figure points at its sidenote entry.
     for (const a of bill.querySelectorAll("sup a"))
       expect(a.getAttribute("href")).toMatch(/^#ref-\d+$/);
-    // The bill's sources now sit in the text above the chart, as one marker "1,2".
+    // The bill's sources now sit in the text above the chart, as one marker "4,5".
     expect(bill.querySelectorAll("sup")).toHaveLength(0);
-    const both = Array.from(document.querySelectorAll("sup")).find((s) => s.querySelectorAll("a").length === 2)!;
-    expect(both.textContent).toMatch(/1,.*2/);
+    const pairs = Array.from(document.querySelectorAll("sup")).filter((s) => s.querySelectorAll("a").length === 2);
+    expect(pairs.map((s) => s.textContent?.replace(/[^0-9,]/g, ""))).toEqual(["2,3", "4,5"]);
     // the scaling law, the stock (in the prose and again beside its window), and the dataset-size table
     expect(data.querySelectorAll("sup")).toHaveLength(4);
     const badges = screen.getAllByRole("link");
     expect(badges.map((a) => a.textContent ?? "").join(" | ")).toMatch(
-      /Cottier.*AI Index.*Hoffmann.*Villalobos/,
+      /Kaplan.*Hoffmann.*Besiroglu.*Cottier.*AI Index.*Villalobos/,
     );
     // The provenance tags, the stock card and the window meter are cut: the
     // citations carry the sources, and the readout carries the window.

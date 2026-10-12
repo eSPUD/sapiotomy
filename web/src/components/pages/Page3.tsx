@@ -18,19 +18,25 @@
  * this page; the answer-time alternative is the next page's business. No
  * inference talk here.
  *
- * Layout rule: no reveals, no drag-to-unlock. TWO numbered sections down the
- * left, one per failure page 2 raises: the knowledge gap (cost, lag, data)
- * and the bias. Section 1's three walls are h3 sub-heads, so its argument reads
- * as a list; section 2 is one paragraph on the bias (the fact was already
+ * Section 1 (added 2026-10-11) is the promise before the bill: why retraining
+ * looks like the answer. Training has followed predictable scaling laws (Kaplan
+ * et al. 2020), and a fixed budget has a best split between model size and text
+ * (Hoffmann et al. 2022; constants from Besiroglu et al. 2024). The iso-compute
+ * explorer lets the reader find it, and shows each tenfold budget buying less.
+ *
+ * Layout rule: no reveals, no drag-to-unlock. THREE numbered sections down the
+ * left: the scaling law, then one per failure page 2 raises: the knowledge gap
+ * (cost, lag, data) and the bias. Section 2's three walls are h3 sub-heads, so
+ * its argument reads as a list; section 3 is one paragraph on the bias (the fact was already
  * there, so more data would not have helped; next-word training on more text
  * strengthens the default) with no sub-heads. Each section is followed by its
  * margin cell. Citations
  * follow the page-2 house style: numbered inline markers (Cite) at the claim
  * they support, a References margin note (RefItem) beside the step that uses
  * each source. References live only in those margin notes, with no preprint
- * tag. Section 1 has one References note beside each part that first cites its
- * sources (a: 1-2, b: 3, c: 4-6); section 2 cites nothing, so its margin cell is
- * empty. There is still no
+ * tag. Section 1's note holds 1-3; section 2 has one References note beside each
+ * part that first cites its sources (a: 4-5, b: 6, c: 7-8); section 3 cites
+ * nothing, so its margin cell is empty. There is still no
  * "how to read this page" rail (a slider, a dial and a text box need no instructions).
  * What is cited vs derived is said inline in each step's h2 annotation
  * ("derived from the two Epoch trends", "cited stock, derived demand"), and the
@@ -49,6 +55,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
+import { IsoComputeExplorer } from "@/components/IsoComputeExplorer";
 import { Cite, RefItem } from "@/components/Cite";
 import { LineChart } from "@/components/LineChart";
 import { PageNav } from "@/components/PageNav";
@@ -102,12 +109,14 @@ const MONTH_TICKS = Array.from({ length: COMBO_MONTHS + 1 }, (_, i) => i);
 
 /** Reference numbers, in order of first appearance on the page. */
 const REF = {
-  trainTrend: 1,
-  runCost: 2,
-  trainingTime: 3,
-  chinchilla: 4,
-  dataStock: 5,
-  datasetSizes: 6,
+  kaplan: 1,
+  chinchilla: 2,
+  besiroglu: 3,
+  trainTrend: 4,
+  runCost: 5,
+  trainingTime: 6,
+  dataStock: 7,
+  datasetSizes: 8,
 } as const;
 
 /** Section b's year span, read off the data so the title cannot outrun it. */
@@ -319,16 +328,87 @@ export function Page3() {
         and the reading it overlooked should get its due.
       </p>
 
-      {/* Each step (left) sits beside its margin notes (right); section 2 cites nothing. */}
+      {/* Each step (left) sits beside its margin notes (right); section 3 cites nothing. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Section 1 — everything that stands between retraining and the knowledge gap.
+        {/* Section 1, the promise: why retraining looks like the answer. Training has
+            followed predictable scaling laws, and a fixed budget has a best split
+            between model size and text. The iso-compute explorer lets the reader find
+            it, and shows each tenfold budget buying less. Sections 2 and 3 are the bill. */}
+        <section className="flex min-w-0 flex-col gap-4">
+          <h2 className="text-xl font-semibold text-ink">
+            1. Why retraining looks like the answer: the scaling law
+          </h2>
+          <p className="text-ink">
+            Retraining is the obvious fix because training language models has followed
+            remarkably predictable rules. Make the model bigger and give it more text, and its{" "}
+            <strong>loss</strong> (how far off it is, on average, at predicting the next word)
+            falls smoothly, by an amount you can predict before you train.
+            <Cite n={REF.kaplan} /> These rules are called <strong>scaling laws</strong>, and they
+            are why labs keep training bigger models.
+          </p>
+          <p className="text-ink">
+            There is a choice inside every budget, though. The same compute can train a bigger
+            model on less text, or a smaller one on more. Drag the model size along one budget to
+            find the best split.
+            <Cite n={[REF.chinchilla, REF.besiroglu]} /> Then pick a bigger budget: the best split
+            stays near 20 tokens of text for every parameter, and each tenfold budget lowers the
+            loss by less than the one before.
+          </p>
+          <figure
+            aria-label="The scaling law: one training budget, many splits"
+            className="m-0 rounded-lg border border-grid bg-surface p-4"
+          >
+            <IsoComputeExplorer height={SECTION1_CHART_H} />
+          </figure>
+          <p className="text-ink">
+            So more compute reliably buys a better model, with diminishing returns. That is the
+            promise behind retraining. The next section is what it costs.
+          </p>
+        </section>
+        <div className="order-last flex flex-col gap-6 lg:order-none">
+          <Note kicker="Try it">
+            <p>
+              Lower loss is better, so the bottom of each curve is the best split for that budget. Drag the model
+              size to the bottom of the curve, then pick a bigger budget.
+            </p>
+          </Note>
+          <Note kicker="What is a FLOP?" tight>
+            <p>
+              A FLOP is one arithmetic operation, a multiply or an add. Training costs about six of
+              them for every parameter, for every token of text, so a budget in FLOPs fixes how much
+              model and text you can afford together.
+            </p>
+            <p>
+              The GPU times assume 1,000 NVIDIA B200 GPUs, NVIDIA&apos;s Blackwell data-centre chip,
+              each sustaining about 900 trillion FLOPs a second (roughly 40% of its peak). Chinchilla&apos;s run, 70B
+              parameters on 1.4T tokens, came to about 6 &times; 10<sup>23</sup> FLOPs.
+              <Cite n={REF.chinchilla} />
+            </p>
+          </Note>
+          <Note kicker="References" tight>
+            <RefItem n={REF.kaplan} href="https://arxiv.org/abs/2001.08361">
+              Kaplan et al. 2020, <em>Scaling Laws for Neural Language Models</em> (arXiv
+              2001.08361).
+            </RefItem>
+            <RefItem n={REF.chinchilla} href="https://arxiv.org/abs/2203.15556">
+              Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS
+              2022).
+            </RefItem>
+            <RefItem n={REF.besiroglu} href="https://arxiv.org/abs/2404.10102">
+              Besiroglu et al. 2024, <em>Chinchilla Scaling: A replication attempt</em> (arXiv
+              2404.10102). The loss curve&apos;s constants.
+            </RefItem>
+          </Note>
+        </div>
+
+        {/* Section 2 — everything that stands between retraining and the knowledge gap.
             It spans both columns as a subgrid, so each margin note can sit level with
             the part of the section it serves: References beside the top, Try it beside
             section b's chart. */}
         <section className="flex min-w-0 flex-col gap-4 lg:col-span-2 lg:grid lg:grid-cols-subgrid lg:items-start lg:gap-x-8">
           <div className="flex min-w-0 flex-col gap-4">
             <h2 className="text-xl font-semibold text-ink">
-              1. Challenges in addressing knowledge gaps
+              2. Challenges in addressing knowledge gaps
             </h2>
             <p className="text-ink">
               Retraining runs into three problems: what it costs, how long it takes, and how much text
@@ -431,7 +511,7 @@ export function Page3() {
           </div>
 
           {/* Each References note sits beside the part that first cites its sources
-              (a: 1-2, b: 3, c: 4-6); on a phone they all fall to the end of the section. */}
+              (a: 4-5, b: 6, c: 7-8); on a phone they all fall to the end of the section. */}
           <div className="order-last lg:order-none">
             <Note kicker="References">
               <RefItem n={REF.trainTrend} href="https://epoch.ai/blog/how-much-does-it-cost-to-train-frontier-ai-models">
@@ -635,10 +715,6 @@ export function Page3() {
           </div>
           <div className="order-last lg:order-none">
             <Note kicker="References">
-              <RefItem n={REF.chinchilla} href="https://arxiv.org/abs/2203.15556">
-                Hoffmann et al. 2022, <em>Training Compute-Optimal Large Language Models</em> (NeurIPS
-                2022).
-              </RefItem>
               <RefItem n={REF.dataStock} href="https://arxiv.org/abs/2211.04325">
                 Villalobos et al. 2024, <em>Will We Run Out of Data? Limits of LLM Scaling Based on
                 Human-Generated Data</em> (Epoch AI &middot; arXiv 2211.04325).
@@ -655,10 +731,10 @@ export function Page3() {
         </section>
 
 
-        {/* Section 2 — the failure retraining was never going to reach, and the pivot */}
+        {/* Section 3 — the failure retraining was never going to reach, and the pivot */}
         <section className="flex min-w-0 flex-col gap-4">
           <h2 className="text-xl font-semibold text-ink">
-            2. Challenges in addressing knowledge bias
+            3. Challenges in addressing knowledge bias
           </h2>
 
           <p className="text-ink">

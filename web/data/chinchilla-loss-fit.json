@@ -1,0 +1,51 @@
+{
+  "points": [
+    {
+      "x": 1e+20,
+      "y": 2.5534
+    },
+    {
+      "x": 1e+21,
+      "y": 2.3055
+    },
+    {
+      "x": 1e+22,
+      "y": 2.1411
+    },
+    {
+      "x": 1e+23,
+      "y": 2.0321
+    },
+    {
+      "x": 1e+24,
+      "y": 1.9597
+    },
+    {
+      "x": 1e+25,
+      "y": 1.9117
+    }
+  ],
+  "fit": {
+    "kind": "chinchilla-parametric-loss",
+    "params": {
+      "E": 1.8172,
+      "A": 482.01,
+      "B": 2085.43,
+      "alpha": 0.3478,
+      "beta": 0.3658,
+      "flopsPerParamToken": 6,
+      "hoffmannE": 1.6934,
+      "hoffmannA": 406.4,
+      "hoffmannB": 410.7,
+      "hoffmannAlpha": 0.3392,
+      "hoffmannBeta": 0.2849
+    }
+  },
+  "citation": {
+    "ref": "Besiroglu et al. 2024, Chinchilla Scaling: A replication attempt",
+    "url": "https://arxiv.org/abs/2404.10102",
+    "venue": "arXiv 2404.10102",
+    "preprint": true
+  },
+  "provenance": "Parametric loss L(N, D) = E + A/N^alpha + B/D^beta, the functional form of Hoffmann et al. 2022 ('Training Compute-Optimal Large Language Models', NeurIPS 2022, Approach 3), with the constants re-estimated by Besiroglu et al. 2024 ('Chinchilla Scaling: A replication attempt', arXiv 2404.10102): E = 1.8172, A = 482.01, B = 2085.43, alpha = 0.3478, beta = 0.3658, copied verbatim from that paper (checked 2026-10-11). Hoffmann et al.'s own published estimates (E = 1.6934, A = 406.4, B = 410.7, alpha = 0.3392, beta = 0.2849) are kept in params for reference only: Besiroglu et al. show they come from optimiser early-stopping and rounding and imply ~70 tokens per parameter, inconsistent with Chinchilla's own 20; the re-estimated constants imply ~20. Training compute is approximated as C = 6ND FLOPs (Kaplan et al. 2020). The six points are DERIVED, not digitised: for each budget C = 1e20, 1e21, 1e22, 1e23, 1e24, 1e25 FLOPs, the minimum of L along N with D = C/(6N), found by a dense log-spaced search (6,000 steps over 1e7 to 1e13 parameters); y is that minimum loss. The page computes the same curves live from the params; src/lib/scalingLaw.test.ts pins the ~20 tokens-per-parameter optimum and the shrinking gain per tenfold budget."
+}

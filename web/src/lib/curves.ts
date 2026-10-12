@@ -35,6 +35,7 @@ import epochComputeGrowthRaw from "@data/epoch-compute-growth.json";
 import epochDataStockRaw from "@data/epoch-data-stock.json";
 import epochDatasetProjectionRaw from "@data/epoch-dataset-projection.json";
 import chinchillaRaw from "@data/chinchilla.json";
+import chinchillaLossFitRaw from "@data/chinchilla-loss-fit.json";
 import epochInferencePricesRaw from "@data/epoch-inference-prices.json";
 import queryEnergyRaw from "@data/query-energy.json";
 
@@ -72,6 +73,7 @@ export const curves: Record<string, CurveData> = {
     "epoch-dataset-projection.json",
   ),
   chinchilla: parseCurveData(chinchillaRaw, "chinchilla.json"),
+  chinchillaLossFit: parseCurveData(chinchillaLossFitRaw, "chinchilla-loss-fit.json"),
   epochInferencePrices: parseCurveData(epochInferencePricesRaw, "epoch-inference-prices.json"),
   queryEnergy: parseCurveData(queryEnergyRaw, "query-energy.json"),
 };
