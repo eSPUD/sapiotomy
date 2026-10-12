@@ -47,7 +47,7 @@ const PAGES = [
   { n: 6, slug: "page-06-thinking-longer", notebook: "page_06_thinking_longer.ipynb",
     declared: "2.0 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
   { n: 7, slug: "page-07-frequency-voting", notebook: "page_07_frequency_voting.ipynb",
-    declared: "3.1 MB", extras: ["results.json"], siteData: "page_07_site_data.py",
+    declared: "7.5 MB", extras: ["results.json"], siteData: "page_07_site_data.py",
     repoNotebookIsTheShippedOne: true },
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
     declared: "10.1 MB", extras: ["scores.jsonl", "judge_solves.jsonl"], siteData: null,

@@ -126,7 +126,7 @@
  *     numbers.
  */
 
-import { useId, useRef, useState } from "react";
+import { Fragment, useId, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -155,7 +155,7 @@ const H = PAGE7.handoff;
 const M = PAGE7.manifest;
 
 const NOTEBOOK_ZIP = "/notebooks/page-07-frequency-voting.zip";
-const NOTEBOOK_SIZE = "3.1 MB";
+const NOTEBOOK_SIZE = "7.5 MB";
 
 /* The instrument used to sit in a provenance plate above step 1, which read as a
    specimen label from a lab the reader has not visited. What a reader needs is
@@ -457,6 +457,8 @@ function Tally({
 /* --------------------------------------------------------- the heat map */
 
 const HM = F1.heatmap;
+/** One decimal for every temperature but zero, so 1.0 reads like its neighbours. */
+const tLabel = (t: number) => (t === 0 ? "0" : t.toFixed(1));
 const OUTCOME_SAYS: Record<HeatCell["outcome"], string> = {
   right: "the vote is right",
   wrong: "the vote is wrong",
@@ -476,47 +478,45 @@ const heatFill = (c: HeatCell) =>
   )}%, transparent)`;
 
 /**
- * Every problem of the temperature sweep at every temperature: a row per problem, a
- * column per temperature. The ratio is its chains right over its chains run; the colour
- * is whether the vote is. A table, so it reads as one without a separate table view.
+ * The temperature sweep: a row per problem, a column per temperature, 40 x 12. A cell
+ * holds how many of its 16 chains are right; its colour is whether the vote is. Clicking
+ * a problem (its number or any of its cells) pins a panel that names, temperature by
+ * temperature, what the vote returned and whether that is the right answer: the user's
+ * brief, "click a question and see which temperatures got the correct answer". Hovering
+ * a cell reads it out without pinning. A table, so it reads as one without a table view.
  */
 function TemperatureHeatmap() {
   const [at, setAt] = useState<{ q: number; j: number } | null>(null);
+  const [pinned, setPinned] = useState<number | null>(null);
   const shown = at ? HM.problems[at.q].cells[at.j] : null;
+  const pin = (q: number) => {
+    setPinned((cur) => (cur === q ? null : q));
+  };
   const legend = (outcome: HeatCell["outcome"], label: string) => (
     <div className="flex flex-col gap-0.5">
       <span className="text-xs text-ink-muted">{label}</span>
       <span className="flex gap-px" aria-hidden="true">
-        {Array.from({ length: HM.n_chains + 1 }, (_, k) => (
-          <span
-            key={k}
-            className="flex h-4 w-4 items-center justify-center rounded-sm font-mono text-[10px] tabular-nums text-ink"
-            style={{ background: heatFill({ temperature: 0, n_correct: k, outcome }) }}
-          >
-            {k}
-          </span>
-        ))}
+        {Array.from({ length: HM.n_chains + 1 }, (_, k) => k)
+          .filter((k) => k % 4 === 0)
+          .map((k) => (
+            <span
+              key={k}
+              className="flex h-4 w-5 items-center justify-center rounded-sm font-mono text-[10px] tabular-nums text-ink"
+              style={{ background: heatFill({ temperature: 0, n_correct: k, outcome }) }}
+            >
+              {k}
+            </span>
+          ))}
       </span>
     </div>
   );
-  // Compact: fixed narrow columns rather than the full width, and the legend and
-  // readout beside the table from sm up (above it on a phone, first in reading order).
+  const p = pinned === null ? null : HM.problems[pinned];
+  const rightAt = p ? p.cells.filter((c) => c.outcome === "right") : [];
   return (
     <section
       aria-label="Chains right and the vote, at every temperature"
-      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4 sm:flex-row-reverse sm:justify-end sm:gap-6"
+      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4 sm:flex-row sm:items-start sm:gap-5"
     >
-      <div className="flex flex-col gap-2 sm:w-48">
-        {legend("right", "the vote is right")}
-        {legend("wrong", "the vote is wrong or ties")}
-        <p className="text-xs text-ink-muted">Each cell reads chains right / chains run.</p>
-        {/* The hover readout; it holds its lines so the panel does not jump. */}
-        <p aria-hidden="true" className="min-h-[3rem] font-mono text-xs text-ink">
-          {shown && at
-            ? `problem ${at.q + 1} · T = ${shown.temperature} · ${shown.n_correct} of ${HM.n_chains} chains right · ${OUTCOME_SAYS[shown.outcome]}`
-            : ""}
-        </p>
-      </div>
       <table
         className="w-auto shrink-0 border-separate self-start font-mono text-[10px] tabular-nums"
         style={{ borderSpacing: "1px" }}
@@ -529,35 +529,50 @@ function TemperatureHeatmap() {
         <thead>
           <tr>
             <th scope="col" className="pb-1 pr-1 text-left align-bottom font-normal text-ink-muted">
-              problem
+              #
             </th>
             {HM.temperatures.map((t) => (
-              <th key={t} scope="col" className="w-9 pb-1 align-bottom font-normal text-ink-muted">
+              <th key={t} scope="col" className="w-7 pb-1 align-bottom font-normal text-ink-muted">
                 {/* Set vertically, reading bottom to top. */}
                 <span className="inline-block rotate-180 whitespace-nowrap [writing-mode:vertical-rl]">
-                  T = {t}
+                  T = {tLabel(t)}
                 </span>
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {HM.problems.map((p, q) => (
-            <tr key={p.problem_id}>
-              <th scope="row" className="text-left font-normal text-ink-muted">
-                {q + 1}
+          {HM.problems.map((row, q) => (
+            <tr key={row.problem_id}>
+              <th scope="row" className="pr-1 text-left font-normal">
+                <button
+                  type="button"
+                  aria-pressed={pinned === q}
+                  aria-label={`Problem ${q + 1}: show which temperatures got it right`}
+                  onClick={() => pin(q)}
+                  className={`w-full rounded-sm px-0.5 text-left tabular-nums hover:text-ink ${
+                    pinned === q ? "bg-compute font-semibold text-canvas" : "text-ink-muted"
+                  }`}
+                >
+                  {q + 1}
+                </button>
               </th>
-              {p.cells.map((c, j) => (
+              {row.cells.map((c, j) => (
                 <td
                   key={c.temperature}
                   onMouseEnter={() => setAt({ q, j })}
-                  className={`h-4 w-9 rounded-sm text-center leading-none text-ink ${
-                    at?.q === q && at.j === j ? "outline outline-2 outline-ink" : ""
+                  onClick={() => pin(q)}
+                  className={`h-4 w-7 cursor-pointer rounded-sm text-center leading-none text-ink ${
+                    at?.q === q && at.j === j
+                      ? "outline outline-2 outline-ink"
+                      : pinned === q
+                        ? "outline outline-1 outline-compute"
+                        : ""
                   }`}
                   style={{ background: heatFill(c) }}
                 >
-                  {c.n_correct}/{HM.n_chains}
-                  <span className="sr-only"> chains right, {OUTCOME_SAYS[c.outcome]}</span>
+                  {c.n_correct}
+                  <span className="sr-only"> of {HM.n_chains} chains right, {OUTCOME_SAYS[c.outcome]}</span>
                 </td>
               ))}
             </tr>
@@ -565,18 +580,82 @@ function TemperatureHeatmap() {
         </tbody>
         <tfoot>
           <tr>
-            <th scope="row" className="pt-1 text-left font-normal text-ink-muted">
-              vote right
+            <th scope="row" className="pt-1 pr-1 text-left font-normal text-ink-muted">
+              right
             </th>
             {HM.temperatures.map((t, j) => (
               <td key={t} className="pt-1 text-center text-correct-ink">
-                {HM.problems.filter((p) => p.cells[j].outcome === "right").length}/
-                {HM.problems.length}
+                {HM.problems.filter((r) => r.cells[j].outcome === "right").length}
               </td>
             ))}
           </tr>
         </tfoot>
       </table>
+
+      {/* The legend and the pinned problem. Sticky, so it stays beside the rows while
+          the reader scrolls down forty of them. */}
+      <div className="flex min-w-0 flex-col gap-3 sm:sticky sm:top-20 sm:w-56">
+        {legend("right", "the vote is right")}
+        {legend("wrong", "the vote is wrong or ties")}
+        <p className="text-xs text-ink-muted">
+          Each cell: chains right of {HM.n_chains}. The bottom row counts problems the vote got
+          right, of {HM.problems.length}.
+        </p>
+        {/* The hover readout; it holds its lines so the panel does not jump. */}
+        <p aria-hidden="true" className="min-h-[2.5rem] font-mono text-xs text-ink">
+          {shown && at
+            ? `problem ${at.q + 1} · T = ${tLabel(shown.temperature)} · ${shown.n_correct} of ${HM.n_chains} right · ${OUTCOME_SAYS[shown.outcome]}`
+            : ""}
+        </p>
+        {p && pinned !== null ? (
+          <div
+            data-testid="heatmap-problem"
+            aria-live="polite"
+            className="flex flex-col gap-2 rounded border border-compute bg-compute/5 p-2 text-xs"
+          >
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="font-semibold text-ink">
+                Problem {pinned + 1} · level {p.level} · {p.subject}
+              </p>
+              <button
+                type="button"
+                onClick={() => setPinned(null)}
+                aria-label="Close this problem"
+                className="text-ink-muted hover:text-ink"
+              >
+                ×
+              </button>
+            </div>
+            <p className="max-h-28 overflow-y-auto font-code leading-relaxed text-ink">
+              {tidyMath(p.question)}
+            </p>
+            <p className="text-ink-muted">
+              answer <span className="font-mono text-ink">{tidyMath(p.ground_truth)}</span> · the vote
+              gets it at {rightAt.length} of {HM.temperatures.length} temperatures
+            </p>
+            <ul className="flex flex-col gap-px font-mono tabular-nums">
+              {p.cells.map((c) => (
+                <li
+                  key={c.temperature}
+                  className="flex items-center gap-2 rounded-sm px-1"
+                  style={{ background: heatFill(c) }}
+                >
+                  <span className="w-11 shrink-0 text-ink">T = {tLabel(c.temperature)}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink" title={c.answer ?? "tie"}>
+                    {c.outcome === "tie" ? "tie" : tidyMath(c.answer ?? "")}
+                  </span>
+                  <span className="shrink-0 text-ink">
+                    {c.n_correct}/{HM.n_chains}
+                  </span>
+                  <span className="w-3 shrink-0 text-center text-ink" aria-label={OUTCOME_SAYS[c.outcome]}>
+                    {c.outcome === "right" ? "✓" : "✗"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
     </section>
   );
 }
@@ -801,160 +880,151 @@ function PileChart({
 /* ------------------------------------------------------------------ figure 3 */
 
 const FW = 620;
-const FHGT = 320;
-const FMARGIN = { top: 30, right: 116, bottom: 84, left: 46 };
+const FHGT = 290;
+const FMARGIN = { top: 30, right: 128, bottom: 46, left: 46 };
 const FIW = FW - FMARGIN.left - FMARGIN.right;
 const FIH = FHGT - FMARGIN.top - FMARGIN.bottom;
 
+/** The three shared budgets get one hue, light to dark as the budget grows. */
+const BUDGET_SHADE = [0.4, 0.68, 1];
+
 /**
- * Step 4 as a fork rather than a table.
+ * Step 4 as a fan: N chains sharing a fixed budget of 2,048, 4,096 or 8,192
+ * tokens, B/N each, against the same chains each allowed to finish.
  *
- * What this replaces was a five-column table under a two-decker header: capped
- * solved, capped cut off, free solved, free tokens, all at three values of N.
- * The finding lives in the difference between two of those columns, and a
- * reader had to hold two numbers per row in their head and subtract. It also
- * hid the one fact that makes the panel an argument rather than two
- * experiments: at N = 1 the two runs ARE the same run, so the two series start
- * from a single point.
+ * Allowed to finish IS section 3's majority-voting line (the pile, which about 1%
+ * of chains ever reach the cap of), so it is drawn in that line's colour and the
+ * page quotes one number for sixteen chains, not two draws that differ by chance.
+ * The three budgets are one hue, light to dark as the budget grows.
  *
- * So: one shared origin and two lines leaving it in opposite directions. The
- * gap between them at N = 16 is the whole claim, and it is a distance rather
- * than a subtraction. Underneath, on the same x positions, the share of chains
- * that hit the cap before finishing, because that is the CAUSE of the lower
- * line and the figure should not make the reader take it on trust: the fall
- * tracks the fill, 1% to 55% to 100%.
+ * At one chain no cap binds and all four lines start together, which is the
+ * control that makes this one experiment rather than four. They fan apart as N
+ * grows, and the order of the fan is the finding: the smaller the budget each
+ * chain gets, the further the vote falls. The cause, the share of chains cut off
+ * by their cap, is behind the widget's toggle (CutOffGrid) rather than drawn under
+ * the axis, where four series of gauges would crowd the chart.
  *
- * The cost sits in the right-hand labels, since the step's title is a question
- * about cost and the answer is that finishing is dear and there is no cheaper
- * version of it.
+ * The right-hand labels are spread so they never overlap; at N = 4 three of the
+ * lines sit at the same height, which is a fact about the data, not a drawing
+ * error, and the readers see the lines merge there.
  */
 function ForkChart() {
-  const capped = F2.split;
-  const ns = capped.map((sp) => sp.n);
+  const budgets = F2.budgets;
+  const finish = F2.uncapped.points;
+  const ns = finish.map((p) => p.n);
   const top = Math.max(...ns);
   const x = (n: number) => (Math.log2(n) / Math.log2(top)) * FIW;
-  const y = (v: number) => FIH - (v / 100) * FIH;
-  const free = (n: number) => F2.hot.points.find((p) => p.n === n);
+  const y = (share: number) => FIH - share * FIH;
+  const path = (pts: { n: number; accuracy: number }[]) =>
+    pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(p.accuracy)}`).join(" ");
 
-  const path = (get: (n: number) => number | undefined) =>
-    capped
-      .map((sp, i) => {
-        const v = get(sp.n);
-        return v === undefined ? "" : `${i ? "L" : "M"}${x(sp.n)},${y(v * 100)}`;
-      })
-      .join(" ");
-
-  const lastN = ns[ns.length - 1];
-  const lastFree = free(lastN);
-  const lastCapped = capped[capped.length - 1];
-  const firstFree = free(ns[0]);
-
-  // The cut-off gauge: a fixed track filled by the share that hit the cap.
-  const TRACK = 58;
-  const GAUGE_Y = FIH + 24;
-  const GAUGE_H = 11;
+  // Right-hand labels at each line's last point, nudged apart to a minimum gap.
+  const ends = [
+    ...budgets.map((b, i) => ({
+      key: `b${b.budget}`,
+      text: `${tokens(b.budget)} shared`,
+      y: y(b.points[b.points.length - 1].accuracy),
+      shade: BUDGET_SHADE[i] ?? 1,
+      finish: false,
+    })),
+    { key: "finish", text: "allowed to finish", y: y(finish[finish.length - 1].accuracy), shade: 1, finish: true },
+  ].sort((a, b) => a.y - b.y);
+  for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 12);
+  const lastFinish = finish[finish.length - 1];
 
   return (
     <ChartFrame
-      title={`The same budget of ${tokens(M.split.budget_total)} tokens split N ways, against the same number of chains allowed to run to their own end. At one chain the cap almost never binds and the two are the same run, both solving ${pct(capped[0].accuracy)}. Splitting the fixed budget ${lastN} ways drops it to ${pct(lastCapped.accuracy)}, with ${pct(lastCapped.truncated_rate)} of chains cut off before they finish. The same ${lastN} chains allowed to finish solve ${pct(lastFree?.accuracy ?? 0)} for ${tokens(lastFree?.mean_tokens ?? 0)} tokens.`}
+      title={`Share of ${M.items.n} problems solved against the number of chains, when the chains share a fixed budget of ${budgets.map((b) => tokens(b.budget)).join(", ")} tokens, and when each is allowed to finish. At one chain all four solve about ${pct(finish[0].accuracy)}. At ${top} chains, allowed to finish solves ${pct(lastFinish.accuracy)}; ${budgets.map((b) => `${tokens(b.budget)} shared solves ${pct(b.points[b.points.length - 1].accuracy)}`).join(", ")}.`}
       width={FW}
       height={FHGT}
       margin={FMARGIN}
-      xLabel="chains"
+      xLabel="# of sampled chains"
       yLabel="solved (%)"
     >
       {[0, 25, 50, 75, 100].map((t) => (
         <g key={t}>
-          <line x1={0} x2={FIW} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={1} />
-          <text x={-8} y={y(t) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
+          <line x1={0} x2={FIW} y1={FIH - (t / 100) * FIH} y2={FIH - (t / 100) * FIH} className="stroke-grid" strokeWidth={1} />
+          <text x={-8} y={FIH - (t / 100) * FIH + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
             {t}
           </text>
         </g>
       ))}
-
-      {/* The fork itself, shaded, so the claim is an area and not an inference */}
-      <path
-        d={`${path((n) => free(n)?.accuracy)} ${[...capped]
-          .reverse()
-          .map((sp) => `L${x(sp.n)},${y(sp.accuracy * 100)}`)
-          .join(" ")} Z`}
-        className="fill-wrong opacity-[0.07]"
-      />
-
-      <path d={path((n) => free(n)?.accuracy)} fill="none" className="stroke-compute" strokeWidth={2.4} />
-      <path d={path((n) => capped.find((sp) => sp.n === n)?.accuracy)} fill="none" className="stroke-wrong" strokeWidth={2.4} />
-
-      {capped.map((sp) => {
-        const f = free(sp.n);
-        return (
-          <g key={sp.n}>
-            {f ? <circle cx={x(sp.n)} cy={y(f.accuracy * 100)} r={3.4} className="fill-compute" /> : null}
-            <circle cx={x(sp.n)} cy={y(sp.accuracy * 100)} r={3.4} className="fill-wrong" />
-          </g>
-        );
-      })}
-
-      {/* The shared origin is the control and the reason this is one experiment */}
-      {firstFree ? (
-        <text x={6} y={y(firstFree.accuracy * 100) - 18} className="fill-ink-muted text-[10px]">
-          at one chain the cap never binds: both lines are the same run
-        </text>
-      ) : null}
-
-      <text x={FIW + 8} y={y((lastFree?.accuracy ?? 0) * 100) - 3} className="fill-compute-ink text-[10px] font-semibold">
-        <tspan x={FIW + 8} dy="0">allowed to finish</tspan>
-        <tspan x={FIW + 8} dy="11" className="fill-ink-muted font-normal">
-          {tokens(lastFree?.mean_tokens ?? 0)} tokens
-        </tspan>
-      </text>
-      <text x={FIW + 8} y={y(lastCapped.accuracy * 100) + 3} className="fill-wrong-ink text-[10px] font-semibold">
-        <tspan x={FIW + 8} dy="0">capped to share</tspan>
-        <tspan x={FIW + 8} dy="11" className="fill-ink-muted font-normal">
-          {tokens(M.split.budget_total)} tokens
-        </tspan>
-      </text>
-
-      {/* x ticks sit above the gauge so each count labels both at once */}
-      {capped.map((sp) => (
-        <text key={sp.n} x={x(sp.n)} y={FIH + 15} textAnchor="middle" className="fill-ink-muted text-[10px] tabular-nums">
-          {sp.n}
+      {ns.map((n) => (
+        <text key={n} x={x(n)} y={FIH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] tabular-nums">
+          {n}
         </text>
       ))}
 
-      {/* the cause of the lower line, on the same x positions as the effect */}
-      <text x={-8} y={GAUGE_Y + GAUGE_H - 1} textAnchor="end" className="fill-ink-muted text-[9px]">
-        cut off
-      </text>
-      {capped.map((sp) => (
-        <g key={`gauge-${sp.n}`}>
-          <rect
-            x={x(sp.n) - TRACK / 2}
-            y={GAUGE_Y}
-            width={TRACK}
-            height={GAUGE_H}
-            rx={2}
-            className="fill-surface-raised stroke-grid"
-            strokeWidth={1}
-          />
-          <rect
-            x={x(sp.n) - TRACK / 2}
-            y={GAUGE_Y}
-            width={TRACK * sp.truncated_rate}
-            height={GAUGE_H}
-            rx={2}
-            className="fill-wrong opacity-70"
-          />
-          <text
-            x={x(sp.n)}
-            y={GAUGE_Y + GAUGE_H + 12}
-            textAnchor="middle"
-            className="fill-ink-muted text-[10px] tabular-nums"
-          >
-            {pct(sp.truncated_rate)}
-          </text>
+      {budgets.map((b, i) => (
+        <g key={b.budget} data-testid={`budget-line-${b.budget}`} strokeOpacity={BUDGET_SHADE[i] ?? 1}>
+          <path d={path(b.points)} fill="none" className="stroke-wrong" strokeWidth={2.2} />
+          {b.points.map((p) => (
+            <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy)} r={3.2} className="fill-wrong" fillOpacity={BUDGET_SHADE[i] ?? 1} />
+          ))}
         </g>
       ))}
+      {/* Drawn last: where the lines meet, the one the reader came from stays on top. */}
+      <g data-testid="finish-line">
+        <path d={path(finish)} fill="none" className="stroke-compute" strokeWidth={2.6} />
+        {finish.map((p) => (
+          <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy)} r={3.6} className="fill-compute" />
+        ))}
+      </g>
+
+      <text x={6} y={y(finish[0].accuracy) - 14} className="fill-ink-muted text-[10px]">
+        at one chain no cap binds: all four start together
+      </text>
+
+      {ends.map((e) => (
+        <text
+          key={e.key}
+          x={FIW + 8}
+          y={e.y + 3}
+          className={`text-[10px] font-semibold ${e.finish ? "fill-compute-ink" : "fill-wrong-ink"}`}
+          fillOpacity={e.finish ? 1 : Math.max(e.shade, 0.55)}
+        >
+          {e.text}
+        </text>
+      ))}
     </ChartFrame>
+  );
+}
+
+/**
+ * Why the budget lines fall: the share of each budget's chains cut off by their cap
+ * and made to commit mid-thought, at every N. Behind the widget's toggle. It is a
+ * property of the run, not a score, so it is a small grid of gauges and not a line.
+ */
+function CutOffGrid() {
+  const budgets = F2.budgets;
+  const ns = budgets[0].points.map((p) => p.n);
+  return (
+    <div data-testid="cut-off-grid" className="flex flex-col gap-1.5 text-xs">
+      <p className="text-ink-muted">Share of chains cut off by their cap before they finished:</p>
+      <div className="grid max-w-md grid-cols-[6.5rem_repeat(3,minmax(0,1fr))] items-center gap-x-3 gap-y-1">
+        <span />
+        {ns.map((n) => (
+          <span key={n} className="font-mono tabular-nums text-ink-muted">
+            {n === 1 ? "1 chain" : `${n} chains`}
+          </span>
+        ))}
+        {budgets.map((b, i) => (
+          <Fragment key={b.budget}>
+            <span className="font-semibold text-wrong-ink" style={{ opacity: Math.max(BUDGET_SHADE[i] ?? 1, 0.55) }}>
+              {tokens(b.budget)} shared
+            </span>
+            {b.points.map((p) => (
+              <span key={p.n} className="flex items-center gap-1.5">
+                <span className="h-2 w-12 overflow-hidden rounded-sm bg-surface-raised ring-1 ring-grid">
+                  <span className="block h-full bg-wrong/70" style={{ width: `${p.truncated_rate * 100}%` }} />
+                </span>
+                <span className="font-mono tabular-nums text-ink-muted">{pct(p.truncated_rate)}</span>
+              </span>
+            ))}
+          </Fragment>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -979,6 +1049,15 @@ export function Page7() {
   const voters = F2.hot.points[voterIx];
   // The third line and its band, what the vote threw away, are drawn on request.
   const [showLost, setShowLost] = useState(false);
+  // Section 4's cause, the share of chains cut off by their cap, is shown on request.
+  const [showCut, setShowCut] = useState(false);
+  // The closing paragraph's two cases: the smallest and largest budget at the most chains.
+  const atTop = (b: (typeof F2.budgets)[number]) => ({
+    budget: b.budget,
+    ...b.points[b.points.length - 1],
+  });
+  const cutLow = atTop(F2.budgets[0]);
+  const cutHigh = atTop(F2.budgets[F2.budgets.length - 1]);
   // The readout's baseline is the flat line the chart draws: one greedy chain.
   const cold = F2.cold.points[0].accuracy;
   const pointsVsGreedy = (acc: number) => {
@@ -1175,8 +1254,9 @@ export function Page7() {
             once.
           </p>
           <p className="text-ink-muted">
-            Here is the vote on {HM.problems.length} of these problems at all{" "}
-            {HM.temperatures.length} temperatures, {HM.n_chains} chains each.
+            Here is the vote on {HM.problems.length} of these problems at{" "}
+            {HM.temperatures.length} temperatures, {HM.n_chains} chains each. Click a problem to
+            see which temperatures got it right.
           </p>
           <TemperatureHeatmap />
         </section>
@@ -1327,35 +1407,46 @@ export function Page7() {
           <h2 className="text-xl font-semibold text-ink">4. Sharing a fixed budget between chains</h2>
           <p className="text-ink-muted">
             Sixteen chains cost sixteen times the tokens. So what if you do not have sixteen times
-            the budget? Below, one fixed budget of {tokens(M.split.budget_total)} tokens is divided
-            between the chains, and the same chains are run again with no budget at all. Read it as
-            two lines, not two experiments: at every point on the x axis the model gets the same
-            number of chains, and the only thing that changes between the lines is whether it is
-            allowed to finish them. They start as one run and end a long way apart.
+            the budget? Below, a fixed budget of{" "}
+            {F2.budgets.map((b) => tokens(b.budget)).join(", ").replace(/, ([^,]*)$/, " or $1")}{" "}
+            tokens is divided between the chains, and the same chains are also allowed to finish.
+            At every point on the x axis the model gets the same number of chains; the only thing
+            that changes between the lines is how many tokens each chain may use.
           </p>
+          {/* The widget is the chart and its one toggle, as in step 3. */}
           <section
-            aria-label="The same budget split N ways"
+            aria-label="A fixed budget shared between chains"
             className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
           >
             <ForkChart />
-            <p className="text-xs text-ink-muted">
-              The gauge under each count is the share of that run&apos;s chains that hit the cap and
-              were made to commit mid-thought, which is a property of the run rather than a score.
-            </p>
-            <p className="text-ink">
-              Dividing a budget does two things at once. One, it adds chains, and two, it shortens
-              every one of them. The shortening is the one that lands. At{" "}
-              {F2.split[F2.split.length - 1].n} chains the budget leaves each with only{" "}
-              {tokens(Math.round(M.split.budget_total / F2.split[F2.split.length - 1].n))} tokens.
-              Every chain hits that ceiling before finishing, and the vote is counting fragments of
-              arguments rather than arguments.{" "}
-              <strong className="text-ink">Splitting is not what fails, capping is.</strong> Let the
-              same chains run to their own end and the vote indeed works, at {tokens(pileTokens)}{" "}
-              tokens for {last.n} chains vs {tokens(oneChainTokens)} for one. There are two ways of
-              spending here, divide one budget, or let every chain finish. The second one is the
-              winner.
-            </p>
+            {showCut ? <CutOffGrid /> : null}
+            <button
+              type="button"
+              aria-pressed={showCut}
+              onClick={() => {
+                recordInteraction(PAGE_N);
+                setShowCut((v) => !v);
+              }}
+              className="inline-flex items-center gap-1.5 self-start rounded border border-compute bg-compute/10 px-2.5 py-1 text-xs font-semibold text-compute transition-colors hover:bg-compute hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-compute focus-visible:ring-offset-1"
+            >
+              <span aria-hidden="true">{showCut ? "▾" : "▸"}</span>
+              {showCut ? "Hide how many chains were cut off" : "Show how many chains were cut off"}
+            </button>
           </section>
+          <p className="text-ink">
+            Dividing a budget does two things at once. One, it adds chains, and two, it shortens
+            every one of them. The shortening is the one that lands. At {cutLow.n} chains,{" "}
+            {tokens(cutLow.budget)} tokens leaves each chain only {tokens(cutLow.chain_budget)}, and{" "}
+            {pct(cutLow.truncated_rate)} of them are cut off before they finish; even{" "}
+            {tokens(cutHigh.budget)} tokens leaves {tokens(cutHigh.chain_budget)} each, and{" "}
+            {pct(cutHigh.truncated_rate)} are cut off. The vote is counting fragments of arguments
+            rather than arguments.{" "}
+            <strong className="text-ink">Splitting is not what fails, capping is.</strong> Let the
+            same chains run to their own end and the vote indeed works, at {tokens(pileTokens)}{" "}
+            tokens for {last.n} chains vs {tokens(oneChainTokens)} for one. There are two ways of
+            spending here, divide one budget, or let every chain finish. The second one is the
+            winner.
+          </p>
         </section>
         {/* Step 5. Page 12's closing shape: prose at full width in the reading
             column, no card and no display number, and the limits brought in from

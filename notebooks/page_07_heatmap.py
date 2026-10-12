@@ -173,10 +173,89 @@ def build(out_dir, dest):
     print(f"\n{dest}  {len(problems)} problems x {len(div)} temperatures")
 
 
+SWEEP_BUNDLE = HERE.parent / "runs" / "page-07-temperature-sweep.zip"
+
+
+def build_sweep(bundle, dest):
+    """The heat map from the temperature sweep (`page_07_temperature_sweep.py`): 16 chains at
+    12 temperatures on 40 problems. Every cell is re-tallied here from the bundle's own chains
+    with the vote copied above, and nothing is written unless each one, and each temperature's
+    summary, matches the sweep's results.json."""
+    import zipfile
+    bundle = Path(bundle)
+    with zipfile.ZipFile(bundle) as z:
+        root = z.namelist()[0].split("/")[0]
+        R = json.loads(z.read(f"{root}/results.json"))
+        lines = z.read(f"{root}/traces.jsonl").decode("utf-8").splitlines()
+    run_id, model, k = R["run_id"], R["model"], R["n_chains"]
+    by = {}
+    for line in lines:
+        if line.strip():
+            r = json.loads(line)
+            if r["run_id"] == run_id and r["model_id"] == model:
+                by.setdefault((r["config_id"], r["problem_id"]), {})[r["sample_index"]] = r
+
+    problems, per_t = [], {t: [] for t in R["temperatures"]}
+    for entry in R["heatmap"]:
+        pid, cells = entry["problem_id"], []
+        for t in R["temperatures"]:
+            slots = by[(f"t{t:.2f}-c{R['chain_cap']}", pid)]
+            rs = [slots[i] for i in range(k)]
+            row = tally(rs)
+            labels, _ = cluster([vote_key(r["trace"]) for r in rs])
+            counts = Counter(l for l in labels if l is not NO_ANSWER).most_common()
+            answer = counts[0][0] if counts and not row["tie"] else None
+            cell = dict(temperature=t, n_correct=sum(bool(r["correct"]) for r in rs),
+                        outcome="tie" if row["tie"] else "right" if row["plurality_correct"] else "wrong",
+                        answer=answer)
+            saved = entry["cells"][f"{t:.1f}"]
+            assert (cell["n_correct"], cell["outcome"], answer) == (
+                saved["correct_chains"], saved["outcome"], saved["plurality_answer"]), \
+                f"{pid} T={t}: re-tallied {cell} but results.json says {saved}"
+            cells.append(cell)
+            per_t[t].append(row)
+        problems.append(dict(problem_id=pid, level=entry["level"], subject=entry["subject"],
+                             question=entry["question"], ground_truth=entry["ground_truth"],
+                             cells=cells))
+    for s in R["summary"]:
+        rows = per_t[s["temperature"]]
+        mine = dict(vote_accuracy=mean(r["plurality_correct"] for r in rows),
+                    single_chain_accuracy=mean(r["mean_chain_correct"] for r in rows),
+                    coverage=mean(r["any_correct"] for r in rows),
+                    tie_rate=mean(r["tie"] for r in rows),
+                    mean_distinct=mean(r["distinct_answers"] for r in rows))
+        for key, v in mine.items():
+            assert math.isclose(v, s[key], abs_tol=1e-9), \
+                f"T={s['temperature']}: {key} is {v} here but {s[key]} in results.json"
+        print(f"T={s['temperature']:<4} vote {mine['vote_accuracy']:.0%}  one chain "
+              f"{mine['single_chain_accuracy']:.0%}  ties {mine['tie_rate']:.0%}  matches results.json")
+
+    out = {
+        "source": {"kind": "temperature sweep", "run_id": run_id, "bundle": bundle.name,
+                   "bundle_sha256": sha256(bundle), "builder": HERE.name,
+                   "builder_sha256": sha256(HERE), "sample_seed": R["sample_seed"]},
+        "n_chains": k,
+        "chain_cap": R["chain_cap"],
+        "temperatures": R["temperatures"],
+        "best_temperature": R["best_temperature"],
+        "summary": R["summary"],
+        "control": R["control"],
+        "problems": problems,
+    }
+    Path(dest).write_text(json.dumps(out, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"\n{dest}  {len(problems)} problems x {len(R['temperatures'])} temperatures")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--out-dir", default=str(HERE.parent / "out" / "page_07"),
                     help="the run's folder: results.json, manifest.json and traces.jsonl")
+    ap.add_argument("--sweep", nargs="?", const=str(SWEEP_BUNDLE), default=None,
+                    help="build from the temperature sweep's bundle instead (default path: "
+                         "runs/page-07-temperature-sweep.zip)")
     ap.add_argument("--dest", default=str(WEB_DATA))
     a = ap.parse_args()
-    build(a.out_dir, a.dest)
+    if a.sweep:
+        build_sweep(a.sweep, a.dest)
+    else:
+        build(a.out_dir, a.dest)

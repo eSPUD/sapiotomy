@@ -113,6 +113,9 @@ def build(out_dir):
         "figure_2": {
             "pile": R["pile_curves"],
             "split": R["split"],
+            # Every shared budget, and the same chains allowed to finish (the pile).
+            "split_budgets": R["split_budgets"],
+            "uncapped": R["uncapped"],
             "splitting_pays": R["splitting_pays"],
             "best_split_n": R["best_split_n"],
             # `n_items` here is the diversity family's smaller item set, not the pile's.

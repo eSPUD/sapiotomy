@@ -163,6 +163,10 @@ interface RawDerived {
   figure_2: {
     pile: { temperature: number; points: RawPilePoint[] }[];
     split: RawSplitPoint[];
+    /** Every shared budget (2048, 4096, 8192), keyed by its total. */
+    split_budgets: Record<string, RawSplitPoint[]>;
+    /** The same chains allowed to finish: the pile itself, at the split's N. */
+    uncapped: { config_id: string; chain_cap: number; points: RawPilePoint[] };
     splitting_pays: boolean;
     best_split_n: number;
     diversity: RawDiversity[];
@@ -308,6 +312,41 @@ for (const line of PILE_LINES) {
   if (s1 && p1) near(s1.accuracy, p1.accuracy, 1e-9, "the split and the pile at N=1");
 }
 
+// Section 4's lines are read off the same chains section 3 draws, so where two of them
+// are the same configuration they must be the same number. Allowed-to-finish IS the pile;
+// the 2048 budget IS the published split; and 8192 shared four ways is 2048 a chain,
+// which is the pile's cap, so that point is the pile's N = 4 exactly.
+{
+  const U = D.figure_2.uncapped;
+  if (U.config_id !== D.pool.config_id) {
+    throw new Page07DataError(
+      `section 4's allowed-to-finish line is ${U.config_id}, not the pile ${D.pool.config_id}`,
+    );
+  }
+  for (const u of U.points) {
+    const p = HOT.points.find((q) => q.n === u.n);
+    if (!p) throw new Page07DataError(`the pile has no point at N=${u.n}`);
+    near(u.accuracy, p.accuracy, 1e-9, `allowed to finish and the pile at N=${u.n}`);
+  }
+  const B = D.figure_2.split_budgets;
+  const b2048 = B[String(D.manifest.split.budget_total)];
+  if (!b2048) throw new Page07DataError("the split's own budget is missing from split_budgets");
+  b2048.forEach((s, i) =>
+    near(s.accuracy, D.figure_2.split[i].accuracy, 1e-9, `the split's own budget at N=${s.n}`),
+  );
+  for (const [b, line] of Object.entries(B)) {
+    for (const s of line) {
+      if (s.chain_budget * s.n !== Number(b)) {
+        throw new Page07DataError(`budget ${b} at N=${s.n} has chains of ${s.chain_budget}`);
+      }
+      if (s.chain_budget === D.pool.chain_cap) {
+        const p = HOT.points.find((q) => q.n === s.n);
+        if (p) near(s.accuracy, p.accuracy, 1e-9, `budget ${b} at N=${s.n} and the pile`);
+      }
+    }
+  }
+}
+
 /* ------------------------------------------------------------ the specimen */
 
 export interface SpecimenChain extends RawChain {}
@@ -385,48 +424,94 @@ for (const { problem } of SHOWCASE) {
 /* ----------------------------------------------------------- the heat map */
 
 /**
- * The diversity family per problem: one cell per problem and temperature, how many
- * of its chains are right and how the vote came out. The notebook saves this family
- * only as one aggregate per temperature; `notebooks/page_07_heatmap.py` re-tallies
- * the same chains with the notebook's own vote and refuses to write unless it
- * reproduces those aggregates. It is checked again here, against the derived file
- * the rest of the page reads, so a heat map from another run fails the build.
+ * Section 2's heat map: the temperature sweep, 16 chains at 12 temperatures on 40 of
+ * the 100 problems (`notebooks/page_07_temperature_sweep.py`, bundled in
+ * `notebooks/runs/page-07-temperature-sweep.zip`). One cell per problem and temperature:
+ * how many of its chains are right, how the vote came out, and the answer it returned.
+ * `notebooks/page_07_heatmap.py --sweep` re-tallies every cell from the bundle's chains
+ * and refuses to write unless each one matches the sweep's results. Checked again here:
+ * the run must be this page's, the summaries must be the averages of the cells, the
+ * temperature-0 column must be one greedy chain copied, and the best temperature must be
+ * the one the summaries name.
  */
 export interface HeatCell {
   temperature: number;
   n_correct: number;
   outcome: Outcome;
+  /** What the vote returned; null on a tie. */
+  answer?: string | null;
+}
+
+interface HeatSummary {
+  temperature: number;
+  n_problems: number;
+  vote_accuracy: number;
+  coverage: number;
+  single_chain_accuracy: number;
+  tie_rate: number;
+  mean_distinct: number;
 }
 
 interface RawHeatmap {
-  source: { run_id: string; results_sha256: string };
+  source: { kind: string; run_id: string; bundle: string; bundle_sha256: string };
   n_chains: number;
+  chain_cap: number;
   temperatures: number[];
-  problems: { problem_id: string; level: number; subject: string; cells: HeatCell[] }[];
+  best_temperature: number;
+  summary: HeatSummary[];
+  control: {
+    temperature: number;
+    n_problems: number;
+    accuracy: number;
+    greedy_accuracy: number;
+    vs_greedy: { fixed: number; broken: number; p: number };
+  };
+  problems: {
+    problem_id: string;
+    level: number;
+    subject: string;
+    question: string;
+    ground_truth: string;
+    cells: HeatCell[];
+  }[];
 }
 
 const HM = rawHeatmap as unknown as RawHeatmap;
 
-if (HM.source.run_id !== D.manifest.run_id || HM.source.results_sha256 !== D.source.results_sha256) {
+if (HM.source.run_id !== D.manifest.run_id) {
   throw new Page07DataError("the heat map was built from a different run than derived.json");
 }
-D.figure_2.diversity.forEach((d, j) => {
-  const cells = HM.problems.map((p) => p.cells[j]);
+{
   const close = (a: number, b: number) => Math.abs(a - b) < 1e-9;
-  const avg = (f: (c: HeatCell) => number) => cells.reduce((s, c) => s + f(c), 0) / cells.length;
-  if (
-    HM.temperatures[j] !== d.temperature ||
-    HM.n_chains !== d.n_chains ||
-    HM.problems.length !== d.n_items ||
-    cells.some((c) => c.temperature !== d.temperature) ||
-    !close(avg((c) => +(c.outcome === "right")), d.plurality_accuracy) ||
-    !close(avg((c) => +(c.outcome === "tie")), d.tie_rate) ||
-    !close(avg((c) => c.n_correct / HM.n_chains), d.single_chain_accuracy) ||
-    !close(avg((c) => +(c.n_correct > 0)), d.coverage)
-  ) {
-    throw new Page07DataError(`the heat map's T = ${d.temperature} column disagrees with derived.json`);
+  HM.temperatures.forEach((t, j) => {
+    const cells = HM.problems.map((p) => p.cells[j]);
+    const s = HM.summary[j];
+    const avg = (f: (c: HeatCell) => number) => cells.reduce((a, c) => a + f(c), 0) / cells.length;
+    if (
+      s.temperature !== t ||
+      s.n_problems !== HM.problems.length ||
+      cells.some((c) => c.temperature !== t || c.n_correct < 0 || c.n_correct > HM.n_chains) ||
+      cells.some((c) => (c.outcome === "tie") !== (c.answer === null)) ||
+      !close(avg((c) => +(c.outcome === "right")), s.vote_accuracy) ||
+      !close(avg((c) => +(c.outcome === "tie")), s.tie_rate) ||
+      !close(avg((c) => c.n_correct / HM.n_chains), s.single_chain_accuracy) ||
+      !close(avg((c) => +(c.n_correct > 0)), s.coverage)
+    ) {
+      throw new Page07DataError(`the heat map's T = ${t} column disagrees with its own summary`);
+    }
+  });
+  // Temperature 0 is one greedy chain copied, so every cell is all right or all wrong.
+  const j0 = HM.temperatures.indexOf(0);
+  if (j0 >= 0 && HM.problems.some((p) => ![0, HM.n_chains].includes(p.cells[j0].n_correct))) {
+    throw new Page07DataError("the heat map's T = 0 column is not one greedy chain");
   }
-});
+  const best = [...HM.summary].sort(
+    (a, b) => b.vote_accuracy - a.vote_accuracy || a.temperature - b.temperature,
+  )[0];
+  if (best.temperature !== HM.best_temperature) {
+    throw new Page07DataError(`the heat map names T = ${HM.best_temperature} as best, not T = ${best.temperature}`);
+  }
+}
 
 export const HEATMAP = HM;
 
@@ -491,6 +576,11 @@ export const PAGE7 = {
     cold: COLD,
     split: D.figure_2.split,
     splittingPays: D.figure_2.splitting_pays,
+    /** Section 4: every shared budget, smallest first, and the same chains allowed to finish. */
+    budgets: Object.entries(D.figure_2.split_budgets)
+      .map(([b, points]) => ({ budget: Number(b), points }))
+      .sort((a, b) => a.budget - b.budget),
+    uncapped: D.figure_2.uncapped,
     bestSplitN: D.figure_2.best_split_n,
     diversity: D.figure_2.diversity,
     /** The page's sentence: the vote against ONE GREEDY CHAIN. */
