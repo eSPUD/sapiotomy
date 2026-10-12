@@ -297,8 +297,16 @@ describe("Page 4 layout and copy (Act 1 revisions)", () => {
       expect(within(cases).getByText(d)).toBeInTheDocument();
     }
     expect(within(cases).getAllByText("Two routes:")).toHaveLength(3);
+    // Each question asks for what its routes produce, and matches its starting point.
+    expect(within(cases).getByText("When should you leave for a 10 a.m. flight?")).toBeInTheDocument();
+    expect(within(cases).getByText("Why does the program crash on large inputs?")).toBeInTheDocument();
     expect(document.body.textContent ?? "").toMatch(
       /The multiplication was a stand-in\. Any problem you cannot answer on sight/,
+    );
+    // Step 3 also scopes the story: retrieval closed page 2's gap, and is set aside.
+    const step3 = screen.getByRole("heading", { level: 2, name: "3. Reasoning beyond mathematics" }).closest("section")!;
+    expect(step3.textContent?.replace(/\s+/g, " ")).toMatch(
+      /Reasoning works from what you already know, so it can spot a missing fact but not supply it\. On page 2, closing the knowledge gap took a lookup in a current source, which is called retrieval\. This story sets retrieval aside to follow reasoning, the part that fixed the bias and can work out problems nobody has solved yet\./,
     );
     expectClean();
   });

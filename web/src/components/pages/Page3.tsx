@@ -351,8 +351,11 @@ export function Page3() {
             model on less text, or a smaller one on more. Drag the model size along one budget to
             find the best split.
             <Cite n={[REF.chinchilla, REF.besiroglu]} /> Then pick a bigger budget: the best split
-            stays near 20 tokens of text for every parameter, and each tenfold budget lowers the
-            loss by less than the one before.
+            stays near 20 <strong>tokens</strong> of text (a token is roughly a word) for every{" "}
+            {/* First load-bearing use of "parameter" in the deck, and pages 5 and 11 are
+                both denominated in it. Defined once, at the altitude of this page. */}
+            <strong>parameter</strong>, the numbers training adjusts, and each tenfold budget
+            lowers the loss by less than the one before.
           </p>
           <figure
             aria-label="The scaling law: one training budget, many splits"
@@ -652,14 +655,12 @@ export function Page3() {
             <section aria-label="Problem two: not enough data" className="flex flex-col gap-3">
               {/* Section c's text, one paragraph above the chart; the frame holds only the chart. */}
               <p className="text-ink">
-                {/* First load-bearing use of "parameter" in the deck, and pages 5 and 11 are
-                    both denominated in it. Defined once, at the altitude of this page. */}
-                Say money is no object. Bigger models still need more text to learn from: a{" "}
-                <strong>scaling law</strong>, measured across hundreds of models, puts the sweet spot
-                at about {cp.tokensPerParam} <strong>tokens</strong> of text (a token is roughly a
-                word) for every <strong>parameter</strong>, the numbers training adjusts.
-                <Cite n={REF.chinchilla} /> But people have only ever written about {STOCK_T} trillion
-                tokens of good-quality text, and no budget can buy text that does not exist.
+                {/* Refers back to section 1, which defines tokens and parameters and
+                    cites the 20-to-1 split. */}
+                Say money is no object. Section 1&apos;s best split still needs about{" "}
+                {cp.tokensPerParam} tokens per parameter, so every bigger model needs more text.
+                But people have only ever written about {STOCK_T} trillion tokens of good-quality
+                text, and no budget can buy text that does not exist.
                 <Cite n={REF.dataStock} /> Meanwhile, Epoch finds the biggest training sets growing
                 about &times;{PP.growthPerYearMedian.toFixed(1)} a year, somewhere between &times;
                 {PP.growthPerYearLow.toFixed(1)} and &times;{PP.growthPerYearHigh.toFixed(1)} (the
@@ -760,9 +761,11 @@ export function Page3() {
             nobody has worked out before, or written down anywhere a model could train on.
           </p>
           <p>
+            {/* Page 2's lookup already kept the answer current without retraining: say so,
+                without naming the method (that is page 4's business). */}
             <strong>
-              Retraining alone cannot keep a model current or fair, so we need other ways to improve
-              its answers.
+              Retraining alone cannot keep a model current or fair (page 2&apos;s lookup did the first
+              without retraining), so we need other ways to improve its answers.
             </strong>
           </p>
         </Handoff>

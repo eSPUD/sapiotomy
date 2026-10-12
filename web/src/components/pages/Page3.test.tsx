@@ -68,10 +68,11 @@ describe("Page 3 (Training-Time Scaling)", () => {
       screen.getByRole("heading", { level: 2, name: /3\. Challenges in addressing knowledge bias/i }),
     ).toBeInTheDocument();
     // Step 3: the guess, under the same numbered spine as pages 1 and 4.
-    // The scaling-law spine: bigger models only pay off if they read more, in step.
+    // The data wall refers back to section 1's split instead of restating the law.
     expect(document.body.textContent).toMatch(
-      /a\s*scaling law, measured across hundreds of models, puts the sweet spot\s*at about 20 tokens of text \(a token is roughly a\s*word\) for every parameter, the numbers training adjusts\./i,
+      /Say money is no object\. Section 1's best split still needs about\s*20 tokens per parameter, so every bigger model needs more text\./,
     );
+    expect(document.body.textContent).not.toMatch(/sweet spot/i);
     // The stock card and the window meter are cut: the prose carries 300T and the
     // token gloss, the chart carries the stock line, the readout carries the window.
     expect(screen.queryByText("≈300T tokens")).toBeNull();
@@ -121,11 +122,15 @@ describe("Page 3 (Training-Time Scaling)", () => {
 
   // First load-bearing use of the word in the deck, and pages 5 and 11 are denominated
   // in it.
-  it("glosses parameter where it first carries weight", () => {
+  it("glosses token and parameter where they first carry weight, in section 1, and only there", () => {
     render(<Page3 />);
-    expect(document.body.textContent).toMatch(
-      /parameter, the numbers training adjusts/,
+    const law = screen.getByRole("heading", { level: 2, name: /1\. Why retraining looks like the answer/ }).closest("section")!;
+    expect(law.textContent).toMatch(
+      /20 tokens of text \(a token is roughly a word\) for every\s*parameter, the numbers training adjusts/,
     );
+    const body = document.body.textContent ?? "";
+    expect(body.match(/roughly a word/g)).toHaveLength(1);
+    expect(body.match(/the numbers training adjusts/g)).toHaveLength(1);
   });
 
   it("the cost chart and the scaling-law explorer have the page's only sliders", () => {
@@ -281,7 +286,7 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(body).toMatch(/Training-time scaling has real limits\./);
     expect(body).toMatch(/buys more knowledge, narrowing the knowledge\s*gap, but at a compounding cost/i);
     expect(body).toMatch(/And some problems do not turn on knowing the answer at all, but on reasoning to it\.\s*Mathematics is the classic case/);
-    expect(body).toMatch(/Retraining alone cannot keep a model current or fair, so we need other ways to improve\s*its answers\./);
+    expect(body).toMatch(/Retraining alone cannot keep a model current or fair \(page 2's lookup did the first\s*without retraining\), so we need other ways to improve its answers\./);
     expect(body).toMatch(/It can also make the knowledge bias worse\./);
     // the page's standing rule: it never names the sequel
     expect(body).not.toMatch(/answer time, on the question actually asked/i);
@@ -351,8 +356,9 @@ describe("Page 3 (Training-Time Scaling)", () => {
     expect(bill.querySelectorAll("sup")).toHaveLength(0);
     const pairs = Array.from(document.querySelectorAll("sup")).filter((s) => s.querySelectorAll("a").length === 2);
     expect(pairs.map((s) => s.textContent?.replace(/[^0-9,]/g, ""))).toEqual(["2,3", "4,5"]);
-    // the scaling law, the stock (in the prose and again beside its window), and the dataset-size table
-    expect(data.querySelectorAll("sup")).toHaveLength(4);
+    // the stock (in the prose and again beside its window) and the dataset-size table;
+    // the 20-to-1 split is cited in section 1, where it is introduced
+    expect(data.querySelectorAll("sup")).toHaveLength(3);
     const badges = screen.getAllByRole("link");
     expect(badges.map((a) => a.textContent ?? "").join(" | ")).toMatch(
       /Kaplan.*Hoffmann.*Besiroglu.*Cottier.*AI Index.*Villalobos/,

@@ -42,7 +42,7 @@ const PAGE_N = 4;
 const REASONING_CASES = [
   {
     domain: "Planning",
-    question: "Will you make a 10 a.m. flight?",
+    question: "When should you leave for a 10 a.m. flight?",
     start: "the drive takes 40 minutes, traffic doubles it at rush hour, and security takes 30.",
     routes: "work backwards from the gate, or forwards from leaving home. Both should land on the same time to go.",
   },
@@ -54,7 +54,7 @@ const REASONING_CASES = [
   },
   {
     domain: "Debugging",
-    question: "Why does the program crash on one input?",
+    question: "Why does the program crash on large inputs?",
     start: "it works on small inputs and fails on large ones.",
     routes: "trace the input forward through the code, or work back from the error. Each step keeps or rules out a suspect.",
   },
@@ -592,6 +592,15 @@ export function Page4() {
             In each, a quick guess can sound right and still be wrong. Working it through one
             checkable step at a time is what makes the answer worth trusting. Only the knowledge each
             step draws on changes; the shape of the work stays the same.
+          </p>
+          {/* Scopes the story, from the section's own premise (reasoning works from what
+              you already know): page 2 closed the knowledge gap with a lookup, which no
+              later page develops. Say so, and say why reasoning is the thread followed. */}
+          <p className="text-ink">
+            Reasoning works from what you already know, so it can spot a missing fact but not supply
+            it. On page 2, closing the knowledge gap took a lookup in a current source, which is
+            called retrieval. This story sets retrieval aside to follow reasoning, the part that fixed
+            the bias and can work out problems nobody has solved yet.
           </p>
         </section>
         <div aria-hidden="true" />
