@@ -1180,6 +1180,11 @@ export function Page8() {
         {/* Step 1 — how Best-of-N works */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Generate, judge, keep the best</h2>
+          <p className="text-ink">
+            Best-of-N works in three steps: the model writes several chains of thought for the same
+            question, a judge rates each chain on its own, and the chain with the highest rating is
+            kept. Press Play to watch it on a small puzzle.
+          </p>
           <BestOfNDemo />
           {/* The anchor sentence: the formal version of what the demo just showed,
               from Cobbe et al.'s abstract, cited in the margin beside it. */}
