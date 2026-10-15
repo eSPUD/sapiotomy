@@ -30,6 +30,15 @@ describe("Page 5, the Act 2 opener", () => {
     );
     expect(body).not.toMatch(/quadratic/i);
   });
+
+  it("notes the hardware in a sidenote beside the opener", () => {
+    render(<Page5 />);
+    const note = screen.getByText("Hardware").closest("aside")!;
+    expect(note).toHaveTextContent("An A100 GPU with 80GB VRAM was used in these experiments.");
+    // Level with the opener: no top padding, and the opener is the cell just before it.
+    expect(note.className).not.toMatch(/lg:pt-9/);
+    expect(note.previousElementSibling?.textContent).toMatch(/^\s*Act 1 ended on a question/);
+  });
 });
 
 describe("Page 5, step 1: what a chain of thought is", () => {

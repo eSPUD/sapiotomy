@@ -207,9 +207,19 @@ export const COST_ESTIMATE = (() => {
 const ZERO_SHOT_COT_TRIGGER = "Let's think step by step.";
 
 /** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+function Note({
+  kicker,
+  flush = false,
+  children,
+}: {
+  kicker: string;
+  /** Drop the top padding. That padding clears a step's h2 so the note lines up
+   *  with the prose under it; beside the headingless lede it drops a line too low. */
+  flush?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${flush ? "" : "lg:pt-9"}`}>
       <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -766,22 +776,24 @@ export function Page5() {
         </h1>
         <NotebookDownload href={NOTEBOOK_HREF} size={NOTEBOOK_SIZE} format="ipynb" />
       </div>
-      {/* Act 2's opener: picks up page 4's open question in its own words and maps the
-          act, as page 11's closing box maps Act 3. Page 4 already covers step-by-step
-          reasoning, so this does not restate it.
-          Held to the content column: the margin is the notes column (15rem) plus the
-          grid's column gap (2rem), so its right edge meets the body text's. */}
-      <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        Act 1 ended on a question: can a language model reason through a problem instead of
-        answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on
-        each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best
-        (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply
-        using a bigger model (page 11). The first tool is the simplest: have the model write out its
-        steps.
-      </p>
-
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* Act 2's opener: picks up page 4's open question in its own words and maps the
+            act, as page 11's closing box maps Act 3. Page 4 already covers step-by-step
+            reasoning, so this does not restate it. A grid row of its own, so the
+            hardware note can sit beside it (author, 2026-10-14). */}
+        <p className="text-lg text-ink-muted">
+          Act 1 ended on a question: can a language model reason through a problem instead of
+          answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on
+          each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best
+          (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply
+          using a bigger model (page 11). The first tool is the simplest: have the model write out
+          its steps.
+        </p>
+        <Note kicker="Hardware" flush>
+          <p>An A100 GPU with 80GB VRAM was used in these experiments.</p>
+        </Note>
+
         {/* Step 1 — the definition and the specimen, merged 2026-09-27 under the
             reviewer-response plan (planning/reviewer_response_changes_plan.md,
             page 5, sections 1 and 2). The first paragraph is the author's draft. */}
