@@ -98,9 +98,9 @@
  * belongs in the download.
  *
  * Load-bearing and easy to lose:
- *   · the notebook download is the whole point of the pipeline. The link carries
- *     the notebook, `harness.py` and all 900 traces, so a reader who doubts a
- *     figure re-derives it. It sits at the top right of the page, beside the act
+ *   · the notebook download. Since 2026-10-14 the link is the author's single
+ *     notebook, 5_CoT.ipynb, in place of the bundle (notebook, `harness.py` and all
+ *     900 traces) that re-derives each figure; see NOTEBOOK_HREF. It sits at the top right of the page, beside the act
  *     kicker; the references sit in right-hand References sidenotes beside the
  *     steps that cite them (Wei, Kojima and the model card beside step 1, the
  *     dataset beside step 2, Kaplan and the Qwen2.5 report beside step 4's
@@ -162,9 +162,14 @@ const BLURT_MIN = Math.min(...F3.models.map((m) => m.blurtMedianTokens));
 const BLURT_MAX = Math.max(...F3.models.map((m) => m.blurtMedianTokens));
 const BLURT_MEDIAN_RANGE = BLURT_MIN === BLURT_MAX ? `${BLURT_MIN}` : `${BLURT_MIN} or ${BLURT_MAX}`;
 
-/** The download: notebook + harness + every generation the page rests on. */
-const NOTEBOOK_ZIP = "/notebooks/page-05-how-to-reason.zip";
-const NOTEBOOK_SIZE = "0.8 MB";
+/**
+ * The download: the author's notebook, 5_CoT.ipynb, as a single file (author,
+ * 2026-10-14; it replaced the zip bundle here). The bundle, with harness.py and
+ * the 900 traces this page's figures replay, stays in public/notebooks for page
+ * 16 and notebookBundles.test.ts.
+ */
+const NOTEBOOK_HREF = "/notebooks/5_CoT.ipynb";
+const NOTEBOOK_SIZE = "0.9 MB";
 
 /**
  * Numbered in order of first appearance. Wei and Kojima are cited for the
@@ -759,7 +764,7 @@ export function Page5() {
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
+        <NotebookDownload href={NOTEBOOK_HREF} size={NOTEBOOK_SIZE} format="ipynb" />
       </div>
       {/* Act 2's opener: picks up page 4's open question in its own words and maps the
           act, as page 11's closing box maps Act 3. Page 4 already covers step-by-step

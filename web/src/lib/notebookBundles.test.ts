@@ -37,8 +37,12 @@ const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
  * notebook's `results.json`, on pages whose notebook stops at its results.
  */
 const PAGES = [
+  // Page 5 no longer links this bundle: since 2026-10-14 pages 5 and 16 offer the
+  // author's single notebook, 5_CoT.ipynb. The bundle stays on disk because
+  // notebooks/build_trace_report.py reads page 5's traces from it, so it is still
+  // checked here, with no declared size (no page prints one).
   { n: 5, slug: "page-05-how-to-reason", notebook: "page_05_how_to_reason.ipynb",
-    declared: "0.8 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
+    declared: null, extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
   // Page 6's repo copy has moved ahead: it lets a chain stop at its cap with no forced
   // answer, and its grid runs to 4,096 tokens. The shipped bundle still carries the
   // run that produced the numbers the page plots, and re-bundling waits on the new
