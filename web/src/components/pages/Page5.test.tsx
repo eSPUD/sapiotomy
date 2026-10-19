@@ -67,7 +67,7 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     render(<Page5 />);
     const para = screen.getByText(/To induce this process/).closest("p")!;
     expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
-      "To induce this process, it is common to put a few worked examples in the prompt. Below, three base Qwen2.5 models answer MATH-500 problems with and without them.",
+      "To induce this process, it is common to put a few worked examples in the prompt. Below, the base model Qwen2.5-3B answers MATH-500 problems with and without them.",
     );
     expect(body()).not.toMatch(/smallest models/i);
     expect(screen.getByRole("region", { name: "Zero-shot: the problem alone" })).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     expect(entries.map((a) => a.getAttribute("href"))).toEqual([
       "https://arxiv.org/abs/2201.11903",
       "https://arxiv.org/abs/2205.11916",
-      "https://huggingface.co/Qwen/Qwen2.5-7B",
+      "https://huggingface.co/Qwen/Qwen2.5-3B",
       "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
     ]);
     const refs = screen.getAllByText("References")[0].closest("aside")!;
@@ -95,29 +95,26 @@ describe("Page 5, step 1: what a chain of thought is", () => {
       "href",
       "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
     );
-    expect(within(refs).getByRole("link", { name: /Qwen2\.5-7B.*model card/ })).toHaveAttribute(
+    expect(within(refs).getByRole("link", { name: /Qwen2\.5-3B.*model card/ })).toHaveAttribute(
       "href",
-      "https://huggingface.co/Qwen/Qwen2.5-7B",
+      "https://huggingface.co/Qwen/Qwen2.5-3B",
     );
   });
 });
 
 describe("Page 5, figure 1: one problem, two prompts", () => {
   const problemGroup = () => within(screen.getByRole("group", { name: "Test problem" }));
-  const sizeGroup = () => within(screen.getByRole("group", { name: "Base model" }));
   const zeroShot = () => within(screen.getByRole("region", { name: "Zero-shot: the problem alone" }));
   const fewShot = () => within(screen.getByRole("region", { name: "Few-shot: after the five worked examples" }));
   const playBtn = () => screen.getByRole("button", { name: /▶ play/i });
   const resetBtn = () => screen.getByRole("button", { name: /reset/i });
+  const figure = () => within(screen.getByRole("region", { name: "One problem, two prompts" }));
 
-  it("offers the three test problems and the three base models, the first of each chosen", () => {
+  it("offers the three test problems, the first chosen, and names its one model", () => {
     render(<Page5 />);
     const problems = problemGroup().getAllByRole("button");
     expect(problems.map((b) => b.textContent)).toEqual(["Easy · level 1", "Medium · level 3", "Hard · level 5"]);
     expect(problems[0]).toHaveAttribute("aria-pressed", "true");
-    const sizes = sizeGroup().getAllByRole("button");
-    expect(sizes.map((b) => b.textContent)).toEqual(["Qwen2.5-1.5B", "Qwen2.5-3B", "Qwen2.5-7B"]);
-    expect(sizes[0]).toHaveAttribute("aria-pressed", "true");
     expect(PAGE5.testProblems.map((p) => p.uniqueId)).toEqual([
       "test/intermediate_algebra/134.json",
       "test/algebra/2584.json",
@@ -125,29 +122,42 @@ describe("Page 5, figure 1: one problem, two prompts", () => {
     ]);
   });
 
-  // Like the old figure 1: a split, zero-shot above few-shot, nothing revealed yet.
-  it("stacks zero-shot above few-shot, each a chat with the question and no reply yet", () => {
+  // One model, the base 3B (author, 2026-10-18): no size picker, and the prose says so.
+  it("shows the base Qwen2.5-3B only, with no model picker", () => {
     render(<Page5 />);
+    expect(PAGE5.figure1Model.label).toBe("Qwen2.5-3B");
+    expect(screen.queryByRole("group", { name: "Base model" })).toBeNull();
+    expect(figure().getByText("Qwen2.5-3B")).toBeInTheDocument();
+    const para = screen.getByText(/To induce this process/).closest("p")!;
+    expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
+      "To induce this process, it is common to put a few worked examples in the prompt. Below, the base model Qwen2.5-3B answers MATH-500 problems with and without them.",
+    );
+  });
+
+  // Fits one screen: the test problem shows once, and the two replies sit side by
+  // side with no reply yet.
+  it("shows the test problem once and the two replies side by side, nothing revealed yet", () => {
+    render(<Page5 />);
+    expect(screen.getAllByTestId("test-problem")).toHaveLength(1);
+    expect(screen.getByTestId("test-problem")).toHaveTextContent(
+      tidyPrompt(PAGE5.testProblems[0].problem).replace(/\s+/g, " ").trim(),
+    );
     const split = screen.getByTestId("split");
-    expect(split).toHaveClass("flex-col");
+    expect(split).toHaveClass("sm:grid-cols-2");
     expect([...split.children].map((c) => c.getAttribute("aria-label"))).toEqual([
       "Zero-shot: the problem alone",
       "Few-shot: after the five worked examples",
     ]);
     for (const side of [zeroShot(), fewShot()]) {
-      expect(side.getByRole("img", { name: "User" })).toBeInTheDocument();
-      expect(side.getByRole("img", { name: "Model" })).toBeInTheDocument();
       expect(side.getByText("press Play to see its reply")).toBeInTheDocument();
     }
-    expect(fewShot().getByText("+ the five worked examples")).toBeInTheDocument();
-    expect(zeroShot().queryByText("+ the five worked examples")).toBeNull();
     expect(resetBtn()).toBeDisabled();
   });
 
   it("Play shows both whole replies, as graded, with their verdicts; Reset clears them", () => {
     render(<Page5 />);
     fireEvent.click(playBtn());
-    const r = PAGE5.testProblems[0].replies["1.5B"];
+    const r = PAGE5.testProblems[0].replies;
     for (const [side, reply] of [[zeroShot(), r.zeroShot], [fewShot(), r.fewShot]] as const) {
       const text = side.getByTestId("model-reply").textContent ?? "";
       expect(text).toContain(`${reply.correct ? "✓" : "✗"} Final answer: ${tidyPrompt(reply.extracted)}.`);
@@ -159,27 +169,27 @@ describe("Page 5, figure 1: one problem, two prompts", () => {
     expect(zeroShot().getByText("press Play to see its reply")).toBeInTheDocument();
   });
 
-  it("switches problem and model with the replies showing, for every pair the run made", () => {
+  it("switches the test problem with the replies showing", () => {
     render(<Page5 />);
     fireEvent.click(playBtn());
     for (const [i, p] of PAGE5.testProblems.entries()) {
       fireEvent.click(problemGroup().getAllByRole("button")[i]);
-      for (const [k, size] of ["1.5B", "3B", "7B"].entries()) {
-        fireEvent.click(sizeGroup().getAllByRole("button")[k]);
-        expect(zeroShot().getByTestId("user-question")).toHaveTextContent(tidyPrompt(p.problem).replace(/\s+/g, " ").trim());
-        const few = p.replies[size].fewShot;
-        const verdict = few.extracted ? `Final answer: ${tidyPrompt(few.extracted)}.` : "No boxed answer.";
-        expect(fewShot().getByTestId("model-reply")).toHaveTextContent(verdict);
+      expect(screen.getByTestId("test-problem")).toHaveTextContent(tidyPrompt(p.problem).replace(/\s+/g, " ").trim());
+      for (const [side, reply] of [[zeroShot(), p.replies.zeroShot], [fewShot(), p.replies.fewShot]] as const) {
+        const verdict = reply.extracted ? `Final answer: ${tidyPrompt(reply.extracted)}.` : "No boxed answer.";
+        expect(side.getByTestId("model-reply")).toHaveTextContent(verdict);
       }
     }
   });
 
-  // On the hard problem the 7B is right with the problem alone and wrong after the
-  // examples. The figure shows it as it is: nothing on the page is picked to agree.
-  it("keeps the replies that cut against the section's point", () => {
-    const hard = PAGE5.testProblems[2].replies["7B"];
-    expect(hard.zeroShot.correct).toBe(true);
-    expect(hard.fewShot.correct).toBe(false);
+  // The 3B's six replies as the run graded them: both right on the easy problem,
+  // only few-shot right on the medium one, both wrong on the hard one.
+  it("shows the 3B's verdicts as the run graded them", () => {
+    expect(PAGE5.testProblems.map((p) => [p.replies.zeroShot.correct, p.replies.fewShot.correct])).toEqual([
+      [true, true],
+      [false, true],
+      [false, false],
+    ]);
   });
 
   it("lists the five worked examples as rows that open to their steps", () => {

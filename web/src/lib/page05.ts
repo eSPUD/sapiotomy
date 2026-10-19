@@ -52,9 +52,9 @@ export interface Reply {
   wroteCode: boolean;
 }
 
-/** A section 1 test problem, with every base model's two replies to it. */
+/** A section 1 test problem, with figure 1's base model's two replies to it. */
 export interface TestProblem extends Problem {
-  replies: Record<string, { zeroShot: Reply; fewShot: Reply }>;
+  replies: { zeroShot: Reply; fewShot: Reply };
 }
 
 /** One model under one prompt, tallied over the 495 problems. */
@@ -138,8 +138,9 @@ const D = rawDerived as unknown as {
     builder_sha256: string;
   };
   section_1: {
+    model: { size: string; model_id: string };
     examples: (RawProblem & { solution: string })[];
-    test_problems: (RawProblem & { replies: Record<string, Record<"zero_shot" | "few_shot", RawReply>> })[];
+    test_problems: (RawProblem & { replies: Record<"zero_shot" | "few_shot", RawReply> })[];
   };
   models: { size: string; model_id: string; label: string; kind: "base" | "instruct"; arms: Record<string, RawArm> }[];
   paired: Record<"few_vs_zero" | "instruct_cot_vs_base_few" | "cot_vs_direct", RawPaired[]>;
@@ -277,14 +278,14 @@ const reply = (r: RawReply): Reply => ({
   wroteCode: r.wrote_code,
 });
 
-const testProblems: TestProblem[] = D.section_1.test_problems.map((t) => {
-  const replies: TestProblem["replies"] = {};
-  for (const s of SIZES) {
-    const r = t.replies[s] ?? fail(`section 1's ${t.unique_id} has no ${s} replies`);
-    replies[s] = { zeroShot: reply(r.zero_shot), fewShot: reply(r.few_shot) };
-  }
-  return { ...problem(t), replies };
-});
+const testProblems: TestProblem[] = D.section_1.test_problems.map((t) => ({
+  ...problem(t),
+  replies: { zeroShot: reply(t.replies.zero_shot), fewShot: reply(t.replies.few_shot) },
+}));
+
+/** Figure 1's model, which has to be one of section 2's base models. */
+const figure1Model = base.find((m) => m.size === D.section_1.model.size) ?? fail("figure 1's model is not one of the base models");
+if (figure1Model.modelId !== D.section_1.model.model_id) fail("figure 1's model id disagrees with section 2's");
 
 export const PAGE5 = {
   provenance: D.provenance,
@@ -292,6 +293,8 @@ export const PAGE5 = {
   n: N,
   examples: D.section_1.examples.map((e): Example => ({ ...problem(e), solution: e.solution })),
   testProblems,
+  /** The one base model figure 1 shows (author, 2026-10-18: the 3B). */
+  figure1Model,
   base,
   instruct,
   paired: pairs,
