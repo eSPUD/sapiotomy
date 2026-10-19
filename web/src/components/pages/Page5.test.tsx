@@ -63,12 +63,16 @@ describe("Page 5, step 1: what a chain of thought is", () => {
   // The author's paragraph, cut to two sentences (2026-10-18): the figure carries the
   // rest. Its column titles define zero-shot and few-shot before section 2 uses them,
   // and its picker names the three models.
-  it("keeps the paragraph short and lets the figure define the terms", () => {
+  // Paragraph 2 is the alternative to paragraph 1's ask, not a second "common way"
+  // (author, 2026-10-18), and it is the original one: Wei et al. (reference 1)
+  // introduced chain of thought with worked examples.
+  it("keeps the paragraph short, opens it as the alternative to asking, and lets the figure define the terms", () => {
     render(<Page5 />);
-    const para = screen.getByText(/To induce this process/).closest("p")!;
+    const para = screen.getByText(/The original way, though/).closest("p")!;
     expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
-      "To induce this process, it is common to put a few worked examples in the prompt. Below, the base model Qwen2.5-3B answers MATH-500 problems with and without them.",
+      "The original way, though, is to show rather than ask: put a few worked examples in the prompt. Below, the base model Qwen2.5-3B answers MATH-500 problems with and without them.",
     );
+    expect(body()).not.toMatch(/it is common to put a few worked examples/i);
     expect(body()).not.toMatch(/smallest models/i);
     expect(screen.getByRole("region", { name: "Zero-shot: the problem alone" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Few-shot: after the five worked examples" })).toBeInTheDocument();
@@ -78,8 +82,12 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     render(<Page5 />);
     const def = screen.getByText(/A common way to ask a model for one/).closest("p")!;
     expect(Array.from(def.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 1", "reference 2"]);
-    const shown = screen.getByText(/To induce this process/).closest("p")!;
-    expect(Array.from(shown.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 3", "reference 4"]);
+    const shown = screen.getByText(/The original way, though/).closest("p")!;
+    expect(Array.from(shown.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
+      "reference 1",
+      "reference 3",
+      "reference 4",
+    ]);
     // Numbered in order of appearance: the model card, then the dataset.
     const entries = Array.from(screen.getAllByText("References")[0].closest("aside")!.querySelectorAll("a"));
     expect(entries.map((a) => a.getAttribute("href"))).toEqual([
@@ -128,10 +136,8 @@ describe("Page 5, figure 1: one problem, two prompts", () => {
     expect(PAGE5.figure1Model.label).toBe("Qwen2.5-3B");
     expect(screen.queryByRole("group", { name: "Base model" })).toBeNull();
     expect(figure().getByText("Qwen2.5-3B")).toBeInTheDocument();
-    const para = screen.getByText(/To induce this process/).closest("p")!;
-    expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
-      "To induce this process, it is common to put a few worked examples in the prompt. Below, the base model Qwen2.5-3B answers MATH-500 problems with and without them.",
-    );
+    const para = screen.getByText(/The original way, though/).closest("p")!;
+    expect(para.textContent).toContain("Below, the base model Qwen2.5-3B");
   });
 
   // Fits one screen: the test problem shows once, and the two replies sit side by

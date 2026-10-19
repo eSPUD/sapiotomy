@@ -710,10 +710,13 @@ export function Page5() {
           {/* The author's paragraph (2026-10-18), cut to two sentences so the figure
               carries the rest (author, same day): its column titles define zero-shot and
               few-shot, and the examples' caption says whose solutions they are. One
-              model, the base 3B (author, same day). */}
+              model, the base 3B (author, same day). It opens as the alternative to
+              paragraph 1's ask, not a second "common way" (author, same day): Wei et al.
+              introduced chain of thought with worked examples, before Kojima's phrase. */}
           <p className="text-ink">
-            To induce this process, it is common to put a few <strong>worked examples</strong> in
-            the prompt. Below, the base model {FIG1_MODEL.label}
+            The original way, though, is to show rather than ask: put a few{" "}
+            <strong>worked examples</strong> in the prompt.
+            <Cite n={REF.wei} /> Below, the base model {FIG1_MODEL.label}
             <Cite n={REF.qwen} /> answers MATH-500 problems
             <Cite n={REF.math500} /> with and without them.
           </p>
