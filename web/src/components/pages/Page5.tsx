@@ -807,10 +807,13 @@ export function Page5() {
           </section>
           <p className="text-ink-muted">
             The worked examples help at every size, by {gains[0]}, {gains[1]} and {gains[2]} points,
-            though less as the model grows. They show the model what an answer looks like: the
-            intermediate steps first, the final answer last. Following them, the model has to work
-            out each intermediate result before it commits to an answer, so it cannot jump to one
-            it never calculated. Without them, the 7B answers{" "}
+            though less as the model grows.{" "}
+            {/* Shashank's two sentences, verbatim (author, 2026-10-18); they replace the
+                page's paraphrase of the same idea. Page5.test.tsx pins the wording. */}
+            By providing the step-by-step intermediate logic in the examples, you force the model to
+            generate its own reasoning pathway before committing to a final answer. This prevents
+            the model from hallucinating a final state because it has to calculate the state
+            sequentially. Without them, the 7B answers{" "}
             <strong className="text-ink">{BASE_7B.zeroShot.wroteCode}</strong> of the {N} problems by
             writing a Python program that nothing runs. After the examples, it never does.
           </p>

@@ -270,6 +270,19 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
     expect(B7.fewShot.wroteCode).toBe(0); // "After the examples, it never does."
   });
 
+  // Shashank's outline asks for this understanding, and the author wants his two
+  // sentences on the page verbatim (2026-10-18).
+  it("carries Shashank's two sentences verbatim, after the figure", () => {
+    render(<Page5 />);
+    const quote =
+      "By providing the step-by-step intermediate logic in the examples, you force the model to generate its own reasoning pathway before committing to a final answer. This prevents the model from hallucinating a final state because it has to calculate the state sequentially.";
+    expect(body()).toContain(quote);
+    expect(body().split(quote)).toHaveLength(2); // once
+    const para = screen.getByText(/By providing the step-by-step intermediate logic/).closest("p")!;
+    const figure = screen.getByLabelText("Zero-shot against few-shot");
+    expect(figure.compareDocumentPosition(para) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   // The page's colours (author, 2026-10-18): crimson baseline, blue few-shot, orange
   // instruct reasoning; few-shot keeps its blue from figure 2 into figure 3.
   it("colours the baseline crimson, few-shot blue and instruct reasoning orange", () => {
