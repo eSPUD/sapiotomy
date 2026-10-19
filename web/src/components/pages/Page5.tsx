@@ -40,8 +40,10 @@
  *   examples make the model work out each intermediate result before it answers.
  *
  *   Step 3: figure 3, the instruct models with no examples against the base
- *   models with five. ITS PROSE WAITS FOR A DISCUSSION WITH THE AUTHOR
- *   (handoff, section 4): only the sentence naming what the figure shows is here.
+ *   models with five. Its opening says what an instruct model is and follows from
+ *   step 2 (author, 2026-10-18); the figure's legend gives each side's prompt
+ *   length. ANY DISCUSSION OF THE RESULTS STILL WAITS FOR THE AUTHOR (handoff,
+ *   section 4).
  *
  *   Step 4: figure 4, the old section 3's chart with the new run's numbers:
  *   each instruct model reasoning and asked for the final answer only. The claim
@@ -111,7 +113,7 @@ const NOTEBOOK_SIZE = "14 KB";
  * instruments the runs were made with. Every number on this page is ours, so no
  * entry may carry a figure.
  */
-const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4 } as const;
+const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4, qwenReport: 5 } as const;
 
 /**
  * The trigger Kojima et al. published, quoted as they published it, because the
@@ -515,6 +517,9 @@ const FIG2_SERIES: [DotSeries, DotSeries] = [
  * of the examples, which the instruct models do without. One tokenizer serves every
  * size, so one number per prompt; the loader's data says so (equal across sizes).
  */
+/** Section 3's opening: the few-shot prompt's median length, to the nearest 50 ("around"). */
+const FEW_PROMPT_ROUNDED = Math.round(BASE[0].fewShot.medianPromptTokens / 50) * 50;
+
 const promptTokens = (arms: ArmStats[]) => {
   const ns = new Set(arms.map((a) => a.medianPromptTokens));
   if (ns.size !== 1) throw new Error("page 5: a prompt's length differs across sizes");
@@ -820,14 +825,24 @@ export function Page5() {
         </section>
         <div aria-hidden="true" />
 
-        {/* Step 3: the figure and the sentence naming what it shows. The prose waits
-            for a discussion with the author (handoff, section 4); do not draft it
-            unasked. */}
+        {/* Step 3. Its opening says what an instruct model is, picking up where step 2
+            ends (author, 2026-10-18): the examples work, but they ride with every
+            question, and post-training does the showing once instead. The results
+            discussion still waits for the author; the figure carries the numbers. */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. In post-training: instruct models, with no examples</h2>
+          <p className="text-ink">
+            The worked examples work, but they travel with every question: the few-shot prompt runs
+            to around {FEW_PROMPT_ROUNDED.toLocaleString("en-GB")} tokens before the model writes a
+            word. <strong>Instruct models</strong> do the showing once, in training. An instruct
+            model is the same base model trained further on instructions paired with good answers,
+            including step-by-step solutions to maths problems,
+            <Cite n={REF.qwenReport} /> so it writes out its steps with no examples in front of the
+            question.
+          </p>
           <p className="text-ink-muted">
-            The same {N} problems, put to the instruct versions of the same three models with no
-            examples, against the base models with five.
+            Below, the instruct versions of the same three models answer the same {N} problems with
+            no examples, against the base models with five.
           </p>
           <section
             aria-label="Instruct models against few-shot base models"
@@ -854,7 +869,12 @@ export function Page5() {
             </figure>
           </section>
         </section>
-        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem n={REF.qwenReport} href="https://arxiv.org/abs/2412.15115">
+            Qwen team 2024, <em>Qwen2.5 Technical Report</em> (arXiv): how the Instruct models
+            were post-trained.
+          </RefItem>
+        </Note>
 
         {/* Step 4: the old section 3, its argument and chart kept, its numbers from
             the instruct run. Every claim is guarded against the data in

@@ -305,7 +305,7 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
 describe("Page 5, figure 3: instruct models against few-shot base models", () => {
   it("compares the instruct models with no examples against the base models with five, on the same problems", () => {
     render(<Page5 />);
-    expect(body()).toContain(`The same ${N} problems, put to the instruct versions of the same three models with no examples, against the base models with five.`);
+    expect(body()).toContain(`Below, the instruct versions of the same three models answer the same ${N} problems with no examples, against the base models with five.`);
     for (const [i, m] of PAGE5.instruct.entries()) {
       expect(screen.getAllByTestId(`dot-${m.size}-few`)[1]).toHaveTextContent(pct(PAGE5.base[i].fewShot.accuracy, 1));
       expect(screen.getByTestId(`dot-${m.size}-instruct`)).toHaveTextContent(pct(m.cot.accuracy, 1));
@@ -313,6 +313,24 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
         `+${pts(m.cot.accuracy, PAGE5.base[i].fewShot.accuracy)} pts`,
       );
     }
+  });
+
+  // Section 3 opens by saying what an instruct model is, picking up from section 2's
+  // examples (author, 2026-10-18), with the prompt length the figure's legend gives.
+  it("opens by saying what an instruct model is, following on from the examples", () => {
+    render(<Page5 />);
+    const para = screen.getByText(/The worked examples work, but they travel with every question/).closest("p")!;
+    expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
+      "The worked examples work, but they travel with every question: the few-shot prompt runs to around 3,750 tokens before the model writes a word. Instruct models do the showing once, in training. An instruct model is the same base model trained further on instructions paired with good answers, including step-by-step solutions to maths problems, so it writes out its steps with no examples in front of the question.",
+    );
+    // "around 3,750": the median few-shot prompt, to the nearest 50.
+    expect(Math.round(PAGE5.base[0].fewShot.medianPromptTokens / 50) * 50).toBe(3750);
+    expect(para.querySelector("strong")?.textContent).toBe("Instruct models");
+    expect(Array.from(para.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 5"]);
+    expect(screen.getByRole("link", { name: /Qwen2\.5 Technical Report/ })).toHaveAttribute(
+      "href",
+      "https://arxiv.org/abs/2412.15115",
+    );
   });
 
   // Shashank's "efficiently": what each side reads before it answers, in the legend.
