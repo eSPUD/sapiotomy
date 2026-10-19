@@ -5,7 +5,7 @@
   "bundle": "page-07-temperature-sweep.zip",
   "bundle_sha256": "4a301313ca4f435fca2bc4763e2baadffbc51decbfc822bd46874a2081124873",
   "builder": "page_07_heatmap.py",
-  "builder_sha256": "4a86babb1fe8d30d24e21005e4228f1d73fa98ade2eeb061ebbe0033d8b57f64",
+  "builder_sha256": "89c0053d2d1d2ac1b5f46cf1390336d49e85531691f54fe1af732db43a3176e6",
   "sample_seed": "page-07-temperature-sweep"
  },
  "n_chains": 16,
@@ -158,6 +158,459 @@
    "broken": 8,
    "p": 0.38331031799316406
   }
+ },
+ "n_axis": [
+  1,
+  2,
+  4,
+  8,
+  16
+ ],
+ "curves": {
+  "0.0": [
+   {
+    "n": 1,
+    "accuracy": 0.4,
+    "coverage": 0.4,
+    "tie_rate": 0.0,
+    "mean_tokens": 642.4
+   },
+   {
+    "n": 2,
+    "accuracy": 0.4,
+    "coverage": 0.4,
+    "tie_rate": 0.0,
+    "mean_tokens": 1284.8
+   },
+   {
+    "n": 4,
+    "accuracy": 0.4,
+    "coverage": 0.4,
+    "tie_rate": 0.0,
+    "mean_tokens": 2569.6
+   },
+   {
+    "n": 8,
+    "accuracy": 0.4,
+    "coverage": 0.4,
+    "tie_rate": 0.0,
+    "mean_tokens": 5139.2
+   },
+   {
+    "n": 16,
+    "accuracy": 0.4,
+    "coverage": 0.4,
+    "tie_rate": 0.0,
+    "mean_tokens": 10278.4
+   }
+  ],
+  "0.1": [
+   {
+    "n": 1,
+    "accuracy": 0.500390625,
+    "coverage": 0.500390625,
+    "tie_rate": 0.0,
+    "mean_tokens": 592.9515625
+   },
+   {
+    "n": 2,
+    "accuracy": 0.4171875,
+    "coverage": 0.57421875,
+    "tie_rate": 0.423046875,
+    "mean_tokens": 1166.500390625
+   },
+   {
+    "n": 4,
+    "accuracy": 0.501171875,
+    "coverage": 0.644921875,
+    "tie_rate": 0.182421875,
+    "mean_tokens": 2356.139453125
+   },
+   {
+    "n": 8,
+    "accuracy": 0.554296875,
+    "coverage": 0.7,
+    "tie_rate": 0.112890625,
+    "mean_tokens": 4705.526171875
+   },
+   {
+    "n": 16,
+    "accuracy": 0.575,
+    "coverage": 0.725,
+    "tie_rate": 0.1,
+    "mean_tokens": 9391.05
+   }
+  ],
+  "0.2": [
+   {
+    "n": 1,
+    "accuracy": 0.51015625,
+    "coverage": 0.51015625,
+    "tie_rate": 0.0,
+    "mean_tokens": 578.494140625
+   },
+   {
+    "n": 2,
+    "accuracy": 0.40078125,
+    "coverage": 0.612109375,
+    "tie_rate": 0.484375,
+    "mean_tokens": 1153.25625
+   },
+   {
+    "n": 4,
+    "accuracy": 0.5171875,
+    "coverage": 0.692578125,
+    "tie_rate": 0.210546875,
+    "mean_tokens": 2303.98359375
+   },
+   {
+    "n": 8,
+    "accuracy": 0.56171875,
+    "coverage": 0.75703125,
+    "tie_rate": 0.128125,
+    "mean_tokens": 4614.031640625
+   },
+   {
+    "n": 16,
+    "accuracy": 0.55,
+    "coverage": 0.8,
+    "tie_rate": 0.1,
+    "mean_tokens": 9234.725
+   }
+  ],
+  "0.3": [
+   {
+    "n": 1,
+    "accuracy": 0.49765625,
+    "coverage": 0.49765625,
+    "tie_rate": 0.0,
+    "mean_tokens": 579.8625
+   },
+   {
+    "n": 2,
+    "accuracy": 0.384765625,
+    "coverage": 0.592578125,
+    "tie_rate": 0.512109375,
+    "mean_tokens": 1166.395703125
+   },
+   {
+    "n": 4,
+    "accuracy": 0.525390625,
+    "coverage": 0.673828125,
+    "tie_rate": 0.214453125,
+    "mean_tokens": 2333.752734375
+   },
+   {
+    "n": 8,
+    "accuracy": 0.576953125,
+    "coverage": 0.721484375,
+    "tie_rate": 0.127734375,
+    "mean_tokens": 4688.55546875
+   },
+   {
+    "n": 16,
+    "accuracy": 0.6,
+    "coverage": 0.775,
+    "tie_rate": 0.1,
+    "mean_tokens": 9351.325
+   }
+  ],
+  "0.4": [
+   {
+    "n": 1,
+    "accuracy": 0.498046875,
+    "coverage": 0.498046875,
+    "tie_rate": 0.0,
+    "mean_tokens": 565.96796875
+   },
+   {
+    "n": 2,
+    "accuracy": 0.38203125,
+    "coverage": 0.603515625,
+    "tie_rate": 0.519921875,
+    "mean_tokens": 1140.159765625
+   },
+   {
+    "n": 4,
+    "accuracy": 0.526953125,
+    "coverage": 0.691015625,
+    "tie_rate": 0.1953125,
+    "mean_tokens": 2284.69609375
+   },
+   {
+    "n": 8,
+    "accuracy": 0.558984375,
+    "coverage": 0.758984375,
+    "tie_rate": 0.129296875,
+    "mean_tokens": 4559.257421875
+   },
+   {
+    "n": 16,
+    "accuracy": 0.575,
+    "coverage": 0.825,
+    "tie_rate": 0.05,
+    "mean_tokens": 9106.675
+   }
+  ],
+  "0.5": [
+   {
+    "n": 1,
+    "accuracy": 0.494140625,
+    "coverage": 0.494140625,
+    "tie_rate": 0.0,
+    "mean_tokens": 580.9640625
+   },
+   {
+    "n": 2,
+    "accuracy": 0.355859375,
+    "coverage": 0.621484375,
+    "tie_rate": 0.56875,
+    "mean_tokens": 1160.741015625
+   },
+   {
+    "n": 4,
+    "accuracy": 0.5375,
+    "coverage": 0.73828125,
+    "tie_rate": 0.248828125,
+    "mean_tokens": 2320.43671875
+   },
+   {
+    "n": 8,
+    "accuracy": 0.5921875,
+    "coverage": 0.8125,
+    "tie_rate": 0.1265625,
+    "mean_tokens": 4648.67109375
+   },
+   {
+    "n": 16,
+    "accuracy": 0.6,
+    "coverage": 0.875,
+    "tie_rate": 0.075,
+    "mean_tokens": 9299.925
+   }
+  ],
+  "0.6": [
+   {
+    "n": 1,
+    "accuracy": 0.500390625,
+    "coverage": 0.500390625,
+    "tie_rate": 0.0,
+    "mean_tokens": 598.75234375
+   },
+   {
+    "n": 2,
+    "accuracy": 0.367578125,
+    "coverage": 0.621875,
+    "tie_rate": 0.542578125,
+    "mean_tokens": 1182.92265625
+   },
+   {
+    "n": 4,
+    "accuracy": 0.5296875,
+    "coverage": 0.703515625,
+    "tie_rate": 0.225,
+    "mean_tokens": 2378.43359375
+   },
+   {
+    "n": 8,
+    "accuracy": 0.56015625,
+    "coverage": 0.78046875,
+    "tie_rate": 0.1375,
+    "mean_tokens": 4745.35390625
+   },
+   {
+    "n": 16,
+    "accuracy": 0.575,
+    "coverage": 0.85,
+    "tie_rate": 0.025,
+    "mean_tokens": 9482.525
+   }
+  ],
+  "0.7": [
+   {
+    "n": 1,
+    "accuracy": 0.457421875,
+    "coverage": 0.457421875,
+    "tie_rate": 0.0,
+    "mean_tokens": 569.417578125
+   },
+   {
+    "n": 2,
+    "accuracy": 0.323046875,
+    "coverage": 0.57890625,
+    "tie_rate": 0.583203125,
+    "mean_tokens": 1155.850390625
+   },
+   {
+    "n": 4,
+    "accuracy": 0.486328125,
+    "coverage": 0.6671875,
+    "tie_rate": 0.27890625,
+    "mean_tokens": 2286.212109375
+   },
+   {
+    "n": 8,
+    "accuracy": 0.547265625,
+    "coverage": 0.723046875,
+    "tie_rate": 0.13828125,
+    "mean_tokens": 4582.88359375
+   },
+   {
+    "n": 16,
+    "accuracy": 0.575,
+    "coverage": 0.75,
+    "tie_rate": 0.075,
+    "mean_tokens": 9167.675
+   }
+  ],
+  "0.8": [
+   {
+    "n": 1,
+    "accuracy": 0.41953125,
+    "coverage": 0.41953125,
+    "tie_rate": 0.0,
+    "mean_tokens": 570.951171875
+   },
+   {
+    "n": 2,
+    "accuracy": 0.3078125,
+    "coverage": 0.562109375,
+    "tie_rate": 0.596484375,
+    "mean_tokens": 1142.45078125
+   },
+   {
+    "n": 4,
+    "accuracy": 0.469140625,
+    "coverage": 0.6578125,
+    "tie_rate": 0.245703125,
+    "mean_tokens": 2290.584375
+   },
+   {
+    "n": 8,
+    "accuracy": 0.509375,
+    "coverage": 0.728125,
+    "tie_rate": 0.124609375,
+    "mean_tokens": 4589.851953125
+   },
+   {
+    "n": 16,
+    "accuracy": 0.525,
+    "coverage": 0.775,
+    "tie_rate": 0.125,
+    "mean_tokens": 9186.0
+   }
+  ],
+  "0.9": [
+   {
+    "n": 1,
+    "accuracy": 0.403515625,
+    "coverage": 0.403515625,
+    "tie_rate": 0.0,
+    "mean_tokens": 572.37734375
+   },
+   {
+    "n": 2,
+    "accuracy": 0.291015625,
+    "coverage": 0.5484375,
+    "tie_rate": 0.634765625,
+    "mean_tokens": 1147.920703125
+   },
+   {
+    "n": 4,
+    "accuracy": 0.4625,
+    "coverage": 0.676953125,
+    "tie_rate": 0.316796875,
+    "mean_tokens": 2294.49765625
+   },
+   {
+    "n": 8,
+    "accuracy": 0.530078125,
+    "coverage": 0.766015625,
+    "tie_rate": 0.175390625,
+    "mean_tokens": 4591.56171875
+   },
+   {
+    "n": 16,
+    "accuracy": 0.575,
+    "coverage": 0.825,
+    "tie_rate": 0.15,
+    "mean_tokens": 9193.725
+   }
+  ],
+  "1.0": [
+   {
+    "n": 1,
+    "accuracy": 0.395703125,
+    "coverage": 0.395703125,
+    "tie_rate": 0.0,
+    "mean_tokens": 561.868359375
+   },
+   {
+    "n": 2,
+    "accuracy": 0.278515625,
+    "coverage": 0.5171875,
+    "tie_rate": 0.653125,
+    "mean_tokens": 1119.141015625
+   },
+   {
+    "n": 4,
+    "accuracy": 0.428125,
+    "coverage": 0.6109375,
+    "tie_rate": 0.327734375,
+    "mean_tokens": 2245.69921875
+   },
+   {
+    "n": 8,
+    "accuracy": 0.492578125,
+    "coverage": 0.690625,
+    "tie_rate": 0.155859375,
+    "mean_tokens": 4501.819140625
+   },
+   {
+    "n": 16,
+    "accuracy": 0.525,
+    "coverage": 0.75,
+    "tie_rate": 0.1,
+    "mean_tokens": 9001.95
+   }
+  ],
+  "1.1": [
+   {
+    "n": 1,
+    "accuracy": 0.357421875,
+    "coverage": 0.357421875,
+    "tie_rate": 0.0,
+    "mean_tokens": 555.855859375
+   },
+   {
+    "n": 2,
+    "accuracy": 0.203515625,
+    "coverage": 0.512890625,
+    "tie_rate": 0.738671875,
+    "mean_tokens": 1118.31640625
+   },
+   {
+    "n": 4,
+    "accuracy": 0.414453125,
+    "coverage": 0.666796875,
+    "tie_rate": 0.360546875,
+    "mean_tokens": 2229.64921875
+   },
+   {
+    "n": 8,
+    "accuracy": 0.487109375,
+    "coverage": 0.79375,
+    "tie_rate": 0.224609375,
+    "mean_tokens": 4468.07109375
+   },
+   {
+    "n": 16,
+    "accuracy": 0.55,
+    "coverage": 0.875,
+    "tie_rate": 0.175,
+    "mean_tokens": 8927.825
+   }
+  ]
  },
  "problems": [
   {

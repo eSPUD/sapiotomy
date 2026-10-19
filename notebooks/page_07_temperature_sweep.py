@@ -41,7 +41,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from page_07_topup import assert_same_run, fill, load_notebook_code, notebook_cell  # noqa: E402
 
-TEMPERATURES = [round(0.1 * i, 1) for i in range(12)]   # 0, 0.1, ..., 1.1
+TEMPERATURES = [round(0.1 * i, 1) for i in range(13)]   # 0, 0.1, ..., 1.2 (the 40-problem run stopped at 1.1)
 N_CHAINS = 16
 N_PROBLEMS = 40
 SAMPLE_SEED = "page-07-temperature-sweep"   # names the draw of 40 from the 100
@@ -118,6 +118,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--dry-run", action="store_true", help="report what is missing; load nothing")
     ap.add_argument("--smoke", metavar="FILE", help="1 problem, 2 temperatures, appended to FILE")
+    ap.add_argument("--problems", type=int, default=N_PROBLEMS,
+                    help=f"how many of the 100 (default {N_PROBLEMS}, a seeded draw; 100 is all of them)")
+    ap.add_argument("--no-control", action="store_true",
+                    help="skip the control (it already covers all 100 problems)")
     args = ap.parse_args()
 
     timer = Timer()
@@ -134,8 +138,12 @@ def main():
         assert_same_run(ns, run_id)
 
     items = ns["items"]
-    rng = random.Random(SAMPLE_SEED)
-    sample = sorted(rng.sample(items, N_PROBLEMS), key=lambda r: r["unique_id"])
+    n_problems = min(args.problems, len(items))
+    if n_problems == len(items):
+        sample = sorted(items, key=lambda r: r["unique_id"])     # all of them: no draw
+    else:
+        rng = random.Random(SAMPLE_SEED)
+        sample = sorted(rng.sample(items, n_problems), key=lambda r: r["unique_id"])
     temps, sweep_path = TEMPERATURES, SWEEP_TRACES
     if args.smoke:
         sample, temps, sweep_path = sample[:1], [0.1, 0.6], Path(args.smoke)
@@ -200,7 +208,7 @@ def main():
 
     # ---- the control: one fresh chain per problem, all 100, at the best temperature
     control = None
-    if not args.smoke:
+    if not args.smoke and not args.no_control:
         t_best = best["temperature"]
         ccid = cid(t_best) + CONTROL_SUFFIX
         with timer.stage(f"control at T={t_best}", problems=len(items)) as info:
@@ -220,11 +228,15 @@ def main():
               f"(exact McNemar {fixed} fixed, {broken} broken, p={p:.4f})")
 
     # ---- write it down, and bundle it for elsewhere
-    out = OUT if not args.smoke else Path(args.smoke).with_suffix(".out")
+    # The 40-problem draw keeps its folder; any other size gets its own, so a larger run
+    # never overwrites the results the page was first built from.
+    out = (Path(args.smoke).with_suffix(".out") if args.smoke
+           else OUT if n_problems == N_PROBLEMS else OUT.with_name(f"page_07_sweep_{n_problems}"))
     out.mkdir(parents=True, exist_ok=True)
     results = dict(
         run_id=run_id, model=ns["PRIMARY"], chain_cap=cap, top_p=ns["TOP_P"],
-        n_chains=N_CHAINS, temperatures=temps, sample_seed=SAMPLE_SEED,
+        n_chains=N_CHAINS, temperatures=temps,
+        sample_seed=SAMPLE_SEED if n_problems < len(items) else None,
         problems=[r["unique_id"] for r in sample], vote_rule=manifest["vote"],
         summary=summary, best_temperature=best["temperature"], heatmap=cells_out,
         control=control)
@@ -244,8 +256,8 @@ def bundle(store, ns, out, sample, temps, cid, control):
         want |= {(control["config_id"], pid) for pid in (r["unique_id"] for r in ns["items"])}
     recs = [r for r in store.done.values() if (r["config_id"], r["problem_id"]) in want]
     recs.sort(key=lambda r: (r["config_id"], r["problem_id"], r["sample_index"]))
-    path = out / "page-07-temperature-sweep.zip"
-    root = "page-07-temperature-sweep"
+    root = "page-07-temperature-sweep" + ("" if len(sample) == N_PROBLEMS else f"-{len(sample)}")
+    path = out / f"{root}.zip"
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         z.writestr(f"{root}/traces.jsonl", "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in recs))
         for name in ("results.json", "timing.json"):

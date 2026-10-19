@@ -466,6 +466,9 @@ interface RawHeatmap {
     greedy_accuracy: number;
     vs_greedy: { fixed: number; broken: number; p: number };
   };
+  /** Section 3's lines: every temperature at every N, the notebook's estimator. */
+  n_axis: number[];
+  curves: Record<string, SweepPoint[]>;
   problems: {
     problem_id: string;
     level: number;
@@ -474,6 +477,14 @@ interface RawHeatmap {
     ground_truth: string;
     cells: HeatCell[];
   }[];
+}
+
+export interface SweepPoint {
+  n: number;
+  accuracy: number;
+  coverage: number;
+  tie_rate: number;
+  mean_tokens: number;
 }
 
 const HM = rawHeatmap as unknown as RawHeatmap;
@@ -504,6 +515,25 @@ if (HM.source.run_id !== D.manifest.run_id) {
   const j0 = HM.temperatures.indexOf(0);
   if (j0 >= 0 && HM.problems.some((p) => ![0, HM.n_chains].includes(p.cells[j0].n_correct))) {
     throw new Page07DataError("the heat map's T = 0 column is not one greedy chain");
+  }
+  // A line at 16 chains is the full tally, so it is the summary; temperature 0 is flat.
+  HM.summary.forEach((s) => {
+    const line = HM.curves[s.temperature.toFixed(1)];
+    const top = line?.[line.length - 1];
+    if (
+      !line ||
+      line.map((p) => p.n).join() !== HM.n_axis.join() ||
+      !top ||
+      !close(top.accuracy, s.vote_accuracy) ||
+      !close(top.coverage, s.coverage) ||
+      !close(top.tie_rate, s.tie_rate)
+    ) {
+      throw new Page07DataError(`the T = ${s.temperature} line disagrees with its summary`);
+    }
+  });
+  const greedy = HM.curves["0.0"];
+  if (!greedy || greedy.some((p) => !close(p.accuracy, greedy[0].accuracy))) {
+    throw new Page07DataError("the T = 0 line is not flat, so it is not one greedy chain");
   }
   const best = [...HM.summary].sort(
     (a, b) => b.vote_accuracy - a.vote_accuracy || a.temperature - b.temperature,

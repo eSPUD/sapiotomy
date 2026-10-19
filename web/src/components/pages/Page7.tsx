@@ -120,8 +120,10 @@
  * carry `lg:col-start-1`, or the next one flows into the note column.
  *
  * Load-bearing and easy to lose:
- *   · the diversity readout is measured on 30 items, not 100. It is a count of
- *     answers, not an accuracy, and the label must keep saying so.
+ *   · the temperature figures (section 2's heat map, section 3's lines and the bar
+ *     figure under them) all read the temperature sweep, and say how many problems it
+ *     covers (40 of the 100 until the 100-problem run lands). The bars are a count of
+ *     answers, not an accuracy, and the caption must keep saying so.
  *   · Wang et al. is cited for the TECHNIQUE. No cite may carry one of our
  *     numbers.
  */
@@ -135,6 +137,7 @@ import { NotebookDownload } from "@/components/NotebookDownload";
 import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE7,
+  type SweepPoint,
   chainsFor,
   foldTrace,
   pLabel,
@@ -207,19 +210,6 @@ const FARMYARD_METHODS: { name: string; students: number; lines: string[] | stri
 /** The students who said 4: the four methods' head counts together. */
 const FARMYARD_RIGHT = FARMYARD_METHODS.reduce((n, m) => n + m.students, 0);
 
-/* The pile's temperature is the best the sweep found, but it is not the only one:
-   the run votes to the same accuracy at more than one setting. Both places that
-   talk about the sweep have to say so, so the tie is read out of the data here
-   rather than named in prose. */
-const BEST_VOTE = Math.max(...F2.diversity.map((d) => d.plurality_accuracy));
-const TIED_WITH_HOT = [...F2.diversity]
-  .sort((a, b) => a.temperature - b.temperature)
-  .filter(
-    (d) =>
-      Math.abs(d.plurality_accuracy - BEST_VOTE) < 1e-9 && d.temperature !== F2.hot.temperature,
-  )
-  .map((d) => `T = ${d.temperature}`)
-  .join(" and ");
 
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
@@ -459,6 +449,67 @@ function Tally({
 const HM = F1.heatmap;
 /** One decimal for every temperature but zero, so 1.0 reads like its neighbours. */
 const tLabel = (t: number) => (t === 0 ? "0" : t.toFixed(1));
+
+/* Section 3 reads the same sweep: a line per temperature over the N axis. Temperature 0
+   is one greedy chain copied, so its line is the flat baseline, not one of the voting
+   lines. The page says how many problems the sweep covers (40 for now; 100 when the
+   overnight extension lands), so the chart and its prose always describe the same run. */
+const sweepLine = (t: number): SweepPoint[] => HM.curves[t.toFixed(1)];
+/* Every temperature of the sweep, T = 0 included: its line is the greedy chain (16
+   identical chains vote exactly as one does), so it lies on the dashed baseline. */
+const SWEEP_TEMPS = HM.temperatures;
+/** The temperatures section 3's band spans: every sampled one (T = 0 is the greedy line). */
+const BAND_TEMPS = SWEEP_TEMPS.filter((t) => t > 0);
+const GREEDY = sweepLine(0)[0].accuracy;
+const SWEEP_PROBLEMS = HM.problems.length;
+/* The bar figure's caption, read off the sweep: the temperatures tied with the best (the
+   page says so rather than naming one winner), and one chain alone from the coolest
+   sampled setting to the hottest. */
+const SWEEP_BY_T = [...HM.summary].sort((a, b) => a.temperature - b.temperature);
+const SWEEP_TIED = SWEEP_BY_T.filter(
+  (d) =>
+    Math.abs(d.vote_accuracy - Math.max(...SWEEP_BY_T.map((x) => x.vote_accuracy))) < 1e-9 &&
+    d.temperature !== HM.best_temperature,
+).map((d) => `T = ${tLabel(d.temperature)}`);
+const COOL = SWEEP_BY_T.find((d) => d.temperature > 0)!;
+/** The bar figure's scale: the tallest value, rounded up to a whole answer. */
+const DISTINCT_TOP = Math.ceil(Math.max(...SWEEP_BY_T.map((d) => d.mean_distinct)));
+const HOT = SWEEP_BY_T[SWEEP_BY_T.length - 1];
+
+/** Cool to warm as temperature rises: the page's blue into its orange. */
+const tempColour = (t: number) => {
+  const hot = Math.max(...SWEEP_TEMPS);
+  return `color-mix(in srgb, var(--compute) ${Math.round((t / hot) * 100)}%, var(--wrong))`;
+};
+
+/** Which temperature's line is highlighted. The best one is chosen to start. */
+function TempPicker({ value, onChange }: { value: number; onChange: (t: number) => void }) {
+  const name = useId();
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="text-xs text-ink-muted">Temperature</span>
+      <div role="radiogroup" aria-label="Temperature" className="flex flex-wrap gap-1">
+        {SWEEP_TEMPS.map((t) => (
+          <label key={t} className="cursor-pointer">
+            <input
+              type="radio"
+              name={name}
+              className="peer sr-only"
+              checked={value === t}
+              aria-label={`T = ${tLabel(t)}${t === HM.best_temperature ? ", the best" : ""}`}
+              onChange={() => onChange(t)}
+            />
+            <span className="flex items-center gap-1 rounded border border-grid px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-ink peer-focus-visible:ring-2 peer-focus-visible:ring-compute peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas">
+              <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: tempColour(t) }} />
+              {tLabel(t)}
+              {t === HM.best_temperature ? <span aria-hidden="true">★</span> : null}
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
 const OUTCOME_SAYS: Record<HeatCell["outcome"], string> = {
   right: "the vote is right",
   wrong: "the vote is wrong",
@@ -478,184 +529,189 @@ const heatFill = (c: HeatCell) =>
   )}%, transparent)`;
 
 /**
- * The temperature sweep: a row per problem, a column per temperature, 40 x 12. A cell
- * holds how many of its 16 chains are right; its colour is whether the vote is. Clicking
- * a problem (its number or any of its cells) pins a panel that names, temperature by
- * temperature, what the vote returned and whether that is the right answer: the user's
- * brief, "click a question and see which temperatures got the correct answer". Hovering
- * a cell reads it out without pinning. A table, so it reads as one without a table view.
+ * The temperature sweep on its side: a row per temperature, a column per problem, one
+ * small square each. Colour says whether the vote is right; strength says how many of
+ * the 16 chains are. No numbers in the squares, so the grid stays compact at a hundred
+ * problems (about 500 x 170 px) instead of running a row per problem down the page.
+ *
+ * Columns are sorted by how many temperatures the vote gets the problem right at (then
+ * by chains right in total), so the grid reads as a picture: a solid block of problems
+ * the vote always gets, a pale block it never does, and a ragged middle band where the
+ * temperature decides. "Problem k" in the readout is a column's place in that order.
+ *
+ * Hover reads a square out; clicking any square pins its problem in a panel underneath,
+ * which names, temperature by temperature, what the vote returned and whether it is
+ * right. The panel's arrows step through the problems in column order, which is how a
+ * keyboard reaches them without tabbing through hundreds of squares.
  */
+const HEAT_ORDER = HM.problems
+  .map((p, q) => ({
+    q,
+    right: p.cells.filter((c) => c.outcome === "right").length,
+    chains: p.cells.reduce((a, c) => a + c.n_correct, 0),
+  }))
+  .sort((a, b) => b.right - a.right || b.chains - a.chains || a.q - b.q)
+  .map((r) => r.q);
+
 function TemperatureHeatmap() {
-  const [at, setAt] = useState<{ q: number; j: number } | null>(null);
+  const [at, setAt] = useState<{ col: number; j: number } | null>(null);
   const [pinned, setPinned] = useState<number | null>(null);
-  const shown = at ? HM.problems[at.q].cells[at.j] : null;
-  const pin = (q: number) => {
-    setPinned((cur) => (cur === q ? null : q));
-  };
+  const n = HEAT_ORDER.length;
+  const shown = at ? HM.problems[HEAT_ORDER[at.col]].cells[at.j] : null;
+  const pin = (col: number) => setPinned((cur) => (cur === col ? null : col));
+  const step = (by: number) =>
+    setPinned((cur) => (cur === null ? (by > 0 ? 0 : n - 1) : Math.min(n - 1, Math.max(0, cur + by))));
   const legend = (outcome: HeatCell["outcome"], label: string) => (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-ink-muted">{label}</span>
+    <div className="flex items-center gap-1.5">
       <span className="flex gap-px" aria-hidden="true">
-        {Array.from({ length: HM.n_chains + 1 }, (_, k) => k)
-          .filter((k) => k % 4 === 0)
-          .map((k) => (
-            <span
-              key={k}
-              className="flex h-4 w-5 items-center justify-center rounded-sm font-mono text-[10px] tabular-nums text-ink"
-              style={{ background: heatFill({ temperature: 0, n_correct: k, outcome }) }}
-            >
-              {k}
-            </span>
-          ))}
+        {[0, 4, 8, 12, 16].map((k) => (
+          <span
+            key={k}
+            className="h-3 w-3 rounded-[1px]"
+            style={{ background: heatFill({ temperature: 0, n_correct: (k * HM.n_chains) / 16, outcome }) }}
+          />
+        ))}
       </span>
+      <span className="text-xs text-ink-muted">{label}</span>
     </div>
   );
-  const p = pinned === null ? null : HM.problems[pinned];
-  const rightAt = p ? p.cells.filter((c) => c.outcome === "right") : [];
+  const p = pinned === null ? null : HM.problems[HEAT_ORDER[pinned]];
+  const rightAt = p ? p.cells.filter((c) => c.outcome === "right").length : 0;
   return (
     <section
       aria-label="Chains right and the vote, at every temperature"
-      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4 sm:flex-row sm:items-start sm:gap-5"
+      className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
     >
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        {legend("right", "the vote is right")}
+        {legend("wrong", "the vote is wrong or ties")}
+        <span className="text-xs text-ink-muted">darker: more of the {HM.n_chains} chains right</span>
+      </div>
       <table
-        className="w-auto shrink-0 border-separate self-start font-mono text-[10px] tabular-nums"
+        className="w-full table-fixed border-separate font-mono text-[10px] tabular-nums"
         style={{ borderSpacing: "1px" }}
         onMouseLeave={() => setAt(null)}
       >
         <caption className="sr-only">
-          Chains right out of {HM.n_chains}, and the vote, for {HM.problems.length} problems at{" "}
-          {HM.temperatures.length} temperatures
+          The vote and the chains right of {HM.n_chains}, for {n} problems (columns, sorted by how
+          often the vote is right) at {HM.temperatures.length} temperatures (rows)
         </caption>
-        <thead>
-          <tr>
-            <th scope="col" className="pb-1 pr-1 text-left align-bottom font-normal text-ink-muted">
-              #
-            </th>
-            {HM.temperatures.map((t) => (
-              <th key={t} scope="col" className="w-7 pb-1 align-bottom font-normal text-ink-muted">
-                {/* Set vertically, reading bottom to top. */}
-                <span className="inline-block rotate-180 whitespace-nowrap [writing-mode:vertical-rl]">
-                  T = {tLabel(t)}
-                </span>
-              </th>
-            ))}
-          </tr>
-        </thead>
+        <colgroup>
+          <col className="w-12" />
+          {HEAT_ORDER.map((q) => (
+            <col key={q} />
+          ))}
+          <col className="w-10" />
+        </colgroup>
         <tbody>
-          {HM.problems.map((row, q) => (
-            <tr key={row.problem_id}>
-              <th scope="row" className="pr-1 text-left font-normal">
-                <button
-                  type="button"
-                  aria-pressed={pinned === q}
-                  aria-label={`Problem ${q + 1}: show which temperatures got it right`}
-                  onClick={() => pin(q)}
-                  className={`w-full rounded-sm px-0.5 text-left tabular-nums hover:text-ink ${
-                    pinned === q ? "bg-compute font-semibold text-canvas" : "text-ink-muted"
-                  }`}
-                >
-                  {q + 1}
-                </button>
+          {HM.temperatures.map((t, j) => (
+            <tr key={t}>
+              <th scope="row" className="pr-1 text-left font-normal text-ink-muted">
+                T = {tLabel(t)}
               </th>
-              {row.cells.map((c, j) => (
-                <td
-                  key={c.temperature}
-                  onMouseEnter={() => setAt({ q, j })}
-                  onClick={() => pin(q)}
-                  className={`h-4 w-7 cursor-pointer rounded-sm text-center leading-none text-ink ${
-                    at?.q === q && at.j === j
-                      ? "outline outline-2 outline-ink"
-                      : pinned === q
-                        ? "outline outline-1 outline-compute"
-                        : ""
-                  }`}
-                  style={{ background: heatFill(c) }}
-                >
-                  {c.n_correct}
-                  <span className="sr-only"> of {HM.n_chains} chains right, {OUTCOME_SAYS[c.outcome]}</span>
-                </td>
-              ))}
+              {HEAT_ORDER.map((q, col) => {
+                const c = HM.problems[q].cells[j];
+                return (
+                  <td
+                    key={q}
+                    data-testid={`heat-${col}-${j}`}
+                    onMouseEnter={() => setAt({ col, j })}
+                    onClick={() => pin(col)}
+                    className={`h-3.5 cursor-pointer rounded-[1px] p-0 ${
+                      at?.col === col && at.j === j
+                        ? "outline outline-2 outline-ink"
+                        : pinned === col
+                          ? "outline outline-1 outline-compute"
+                          : ""
+                    }`}
+                    style={{ background: heatFill(c) }}
+                  >
+                    <span className="sr-only">
+                      problem {col + 1}: {c.n_correct} of {HM.n_chains} chains right, {OUTCOME_SAYS[c.outcome]}
+                    </span>
+                  </td>
+                );
+              })}
+              <td className="pl-1 text-right text-correct-ink">
+                {HM.problems.filter((r) => r.cells[j].outcome === "right").length}/{n}
+              </td>
             </tr>
           ))}
         </tbody>
-        <tfoot>
-          <tr>
-            <th scope="row" className="pt-1 pr-1 text-left font-normal text-ink-muted">
-              right
-            </th>
-            {HM.temperatures.map((t, j) => (
-              <td key={t} className="pt-1 text-center text-correct-ink">
-                {HM.problems.filter((r) => r.cells[j].outcome === "right").length}
-              </td>
-            ))}
-          </tr>
-        </tfoot>
       </table>
-
-      {/* The legend and the pinned problem. Sticky, so it stays beside the rows while
-          the reader scrolls down forty of them. */}
-      <div className="flex min-w-0 flex-col gap-3 sm:sticky sm:top-20 sm:w-56">
-        {legend("right", "the vote is right")}
-        {legend("wrong", "the vote is wrong or ties")}
-        <p className="text-xs text-ink-muted">
-          Each cell: chains right of {HM.n_chains}. The bottom row counts problems the vote got
-          right, of {HM.problems.length}.
-        </p>
-        {/* The hover readout; it holds its lines so the panel does not jump. */}
-        <p aria-hidden="true" className="min-h-[2.5rem] font-mono text-xs text-ink">
-          {shown && at
-            ? `problem ${at.q + 1} · T = ${tLabel(shown.temperature)} · ${shown.n_correct} of ${HM.n_chains} right · ${OUTCOME_SAYS[shown.outcome]}`
-            : ""}
-        </p>
-        {p && pinned !== null ? (
-          <div
-            data-testid="heatmap-problem"
-            aria-live="polite"
-            className="flex flex-col gap-2 rounded border border-compute bg-compute/5 p-2 text-xs"
-          >
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="font-semibold text-ink">
-                Problem {pinned + 1} · level {p.level} · {p.subject}
-              </p>
-              <button
-                type="button"
-                onClick={() => setPinned(null)}
-                aria-label="Close this problem"
-                className="text-ink-muted hover:text-ink"
-              >
-                ×
-              </button>
-            </div>
-            <p className="max-h-28 overflow-y-auto font-code leading-relaxed text-ink">
-              {tidyMath(p.question)}
-            </p>
-            <p className="text-ink-muted">
-              answer <span className="font-mono text-ink">{tidyMath(p.ground_truth)}</span> · the vote
-              gets it at {rightAt.length} of {HM.temperatures.length} temperatures
-            </p>
-            <ul className="flex flex-col gap-px font-mono tabular-nums">
-              {p.cells.map((c) => (
-                <li
-                  key={c.temperature}
-                  className="flex items-center gap-2 rounded-sm px-1"
-                  style={{ background: heatFill(c) }}
-                >
-                  <span className="w-11 shrink-0 text-ink">T = {tLabel(c.temperature)}</span>
-                  <span className="min-w-0 flex-1 truncate text-ink" title={c.answer ?? "tie"}>
-                    {c.outcome === "tie" ? "tie" : tidyMath(c.answer ?? "")}
-                  </span>
-                  <span className="shrink-0 text-ink">
-                    {c.n_correct}/{HM.n_chains}
-                  </span>
-                  <span className="w-3 shrink-0 text-center text-ink" aria-label={OUTCOME_SAYS[c.outcome]}>
-                    {c.outcome === "right" ? "✓" : "✗"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
+      {/* The hover readout; it holds its line so the panel does not jump. */}
+      <p aria-hidden="true" className="min-h-[1rem] font-mono text-xs text-ink">
+        {shown && at
+          ? `problem ${at.col + 1} · T = ${tLabel(shown.temperature)} · ${shown.n_correct} of ${HM.n_chains} right · ${OUTCOME_SAYS[shown.outcome]}`
+          : "Click a column to see that problem at every temperature."}
+      </p>
+      <div className="flex items-center gap-2 text-xs">
+        <button
+          type="button"
+          aria-label="Previous problem"
+          onClick={() => step(-1)}
+          className="h-6 w-6 rounded border border-grid text-ink hover:bg-surface-raised"
+        >
+          ‹
+        </button>
+        <span className="font-mono tabular-nums text-ink-muted">
+          {pinned === null ? `${n} problems` : `problem ${pinned + 1} of ${n}`}
+        </span>
+        <button
+          type="button"
+          aria-label="Next problem"
+          onClick={() => step(1)}
+          className="h-6 w-6 rounded border border-grid text-ink hover:bg-surface-raised"
+        >
+          ›
+        </button>
       </div>
+      {p && pinned !== null ? (
+        <div
+          data-testid="heatmap-problem"
+          aria-live="polite"
+          className="flex flex-col gap-2 rounded border border-compute bg-compute/5 p-3 text-xs"
+        >
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="font-semibold text-ink">
+              Problem {pinned + 1} · level {p.level} · {p.subject}
+            </p>
+            <button
+              type="button"
+              onClick={() => setPinned(null)}
+              aria-label="Close this problem"
+              className="text-ink-muted hover:text-ink"
+            >
+              ×
+            </button>
+          </div>
+          <p className="max-h-24 overflow-y-auto font-code leading-relaxed text-ink">{tidyMath(p.question)}</p>
+          <p className="text-ink-muted">
+            answer <span className="font-mono text-ink">{tidyMath(p.ground_truth)}</span> · the vote gets
+            it at {rightAt} of {HM.temperatures.length} temperatures
+          </p>
+          <ul className="grid grid-cols-1 gap-px font-mono tabular-nums sm:grid-cols-2 lg:grid-cols-3">
+            {p.cells.map((c) => (
+              <li
+                key={c.temperature}
+                className="flex items-center gap-2 rounded-sm px-1"
+                style={{ background: heatFill(c) }}
+              >
+                <span className="w-11 shrink-0 text-ink">T = {tLabel(c.temperature)}</span>
+                <span className="min-w-0 flex-1 truncate text-ink" title={c.answer ?? "tie"}>
+                  {c.outcome === "tie" ? "tie" : tidyMath(c.answer ?? "")}
+                </span>
+                <span className="shrink-0 text-ink">
+                  {c.n_correct}/{HM.n_chains}
+                </span>
+                <span className="w-3 shrink-0 text-center text-ink" aria-label={OUTCOME_SAYS[c.outcome]}>
+                  {c.outcome === "right" ? "✓" : "✗"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -714,21 +770,37 @@ function PileChart({
   at,
   showLost,
   onAt,
+  temp,
 }: {
   at: number;
   showLost: boolean;
   onAt: (i: number) => void;
+  /** The highlighted temperature; every other one is drawn faint behind it. */
+  temp: number;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const pts = F2.hot.points;
-  const ns = pts.map((p) => p.n);
+  const pts = sweepLine(temp);
+  const ns = HM.n_axis;
   const sel = pts[at];
   const x = (n: number) => (Math.log2(n) / Math.log2(Math.max(...ns))) * IW;
   const y = (v: number) => IH - (v / 100) * IH;
-  const line = (get: (p: (typeof pts)[number]) => number) =>
-    pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(get(p) * 100)}`).join(" ");
-  const cold = F2.cold.points[0].accuracy;
+  const pathOf = (line: SweepPoint[], get: (p: SweepPoint) => number) =>
+    line.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(get(p) * 100)}`).join(" ");
+  const line = (get: (p: SweepPoint) => number) => pathOf(pts, get);
+  const cold = GREEDY;
   const last = pts[pts.length - 1];
+  // The band: at each N, the lowest and highest vote across the sampled temperatures.
+  const bandLo = ns.map((_, i) => Math.min(...BAND_TEMPS.map((t) => sweepLine(t)[i].accuracy)));
+  const bandHi = ns.map((_, i) => Math.max(...BAND_TEMPS.map((t) => sweepLine(t)[i].accuracy)));
+  const bandPath =
+    ns.map((n, i) => `${i ? "L" : "M"}${x(n)},${y(bandHi[i] * 100)}`).join(" ") +
+    " " +
+    [...ns]
+      .map((n, i) => ({ n, i }))
+      .reverse()
+      .map(({ n, i }) => `L${x(n)},${y(bandLo[i] * 100)}`)
+      .join(" ") +
+    " Z";
   // Snap a pointer to the nearest measured N, through the svg's own coordinates,
   // because the chart scales to fit its column.
   const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
@@ -764,7 +836,7 @@ function PileChart({
 
   return (
     <ChartFrame
-      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of sampled chains. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. Majority voting solves ${pct(last.accuracy)} over sixteen sampled chains.${showLost ? ` At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.` : ""}`}
+      title={`Share of ${SWEEP_PROBLEMS} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of sampled chains, at ${HM.temperatures.length - 1} temperatures. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. At T = ${tLabel(temp)}, majority voting solves ${pct(last.accuracy)} over sixteen sampled chains; across every sampled temperature it solves ${pct(bandLo[bandLo.length - 1])} to ${pct(bandHi[bandHi.length - 1])}.${showLost ? ` At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.` : ""}`}
       width={W}
       height={HGT}
       margin={MARGIN}
@@ -808,14 +880,36 @@ function PileChart({
         </g>
       ) : null}
 
-      <path d={line((p) => p.accuracy)} fill="none" className="stroke-compute" strokeWidth={2.4} />
+      {/* Every sampled temperature (T = 0.1 to the hottest) as one band, lowest to
+          highest accuracy at each N, instead of a faint line each: the band says "at any
+          temperature, voting lands in here", and the picked temperature is the line drawn
+          on top of it. Neutral, so it never reads as the vote's thrown-away band. */}
+      <path data-testid="temperature-band" d={bandPath} className="fill-ink-faint" opacity={0.16} />
+      <text
+        x={x(ns[ns.length - 2])}
+        y={y(bandHi[ns.length - 2] * 100) - 7}
+        textAnchor="middle"
+        className="fill-ink-muted text-[10px]"
+      >
+        every temperature, T = {tLabel(BAND_TEMPS[0])} to {tLabel(BAND_TEMPS[BAND_TEMPS.length - 1])}
+      </text>
+      <path
+        data-testid={`sweep-line-${tLabel(temp)}`}
+        d={line((p) => p.accuracy)}
+        fill="none"
+        className="stroke-compute"
+        strokeWidth={2.4}
+      />
       {pts.map((p) => (
         <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy * 100)} r={3.4} className="fill-compute" />
       ))}
-      <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute-ink text-[10px] font-semibold">
-        <tspan x={IW + 6} dy="0">majority</tspan>
-        <tspan x={IW + 6} dy="11">voting</tspan>
-      </text>
+      {/* At T = 0 the highlighted line IS the greedy baseline, which is labelled already. */}
+      {temp !== 0 ? (
+        <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute-ink text-[10px] font-semibold">
+          <tspan x={IW + 6} dy="0">majority voting</tspan>
+          <tspan x={IW + 6} dy="11">T = {tLabel(temp)}</tspan>
+        </text>
+      ) : null}
 
       <line x1={0} x2={IW} y1={y(cold * 100)} y2={y(cold * 100)} className="stroke-ink-muted" strokeWidth={1.4} strokeDasharray="2 3" />
       <text x={IW + 6} y={y(cold * 100) + 4} className="fill-ink-muted text-[10px]">
@@ -1045,8 +1139,13 @@ export function Page7() {
   // so the reader's first sight of the chart is the finished result the prose
   // above it quotes, and adding a voter is something they take away rather than
   // something they build up to.
-  const [voterIx, setVoterIx] = useState(F2.hot.points.length - 1);
-  const voters = F2.hot.points[voterIx];
+  const [voterIx, setVoterIx] = useState(HM.n_axis.length - 1);
+  // Section 3's highlighted temperature; it starts on the sweep's best.
+  const [tempSel, setTempSel] = useState(HM.best_temperature);
+  const voters = sweepLine(tempSel)[voterIx];
+  // The headline: the best temperature's vote at 16 chains against one greedy chain.
+  const bestTop = sweepLine(HM.best_temperature)[HM.n_axis.length - 1].accuracy;
+  const gainPts = Math.round((bestTop - GREEDY) * 100);
   // The third line and its band, what the vote threw away, are drawn on request.
   const [showLost, setShowLost] = useState(false);
   // Section 4's cause, the share of chains cut off by their cap, is shown on request.
@@ -1059,7 +1158,7 @@ export function Page7() {
   const cutLow = atTop(F2.budgets[0]);
   const cutHigh = atTop(F2.budgets[F2.budgets.length - 1]);
   // The readout's baseline is the flat line the chart draws: one greedy chain.
-  const cold = F2.cold.points[0].accuracy;
+  const cold = GREEDY;
   const pointsVsGreedy = (acc: number) => {
     const d = Math.round((acc - cold) * 100);
     return d === 0
@@ -1256,8 +1355,8 @@ export function Page7() {
           </p>
           <p className="text-ink-muted">
             Here is the vote on {HM.problems.length} of these problems at{" "}
-            {HM.temperatures.length} temperatures, {HM.n_chains} chains each. Click a problem to
-            see which temperatures got it right.
+            {HM.temperatures.length} temperatures, {HM.n_chains} chains each. Click a column to
+            see which temperatures got that problem right.
           </p>
           <TemperatureHeatmap />
         </section>
@@ -1280,8 +1379,10 @@ export function Page7() {
             Just now, we saw majority voting on two separate problems, and how different
             reasoning across many chains of thought can lead to many different answers. But how
             does majority voting compare with a single, pure chain of thought? Below, we compare
-            majority voting against greedy decoding on all {M.items.n} {BENCHMARK} problems at{" "}
-            {LEVELS}. <strong className="text-ink">One greedy chain</strong> is the baseline to beat.
+            majority voting at {SWEEP_TEMPS.length} temperatures against greedy decoding, on{" "}
+            {SWEEP_PROBLEMS === M.items.n ? `all ${M.items.n}` : `${SWEEP_PROBLEMS} of the ${M.items.n}`}{" "}
+            {BENCHMARK} problems at {LEVELS}. <strong className="text-ink">One greedy chain</strong>{" "}
+            is the baseline to beat.
           </p>
           {/* The widget is the chart and its controls. Every sentence that used to sit
               in here (the band note, the headline, two footnotes) is outside it now or
@@ -1290,8 +1391,16 @@ export function Page7() {
             aria-label="Accuracy against the number of chains"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
+            <TempPicker
+              value={tempSel}
+              onChange={(t) => {
+                recordInteraction(PAGE_N);
+                setTempSel(t);
+              }}
+            />
             <PileChart
               at={voterIx}
+              temp={tempSel}
               showLost={showLost}
               onAt={(i) => {
                 recordInteraction(PAGE_N);
@@ -1304,15 +1413,23 @@ export function Page7() {
               {/* One sentence, measured against the line the reader can see. It used
                   to compare against one SAMPLED chain, which the chart does not draw. */}
               <p aria-live="polite" className="text-sm text-ink">
-                {voters.n === 1 ? (
+                {tempSel === 0 ? (
                   <>
-                    With one chain there is no vote yet: that one sampled chain solves{" "}
+                    At T = 0 every chain is the same greedy chain, so{" "}
+                    {voters.n === 1 ? "one" : voters.n} of them solve{" "}
+                    <strong className="font-mono">{pct(voters.accuracy)}</strong>, exactly what one
+                    greedy chain does: there is nothing to vote on.
+                  </>
+                ) : voters.n === 1 ? (
+                  <>
+                    With one chain at T = {tLabel(tempSel)} there is no vote yet: that one sampled
+                    chain solves{" "}
                     <strong className="font-mono">{pct(voters.accuracy)}</strong>,{" "}
                     {pointsVsGreedy(voters.accuracy)}.
                   </>
                 ) : (
                   <>
-                    With {voters.n} sampled chains, majority voting solves{" "}
+                    With {voters.n} sampled chains at T = {tLabel(tempSel)}, majority voting solves{" "}
                     <strong className="font-mono">{pct(voters.accuracy)}</strong>,{" "}
                     <strong>{pointsVsGreedy(voters.accuracy)}</strong>
                     {voters.accuracy < cold ? `: ${pct(voters.tie_rate)} of these votes tie.` : "."}
@@ -1345,60 +1462,73 @@ export function Page7() {
               so. See the file header. "Every chain gives the same answer" at T = 0 is the
               card's own first number, 1.0, and the tests hold it there. */}
           <p className="text-ink">
-            One greedy chain solves <strong className="font-mono">{pct(F2.gain.bare_cot)}</strong>,
-            which is <strong>{F2.gain.gain_pts.toFixed(0)} points</strong> less than majority voting
-            with {F1.n_chains} sampled chains. Those {F2.gain.gain_pts.toFixed(0)} points exist only
+            One greedy chain solves <strong className="font-mono">{pct(GREEDY)}</strong>, which is{" "}
+            <strong>{gainPts} points</strong> less than majority voting with {HM.n_chains} sampled
+            chains at T = {tLabel(HM.best_temperature)}. Those {gainPts} points exist only
             because the chains disagree. At T = 0 every chain gives the same answer, so there is
             nothing to vote on; turn the temperature up and the answers start to differ. Here is by
             how much:
           </p>
           {/* The temperature sweep as a small figure, not a second boxed widget: the
               chart above is the step's one framed panel, and this is what the paragraph's
-              "Here is by how much:" points at. Bars run on a fixed 0 to n_chains scale,
-              the most different answers that many chains can give, so a full bar would be
-              every chain disagreeing. The pile's temperature is drawn in the majority-
-              voting line's colour, because those are the chains the chart above votes on. */}
+              "Here is by how much:" points at. Columns start at zero and are labelled
+              with their values. It reads the same sweep as the chart above and the heat
+              map, and the best temperature is drawn in the majority-voting colour. */}
           <figure
-            aria-label={`Different answers among ${F2.diversity[0].n_chains} chains, by temperature`}
+            aria-label={`Different answers among ${HM.n_chains} chains, by temperature`}
             className="flex max-w-md flex-col gap-1.5"
           >
             <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
-              different answers among {F2.diversity[0].n_chains} chains, by temperature
+              different answers among {HM.n_chains} chains, by temperature
             </p>
-            {[...F2.diversity]
-              .sort((a, b) => a.temperature - b.temperature)
-              .map((d) => {
-                const pile = d.temperature === F2.hot.temperature;
+            {/* Columns, temperature left to right like an axis. Each is labelled with its
+                value, so the scale only has to start at zero: it tops out at the tallest
+                value rounded up, which keeps the figure free of empty space. */}
+            <div className="flex h-28 items-end gap-1 border-b border-grid pb-px">
+              {SWEEP_BY_T.map((d) => {
+                const best = d.temperature === HM.best_temperature;
                 return (
                   <div
                     key={d.temperature}
                     data-testid="diversity-bar"
                     data-value={d.mean_distinct}
-                    className="flex items-center gap-2 text-xs"
+                    className="flex h-full flex-1 flex-col items-center justify-end gap-0.5"
+                    aria-label={`T = ${tLabel(d.temperature)}: ${d.mean_distinct.toFixed(1)} different answers`}
                   >
                     <span
-                      className={`w-14 shrink-0 font-mono tabular-nums ${pile ? "font-semibold text-compute" : "text-ink-muted"}`}
+                      className={`font-mono text-[10px] tabular-nums ${best ? "font-semibold text-compute-ink" : "text-ink"}`}
                     >
-                      T = {d.temperature}
+                      {d.mean_distinct.toFixed(1)}
                     </span>
-                    <span className="flex h-3 flex-1 items-center">
-                      <span
-                        className={`h-full rounded-sm ${pile ? "bg-compute" : "bg-ink-faint/40"}`}
-                        style={{ width: `${(d.mean_distinct / d.n_chains) * 100}%` }}
-                      />
-                      <span
-                        className={`ml-1.5 font-mono tabular-nums ${pile ? "font-semibold text-compute" : "text-ink"}`}
-                      >
-                        {d.mean_distinct.toFixed(1)}
-                      </span>
-                    </span>
+                    <span
+                      className={`w-full max-w-[1.75rem] rounded-t-sm ${best ? "bg-compute" : "bg-ink-faint/40"}`}
+                      style={{ height: `${(d.mean_distinct / DISTINCT_TOP) * 82}%` }}
+                    />
                   </div>
                 );
               })}
+            </div>
+            <div className="flex gap-1" aria-hidden="true">
+              {SWEEP_BY_T.map((d) => (
+                <span
+                  key={d.temperature}
+                  className={`flex-1 text-center font-mono text-[10px] tabular-nums ${
+                    d.temperature === HM.best_temperature ? "font-semibold text-compute-ink" : "text-ink-muted"
+                  }`}
+                >
+                  {tLabel(d.temperature)}
+                </span>
+              ))}
+            </div>
+            <p className="text-center text-[10px] text-ink-muted" aria-hidden="true">
+              temperature (T)
+            </p>
             <figcaption className="pt-1 text-xs text-ink-muted">
-              Averaged over {F2.diversity[0].n_items} problems; a count of answers, not an
-              accuracy. More is not better: the vote comes out the same at T = {F2.hot.temperature}{" "}
-              and {TIED_WITH_HOT}, and worse above that.
+              Averaged over {SWEEP_PROBLEMS} problems; a count of answers, not an accuracy. More
+              is not better: one chain alone falls from {pct(COOL.single_chain_accuracy)} at T ={" "}
+              {tLabel(COOL.temperature)} to {pct(HOT.single_chain_accuracy)} at T ={" "}
+              {tLabel(HOT.temperature)}, and the vote is best at T = {tLabel(HM.best_temperature)}
+              {SWEEP_TIED.length ? `, tied with ${SWEEP_TIED.join(" and ")}` : ""}.
             </figcaption>
           </figure>
         </section>
@@ -1409,7 +1539,10 @@ export function Page7() {
           <p className="text-ink-muted">
             Sixteen chains cost sixteen times the tokens. So what if you do not have sixteen times
             the budget? Below, a fixed budget of{" "}
-            {F2.budgets.map((b) => tokens(b.budget)).join(", ").replace(/, ([^,]*)$/, " or $1")}{" "}
+            {F2.budgets
+              .map((b) => tokens(b.budget))
+              .map((b, i, all) => (i === 0 ? b : i === all.length - 1 ? ` or ${b}` : `, ${b}`))
+              .join("")}{" "}
             tokens is divided between the chains, and the same chains are also allowed to finish.
             At every point on the x axis the model gets the same number of chains; the only thing
             that changes between the lines is how many tokens each chain may use.

@@ -10,6 +10,11 @@ import { PAGE7, chainsFor, foldTrace, tidyMath } from "@/lib/page07";
  * headline is measured against, and the fixed-budget result that did not go the
  * spec's way.
  */
+// Section 3 reads the temperature sweep: a line per temperature, and T = 0 is the greedy chain.
+const SWEEP = PAGE7.figure1.heatmap;
+const BEST_LINE = SWEEP.curves[SWEEP.best_temperature.toFixed(1)];
+const GREEDY_ACC = SWEEP.curves["0.0"][0].accuracy;
+
 describe("Page 7 (frequency voting) component", () => {
   /** Figure 2's N control is a rule on the chart, moved here with its own keys. */
   const nControl = () => screen.getByRole("slider", { name: /# of sampled chains/ });
@@ -19,17 +24,16 @@ describe("Page 7 (frequency voting) component", () => {
   };
   it("quotes the headline against BARE CHAIN OF THOUGHT, not against a sampled chain", () => {
     render(<Page7 />);
-    // 43% is page 5's `bare` and page 6's top rung. If the page ever quotes the
-    // sampled baseline here instead, the gain silently becomes 4 points and stops
-    // being significant.
+    // The baseline is the GREEDY chain (the sweep's flat T = 0 line), not one sampled
+    // chain. Quoting the sampled baseline instead would shrink the gap and hide that
+    // part of it is sampling. The headline reads the same sweep the chart draws.
     const headline = screen.getByText(/One greedy chain solves/i).closest("p")!;
-    expect(within(headline).getByText("43%")).toBeInTheDocument();
+    expect(within(headline).getByText(`${Math.round(GREEDY_ACC * 100)}%`)).toBeInTheDocument();
+    const gap = Math.round((BEST_LINE[BEST_LINE.length - 1].accuracy - GREEDY_ACC) * 100);
     expect(headline.textContent).toMatch(
-      /12 points\s+less than majority voting with 16 sampled chains/,
+      new RegExp(`${gap} points\\s+less than majority voting with 16 sampled\\s+chains at T = ${SWEEP.best_temperature}`),
     );
-    // and the 12 is the gap the run tested, against the greedy chain
-    expect(PAGE7.figure2.gain.gain_pts).toBeCloseTo(12, 6);
-    expect(PAGE7.figure2.gain.p).toBeLessThan(0.05);
+    expect(gap).toBeGreaterThan(0);
   });
 
   // The guard on the +12 (some of it is sampling, not counting) is carried by the
@@ -37,9 +41,9 @@ describe("Page 7 (frequency voting) component", () => {
   // the flat greedy line before any vote is taken, and the readout there says so.
   it("shows in figure 2 that sampling alone is part of the gain", () => {
     render(<Page7 />);
-    const one = PAGE7.figure2.hot.points[0];
+    const one = BEST_LINE[0];
     expect(one.n).toBe(1);
-    expect(one.accuracy).toBeGreaterThan(PAGE7.figure2.cold.points[0].accuracy);
+    expect(one.accuracy).toBeGreaterThan(GREEDY_ACC);
     setVoters(0);
     const live = document.querySelector("p[aria-live='polite']")!;
     expect(live.textContent).toMatch(/no vote yet/);
@@ -62,8 +66,9 @@ describe("Page 7 (frequency voting) component", () => {
     const second = PAGE7.figure1.specimen.ranked[1];
     fireEvent.click(tallyRows()[1]);
     expect(tallyRows()[1]).toHaveAttribute("aria-expanded", "true");
+    const card = screen.getByRole("region", { name: /One problem, 16 chains, tallied/ });
     expect(
-      screen.getByText(new RegExp(`${second.votes} of ${PAGE7.figure1.n_chains} chains`)),
+      within(card).getByText(new RegExp(`${second.votes} of ${PAGE7.figure1.n_chains} chains`)),
     ).toBeInTheDocument();
   });
 
@@ -195,42 +200,50 @@ describe("Page 7 (frequency voting) component", () => {
     window.removeEventListener("keydown", pageTurn);
   });
 
-  // Section 2's heat map: the temperature sweep, 40 problems x 12 temperatures, 16 chains.
-  it("draws the temperature sweep as one cell per problem and temperature", () => {
+  // Section 2's heat map, on its side: a row per temperature, a column per problem, sorted
+  // by how often the vote gets the problem right.
+  it("draws the temperature sweep as a row per temperature and a column per problem", () => {
     render(<Page7 />);
     const HM = PAGE7.figure1.heatmap;
-    expect(HM.problems).toHaveLength(40);
-    expect(HM.temperatures).toEqual([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1]);
+    // 0, 0.1, ... in steps of 0.1: 12 temperatures on the 40, 13 (to 1.2) on the 100
+    HM.temperatures.forEach((t, j) => expect(t).toBeCloseTo(j / 10, 9));
+    expect(HM.temperatures.length).toBeGreaterThanOrEqual(12);
     expect(HM.n_chains).toBe(16);
+    const n = HM.problems.length;
     const map = screen.getByRole("region", { name: /Chains right and the vote, at every temperature/ });
-    const table = within(map).getByRole("table");
-    // a header row, 40 problem rows, and the footer
-    expect(within(table).getAllByRole("row")).toHaveLength(1 + 40 + 1);
-    expect(within(table).getAllByRole("columnheader")).toHaveLength(1 + 12);
-    // the footer counts the problems the vote got right, which is the summary's accuracy
-    const foot = within(table).getAllByRole("row").at(-1)!;
-    const counts = within(foot).getAllByRole("cell").map((c) => Number(c.textContent));
-    expect(counts).toEqual(HM.summary.map((s) => Math.round(s.vote_accuracy * 40)));
+    const rows = within(within(map).getByRole("table")).getAllByRole("row");
+    expect(rows).toHaveLength(HM.temperatures.length);
+    rows.forEach((row, j) => {
+      const cells = within(row).getAllByRole("cell");
+      expect(cells).toHaveLength(n + 1);
+      // the row ends with how many problems the vote got right at that temperature
+      expect(cells[n].textContent).toBe(`${Math.round(HM.summary[j].vote_accuracy * n)}/${n}`);
+    });
+    // columns run from the problems the vote always gets to the ones it never does
+    const rightAt = (col: number) =>
+      HM.temperatures.filter((_, j) => /the vote is right/.test(screen.getByTestId(`heat-${col}-${j}`).textContent ?? "")).length;
+    for (let col = 1; col < n; col++) expect(rightAt(col)).toBeLessThanOrEqual(rightAt(col - 1));
   });
 
   it("pins a problem and shows which temperatures got it right", () => {
     render(<Page7 />);
     const HM = PAGE7.figure1.heatmap;
     expect(screen.queryByTestId("heatmap-problem")).toBeNull();
-    const q = HM.problems.findIndex((p) => p.cells.some((c) => c.outcome === "right"));
-    fireEvent.click(screen.getByRole("button", { name: `Problem ${q + 1}: show which temperatures got it right` }));
+    fireEvent.click(screen.getByTestId("heat-0-3"));
     const panel = screen.getByTestId("heatmap-problem");
-    const p = HM.problems[q];
-    const right = p.cells.filter((c) => c.outcome === "right").length;
-    expect(panel.textContent).toContain(`the vote gets it at ${right} of 12 temperatures`);
+    expect(panel.textContent).toMatch(/^Problem 1 · level/);
     const items = within(panel).getAllByRole("listitem");
-    expect(items).toHaveLength(12);
-    for (const [j, c] of p.cells.entries()) {
-      expect(items[j].textContent).toContain(`T = ${c.temperature === 0 ? "0" : c.temperature.toFixed(1)}`);
-      expect(items[j].textContent).toContain(`${c.n_correct}/16`);
+    expect(items).toHaveLength(HM.temperatures.length);
+    const rightCount = items.filter((li) => li.textContent?.includes("✓")).length;
+    expect(panel.textContent).toContain(`the vote gets it at ${rightCount} of ${HM.temperatures.length} temperatures`);
+    for (const [j, t] of HM.temperatures.entries()) {
+      expect(items[j].textContent).toContain(`T = ${t === 0 ? "0" : t.toFixed(1)}`);
+      expect(items[j].textContent).toMatch(/\d+\/16/);
     }
-    // clicking the same problem again unpins it
-    fireEvent.click(screen.getByRole("button", { name: `Problem ${q + 1}: show which temperatures got it right` }));
+    // the arrows step through the columns in order, and the same column again unpins
+    fireEvent.click(screen.getByRole("button", { name: "Next problem" }));
+    expect(screen.getByTestId("heatmap-problem").textContent).toMatch(/^Problem 2 · level/);
+    fireEvent.click(screen.getByTestId("heat-1-0"));
     expect(screen.queryByTestId("heatmap-problem")).toBeNull();
   });
 
@@ -272,12 +285,58 @@ describe("Page 7 (frequency voting) component", () => {
 
   // The intro names the two drawn lines by the chart's own names, and does not explain
   // majority voting again: step 1's analogy does that.
+  // Section 3 draws every temperature of the sweep, the best highlighted to start; picking
+  // another highlights it, and the readout follows.
+  it("draws one band for every temperature and a line for the one picked", () => {
+    render(<Page7 />);
+    const widget = screen.getByRole("region", { name: /Accuracy against the number/ });
+    const picker = within(widget).getByRole("radiogroup", { name: "Temperature" });
+    const radios = within(picker).getAllByRole("radio");
+    expect(radios).toHaveLength(SWEEP.temperatures.length);
+    const best = within(picker).getByRole("radio", { name: /, the best$/ });
+    expect(best).toBeChecked();
+    expect(best.getAttribute("aria-label")).toBe(`T = ${SWEEP.best_temperature.toFixed(1)}, the best`);
+    // One band behind one picked line, not a faint line per temperature.
+    expect(within(widget).getByTestId("temperature-band")).toBeInTheDocument();
+    expect(widget.querySelectorAll("[data-testid^='sweep-line-']")).toHaveLength(1);
+    expect(within(widget).getByTestId(`sweep-line-${SWEEP.best_temperature.toFixed(1)}`)).toBeInTheDocument();
+    const live = document.querySelector("p[aria-live='polite']")!;
+    expect(live.textContent).toContain(`at T = ${SWEEP.best_temperature.toFixed(1)}`);
+    fireEvent.click(within(picker).getByRole("radio", { name: "T = 1.1" }));
+    expect(within(widget).getByTestId("sweep-line-1.1")).toBeInTheDocument();
+    const hot = SWEEP.curves["1.1"];
+    expect(live.textContent).toContain("at T = 1.1");
+    expect(live.textContent).toContain(`${Math.round(hot[hot.length - 1].accuracy * 100)}%`);
+  });
+
+  // T = 0 is a temperature like the others: its line is the greedy chain, so picking it
+  // says there is nothing to vote on rather than calling the copies sampled chains.
+  it("draws T = 0 too, as the greedy chain", () => {
+    render(<Page7 />);
+    const widget = screen.getByRole("region", { name: /Accuracy against the number/ });
+    const picker = within(widget).getByRole("radiogroup", { name: "Temperature" });
+    fireEvent.click(within(picker).getByRole("radio", { name: "T = 0" }));
+    const live = document.querySelector("p[aria-live='polite']")!;
+    expect(live.textContent).toMatch(/At T = 0 every chain is the same greedy chain/);
+    expect(live.textContent).toContain(`${Math.round(GREEDY_ACC * 100)}%`);
+    expect(live.textContent).toMatch(/nothing to vote on/);
+    expect(live.textContent).not.toMatch(/sampled chains/);
+    for (const p of SWEEP.curves["0.0"]) expect(p.accuracy).toBeCloseTo(GREEDY_ACC, 9);
+  });
+
   it("names the drawn lines the same way in the intro and on the chart", () => {
     render(<Page7 />);
     const intro = screen.getByText(/Just now, we saw majority voting/).closest("p")!;
     expect(intro.textContent).toMatch(/majority voting/);
     expect(intro.textContent).toMatch(/One greedy chain/);
-    expect(intro.textContent).toMatch(/all 100 MATH-500 problems at\s+levels 4 and 5/);
+    const scope =
+      SWEEP.problems.length === PAGE7.manifest.items.n
+        ? `all ${PAGE7.manifest.items.n}`
+        : `${SWEEP.problems.length} of the ${PAGE7.manifest.items.n}`;
+    expect(intro.textContent).toMatch(new RegExp(`${scope}\\s+MATH-500 problems at\\s+levels 4 and 5`));
+    expect(intro.textContent).toMatch(
+      new RegExp(`majority voting at ${SWEEP.temperatures.length} temperatures against greedy decoding`),
+    );
     expect(intro.textContent).not.toMatch(/In the pile|the answer the most chains agreed on/);
   });
 
@@ -331,11 +390,11 @@ describe("Page 7 (frequency voting) component", () => {
     render(<Page7 />);
     const widget = screen.getByRole("region", { name: /Accuracy against the number/ });
     expect(widget.textContent).toMatch(/ties/);
-    const two = PAGE7.figure2.hot.points.findIndex((p) => p.n === 2);
+    const two = BEST_LINE.findIndex((p) => p.n === 2);
     setVoters(two);
     const live = document.querySelector("p[aria-live='polite']")!;
     expect(live.textContent).toMatch(
-      new RegExp(`${Math.round(PAGE7.figure2.hot.points[two].tie_rate * 100)}% of these votes tie`),
+      new RegExp(`${Math.round(BEST_LINE[two].tie_rate * 100)}% of these votes tie`),
     );
   });
 
@@ -361,65 +420,64 @@ describe("Page 7 (frequency voting) component", () => {
     expect(body).not.toMatch(/refuse to continue/i);
   });
 
-  // The sweep does not single out one temperature: plurality accuracy ties at the top.
-  // The card has to carry the tie, or it claims a falloff the data does not show.
-  it("reports the temperature sweep's tie rather than a falloff it does not show", () => {
+  // The bar figure's caption is read off the sweep, and every claim in it must be true of
+  // the data: one chain falls from the coolest sampled setting to the hottest, and the vote
+  // is best where it says (with every tie named, not one winner picked).
+  it("captions the temperature sweep with claims the data supports", () => {
     render(<Page7 />);
-    const best = Math.max(...PAGE7.figure2.diversity.map((d) => d.plurality_accuracy));
-    const tied = PAGE7.figure2.diversity.filter(
-      (d) => Math.abs(d.plurality_accuracy - best) < 1e-9,
-    );
-    expect(tied.length).toBeGreaterThan(1);
-    const body = document.body.textContent ?? "";
-    expect(body).not.toMatch(/past T = 0\.3 each chain gets worse/);
-    for (const d of tied) expect(body).toContain(`T = ${d.temperature}`);
-    expect(body).toMatch(/the vote comes out the same at T = \S+\s+and T = /);
-    // "and worse above that" has to be true of every hotter setting
-    const hottestTied = Math.max(...tied.map((d) => d.temperature));
-    for (const d of PAGE7.figure2.diversity.filter((d) => d.temperature > hottestTied)) {
-      expect(d.plurality_accuracy).toBeLessThan(best);
+    const byT = [...SWEEP.summary].sort((a, b) => a.temperature - b.temperature);
+    const cool = byT.find((d) => d.temperature > 0)!;
+    const hot = byT[byT.length - 1];
+    expect(hot.single_chain_accuracy).toBeLessThan(cool.single_chain_accuracy);
+    const cap = screen.getByRole("figure", { name: /Different answers among 16 chains/ })
+      .querySelector("figcaption")!.textContent ?? "";
+    const lbl = (t: number) => (t === 0 ? "0" : t.toFixed(1));
+    expect(cap).toContain(`one chain alone falls from ${Math.round(cool.single_chain_accuracy * 100)}% at T = ${lbl(cool.temperature)}`);
+    expect(cap).toContain(`${Math.round(hot.single_chain_accuracy * 100)}% at T = ${lbl(hot.temperature)}`);
+    const top = Math.max(...byT.map((d) => d.vote_accuracy));
+    for (const d of byT.filter((d) => Math.abs(d.vote_accuracy - top) < 1e-9)) {
+      expect(cap).toContain(`T = ${lbl(d.temperature)}`);
     }
+    expect(cap).toMatch(new RegExp(`the vote is best at T = ${lbl(SWEEP.best_temperature)}`));
   });
 
-  // The headline leads into the temperature card, and the sentence that does it makes
+  // The headline leads into the temperature figure, and the sentence that does it makes
   // two claims the run has to keep true: at T = 0 there is exactly one answer, and the
   // vote's gain over the greedy chain vanishes there (the flat line).
-  it("leads from the headline into the temperature card on claims the run supports", () => {
+  it("leads from the headline into the temperature figure on claims the run supports", () => {
     render(<Page7 />);
     const headline = screen.getByText(/One greedy chain solves/i).closest("p")!;
     expect(headline.textContent).toMatch(/exist only\s+because the chains disagree/);
     expect(headline.textContent?.trimEnd()).toMatch(/Here is by\s+how much:$/);
     expect(headline.nextElementSibling?.textContent).toMatch(/different answers among/);
-    const cold = PAGE7.figure2.diversity.find((d) => d.temperature === 0)!;
+    const cold = SWEEP.summary.find((d) => d.temperature === 0)!;
     expect(cold.mean_distinct).toBe(1);
-    for (const p of PAGE7.figure2.cold.points) {
-      expect(p.accuracy).toBeCloseTo(PAGE7.figure2.gain.bare_cot, 9);
-    }
+    for (const p of SWEEP.curves["0.0"]) expect(p.accuracy).toBeCloseTo(GREEDY_ACC, 9);
   });
 
-  // A small unboxed figure under the paragraph, not a second card: one bar per
-  // temperature on a fixed 0 to n_chains scale, so the widths are comparable counts.
-  it("draws the temperature sweep as bars on a fixed scale, outside any card", () => {
+  // A small unboxed figure under the paragraph, not a second card: one column per
+  // temperature, left to right, each labelled with its count.
+  it("draws the temperature sweep as a column per temperature, outside any card", () => {
     render(<Page7 />);
-    const fig = screen.getByRole("figure", { name: /Different answers among 8 chains/ });
+    const fig = screen.getByRole("figure", { name: /Different answers among 16 chains/ });
     expect(fig.className).not.toMatch(/border|bg-surface/);
     const bars = within(fig).getAllByTestId("diversity-bar");
-    const sweep = [...PAGE7.figure2.diversity].sort((a, b) => a.temperature - b.temperature);
-    expect(bars).toHaveLength(sweep.length);
-    for (const [i, d] of sweep.entries()) {
+    const byT = [...SWEEP.summary].sort((a, b) => a.temperature - b.temperature);
+    expect(bars).toHaveLength(byT.length);
+    expect(byT[0].temperature).toBe(0);
+    for (const [i, d] of byT.entries()) {
       expect(Number(bars[i].getAttribute("data-value"))).toBe(d.mean_distinct);
-      expect(bars[i].textContent).toContain(`T = ${d.temperature}`);
+      expect(bars[i].getAttribute("aria-label")).toContain(`T = ${d.temperature === 0 ? "0" : d.temperature.toFixed(1)}`);
       expect(bars[i].textContent).toContain(d.mean_distinct.toFixed(1));
     }
   });
 
-  it("labels the diversity readout as a count on its own smaller item set", () => {
+  it("labels the diversity readout as a count, and says how many problems", () => {
     render(<Page7 />);
     expect(screen.getByText(/count of answers, not an\s+accuracy/i)).toBeInTheDocument();
     expect(
-      screen.getByText(new RegExp(`Averaged over ${PAGE7.figure2.diversity[0].n_items} problems`)),
+      screen.getByText(new RegExp(`Averaged over ${SWEEP.problems.length} problems`)),
     ).toBeInTheDocument();
-    expect(PAGE7.figure2.diversity[0].n_items).toBeLessThan(PAGE7.manifest.items.n);
   });
 
   // Section 4 is a fan: three shared budgets and the same chains allowed to finish, which
@@ -457,6 +515,11 @@ describe("Page 7 (frequency voting) component", () => {
     }
     fireEvent.click(screen.getByRole("button", { name: /Hide how many chains were cut off/ }));
     expect(screen.queryByTestId("cut-off-grid")).toBeNull();
+  });
+
+  it("names the three budgets in section 4's intro as a list", () => {
+    render(<Page7 />);
+    expect(document.body.textContent).toContain("a fixed budget of 2,048, 4,096 or 8,192 tokens");
   });
 
   it("closes section 4 on the smallest and largest budget at the most chains", () => {
@@ -597,7 +660,7 @@ describe("Page 7 (frequency voting) component", () => {
     // Coverage is read out only while its line is drawn.
     fireEvent.click(screen.getByRole("button", { name: /Show what the vote threw away/ }));
     const live = document.querySelector("p[aria-live='polite']")!;
-    for (const [i, p] of PAGE7.figure2.hot.points.entries()) {
+    for (const [i, p] of BEST_LINE.entries()) {
       setVoters(i);
       const text = live.textContent;
       expect(text).toMatch(new RegExp(`${Math.round(p.accuracy * 100)}%`));
@@ -611,8 +674,8 @@ describe("Page 7 (frequency voting) component", () => {
   // readout used to measure against one sampled chain, which the chart does not draw.
   it("owns the positions where the vote is behind the greedy chain", () => {
     render(<Page7 />);
-    const pts = PAGE7.figure2.hot.points;
-    const greedy = PAGE7.figure2.cold.points[0].accuracy;
+    const pts = BEST_LINE;
+    const greedy = GREEDY_ACC;
     const live = document.querySelector("p[aria-live='polite']")!;
     const behind = pts.findIndex((p, i) => i > 0 && p.accuracy < greedy);
     expect(behind).toBeGreaterThan(0);
