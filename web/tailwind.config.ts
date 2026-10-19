@@ -29,6 +29,9 @@ const config: Config = {
         "compute-ink": tokens.computeInk,
         "correct-ink": tokens.correctInk,
         "wrong-ink": tokens.wrongInk,
+        // A fourth hue, dark, for a comparison's baseline (page 5); see tokens.ts.
+        crimson: tokens.crimson,
+        "crimson-ink": tokens.crimsonInk,
       },
       fontFamily: {
         // Broadsheet: "the serif is the chrome" — Source Serif 4 for heading

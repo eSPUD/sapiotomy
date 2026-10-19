@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { Page5 } from "./Page5";
-import { PAGE5, fewShotPrompt, pct, tidyPrompt } from "@/lib/page05";
+import { PAGE5, fewShotPrompt, gradedText, pct, textSteps, tidyPrompt } from "@/lib/page05";
 
 const body = () => (document.body.textContent ?? "").replace(/\s+/g, " ");
 const N = PAGE5.n;
@@ -60,7 +60,7 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     const def = screen.getByText(/A common way to ask a model for one/).closest("p")!;
     expect(Array.from(def.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 1", "reference 2"]);
     const shown = screen.getByText(/The original way is to show the model/).closest("p")!;
-    expect(Array.from(shown.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 3"]);
+    expect(Array.from(shown.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 3", "reference 4"]);
     const refs = screen.getAllByText("References")[0].closest("aside")!;
     expect(within(refs).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
     expect(within(refs).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
@@ -68,16 +68,29 @@ describe("Page 5, step 1: what a chain of thought is", () => {
       "href",
       "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
     );
+    expect(within(refs).getByRole("link", { name: /Qwen2\.5-7B.*model card/ })).toHaveAttribute(
+      "href",
+      "https://huggingface.co/Qwen/Qwen2.5-7B",
+    );
   });
 });
 
-describe("Page 5, figure 1: the few-shot prompt", () => {
-  const tabs = () => screen.getAllByRole("tab");
+describe("Page 5, figure 1: one problem, two prompts", () => {
+  const problemGroup = () => within(screen.getByRole("group", { name: "Test problem" }));
+  const sizeGroup = () => within(screen.getByRole("group", { name: "Base model" }));
+  const zeroShot = () => within(screen.getByRole("region", { name: "Zero-shot: the problem alone" }));
+  const fewShot = () => within(screen.getByRole("region", { name: "Few-shot: after the five worked examples" }));
+  const playBtn = () => screen.getByRole("button", { name: /▶ play/i });
+  const resetBtn = () => screen.getByRole("button", { name: /reset/i });
 
-  it("offers the three test problems, easy, medium and hard, the first selected", () => {
+  it("offers the three test problems and the three base models, the first of each chosen", () => {
     render(<Page5 />);
-    expect(tabs().map((t) => t.textContent)).toEqual(["Easy · level 1", "Medium · level 3", "Hard · level 5"]);
-    expect(tabs()[0]).toHaveAttribute("aria-selected", "true");
+    const problems = problemGroup().getAllByRole("button");
+    expect(problems.map((b) => b.textContent)).toEqual(["Easy · level 1", "Medium · level 3", "Hard · level 5"]);
+    expect(problems[0]).toHaveAttribute("aria-pressed", "true");
+    const sizes = sizeGroup().getAllByRole("button");
+    expect(sizes.map((b) => b.textContent)).toEqual(["Qwen2.5-1.5B", "Qwen2.5-3B", "Qwen2.5-7B"]);
+    expect(sizes[0]).toHaveAttribute("aria-pressed", "true");
     expect(PAGE5.testProblems.map((p) => p.uniqueId)).toEqual([
       "test/intermediate_algebra/134.json",
       "test/algebra/2584.json",
@@ -85,27 +98,77 @@ describe("Page 5, figure 1: the few-shot prompt", () => {
     ]);
   });
 
-  it("shows the five examples, the same in every prompt, then the chosen test problem", () => {
+  // Like the old figure 1: a split, zero-shot above few-shot, nothing revealed yet.
+  it("stacks zero-shot above few-shot, each a chat with the question and no reply yet", () => {
     render(<Page5 />);
-    const examples = screen.getByTestId("examples");
-    for (const e of PAGE5.examples) {
-      expect(examples.textContent).toContain(tidyPrompt(e.problem));
-      expect(examples.textContent).toContain(tidyPrompt(e.solution));
+    const split = screen.getByTestId("split");
+    expect(split).toHaveClass("flex-col");
+    expect([...split.children].map((c) => c.getAttribute("aria-label"))).toEqual([
+      "Zero-shot: the problem alone",
+      "Few-shot: after the five worked examples",
+    ]);
+    for (const side of [zeroShot(), fewShot()]) {
+      expect(side.getByRole("img", { name: "User" })).toBeInTheDocument();
+      expect(side.getByRole("img", { name: "Model" })).toBeInTheDocument();
+      expect(side.getByText("press Play to see its reply")).toBeInTheDocument();
     }
+    expect(fewShot().getByText("+ the five worked examples")).toBeInTheDocument();
+    expect(zeroShot().queryByText("+ the five worked examples")).toBeNull();
+    expect(resetBtn()).toBeDisabled();
+  });
+
+  it("Play shows both whole replies, as graded, with their verdicts; Reset clears them", () => {
+    render(<Page5 />);
+    fireEvent.click(playBtn());
+    const r = PAGE5.testProblems[0].replies["1.5B"];
+    for (const [side, reply] of [[zeroShot(), r.zeroShot], [fewShot(), r.fewShot]] as const) {
+      const text = side.getByTestId("model-reply").textContent ?? "";
+      expect(text).toContain(`${reply.correct ? "✓" : "✗"} Final answer: ${tidyPrompt(reply.extracted)}.`);
+      expect(text).toContain(`${reply.tokens} tokens`);
+      expect(side.getAllByRole("listitem")).toHaveLength(textSteps(gradedText(reply)).length);
+    }
+    expect(playBtn()).toBeDisabled();
+    fireEvent.click(resetBtn());
+    expect(zeroShot().getByText("press Play to see its reply")).toBeInTheDocument();
+  });
+
+  it("switches problem and model with the replies showing, for every pair the run made", () => {
+    render(<Page5 />);
+    fireEvent.click(playBtn());
     for (const [i, p] of PAGE5.testProblems.entries()) {
-      fireEvent.click(tabs()[i]);
-      expect(tabs()[i]).toHaveAttribute("aria-selected", "true");
-      expect(screen.getByTestId("test-problem")).toHaveTextContent(tidyPrompt(p.problem).replace(/\s+/g, " ").trim());
-      // The examples do not change with the tab.
-      expect(screen.getByTestId("examples").textContent).toBe(examples.textContent);
+      fireEvent.click(problemGroup().getAllByRole("button")[i]);
+      for (const [k, size] of ["1.5B", "3B", "7B"].entries()) {
+        fireEvent.click(sizeGroup().getAllByRole("button")[k]);
+        expect(zeroShot().getByTestId("user-question")).toHaveTextContent(tidyPrompt(p.problem).replace(/\s+/g, " ").trim());
+        const few = p.replies[size].fewShot;
+        const verdict = few.extracted ? `Final answer: ${tidyPrompt(few.extracted)}.` : "No boxed answer.";
+        expect(fewShot().getByTestId("model-reply")).toHaveTextContent(verdict);
+      }
     }
   });
 
-  // Prompts only (handoff, section 2): no reply and no answer is shown.
-  it("shows prompts only: no model reply, no answer", () => {
+  // On the hard problem the 7B is right with the problem alone and wrong after the
+  // examples. The figure shows it as it is: nothing on the page is picked to agree.
+  it("keeps the replies that cut against the section's point", () => {
+    const hard = PAGE5.testProblems[2].replies["7B"];
+    expect(hard.zeroShot.correct).toBe(true);
+    expect(hard.fewShot.correct).toBe(false);
+  });
+
+  it("lists the five worked examples as rows that open to their steps", () => {
     render(<Page5 />);
-    expect(screen.queryByRole("button", { name: /play/i })).toBeNull();
-    expect(screen.getByTestId("test-problem").textContent).not.toContain(PAGE5.testProblems[0].answer);
+    const rows = within(screen.getByTestId("examples")).getAllByRole("listitem", { hidden: true });
+    const summaries = screen.getByTestId("examples").querySelectorAll("summary");
+    expect(summaries).toHaveLength(5);
+    for (const [i, e] of PAGE5.examples.entries()) {
+      expect(summaries[i]).toHaveTextContent(`level ${e.level}`);
+      expect(summaries[i]).toHaveTextContent(`${textSteps(e.solution).length} steps →`);
+    }
+    expect(rows.length).toBeGreaterThanOrEqual(5);
+    // Every step of every solution is there to open, nothing dropped.
+    for (const e of PAGE5.examples) {
+      expect(textSteps(e.solution).join("\n\n").replace(/\s+/g, "")).toBe(e.solution.replace(/\s+/g, ""));
+    }
   });
 
   // The page shows what the notebook sent: Problem / Solution blocks, examples first.
@@ -121,7 +184,8 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
   it("opens on the denominator before the figure", () => {
     render(<Page5 />);
     expect(N).toBe(495);
-    expect(body()).toContain(`One prompt proves nothing, so we ran it on the other ${N} MATH-500 problems, with base models of three sizes`);
+    // The old section 2's opening sentence, with the new denominator.
+    expect(body()).toContain(`One trace proves nothing, so both prompts were run across the other ${N} MATH-500 problems, with base models of three sizes.`);
   });
 
   it("draws a bar per prompt per size, labelled with the run's accuracies and the lead in points", () => {
@@ -158,12 +222,18 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
     expect(B7.fewShot.wroteCode).toBe(0); // "After the examples, it never does."
   });
 
-  it("cites the base model card beside the step", () => {
+  // The page's colours (author, 2026-10-18): crimson baseline, blue few-shot, orange
+  // instruct reasoning; few-shot keeps its blue from figure 2 into figure 3.
+  it("colours the baseline crimson, few-shot blue and instruct reasoning orange", () => {
     render(<Page5 />);
-    expect(screen.getByRole("link", { name: /Qwen2\.5-7B.*model card/ })).toHaveAttribute(
-      "href",
-      "https://huggingface.co/Qwen/Qwen2.5-7B",
-    );
+    const fill = (id: string, k = 0) => screen.getAllByTestId(id)[k].querySelector("rect")?.getAttribute("class");
+    expect(fill("bar-1.5B-zero")).toContain("fill-crimson");
+    expect(fill("bar-1.5B-few", 0)).toContain("fill-wrong");
+    expect(fill("bar-1.5B-few", 1)).toContain("fill-wrong");
+    expect(fill("bar-1.5B-instruct")).toContain("fill-compute");
+    const floor = screen.getByTestId(`floor-${I15.label}`).querySelectorAll("rect");
+    expect(floor[0].getAttribute("class")).toContain("fill-crimson");
+    expect(floor[1].getAttribute("class")).toContain("fill-compute");
   });
 });
 

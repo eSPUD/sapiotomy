@@ -91,6 +91,18 @@ describe("design tokens", () => {
     expect(contrast(tokens.size1, tokens.surface)).toBeGreaterThanOrEqual(2);
   });
 
+  // Crimson sits beside Clay in page 5's stacked bars, so it must differ from Clay in
+  // lightness, not only in hue, and carry ivory text where Clay carries Slate.
+  it("crimson is told apart from Clay by lightness, carries ivory text, and its ink step is AA", () => {
+    for (const hex of [tokens.crimson, tokens.crimsonInk]) expect(hex).toMatch(HEX);
+    expect(contrast(tokens.crimson, tokens.compute)).toBeGreaterThanOrEqual(2);
+    expect(contrast(tokens.crimson, tokens.wrong)).toBeGreaterThanOrEqual(2);
+    expect(contrast(tokens.canvas, tokens.crimson)).toBeGreaterThanOrEqual(4.5);
+    for (const ground of [tokens.canvas, tokens.surface, tokens.surfaceRaised]) {
+      expect(contrast(tokens.crimsonInk, ground)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it("each line step sits between its fill and its ink step", () => {
     const pairs = [
       [tokens.compute, tokens.computeBright, tokens.computeInk],

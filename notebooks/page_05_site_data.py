@@ -6,7 +6,8 @@ five-shot CoT) and the instruct run (`page_5_instruct_reasoning.ipynb`: Qwen2.5 
 computes nothing the notebooks did not: the same tallies, on the 495 problems both runs
 share (the instruct run also answered the five example problems, which are left out). It
 chooses section 1's three test problems and lays it all out the way
-`web/src/lib/page05.ts` reads it.
+`web/src/lib/page05.ts` reads it. Section 1 carries every base model's zero-shot and
+few-shot reply to the three test problems, for figure 1's Play.
 
     python page_05_site_data.py                                      # out/page_05/derived.json
     cp out/page_05/derived.json ../web/data/page-05-derived.json     # promote it to the page
@@ -175,6 +176,12 @@ def build(out_path):
     assert chosen == SECTION_1_IDS, f"section 1's rule now picks {chosen}"
     problem = lambda u: {"unique_id": u, "level": rows[u]["level"], "subject": rows[u]["subject"],
                          "problem": rows[u]["problem"], "answer": rows[u]["answer"]}
+    # Figure 1's Play: every base model's two replies to each of the three, so the
+    # reader picks the size and nothing is chosen for the page.
+    reply = lambda r: {k: r[k] for k in ("reply", "extracted", "correct", "tokens", "truncated", "boxed",
+                                         "wrote_code")}
+    test_problem = lambda u: dict(problem(u), replies={
+        s: {arm: reply(few[(BASE[s], arm, u)]) for arm in ("zero_shot", "few_shot")} for s in SIZES})
 
     # Section 4: each instruct model reasoning and answering directly; and the smallest model
     # reasoning against the largest answering directly.
@@ -212,7 +219,7 @@ def build(out_path):
         },
         "section_1": {
             "examples": [dict(problem(u), solution=solutions[u]) for u in EXAMPLE_IDS],
-            "test_problems": [problem(u) for u in SECTION_1_IDS],
+            "test_problems": [test_problem(u) for u in SECTION_1_IDS],
         },
         "models": models,
         "paired": pairs,

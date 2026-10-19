@@ -41,6 +41,22 @@ export interface Example extends Problem {
   solution: string;
 }
 
+/** One base model's reply to a test problem, as the few-shot run saved and graded it. */
+export interface Reply {
+  reply: string;
+  extracted: string;
+  correct: boolean;
+  tokens: number;
+  truncated: boolean;
+  boxed: boolean;
+  wroteCode: boolean;
+}
+
+/** A section 1 test problem, with every base model's two replies to it. */
+export interface TestProblem extends Problem {
+  replies: Record<string, { zeroShot: Reply; fewShot: Reply }>;
+}
+
 /** One model under one prompt, tallied over the 495 problems. */
 export interface ArmStats {
   n: number;
@@ -100,6 +116,15 @@ type RawArm = {
   short_share?: number;
 };
 type RawProblem = { unique_id: string; level: number; subject: string; problem: string; answer: string };
+type RawReply = {
+  reply: string;
+  extracted: string;
+  correct: boolean;
+  tokens: number;
+  truncated: boolean;
+  boxed: boolean;
+  wrote_code: boolean;
+};
 type RawPaired = { size?: string; a: string; b: string; n: number; both: number; neither: number; a_only: number; b_only: number };
 
 const D = rawDerived as unknown as {
@@ -112,7 +137,10 @@ const D = rawDerived as unknown as {
     builder: string;
     builder_sha256: string;
   };
-  section_1: { examples: (RawProblem & { solution: string })[]; test_problems: RawProblem[] };
+  section_1: {
+    examples: (RawProblem & { solution: string })[];
+    test_problems: (RawProblem & { replies: Record<string, Record<"zero_shot" | "few_shot", RawReply>> })[];
+  };
   models: { size: string; model_id: string; label: string; kind: "base" | "instruct"; arms: Record<string, RawArm> }[];
   paired: Record<"few_vs_zero" | "instruct_cot_vs_base_few" | "cot_vs_direct", RawPaired[]>;
   section_4: {
@@ -239,12 +267,31 @@ if (D.section_1.examples.length !== 5 || D.section_1.test_problems.length !== 3)
   fail("section 1 needs five examples and three test problems");
 }
 
+const reply = (r: RawReply): Reply => ({
+  reply: r.reply,
+  extracted: r.extracted,
+  correct: r.correct,
+  tokens: r.tokens,
+  truncated: r.truncated,
+  boxed: r.boxed,
+  wroteCode: r.wrote_code,
+});
+
+const testProblems: TestProblem[] = D.section_1.test_problems.map((t) => {
+  const replies: TestProblem["replies"] = {};
+  for (const s of SIZES) {
+    const r = t.replies[s] ?? fail(`section 1's ${t.unique_id} has no ${s} replies`);
+    replies[s] = { zeroShot: reply(r.zero_shot), fewShot: reply(r.few_shot) };
+  }
+  return { ...problem(t), replies };
+});
+
 export const PAGE5 = {
   provenance: D.provenance,
   /** Problems every figure is drawn on. */
   n: N,
   examples: D.section_1.examples.map((e): Example => ({ ...problem(e), solution: e.solution })),
-  testProblems: D.section_1.test_problems.map(problem),
+  testProblems,
   base,
   instruct,
   paired: pairs,
@@ -292,3 +339,38 @@ export function tidyPrompt(text: string): string {
 export const exampleBlock = (e: Example) => `Problem:\n${e.problem}\n\nSolution:\n${e.solution}\n\n`;
 export const questionBlock = (p: Problem) => `Problem:\n${p.problem}\n\nSolution:\n`;
 export const fewShotPrompt = (p: Problem) => PAGE5.examples.map(exampleBlock).join("") + questionBlock(p);
+
+/**
+ * A reply as it was graded: everything before the first "Problem:", which is where
+ * a base model starts inventing the next problem (and where the few-shot run's
+ * generation stopped). The grader ignored the rest, so the page does too.
+ */
+export const gradedText = (r: Reply) => r.reply.split("Problem:")[0].trimEnd();
+
+/**
+ * Display-only grouping of a reply or a worked solution into steps: one per
+ * paragraph (text between blank lines). A fenced code block stays one step, and a
+ * paragraph ending on a colon ("Let's break it down step-by-step:") joins the one
+ * it announces. Nothing is dropped: the steps rejoin to the whole text.
+ */
+export function textSteps(text: string): string[] {
+  const out: string[] = [];
+  let buffer: string[] = [];
+  let inFence = false;
+  let open = false;
+  const flush = () => {
+    const para = buffer.join("\n").trim();
+    buffer = [];
+    if (!para) return;
+    if (open && out.length) out[out.length - 1] += `\n\n${para}`;
+    else out.push(para);
+    open = para.endsWith(":");
+  };
+  for (const line of text.split("\n")) {
+    if (line.trim().startsWith("```")) inFence = !inFence;
+    if (!inFence && line.trim() === "") flush();
+    else buffer.push(line);
+  }
+  flush();
+  return out;
+}
