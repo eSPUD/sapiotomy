@@ -10,7 +10,7 @@ import {
   QUIZ,
   pct,
 } from "./page16";
-import { PAGE5 } from "./page05";
+import { PAGE5 } from "./page05HowToReason";
 import { PAGE6 } from "./page06";
 import { PAGE7 } from "./page07";
 import { PAGE8 } from "./page08";

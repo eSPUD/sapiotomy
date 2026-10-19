@@ -44,7 +44,8 @@ doubts a figure re-derives it rather than taking the file's word for it. See
 
 | File | Page | Run |
 |---|---|---|
-| `page-05-derived.json` | 5 | 900 generations: 3 prompt conditions × 3 Qwen2.5 checkpoints × 100 MATH-500 L4-5 items, greedy |
+| `page-05-derived.json` | 5 | 5,940 replies on 495 MATH-500 items: base Qwen2.5 zero-shot and five-shot, Qwen2.5-Instruct reasoning and final answer only, 3 sizes each, greedy |
+| `page-05-how-to-reason-derived.json` | 16 | the retired page 5 run: 900 generations, 3 prompt conditions × 3 Qwen2.5 checkpoints × 100 MATH-500 L4-5 items, greedy |
 | `page-06-derived.json` | 6 | 1,500 records: 5 token budgets × 3 Qwen2.5 checkpoints × the same 100 items, greedy, forced at the cap |
 | `page-09-derived.json` | 9 | 1,580 chains reused from page 7's pile (Qwen2.5-3B-Instruct, T=0.3, the same 100 items) and graded step by step twice: a deterministic arithmetic checker, and `Qwen2.5-Math-PRM-7B` admitted only after being measured against it (AUC 0.89). Only chains the model ended itself are graded |
 

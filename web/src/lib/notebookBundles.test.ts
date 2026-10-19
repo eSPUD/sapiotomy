@@ -37,10 +37,10 @@ const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
  * notebook's `results.json`, on pages whose notebook stops at its results.
  */
 const PAGES = [
-  // Page 5 no longer links this bundle: since 2026-10-14 pages 5 and 16 offer the
-  // author's single notebook, 5_CoT.ipynb. The bundle stays on disk because
-  // notebooks/build_trace_report.py reads page 5's traces from it, so it is still
-  // checked here, with no declared size (no page prints one).
+  // The retired page 5 run. Page 5 no longer links this bundle: pages 5 and 16 offer
+  // the page's two notebooks in one zip, checked below. The bundle stays on disk
+  // because notebooks/build_trace_report.py reads its traces, and page 16's ladder
+  // still plots its data, so it is still checked here, with no declared size.
   { n: 5, slug: "page-05-how-to-reason", notebook: "page_05_how_to_reason.ipynb",
     declared: null, extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
   // Page 6's repo copy has moved ahead: it lets a chain stop at its cap with no forced
@@ -86,6 +86,9 @@ describe.each(PAGES)("page $n's notebook bundle", ({
   n, slug, notebook, declared, extras, siteData, repoNotebookIsTheShippedOne,
 }) => {
   const pad = String(n).padStart(2, "0");
+  // The retired page 5 run's data moved aside when page 5 was rebuilt on two new runs
+  // (2026-10-18); page 16's ladder still reads it.
+  const plottedFile = n === 5 ? "page-05-how-to-reason-derived.json" : `page-${pad}-derived.json`;
 
   it("exists, and the size on the page is the size on disk", () => {
     const mb = statSync(zipPath(slug)).size / 1e6;
@@ -142,7 +145,7 @@ describe.each(PAGES)("page $n's notebook bundle", ({
   it("carries the same derived.json the page plots", () => {
     const sha = (b: Buffer | Uint8Array) => createHash("sha256").update(b).digest("hex");
     expect(sha(member(slug, `${slug}/out/page_${pad}/derived.json`))).toBe(
-      sha(readFileSync(resolve(WEB, `data/page-${pad}-derived.json`))),
+      sha(readFileSync(resolve(WEB, `data/${plottedFile}`))),
     );
   });
 
@@ -170,7 +173,7 @@ describe.each(PAGES)("page $n's notebook bundle", ({
     const bundled = JSON.parse(member(slug, `${slug}/out/page_${pad}/manifest.json`).toString());
     expect(bundled.notebook_sha256).toBe(shipped);
     const plotted = JSON.parse(
-      readFileSync(resolve(WEB, `data/page-${pad}-derived.json`), "utf8"),
+      readFileSync(resolve(WEB, `data/${plottedFile}`), "utf8"),
     );
     expect(plotted.manifest.notebook_sha256).toBe(shipped);
   });
@@ -189,5 +192,41 @@ describe.each(PAGES)("page $n's notebook bundle", ({
     expect(shipped.length === repo.length && shipped.every((c, i) => c === repo[i])).toBe(
       repoNotebookIsTheShippedOne,
     );
+  });
+});
+
+// Page 5 ships its two notebooks, base (few-shot) and instruct, in one zip with no
+// traces, so it is not a bundle in the sense above. Both notebooks also sit in
+// public/notebooks as plain files, and the zip must carry exactly those bytes, which
+// are the repo's notebooks (the traces live in notebooks/traces/page_5).
+describe("page 5's two-notebook zip", () => {
+  const slug = "page-05-chain-of-thought";
+  const notebooks = ["page_5_few_shot.ipynb", "page_5_instruct_reasoning.ipynb"];
+
+  it("exists, and the size on the page is the size on disk", () => {
+    expect(`${Math.round(statSync(zipPath(slug)).size / 1e3)} KB`).toBe("14 KB");
+  });
+
+  it("unpacks into one folder holding the two notebooks and nothing else", () => {
+    expect(entries(slug).sort()).toEqual(notebooks.map((nb) => `${slug}/${nb}`));
+  });
+
+  it("carries the same notebooks that public/notebooks serves, which are the repo's", () => {
+    for (const nb of notebooks) {
+      const served = readFileSync(resolve(WEB, `public/notebooks/${nb}`));
+      expect(member(slug, `${slug}/${nb}`).equals(served)).toBe(true);
+      expect(served.equals(readFileSync(resolve(WEB, `../notebooks/${nb}`)))).toBe(true);
+    }
+  });
+
+  // Sections 3 and 4 compare the two runs' accuracies, which only means something if
+  // they grade alike: the first \boxed{}, compared with math_verify.
+  it("grades both notebooks on the first \\boxed{} with math_verify", () => {
+    for (const nb of notebooks) {
+      const src = codeCells(readFileSync(resolve(WEB, `public/notebooks/${nb}`))).join("\n");
+      expect(src).toContain("def extract_answer(text):");
+      expect(src).toContain('.find("\\\\boxed{")');
+      expect(src).toContain('verify(parse(f"$');
+    }
   });
 });

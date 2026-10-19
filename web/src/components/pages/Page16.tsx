@@ -291,8 +291,8 @@ export function Page16() {
               href={n.href}
               download
               aria-label={`Page ${n.page}: ${n.title}. ${
-                n.format === "ipynb"
-                  ? `Download the notebook, ipynb, ${n.size}`
+                n.format === "notebooks"
+                  ? `Download the notebooks, zip, ${n.size}`
                   : `Download the notebook and traces, zip, ${n.size}`
               }`}
               className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"

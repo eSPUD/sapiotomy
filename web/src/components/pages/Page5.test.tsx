@@ -1,497 +1,237 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
-import { COST_ESTIMATE, Page5 } from "./Page5";
-import { PAGE5, SUPPRESSION_TABLE, reasoningSteps, tidyMath } from "@/lib/page05";
+import { Page5 } from "./Page5";
+import { PAGE5, fewShotPrompt, pct, tidyPrompt } from "@/lib/page05";
 
-const BLURT = PAGE5.figure1.tabs[0];
-const BARE = PAGE5.figure1.tabs[1];
-/** What the page reveals: intermediate steps, not the notebook's lines. */
-const BARE_STEPS = reasoningSteps(BARE.steps);
+const body = () => (document.body.textContent ?? "").replace(/\s+/g, " ");
+const N = PAGE5.n;
+const [B15, B3, B7] = PAGE5.base;
+const [I15, I3, I7] = PAGE5.instruct;
+/** The difference of the two printed percentages, as the page prints it. */
+const pts = (a: number, b: number) => ((Math.round(a * 1000) - Math.round(b * 1000)) / 10).toFixed(1);
 
-const body = () => document.body.textContent ?? "";
-const playBtn = () => screen.getByRole("button", { name: /▶ play/i });
-const resetBtn = () => screen.getByRole("button", { name: /reset/i });
-// Figure 1 is a split: one chat per condition, System 1 above System 2, one shared stepper.
-const system1 = () => within(screen.getByRole("region", { name: "System 1" }));
-const system2 = () => within(screen.getByRole("region", { name: "System 2" }));
-
-/** Play shows both whole replies at once. */
-const playAll = () => fireEvent.click(playBtn());
-
-// Sections 1 and 2 merged on 2026-09-27 under the reviewer-response plan: the
-// definition is the author's scratch-paper draft, and the specimen sits under it.
 describe("Page 5, the Act 2 opener", () => {
-  it("picks up page 4's question and maps the act, without restating step-by-step reasoning", () => {
+  it("picks up page 4's question and maps the act, unchanged from the old page", () => {
     render(<Page5 />);
-    const body = (document.body.textContent ?? "").replace(/\s+/g, " ");
-    expect(body).toContain(
+    expect(body()).toContain(
       "Act 1 ended on a question: can a language model reason through a problem instead of answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply using a bigger model (page 11). The first tool is the simplest: have the model write out its steps.",
     );
-    expect(body).not.toMatch(/quadratic/i);
   });
 
   it("notes the hardware in a sidenote beside the opener", () => {
     render(<Page5 />);
     const note = screen.getByText("Hardware").closest("aside")!;
     expect(note).toHaveTextContent("An A100 GPU with 80GB VRAM was used in these experiments.");
-    // Level with the opener: no top padding, and the opener is the cell just before it.
+    expect(PAGE5.provenance.decoding.hardware).toContain("A100");
     expect(note.className).not.toMatch(/lg:pt-9/);
     expect(note.previousElementSibling?.textContent).toMatch(/^\s*Act 1 ended on a question/);
   });
 });
 
 describe("Page 5, step 1: what a chain of thought is", () => {
-  it("defines the term as each step feeding the next, in one merged step", () => {
+  it("has four steps, in Shashank's order", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
-    expect(headings[0]).toBe("1. Chain of Thought (CoT): System 2, written down");
-    expect(headings[1]).toBe("2. System 1 versus System 2 thinking on MATH-500 problems");
-    expect(headings[2]).toBe("3. Smaller reasoning models do better than larger non-reasoning models");
-    expect(headings[3]).toBe("4. The (token) cost of a chain of thought");
-    expect(headings).toHaveLength(4);
-    expect(body()).toContain(
-      "We've previously illustrated what step-by-step reasoning looks like for a couple of real-world problems.",
-    );
-    expect(body()).toContain(
-      "Chain-of-thought prompting simulates human reasoning by using each intermediate step as part of the LLM prompt to generate the next intermediate step.",
-    );
-    // The 17 × 24 example went with the author's 2026-09-27 rewrite.
-    expect(body()).not.toContain("17 × 24");
-    // Cut by the author 2026-09-27: a person's written steps are their thinking too.
-    expect(body()).not.toContain("the thinking itself");
+    expect(headings).toEqual([
+      "1. Chain of Thought (CoT): System 2, written down",
+      "2. Zero-shot versus few-shot on MATH-500 problems",
+      "3. Instruct models, with no examples",
+      "4. Smaller reasoning models do better than larger non-reasoning models",
+    ]);
   });
 
-  // The phrase is the one the cited paper published, because the marker sits on
-  // it; the run's own instruction suffix is a different string and its arm is
-  // not on the page.
-  it("names the classic ask in the words the cited paper published", () => {
+  it("keeps the author's definition and the classic ask in the cited paper's words", () => {
     render(<Page5 />);
+    expect(body()).toContain(
+      "We've previously illustrated what step-by-step reasoning looks like for a couple of real-world problems. Chain-of-thought prompting simulates human reasoning by using each intermediate step as part of the LLM prompt to generate the next intermediate step.",
+    );
     expect(body()).toContain("A common way to ask a model for one is to end the prompt with “Let's think step by step.”");
-    expect(body()).toContain("Let's think step by step.");
-    expect(body()).not.toContain(PAGE5.manifest.conditions.zero_shot_cot.trim());
   });
 
-  // Pages 1 to 3's grammar: the marker sits on the claim, and the entry sits in
-  // a right-hand References sidenote beside the step, with the number tying the
-  // two together.
-  it("marks the two techniques in the prose and resolves them in a References sidenote", () => {
+  // The worked solutions are ours: the page says so in the words the handoff allows.
+  it("says the worked solutions were written for this experiment, expanding MATH's own", () => {
     render(<Page5 />);
-    expect(screen.queryByText(/cited for the technique/i)).not.toBeInTheDocument();
+    expect(body()).toContain("worked solutions written for this experiment, expanding MATH's own solutions.");
+  });
 
-    // Markers on the definition, numbered in order of appearance; the third is
-    // the model card, in the next paragraph where it names the model.
-    const step = screen.getByText(/A common way to ask a model for one/).closest("p")!;
-    expect(Array.from(step.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
-      "reference 1",
-      "reference 2",
-    ]);
-    const model = screen.getByText(/Today's models no longer need that phrase/).closest("p")!;
-    expect(Array.from(model.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
-      "reference 3",
-    ]);
-
-    // Both entries live in the first right-hand References sidenote, beside
-    // this step. (The second References sidenote sits beside the close.)
+  it("marks the techniques and the dataset, resolved in the References sidenote beside the step", () => {
+    render(<Page5 />);
+    const def = screen.getByText(/A common way to ask a model for one/).closest("p")!;
+    expect(Array.from(def.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 1", "reference 2"]);
+    const shown = screen.getByText(/The original way is to show the model/).closest("p")!;
+    expect(Array.from(shown.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 3"]);
     const refs = screen.getAllByText("References")[0].closest("aside")!;
     expect(within(refs).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
     expect(within(refs).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
+    expect(within(refs).getByRole("link", { name: /MATH-500 dataset card/ })).toHaveAttribute(
+      "href",
+      "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
+    );
   });
 });
 
-describe("Page 5, figure 1: the chain is already there", () => {
-  it("stacks System 1 above System 2, with nothing revealed yet and no mode buttons", () => {
+describe("Page 5, figure 1: the few-shot prompt", () => {
+  const tabs = () => screen.getAllByRole("tab");
+
+  it("offers the three test problems, easy, medium and hard, the first selected", () => {
     render(<Page5 />);
-    // One column at every width: System 1 first, System 2 under it.
-    const split = screen.getByTestId("split");
-    expect(split).toHaveClass("flex-col");
-    expect(split.className).not.toMatch(/grid-cols/);
-    const sides = [...split.children].map((c) => c.getAttribute("aria-label"));
-    expect(sides).toEqual(["System 1", "System 2"]);
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Chain of Thought: Reasoning Out Loud",
-    );
-    expect(screen.queryByRole("group", { name: "Prompt" })).toBeNull();
-    // Play and Reset are the only controls: no Back, no Next.
-    expect(screen.queryByRole("button", { name: /back/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /next/i })).toBeNull();
-    // No progress bar, and no step counter: the replies are not streamed.
-    expect(body()).not.toMatch(/of \d+ tokens written/);
-    expect(body()).not.toMatch(/step \d+ of \d+/);
-    expect(system2().getAllByText("press Play to see its reply")).toHaveLength(1);
-    expect(screen.queryByText(tidyMath(BARE.steps[0].text))).toBeNull();
+    expect(tabs().map((t) => t.textContent)).toEqual(["Easy · level 1", "Medium · level 3", "Hard · level 5"]);
+    expect(tabs()[0]).toHaveAttribute("aria-selected", "true");
+    expect(PAGE5.testProblems.map((p) => p.uniqueId)).toEqual([
+      "test/intermediate_algebra/134.json",
+      "test/algebra/2584.json",
+      "test/intermediate_algebra/1994.json",
+    ]);
   });
 
-  // A chat, like page 2's: each turn is marked by its speaker's icon.
-  it("sets each side as a chat, the user's question and the model's reply marked by icons", () => {
+  it("shows the five examples, the same in every prompt, then the chosen test problem", () => {
     render(<Page5 />);
-    for (const side of [system1(), system2()]) {
-      expect(side.getByRole("img", { name: "User" })).toBeInTheDocument();
-      expect(side.getByRole("img", { name: "Model" })).toBeInTheDocument();
-      expect(side.getByTestId("user-question")).toHaveTextContent(tidyMath(PAGE5.figure1.question));
+    const examples = screen.getByTestId("examples");
+    for (const e of PAGE5.examples) {
+      expect(examples.textContent).toContain(tidyPrompt(e.problem));
+      expect(examples.textContent).toContain(tidyPrompt(e.solution));
+    }
+    for (const [i, p] of PAGE5.testProblems.entries()) {
+      fireEvent.click(tabs()[i]);
+      expect(tabs()[i]).toHaveAttribute("aria-selected", "true");
+      expect(screen.getByTestId("test-problem")).toHaveTextContent(tidyPrompt(p.problem).replace(/\s+/g, " ").trim());
+      // The examples do not change with the tab.
+      expect(screen.getByTestId("examples").textContent).toBe(examples.textContent);
     }
   });
 
-  // The Terms note (token, greedy decoding) moved to the glossary appendix on
-  // 2026-09-27; Glossary.test.tsx now holds the definitions. `checkpoint` was cut
-  // earlier as a term this reader could not use, and stays out.
-  it("carries no Terms note: the definitions live in the glossary", () => {
+  // Prompts only (handoff, section 2): no reply and no answer is shown.
+  it("shows prompts only: no model reply, no answer", () => {
     render(<Page5 />);
-    expect(screen.queryByText("Terms")).toBeNull();
-    expect(body()).not.toMatch(/A token is a word-piece/i);
-    expect(body()).not.toMatch(/one saved set of a model's trained numbers/i);
+    expect(screen.queryByRole("button", { name: /play/i })).toBeNull();
+    expect(screen.getByTestId("test-problem").textContent).not.toContain(PAGE5.testProblems[0].answer);
   });
 
-  // The step's premise: the classic way is to ask, and this model does not need
-  // asking. The figure is a look at what that produces.
-  it("says the model writes a chain unasked before showing the trace", () => {
-    render(<Page5 />);
-    expect(body().replace(/\u00a0/g, " ")).toContain(
-      "Today's models no longer need that phrase, because System 2 thinking is their default mode.",
-    );
-    expect(body().replace(/\u00a0/g, " ")).toContain(
-      "into System 1, answering immediately, and compare against System 2 results.",
-    );
-  });
-
-  // The trace and the prompt are listings of what a machine read and wrote, so
-  // they take the deck's one licensed non-serif face. The broadsheet serif is
-  // unreadable at 573 tokens of half-LaTeX.
-  it("sets the question and the revealed trace in mono", () => {
-    const { container } = render(<Page5 />);
-    expect(container.querySelector("p.font-code")?.textContent).toBe(tidyMath(PAGE5.figure1.question));
-    playAll();
-    const revealed = system2().getByText(tidyMath(BARE.steps[0].text)).closest("li");
-    expect(revealed?.className).toContain("font-code");
-  });
-
-  it("plays System 2's own output to a correct answer it was never asked to work for", () => {
-    render(<Page5 />);
-    playAll();
-    expect(system2().getByText(tidyMath(BARE.steps[0].text))).toBeInTheDocument();
-    expect(
-      system2().getByText(tidyMath(BARE.steps[BARE.steps.length - 1].text)),
-    ).toBeInTheDocument();
-    // Each reveal is an intermediate step: the instruction and its working together.
-    const eliminate = system2().getByText(/^First, eliminate the fraction/).closest("li")!;
-    expect(eliminate).toHaveTextContent(tidyMath(BARE_STEPS[2].parts[1]).trim());
-    expect(system2().getAllByRole("listitem")).toHaveLength(BARE_STEPS.length);
-    const s2 = system2().getByTestId("model-reply").textContent ?? "";
-    expect(s2).toContain(`Final answer: ${BARE.extractedAnswer}.`);
-    expect(s2).toContain(`${BARE.tokensGenerated} tokens · ${BARE_STEPS.length} steps`);
-  });
-
-  it("System 1 lands wrong in a single step, and Reset clears both replies", () => {
-    render(<Page5 />);
-    playAll();
-    const s1 = system1().getByTestId("model-reply").textContent ?? "";
-    expect(s1).toContain(`Final answer: ${BLURT.extractedAnswer}.`);
-    // The ✗ marks it wrong; the correction is not spelled out (author, 2026-09-27).
-    expect(s1).not.toContain("the answer is");
-    expect(s1).toContain(`${BLURT.tokensGenerated} tokens · 1 step`);
-    fireEvent.click(resetBtn());
-    expect(screen.queryByText(/Final answer/)).toBeNull();
-    expect(resetBtn()).toBeDisabled();
-    expect(playBtn()).toBeEnabled();
-  });
-
-  // The author took the suffix off the page on 2026-09-27: both sides show the
-  // question alone.
-  it("shows the question alone on both sides, without System 1's appended instruction", () => {
-    render(<Page5 />);
-    expect(body()).not.toContain(BLURT.promptAfter.trim());
+  // The page shows what the notebook sent: Problem / Solution blocks, examples first.
+  it("lays the prompt out as the notebook built it", () => {
+    const prompt = fewShotPrompt(PAGE5.testProblems[0]);
+    expect(prompt.startsWith(`Problem:\n${PAGE5.examples[0].problem}\n\nSolution:\n`)).toBe(true);
+    expect(prompt.endsWith(`Problem:\n${PAGE5.testProblems[0].problem}\n\nSolution:\n`)).toBe(true);
+    expect(PAGE5.examples.map((e) => e.level)).toEqual([2, 4, 3, 5, 1]);
   });
 });
 
-describe("Page 5, figure 2: the cost of working with no reasoning", () => {
-  // The author's paragraph (2026-09-27): the reasoning side with its denominator,
-  // every number read from the run.
-  it("gives the reasoning side, with the denominator, in the author's words", () => {
+describe("Page 5, figure 2: zero-shot against few-shot", () => {
+  it("opens on the denominator before the figure", () => {
     render(<Page5 />);
-    const F2 = PAGE5.figure2;
-    const intro = (screen.getByText(/One trace proves nothing/).textContent ?? "").replace(
-      /\u00a0/g,
-      " ",
-    );
-    expect(intro).toContain(
-      `One trace proves nothing, so both prompts were run across ${F2.bare.n} problems from the same difficulty band.`,
-    );
-    expect(intro).toContain("Below is that comparison: the same model, reasoning against non-reasoning.");
-    expect(intro).toContain(
-      `Reasoning, it writes a median of ${F2.bare.medianTokens} tokens of working and solves ${F2.bare.nCorrect} of the ${F2.bare.n}.`,
-    );
-    // The grid it pointed at became a table, so the "Each square below" sentence went too.
-    expect(intro).not.toContain("Each square below");
-    // The suffix is no longer shown in section 1, so the paragraph does not point back to it.
-    expect(intro).not.toContain("the same suffix you just read");
+    expect(N).toBe(495);
+    expect(body()).toContain(`One prompt proves nothing, so we ran it on the other ${N} MATH-500 problems, with base models of three sizes`);
   });
 
-  // Figure 2 is two stacked bars since 2026-09-27 (author), replacing a 2x2 matrix
-  // and, before that, a grid grouped by outcome that read as problem order.
-  it("stacks each system's 100 problems: solved by both, solved only by it, not solved", () => {
+  it("draws a bar per prompt per size, labelled with the run's accuracies and the lead in points", () => {
     render(<Page5 />);
-    const T = SUPPRESSION_TABLE;
-    const F2 = PAGE5.figure2;
-    const seg = (bar: string, key: string) =>
-      screen.getByTestId(`bar-${bar}-${key}`).querySelector("title")!.textContent;
-    expect(seg("System 1", "both")).toBe(`System 1: ${T.both} solved by both`);
-    expect(seg("System 1", "only")).toBe(`System 1: ${T.beforeOnly} solved only by this system`);
-    expect(seg("System 1", "unsolved")).toBe(`System 1: ${T.n - F2.blurt.nCorrect} not solved`);
-    expect(seg("System 2", "both")).toBe(`System 2: ${T.both} solved by both`);
-    expect(seg("System 2", "only")).toBe(`System 2: ${T.afterOnly} solved only by this system`);
-    expect(seg("System 2", "unsolved")).toBe(`System 2: ${T.n - F2.bare.nCorrect} not solved`);
-    expect(body()).toContain(`${F2.blurt.nCorrect} solved`);
-    expect(body()).toContain(`${F2.bare.nCorrect} solved`);
-    // The orientation guard: each bar's solved segments add up to its solve count.
-    expect(T.both + T.beforeOnly).toBe(F2.blurt.nCorrect);
-    expect(T.both + T.afterOnly).toBe(F2.bare.nCorrect);
-  });
-
-  it("carries a legend above and a centred title below, and labels every segment", () => {
-    render(<Page5 />);
-    const fig = screen.getByLabelText("The cost of working with no reasoning");
-    for (const name of ["solved by both", "solved only by this system", "not solved"]) {
-      expect(within(fig).getByText(name)).toBeInTheDocument();
+    for (const m of PAGE5.base) {
+      expect(screen.getByTestId(`bar-${m.size}-zero`)).toHaveTextContent(pct(m.zeroShot.accuracy, 1));
+      // Figure 3 reuses the few-shot bars, so figure 2's are the first of each.
+      expect(screen.getAllByTestId(`bar-${m.size}-few`)[0]).toHaveTextContent(pct(m.fewShot.accuracy, 1));
+      expect(screen.getAllByTestId(`row-${m.size}`)[0]).toHaveTextContent(`+${pts(m.fewShot.accuracy, m.zeroShot.accuracy)} pts`);
     }
-    const caption = fig.querySelector("figcaption")!;
-    // The title names the model and the benchmark (author, 2026-09-27).
-    expect(caption).toHaveTextContent(
-      "System 1 vs System 2: Qwen2.5-3B-Instruct on 100 MATH-500 problems (levels 4 and 5)",
+    expect([B15, B3, B7].map((m) => pct(m.zeroShot.accuracy, 1))).toEqual(["22.8%", "30.7%", "49.7%"]);
+    expect([B15, B3, B7].map((m) => pct(m.fewShot.accuracy, 1))).toEqual(["37.6%", "43.2%", "54.9%"]);
+  });
+
+  it("carries the run's ledger inside the figure card", () => {
+    render(<Page5 />);
+    const vitals = screen.getByLabelText("Zero-shot against few-shot").querySelector("dl")?.textContent ?? "";
+    expect(vitals).toContain("Qwen2.5 base · 1.5B, 3B, 7B · bf16");
+    expect(vitals).toContain("greedy · 1,024-token cap");
+    expect(vitals).toContain(`n = ${N} paired`);
+    expect(vitals).toContain("2,970 replies");
+  });
+
+  // Every number and comparison in the paragraph, against the data.
+  it("explains the gain in words the run supports", () => {
+    render(<Page5 />);
+    const gains = PAGE5.base.map((m) => pts(m.fewShot.accuracy, m.zeroShot.accuracy));
+    expect(gains).toEqual(["14.8", "12.5", "5.2"]);
+    const g = gains.map(Number);
+    expect(g.every((x) => x > 0)).toBe(true); // "help at every size"
+    expect(g[0] > g[1] && g[1] > g[2]).toBe(true); // "less as the model grows"
+    expect(body()).toContain(`by ${gains[0]}, ${gains[1]} and ${gains[2]} points, though less as the model grows`);
+    expect(body()).toContain(`the 7B answers ${B7.zeroShot.wroteCode} of the ${N} problems by writing a Python program`);
+    expect(B7.fewShot.wroteCode).toBe(0); // "After the examples, it never does."
+  });
+
+  it("cites the base model card beside the step", () => {
+    render(<Page5 />);
+    expect(screen.getByRole("link", { name: /Qwen2\.5-7B.*model card/ })).toHaveAttribute(
+      "href",
+      "https://huggingface.co/Qwen/Qwen2.5-7B",
     );
-    expect(caption.className).toContain("text-center");
-    expect(screen.queryByRole("table")).toBeNull();
-    // Every segment carries its count, the thin "3" and "4" included.
-    for (const bar of ["System 1", "System 2"]) {
-      for (const key of ["both", "only", "unsolved"]) {
-        expect(screen.getByTestId(`bar-${bar}-${key}`).querySelector("text")).not.toBeNull();
-      }
-    }
-  });
-
-  it("has no grid and no switch any more", () => {
-    render(<Page5 />);
-    expect(screen.queryByRole("group", { name: "Reasoning condition" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "System 1" })).toBeNull();
-    expect(body()).not.toContain("watch what leaves");
-  });
-
-  // Cut by the author 2026-09-27: the figure needs no reading instructions.
-  it("carries no how-to-read note beside the figure", () => {
-    render(<Page5 />);
-    expect(screen.queryByText("How to read it")).toBeNull();
-    expect(body()).not.toContain("count the squares that change colour");
   });
 });
 
-describe("Page 5, figure 3: the floor is flat", () => {
-  // The author's intro, 2026-09-27: why a third figure exists, in one sentence,
-  // with the two sizes named as the bars label them. No reading instructions.
-  it("says why a third figure exists, in one sentence", () => {
+describe("Page 5, figure 3: instruct models against few-shot base models", () => {
+  it("compares the instruct models with no examples against the base models with five, on the same problems", () => {
     render(<Page5 />);
-    expect(body()).toContain(
-      `Can a bigger model make up for skipping the steps? We ran the same ${PAGE5.figure2.bare.n} MATH-500 problems (levels 4 and 5) on a smaller (1.5B) and a larger (7B) model from the same family.`,
-    );
-    expect(body()).not.toContain("Watch where the left piece ends instead");
+    expect(body()).toContain(`The same ${N} problems, put to the instruct versions of the same three models with no examples, against the base models with five.`);
+    for (const [i, m] of PAGE5.instruct.entries()) {
+      expect(screen.getAllByTestId(`bar-${m.size}-few`)[1]).toHaveTextContent(pct(PAGE5.base[i].fewShot.accuracy, 1));
+      expect(screen.getByTestId(`bar-${m.size}-instruct`)).toHaveTextContent(pct(m.cot.accuracy, 1));
+    }
+  });
+});
+
+describe("Page 5, figure 4: the floor is flat", () => {
+  it("defines System 1 here as the final answer only, and checks the models complied", () => {
+    render(<Page5 />);
+    const floor = Math.floor(Math.min(...PAGE5.instruct.map((m) => m.direct.shortShare!)) * 100);
+    expect(floor).toBe(98);
+    expect(body()).toContain(`At least ${floor}% of their replies are then 40 tokens or fewer: System 1, answering immediately.`);
   });
 
-  it("compares named checkpoints and never puts size on an axis", () => {
-    render(<Page5 />);
-    const t = body().replace(/\u00a0/g, " ");
-    expect(t).toContain("Forced into System 1, the 7B solves 11%");
-    expect(t).toContain("In System 2, the 1.5B solves 22%");
-    // The emergence claim and the redrawn PaLM chart left the page with the
-    // premise. Our trend is smooth and monotone; a sign flip is not in it.
-    expect(body()).not.toMatch(/emergen/i);
-    expect(body()).not.toMatch(/PaLM/i);
-  });
-
-  // The author rewrote the two paragraphs under figure 3 into one on 2026-09-27
-  // and dropped the old hedge. What the sentence claims must still hold in the
-  // data: the 1.5B is under a quarter of the 7B, and it scores at least double.
   it("states the cross-model result, and its words match the data", () => {
     render(<Page5 />);
-    const t = body().replace(/\u00a0/g, " ");
-    expect(t).toContain(
-      "a model less than a quarter the size does twice as well, just by writing out its steps.",
+    const small = PAGE5.section4.small;
+    const large = PAGE5.section4.large;
+    expect(body()).toContain(`Forced into System 1, the 7B solves ${pct(large.direct.accuracy, 1)}.`);
+    expect(body()).toContain(`In System 2, the 1.5B solves ${pct(small.cot.accuracy, 1)}`);
+    expect(1.5 / 7).toBeLessThan(0.25); // "less than a quarter the size"
+    expect(small.cot.accuracy / large.direct.accuracy).toBeGreaterThanOrEqual(2); // "twice as well"
+    // "Every model in System 2 beats every model in System 1."
+    expect(Math.min(...PAGE5.instruct.map((m) => m.cot.accuracy))).toBeGreaterThan(
+      Math.max(...PAGE5.instruct.map((m) => m.direct.accuracy)),
     );
-    expect(t).toContain("Every model in System 2 beats every model in System 1.");
-    const { cross, models } = PAGE5.figure3;
-    expect(cross.param_ratio).toBeGreaterThan(4);
-    expect(cross.ungagged_small_accuracy).toBeGreaterThanOrEqual(2 * cross.gagged_large_accuracy);
-    // "Every model in System 2 beats every model in System 1": the weakest
-    // reasoning score is above the strongest non-reasoning one.
-    expect(Math.min(...models.map((m) => m.bareAccuracy))).toBeGreaterThan(
-      Math.max(...models.map((m) => m.blurtAccuracy)),
-    );
-    expect(body()).not.toContain("the flat floor is the finding");
-  });
-});
-
-// The close was three stat cards quoting one unnamed checkpoint, one of them a
-// ×95.5 "trade". It is now a scatter: six cells, every one of them named.
-describe("Page 5, figure 4: what each checkpoint wrote against what it solved", () => {
-  // Model size is encoded by marker shape with a legend (author, 2026-09-27;
-  // area-scaled dots came first), so the markers carry only the percentage.
-  it("marks each model with its own shape, with a legend, and labels only the percentage", () => {
-    render(<Page5 />);
-    const legend = screen.getByRole("list", { name: "Model size" });
-    const entries = Array.from(legend.querySelectorAll("li")).slice(1);
-    expect(entries.map((li) => [li.textContent, li.querySelector("[data-shape]")!.getAttribute("data-shape")])).toEqual([
-      ["1.5B", "circle"],
-      ["3B", "square"],
-      ["7B", "triangle"],
-    ]);
-
-    const chart = screen.getByLabelText(/Median tokens written against the share/);
-    const shapes = Array.from(chart.querySelectorAll("[data-shape]")).map((m) => m.getAttribute("data-shape"));
-    // Two markers per model, in model order, one per prompt.
-    expect(shapes).toEqual(["circle", "circle", "square", "square", "triangle", "triangle"]);
-
-    const labels = Array.from(chart.querySelectorAll("[data-shape] + text")).map((t) => t.textContent);
-    expect(labels).toHaveLength(6);
-    for (const l of labels) expect(l).toMatch(/^\d+%$/);
   });
 
-  // The prompt is named by annotations inside the plot, not by a colour key.
-  it("annotates each prompt's cluster inside the plot, with no colour key", () => {
+  it("prices the steps in tokens, rounded the way the sentence says", () => {
     render(<Page5 />);
-    expect(screen.queryByRole("list", { name: "Prompt" })).toBeNull();
-    const chart = screen.getByLabelText(/Median tokens written against the share/);
-    const note = (name: string) =>
-      Array.from(chart.querySelectorAll("text")).find((t) => t.textContent === name)!;
-    const blurt = note("non-reasoning");
-    const bare = note("reasoning");
-    expect(blurt.getAttribute("class")).toContain("fill-wrong");
-    expect(bare.getAttribute("class")).toContain("fill-compute");
-    // Inside the plot: below its top edge, and left of the reasoning cluster.
-    expect(Number(blurt.getAttribute("y"))).toBeGreaterThan(0);
-    expect(Number(bare.getAttribute("y"))).toBeGreaterThan(0);
-    expect(Number(blurt.getAttribute("x"))).toBeLessThan(Number(bare.getAttribute("x")));
+    const mean = PAGE5.instruct.reduce((a, m) => a + m.cot.medianTokens, 0) / 3;
+    expect(Math.round(mean / 10) * 10).toBe(450);
+    expect([I15, I3, I7].every((m) => m.direct.medianTokens === 6)).toBe(true);
+    expect(body()).toContain("a median of around 450 tokens per problem, against 6.");
   });
 
-  it("opens on the token cost, in words the run still supports", () => {
+  it("splits each checkpoint's bar at its non-reasoning accuracy, with no size axis", () => {
     render(<Page5 />);
-    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
-    expect(headings[3]).toBe("4. The (token) cost of a chain of thought");
-    expect(body().replace(/\u00a0/g, " ")).toContain(
-      "A chain of thought is not free. In System 2, every model below writes about 100× as many tokens as in System 1, a median of around 570 per problem against 5 or 6.",
-    );
-    for (const m of PAGE5.figure3.models) {
-      const ratio = m.bareMedianTokens / m.blurtMedianTokens;
-      expect(ratio).toBeGreaterThan(80);
-      expect(ratio).toBeLessThan(125);
+    for (const m of PAGE5.instruct) {
+      const row = screen.getByTestId(`floor-${m.label}`);
+      expect(row).toHaveTextContent(pct(m.cot.accuracy, 1));
+      expect(row).toHaveTextContent(`+${pts(m.cot.accuracy, m.direct.accuracy)}`);
     }
-  });
-
-  // The one estimated (not measured) claim on the page. "About a
-  // hundred-thousandth" must stay within a factor of two of the maths, and the
-  // margin note must say it is an estimate and cite where the inputs come from.
-  it("compares a million chains with training, as a labelled estimate", () => {
-    render(<Page5 />);
-    expect(body()).toContain(
-      "Even across a million problems, the 3B's chains of thought add up to about a hundred-thousandth of what it cost to train the model.",
-    );
-    expect(COST_ESTIMATE.millionChainsShare).toBeGreaterThan(0.5e-5);
-    expect(COST_ESTIMATE.millionChainsShare).toBeLessThan(2e-5);
-    const note = screen.getByText("An estimate").closest("aside")!;
-    expect(within(note).getByRole("link", { name: /Kaplan et al. 2020/ })).toBeInTheDocument();
-    expect(within(note).getByRole("link", { name: /Qwen2.5 Technical Report/ })).toBeInTheDocument();
-    expect(note.textContent).toContain("18 trillion tokens");
-  });
-
-  // Six dots, and the axes they sit on, in the chart's own accessible title:
-  // a reader on a screen reader gets the same six cells as a reader with eyes.
-  it("plots all three checkpoints under both prompts", () => {
-    render(<Page5 />);
-    const chart = screen.getByLabelText(/Median tokens written against the share/);
-    const title = chart.getAttribute("aria-label") ?? "";
-    for (const m of PAGE5.figure3.models) {
-      expect(title).toContain(`${m.blurtMedianTokens} tokens and ${Math.round(m.blurtAccuracy * 100)}%`);
-      expect(title).toContain(`${m.bareMedianTokens} tokens and ${Math.round(m.bareAccuracy * 100)}%`);
-    }
-    expect(title).toContain("Non-reasoning");
-    expect(title).toContain("Reasoning");
-  });
-
-  // The claim the page is not allowed to make. The caption that said so in words
-  // ("The dots are not joined…") was cut by the author on 2026-09-27; the markers
-  // themselves must still stand apart, with no line drawn from tokens to accuracy.
-  it("does not price the tokens, and never joins the markers", () => {
-    render(<Page5 />);
-    expect(body()).not.toContain("The dots are not joined");
-    const chart = screen.getByLabelText(/Median tokens written against the share/);
-    expect(chart.querySelector("polyline")).toBeNull();
-    expect(body()).not.toContain("the trade");
-    expect(body()).not.toContain(`×${PAGE5.close.token_multiple}`);
+    const chart = screen.getByRole("img", { name: /each bar split into the part it keeps non-reasoning/ });
+    expect(chart.getAttribute("aria-label")).not.toMatch(/parameters|scale/i);
+    const vitals = screen.getByLabelText("The floor is flat").querySelector("dl")?.textContent ?? "";
+    expect(vitals).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16");
   });
 });
 
 describe("Page 5: provenance and what the page may claim", () => {
-  // The pipeline's whole claim: a reader who doubts a figure re-derives it.
-  // The link sits at the top right of the page, on the act kicker's row.
-  it("links the author's notebook as a single .ipynb download, beside the title", () => {
+  it("links the two notebooks as one zip, beside the title", () => {
     render(<Page5 />);
-    const link = screen.getByRole("link", { name: /download the notebook/i });
-    expect(link).toHaveAttribute("href", "/notebooks/5_CoT.ipynb");
-    expect(link).toHaveTextContent("Download the notebook (ipynb, 0.9 MB)");
+    const link = screen.getByRole("link", { name: /download the notebooks/i });
+    expect(link).toHaveAttribute("href", "/notebooks/page-05-chain-of-thought.zip");
+    expect(link).toHaveTextContent("Download the notebooks (zip, 14 KB)");
     expect(link).toHaveAttribute("download");
-    // It shares the title's row, right after the page heading.
     expect(link.parentElement?.querySelector("h1")).toBe(screen.getByRole("heading", { level: 1 }));
   });
 
-  // The run's vitals moved off the top plate (jargon before the reader has met
-  // a token cap) into a ledger inside the close's figure card, where they have
-  // the card's width instead of a margin column that wrapped the run id.
-  it("names the instrument on the page, in a ledger inside the close's figure", () => {
-    render(<Page5 />);
-    const card = screen.getByLabelText("Tokens written against problems solved");
-    const vitals = card.querySelector("dl")?.textContent ?? "";
-    expect(vitals).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B");
-    expect(vitals).toContain("MATH-500 levels 4 and 5");
-    expect(vitals).toContain("900 generations");
-    // The run id and its date are in the downloadable notebook, not on the page:
-    // a 40-character hash is provenance no reader can check by eye, and pages 6
-    // and 7 already keep theirs off the page.
-    expect(body()).not.toContain(PAGE5.manifest.run_id);
-  });
-
-  // The instruments are cited where the page first names them (moved up from
-  // section 4 on 2026-09-27): the model card in step 1, the dataset in step 2.
-  it("cites the model card and the dataset, linked to Hugging Face", () => {
-    render(<Page5 />);
-    const qwen = screen.getByRole("link", { name: /Qwen2\.5-3B-Instruct.*model card/i });
-    expect(qwen).toHaveAttribute("href", "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct");
-    const math500 = screen.getByRole("link", { name: /MATH-500 dataset card/i });
-    expect(math500).toHaveAttribute(
-      "href",
-      "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
-    );
-
-    // Numbered in order of first appearance: the model card closes step 1's
-    // markers, the dataset opens step 2's.
-    const step1 = screen.getByText(/Today's models no longer need that phrase/).closest("p")!;
-    expect(Array.from(step1.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
-      "reference 3",
-    ]);
-    const step2 = screen.getByText(/One trace proves nothing/).closest("p")!;
-    expect(Array.from(step2.querySelectorAll("sup")).map((s) => s.textContent)).toEqual([
-      "reference 4",
-    ]);
-  });
-
-  // The "Also measured" note (the instruction null, the exemplar rungs) went
-  // back to the notebook on 2026-08-08: the page shows what the chain is worth,
-  // not how a model that already reasons responds to prompt engineering. Both
-  // findings stay measured, in the download.
-  it("does not carry the instruction and exemplar findings on the page", () => {
-    render(<Page5 />);
-    expect(body()).not.toContain("Also measured");
-    expect(body()).not.toContain("A bound, not a zero");
-    expect(body()).not.toContain("Worked examples in the prompt");
-  });
-
-  // The conditions are named plainly on every surface: buttons, cluster
-  // labels, aria titles, prose. The euphemisms may not come back.
   it("says reasoning and non-reasoning, never the old euphemisms", () => {
     render(<Page5 />);
     expect(body()).not.toMatch(/forbidden to reason/i);
@@ -499,61 +239,21 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(body()).not.toMatch(/allowed to reason/i);
   });
 
-  // The provenance plate ("one measurement of ours, not a redrawing...") was
-  // removed 2026-08-08 as jargon; the techniques stay cited, once each.
-  it("cites the techniques once, with no provenance plate above the steps", () => {
+  it("carries no provenance prose and no grader talk", () => {
     render(<Page5 />);
-    expect(screen.getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
-    expect(body()).not.toContain("one measurement of ours");
-    expect(body()).not.toContain("replay mode");
+    expect(body()).not.toMatch(/math_verify|sha256|notebook run|replay/i);
   });
 
-  // The three-paragraph footer these came from was doing the notebook's job, and
-  // the one line that survived it (a "Limits" note beside figure 3) was cut by
-  // the author on 2026-09-27. None of the old footer's caveats may come back.
-  it("carries no limits note and none of the old footer's caveats", () => {
-    render(<Page5 />);
-    expect(screen.queryByText("Limits")).toBeNull();
-    expect(body()).not.toContain("Three checkpoints are not a scaling law");
-    expect(body()).not.toContain("hit the token cap");
-    expect(body()).not.toContain("is one phrasing and another would move the floor");
-    expect(body()).not.toContain("never whether the working was sound");
-    expect(body()).not.toContain("reasoning-from-scratch");
-  });
-
-  // The close names the cost, with no page number (reviewer plan, CP2) and, since
-  // 2026-09-27, no handoff question.
   it("closes on the cost, with no page number and no handoff question", () => {
     render(<Page5 />);
     expect(body()).toContain(
       "A chain of thought makes a model better at hard problems, and it charges for that in tokens.",
     );
-    // The italic handoff question was cut by the author on 2026-09-27.
-    expect(body()).not.toContain("How many tokens does it actually need");
     expect(body()).not.toContain("Page 6 asks");
   });
 
-  // Deck-wide copy rule: no em dashes in rendered text.
   it("has no em dash anywhere in its copy", () => {
     render(<Page5 />);
     expect(body()).not.toContain("—");
-  });
-});
-
-// No streaming (author, 2026-09-27): one press of Play lands both whole replies
-// in the same render, with no timer involved.
-describe("Page 5 figure 1: no step-by-step animation", () => {
-  it("Play shows every step of both replies at once", () => {
-    render(<Page5 />);
-    playAll();
-    expect(system2().getAllByRole("listitem")).toHaveLength(BARE_STEPS.length);
-    expect(system1().getByTestId("model-reply").textContent).toContain(
-      `Final answer: ${BLURT.extractedAnswer}.`,
-    );
-    expect(system2().getByTestId("model-reply").textContent).toContain(
-      `Final answer: ${BARE.extractedAnswer}.`,
-    );
-    expect(playBtn()).toBeDisabled();
   });
 });

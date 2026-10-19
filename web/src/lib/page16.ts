@@ -67,7 +67,9 @@
  *      rule). The component test sweeps the DOM; this one catches it in the
  *      source, where the fix is obvious.
  */
-import { PAGE5 } from "./page05";
+// The retired page 5 run (100 level 4 and 5 problems), not the page's current runs:
+// its problems are page 6's, so the ladder can pair them.
+import { PAGE5 } from "./page05HowToReason";
 import { PAGE6, WAIT_TABLE, pLabel } from "./page06";
 import { PAGE7 } from "./page07";
 import { PAGE8 } from "./page08";
@@ -283,11 +285,11 @@ if (WAIT.before / WAIT.table.n !== PAGE5.figure2.bare.accuracy) {
  * the right one. Any page that gains a rung must gain an entry here, and NOTEBOOKS
  * throws rather than silently omitting a source.
  */
-/** A page's download: a zip bundle (notebook, harness, traces) unless `format` says the bare notebook. */
-type NotebookLink = { title: string; href: string; size: string; format?: "zip" | "ipynb" };
+/** A page's download: a zip bundle (notebook, harness, traces) unless `format` says a zip of notebooks only. */
+type NotebookLink = { title: string; href: string; size: string; format?: "zip" | "notebooks" };
 const NOTEBOOK_BY_PAGE: Record<number, NotebookLink> = {
-  // Page 5 links the author's single notebook since 2026-10-14, as page 5 itself does.
-  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/5_CoT.ipynb", size: "0.9 MB", format: "ipynb" },
+  // Page 5 links the author's two notebooks, base and instruct, in one zip, as page 5 itself does.
+  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/page-05-chain-of-thought.zip", size: "14 KB", format: "notebooks" },
   6: { title: "Thinking longer, and budget forcing", href: "/notebooks/page-06-thinking-longer.zip", size: "2.0 MB" },
   7: { title: "Sampling and voting", href: "/notebooks/page-07-frequency-voting.zip", size: "3.0 MB" },
   8: { title: "Best-of-N and the judges", href: "/notebooks/page-08-best-of-n.zip", size: "9.7 MB" },
