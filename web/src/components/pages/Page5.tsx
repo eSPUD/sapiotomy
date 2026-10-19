@@ -364,6 +364,10 @@ function PromptFigure({
         <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
           The five worked examples, in the few-shot prompt only
         </p>
+        <p data-testid="examples-caption" className="text-xs text-ink-muted">
+          One MATH-500 problem per level, with worked solutions written for this experiment,
+          expanding MATH&apos;s own solutions.
+        </p>
         <ExampleList />
       </div>
 
@@ -711,20 +715,15 @@ export function Page5() {
             &ldquo;{ZERO_SHOT_COT_TRIGGER}&rdquo;
             <Cite n={REF.kojima} />
           </p>
-          {/* The author's paragraph (2026-10-18), with two facts corrected: the three
-              models are not the series' smallest (it starts at 0.5B), and the worked
-              solutions are ours, expanding MATH's, not MATH's own. */}
+          {/* The author's paragraph (2026-10-18), cut to two sentences so the figure
+              carries the rest (author, same day): its column titles define zero-shot and
+              few-shot, its picker names the three models, and the examples' caption says
+              whose solutions they are. */}
           <p className="text-ink">
             To induce this process, it is common to put a few <strong>worked examples</strong> in
-            the prompt, each showing a clear, step-by-step approach to solving a problem. Below are
-            three such prompts, one for each test problem (easy, medium and hard), which we gave to
-            three base models of the Qwen2.5 series: 1.5B, 3B and 7B, pretrained only and never
-            tuned to follow instructions.
-            <Cite n={REF.qwen} /> Each prompt shows five MATH-500 problems, one for each level of
-            difficulty, with worked solutions written for this experiment, expanding MATH&apos;s own
-            solutions.
-            <Cite n={REF.math500} /> Each model answered every test problem twice: with the problem
-            alone (zero-shot), and after the examples (few-shot).
+            the prompt. Below, three base Qwen2.5 models
+            <Cite n={REF.qwen} /> answer MATH-500 problems
+            <Cite n={REF.math500} /> with and without them.
           </p>
           <PromptFigure
             active={active}

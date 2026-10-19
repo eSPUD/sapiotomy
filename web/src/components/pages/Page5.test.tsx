@@ -50,23 +50,28 @@ describe("Page 5, step 1: what a chain of thought is", () => {
   });
 
   // The worked solutions are ours: the page says so in the words the handoff allows.
+  // The worked solutions are ours; the figure's caption on the examples says so in the
+  // words the handoff allows.
   it("says the worked solutions were written for this experiment, expanding MATH's own", () => {
     render(<Page5 />);
-    expect(body()).toContain("worked solutions written for this experiment, expanding MATH's own solutions.");
+    expect(screen.getByTestId("examples-caption")).toHaveTextContent(
+      "worked solutions written for this experiment, expanding MATH's own solutions.",
+    );
     expect(body()).not.toMatch(/worked solutions from the MATH-500 dataset/i);
   });
 
-  // The author's paragraph: the three models are named, not called the series'
-  // smallest (Qwen2.5 starts at 0.5B), and zero-shot and few-shot are defined here,
-  // before section 2 uses them.
-  it("names the three base models and defines zero-shot and few-shot", () => {
+  // The author's paragraph, cut to two sentences (2026-10-18): the figure carries the
+  // rest. Its column titles define zero-shot and few-shot before section 2 uses them,
+  // and its picker names the three models.
+  it("keeps the paragraph short and lets the figure define the terms", () => {
     render(<Page5 />);
-    expect(body()).toContain(
-      "To induce this process, it is common to put a few worked examples in the prompt, each showing a clear, step-by-step approach to solving a problem.",
+    const para = screen.getByText(/To induce this process/).closest("p")!;
+    expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
+      "To induce this process, it is common to put a few worked examples in the prompt. Below, three base Qwen2.5 models answer MATH-500 problems with and without them.",
     );
-    expect(body()).toContain("three base models of the Qwen2.5 series: 1.5B, 3B and 7B");
     expect(body()).not.toMatch(/smallest models/i);
-    expect(body()).toContain("with the problem alone (zero-shot), and after the examples (few-shot).");
+    expect(screen.getByRole("region", { name: "Zero-shot: the problem alone" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Few-shot: after the five worked examples" })).toBeInTheDocument();
   });
 
   it("marks the techniques and the dataset, resolved in the References sidenote beside the step", () => {
