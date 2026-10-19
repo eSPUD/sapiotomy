@@ -68,6 +68,8 @@ export interface ArmStats {
   unboxed: number;
   /** Accuracy by MATH level, 1 to 5. */
   byLevel: { level: number; n: number; correct: number; accuracy: number }[];
+  /** Median length of the prompt the model read, in tokens, over the 495 problems. */
+  medianPromptTokens: number;
   /** Base replies that write a Python block (the few-shot run only). */
   wroteCode?: number;
   /** Replies of 40 tokens or fewer (the instruct run only). */
@@ -111,6 +113,7 @@ type RawArm = {
   truncated: number;
   unboxed: number;
   by_level: Record<string, { n: number; correct: number; accuracy: number | null }>;
+  median_prompt_tokens: number;
   wrote_code?: number;
   short_replies?: number;
   short_share?: number;
@@ -179,6 +182,7 @@ function arm(raw: RawArm, what: string): ArmStats {
     truncated: raw.truncated,
     unboxed: raw.unboxed,
     byLevel,
+    medianPromptTokens: raw.median_prompt_tokens ?? fail(`${what} has no prompt length`),
     wroteCode: raw.wrote_code,
     shortReplies: raw.short_replies,
     shortShare: raw.short_share,

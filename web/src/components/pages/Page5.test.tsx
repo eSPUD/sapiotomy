@@ -301,6 +301,21 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
       );
     }
   });
+
+  // Shashank's "efficiently": what each side reads before it answers, in the legend.
+  // The few-shot prompt carries the five examples (3,700 tokens of them); the
+  // instruct prompt carries none. One tokenizer, so the length is the same at every size.
+  it("gives each side's prompt length, from the notebooks' own counts", () => {
+    render(<Page5 />);
+    const few = PAGE5.base.map((m) => m.fewShot.medianPromptTokens);
+    const inst = PAGE5.instruct.map((m) => m.cot.medianPromptTokens);
+    expect(new Set(few).size).toBe(1);
+    expect(new Set(inst).size).toBe(1);
+    expect([few[0], inst[0]]).toEqual([3755, 88]);
+    const legend = screen.getByLabelText("Instruct models against few-shot base models").querySelector("ul")!;
+    expect(legend).toHaveTextContent("from: base model, five worked examples· prompt 3,755 tokens");
+    expect(legend).toHaveTextContent("to: instruct model, no examples· prompt 88 tokens");
+  });
 });
 
 describe("Page 5, figure 4: the floor is flat", () => {

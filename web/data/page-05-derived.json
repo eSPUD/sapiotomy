@@ -16,7 +16,9 @@
           "few_shot"
         ],
         "batch_size": "64, halved for a batch that ran out of memory",
-        "stop": "a new Problem:"
+        "stop": "a new Problem:",
+        "prompt_tokens": "few_shot_prompt_tokens.json",
+        "prompt_tokens_sha256": "a38f718d80a39af541b46db859011b6a0979d68134e2bd3592b6a4588ee48240"
       },
       "instruct": {
         "notebook": "page_5_instruct_reasoning.ipynb",
@@ -34,7 +36,9 @@
           "Direct"
         ],
         "batch_size": 128,
-        "system_prompt": "Qwen's default"
+        "system_prompt": "Qwen's default",
+        "prompt_tokens": "instruct_reasoning_prompt_tokens.json",
+        "prompt_tokens_sha256": "e46200f1cb93c39e47682ddf50e8a98bb9e129fae29d234756f0cea99173bbea"
       }
     },
     "solutions_sha256": "f41c196505cc241a78f372f60123f99a0c6b56f92880ecb5d338bab8b987bfa8",
@@ -52,7 +56,7 @@
       "excluded": "the five example problems"
     },
     "builder": "page_05_site_data.py",
-    "builder_sha256": "55fa8c902cabff04e23a6b5b520db41829cc59db032c471791a3da4ca964ac44"
+    "builder_sha256": "76b04bb4a40d9759b20b039a40d3487693f06b024ce6aec21d4e5f296e2121f8"
   },
   "section_1": {
     "model": {
@@ -231,7 +235,8 @@
               "median_tokens": 321
             }
           },
-          "wrote_code": 38
+          "wrote_code": 38,
+          "median_prompt_tokens": 55
         },
         "few_shot": {
           "n": 495,
@@ -272,7 +277,8 @@
               "median_tokens": 432
             }
           },
-          "wrote_code": 0
+          "wrote_code": 0,
+          "median_prompt_tokens": 3755
         }
       }
     },
@@ -321,7 +327,8 @@
               "median_tokens": 411
             }
           },
-          "wrote_code": 67
+          "wrote_code": 67,
+          "median_prompt_tokens": 55
         },
         "few_shot": {
           "n": 495,
@@ -362,7 +369,8 @@
               "median_tokens": 368
             }
           },
-          "wrote_code": 0
+          "wrote_code": 0,
+          "median_prompt_tokens": 3755
         }
       }
     },
@@ -411,7 +419,8 @@
               "median_tokens": 638
             }
           },
-          "wrote_code": 265
+          "wrote_code": 265,
+          "median_prompt_tokens": 55
         },
         "few_shot": {
           "n": 495,
@@ -452,7 +461,8 @@
               "median_tokens": 379
             }
           },
-          "wrote_code": 0
+          "wrote_code": 0,
+          "median_prompt_tokens": 3755
         }
       }
     },
@@ -502,7 +512,8 @@
             }
           },
           "short_replies": 4,
-          "short_share": 0.00808080808080808
+          "short_share": 0.00808080808080808,
+          "median_prompt_tokens": 88
         },
         "Direct": {
           "n": 495,
@@ -544,7 +555,8 @@
             }
           },
           "short_replies": 492,
-          "short_share": 0.9939393939393939
+          "short_share": 0.9939393939393939,
+          "median_prompt_tokens": 104
         }
       }
     },
@@ -594,7 +606,8 @@
             }
           },
           "short_replies": 0,
-          "short_share": 0.0
+          "short_share": 0.0,
+          "median_prompt_tokens": 88
         },
         "Direct": {
           "n": 495,
@@ -636,7 +649,8 @@
             }
           },
           "short_replies": 488,
-          "short_share": 0.9858585858585859
+          "short_share": 0.9858585858585859,
+          "median_prompt_tokens": 104
         }
       }
     },
@@ -686,7 +700,8 @@
             }
           },
           "short_replies": 1,
-          "short_share": 0.00202020202020202
+          "short_share": 0.00202020202020202,
+          "median_prompt_tokens": 88
         },
         "Direct": {
           "n": 495,
@@ -728,7 +743,8 @@
             }
           },
           "short_replies": 495,
-          "short_share": 1.0
+          "short_share": 1.0,
+          "median_prompt_tokens": 104
         }
       }
     }

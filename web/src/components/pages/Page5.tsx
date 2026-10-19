@@ -392,6 +392,8 @@ interface DotSeries {
   fill: string;
   stroke: string;
   arms: ArmStats[];
+  /** Shown after the label in the legend: figure 3 gives each prompt's length. */
+  note?: string;
 }
 
 const ROWS_W = 660;
@@ -484,6 +486,7 @@ function SeriesLegend({ series }: { series: DotSeries[] }) {
             <circle cx="6" cy="6" r="5" className={s.fill} />
           </svg>
           {k === 0 ? "from" : "to"}: {s.label}
+          {s.note ? <span className="font-mono tabular-nums text-ink">· {s.note}</span> : null}
         </li>
       ))}
     </ul>
@@ -507,9 +510,32 @@ const FIG2_SERIES: [DotSeries, DotSeries] = [
   { key: "few", label: "few-shot, five worked examples first", ...FEW_SHOT, arms: BASE.map((m) => m.fewShot) },
 ];
 
+/**
+ * The prompt each side of figure 3 reads, in tokens (median over the 495): the cost
+ * of the examples, which the instruct models do without. One tokenizer serves every
+ * size, so one number per prompt; the loader's data says so (equal across sizes).
+ */
+const promptTokens = (arms: ArmStats[]) => {
+  const ns = new Set(arms.map((a) => a.medianPromptTokens));
+  if (ns.size !== 1) throw new Error("page 5: a prompt's length differs across sizes");
+  return `prompt ${arms[0].medianPromptTokens.toLocaleString("en-GB")} tokens`;
+};
+
 const FIG3_SERIES: [DotSeries, DotSeries] = [
-  { key: "few", label: "base model, five worked examples", ...FEW_SHOT, arms: BASE.map((m) => m.fewShot) },
-  { key: "instruct", label: "instruct model, no examples", ...INSTRUCT_REASONING, arms: INSTRUCT.map((m) => m.cot) },
+  {
+    key: "few",
+    label: "base model, five worked examples",
+    ...FEW_SHOT,
+    arms: BASE.map((m) => m.fewShot),
+    note: promptTokens(BASE.map((m) => m.fewShot)),
+  },
+  {
+    key: "instruct",
+    label: "instruct model, no examples",
+    ...INSTRUCT_REASONING,
+    arms: INSTRUCT.map((m) => m.cot),
+    note: promptTokens(INSTRUCT.map((m) => m.cot)),
+  },
 ];
 
 const describeSeries = (s: DotSeries) => SIZES.map((size, i) => `${size} ${pct(s.arms[i].accuracy, 1)}`).join(", ");

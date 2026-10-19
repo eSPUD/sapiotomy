@@ -27,6 +27,11 @@ NOTEBOOKS = HERE.parent
 
 FEW_SHOT_TRACES = NOTEBOOKS / "traces" / "page_5" / "few_shot.jsonl"
 INSTRUCT_TRACES = NOTEBOOKS / "traces" / "page_5" / "instruct_reasoning.jsonl"
+# Each notebook's prompts cell saves every prompt's length as prompt_tokens.json. For the
+# runs above, those cells were run again on CPU (tokenizers only, no model), since the
+# runs predate the cell; the prompts are the same ones the runs sent.
+FEW_SHOT_PROMPT_TOKENS = NOTEBOOKS / "traces" / "page_5" / "few_shot_prompt_tokens.json"
+INSTRUCT_PROMPT_TOKENS = NOTEBOOKS / "traces" / "page_5" / "instruct_reasoning_prompt_tokens.json"
 SOLUTIONS = NOTEBOOKS / "page_5_few_shot_solutions.json"
 MATH500 = NOTEBOOKS / "data" / "math500_test.json"     # HuggingFaceH4/MATH-500, test split, same order
 
@@ -135,17 +140,30 @@ def build(out_path):
         assert (r["ground_truth"], r["difficulty_level"]) == (rows[u]["answer"], rows[u]["level"]), \
             f"instruct run: {u} differs from MATH-500"
 
+    # Every prompt's length in tokens, as each notebook's prompts cell saves it
+    # (prompt_tokens.json). The same tokenizer serves every size, so a prompt's length
+    # depends on the prompt alone.
+    few_prompt = json.loads(FEW_SHOT_PROMPT_TOKENS.read_text(encoding="utf-8"))
+    inst_prompt = json.loads(INSTRUCT_PROMPT_TOKENS.read_text(encoding="utf-8"))
+    assert {a: set(v) for a, v in few_prompt.items()} == {a: set(test_ids) for a in ("zero_shot", "few_shot")}, \
+        "few-shot prompt lengths do not cover the 495 problems in both arms"
+    assert {m: set(v) for m, v in inst_prompt.items()} == {m: set(rows) for m in ("CoT", "Direct")}, \
+        "instruct prompt lengths do not cover the 500 problems in both modes"
+    median_prompt = lambda lengths: statistics.median(lengths[u] for u in test_ids)
+
     def few_tally(s, arm):
         return tally([few[(BASE[s], arm, u)] for u in test_ids],
                      correct=lambda r: r["correct"], tokens=lambda r: r["tokens"],
                      truncated=lambda r: r["truncated"], unboxed=lambda r: not r["boxed"],
                      level=lambda r: r["level"],
-                     extra=lambda rs: {"wrote_code": sum(r["wrote_code"] for r in rs)})
+                     extra=lambda rs: {"wrote_code": sum(r["wrote_code"] for r in rs),
+                                       "median_prompt_tokens": median_prompt(few_prompt[arm])})
 
     def inst_tally(s, mode):
         def short(rs):
             k = sum(r["generated_tokens_count"] <= SHORT_REPLY for r in rs)
-            return {"short_replies": k, "short_share": k / len(rs)}
+            return {"short_replies": k, "short_share": k / len(rs),
+                    "median_prompt_tokens": median_prompt(inst_prompt[mode])}
         return tally([inst[(INSTRUCT[s], mode, u)] for u in test_ids],
                      correct=lambda r: r["is_correct"], tokens=lambda r: r["generated_tokens_count"],
                      truncated=lambda r: r["truncated"],
@@ -203,12 +221,16 @@ def build(out_path):
                              "traces_sha256": sha256(FEW_SHOT_TRACES), "records": len(few),
                              "models": [BASE[s] for s in SIZES], "arms": ["zero_shot", "few_shot"],
                              "batch_size": "64, halved for a batch that ran out of memory",
-                             "stop": "a new Problem:"},
+                             "stop": "a new Problem:",
+                             "prompt_tokens": FEW_SHOT_PROMPT_TOKENS.name,
+                             "prompt_tokens_sha256": sha256(FEW_SHOT_PROMPT_TOKENS)},
                 "instruct": {"notebook": "page_5_instruct_reasoning.ipynb", "ran_as_commit": "2f7bba7",
                              "traces": INSTRUCT_TRACES.name, "traces_sha256": sha256(INSTRUCT_TRACES),
                              "records": len(inst), "models": [f"Qwen/{INSTRUCT[s]}" for s in SIZES],
                              "modes": ["CoT", "Direct"], "batch_size": 128,
-                             "system_prompt": "Qwen's default"},
+                             "system_prompt": "Qwen's default",
+                             "prompt_tokens": INSTRUCT_PROMPT_TOKENS.name,
+                             "prompt_tokens_sha256": sha256(INSTRUCT_PROMPT_TOKENS)},
             },
             "solutions_sha256": SOLUTIONS_SHA256,
             "decoding": {"strategy": "greedy", "dtype": "bf16", "max_new_tokens": 1024,
