@@ -53,14 +53,36 @@ describe("Page 5, step 1: what a chain of thought is", () => {
   it("says the worked solutions were written for this experiment, expanding MATH's own", () => {
     render(<Page5 />);
     expect(body()).toContain("worked solutions written for this experiment, expanding MATH's own solutions.");
+    expect(body()).not.toMatch(/worked solutions from the MATH-500 dataset/i);
+  });
+
+  // The author's paragraph: the three models are named, not called the series'
+  // smallest (Qwen2.5 starts at 0.5B), and zero-shot and few-shot are defined here,
+  // before section 2 uses them.
+  it("names the three base models and defines zero-shot and few-shot", () => {
+    render(<Page5 />);
+    expect(body()).toContain(
+      "To induce this process, it is common to put a few worked examples in the prompt, each showing a clear, step-by-step approach to solving a problem.",
+    );
+    expect(body()).toContain("three base models of the Qwen2.5 series: 1.5B, 3B and 7B");
+    expect(body()).not.toMatch(/smallest models/i);
+    expect(body()).toContain("with the problem alone (zero-shot), and after the examples (few-shot).");
   });
 
   it("marks the techniques and the dataset, resolved in the References sidenote beside the step", () => {
     render(<Page5 />);
     const def = screen.getByText(/A common way to ask a model for one/).closest("p")!;
     expect(Array.from(def.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 1", "reference 2"]);
-    const shown = screen.getByText(/The original way is to show the model/).closest("p")!;
+    const shown = screen.getByText(/To induce this process/).closest("p")!;
     expect(Array.from(shown.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 3", "reference 4"]);
+    // Numbered in order of appearance: the model card, then the dataset.
+    const entries = Array.from(screen.getAllByText("References")[0].closest("aside")!.querySelectorAll("a"));
+    expect(entries.map((a) => a.getAttribute("href"))).toEqual([
+      "https://arxiv.org/abs/2201.11903",
+      "https://arxiv.org/abs/2205.11916",
+      "https://huggingface.co/Qwen/Qwen2.5-7B",
+      "https://huggingface.co/datasets/HuggingFaceH4/MATH-500",
+    ]);
     const refs = screen.getAllByText("References")[0].closest("aside")!;
     expect(within(refs).getByRole("link", { name: /Wei et al. 2022/ })).toBeInTheDocument();
     expect(within(refs).getByRole("link", { name: /Kojima et al. 2022/ })).toBeInTheDocument();
