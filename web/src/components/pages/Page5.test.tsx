@@ -35,8 +35,8 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
     expect(headings).toEqual([
       "1. Chain of Thought (CoT): System 2, written down",
-      "2. Zero-shot versus few-shot on MATH-500 problems",
-      "3. Instruct models, with no examples",
+      "2. At inference time: zero-shot versus few-shot",
+      "3. In post-training: instruct models, with no examples",
       "4. Smaller reasoning models do better than larger non-reasoning models",
     ]);
   });

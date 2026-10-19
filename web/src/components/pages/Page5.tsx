@@ -743,7 +743,9 @@ export function Page5() {
 
         {/* Step 2: figure first, then the prose explaining Shashank's sentence. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. Zero-shot versus few-shot on MATH-500 problems</h2>
+          {/* Headings 2 and 3 name Shashank's two solutions: one at inference time, one
+              in post-training (author, 2026-10-18). */}
+          <h2 className="text-xl font-semibold text-ink">2. At inference time: zero-shot versus few-shot</h2>
           <p className="text-ink-muted">
             {/* The old section 2's opening sentence, with the new run's denominator. */}
             One trace proves nothing, so both prompts were run across the other {N} MATH-500
@@ -793,7 +795,7 @@ export function Page5() {
             for a discussion with the author (handoff, section 4); do not draft it
             unasked. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Instruct models, with no examples</h2>
+          <h2 className="text-xl font-semibold text-ink">3. In post-training: instruct models, with no examples</h2>
           <p className="text-ink-muted">
             The same {N} problems, put to the instruct versions of the same three models with no
             examples, against the base models with five.
