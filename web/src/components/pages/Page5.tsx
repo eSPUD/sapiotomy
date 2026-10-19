@@ -385,74 +385,88 @@ function PromptFigure({
 
 /* ------------------------------------------------------- figures 2 and 3 */
 
-/** One prompt or model, a bar per size. */
-interface BarSeries {
+/** One prompt or model: a dot per size. */
+interface DotSeries {
   key: string;
   label: string;
   fill: string;
+  stroke: string;
   arms: ArmStats[];
 }
 
-const BARS_W = 660;
-const BARS_H = 250;
-const BARS_MARGIN = { top: 8, right: 92, bottom: 40, left: 52 };
-const BARS_INNER_W = BARS_W - BARS_MARGIN.left - BARS_MARGIN.right;
-const BARS_INNER_H = BARS_H - BARS_MARGIN.top - BARS_MARGIN.bottom;
+const ROWS_W = 660;
+const ROWS_H = 176;
+const ROWS_MARGIN = { top: 8, right: 76, bottom: 40, left: 52 };
+const ROWS_INNER_W = ROWS_W - ROWS_MARGIN.left - ROWS_MARGIN.right;
+const ROWS_INNER_H = ROWS_H - ROWS_MARGIN.top - ROWS_MARGIN.bottom;
+const DOT_R = 5.5;
 
 /**
- * Figures 2 and 3: for each model size, one bar per series, the share of the same
- * 495 problems solved. The right margin carries the second series' lead over the
- * first, in points. Sizes are rows, not an axis: three sizes are not a trend.
+ * Figures 2 and 3 as dot-and-arrow rows (author, 2026-10-18, replacing grouped
+ * bars that repeated each other): one row per model size, a dot where it starts
+ * (the first series), an arrow to where it ends (the second), the share of the
+ * same 495 problems solved at each end, and the gain in points at the right.
+ * Sizes are rows, not an axis: three sizes are not a trend.
  */
-function GroupedBars({ title, series, sizes }: { title: string; series: [BarSeries, BarSeries]; sizes: string[] }) {
-  const x = (accuracy: number) => accuracy * BARS_INNER_W;
-  const rowH = BARS_INNER_H / sizes.length;
-  const barH = 20;
-  const gap = 4;
+function ArrowRows({ id, title, series, sizes }: { id: string; title: string; series: [DotSeries, DotSeries]; sizes: string[] }) {
+  const x = (accuracy: number) => Math.round(accuracy * ROWS_INNER_W * 100) / 100;
+  const rowH = ROWS_INNER_H / sizes.length;
+  const [from, to] = series;
+  const arrowId = `${id}-arrow`;
   return (
     <ChartFrame
       title={title}
-      width={BARS_W}
-      height={BARS_H}
-      margin={BARS_MARGIN}
+      width={ROWS_W}
+      height={ROWS_H}
+      margin={ROWS_MARGIN}
       xLabel={`percentage of the same ${N} problems solved`}
     >
+      <defs>
+        <marker id={arrowId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" className={to.fill} />
+        </marker>
+      </defs>
       {[0, 25, 50, 75, 100].map((t) => (
         <g key={t}>
-          <line x1={x(t / 100)} x2={x(t / 100)} y1={0} y2={BARS_INNER_H} className="stroke-grid" strokeWidth={1} />
-          <text x={x(t / 100)} y={BARS_INNER_H + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
+          <line x1={x(t / 100)} x2={x(t / 100)} y1={0} y2={ROWS_INNER_H} className="stroke-grid" strokeWidth={1} />
+          <text x={x(t / 100)} y={ROWS_INNER_H + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
             {t}
           </text>
         </g>
       ))}
       {sizes.map((size, i) => {
-        const top = i * rowH + rowH / 2 - barH - gap / 2;
-        const [a, b] = series.map((s) => s.arms[i]);
+        const y = i * rowH + rowH / 2;
+        const a = from.arms[i].accuracy;
+        const b = to.arms[i].accuracy;
         return (
           <g key={size} data-testid={`row-${size}`}>
-            <text x={-10} y={top + barH + gap / 2 + 4} textAnchor="end" className="fill-ink text-sm font-semibold">
+            <text x={-10} y={y + 5} textAnchor="end" className="fill-ink text-sm font-semibold">
               {size}
             </text>
-            {series.map((s, k) => {
-              const y = top + k * (barH + gap);
-              const acc = s.arms[i].accuracy;
-              return (
-                <g key={s.key} data-testid={`bar-${size}-${s.key}`}>
-                  <rect x={0} y={y} width={x(acc)} height={barH} className={s.fill}>
-                    <title>{`${size}, ${s.label}: ${pct(acc, 1)}`}</title>
-                  </rect>
-                  <text x={x(acc) + 6} y={y + barH / 2 + 4} className="fill-ink text-xs tabular-nums">
-                    {pct(acc, 1)}
-                  </text>
-                </g>
-              );
-            })}
-            <text
-              x={BARS_INNER_W + 10}
-              y={top + barH + gap / 2 + 4}
-              className="fill-ink text-xs font-semibold tabular-nums"
-            >
-              {`${pts(b.accuracy, a.accuracy) >= 0 ? "+" : ""}${ptsLabel(b.accuracy, a.accuracy)} pts`}
+            <line
+              x1={x(a) + DOT_R + 1}
+              x2={x(b) - DOT_R - 1}
+              y1={y}
+              y2={y}
+              className={to.stroke}
+              strokeWidth={2}
+              markerEnd={`url(#${arrowId})`}
+            />
+            {[
+              { s: from, acc: a, labelX: x(a) - DOT_R - 5, anchor: "end" as const },
+              { s: to, acc: b, labelX: x(b) + DOT_R + 5, anchor: "start" as const },
+            ].map(({ s, acc, labelX, anchor }) => (
+              <g key={s.key} data-testid={`dot-${size}-${s.key}`}>
+                <circle cx={x(acc)} cy={y} r={DOT_R} className={`${s.fill} stroke-surface`} strokeWidth={1.5}>
+                  <title>{`${size}, ${s.label}: ${pct(acc, 1)}`}</title>
+                </circle>
+                <text x={labelX} y={y + 4} textAnchor={anchor} className="fill-ink text-xs tabular-nums">
+                  {pct(acc, 1)}
+                </text>
+              </g>
+            ))}
+            <text x={ROWS_INNER_W + 10} y={y + 4} className="fill-ink text-xs font-semibold tabular-nums">
+              {`${pts(b, a) >= 0 ? "+" : ""}${ptsLabel(b, a)} pts`}
             </text>
           </g>
         );
@@ -461,15 +475,15 @@ function GroupedBars({ title, series, sizes }: { title: string; series: [BarSeri
   );
 }
 
-function SeriesLegend({ series }: { series: BarSeries[] }) {
+function SeriesLegend({ series }: { series: DotSeries[] }) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-      {series.map((s) => (
+      {series.map((s, k) => (
         <li key={s.key} className="flex items-center gap-1.5">
           <svg aria-hidden="true" width="12" height="12">
-            <rect width="12" height="12" rx="2" className={s.fill} />
+            <circle cx="6" cy="6" r="5" className={s.fill} />
           </svg>
-          {s.label}
+          {k === 0 ? "from" : "to"}: {s.label}
         </li>
       ))}
     </ul>
@@ -484,20 +498,21 @@ const SIZES = BASE.map((m) => m.size);
  * few-shot (figures 1 to 3), Clay orange for instruct models reasoning (figures 3
  * and 4). Crimson is dark so it stays apart from Clay for colour-blind readers.
  */
-const FEW_SHOT_FILL = "fill-wrong";
-const BASELINE_FILL = "fill-crimson";
+const FEW_SHOT = { fill: "fill-wrong", stroke: "stroke-wrong" };
+const BASELINE = { fill: "fill-crimson", stroke: "stroke-crimson" };
+const INSTRUCT_REASONING = { fill: "fill-compute", stroke: "stroke-compute" };
 
-const FIG2_SERIES: [BarSeries, BarSeries] = [
-  { key: "zero", label: "zero-shot: the problem alone", fill: BASELINE_FILL, arms: BASE.map((m) => m.zeroShot) },
-  { key: "few", label: "few-shot: five worked examples first", fill: FEW_SHOT_FILL, arms: BASE.map((m) => m.fewShot) },
+const FIG2_SERIES: [DotSeries, DotSeries] = [
+  { key: "zero", label: "zero-shot, the problem alone", ...BASELINE, arms: BASE.map((m) => m.zeroShot) },
+  { key: "few", label: "few-shot, five worked examples first", ...FEW_SHOT, arms: BASE.map((m) => m.fewShot) },
 ];
 
-const FIG3_SERIES: [BarSeries, BarSeries] = [
-  { key: "few", label: "base model, five worked examples", fill: FEW_SHOT_FILL, arms: BASE.map((m) => m.fewShot) },
-  { key: "instruct", label: "instruct model, no examples", fill: "fill-compute", arms: INSTRUCT.map((m) => m.cot) },
+const FIG3_SERIES: [DotSeries, DotSeries] = [
+  { key: "few", label: "base model, five worked examples", ...FEW_SHOT, arms: BASE.map((m) => m.fewShot) },
+  { key: "instruct", label: "instruct model, no examples", ...INSTRUCT_REASONING, arms: INSTRUCT.map((m) => m.cot) },
 ];
 
-const describeSeries = (s: BarSeries) => SIZES.map((size, i) => `${size} ${pct(s.arms[i].accuracy, 1)}`).join(", ");
+const describeSeries = (s: DotSeries) => SIZES.map((size, i) => `${size} ${pct(s.arms[i].accuracy, 1)}`).join(", ");
 
 /* ------------------------------------------------------------------ figure 4 */
 
@@ -745,8 +760,9 @@ export function Page5() {
             />
             <figure className="flex flex-col gap-2">
               <SeriesLegend series={FIG2_SERIES} />
-              <GroupedBars
-                title={`Share of the same ${N} MATH-500 problems solved by three base Qwen2.5 models. Zero-shot: ${describeSeries(FIG2_SERIES[0])}. Few-shot: ${describeSeries(FIG2_SERIES[1])}.`}
+              <ArrowRows
+                id="p5-fig2"
+                title={`Share of the same ${N} MATH-500 problems solved by three base Qwen2.5 models, from zero-shot to few-shot. Zero-shot: ${describeSeries(FIG2_SERIES[0])}. Few-shot: ${describeSeries(FIG2_SERIES[1])}.`}
                 series={FIG2_SERIES}
                 sizes={SIZES}
               />
@@ -789,8 +805,9 @@ export function Page5() {
             </div>
             <figure className="flex flex-col gap-2">
               <SeriesLegend series={FIG3_SERIES} />
-              <GroupedBars
-                title={`Share of the same ${N} MATH-500 problems solved. Base models with five worked examples: ${describeSeries(FIG3_SERIES[0])}. Instruct models with no examples: ${describeSeries(FIG3_SERIES[1])}.`}
+              <ArrowRows
+                id="p5-fig3"
+                title={`Share of the same ${N} MATH-500 problems solved, from base models with five worked examples to instruct models with none. Base, few-shot: ${describeSeries(FIG3_SERIES[0])}. Instruct, no examples: ${describeSeries(FIG3_SERIES[1])}.`}
                 series={FIG3_SERIES}
                 sizes={SIZES}
               />

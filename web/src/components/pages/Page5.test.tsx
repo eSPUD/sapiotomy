@@ -225,13 +225,18 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
     expect(body()).toContain(`One trace proves nothing, so both prompts were run across the other ${N} MATH-500 problems, with base models of three sizes.`);
   });
 
-  it("draws a bar per prompt per size, labelled with the run's accuracies and the lead in points", () => {
+  // Dot-and-arrow rows (author, 2026-10-18): a dot where each model starts, an arrow
+  // to where it ends, both labelled, and the gain at the right. No bars.
+  it("draws one row per size, a dot at each end and an arrow between, labelled with the run's numbers", () => {
     render(<Page5 />);
+    for (const row of screen.getAllByTestId(/^row-/)) expect(row.querySelector("rect")).toBeNull();
     for (const m of PAGE5.base) {
-      expect(screen.getByTestId(`bar-${m.size}-zero`)).toHaveTextContent(pct(m.zeroShot.accuracy, 1));
-      // Figure 3 reuses the few-shot bars, so figure 2's are the first of each.
-      expect(screen.getAllByTestId(`bar-${m.size}-few`)[0]).toHaveTextContent(pct(m.fewShot.accuracy, 1));
-      expect(screen.getAllByTestId(`row-${m.size}`)[0]).toHaveTextContent(`+${pts(m.fewShot.accuracy, m.zeroShot.accuracy)} pts`);
+      // Figure 3 starts from the few-shot dots too, so figure 2's are the first of each.
+      expect(screen.getByTestId(`dot-${m.size}-zero`)).toHaveTextContent(pct(m.zeroShot.accuracy, 1));
+      expect(screen.getAllByTestId(`dot-${m.size}-few`)[0]).toHaveTextContent(pct(m.fewShot.accuracy, 1));
+      const row = screen.getAllByTestId(`row-${m.size}`)[0];
+      expect(row).toHaveTextContent(`+${pts(m.fewShot.accuracy, m.zeroShot.accuracy)} pts`);
+      expect(row.querySelector("line")?.getAttribute("marker-end")).toBe("url(#p5-fig2-arrow)");
     }
     expect([B15, B3, B7].map((m) => pct(m.zeroShot.accuracy, 1))).toEqual(["22.8%", "30.7%", "49.7%"]);
     expect([B15, B3, B7].map((m) => pct(m.fewShot.accuracy, 1))).toEqual(["37.6%", "43.2%", "54.9%"]);
@@ -263,11 +268,15 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
   // instruct reasoning; few-shot keeps its blue from figure 2 into figure 3.
   it("colours the baseline crimson, few-shot blue and instruct reasoning orange", () => {
     render(<Page5 />);
-    const fill = (id: string, k = 0) => screen.getAllByTestId(id)[k].querySelector("rect")?.getAttribute("class");
-    expect(fill("bar-1.5B-zero")).toContain("fill-crimson");
-    expect(fill("bar-1.5B-few", 0)).toContain("fill-wrong");
-    expect(fill("bar-1.5B-few", 1)).toContain("fill-wrong");
-    expect(fill("bar-1.5B-instruct")).toContain("fill-compute");
+    const fill = (id: string, k = 0) => screen.getAllByTestId(id)[k].querySelector("circle")?.getAttribute("class");
+    expect(fill("dot-1.5B-zero")).toContain("fill-crimson");
+    expect(fill("dot-1.5B-few", 0)).toContain("fill-wrong");
+    expect(fill("dot-1.5B-few", 1)).toContain("fill-wrong");
+    expect(fill("dot-1.5B-instruct")).toContain("fill-compute");
+    // Each arrow takes the colour of where it ends.
+    const arrow = (k: number) => screen.getAllByTestId("row-1.5B")[k].querySelector("line")?.getAttribute("class");
+    expect(arrow(0)).toContain("stroke-wrong");
+    expect(arrow(1)).toContain("stroke-compute");
     const floor = screen.getByTestId(`floor-${I15.label}`).querySelectorAll("rect");
     expect(floor[0].getAttribute("class")).toContain("fill-crimson");
     expect(floor[1].getAttribute("class")).toContain("fill-compute");
@@ -279,8 +288,11 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
     render(<Page5 />);
     expect(body()).toContain(`The same ${N} problems, put to the instruct versions of the same three models with no examples, against the base models with five.`);
     for (const [i, m] of PAGE5.instruct.entries()) {
-      expect(screen.getAllByTestId(`bar-${m.size}-few`)[1]).toHaveTextContent(pct(PAGE5.base[i].fewShot.accuracy, 1));
-      expect(screen.getByTestId(`bar-${m.size}-instruct`)).toHaveTextContent(pct(m.cot.accuracy, 1));
+      expect(screen.getAllByTestId(`dot-${m.size}-few`)[1]).toHaveTextContent(pct(PAGE5.base[i].fewShot.accuracy, 1));
+      expect(screen.getByTestId(`dot-${m.size}-instruct`)).toHaveTextContent(pct(m.cot.accuracy, 1));
+      expect(screen.getAllByTestId(`row-${m.size}`)[1]).toHaveTextContent(
+        `+${pts(m.cot.accuracy, PAGE5.base[i].fewShot.accuracy)} pts`,
+      );
     }
   });
 });
