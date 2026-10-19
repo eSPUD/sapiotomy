@@ -166,7 +166,7 @@ author whether `notebooks/page_05_how_to_reason.ipynb` (the retired run) stays.
 | `act-2-redesign` (local `a86a068`, 2 commits ahead of `origin`) | fully contained in `main` | |
 | `main` (`6129bc9`, latest page 5 work up to 2026-10-14) | | 54 commits ahead |
 | `dev/page-6-refinement` (local `ff5e7f3`; `origin` `a64b634` is 4 commits further) | both fully contained in `main` | +8 / +12 |
-| `dev/page-7-refinement` (`cd138d2`, same as `origin`) | **9 commits not in `main`**; a trial merge with `main` is clean | +55 |
+| `dev/page-7-refinement` (`586a464`, pushed) | **10 commits not in `main`**; a trial merge of `cd138d2` with `main` was clean | +56 |
 | `wip/page-7-section-4` | 6 not in `main`; rebased copies of page 7 commits plus one "local, not for push" WIP that looks superseded by `bd6eed4` | |
 | `origin/dev/page-8-refinement` | 19 not in `main`; merges an older page 7 | |
 | this branch, `claude/page-5-rework-new-data-556ad7` | `main` + the page 5 commits | |
@@ -176,8 +176,7 @@ So `act-2-redesign` holds neither the latest page 5 nor page 6 work; `main` does
 then `dev/page-5-refinement` branched from it. Confirm the exact steps with the author before any
 merge; never merge into `main`.
 
-**Uncommitted page 7 work on the Linux machine.** The worktree
-`.claude/worktrees/relaxed-northcutt-81c3b7` (on `dev/page-7-refinement`) holds 6 modified files,
-+1,039 / −302 lines (`Page7.tsx`, `Page7.test.tsx`, `page07.ts`, `page-07-heatmap.json`,
-`page_07_heatmap.py`, `page_07_temperature_sweep.py`), last edited 2026-10-15. The Mac cannot see
-it until it is committed and pushed from the Linux machine.
+**Page 7's uncommitted work is now committed and pushed** as `586a464` on
+`dev/page-7-refinement` (section 3 as a line per temperature from the sweep; work in progress from
+2026-10-15, committed as found; page 7's tests passed). This branch is pushed as
+`origin/claude/page-5-rework-new-data-556ad7`.
