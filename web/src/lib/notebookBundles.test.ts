@@ -36,6 +36,7 @@ const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
  * carries. `siteData` names the script that builds `derived.json` from the
  * notebook's `results.json`, on pages whose notebook stops at its results.
  */
+
 const PAGES = [
   // Page 5 no longer links this bundle: since 2026-10-14 pages 5 and 16 offer the
   // author's single notebook, 5_CoT.ipynb. The bundle stays on disk because
@@ -66,6 +67,13 @@ const PAGES = [
     declared: "1.6 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: true },
   { n: 11, slug: "page-11-training-vs-scale", notebook: "page_11_training_vs_scale.ipynb",
     declared: "2.8 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: true },
+  // Page 12 generates no pile of its own: it replays page 7's chains, so those ship at
+  // the path the notebook reads them from, out/page_07/traces.jsonl, and its own folder
+  // holds the results and the hint retry's chains.
+  { n: 12, slug: "page-12-star-harvest", notebook: "page_12_star_harvest.ipynb",
+    declared: "3.1 MB", extras: ["results.json", "hint_traces.jsonl"],
+    siteData: "page_12_site_data.py", repoNotebookIsTheShippedOne: true,
+    traces: "out/page_07/traces.jsonl" },
 ] as const;
 
 const NOTEBOOKS = resolve(WEB, "../notebooks");
@@ -82,9 +90,8 @@ const entries = (slug: string) =>
 const member = (slug: string, name: string) =>
   execFileSync("unzip", ["-p", zipPath(slug), name], { maxBuffer: 1 << 28 });
 
-describe.each(PAGES)("page $n's notebook bundle", ({
-  n, slug, notebook, declared, extras, siteData, repoNotebookIsTheShippedOne,
-}) => {
+describe.each(PAGES)("page $n's notebook bundle", (page) => {
+  const { n, slug, notebook, declared, extras, siteData, repoNotebookIsTheShippedOne } = page;
   const pad = String(n).padStart(2, "0");
 
   it("exists, and the size on the page is the size on disk", () => {
@@ -115,7 +122,7 @@ describe.each(PAGES)("page $n's notebook bundle", ({
         ...(siteData ? [`${slug}/${siteData}`] : []),
         `${slug}/out/page_${pad}/derived.json`,
         `${slug}/out/page_${pad}/manifest.json`,
-        `${slug}/out/page_${pad}/traces.jsonl`,
+        `${slug}/${"traces" in page ? page.traces : `out/page_${pad}/traces.jsonl`}`,
         ...extras.map((e) => `${slug}/out/page_${pad}/${e}`),
         `${slug}/requirements.txt`,
       ].sort(),

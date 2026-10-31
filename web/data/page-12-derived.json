@@ -1,9 +1,17 @@
 {
  "manifest": {
   "run_id": "p12-full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
-  "page": 12,
   "notebook": "page_12_star_harvest.ipynb",
+  "page": 12,
   "run_mode": "REPLAY",
+  "replayed": true,
+  "timestamp_utc": "2026-10-31T23:42:58+00:00",
+  "notebook_git_sha": "39668139c9a106cc4a8845b8960afc54102fd932",
+  "notebook_sha256": "fef6431b72f170619aa800f8e3e71e9ab30d34063df7c7ea34658f54de69ad72",
+  "harness": {
+   "version": "1.5",
+   "sha256": "c1d6d5b18d642be62bcc0ce5764498bac250ea1f8472f6560c681448b24fa1f4"
+  },
   "source_run_id": "full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
   "model_id": "Qwen/Qwen2.5-3B-Instruct",
   "pool_config": "t0.30-c2048",
@@ -11,10 +19,17 @@
   "chain_cap": 2048,
   "n_items": 100,
   "n_chains": 16,
-  "dataset": "math500_l45"
+  "dataset": "math500_l45",
+  "hint": {
+   "run_id": "p12-hint-full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
+   "cap": 2048,
+   "decoding": "greedy",
+   "template": "{question}\n\n(Hint: the correct answer is {answer}.)",
+   "n_retried": 57
+  }
  },
  "source": {
-  "results_sha256": "b3d04596ae479122148ae9e924bc1dc7640550c802152833b8dea42dfeb6670a",
+  "results_sha256": "c29d26e103814869a18b9e64f50a7a1f33e6a318fd3b1ebcff37483279411034",
   "builder": "page_12_site_data.py",
   "builder_sha256": "ce343793cd91f8cadb5c505370c5114bd065581b0205c29957e1bce2fcd47fe0"
  },
@@ -23,7 +38,9 @@
   "popular_keeps_wrong_chains": true,
   "more_attempts_more_lessons": true,
   "some_problems_never_yield": true,
-  "vote_missed_what_key_found": true
+  "vote_missed_what_key_found": true,
+  "hint_recovers_lessons": true,
+  "hint_reaches_never": true
  },
  "n_chains": 16,
  "curves": {

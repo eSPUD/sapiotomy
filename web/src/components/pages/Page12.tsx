@@ -70,6 +70,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
+import { NotebookDownload } from "@/components/NotebookDownload";
 import { Slider } from "@/components/Slider";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
@@ -79,6 +80,10 @@ import { STAR_LINES } from "@/lib/starListing";
 import { PAGE12, harvest, modelLabel, tidyMath, type Problem, type Rule } from "@/lib/page12";
 
 const PAGE_N = 12;
+
+/** Section 2's run: the notebook, page 7's chains it replays, and the hint retry. */
+const NOTEBOOK_ZIP = "/notebooks/page-12-star-harvest.zip";
+const NOTEBOOK_SIZE = "3.1 MB";
 
 /** Page 12's references, numbered in order of first appearance. */
 const REF = { star: 1, exit: 2, rft: 3, gvm: 4 } as const;
@@ -701,12 +706,15 @@ export function Page12() {
 
         {/* Section 2: STaR's filter run over page 7's pile */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. Which chains become lessons?
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              measured · page 7&apos;s pile · {modelLabel} · MATH-500
-            </span>
-          </h2>
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <h2 className="text-xl font-semibold text-ink">
+              2. Which chains become lessons?
+              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+                measured · page 7&apos;s pile · {modelLabel} · MATH-500
+              </span>
+            </h2>
+            <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
+          </div>
           <p className="text-ink">
             STaR can be tried without training anything. Page 7 already asked {modelLabel}{" "}
             each of {PAGE12.manifest.n_items} hard MATH problems {PAGE12.n_chains} times, and every
