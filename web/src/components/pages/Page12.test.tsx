@@ -10,13 +10,13 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeInTheDocument();
   });
 
-  it("quotes the full Table 1 row set, including the 23x larger LaMDA bar", () => {
+  it("runs STaR's filter over page 7's pile in section 2, with no Table 1 bar chart", () => {
     render(<Page12 />);
-    expect(screen.getByText("LaMDA 137B, few-shot CoT")).toBeInTheDocument();
-    expect(screen.getByText("55.6%")).toBeInTheDocument();
-    // The headline figures repeat in the figcaption; the bars are one each.
-    expect(screen.getAllByText("72.5%").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("73.0%").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("heading", { name: /2\. Which chains become lessons\?/ })).toBeInTheDocument();
+    expect(screen.queryByText("LaMDA 137B, few-shot CoT")).not.toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: /Keep a chain if its answer/ })).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /Attempts per problem/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /level \d/ })).toHaveLength(100);
   });
 
   it("draws the loop as a diagram, with no simulated accuracy chart", () => {
@@ -30,9 +30,8 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("has no controls: the correctness check is always on", () => {
+  it("keeps section 1 free of controls: the loop's correctness check is always on", () => {
     render(<Page12 />);
-    // No step-through button and no answer-key toggle — the check is always on.
     expect(screen.queryByRole("button", { name: /Run iteration/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
     expect(screen.queryByText(/No answer key: every rationale trains/)).not.toBeInTheDocument();
@@ -73,7 +72,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     const interactive = screen.getByText(/Everything rests on the answer key/);
     const listing = screen.getByText(/hint = y/);
-    const results = screen.getByText("LaMDA 137B, few-shot CoT");
+    const results = screen.getByRole("heading", { name: /Which chains become lessons/ });
     const counterweight = screen.getByText(/Trained on reasoning, graded on answers/);
     const handoff = screen.getByText(/Page 13 picks it up from there/);
     const follows = (a: Element, b: Element) =>
@@ -131,8 +130,10 @@ describe("Page 12 (STaR and self-improvement)", () => {
       screen.getByText(/expert iteration \(Anthony et al\. 2017\)/).querySelector("sup"),
     ).toBeNull();
     expect(screen.getByText(/one greedy rollout/).querySelector("sup")).toBeNull();
-    // The results heading carries its source right where the reader looks.
-    expect(document.querySelector("h2 sup")).toBeInTheDocument();
+    // The measured section names its source right where the reader looks.
+    expect(screen.getByRole("heading", { name: /Which chains become lessons/ }).textContent).toMatch(
+      /measured · page 7's pile/,
+    );
     expect(screen.queryByText(/sample from the current policy/)).not.toBeInTheDocument();
     // The counterweight's claim has outside experimental support.
     expect(screen.getByText(/wrong reasoning path/)).toBeInTheDocument();
@@ -193,12 +194,12 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
   });
 
-  it("has no provenance footnote: the section-2 results are cited inline", () => {
+  it("has no provenance footnote: section 2 names its run in its heading", () => {
     render(<Page12 />);
     expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
     expect(screen.queryByText("Cited")).not.toBeInTheDocument();
     expect(screen.queryByText(/Table 1, CommonsenseQA dev/)).not.toBeInTheDocument();
-    // The citation still lives in section 2's heading and figcaption.
-    expect(screen.getByRole("heading", { name: /What the loop bought/ })).toBeInTheDocument();
+    // Section 2's provenance is its heading badge, not a footnote.
+    expect(screen.getByRole("heading", { name: /Which chains become lessons/ })).toBeInTheDocument();
   });
 });

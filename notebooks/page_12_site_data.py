@@ -1,0 +1,104 @@
+"""Page 12's website data: `derived.json`, built from what the notebook saved.
+
+The notebook computes every number in `results.json`: for each of page 7's problems, which of
+its sixteen chains were right and which answer each one gave, and what STaR's filter keeps at
+every number of attempts under each rule. This script computes nothing the notebook did not.
+It picks the chains the page can open (the first chain each rule would keep), and lays them
+out the way `web/src/lib/page12.ts` reads them.
+
+    python page_12_site_data.py                                      # out/page_12/derived.json
+    cp out/page_12/derived.json ../web/data/page-12-derived.json     # promote it to the page
+"""
+
+import argparse
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+HERE = Path(__file__).resolve()
+CHAIN_FIELDS = ("sample_index", "trace", "extracted_answer", "correct", "truncated", "tokens_generated")
+
+
+def sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def popular(cls, k):
+    """The class most of the first k chains agree on; a tie, or no answers, is None."""
+    tally = Counter(c for c in cls[:k] if c >= 0)
+    if not tally:
+        return None
+    (top, n), *rest = tally.most_common()
+    return None if rest and rest[0][1] == n else top
+
+
+def shown_chains(row, n_chains):
+    """Every chain the page can open: under the answer key, the first right one; under the
+    popular answer, the first chain of each class that wins at some number of attempts."""
+    idx = set()
+    if any(row["correct"]):
+        idx.add(row["correct"].index(True))
+    for k in range(1, n_chains + 1):
+        top = popular(row["cls"], k)
+        if top is not None:
+            idx.add(row["cls"].index(top))
+    return sorted(idx)
+
+
+def build(out_dir, traces_path):
+    out_dir = Path(out_dir)
+    results_path = out_dir / "results.json"
+    R = json.loads(results_path.read_text(encoding="utf-8"))
+    manifest = json.loads((out_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["run_id"] == R["run_id"], "results.json and manifest.json are from different runs"
+
+    n = R["n_chains"]
+    latest = {}
+    with Path(traces_path).open(encoding="utf-8") as f:
+        for r in (json.loads(line) for line in f if line.strip()):
+            if r["run_id"] == R["source_run_id"] and r["config_id"] == R["pool_config"]:
+                latest[(r["problem_id"], r["sample_index"])] = r
+    pile = {}
+    for (pid, _), r in sorted(latest.items(), key=lambda kv: kv[0][1]):
+        pile.setdefault(pid, []).append(r)
+
+    problems = []
+    for pid, row in R["rows"].items():
+        rs = pile[pid][:n]
+        assert [bool(r["correct"]) for r in rs] == row["correct"], f"{pid}: traces disagree with results.json"
+        problems.append({
+            "problem_id": pid, "level": rs[0]["level"], "subject": rs[0]["subject"],
+            "question": rs[0]["question"], "ground_truth": rs[0]["ground_truth"],
+            **row,
+            "chains": {str(j): {k: rs[j][k] for k in CHAIN_FIELDS} for j in shown_chains(row, n)},
+        })
+
+    derived = {
+        "manifest": manifest,
+        "source": {"results_sha256": sha256(results_path), "builder": HERE.name,
+                   "builder_sha256": sha256(HERE)},
+        "claims": R["claims"],
+        "n_chains": n,
+        "curves": R["curves"],
+        "greedy_lessons": R["greedy_lessons"],
+        "vote_missed": R["vote_missed"],
+        "never": R["never"],
+        "problems": problems,
+    }
+    path = out_dir / "derived.json"
+    path.write_text(json.dumps(derived, indent=1, ensure_ascii=False), encoding="utf-8")
+    n_shown = sum(len(p["chains"]) for p in problems)
+    print(f"{len(problems)} problems, {n_shown} openable chains")
+    print(f"{path}   {path.stat().st_size / 1024:,.1f} KB")
+    return derived
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--out-dir", default=str(HERE.parent / "out" / "page_12"),
+                    help="the run's folder: results.json and manifest.json")
+    ap.add_argument("--traces", default=str(HERE.parent / "out" / "page_07" / "traces.jsonl"),
+                    help="page 7's traces.jsonl, which holds the chains")
+    a = ap.parse_args()
+    build(a.out_dir, a.traces)
