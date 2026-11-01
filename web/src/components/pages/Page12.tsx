@@ -571,7 +571,8 @@ function TrainingTray({ question, reasoning, answer, hinted, arriving }: {
 
 function StarHarvest() {
   const problems = walked;
-  const [rationalize, setRationalize] = useState(false);
+  // On by default: rationalization is part of STaR as published; off is the paper's ablation.
+  const [rationalize, setRationalize] = useState(true);
   const [at, setAt] = useState(0);
   // Playback: how many steps of the pass are showing, or null for all of them.
   const [phase, setPhase] = useState<number | null>(null);
@@ -633,7 +634,11 @@ function StarHarvest() {
                 setRationalize(v);
               }}
             />
-            <span className="text-[11px] text-ink-muted">A missed problem is retried once with the answer as a hint.</span>
+            <span className="text-[11px] text-ink-muted">
+              {rationalize
+                ? "A missed problem is retried once with the answer as a hint."
+                : "Off: STaR without rationalization, the paper's ablation."}
+            </span>
           </div>
         ) : null}
         <div className="flex items-center gap-2">
@@ -684,7 +689,7 @@ function StarHarvest() {
                   ? "It matches, so it is kept."
                   : rationalize
                     ? "It misses."
-                    : "It misses, so it is dropped. Turn rationalization on to retry it."}
+                    : "It misses, so it is dropped; without rationalization nothing retries it."}
               </p>
             </PassStep>
             ) : null}
@@ -1047,7 +1052,7 @@ export function Page12() {
         </section>
 
         <Note kicker="Try it">
-          <p>Walk the {walked.length} problems with rationalization off, then on. Two of them gain a chain of reasoning; the last still gives nothing.</p>
+          <p>Play each of the {walked.length} problems, then switch rationalization off: without it, the last three give the training set nothing.</p>
         </Note>
 
         {/* The two closing blocks — kept at the page bottom on purpose, reading

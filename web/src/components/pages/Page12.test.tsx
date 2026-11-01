@@ -22,19 +22,21 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.queryByText(/step grader/i)).not.toBeInTheDocument();
     expect(screen.getByRole("group", { name: /the one chain decoded greedily/ })).toBeInTheDocument();
     expect(screen.getByText(/Selected by the answer\. Trained on the reasoning\./)).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /^43 of 100 problems put reasoning into the training set, none with a wrong answer/ })).toBeInTheDocument();
-    // Rationalization is a small switch, off by default, not a checkbox.
+    // Rationalization is a small switch, on by default because it is part of STaR as published.
     const sw = screen.getByRole("switch", { name: /Rationalization/ });
-    expect(sw).toHaveAttribute("aria-checked", "false");
+    expect(sw).toHaveAttribute("aria-checked", "true");
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-    fireEvent.click(sw);
     expect(screen.getByRole("img", { name: /^96 of 100 problems put reasoning into the training set, 53 of them through rationalization/ })).toBeInTheDocument();
-    // The headline follows the switch: with it off, the last problem says nothing of a retry.
+    // Off is the paper's ablation, and says so.
     fireEvent.click(sw);
+    expect(screen.getByText(/STaR without rationalization, the paper's ablation/)).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /^43 of 100 problems put reasoning into the training set, none with a wrong answer/ })).toBeInTheDocument();
+    // The headline follows the switch: with it off, the last problem says nothing of a retry.
     fireEvent.click(screen.getByRole("button", { name: "previous problem" }));
     expect(screen.getByText("The greedy chain misses, so nothing goes in.")).toBeInTheDocument();
     fireEvent.click(sw);
     expect(screen.getByText("The greedy chain misses, and so does the hinted retry.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "next problem" }));
     fireEvent.click(screen.getByRole("button", { name: "next problem" }));
     // The walked problems: the second is rescued by the hint once rationalization is on.
     fireEvent.click(screen.getByRole("button", { name: "next problem" }));
@@ -59,7 +61,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
       act(() => vi.advanceTimersByTime(1900));
       expect(screen.getByRole("button", { name: /play this problem's pass/ })).toBeInTheDocument();
       expect(screen.getByText("The greedy chain is right, so its reasoning goes in.")).toBeInTheDocument();
-      // Turning rationalization on mid-play shows the whole pass at once.
+      // Flipping rationalization mid-play shows the whole pass at once.
       fireEvent.click(screen.getByRole("button", { name: /play this problem's pass/ }));
       fireEvent.click(screen.getByRole("switch", { name: /Rationalization/ }));
       expect(steps()).toBe(3);
