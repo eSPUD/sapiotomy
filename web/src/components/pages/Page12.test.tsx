@@ -38,7 +38,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
     fireEvent.click(screen.getByRole("button", { name: "next problem" }));
     // The walked problems: the second is rescued by the hint once rationalization is on.
     fireEvent.click(screen.getByRole("button", { name: "next problem" }));
-    expect(screen.getByText(/The hinted chain goes in, every line of it/)).toBeInTheDocument();
+    expect(screen.getByText(/written with the hint; filed without it/)).toBeInTheDocument();
     expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
   });
 
@@ -52,11 +52,11 @@ describe("Page 12 (STaR and self-improvement)", () => {
       fireEvent.click(screen.getByRole("button", { name: /play this problem's pass/ }));
       expect(steps()).toBe(1);
       expect(screen.getByText("One pass of STaR, step by step.")).toBeInTheDocument();
-      act(() => vi.advanceTimersByTime(1400));
+      act(() => vi.advanceTimersByTime(2700));
       expect(steps()).toBe(2);
-      act(() => vi.advanceTimersByTime(1400));
+      act(() => vi.advanceTimersByTime(1700));
       expect(steps()).toBe(3);
-      act(() => vi.advanceTimersByTime(1400));
+      act(() => vi.advanceTimersByTime(1900));
       expect(screen.getByRole("button", { name: /play this problem's pass/ })).toBeInTheDocument();
       expect(screen.getByText("The greedy chain is right, so its reasoning goes in.")).toBeInTheDocument();
       // Turning rationalization on mid-play shows the whole pass at once.

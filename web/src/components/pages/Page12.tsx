@@ -514,8 +514,60 @@ const HINT_RESCUED = PAGE12.problems.filter((p) => !p.greedy.correct && p.hint?.
  * laid out to fit one screen: the switch and the problem picker in a row, then the pass for
  * one problem on the left with the chain it keeps open on the right, then the meter.
  */
-/** How long playback holds on each step of the pass. */
-const STEP_MS = 1400;
+/** How long playback holds on each step of the pass: long enough for a chain to type out. */
+const STEP_MS = { generate: 2600, filter: 1600, rationalize: 2600, train: 1800 } as const;
+type StepKind = keyof typeof STEP_MS;
+
+/** Clip text for a preview, at a word boundary. */
+const clip = (t: string, n: number) => (t.length <= n ? t : `${t.slice(0, t.lastIndexOf(" ", n) > n * 0.6 ? t.lastIndexOf(" ", n) : n)}…`);
+
+/**
+ * The tray at the bottom of the pass: what one problem adds to the training set. A kept chain
+ * drops in as one example, the question paired with the reasoning, while playback reaches it.
+ */
+function TrainingTray({ question, reasoning, answer, hinted, arriving }: {
+  question: string;
+  reasoning: string | null;
+  answer: string;
+  hinted: boolean;
+  arriving: boolean;
+}) {
+  const [inPlace, setInPlace] = useState(!arriving);
+  useEffect(() => {
+    if (!arriving) {
+      setInPlace(true);
+      return;
+    }
+    setInPlace(false);
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => {
+      r2 = requestAnimationFrame(() => setInPlace(true));
+    });
+    return () => {
+      cancelAnimationFrame(r1);
+      cancelAnimationFrame(r2);
+    };
+  }, [arriving]);
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg border-2 border-dashed border-grid bg-surface p-2" aria-label="the training set">
+      <p className="text-[11px] uppercase tracking-wide text-ink-muted">
+        training set · {reasoning === null ? "nothing from this problem" : "one example from this problem"}
+      </p>
+      {reasoning === null ? null : (
+        <div
+          className={`flex flex-col gap-0.5 rounded border p-2 font-code text-[11px] leading-snug text-ink motion-safe:transition-all motion-safe:duration-700 ${
+            hinted ? "border-compute bg-compute/10" : "border-correct bg-correct/10"
+          } ${inPlace ? "translate-y-0 opacity-100" : "-translate-y-10 opacity-0"}`}
+        >
+          <p><span className="text-ink-muted">question </span>{clip(tidyMath(question), 60)}</p>
+          <p><span className="text-ink-muted">reasoning </span>{clip(tidyMath(reasoning), 90)}</p>
+          <p><span className="text-ink-muted">answer </span>{tidyMath(answer)}</p>
+          {hinted ? <p className="text-compute-ink">written with the hint; filed without it</p> : null}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function StarHarvest() {
   const problems = walked;
@@ -534,15 +586,17 @@ function StarHarvest() {
   const retried = rationalize && !g.correct && hint !== null;
   const rescued = retried && hint!.correct;
   // Generate, filter, (rationalize), training set.
-  const nSteps = retried ? 4 : 3;
+  const kinds: StepKind[] = retried ? ["generate", "filter", "rationalize", "train"] : ["generate", "filter", "train"];
+  const nSteps = kinds.length;
   const shown = (i: number) => phase === null || i < phase;
   const lastShown = phase === null ? nSteps - 1 : Math.min(phase, nSteps) - 1;
   const current = (i: number) => phase !== null && i === lastShown;
+  const holdMs = phase === null ? 0 : STEP_MS[kinds[Math.min(phase, nSteps) - 1]];
   useEffect(() => {
     if (phase === null) return;
-    const t = setTimeout(() => setPhase(phase >= nSteps ? null : phase + 1), STEP_MS);
+    const t = setTimeout(() => setPhase(phase >= nSteps ? null : phase + 1), holdMs);
     return () => clearTimeout(t);
-  }, [phase, nSteps]);
+  }, [phase, nSteps, holdMs]);
   const play = () => {
     // Reduced motion: no playback; the full pass is already on screen.
     if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
@@ -561,8 +615,8 @@ function StarHarvest() {
         : hint!.mentions_hint
           ? "The greedy chain misses; with the hint, the model reaches the answer by leaning on it."
           : "The greedy chain misses; with the answer as a hint, the model finds the route.";
-  const verdictOf = (c: { correct: boolean; answer: string }) => (
-    <Verdict correct={c.correct} answer={c.answer} groundTruth={problem.ground_truth} />
+  const verdictOf = (c: { correct: boolean; answer: string }, lit = false) => (
+    <Verdict correct={c.correct} answer={c.answer} groundTruth={problem.ground_truth} lit={lit} />
   );
 
   return (
@@ -655,13 +709,15 @@ function StarHarvest() {
             {shown(nSteps - 1) ? (
             <PassStep label="Training set" detail="what the weights are fitted to" dot={g.correct ? "kept" : rescued ? "hint" : "dropped"} last current={current(nSteps - 1)}>
               <p className="text-sm text-ink">
-                <strong>Selected by the answer. Trained on the reasoning.</strong>{" "}
-                {g.correct
-                  ? "The greedy chain goes in, every line of it."
-                  : rescued
-                    ? "The hinted chain goes in, every line of it, filed under the question without the hint."
-                    : "Nothing from this problem."}
+                <strong>Selected by the answer. Trained on the reasoning.</strong>
               </p>
+              <TrainingTray
+                question={problem.question}
+                reasoning={g.correct ? g.trace : rescued ? hint!.trace : null}
+                answer={problem.ground_truth}
+                hinted={rescued}
+                arriving={current(nSteps - 1)}
+              />
             </PassStep>
             ) : null}
           </ol>
@@ -678,9 +734,11 @@ function StarHarvest() {
                 prompt={problem.question}
                 hintText={`(Hint: the correct answer is ${tidyMath(problem.ground_truth)}.)`}
                 reply={hint!.trace}
+                stream={current(2)}
+                streamMs={STEP_MS.rationalize - 600}
                 verdict={
                   <>
-                    {verdictOf(hint!)}
+                    {verdictOf(hint!, current(2))}
                     {rescued && hint!.mentions_hint ? (
                       <p className="text-sm text-ink-muted">
                         This reasoning refers to the hint, so with the hint deleted it argues from an answer it was never shown.
@@ -698,7 +756,9 @@ function StarHarvest() {
               <Exchange
                 prompt={problem.question}
                 reply={g.trace}
-                verdict={shown(1) ? verdictOf({ correct: g.correct, answer: g.extracted_answer }) : null}
+                stream={current(0)}
+                streamMs={STEP_MS.generate - 400}
+                verdict={shown(1) ? verdictOf({ correct: g.correct, answer: g.extracted_answer }, current(1)) : null}
               />
             </>
           )}
@@ -740,27 +800,73 @@ function StarHarvest() {
   );
 }
 
-/** The verdict under a model turn, in page 5's style. */
-function Verdict({ correct, answer, groundTruth }: { correct: boolean; answer: string; groundTruth: string }) {
+/**
+ * The filter, made visible: the model's boxed answer and the answer key side by side, each
+ * shaded, with the match or miss between them. `lit` rings both while playback is on this step.
+ */
+function Verdict({ correct, answer, groundTruth, lit = false }: {
+  correct: boolean;
+  answer: string;
+  groundTruth: string;
+  lit?: boolean;
+}) {
+  const ring = lit ? "ring-4 ring-compute/30" : "";
   return (
-    <p className={`rounded border-l-4 px-3 py-2 ${correct ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"}`}>
-      <span className={`font-semibold ${correct ? "text-correct-ink" : "text-wrong-ink"}`}>
-        {correct ? "✓" : "✗"} Final answer: {tidyMath(answer || "none")}.
+    <div className="flex flex-wrap items-center gap-2 text-sm" role="group" aria-label={`the model answered ${tidyMath(answer || "nothing")}; the answer key says ${tidyMath(groundTruth)}; ${correct ? "a match" : "a miss"}`}>
+      <span className={`flex items-center gap-1.5 rounded border px-2 py-1 transition-shadow ${correct ? "border-correct bg-correct/20" : "border-wrong bg-wrong/20"} ${ring}`}>
+        <span className="text-[11px] text-ink-muted">model</span>
+        <span className={`font-mono font-semibold ${correct ? "text-correct-ink" : "text-wrong-ink"}`}>{tidyMath(answer || "none")}</span>
       </span>
-      {correct ? null : (
-        <span className="text-sm text-ink-muted"> The answer key says {tidyMath(groundTruth)}.</span>
-      )}
-    </p>
+      <span className={`font-semibold ${correct ? "text-correct-ink" : "text-wrong-ink"}`}>{correct ? "= ✓" : "≠ ✗"}</span>
+      <span className={`flex items-center gap-1.5 rounded border border-ink-muted/40 bg-surface-raised px-2 py-1 transition-shadow ${ring}`}>
+        <span className="text-[11px] text-ink-muted">key</span>
+        <span className="font-mono font-semibold text-ink">{tidyMath(groundTruth)}</span>
+      </span>
+    </div>
   );
 }
 
+/**
+ * How much of `text` is showing: all of it, or, while `active`, a share that grows from
+ * nothing to everything over `ms`, so every chain types out in the same time whatever its length.
+ */
+function useTyped(text: string, active: boolean, ms: number) {
+  const [n, setN] = useState(text.length);
+  useEffect(() => {
+    if (!active) {
+      setN(text.length);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const f = Math.min(1, (t - t0) / ms);
+      setN(Math.round(f * text.length));
+      if (f < 1) raf = requestAnimationFrame(tick);
+    };
+    setN(0);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [text, active, ms]);
+  return n;
+}
+
 /** One exchange, set like page 5's chat: the user on the right, the model on the left. */
-function Exchange({ prompt, hintText, reply, verdict }: {
+function Exchange({ prompt, hintText, reply, verdict, stream = false, streamMs = 0 }: {
   prompt: string;
   hintText?: string;
   reply: string;
   verdict: React.ReactNode;
+  /** Type the reply out, as the model writes it; the verdict waits until it is done. */
+  stream?: boolean;
+  streamMs?: number;
 }) {
+  const typed = useTyped(reply, stream, streamMs);
+  const done = typed >= reply.length;
+  const box = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (stream && box.current) box.current.scrollTop = box.current.scrollHeight;
+  }, [typed, stream]);
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-grid bg-canvas p-3">
       <div className="flex max-w-[95%] items-start gap-2 self-end">
@@ -778,10 +884,11 @@ function Exchange({ prompt, hintText, reply, verdict }: {
       <div className="flex max-w-[95%] items-start gap-2 self-start">
         <ModelIcon />
         <div className="flex min-w-0 flex-col gap-2">
-          <p className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words font-code text-sm leading-relaxed text-ink">
-            {tidyMath(reply)}
+          <p ref={box} className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words font-code text-sm leading-relaxed text-ink">
+            {tidyMath(done ? reply : reply.slice(0, typed))}
+            {done ? null : <span aria-hidden="true" className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-ink-muted" />}
           </p>
-          {verdict}
+          {done ? verdict : null}
         </div>
       </div>
     </div>
