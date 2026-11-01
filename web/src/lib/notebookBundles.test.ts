@@ -71,7 +71,7 @@ const PAGES = [
   // the path the notebook reads them from, out/page_07/traces.jsonl, beside page 9's step
   // scores over the same chains; its own folder holds the results and the hint retry's chains.
   { n: 12, slug: "page-12-star-harvest", notebook: "page_12_star_harvest.ipynb",
-    declared: "4.9 MB", extras: ["results.json", "hint_traces.jsonl"],
+    declared: "5.0 MB", extras: ["results.json", "hint_traces.jsonl"],
     siteData: "page_12_site_data.py", repoNotebookIsTheShippedOne: true,
     traces: "out/page_07/traces.jsonl",
     borrowed: ["out/page_09/traces.jsonl", "out/page_09/derived.json"] },

@@ -14,37 +14,28 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     expect(screen.getByRole("heading", { name: /2\. Which reasoning goes into the training set\?/ })).toBeInTheDocument();
     expect(screen.queryByText("LaMDA 137B, few-shot CoT")).not.toBeInTheDocument();
-    // Beat one is STaR alone: no rule picker until the reader takes the key away.
-    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/retry once with the correct answer given as a hint/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /take the answer key away/ }));
-    expect(screen.getByRole("radiogroup", { name: /Which chains go into the training set/ })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: /majority/ })).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByText(/each chain is its own majority/)).toBeInTheDocument();
+    // STaR alone: the answer key is the rule, with no alternative selector and nothing behind a button.
+    expect(screen.queryByRole("radiogroup", { name: /Which chains go into the training set/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /take the answer key away/ })).not.toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: /Reasoning chains written per problem/ })).toBeInTheDocument();
-    // The figure stands on its own: no references to earlier pages' tools in its controls.
-    expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
-    // One problem walked through the pass: its chains, the rule's pick, the training set.
-    expect(screen.getByRole("group", { name: /chain(s)? written for this problem/ })).toBeInTheDocument();
+    expect(screen.queryByText(/majority/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/step grader/i)).not.toBeInTheDocument();
+    // It opens on STaR's own decoding: one greedy chain per problem, the RFT variant's sampled chains a switch away.
+    expect(screen.getByRole("radio", { name: /decoded greedily/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
+    expect(screen.getByRole("group", { name: /the one chain decoded greedily/ })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /^43 of 100 problems put reasoning into the training set, 43 chains in all/ })).toBeInTheDocument();
+    // The hint retry is a choice like every other control here, not a checkbox.
+    expect(screen.getByRole("radio", { name: /Retry once with the correct answer given as a hint/ })).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /Retry once/ }));
+    expect(screen.getByRole("img", { name: /^96 of 100 problems put reasoning into the training set, 53 of them through the hint/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /Several, sampled/ }));
+    expect(screen.getByRole("slider", { name: /Chains sampled per problem/ })).toBeInTheDocument();
+    // One problem walked through the pass: its chains, the key's pick, the training set.
+    expect(screen.getByRole("group", { name: /chains? sampled for this problem/ })).toBeInTheDocument();
     expect(screen.getByText(/Selected by the answer\. Trained on the reasoning\./)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /next problem/ })).toBeInTheDocument();
-    // After the reveal, the same pass is counted over all 100 problems under every rule.
-    expect(screen.getByRole("img", { name: /^answer key: \d+ chains in the training set/ })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /^majority vote: \d+ chains in the training set from 100 problems/ })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /^step grader: \d+ chains/ })).toBeInTheDocument();
-  });
-
-  it("offers a step grader as a third rule, and shows its verdict beside the answer key's", () => {
-    render(<Page12 />);
-    fireEvent.click(screen.getByRole("button", { name: /take the answer key away/ }));
-    const radios = within(screen.getByRole("radiogroup", { name: /Which chains go into the training set/ })).getAllByRole("radio");
-    expect(radios).toHaveLength(3);
-    fireEvent.click(screen.getByRole("radio", { name: /step grader passes/ }));
-    expect(screen.queryByLabelText(/retry once with the correct answer given as a hint/)).not.toBeInTheDocument();
-    // The chain shown under the training set carries the grader's verdict beside the key's.
-    expect(screen.getByText(/Step grader:/)).toBeInTheDocument();
-    expect(screen.getByText(/Final answer:/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "next problem" })).toBeInTheDocument();
+    expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
   });
 
   it("draws the loop as a diagram, with no simulated accuracy chart", () => {

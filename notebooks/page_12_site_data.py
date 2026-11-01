@@ -4,8 +4,8 @@ The notebook computes every number in `results.json`: for each of page 7's probl
 its sixteen chains were right, which answer each one gave and whether page 9's step grader passed
 it, and what each rule keeps at every number of attempts. This script computes nothing the
 notebook did not. It picks the chains the page can open (each problem's first chain, and the
-chains each rule would show), attaches page 9's step scores to them and each problem's hinted
-chain, and lays them out the way `web/src/lib/page12.ts` reads them.
+chains each rule would show) plus its greedy chain, attaches page 9's step scores to them and
+each problem's hinted chain, and lays them out the way `web/src/lib/page12.ts` reads them.
 
     python page_12_site_data.py                                      # out/page_12/derived.json
     cp out/page_12/derived.json ../web/data/page-12-derived.json     # promote it to the page
@@ -19,6 +19,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve()
 CHAIN_FIELDS = ("sample_index", "trace", "extracted_answer", "correct", "truncated", "tokens_generated")
+GREEDY_FIELDS = ("trace", "extracted_answer", "correct", "truncated", "tokens_generated")
 HINT_FIELDS = ("trace", "answer", "correct", "mentions_hint", "truncated", "tokens_generated")
 
 
@@ -72,11 +73,15 @@ def build(out_dir, traces_path, hint_path, prm_path):
     assert manifest["run_id"] == R["run_id"], "results.json and manifest.json are from different runs"
 
     n = R["n_chains"]
-    latest = {}
+    latest, greedy = {}, {}
     with Path(traces_path).open(encoding="utf-8") as f:
         for r in (json.loads(line) for line in f if line.strip()):
-            if r["run_id"] == R["source_run_id"] and r["config_id"] == R["pool_config"]:
+            if r["run_id"] != R["source_run_id"]:
+                continue
+            if r["config_id"] == R["pool_config"]:
                 latest[(r["problem_id"], r["sample_index"])] = r
+            elif r["config_id"] == R["greedy_config"]:
+                greedy[r["problem_id"]] = r
     pile = {}
     for (pid, _), r in sorted(latest.items(), key=lambda kv: kv[0][1]):
         pile.setdefault(pid, []).append(r)
@@ -104,6 +109,7 @@ def build(out_dir, traces_path, hint_path, prm_path):
     for pid, row in R["rows"].items():
         rs = pile[pid][:n]
         assert [bool(r["correct"]) for r in rs] == row["correct"], f"{pid}: traces disagree with results.json"
+        assert bool(greedy[pid]["correct"]) == row["greedy_correct"], f"{pid}: the greedy chain disagrees with results.json"
         problems.append({
             "problem_id": pid, "level": rs[0]["level"], "subject": rs[0]["subject"],
             "question": rs[0]["question"], "ground_truth": rs[0]["ground_truth"],
@@ -112,6 +118,8 @@ def build(out_dir, traces_path, hint_path, prm_path):
                                 "steps": (step_spans(rs[j]["trace"], graded[(pid, rs[j]["sample_index"])], threshold)
                                           if (pid, rs[j]["sample_index"]) in graded else None)}
                        for j in shown_chains(row, n)},
+            # STaR's own setting: one greedy chain per problem. Page 9 never scored these.
+            "greedy": {k: greedy[pid][k] for k in GREEDY_FIELDS},
             "hint": hint.get(pid),
         })
 

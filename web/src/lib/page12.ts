@@ -52,8 +52,18 @@ export interface Problem {
   prm_pass: (boolean | null)[];
   /** The chains the page can open, keyed by their index in sample order. */
   chains: Record<string, Chain>;
+  /** STaR's own setting: the one chain decoded greedily. Page 9 never scored these. */
+  greedy: GreedyChain;
   /** The same question asked once more, greedily, with the answer as a hint. */
   hint: HintChain | null;
+}
+
+export interface GreedyChain {
+  trace: string;
+  extracted_answer: string;
+  correct: boolean;
+  truncated: boolean;
+  tokens_generated: number;
 }
 
 export interface HintChain {
@@ -187,6 +197,13 @@ function load(raw: unknown): Derived & { order: Problem[] } {
   }
   for (const p of d.problems) {
     if (!("0" in p.chains)) throw new Page12DataError(`${p.problem_id}: its first chain is not bundled`);
+    if (p.greedy.correct !== p.greedy_correct) throw new Page12DataError(`${p.problem_id}: its greedy chain disagrees with its verdict`);
+  }
+  if (d.problems.filter((p) => p.greedy_correct).length !== d.greedy_lessons) {
+    throw new Page12DataError("the greedy chains do not add up to the notebook's greedy lessons");
+  }
+  if (d.hint && d.problems.filter((p) => !p.greedy_correct).length !== d.hint.n_missed) {
+    throw new Page12DataError("the hint retry's misses are not the greedy chains' misses");
   }
   for (const p of d.problems) {
     for (const [j, c] of Object.entries(p.chains)) {
@@ -210,6 +227,24 @@ function load(raw: unknown): Derived & { order: Problem[] } {
 }
 
 export const PAGE12 = load(rawDerived);
+
+/**
+ * The five problems the figure walks through, in order, each with the one thing it shows.
+ * `page12.test.ts` checks that the data still says what each note says.
+ */
+export const WALK: readonly { id: string; note: string }[] = [
+  { id: "test/algebra/2064.json", note: "the usual case: the greedy chain is right, and so are most samples" },
+  { id: "test/algebra/1184.json", note: "the greedy chain is right; most samples agree on a wrong answer" },
+  { id: "test/number_theory/357.json", note: "the greedy chain misses; one sample in 16 reaches the answer" },
+  { id: "test/prealgebra/1139.json", note: "the greedy chain misses; the hint reaches the answer, and so do two samples" },
+  { id: "test/intermediate_algebra/1806.json", note: "no chain reaches the answer; the hint does" },
+];
+
+export const walked: Problem[] = WALK.map(({ id }) => {
+  const p = PAGE12.problems.find((q) => q.problem_id === id);
+  if (!p) throw new Page12DataError(`${id} is walked by the figure but not in the run`);
+  return p;
+});
 
 export const hasHint = PAGE12.hint !== null && PAGE12.problems.every((p) => p.hint !== null);
 
