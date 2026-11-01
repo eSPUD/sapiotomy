@@ -63,24 +63,37 @@ describe("Page 12 (STaR and self-improvement)", () => {
     }
   });
 
-  it("plays one problem's pass a step at a time, and Reset clears it", () => {
+  it("plays one problem's pass beat by beat, carries the key over and back, and Reset clears it", () => {
     vi.useFakeTimers();
     try {
       render(<Page12 />);
       const pass = screen.getByRole("list", { name: /STaR's pass for this problem/ });
       const steps = () => within(pass).queryAllByRole("listitem").length;
       const play = screen.getByRole("button", { name: /Play/ });
+      // The answer key is on show before anything plays.
+      expect(screen.getByText("The answer key for this problem:")).toBeInTheDocument();
       expect(steps()).toBe(0);
-      expect(screen.getByText("Press Play to run one pass of STaR on this problem.")).toBeInTheDocument();
       fireEvent.click(play);
+      // Generate: the whole chain at once, not typed out.
       expect(steps()).toBe(1);
-      expect(screen.getByText("One pass of STaR, step by step.")).toBeInTheDocument();
-      act(() => vi.advanceTimersByTime(2700));
+      expect(screen.getByRole("group", { name: /the model answered 81/ })).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(3200));
+      // Filter: key and model's answer lit; then the key is carried over and the result shows.
       expect(steps()).toBe(2);
-      act(() => vi.advanceTimersByTime(1700));
+      // Each beat's timer is set once the beat before it has rendered, so advance one beat at a time.
+      act(() => vi.advanceTimersByTime(1800));
+      act(() => vi.advanceTimersByTime(1500));
+      expect(screen.getByText("==")).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(2000));
+      act(() => vi.advanceTimersByTime(1300));
+      // The key is home: the result settles, and Rationalize shows as skipped.
+      expect(screen.getByText(/== the key ✓/)).toBeInTheDocument();
       expect(steps()).toBe(3);
-      act(() => vi.advanceTimersByTime(1900));
-      // The whole pass stays on screen.
+      expect(screen.getByText(/Skipped: no hint needed/)).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1800));
+      // Training set: the chain is carried in.
+      expect(steps()).toBe(4);
+      act(() => vi.advanceTimersByTime(2200));
       expect(screen.getByText("The greedy chain is right, so its reasoning goes in.")).toBeInTheDocument();
       expect(play).toBeDisabled();
       fireEvent.click(screen.getByRole("button", { name: /Reset/ }));
@@ -88,8 +101,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
       // Flipping rationalization mid-play shows the whole pass at once.
       fireEvent.click(play);
       fireEvent.click(screen.getByRole("switch", { name: /Rationalization/ }));
-      expect(steps()).toBe(3);
-      expect(screen.getByText("The greedy chain is right, so its reasoning goes in.")).toBeInTheDocument();
+      expect(steps()).toBe(4);
     } finally {
       vi.useRealTimers();
     }
