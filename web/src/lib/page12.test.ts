@@ -4,10 +4,10 @@
  * these pin the claims the copy makes from them.
  */
 import { describe, expect, it } from "vitest";
-import { PAGE12, cellState, curvePoint, harvest, popular } from "./page12";
+import { PAGE12, RULES, cellState, curvePoint, harvest, popular, type Rule } from "./page12";
 
 const N = PAGE12.n_chains;
-const at = (rule: "key" | "popular", k: number) => PAGE12.curves[rule][k - 1];
+const at = (rule: Rule, k: number) => PAGE12.curves[rule][k - 1];
 
 describe("Page 12: the harvest", () => {
   it("is page 7's pile: 100 problems, 16 chains each", () => {
@@ -49,7 +49,7 @@ describe("Page 12: the harvest", () => {
   });
 
   it("recomputes the notebook's curves exactly", () => {
-    for (const rule of ["key", "popular"] as const) {
+    for (const rule of RULES) {
       for (const pt of PAGE12.curves[rule]) expect(curvePoint(PAGE12.problems, pt.k, rule)).toEqual(pt);
     }
   });
@@ -65,5 +65,18 @@ describe("Page 12: the harvest", () => {
         if (cellState(p, k, "key", true) === "hint") expect(p.hint!.correct).toBe(true);
       }
     }
+  });
+
+  it("the step grader ignores the answer: it lets wrong answers in and keeps some right ones out", () => {
+    expect(at("prm", N).chains_wrong).toBeGreaterThan(0);
+    const rightIn = at("prm", N).chains_kept - at("prm", N).chains_wrong;
+    expect(PAGE12.prm.right_total - rightIn).toBe(PAGE12.prm.right_rejected);
+    for (const id of PAGE12.prm.lost) {
+      const p = PAGE12.problems.find((q) => q.problem_id === id)!;
+      expect(p.correct.some(Boolean)).toBe(true);
+      expect(harvest(p, N, "prm").some((j) => p.correct[j])).toBe(false);
+    }
+    // A chain page 9 never graded never passes.
+    for (const p of PAGE12.problems) for (const j of harvest(p, N, "prm")) expect(p.prm_pass[j]).toBe(true);
   });
 });

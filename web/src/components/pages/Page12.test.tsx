@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Page12 } from "./Page12";
 
 describe("Page 12 (STaR and self-improvement)", () => {
@@ -20,6 +20,16 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/retry once with the correct answer given as a hint/)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /level \d/ })).toHaveLength(100);
+  });
+
+  it("offers a step grader as a third rule, and shows its verdict beside the answer key's", () => {
+    render(<Page12 />);
+    const radios = within(screen.getByRole("radiogroup", { name: /Which chains go into the training set/ })).getAllByRole("radio");
+    expect(radios).toHaveLength(3);
+    fireEvent.click(screen.getByRole("radio", { name: /step grader passes/ }));
+    expect(screen.queryByLabelText(/retry once with the correct answer given as a hint/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: /level \d/ })[0]);
+    expect(screen.getByText(/Step grader:/)).toBeInTheDocument();
   });
 
   it("draws the loop as a diagram, with no simulated accuracy chart", () => {

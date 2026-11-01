@@ -78,13 +78,26 @@ import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { STAR_LINES } from "@/lib/starListing";
 import { ModelIcon, UserIcon } from "@/components/ChatIcons";
-import { PAGE12, cellState, harvest, hasHint, modelLabel, tidyMath, type CellState, type Problem, type Rule } from "@/lib/page12";
+import {
+  PAGE12,
+  cellState,
+  harvest,
+  hasHint,
+  modelLabel,
+  shownChain,
+  tidyMath,
+  type CellState,
+  type Chain,
+  type Problem,
+  type Rule,
+} from "@/lib/page12";
 
 const PAGE_N = 12;
+const N_CHAINS = PAGE12.n_chains;
 
-/** Section 2's run: the notebook, page 7's chains it replays, and the hint retry. */
+/** Section 2's run: the notebook, page 7's chains it replays, page 9's step scores, and the hint retry. */
 const NOTEBOOK_ZIP = "/notebooks/page-12-star-harvest.zip";
-const NOTEBOOK_SIZE = "3.2 MB";
+const NOTEBOOK_SIZE = "4.9 MB";
 
 /** Page 12's references, numbered in order of first appearance. */
 const REF = { star: 1, exit: 2, rft: 3, gvm: 4 } as const;
@@ -420,7 +433,8 @@ function CodeLine({
  * square per problem, ordered by how many of its chains were right so the grid fills from
  * the left as chains are added. Each control is one line of the listing above: the slider
  * is how many chains line 5 writes, the rule is line 6's check, and the hint toggle is
- * lines 8 and 9. Every number shown is recomputed from the bundled verdicts, which the
+ * lines 8 and 9. Only the answer key is STaR's check; majority vote and page 9's step
+ * grader are answer-time selectors put to a training-time job, there for contrast. Every number shown is recomputed from the bundled verdicts, which the
  * load step has already checked against the notebook.
  */
 const STATE_STYLE: Record<CellState, string> = {
@@ -458,16 +472,17 @@ function StarHarvest() {
   const RULES: { id: Rule; label: string }[] = [
     { id: "key", label: "Only chains with the correct answer (STaR)" },
     { id: "popular", label: "Chains that agree with the majority (no answer key)" },
+    { id: "prm", label: "Chains whose every step a step grader passes (no answer key)" },
   ];
 
   return (
     <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-      <div className="grid gap-4 sm:grid-cols-2 sm:items-end">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <span id="star-rule" className="text-sm text-ink-muted">
             Which chains go into the training set?
           </span>
-          <div role="radiogroup" aria-labelledby="star-rule" className="grid grid-cols-2 gap-1">
+          <div role="radiogroup" aria-labelledby="star-rule" className="grid gap-1 sm:grid-cols-3">
             {RULES.map((r) => (
               <button
                 key={r.id}
@@ -564,7 +579,9 @@ function StarHarvest() {
         at {N}. STaR writes one chain per problem; writing several is the RFT variant.
         <Cite n={REF.rft} /> Without the key, keeping whatever the majority answered puts{" "}
         {PAGE12.curves.popular[N - 1].chains_wrong} wrong answers among {PAGE12.curves.popular[N - 1].chains_kept}{" "}
-        chains at {N}, and the model would be trained to reason its way to them.
+        chains at {N}, and the model would be trained to reason its way to them. The step grader is
+        page 9&apos;s process reward model, {PAGE12.prm.model_id.split("/").pop()}, at page 9&apos;s
+        cutoff of {PAGE12.prm.threshold.toFixed(2)}; it never sees the answer key.
       </figcaption>
     </figure>
   );
@@ -585,10 +602,61 @@ function Verdict({ correct, answer, groundTruth }: { correct: boolean; answer: s
 }
 
 /** One exchange, set like page 5's chat: the user on the right, the model on the left. */
-function Exchange({ prompt, hintText, reply, verdict }: {
+/**
+ * A chain's text with page 9's flagged steps marked. Spans are character offsets into the
+ * trace, so the text between them (the paragraph breaks) is the trace's own.
+ */
+function GradedReply({ trace, steps }: { trace: string; steps: Chain["steps"] }) {
+  if (!steps) return <>{tidyMath(trace)}</>;
+  // tidyMath trims, which would run one step into the next; keep the edges' own whitespace.
+  const tidy = (t: string) => {
+    const [, lead, body, trail] = t.match(/^(\s*)([\s\S]*?)(\s*)$/)!;
+    return lead + tidyMath(body) + trail;
+  };
+  const parts: React.ReactNode[] = [];
+  let pos = 0;
+  steps.forEach(([a, b, score], i) => {
+    if (a > pos) parts.push(tidy(trace.slice(pos, a)));
+    const text = tidy(trace.slice(a, b));
+    parts.push(
+      score < PAGE12.prm.threshold ? (
+        <mark key={i} className="rounded bg-wrong/20 text-ink" title={`step grader: ${score.toFixed(2)}`}>
+          {text}
+          <span className="ml-1 rounded bg-wrong/30 px-1 font-mono text-xs text-wrong-ink">
+            step {i + 1} · {score.toFixed(2)}
+          </span>
+        </mark>
+      ) : (
+        text
+      ),
+    );
+    pos = b;
+  });
+  if (pos < trace.length) parts.push(tidy(trace.slice(pos)));
+  return <>{parts}</>;
+}
+
+/** What page 9's step grader made of a chain, under its answer verdict. */
+function GraderVerdict({ chain }: { chain: Chain }) {
+  const steps = chain.steps;
+  const flagged = steps ? steps.filter((s) => s[2] < PAGE12.prm.threshold).length : 0;
+  return (
+    <p className="text-sm text-ink-muted">
+      <span className="font-semibold text-ink">Step grader:</span>{" "}
+      {!steps
+        ? "not graded; the chain ran into its length cap, so it never passes."
+        : flagged === 0
+          ? `passes all ${steps.length} steps.`
+          : `flags ${flagged} of ${steps.length} steps, marked above, so it does not pass.`}
+    </p>
+  );
+}
+
+function Exchange({ prompt, hintText, reply, steps, verdict }: {
   prompt: string;
   hintText?: string;
   reply: string;
+  steps?: Chain["steps"];
   verdict: React.ReactNode;
 }) {
   return (
@@ -609,7 +677,7 @@ function Exchange({ prompt, hintText, reply, verdict }: {
         <ModelIcon />
         <div className="flex min-w-0 flex-col gap-2">
           <p className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words font-code text-sm leading-relaxed text-ink">
-            {tidyMath(reply)}
+            {steps === undefined ? tidyMath(reply) : <GradedReply trace={reply} steps={steps} />}
           </p>
           {verdict}
         </div>
@@ -633,10 +701,23 @@ function OpenProblem({ problem, kept, state, k, rule }: {
 }) {
   const nRight = problem.correct.filter(Boolean).length;
   const first = problem.chains["0"];
-  const keptChain = kept.length ? problem.chains[String(kept[0])] : null;
+  const shownIdx = shownChain(problem, kept);
+  const keptChain = shownIdx === undefined ? null : problem.chains[String(shownIdx)];
   const verdictOf = (c: { correct: boolean; answer: string }) => (
     <Verdict correct={c.correct} answer={c.answer} groundTruth={problem.ground_truth} />
   );
+  const chainVerdict = (c: Chain) => (
+    <>
+      {verdictOf({ correct: c.correct, answer: c.extracted_answer })}
+      <GraderVerdict chain={c} />
+    </>
+  );
+  const failed =
+    rule === "key"
+      ? k === 1 ? ", wrong" : `, all ${k} wrong`
+      : rule === "prm"
+        ? k === 1 ? ", which the step grader does not pass" : `; the step grader passes none of the ${k}`
+        : k === 1 ? "" : `; the ${k} chains tie on their answers`;
   const inSet = state !== "none";
   return (
     <div className="flex flex-col gap-3">
@@ -657,26 +738,24 @@ function OpenProblem({ problem, kept, state, k, rule }: {
       {keptChain ? (
         <>
           <Step>
-            Chain {kept[0] + 1} of {k}
-            {kept.length > 1 ? `, and ${kept.length - 1} more like it` : ""}
+            Chain {shownIdx! + 1} of {k}
+            {kept.length > 1 ? `, one of ${kept.length} kept` : ""}
+            {kept.length > 1 && !keptChain.correct ? " (the first with a wrong answer)" : ""}
           </Step>
           <Exchange
             prompt={problem.question}
             reply={keptChain.trace}
-            verdict={verdictOf({ correct: keptChain.correct, answer: keptChain.extracted_answer })}
+            steps={keptChain.steps}
+            verdict={chainVerdict(keptChain)}
           />
         </>
       ) : (
         <>
           <Step>
             {k === 1 ? "The one chain" : `Chain 1 of ${k}`}
-            {rule === "key" ? (k === 1 ? ", wrong" : `, all ${k} wrong`) : k === 1 ? "" : `; the ${k} chains tie on their answers`}
+            {failed}
           </Step>
-          <Exchange
-            prompt={problem.question}
-            reply={first.trace}
-            verdict={verdictOf({ correct: first.correct, answer: first.extracted_answer })}
-          />
+          <Exchange prompt={problem.question} reply={first.trace} steps={first.steps} verdict={chainVerdict(first)} />
         </>
       )}
 
@@ -823,6 +902,20 @@ export function Page12() {
             but the majority answer was wrong. Picking an answer at the moment of asking, with no key,
             loses that chain. Building a training set with the key keeps it.
           </p>
+          <p className="text-ink">
+            <strong className="text-ink">A step grader checks the reasoning, and is wrong both ways.</strong>{" "}
+            The third rule ignores the answer and keeps a chain when page 9&apos;s process reward model
+            passes every step. It refuses {PAGE12.prm.right_rejected} of the {PAGE12.prm.right_total}{" "}
+            chains that reached the correct answer. Page 9 found that it catches most false steps but also
+            flags sound ones, so some of these are flaws the answer key let through and some are false
+            alarms; nothing here says which. On {PAGE12.prm.lost.length} problems it keeps no correct chain
+            at all.
+            And it passes {PAGE12.curves.prm[N_CHAINS - 1].chains_wrong} chains with wrong answers, on{" "}
+            {PAGE12.prm.never_passed.length} of the {PAGE12.never.length} problems nothing solved. Majority
+            vote and the step grader were built to pick an answer at the moment of asking (pages 7 and 9);
+            here they do a different job, choosing what to train on. STaR uses the answer key because
+            that check cannot be talked into a wrong answer, even though it cannot see the reasoning.
+          </p>
           {PAGE12.hint ? (
             <p className="text-ink">
               <strong className="text-ink">The hint retry reaches the problems no chain solves.</strong>{" "}
@@ -838,7 +931,7 @@ export function Page12() {
         </section>
 
         <Note kicker="Try it">
-          <p>Write {PAGE12.n_chains} chains per problem, then switch to the majority rule.</p>
+          <p>Write {PAGE12.n_chains} chains per problem, then switch to the majority rule and the step grader.</p>
         </Note>
 
         {/* The two closing blocks — kept at the page bottom on purpose, reading

@@ -6,6 +6,9 @@
  * 7's pile replayed: 100 MATH-500 problems, 16 chains each from Qwen2.5-3B-Instruct, and
  * STaR's filter applied to them. Nothing is trained.
  *
+ * Page 9's step scores over the same chains ride along: the third rule keeps a chain when
+ * page 9's process reward model passes every step, and each openable chain carries its steps.
+ *
  * The page lets the reader change the rule and the number of attempts, so it has to
  * recompute what the filter keeps. `harvest` and `popular` below are the notebook's two
  * functions translated, and the load step re-derives every point of the notebook's curves
@@ -18,7 +21,9 @@ export { tidyMath };
 
 export class Page12DataError extends Error {}
 
-export type Rule = "key" | "popular";
+export type Rule = "key" | "popular" | "prm";
+
+export const RULES: readonly Rule[] = ["key", "popular", "prm"];
 
 export interface Chain {
   sample_index: number;
@@ -27,6 +32,8 @@ export interface Chain {
   correct: boolean;
   truncated: boolean;
   tokens_generated: number;
+  /** Page 9's steps as [start, end, score] spans of `trace`; null when page 9 never graded it. */
+  steps: [number, number, number][] | null;
 }
 
 export interface Problem {
@@ -41,6 +48,8 @@ export interface Problem {
   cls: number[];
   labels: string[];
   greedy_correct: boolean;
+  /** Whether page 9's step grader passed each chain; null for a chain it never graded. */
+  prm_pass: (boolean | null)[];
   /** The chains the page can open, keyed by their index in sample order. */
   chains: Record<string, Chain>;
   /** The same question asked once more, greedily, with the answer as a hint. */
@@ -80,6 +89,14 @@ interface Derived {
   greedy_lessons: number;
   vote_missed: string[];
   never: string[];
+  prm: {
+    model_id: string;
+    threshold: number;
+    right_rejected: number;
+    right_total: number;
+    lost: string[];
+    never_passed: string[];
+  };
   hint: {
     template: string;
     n_missed: number;
@@ -103,23 +120,30 @@ export function popular(cls: number[], k: number): number | null {
 }
 
 /** The chains among the first k that the filter keeps, as indices in sample order. */
-export function harvest(p: Pick<Problem, "correct" | "cls">, k: number, rule: Rule): number[] {
+export function harvest(p: Pick<Problem, "correct" | "cls" | "prm_pass">, k: number, rule: Rule): number[] {
   const idx = Array.from({ length: k }, (_, j) => j);
   if (rule === "key") return idx.filter((j) => p.correct[j]);
+  if (rule === "prm") return idx.filter((j) => p.prm_pass[j] === true);
   const top = popular(p.cls, k);
   return top === null ? [] : idx.filter((j) => p.cls[j] === top);
 }
 
 export type CellState = "right" | "wrong" | "hint" | "none";
 
+/** The kept chain the page opens: the first wrong one if any got in, else the first. */
+export function shownChain(p: Pick<Problem, "correct">, kept: number[]): number | undefined {
+  return kept.find((j) => !p.correct[j]) ?? kept[0];
+}
+
 /**
- * What one problem contributes to the training set. The hint retry is STaR's second
- * chance and only exists under the answer key: a problem with no right chain among the
- * first k gets a lesson when its hinted chain reached the answer.
+ * What one problem contributes to the training set: any wrong answer kept makes it
+ * "wrong". The hint retry is STaR's second chance and only exists under the answer key:
+ * a problem with no right chain among the first k gets a lesson when its hinted chain
+ * reached the answer.
  */
 export function cellState(p: Problem, k: number, rule: Rule, useHint: boolean): CellState {
   const kept = harvest(p, k, rule);
-  if (kept.length) return p.correct[kept[0]] ? "right" : "wrong";
+  if (kept.length) return kept.every((j) => p.correct[j]) ? "right" : "wrong";
   if (useHint && rule === "key" && p.hint?.correct) return "hint";
   return "none";
 }
@@ -142,7 +166,7 @@ function load(raw: unknown): Derived & { order: Problem[] } {
   if (d.problems.length !== d.manifest.n_items) {
     throw new Page12DataError(`${d.problems.length} problems bundled, manifest says ${d.manifest.n_items}`);
   }
-  for (const rule of ["key", "popular"] as const) {
+  for (const rule of RULES) {
     for (const pt of d.curves[rule]) {
       const mine = curvePoint(d.problems, pt.k, rule);
       if (JSON.stringify(mine) !== JSON.stringify(pt)) {
@@ -150,13 +174,13 @@ function load(raw: unknown): Derived & { order: Problem[] } {
       }
     }
   }
-  // Every chain the page can open must be one the filter would keep somewhere.
+  // Every chain the page can open must be bundled.
   for (const p of d.problems) {
-    for (const rule of ["key", "popular"] as const) {
+    for (const rule of RULES) {
       for (let k = 1; k <= d.n_chains; k++) {
-        const first = harvest(p, k, rule)[0];
-        if (first !== undefined && !(String(first) in p.chains)) {
-          throw new Page12DataError(`${p.problem_id}: chain ${first} is kept under ${rule} at k=${k} but not bundled`);
+        const j = shownChain(p, harvest(p, k, rule));
+        if (j !== undefined && !(String(j) in p.chains)) {
+          throw new Page12DataError(`${p.problem_id}: chain ${j} is kept under ${rule} at k=${k} but not bundled`);
         }
       }
     }
@@ -164,8 +188,18 @@ function load(raw: unknown): Derived & { order: Problem[] } {
   for (const p of d.problems) {
     if (!("0" in p.chains)) throw new Page12DataError(`${p.problem_id}: its first chain is not bundled`);
   }
-  if (!d.claims.key_keeps_no_wrong_chain || !d.claims.popular_keeps_wrong_chains) {
-    throw new Page12DataError("the run does not support the section's two claims");
+  for (const p of d.problems) {
+    for (const [j, c] of Object.entries(p.chains)) {
+      const pass = p.prm_pass[Number(j)];
+      if ((c.steps === null) !== (pass === null)) throw new Page12DataError(`${p.problem_id}: chain ${j}'s steps disagree with its grade`);
+      if (c.steps && c.steps.every((s) => s[2] >= d.prm.threshold) !== pass) {
+        throw new Page12DataError(`${p.problem_id}: chain ${j}'s step scores disagree with its grade`);
+      }
+    }
+  }
+  const claims = ["key_keeps_no_wrong_chain", "popular_keeps_wrong_chains", "prm_keeps_wrong_chains", "prm_rejects_right_chains"];
+  if (!claims.every((c) => d.claims[c])) {
+    throw new Page12DataError("the run does not support the section's claims");
   }
   // Most right chains first, so the grid fills from the left as attempts rise.
   const nRight = (p: Problem) => p.correct.filter(Boolean).length;

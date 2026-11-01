@@ -68,12 +68,13 @@ const PAGES = [
   { n: 11, slug: "page-11-training-vs-scale", notebook: "page_11_training_vs_scale.ipynb",
     declared: "2.8 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: true },
   // Page 12 generates no pile of its own: it replays page 7's chains, so those ship at
-  // the path the notebook reads them from, out/page_07/traces.jsonl, and its own folder
-  // holds the results and the hint retry's chains.
+  // the path the notebook reads them from, out/page_07/traces.jsonl, beside page 9's step
+  // scores over the same chains; its own folder holds the results and the hint retry's chains.
   { n: 12, slug: "page-12-star-harvest", notebook: "page_12_star_harvest.ipynb",
-    declared: "3.2 MB", extras: ["results.json", "hint_traces.jsonl"],
+    declared: "4.9 MB", extras: ["results.json", "hint_traces.jsonl"],
     siteData: "page_12_site_data.py", repoNotebookIsTheShippedOne: true,
-    traces: "out/page_07/traces.jsonl" },
+    traces: "out/page_07/traces.jsonl",
+    borrowed: ["out/page_09/traces.jsonl", "out/page_09/derived.json"] },
 ] as const;
 
 const NOTEBOOKS = resolve(WEB, "../notebooks");
@@ -124,6 +125,7 @@ describe.each(PAGES)("page $n's notebook bundle", (page) => {
         `${slug}/out/page_${pad}/manifest.json`,
         `${slug}/${"traces" in page ? page.traces : `out/page_${pad}/traces.jsonl`}`,
         ...extras.map((e) => `${slug}/out/page_${pad}/${e}`),
+        ...("borrowed" in page ? page.borrowed.map((b) => `${slug}/${b}`) : []),
         `${slug}/requirements.txt`,
       ].sort(),
     );
