@@ -43,6 +43,17 @@ export interface Problem {
   greedy_correct: boolean;
   /** The chains the page can open, keyed by their index in sample order. */
   chains: Record<string, Chain>;
+  /** The same question asked once more, greedily, with the answer as a hint. */
+  hint: HintChain | null;
+}
+
+export interface HintChain {
+  trace: string;
+  answer: string;
+  correct: boolean;
+  mentions_hint: boolean;
+  truncated: boolean;
+  tokens_generated: number;
 }
 
 export interface CurvePoint {
@@ -69,6 +80,14 @@ interface Derived {
   greedy_lessons: number;
   vote_missed: string[];
   never: string[];
+  hint: {
+    template: string;
+    n_missed: number;
+    n_retried: number;
+    recovered: string[];
+    recovered_never: string[];
+    mentions_hint: string[];
+  } | null;
   problems: Problem[];
 }
 
@@ -89,6 +108,20 @@ export function harvest(p: Pick<Problem, "correct" | "cls">, k: number, rule: Ru
   if (rule === "key") return idx.filter((j) => p.correct[j]);
   const top = popular(p.cls, k);
   return top === null ? [] : idx.filter((j) => p.cls[j] === top);
+}
+
+export type CellState = "right" | "wrong" | "hint" | "none";
+
+/**
+ * What one problem contributes to the training set. The hint retry is STaR's second
+ * chance and only exists under the answer key: a problem with no right chain among the
+ * first k gets a lesson when its hinted chain reached the answer.
+ */
+export function cellState(p: Problem, k: number, rule: Rule, useHint: boolean): CellState {
+  const kept = harvest(p, k, rule);
+  if (kept.length) return p.correct[kept[0]] ? "right" : "wrong";
+  if (useHint && rule === "key" && p.hint?.correct) return "hint";
+  return "none";
 }
 
 export function curvePoint(problems: Problem[], k: number, rule: Rule): CurvePoint {
@@ -128,6 +161,9 @@ function load(raw: unknown): Derived & { order: Problem[] } {
       }
     }
   }
+  for (const p of d.problems) {
+    if (!("0" in p.chains)) throw new Page12DataError(`${p.problem_id}: its first chain is not bundled`);
+  }
   if (!d.claims.key_keeps_no_wrong_chain || !d.claims.popular_keeps_wrong_chains) {
     throw new Page12DataError("the run does not support the section's two claims");
   }
@@ -140,5 +176,7 @@ function load(raw: unknown): Derived & { order: Problem[] } {
 }
 
 export const PAGE12 = load(rawDerived);
+
+export const hasHint = PAGE12.hint !== null && PAGE12.problems.every((p) => p.hint !== null);
 
 export const modelLabel = PAGE12.manifest.model_id.split("/").pop()!;

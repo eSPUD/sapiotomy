@@ -4,7 +4,7 @@
  * these pin the claims the copy makes from them.
  */
 import { describe, expect, it } from "vitest";
-import { PAGE12, curvePoint, harvest, popular } from "./page12";
+import { PAGE12, cellState, curvePoint, harvest, popular } from "./page12";
 
 const N = PAGE12.n_chains;
 const at = (rule: "key" | "popular", k: number) => PAGE12.curves[rule][k - 1];
@@ -51,6 +51,19 @@ describe("Page 12: the harvest", () => {
   it("recomputes the notebook's curves exactly", () => {
     for (const rule of ["key", "popular"] as const) {
       for (const pt of PAGE12.curves[rule]) expect(curvePoint(PAGE12.problems, pt.k, rule)).toEqual(pt);
+    }
+  });
+
+  it("the hint retry fills empty squares under the answer key only, and never adds a wrong answer", () => {
+    expect(PAGE12.hint).not.toBeNull();
+    const at16 = PAGE12.problems.filter((p) => cellState(p, N, "key", true) === "hint");
+    // At 16 chains the empty squares are exactly `never`, so the hint fills the ones it recovered.
+    expect(at16.map((p) => p.problem_id).sort()).toEqual([...PAGE12.hint!.recovered_never].sort());
+    for (const p of PAGE12.problems) {
+      for (const k of [1, 4, 16]) {
+        expect(cellState(p, k, "popular", true)).not.toBe("hint");
+        if (cellState(p, k, "key", true) === "hint") expect(p.hint!.correct).toBe(true);
+      }
     }
   });
 });

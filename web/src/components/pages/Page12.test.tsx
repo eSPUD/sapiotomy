@@ -12,10 +12,13 @@ describe("Page 12 (STaR and self-improvement)", () => {
 
   it("runs STaR's filter over page 7's pile in section 2, with no Table 1 bar chart", () => {
     render(<Page12 />);
-    expect(screen.getByRole("heading", { name: /2\. Which chains become lessons\?/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /2\. Which reasoning goes into the training set\?/ })).toBeInTheDocument();
     expect(screen.queryByText("LaMDA 137B, few-shot CoT")).not.toBeInTheDocument();
-    expect(screen.getByRole("radiogroup", { name: /Keep a chain if its answer/ })).toBeInTheDocument();
-    expect(screen.getByRole("slider", { name: /Attempts per problem/ })).toBeInTheDocument();
+    expect(screen.getByRole("radiogroup", { name: /Which chains go into the training set/ })).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: /Reasoning chains written per problem/ })).toBeInTheDocument();
+    // The figure stands on its own: no references to earlier pages' tools in its controls.
+    expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/retry once with the correct answer given as a hint/)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /level \d/ })).toHaveLength(100);
   });
 
@@ -72,7 +75,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     const interactive = screen.getByText(/Everything rests on the answer key/);
     const listing = screen.getByText(/hint = y/);
-    const results = screen.getByRole("heading", { name: /Which chains become lessons/ });
+    const results = screen.getByRole("heading", { name: /Which reasoning goes into the training set/ });
     const counterweight = screen.getByText(/Trained on reasoning, graded on answers/);
     const handoff = screen.getByText(/Page 13 picks it up from there/);
     const follows = (a: Element, b: Element) =>
@@ -131,8 +134,8 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeNull();
     expect(screen.getByText(/one greedy rollout/).querySelector("sup")).toBeNull();
     // The measured section names its source right where the reader looks.
-    expect(screen.getByRole("heading", { name: /Which chains become lessons/ }).textContent).toMatch(
-      /measured · page 7's pile/,
+    expect(screen.getByRole("heading", { name: /Which reasoning goes into the training set/ }).textContent).toMatch(
+      /measured · Qwen2\.5-3B-Instruct · 100 MATH-500 problems/,
     );
     expect(screen.queryByText(/sample from the current policy/)).not.toBeInTheDocument();
     // The counterweight's claim has outside experimental support.
@@ -200,6 +203,6 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.queryByText("Cited")).not.toBeInTheDocument();
     expect(screen.queryByText(/Table 1, CommonsenseQA dev/)).not.toBeInTheDocument();
     // Section 2's provenance is its heading badge, not a footnote.
-    expect(screen.getByRole("heading", { name: /Which chains become lessons/ })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Which reasoning goes into the training set/ })).toBeInTheDocument();
   });
 });

@@ -3,8 +3,9 @@
 The notebook computes every number in `results.json`: for each of page 7's problems, which of
 its sixteen chains were right and which answer each one gave, and what STaR's filter keeps at
 every number of attempts under each rule. This script computes nothing the notebook did not.
-It picks the chains the page can open (the first chain each rule would keep), and lays them
-out the way `web/src/lib/page12.ts` reads them.
+It picks the chains the page can open (each problem's first chain, and the first chain each rule
+would keep), attaches each problem's hinted chain, and lays them out the way
+`web/src/lib/page12.ts` reads them.
 
     python page_12_site_data.py                                      # out/page_12/derived.json
     cp out/page_12/derived.json ../web/data/page-12-derived.json     # promote it to the page
@@ -18,6 +19,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve()
 CHAIN_FIELDS = ("sample_index", "trace", "extracted_answer", "correct", "truncated", "tokens_generated")
+HINT_FIELDS = ("trace", "answer", "correct", "mentions_hint", "truncated", "tokens_generated")
 
 
 def sha256(path):
@@ -34,9 +36,10 @@ def popular(cls, k):
 
 
 def shown_chains(row, n_chains):
-    """Every chain the page can open: under the answer key, the first right one; under the
-    popular answer, the first chain of each class that wins at some number of attempts."""
-    idx = set()
+    """Every chain the page can open: the first one, which is the try that failed when nothing
+    is kept; under the answer key, the first right one; under the popular answer, the first
+    chain of each class that wins at some number of attempts."""
+    idx = {0}
     if any(row["correct"]):
         idx.add(row["correct"].index(True))
     for k in range(1, n_chains + 1):
@@ -46,7 +49,7 @@ def shown_chains(row, n_chains):
     return sorted(idx)
 
 
-def build(out_dir, traces_path):
+def build(out_dir, traces_path, hint_path):
     out_dir = Path(out_dir)
     results_path = out_dir / "results.json"
     R = json.loads(results_path.read_text(encoding="utf-8"))
@@ -63,6 +66,14 @@ def build(out_dir, traces_path):
     for (pid, _), r in sorted(latest.items(), key=lambda kv: kv[0][1]):
         pile.setdefault(pid, []).append(r)
 
+    hint = {}
+    if R.get("hint"):
+        with Path(hint_path).open(encoding="utf-8") as f:
+            for h in (json.loads(line) for line in f if line.strip()):
+                if h["run_id"] == R["hint"]["run_id"]:
+                    hint[h["problem_id"]] = {k: h[k] for k in HINT_FIELDS}
+        assert {i: h["correct"] for i, h in hint.items()} == R["hint"]["correct"], "hint_traces.jsonl disagrees with results.json"
+
     problems = []
     for pid, row in R["rows"].items():
         rs = pile[pid][:n]
@@ -72,6 +83,7 @@ def build(out_dir, traces_path):
             "question": rs[0]["question"], "ground_truth": rs[0]["ground_truth"],
             **row,
             "chains": {str(j): {k: rs[j][k] for k in CHAIN_FIELDS} for j in shown_chains(row, n)},
+            "hint": hint.get(pid),
         })
 
     derived = {
@@ -84,6 +96,8 @@ def build(out_dir, traces_path):
         "greedy_lessons": R["greedy_lessons"],
         "vote_missed": R["vote_missed"],
         "never": R["never"],
+        "hint": None if not R.get("hint") else {
+            k: R["hint"][k] for k in ("template", "n_missed", "n_retried", "recovered", "recovered_never", "mentions_hint")},
         "problems": problems,
     }
     path = out_dir / "derived.json"
@@ -100,5 +114,7 @@ if __name__ == "__main__":
                     help="the run's folder: results.json and manifest.json")
     ap.add_argument("--traces", default=str(HERE.parent / "out" / "page_07" / "traces.jsonl"),
                     help="page 7's traces.jsonl, which holds the chains")
+    ap.add_argument("--hint", default=str(HERE.parent / "out" / "page_12" / "hint_traces.jsonl"),
+                    help="the hint retry's chains")
     a = ap.parse_args()
-    build(a.out_dir, a.traces)
+    build(a.out_dir, a.traces, a.hint)
