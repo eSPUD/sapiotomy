@@ -25,7 +25,14 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.getByRole("slider", { name: /Reasoning chains written per problem/ })).toBeInTheDocument();
     // The figure stands on its own: no references to earlier pages' tools in its controls.
     expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /level \d/ })).toHaveLength(100);
+    // One problem walked through the pass: its chains, the rule's pick, the training set.
+    expect(screen.getByRole("group", { name: /chain(s)? written for this problem/ })).toBeInTheDocument();
+    expect(screen.getByText(/Selected by the answer\. Trained on the reasoning\./)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /next problem/ })).toBeInTheDocument();
+    // After the reveal, the same pass is counted over all 100 problems under every rule.
+    expect(screen.getByRole("img", { name: /^answer key: \d+ chains in the training set/ })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /^majority vote: \d+ chains in the training set from 100 problems/ })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /^step grader: \d+ chains/ })).toBeInTheDocument();
   });
 
   it("offers a step grader as a third rule, and shows its verdict beside the answer key's", () => {
@@ -35,8 +42,9 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(radios).toHaveLength(3);
     fireEvent.click(screen.getByRole("radio", { name: /step grader passes/ }));
     expect(screen.queryByLabelText(/retry once with the correct answer given as a hint/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("button", { name: /level \d/ })[0]);
+    // The chain shown under the training set carries the grader's verdict beside the key's.
     expect(screen.getByText(/Step grader:/)).toBeInTheDocument();
+    expect(screen.getByText(/Final answer:/)).toBeInTheDocument();
   });
 
   it("draws the loop as a diagram, with no simulated accuracy chart", () => {

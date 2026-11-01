@@ -84,9 +84,9 @@ import {
   harvest,
   hasHint,
   modelLabel,
+  popular,
   shownChain,
   tidyMath,
-  type CellState,
   type Chain,
   type Problem,
   type Rule,
@@ -429,27 +429,95 @@ function CodeLine({
 }
 
 /**
- * Section 2's figure: STaR's training set built from page 7's pile, nothing trained. One
- * square per problem, ordered by how many of its chains were right so the grid fills from
- * the left as chains are added. Each control is one line of the listing above: the slider
- * is how many chains line 5 writes, the rule is line 6's check, and the hint toggle is
- * lines 8 and 9. Only the answer key is STaR's check; majority vote and page 9's step
- * grader are answer-time selectors put to a training-time job, there for contrast. Every number shown is recomputed from the bundled verdicts, which the
- * load step has already checked against the notebook.
+ * Section 2's figure: one problem walked through one pass of STaR's loop, with nothing
+ * trained. The model's chains for the problem sit in a row; the rule marks the ones it
+ * keeps; the kept ones land in the training set with their reasoning open underneath,
+ * because the reasoning is what the weights would be fitted to. Under the tray, one bar
+ * per rule counts the same pass over all 100 problems. Each control is one line of the
+ * listing above: the slider is how many chains line 5 writes, the rule is line 6's check,
+ * and the hint toggle is lines 8 and 9. Only the answer key is STaR's check; majority vote
+ * and page 9's step grader are answer-time selectors put to a training-time job, there for
+ * contrast. Every number shown is recomputed from the bundled verdicts, which the load
+ * step has already checked against the notebook.
  */
-const STATE_STYLE: Record<CellState, string> = {
-  right: "border-correct bg-correct",
-  wrong: "border-wrong bg-wrong",
-  hint: "border-compute bg-compute",
-  none: "border-grid bg-transparent",
+type Tone = "plain" | "kept" | "right" | "wrong" | "hint";
+
+const TONE_STYLE: Record<Tone, string> = {
+  plain: "border-grid bg-surface-raised text-ink-muted",
+  kept: "border-compute bg-compute/15 text-ink",
+  right: "border-correct bg-correct/20 text-correct-ink",
+  wrong: "border-wrong bg-wrong/20 text-wrong-ink",
+  hint: "border-compute bg-compute/20 text-compute-ink",
 };
 
-const STATE_LABEL: Record<CellState, string> = {
-  right: "trains on a correct answer",
-  wrong: "wrong answer, kept anyway",
-  hint: "trains on a correct answer found with a hint",
-  none: "no training data",
-};
+/** One chain as a small card: its number and the answer it boxed. */
+function ChainChip({ n, answer, tone, dim, pressed, onClick, title }: {
+  n: number | string;
+  answer: string;
+  tone: Tone;
+  dim?: boolean;
+  pressed?: boolean;
+  onClick?: () => void;
+  title: string;
+}) {
+  const label = answer ? tidyMath(answer) : "no answer";
+  const short = label.length > 14 ? `${label.slice(0, 13)}…` : label;
+  const cls = `flex h-11 w-[4.5rem] flex-col items-center justify-center rounded border font-mono text-xs leading-tight transition-opacity ${TONE_STYLE[tone]} ${
+    dim ? "opacity-35" : ""
+  } ${pressed ? "outline outline-2 outline-offset-1 outline-ink" : ""} ${onClick ? "cursor-pointer hover:opacity-100" : ""}`;
+  const body = (
+    <>
+      <span className="text-[10px] uppercase tracking-wide opacity-70">{typeof n === "number" ? `chain ${n}` : n}</span>
+      <span className="max-w-full truncate px-1">{short}</span>
+    </>
+  );
+  return onClick ? (
+    <button type="button" title={title} aria-label={title} aria-pressed={pressed} onClick={onClick} className={cls}>
+      {body}
+    </button>
+  ) : (
+    <span title={title} aria-label={title} role="img" className={cls}>
+      {body}
+    </span>
+  );
+}
+
+/** Small eyebrow over each stage of the pass. */
+function Stage({ n, children }: { n: number; children: React.ReactNode }) {
+  return (
+    <p className="flex items-baseline gap-2 text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-grid font-mono text-[10px] normal-case text-ink">
+        {n}
+      </span>
+      {children}
+    </p>
+  );
+}
+
+const RULE_OPTIONS: { id: Rule; label: string; short: string }[] = [
+  { id: "key", label: "Only chains with the correct answer (STaR)", short: "answer key" },
+  { id: "popular", label: "Chains that agree with the majority (no answer key)", short: "majority vote" },
+  { id: "prm", label: "Chains whose every step a step grader passes (no answer key)", short: "step grader" },
+];
+
+/** What one rule keeps over the whole pile at k chains, with the hint retry's lessons under the key. */
+function tally(k: number, rule: Rule, hintOn: boolean) {
+  let problems = 0, kept = 0, wrong = 0, hinted = 0;
+  for (const p of PAGE12.problems) {
+    const h = harvest(p, k, rule);
+    if (h.length) problems += 1;
+    kept += h.length;
+    wrong += h.filter((j) => !p.correct[j]).length;
+    if (!h.length && hintOn && rule === "key" && p.hint?.correct) {
+      problems += 1;
+      hinted += 1;
+    }
+  }
+  return { problems, kept, wrong, hinted };
+}
+
+/** The problem the figure walks through first: one chain in 16 reached the key, and the vote missed it. */
+const FIRST_PROBLEM = "test/number_theory/357.json";
 
 /**
  * The figure has two beats. First the reader builds one round's training set with STaR's
@@ -459,61 +527,81 @@ const STATE_LABEL: Record<CellState, string> = {
  */
 function StarHarvest() {
   const N = PAGE12.n_chains;
+  const problems = PAGE12.order;
   const [k, setK] = useState(1);
   const [rule, setRule] = useState<Rule>("key");
   const [useHint, setUseHint] = useState(false);
   const [compare, setCompare] = useState(false);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [at, setAt] = useState(() => Math.max(0, problems.findIndex((p) => p.problem_id === FIRST_PROBLEM)));
+  const [pick, setPick] = useState<number | null>(null);
   const hintOn = useHint && rule === "key";
   const takeKeyAway = () => {
     setCompare(true);
     setRule("popular");
-    setOpenId(null);
+    setPick(null);
+  };
+  const goTo = (i: number) => {
+    setAt((i + problems.length) % problems.length);
+    setPick(null);
   };
 
-  const cells = PAGE12.order.map((p) => {
-    const kept = harvest(p, k, rule);
-    return { p, kept, state: cellState(p, k, rule, hintOn) };
-  });
-  const inSet = cells.filter((c) => c.state !== "none").length;
-  const chainsIn = cells.reduce((s, c) => s + c.kept.length + (c.state === "hint" ? 1 : 0), 0);
-  const chainsWrong = cells.reduce((s, c) => s + c.kept.filter((j) => !c.p.correct[j]).length, 0);
-  const open = cells.find((c) => c.p.problem_id === openId) ?? null;
-  const shown: CellState[] = rule === "key" ? (hintOn ? ["right", "hint", "none"] : ["right", "none"]) : ["right", "wrong", "none"];
+  const problem = problems[at];
+  const kept = harvest(problem, k, rule);
+  const state = cellState(problem, k, rule, hintOn);
+  const top = rule === "popular" ? popular(problem.cls, k) : null;
+  const shownIdx = shownChain(problem, kept);
+  const openIdx = pick !== null && kept.includes(pick) ? pick : shownIdx;
+  const openChain = openIdx === undefined ? null : problem.chains[String(openIdx)];
+  const first = problem.chains["0"];
 
-  const RULES: { id: Rule; label: string }[] = [
-    { id: "key", label: "Only chains with the correct answer (STaR)" },
-    { id: "popular", label: "Chains that agree with the majority (no answer key)" },
-    { id: "prm", label: "Chains whose every step a step grader passes (no answer key)" },
-  ];
+  const selection =
+    rule === "key"
+      ? `${kept.length} of ${k} ${kept.length === 1 ? "matches" : "match"} the answer key.`
+      : rule === "prm"
+        ? `The step grader passes ${kept.length} of ${k}; it never sees the answer key.`
+        : top === null
+          ? k === 1
+            ? "One chain is its own majority, so it is kept."
+            : `The ${k} chains tie on their answers, so nothing is kept.`
+          : `The majority answer is ${tidyMath(problem.labels[top])}, given by ${kept.length} of ${k}; those are kept.`;
+
+  const rows = (compare ? RULE_OPTIONS : RULE_OPTIONS.filter((r) => r.id === "key")).map((r) => ({
+    ...r,
+    ...tally(k, r.id, hintOn),
+  }));
+  const span = N * PAGE12.manifest.n_items; // every chain the pile holds, so the bars are on one scale at every k
+  const pct = (n: number) => `${(100 * n) / span}%`;
 
   return (
     <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
       <div className="flex flex-col gap-4">
         {compare ? (
-        <div className="flex flex-col gap-1">
-          <span id="star-rule" className="text-sm text-ink-muted">
-            Which chains go into the training set?
-          </span>
-          <div role="radiogroup" aria-labelledby="star-rule" className="grid gap-1 sm:grid-cols-3">
-            {RULES.map((r) => (
-              <button
-                key={r.id}
-                type="button"
-                role="radio"
-                aria-checked={rule === r.id}
-                onClick={() => setRule(r.id)}
-                className={`h-12 rounded border px-2 text-xs leading-tight ${
-                  rule === r.id
-                    ? "border-compute bg-compute/15 text-ink"
-                    : "border-grid text-ink-muted hover:border-compute hover:text-ink"
-                }`}
-              >
-                {r.label}
-              </button>
-            ))}
+          <div className="flex flex-col gap-1">
+            <span id="star-rule" className="text-sm text-ink-muted">
+              Which chains go into the training set?
+            </span>
+            <div role="radiogroup" aria-labelledby="star-rule" className="grid gap-1 sm:grid-cols-3">
+              {RULE_OPTIONS.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={rule === r.id}
+                  onClick={() => {
+                    setRule(r.id);
+                    setPick(null);
+                  }}
+                  className={`h-12 rounded border px-2 text-xs leading-tight ${
+                    rule === r.id
+                      ? "border-compute bg-compute/15 text-ink"
+                      : "border-grid text-ink-muted hover:border-compute hover:text-ink"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
         ) : (
           <p className="text-sm text-ink">
             <span className="text-ink-muted">Rule:</span> only chains with the correct answer go into the
@@ -525,7 +613,10 @@ function StarHarvest() {
           min={1}
           max={N}
           value={k}
-          onChange={setK}
+          onChange={(v) => {
+            setK(v);
+            setPick(null);
+          }}
           ticks={[1, 4, 8, 12, 16]}
         />
       </div>
@@ -537,53 +628,187 @@ function StarHarvest() {
         </label>
       ) : null}
 
-      <div
-        role="img"
-        aria-label={`${PAGE12.manifest.n_items} problems at ${k} chains each: ${inSet} put training data in, and ${chainsWrong} of the ${chainsIn} chains in the training set have a wrong answer.`}
-        className="grid grid-cols-10 gap-1 sm:grid-cols-[repeat(20,minmax(0,1fr))]"
-      >
-        {cells.map(({ p, state }) => {
-          const isOpen = p.problem_id === openId;
-          return (
-            <button
-              key={p.problem_id}
-              type="button"
-              data-problem={p.problem_id}
-              aria-label={`${p.subject}, level ${p.level}: ${STATE_LABEL[state]}`}
-              aria-pressed={isOpen}
-              onClick={() => setOpenId(isOpen ? null : p.problem_id)}
-              className={`aspect-square rounded-sm border transition-colors ${STATE_STYLE[state]} ${
-                isOpen ? "outline outline-2 outline-offset-2 outline-ink" : ""
-              }`}
-            />
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
-        <span>One square per problem.</span>
-        {shown.map((st) => (
-          <span key={st} className="flex items-center gap-1.5">
-            <span aria-hidden="true" className={`inline-block h-3 w-3 rounded-sm border ${STATE_STYLE[st]}`} />
-            {STATE_LABEL[st]}
+      {/* The pass, for one problem. */}
+      <div className="flex flex-col gap-4 rounded-lg border border-grid bg-canvas p-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="font-mono text-xs text-ink-muted">
+            problem {at + 1} of {problems.length} · {problem.subject}, level {problem.level} · the answer key says{" "}
+            {tidyMath(problem.ground_truth)} · {problem.correct.filter(Boolean).length} of {N} chains reached it
+          </p>
+          <span className="flex gap-1">
+            <button type="button" onClick={() => goTo(at - 1)} className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute">
+              ← previous problem
+            </button>
+            <button type="button" onClick={() => goTo(at + 1)} className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute">
+              next problem →
+            </button>
           </span>
-        ))}
+        </div>
+        <p className="whitespace-pre-wrap font-code text-sm text-ink">{tidyMath(problem.question)}</p>
+
+        <div className="flex flex-col gap-2">
+          <Stage n={1}>
+            Generate: {k === 1 ? "one chain" : `${k} chains`}, each ending in a boxed answer
+          </Stage>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label={k === 1 ? "the one chain written for this problem" : `the ${k} chains written for this problem`}>
+            {Array.from({ length: k }, (_, j) => {
+              const isKept = kept.includes(j);
+              const answer = problem.cls[j] >= 0 ? problem.labels[problem.cls[j]] : "";
+              return (
+                <ChainChip
+                  key={j}
+                  n={j + 1}
+                  answer={answer}
+                  tone={isKept ? "kept" : "plain"}
+                  dim={!isKept}
+                  title={`chain ${j + 1}: answered ${answer ? tidyMath(answer) : "nothing"}${isKept ? ", kept" : ", dropped"}`}
+                />
+              );
+            })}
+          </div>
+          <Stage n={2}>Select: {RULE_OPTIONS.find((r) => r.id === rule)!.short}</Stage>
+          <p className="text-sm text-ink">{selection}</p>
+        </div>
+
+        {rule === "key" && hintOn && kept.length === 0 && problem.hint ? (
+          <div className="flex flex-col gap-2">
+            <Stage n={3}>Rationalize: ask again with the answer as a hint</Stage>
+            <p className="text-sm text-ink">
+              {problem.hint.correct
+                ? "The hinted chain reaches the answer. It is kept, with the hint deleted from the question."
+                : "The hinted chain still misses, so this problem gives nothing to train on."}
+            </p>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-2 rounded-lg border border-dashed border-compute/60 bg-surface p-3">
+          <Stage n={rule === "key" && hintOn && kept.length === 0 && problem.hint ? 4 : 3}>
+            Training set: what the weights are fitted to
+          </Stage>
+          <p className="text-sm text-ink">
+            <strong>Selected by the answer. Trained on the reasoning.</strong>{" "}
+            {state === "none"
+              ? "Nothing from this problem."
+              : state === "hint"
+                ? "One chain of reasoning, written with the hint, filed under the question without it."
+                : `${kept.length === 1 ? "One chain" : `${kept.length} chains`} of reasoning, every line of ${kept.length === 1 ? "it" : "them"}, answer included.`}
+          </p>
+          {state !== "none" ? (
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="the chains in the training set">
+              {kept.map((j) => {
+                const answer = problem.cls[j] >= 0 ? problem.labels[problem.cls[j]] : "";
+                const bundled = String(j) in problem.chains;
+                const tone: Tone = problem.correct[j] ? "right" : "wrong";
+                return (
+                  <ChainChip
+                    key={j}
+                    n={j + 1}
+                    answer={answer}
+                    tone={tone}
+                    pressed={bundled ? j === openIdx : undefined}
+                    onClick={bundled ? () => setPick(j) : undefined}
+                    title={`chain ${j + 1} in the training set, ${problem.correct[j] ? "correct answer" : "wrong answer"}${bundled ? "; open it" : ""}`}
+                  />
+                );
+              })}
+              {state === "hint" ? (
+                <ChainChip n="hinted" answer={problem.hint!.answer} tone="hint" title="the hinted chain, in the training set" />
+              ) : null}
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
+            <span className="flex items-center gap-1.5">
+              <span aria-hidden="true" className={`inline-block h-3 w-3 rounded-sm border ${TONE_STYLE.right}`} />
+              correct answer
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span aria-hidden="true" className={`inline-block h-3 w-3 rounded-sm border ${TONE_STYLE.wrong}`} />
+              wrong answer, kept anyway
+            </span>
+            {rule !== "key" ? <span>(the answer key&apos;s verdict, which this rule never saw)</span> : null}
+          </div>
+        </div>
+
+        {state === "hint" && problem.hint ? (
+          <>
+            <Step>The retry, with the answer given as a hint</Step>
+            <Exchange
+              prompt={problem.question}
+              hintText={`(Hint: the correct answer is ${tidyMath(problem.ground_truth)}.)`}
+              reply={problem.hint.trace}
+              verdict={<Verdict correct={problem.hint.correct} answer={problem.hint.answer} groundTruth={problem.ground_truth} />}
+            />
+            {problem.hint.mentions_hint ? (
+              <p className="rounded border-l-4 border-compute bg-compute/10 px-3 py-2 text-sm text-ink">
+                This reasoning refers to the hint, so with the hint deleted it argues from an answer it was never shown.
+              </p>
+            ) : null}
+          </>
+        ) : openChain ? (
+          <>
+            <Step>
+              Chain {openIdx! + 1} of {k}, as it would be trained on
+              {kept.length > 1 && !openChain.correct && pick === null ? " (the first with a wrong answer)" : ""}
+            </Step>
+            <Exchange
+              prompt={problem.question}
+              reply={openChain.trace}
+              steps={openChain.steps}
+              verdict={
+                <>
+                  <Verdict correct={openChain.correct} answer={openChain.extracted_answer} groundTruth={problem.ground_truth} />
+                  <GraderVerdict chain={openChain} />
+                </>
+              }
+            />
+          </>
+        ) : (
+          <>
+            <Step>
+              {k === 1 ? "The one chain, dropped" : `Chain 1 of ${k}, dropped like the rest`}
+            </Step>
+            <Exchange
+              prompt={problem.question}
+              reply={first.trace}
+              steps={first.steps}
+              verdict={
+                <>
+                  <Verdict correct={first.correct} answer={first.extracted_answer} groundTruth={problem.ground_truth} />
+                  <GraderVerdict chain={first} />
+                </>
+              }
+            />
+          </>
+        )}
       </div>
 
-      <dl className="grid grid-cols-3 gap-3">
-        {[
-          { label: "problems in the training set", value: `${inSet} of ${PAGE12.manifest.n_items}` },
-          { label: "chains in the training set", value: String(chainsIn) },
-          { label: "of those, wrong answers", value: String(chainsWrong), bad: chainsWrong > 0 },
-        ].map((s) => (
-          <div key={s.label} className="rounded bg-surface-raised px-3 py-2">
-            <dt className="text-xs text-ink-muted">{s.label}</dt>
-            <dd className={`m-0 font-mono text-base tabular-nums sm:text-xl ${s.bad ? "text-wrong-ink" : "text-ink"}`}>
-              {s.value}
-            </dd>
+      {/* The same pass over every problem. */}
+      <div className="flex flex-col gap-2">
+        <p className="text-sm text-ink-muted">
+          The same pass over all {PAGE12.manifest.n_items} problems at {k === 1 ? "one chain" : `${k} chains`} each:
+        </p>
+        {rows.map((r) => (
+          <div key={r.id} className="grid grid-cols-[7rem_1fr] items-center gap-3 sm:grid-cols-[8rem_1fr]">
+            <span className="text-sm text-ink">{r.short}</span>
+            <div
+              role="img"
+              aria-label={`${r.short}: ${r.kept + r.hinted} chains in the training set from ${r.problems} problems, ${r.wrong} with a wrong answer`}
+              className="flex flex-col gap-1"
+            >
+              <div className="flex h-5 w-full overflow-hidden rounded-sm bg-surface-raised">
+                <span className="h-full bg-correct transition-[width]" style={{ width: pct(r.kept - r.wrong) }} />
+                <span className="h-full bg-wrong transition-[width]" style={{ width: pct(r.wrong) }} />
+                <span className="h-full bg-compute transition-[width]" style={{ width: pct(r.hinted) }} />
+              </div>
+              <span className="font-mono text-xs tabular-nums text-ink-muted">
+                {r.kept + r.hinted} chains from {r.problems} problems
+                {r.wrong > 0 ? <span className="text-wrong-ink">, {r.wrong} with a wrong answer</span> : ", no wrong answers"}
+                {r.hinted > 0 ? <span className="text-compute-ink">, {r.hinted} from the hint retry</span> : null}
+              </span>
+            </div>
           </div>
         ))}
-      </dl>
+      </div>
 
       {rule === "popular" && k === 1 ? (
         <p className="rounded border-l-4 border-compute bg-compute/10 px-3 py-2 text-sm text-ink">
@@ -591,12 +816,6 @@ function StarHarvest() {
           problem gets in and nothing is filtered. Add chains to see the vote start to work.
         </p>
       ) : null}
-
-      {open ? (
-        <OpenProblem problem={open.p} kept={open.kept} state={open.state} k={k} rule={rule} />
-      ) : (
-        <p className="text-sm text-ink-muted">Click a square to see the problem and what the model wrote for it.</p>
-      )}
 
       {compare ? null : (
         <button
@@ -732,95 +951,6 @@ function Step({ children }: { children: React.ReactNode }) {
   return <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{children}</p>;
 }
 
-/** What the model wrote for one problem, and what of it goes into the training set. */
-function OpenProblem({ problem, kept, state, k, rule }: {
-  problem: Problem;
-  kept: number[];
-  state: CellState;
-  k: number;
-  rule: Rule;
-}) {
-  const nRight = problem.correct.filter(Boolean).length;
-  const first = problem.chains["0"];
-  const shownIdx = shownChain(problem, kept);
-  const keptChain = shownIdx === undefined ? null : problem.chains[String(shownIdx)];
-  const verdictOf = (c: { correct: boolean; answer: string }) => (
-    <Verdict correct={c.correct} answer={c.answer} groundTruth={problem.ground_truth} />
-  );
-  const chainVerdict = (c: Chain) => (
-    <>
-      {verdictOf({ correct: c.correct, answer: c.extracted_answer })}
-      <GraderVerdict chain={c} />
-    </>
-  );
-  const failed =
-    rule === "key"
-      ? k === 1 ? ", wrong" : `, all ${k} wrong`
-      : rule === "prm"
-        ? k === 1 ? ", which the step grader does not pass" : `; the step grader passes none of the ${k}`
-        : k === 1 ? "" : `; the ${k} chains tie on their answers`;
-  const inSet = state !== "none";
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-mono text-xs text-ink-muted">
-          {problem.subject}, level {problem.level} · the answer key says {tidyMath(problem.ground_truth)} · {nRight} of{" "}
-          {problem.correct.length} chains reached it
-        </p>
-        <span
-          className={`rounded border px-2 py-0.5 text-xs ${
-            !inSet ? "border-grid text-ink-muted" : state === "wrong" ? "border-wrong text-wrong-ink" : "border-correct text-correct-ink"
-          }`}
-        >
-          {inSet ? "goes into the training set" : "nothing goes into the training set"}
-        </span>
-      </div>
-
-      {keptChain ? (
-        <>
-          <Step>
-            Chain {shownIdx! + 1} of {k}
-            {kept.length > 1 ? `, one of ${kept.length} kept` : ""}
-            {kept.length > 1 && !keptChain.correct ? " (the first with a wrong answer)" : ""}
-          </Step>
-          <Exchange
-            prompt={problem.question}
-            reply={keptChain.trace}
-            steps={keptChain.steps}
-            verdict={chainVerdict(keptChain)}
-          />
-        </>
-      ) : (
-        <>
-          <Step>
-            {k === 1 ? "The one chain" : `Chain 1 of ${k}`}
-            {failed}
-          </Step>
-          <Exchange prompt={problem.question} reply={first.trace} steps={first.steps} verdict={chainVerdict(first)} />
-        </>
-      )}
-
-      {state === "hint" && problem.hint ? (
-        <>
-          <Step>The retry, with the answer given as a hint</Step>
-          <Exchange
-            prompt={problem.question}
-            hintText={`(Hint: the correct answer is ${tidyMath(problem.ground_truth)}.)`}
-            reply={problem.hint.trace}
-            verdict={verdictOf(problem.hint)}
-          />
-          <p className="rounded border-l-4 border-compute bg-compute/10 px-3 py-2 text-sm text-ink">
-            <strong>What goes into the training set:</strong> the question without the hint, paired with
-            the reasoning above, as if the model had found it unaided.
-            {problem.hint.mentions_hint
-              ? " This reasoning refers to the hint, so with the hint deleted it argues from an answer it was never shown."
-              : ""}
-          </p>
-        </>
-      ) : null}
-    </div>
-  );
-}
 
 export function Page12() {
   const page = getPage(PAGE_N)!;
@@ -950,7 +1080,7 @@ export function Page12() {
               <strong className="text-ink">The hint retry reaches the problems no chain solves.</strong>{" "}
               Of the {PAGE12.never.length} problems where all {PAGE12.n_chains} chains were wrong, the
               retry recovers {PAGE12.hint.recovered_never.length}. But a hint can carry an argument that
-              does not hold: of the {PAGE12.hint.recovered.length} problems the model's single greedy try
+              does not hold: of the {PAGE12.hint.recovered.length} problems the model&apos;s single greedy try
               missed and the retry recovered, {PAGE12.hint.mentions_hint.length} reason by pointing at the
               hint, and STaR keeps them anyway once the answer matches. On CommonsenseQA the retry lifted
               GPT-J from {p.starNoRationalization}% to {p.star}%.
