@@ -11,47 +11,68 @@ describe("Page 12 (STaR and self-improvement)", () => {
   });
 
   it("runs STaR's filter over page 7's pile in section 2, with no Table 1 bar chart", () => {
-    render(<Page12 />);
-    expect(screen.getByRole("heading", { name: /2\. Which reasoning goes into the training set\?/ })).toBeInTheDocument();
-    expect(screen.queryByText("LaMDA 137B, few-shot CoT")).not.toBeInTheDocument();
-    // STaR as published and nothing else: one greedy chain, the answer key, and a rationalization switch.
-    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
-    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /take the answer key away/ })).not.toBeInTheDocument();
-    expect(screen.queryByText(/majority/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/step grader/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("group", { name: /the one chain decoded greedily/ })).toBeInTheDocument();
-    expect(screen.getByText(/Selected by the answer\. Trained on the reasoning\./)).toBeInTheDocument();
-    // Rationalization is a small switch, on by default because it is part of STaR as published.
-    const sw = screen.getByRole("switch", { name: /Rationalization/ });
-    expect(sw).toHaveAttribute("aria-checked", "true");
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /^96 of 100 problems put reasoning into the training set, 53 of them through rationalization/ })).toBeInTheDocument();
-    // Off is the paper's ablation, and says so.
-    fireEvent.click(sw);
-    expect(screen.getByText(/STaR without rationalization, the paper's ablation/)).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /^43 of 100 problems put reasoning into the training set, none with a wrong answer/ })).toBeInTheDocument();
-    // The headline follows the switch: with it off, the last problem says nothing of a retry.
-    fireEvent.click(screen.getByRole("button", { name: "previous problem" }));
-    expect(screen.getByText("The greedy chain misses, so nothing goes in.")).toBeInTheDocument();
-    fireEvent.click(sw);
-    expect(screen.getByText("The greedy chain misses, and so does the hinted retry.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "next problem" }));
-    fireEvent.click(screen.getByRole("button", { name: "next problem" }));
-    // The walked problems: the second is rescued by the hint once rationalization is on.
-    fireEvent.click(screen.getByRole("button", { name: "next problem" }));
-    expect(screen.getByText(/written with the hint; filed without it/)).toBeInTheDocument();
-    expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
+    // Reduced motion, so Play shows the whole pass at once.
+    const mm = window.matchMedia;
+    window.matchMedia = ((q: string) => ({ matches: q.includes("reduce"), media: q })) as unknown as typeof window.matchMedia;
+    try {
+      render(<Page12 />);
+      expect(screen.getByRole("heading", { name: /2\. Which reasoning goes into the training set\?/ })).toBeInTheDocument();
+      expect(screen.queryByText("LaMDA 137B, few-shot CoT")).not.toBeInTheDocument();
+      // STaR as published and nothing else: one greedy chain, the answer key, a rationalization switch.
+      expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+      expect(screen.queryByRole("slider")).not.toBeInTheDocument();
+      expect(screen.queryByText(/majority/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/step grader/i)).not.toBeInTheDocument();
+      // As on page 5: empty until Play, cleared by Reset.
+      const play = screen.getByRole("button", { name: /Play/ });
+      const reset = screen.getByRole("button", { name: /Reset/ });
+      expect(screen.getByText(/press Play to see its reply/)).toBeInTheDocument();
+      expect(play).toBeEnabled();
+      expect(reset).toBeDisabled();
+      fireEvent.click(play);
+      expect(play).toBeDisabled();
+      expect(reset).toBeEnabled();
+      expect(screen.getByRole("group", { name: /the one chain decoded greedily/ })).toBeInTheDocument();
+      expect(screen.getByText(/Selected by the answer\. Trained on the reasoning\./)).toBeInTheDocument();
+      // Rationalization is a small switch, on by default because it is part of STaR as published.
+      const sw = screen.getByRole("switch", { name: /Rationalization/ });
+      expect(sw).toHaveAttribute("aria-checked", "true");
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(screen.getByRole("img", { name: /^96 of 100 problems put reasoning into the training set, 53 of them through rationalization/ })).toBeInTheDocument();
+      // Off is the paper's ablation, and says so.
+      fireEvent.click(sw);
+      expect(screen.getByText(/STaR without rationalization, the paper's ablation/)).toBeInTheDocument();
+      expect(screen.getByRole("img", { name: /^43 of 100 problems put reasoning into the training set, none with a wrong answer/ })).toBeInTheDocument();
+      // A new problem starts empty again. The headline follows the switch.
+      fireEvent.click(screen.getByRole("button", { name: "previous problem" }));
+      expect(screen.getByText(/press Play to see its reply/)).toBeInTheDocument();
+      fireEvent.click(play);
+      expect(screen.getByText("The greedy chain misses, so nothing goes in.")).toBeInTheDocument();
+      fireEvent.click(sw);
+      expect(screen.getByText("The greedy chain misses, and so does the hinted retry.")).toBeInTheDocument();
+      // The second problem is rescued by the hint.
+      fireEvent.click(screen.getByRole("button", { name: "next problem" }));
+      fireEvent.click(screen.getByRole("button", { name: "next problem" }));
+      fireEvent.click(play);
+      expect(screen.getByText(/written with the hint; filed without it/)).toBeInTheDocument();
+      fireEvent.click(reset);
+      expect(screen.getByText(/press Play to see its reply/)).toBeInTheDocument();
+      expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
+    } finally {
+      window.matchMedia = mm;
+    }
   });
 
-  it("plays one problem's pass a step at a time, and any control stops it", () => {
+  it("plays one problem's pass a step at a time, and Reset clears it", () => {
     vi.useFakeTimers();
     try {
       render(<Page12 />);
       const pass = screen.getByRole("list", { name: /STaR's pass for this problem/ });
-      const steps = () => within(pass).getAllByRole("listitem").length;
-      expect(steps()).toBe(3);
-      fireEvent.click(screen.getByRole("button", { name: /play this problem's pass/ }));
+      const steps = () => within(pass).queryAllByRole("listitem").length;
+      const play = screen.getByRole("button", { name: /Play/ });
+      expect(steps()).toBe(0);
+      expect(screen.getByText("Press Play to run one pass of STaR on this problem.")).toBeInTheDocument();
+      fireEvent.click(play);
       expect(steps()).toBe(1);
       expect(screen.getByText("One pass of STaR, step by step.")).toBeInTheDocument();
       act(() => vi.advanceTimersByTime(2700));
@@ -59,13 +80,16 @@ describe("Page 12 (STaR and self-improvement)", () => {
       act(() => vi.advanceTimersByTime(1700));
       expect(steps()).toBe(3);
       act(() => vi.advanceTimersByTime(1900));
-      expect(screen.getByRole("button", { name: /play this problem's pass/ })).toBeInTheDocument();
+      // The whole pass stays on screen.
       expect(screen.getByText("The greedy chain is right, so its reasoning goes in.")).toBeInTheDocument();
+      expect(play).toBeDisabled();
+      fireEvent.click(screen.getByRole("button", { name: /Reset/ }));
+      expect(steps()).toBe(0);
       // Flipping rationalization mid-play shows the whole pass at once.
-      fireEvent.click(screen.getByRole("button", { name: /play this problem's pass/ }));
+      fireEvent.click(play);
       fireEvent.click(screen.getByRole("switch", { name: /Rationalization/ }));
       expect(steps()).toBe(3);
-      expect(screen.queryByRole("button", { name: /stop playback/ })).not.toBeInTheDocument();
+      expect(screen.getByText("The greedy chain is right, so its reasoning goes in.")).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }

@@ -510,8 +510,9 @@ const GREEDY_RIGHT = PAGE12.problems.filter((p) => p.greedy.correct).length;
 const HINT_RESCUED = PAGE12.problems.filter((p) => !p.greedy.correct && p.hint?.correct).length;
 
 /**
- * Nothing is hidden behind a button: the one control is the rationalization switch. It is
- * laid out to fit one screen: the switch and the problem picker in a row, then the pass for
+ * As on page 5, the pass starts empty: Play runs it a step at a time and leaves it on
+ * screen, Reset clears it. The rationalization switch and the problem arrows sit above it. It
+ * is laid out to fit one screen: the switch and the problem picker in a row, then the pass for
  * one problem on the left with the chain it keeps open on the right, then the meter.
  */
 /** How long playback holds on each step of the pass: long enough for a chain to type out. */
@@ -550,8 +551,9 @@ function TrainingTray({ question, reasoning, answer, hinted, arriving }: {
   }, [arriving]);
   return (
     <div className="flex flex-col gap-1.5 rounded-lg border-2 border-dashed border-grid bg-surface p-2" aria-label="the training set">
-      <p className="text-[11px] uppercase tracking-wide text-ink-muted">
-        training set · {reasoning === null ? "nothing from this problem" : "one example from this problem"}
+      <p className="text-sm text-ink">
+        <strong>Selected by the answer. Trained on the reasoning.</strong>{" "}
+        {reasoning === null ? <span className="text-ink-muted">Nothing from this problem.</span> : null}
       </p>
       {reasoning === null ? null : (
         <div
@@ -559,10 +561,12 @@ function TrainingTray({ question, reasoning, answer, hinted, arriving }: {
             hinted ? "border-compute bg-compute/10" : "border-correct bg-correct/10"
           } ${inPlace ? "translate-y-0 opacity-100" : "-translate-y-10 opacity-0"}`}
         >
-          <p><span className="text-ink-muted">question </span>{clip(tidyMath(question), 60)}</p>
-          <p><span className="text-ink-muted">reasoning </span>{clip(tidyMath(reasoning), 90)}</p>
+          {hinted ? (
+            <p className="self-start rounded bg-compute/20 px-1 font-sans text-[10px] text-compute-ink">written with the hint; filed without it</p>
+          ) : null}
+          <p><span className="text-ink-muted">question </span>{clip(tidyMath(question), 48)}</p>
+          <p><span className="text-ink-muted">reasoning </span>{clip(tidyMath(reasoning), 64)}</p>
           <p><span className="text-ink-muted">answer </span>{tidyMath(answer)}</p>
-          {hinted ? <p className="text-compute-ink">written with the hint; filed without it</p> : null}
         </div>
       )}
     </div>
@@ -574,10 +578,11 @@ function StarHarvest() {
   // On by default: rationalization is part of STaR as published; off is the paper's ablation.
   const [rationalize, setRationalize] = useState(true);
   const [at, setAt] = useState(0);
-  // Playback: how many steps of the pass are showing, or null for all of them.
-  const [phase, setPhase] = useState<number | null>(null);
+  // As on page 5: the pass starts empty, Play runs it a step at a time and leaves it on screen,
+  // Reset clears it. 0 is empty, 1 to n are the steps showing during playback, null is the whole pass.
+  const [phase, setPhase] = useState<number | null>(0);
   const goTo = (i: number) => {
-    setPhase(null);
+    setPhase(0);
     setAt((i + problems.length) % problems.length);
   };
 
@@ -591,18 +596,20 @@ function StarHarvest() {
   const nSteps = kinds.length;
   const shown = (i: number) => phase === null || i < phase;
   const lastShown = phase === null ? nSteps - 1 : Math.min(phase, nSteps) - 1;
-  const current = (i: number) => phase !== null && i === lastShown;
-  const holdMs = phase === null ? 0 : STEP_MS[kinds[Math.min(phase, nSteps) - 1]];
+  const playing = phase !== null && phase > 0;
+  const current = (i: number) => playing && i === lastShown;
+  const holdMs = !playing ? 0 : STEP_MS[kinds[Math.min(phase, nSteps) - 1]];
   useEffect(() => {
-    if (phase === null) return;
+    if (phase === null || phase === 0) return;
     const t = setTimeout(() => setPhase(phase >= nSteps ? null : phase + 1), holdMs);
     return () => clearTimeout(t);
   }, [phase, nSteps, holdMs]);
   const play = () => {
-    // Reduced motion: no playback; the full pass is already on screen.
-    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    setPhase(phase === null ? 1 : null);
+    // Reduced motion: no animation; the whole pass appears at once.
+    const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    setPhase(reduced ? null : 1);
   };
+  const reset = () => setPhase(0);
   const n = PAGE12.manifest.n_items;
   const inSet = GREEDY_RIGHT + (rationalize ? HINT_RESCUED : 0);
   const pct = (x: number) => `${(100 * x) / n}%`;
@@ -630,7 +637,8 @@ function StarHarvest() {
               label="Rationalization (lines 8 and 9)"
               checked={rationalize}
               onChange={(v) => {
-                setPhase(null);
+                // Mid-play, show the whole pass at once; an empty pass stays empty.
+                setPhase((ph) => (ph === 0 ? 0 : null));
                 setRationalize(v);
               }}
             />
@@ -642,14 +650,6 @@ function StarHarvest() {
           </div>
         ) : null}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={play}
-            aria-label={phase === null ? "play this problem's pass step by step" : "stop playback"}
-            className="rounded border border-compute bg-compute/15 px-2 py-0.5 text-xs text-ink hover:bg-compute/25"
-          >
-            {phase === null ? "▶ Play" : "■ Stop"}
-          </button>
           <span className="font-mono text-xs text-ink-muted">
             problem {at + 1} of {problems.length}
           </span>
@@ -666,11 +666,14 @@ function StarHarvest() {
       <div className="grid gap-3 rounded-lg border border-grid bg-canvas p-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         <div className="flex min-w-0 flex-col gap-3">
           <p className="text-sm text-ink">
-            <span className="font-semibold">{phase === null ? headline : "One pass of STaR, step by step."}</span>{" "}
+            <span className="font-semibold">
+              {phase === null ? headline : playing ? "One pass of STaR, step by step." : "Press Play to run one pass of STaR on this problem."}
+            </span>{" "}
             <span className="text-ink-muted">The answer key says {tidyMath(problem.ground_truth)}.</span>
           </p>
 
           <ol className="m-0 flex list-none flex-col p-0" aria-label="STaR's pass for this problem">
+            {shown(0) && phase !== 0 ? (
             <PassStep label="Generate" detail="one chain, decoded greedily" dot="neutral" last={lastShown === 0} current={current(0)}>
               <div className="flex gap-1" role="group" aria-label="the one chain decoded greedily for this problem">
                 <ChainChip
@@ -682,6 +685,7 @@ function StarHarvest() {
                 />
               </div>
             </PassStep>
+            ) : null}
             {shown(1) ? (
             <PassStep label="Filter" detail="against the answer key" dot={g.correct ? "kept" : "dropped"} last={lastShown === 1} current={current(1)}>
               <p className="text-sm text-ink">
@@ -713,9 +717,6 @@ function StarHarvest() {
             ) : null}
             {shown(nSteps - 1) ? (
             <PassStep label="Training set" detail="what the weights are fitted to" dot={g.correct ? "kept" : rescued ? "hint" : "dropped"} last current={current(nSteps - 1)}>
-              <p className="text-sm text-ink">
-                <strong>Selected by the answer. Trained on the reasoning.</strong>
-              </p>
               <TrainingTray
                 question={problem.question}
                 reasoning={g.correct ? g.trace : rescued ? hint!.trace : null}
@@ -761,6 +762,7 @@ function StarHarvest() {
               <Exchange
                 prompt={problem.question}
                 reply={g.trace}
+                pending={phase === 0}
                 stream={current(0)}
                 streamMs={STEP_MS.generate - 400}
                 verdict={shown(1) ? verdictOf({ correct: g.correct, answer: g.extracted_answer }, current(1)) : null}
@@ -768,6 +770,26 @@ function StarHarvest() {
             </>
           )}
         </div>
+      </div>
+
+      {/* Play and Reset, as on page 5. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={play}
+          disabled={phase !== 0}
+          className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+        >
+          ▶ Play
+        </button>
+        <button
+          type="button"
+          onClick={reset}
+          disabled={phase === 0}
+          className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+        >
+          ↺ Reset
+        </button>
       </div>
 
       {/* The same pass over every problem. */}
@@ -857,11 +879,13 @@ function useTyped(text: string, active: boolean, ms: number) {
 }
 
 /** One exchange, set like page 5's chat: the user on the right, the model on the left. */
-function Exchange({ prompt, hintText, reply, verdict, stream = false, streamMs = 0 }: {
+function Exchange({ prompt, hintText, reply, verdict, stream = false, streamMs = 0, pending = false }: {
   prompt: string;
   hintText?: string;
   reply: string;
   verdict: React.ReactNode;
+  /** Before Play: the reply is not written yet. */
+  pending?: boolean;
   /** Type the reply out, as the model writes it; the verdict waits until it is done. */
   stream?: boolean;
   streamMs?: number;
@@ -889,11 +913,20 @@ function Exchange({ prompt, hintText, reply, verdict, stream = false, streamMs =
       <div className="flex max-w-[95%] items-start gap-2 self-start">
         <ModelIcon />
         <div className="flex min-w-0 flex-col gap-2">
+          {pending ? (
+            <p className="flex items-center gap-2 text-sm text-ink-muted">
+              <span aria-hidden="true" className="animate-pulse text-compute-ink">▍</span>
+              press Play to see its reply
+            </p>
+          ) : (
+          <>
           <p ref={box} className="max-h-56 overflow-y-auto whitespace-pre-wrap break-words font-code text-sm leading-relaxed text-ink">
             {tidyMath(done ? reply : reply.slice(0, typed))}
             {done ? null : <span aria-hidden="true" className="ml-0.5 inline-block h-3.5 w-1.5 translate-y-0.5 animate-pulse bg-ink-muted" />}
           </p>
           {done ? verdict : null}
+          </>
+          )}
         </div>
       </div>
     </div>
