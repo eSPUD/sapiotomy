@@ -1062,61 +1062,31 @@ export function Page12() {
           </div>
           <p className="text-ink">
             <strong className="text-ink">STaR gets to see something no answer-time method ever does: the
-            answer key.</strong> Pages 7 to 9 had to pick an answer with no key in the room, by vote or by
-            a grader. STaR checks every chain against the key before anything is trained, and pays for
-            that with a labelled dataset and a training run. This section builds the training set one
-            round would fine-tune on, then takes the key away to see what the answer-time tools would
-            have kept instead.
-          </p>
-          <p className="text-ink">
-            STaR can be tried without training anything, because its first step is just asking. Here{" "}
-            {modelLabel} was given each of {PAGE12.manifest.n_items} hard MATH problems and wrote up to{" "}
-            {PAGE12.n_chains} reasoning chains for each, and every chain was checked against the answer
-            key. Nothing below is trained; the figure shows what one round of training would be fed.
+            answer key.</strong> Pages 7 to 9 picked an answer with no key in the room, by vote or by a
+            grader. STaR checks every chain against the key, and the chains that pass become the training
+            set, reasoning and all. Below, {modelLabel} wrote up to {PAGE12.n_chains} chains for each of{" "}
+            {PAGE12.manifest.n_items} hard MATH problems; nothing is trained. Build the set, then take the
+            key away and see what the answer-time tools would have kept instead.
           </p>
           <StarHarvest />
-          {PAGE12.hint ? (
-            <p className="text-ink">
-              <strong className="text-ink">The hint retry reaches the problems no chain solves.</strong>{" "}
-              Of the {PAGE12.never.length} problems where all {PAGE12.n_chains} chains were wrong, the
-              retry recovers {PAGE12.hint.recovered_never.length}. But a hint can carry an argument that
-              does not hold: of the {PAGE12.hint.recovered.length} problems the model&apos;s single greedy try
-              missed and the retry recovered, {PAGE12.hint.mentions_hint.length} reason by pointing at the
-              hint, and STaR keeps them anyway once the answer matches. On CommonsenseQA the retry lifted
-              GPT-J from {p.starNoRationalization}% to {p.star}%.
-              <Cite n={REF.star} />
-            </p>
-          ) : null}
-
-          <h3 className="mt-2 text-lg font-semibold text-ink">Without the answer key</h3>
-          <p className="text-ink">
-            <strong className="text-ink">The answer key finds what majority vote misses.</strong> On{" "}
-            {PAGE12.vote_missed.length} problems at least one of the {PAGE12.n_chains} chains was correct,
-            but the majority answer was wrong. Picking an answer at the moment of asking, with no key,
-            loses that chain. Building a training set with the key keeps it.
-          </p>
-          <p className="text-ink">
-            <strong className="text-ink">A step grader checks the reasoning, and is wrong both ways.</strong>{" "}
-            The third rule ignores the answer and keeps a chain when page 9&apos;s process reward model
-            passes every step. It refuses {PAGE12.prm.right_rejected} of the {PAGE12.prm.right_total}{" "}
-            chains that reached the correct answer. Page 9 found that it catches most false steps but also
-            flags sound ones, so some of these are flaws the answer key let through and some are false
-            alarms; nothing here says which. On {PAGE12.prm.lost.length} problems it keeps no correct chain
-            at all.
-            And it passes {PAGE12.curves.prm[N_CHAINS - 1].chains_wrong} chains with wrong answers, on{" "}
-            {PAGE12.prm.never_passed.length} of the {PAGE12.never.length} problems nothing solved. Majority
-            vote and the step grader were built to pick an answer at the moment of asking (pages 7 and 9);
-            here they do a different job, choosing what to train on. STaR uses the answer key because
-            that check cannot be talked into a wrong answer, even though it cannot see the reasoning.
-          </p>
           <p className="text-ink">
             <strong className="text-ink">Does training on the clean set beat voting?</strong> This page
-            cannot say; nothing here is trained. What it can show is the input to that bet: at{" "}
+            cannot say; nothing here is trained. What it shows is the input to that bet. At{" "}
             {PAGE12.n_chains} chains the key hands training {PAGE12.curves.key[PAGE12.n_chains - 1].chains_kept}{" "}
-            chains with no wrong answer among them, and the vote would hand it{" "}
-            {PAGE12.curves.popular[PAGE12.n_chains - 1].chains_wrong} wrong ones. That training on the
-            clean set pays is the paper&apos;s result, not this page&apos;s: on CommonsenseQA the loop lifted
-            GPT-J from {p.fewShotCot}% with few-shot chain of thought to {p.star}%.
+            chains with no wrong answer among them; the vote hands it{" "}
+            {PAGE12.curves.popular[PAGE12.n_chains - 1].chains_wrong} wrong ones to reason its way to; and
+            page 9&apos;s step grader, which never sees the answer, refuses {PAGE12.prm.right_rejected} right
+            chains and passes {PAGE12.curves.prm[PAGE12.n_chains - 1].chains_wrong} wrong ones.
+            {PAGE12.hint ? (
+              <>
+                {" "}The key cannot be talked into a wrong answer, but it cannot see the reasoning either: of
+                the {PAGE12.hint.recovered.length} problems the hint retry recovered,{" "}
+                {PAGE12.hint.mentions_hint.length} reason by pointing at the hint, and STaR keeps them.
+              </>
+            ) : null}
+            {" "}That training on the clean set pays is the paper&apos;s result, not this page&apos;s: on
+            CommonsenseQA the loop lifted GPT-J from {p.fewShotCot}% with few-shot chain of thought to{" "}
+            {p.star}%.
             <Cite n={REF.star} />
           </p>
         </section>
