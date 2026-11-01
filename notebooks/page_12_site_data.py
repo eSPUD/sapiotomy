@@ -80,6 +80,10 @@ def build(out_dir, traces_path, hint_path, prm_path):
     pile = {}
     for (pid, _), r in sorted(latest.items(), key=lambda kv: kv[0][1]):
         pile.setdefault(pid, []).append(r)
+    # The notebook's section 2b: these chains count as right.
+    for pid, js in R.get("regraded", {}).items():
+        for j in js:
+            latest[(pid, j)]["correct"] = True
 
     threshold = R["prm"]["threshold"]
     graded = {}
