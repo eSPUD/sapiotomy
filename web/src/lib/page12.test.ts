@@ -80,28 +80,21 @@ describe("Page 12: the harvest", () => {
     for (const p of PAGE12.problems) for (const j of harvest(p, N, "prm")) expect(p.prm_pass[j]).toBe(true);
   });
 
-  it("walks five problems whose notes the data still supports", () => {
-    expect(walked).toHaveLength(5);
-    const [usual, greedyRightVoteWrong, oneInN, hintAndTwo, hinted] = walked;
-    const nRight = (c: boolean[]) => c.filter(Boolean).length;
+  it("walks four problems whose notes the data still supports", () => {
     expect(WALK.map((w) => w.id)).toEqual(walked.map((p) => p.problem_id));
-    // the usual case: the greedy chain is right, and so are most samples
-    expect(usual.greedy_correct).toBe(true);
-    expect(nRight(usual.correct)).toBeGreaterThan(N / 2);
-    // the greedy chain is right; most samples agree on a wrong answer
-    expect(greedyRightVoteWrong.greedy_correct).toBe(true);
-    const top = popular(greedyRightVoteWrong.cls, N)!;
-    expect(greedyRightVoteWrong.correct[greedyRightVoteWrong.cls.indexOf(top)]).toBe(false);
-    // the greedy chain misses; one sample in 16 reaches the answer
-    expect(oneInN.greedy_correct).toBe(false);
-    expect(nRight(oneInN.correct)).toBe(1);
-    // the greedy chain misses; the hint reaches the answer, and so do two samples
-    expect(hintAndTwo.greedy_correct).toBe(false);
-    expect(hintAndTwo.hint?.correct).toBe(true);
-    expect(nRight(hintAndTwo.correct)).toBe(2);
-    // no chain reaches the answer; the hint does
-    expect(hinted.greedy_correct).toBe(false);
-    expect(PAGE12.never).toContain(hinted.problem_id);
-    expect(hinted.hint?.correct).toBe(true);
+    const [right, rescued, leaning, lost] = walked;
+    // the greedy chain is right, so its reasoning goes in
+    expect(right.greedy.correct).toBe(true);
+    // the greedy chain misses; with the answer as a hint, the model finds the route
+    expect(rescued.greedy.correct).toBe(false);
+    expect(rescued.hint?.correct).toBe(true);
+    expect(rescued.hint?.mentions_hint).toBe(false);
+    // the greedy chain misses; with the hint, the model reaches the answer by leaning on it
+    expect(leaning.greedy.correct).toBe(false);
+    expect(leaning.hint?.correct).toBe(true);
+    expect(leaning.hint?.mentions_hint).toBe(true);
+    // the greedy chain misses, and so does the hinted retry
+    expect(lost.greedy.correct).toBe(false);
+    expect(lost.hint?.correct).toBe(false);
   });
 });

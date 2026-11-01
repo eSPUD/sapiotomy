@@ -71,7 +71,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { NotebookDownload } from "@/components/NotebookDownload";
-import { Slider } from "@/components/Slider";
+import { Toggle } from "@/components/Toggle";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { ACTS, getPage } from "@/lib/pages";
@@ -81,15 +81,10 @@ import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import {
   PAGE12,
   WALK,
-  cellState,
-  harvest,
   hasHint,
   modelLabel,
-  shownChain,
   tidyMath,
   walked,
-  type CellState,
-  type Problem,
 } from "@/lib/page12";
 
 const PAGE_N = 12;
@@ -429,62 +424,45 @@ function CodeLine({
 }
 
 /**
- * Section 2's figure: one problem walked through one pass of STaR's loop, with nothing
- * trained. The model's chains for the problem sit in a row; the rule marks the ones it
- * keeps; the kept ones land in the training set with their reasoning open underneath,
- * because the reasoning is what the weights would be fitted to. Under the tray, one meter
- * counts the same pass over all 100 problems. Each control is one line of the listing
- * above: the decoding choice and slider are line 5, the hint choice is lines 8 and 9; line
- * 6's check, the answer key, is fixed. (Majority vote and page 9's step grader were tried
- * here as alternative selectors and dropped: the first is another method, the second is
- * training on a reward model's picks, and neither is STaR.) Every number shown is
- * recomputed from the bundled verdicts, which the load step has already checked against
- * the notebook.
+ * Section 2's figure: one problem walked through one pass of STaR's loop as published, with
+ * nothing trained. The model answers once, greedily; the answer key keeps the chain or not;
+ * with rationalization on, a miss is retried once with the answer as a hint; whatever is
+ * kept lands in the training set with its reasoning open beside it, because the reasoning
+ * is what the weights would be fitted to. Under the pass, one meter counts the same pass
+ * over all 100 problems. The switch is lines 8 and 9 of the listing above; line 5's greedy
+ * decoding and line 6's answer key are fixed. (Sampled chains, majority vote and page 9's
+ * step grader were all tried here and dropped: the first is the RFT variant, the other two
+ * are other methods, and none is STaR.) Every number shown is recomputed from the bundled
+ * verdicts, which the load step has already checked against the notebook.
  */
-type Tone = "plain" | "kept" | "right" | "wrong" | "hint";
+type Tone = "plain" | "right" | "hint";
 
 const TONE_STYLE: Record<Tone, string> = {
   plain: "border-grid bg-surface-raised text-ink-muted",
-  kept: "border-compute bg-compute/15 text-ink",
   right: "border-correct bg-correct/20 text-correct-ink",
-  wrong: "border-wrong bg-wrong/20 text-wrong-ink",
   hint: "border-compute bg-compute/20 text-compute-ink",
 };
 
-/** One chain as a small card: its number and the answer it boxed. */
-function ChainChip({ n, answer, tone, dim, pressed, onClick, title, compact }: {
-  n: number | string;
+/** One chain as a small card: what it is, and the answer it boxed. */
+function ChainChip({ label, answer, tone, dim, title }: {
+  label: string;
   answer: string;
   tone: Tone;
   dim?: boolean;
-  pressed?: boolean;
-  onClick?: () => void;
   title: string;
-  /** Smaller, for a row of many. */
-  compact?: boolean;
 }) {
-  const label = answer ? tidyMath(answer) : "no answer";
-  const short = label.length > 9 ? `${label.slice(0, 8)}…` : label;
-  const cls = `flex flex-col items-center justify-center rounded border font-mono leading-tight transition-opacity ${
-    compact ? "h-7 w-10 text-[10px]" : typeof n === "number" ? "h-9 w-14 text-[11px]" : "h-9 min-w-14 px-2 text-[11px]"
-  } ${TONE_STYLE[tone]} ${dim ? "opacity-35" : ""} ${pressed ? "outline outline-2 outline-offset-1 outline-ink" : ""} ${
-    onClick ? "cursor-pointer hover:opacity-100" : ""
-  }`;
-  const body = (
-    <>
-      <span className={`${compact ? "text-[8px]" : "text-[10px]"} uppercase tracking-wide opacity-70`}>
-        {typeof n === "number" ? (compact ? `#${n}` : `chain ${n}`) : n}
-      </span>
-      <span className="max-w-full truncate px-1">{short}</span>
-    </>
-  );
-  return onClick ? (
-    <button type="button" title={title} aria-label={title} aria-pressed={pressed} onClick={onClick} className={cls}>
-      {body}
-    </button>
-  ) : (
-    <span title={title} aria-label={title} role="img" className={cls}>
-      {body}
+  const shown = answer ? tidyMath(answer) : "no answer";
+  return (
+    <span
+      role="img"
+      title={title}
+      aria-label={title}
+      className={`flex h-9 min-w-14 flex-col items-center justify-center rounded border px-2 font-mono text-[11px] leading-tight ${TONE_STYLE[tone]} ${
+        dim ? "opacity-40" : ""
+      }`}
+    >
+      <span className="text-[10px] uppercase tracking-wide opacity-70">{label}</span>
+      <span className="max-w-full truncate">{shown.length > 12 ? `${shown.slice(0, 11)}…` : shown}</span>
     </span>
   );
 }
@@ -501,317 +479,135 @@ function Stage({ n, children }: { n: number; children: React.ReactNode }) {
   );
 }
 
-/**
- * STaR's filter over the whole pile, counted by problem: those with a right chain kept,
- * those the hint retry rescued, and the rest. In greedy mode the pile is each problem's one
- * greedy chain, STaR's own setting; otherwise it is the first k sampled chains, the RFT variant.
- */
-function tally(k: number, hintOn: boolean, greedy: boolean) {
-  let right = 0, hinted = 0, chains = 0;
-  for (const p of PAGE12.problems) {
-    const n = greedy ? (p.greedy.correct ? 1 : 0) : harvest(p, k, "key").length;
-    chains += n;
-    if (n) right += 1;
-    else if (hintOn && p.hint?.correct) {
-      hinted += 1;
-      chains += 1;
-    }
-  }
-  return { right, hinted, none: PAGE12.problems.length - right - hinted, chains };
-}
-
-/** A small radio row, the page's one control idiom: the chosen option is outlined in the compute colour. */
-function Choice<T extends string | boolean>({ id, label, value, options, onChange }: {
-  id: string;
-  label: string;
-  value: T;
-  options: { value: T; label: string }[];
-  onChange: (v: T) => void;
-}) {
-  return (
-    <div className="flex min-w-0 flex-col gap-1">
-      <span id={id} className="text-xs text-ink-muted">
-        {label}
-      </span>
-      <div role="radiogroup" aria-labelledby={id} className="flex flex-col gap-1">
-        {options.map((o) => (
-          <button
-            key={String(o.value)}
-            type="button"
-            role="radio"
-            aria-checked={value === o.value}
-            onClick={() => onChange(o.value)}
-            className={`min-h-8 rounded border px-2 py-1 text-left text-xs leading-tight ${
-              value === o.value
-                ? "border-compute bg-compute/15 text-ink"
-                : "border-grid text-ink-muted hover:border-compute hover:text-ink"
-            }`}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+/** The pass over all 100 problems: the greedy chain's lessons, and what rationalization adds. */
+const GREEDY_RIGHT = PAGE12.problems.filter((p) => p.greedy.correct).length;
+const HINT_RESCUED = PAGE12.problems.filter((p) => !p.greedy.correct && p.hint?.correct).length;
 
 /**
- * Nothing is hidden behind a button: the decoding choice, the hint choice and the slider
- * are in the control row from the start. The figure opens on STaR as published, the answer
- * key over one greedy chain per problem, with the RFT variant's sampled chains a switch
- * away. It is laid out to fit one screen: controls in a row, then the pass for one problem
- * on the left with the chain it keeps open on the right, then the meter.
+ * Nothing is hidden behind a button: the one control is the rationalization switch. It is
+ * laid out to fit one screen: the switch and the problem picker in a row, then the pass for
+ * one problem on the left with the chain it keeps open on the right, then the meter.
  */
 function StarHarvest() {
-  const N = PAGE12.n_chains;
   const problems = walked;
-  const [k, setK] = useState(1);
-  const [sampled, setSampled] = useState(false);
-  const [useHint, setUseHint] = useState(false);
+  const [rationalize, setRationalize] = useState(false);
   const [at, setAt] = useState(0);
-  const [pick, setPick] = useState<number | null>(null);
-  const greedy = !sampled;
-  const hintOn = useHint;
-  const goTo = (i: number) => {
-    setAt((i + problems.length) % problems.length);
-    setPick(null);
-  };
+  const goTo = (i: number) => setAt((i + problems.length) % problems.length);
 
   const problem = problems[at];
   const g = problem.greedy;
-  const kept = greedy ? [] : harvest(problem, k, "key");
-  const got = greedy ? g.correct : kept.length > 0;
-  const state: CellState = greedy
-    ? g.correct ? "right" : hintOn && problem.hint?.correct ? "hint" : "none"
-    : cellState(problem, k, "key", hintOn);
-  const shownIdx = shownChain(problem, kept);
-  const openIdx = pick !== null && kept.includes(pick) ? pick : shownIdx;
-  const openChain = openIdx === undefined ? null : problem.chains[String(openIdx)];
-  const first = problem.chains["0"];
-  const nChains = greedy ? 1 : k;
-  const rationalizing = hintOn && !got && problem.hint !== null;
-
-  const selection = greedy
-    ? g.correct ? "it matches the answer key" : "it misses the answer key"
-    : `${kept.length} of ${k} ${kept.length === 1 ? "matches" : "match"} the answer key`;
-
-  const all = tally(k, hintOn, greedy);
-  const pct = (n: number) => `${(100 * n) / PAGE12.manifest.n_items}%`;
-
-  const verdictOf = (c: { correct: boolean; extracted_answer: string }) => (
-    <Verdict correct={c.correct} answer={c.extracted_answer} groundTruth={problem.ground_truth} />
+  const hint = problem.hint;
+  const retried = rationalize && !g.correct && hint !== null;
+  const rescued = retried && hint!.correct;
+  const n = PAGE12.manifest.n_items;
+  const inSet = GREEDY_RIGHT + (rationalize ? HINT_RESCUED : 0);
+  const pct = (x: number) => `${(100 * x) / n}%`;
+  const verdictOf = (c: { correct: boolean; answer: string }) => (
+    <Verdict correct={c.correct} answer={c.answer} groundTruth={problem.ground_truth} />
   );
-  const chipOf = (j: number, inTray: boolean, compact = false) => {
-    const answer = problem.cls[j] >= 0 ? problem.labels[problem.cls[j]] : "";
-    const bundled = String(j) in problem.chains;
-    const isKept = kept.includes(j);
-    return inTray ? (
-      <ChainChip
-        key={j}
-        n={j + 1}
-        answer={answer}
-        tone={problem.correct[j] ? "right" : "wrong"}
-        pressed={bundled ? j === openIdx : undefined}
-        onClick={bundled ? () => setPick(j) : undefined}
-        title={`chain ${j + 1} in the training set, ${problem.correct[j] ? "correct answer" : "wrong answer"}${bundled ? "; open it" : ""}`}
-      />
-    ) : (
-      <ChainChip
-        key={j}
-        n={j + 1}
-        answer={answer}
-        tone={isKept ? "kept" : "plain"}
-        dim={!isKept}
-        compact={compact}
-        title={`chain ${j + 1}: answered ${answer ? tidyMath(answer) : "nothing"}${isKept ? ", kept" : ", dropped"}`}
-      />
-    );
-  };
-  // The tray groups kept chains by answer: fifteen chips saying "3" say less than one saying "3, 15 times".
-  const trayGroups = (() => {
-    const groups = new Map<number, number[]>();
-    for (const j of kept) groups.set(problem.cls[j], [...(groups.get(problem.cls[j]) ?? []), j]);
-    return [...groups.values()];
-  })();
 
   return (
     <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-3">
-      {/* Controls, one row. */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Choice<boolean>
-          id="star-decoding"
-          label="How many chains per problem? (line 5)"
-          value={sampled}
-          options={[
-            { value: false, label: "One, decoded greedily (STaR as published)" },
-            { value: true, label: "Several, sampled (the RFT variant)" },
-          ]}
-          onChange={(v) => {
-            setSampled(v);
-            setPick(null);
-          }}
-        />
+      {/* The switch, and which problem is shown. */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
         {hasHint ? (
-          <Choice<boolean>
-            id="star-hint"
-            label="When no chain is correct? (lines 8 and 9)"
-            value={useHint}
-            options={[
-              { value: false, label: "Drop the problem" },
-              { value: true, label: "Retry once with the correct answer given as a hint" },
-            ]}
-            onChange={setUseHint}
-          />
-        ) : (
-          <p className="self-end text-xs text-ink-muted">
-            The hint retry is STaR&apos;s own second chance; without the answer key there is no hint to give.
-          </p>
-        )}
-        {greedy ? (
-          <p className="self-end text-xs text-ink-muted">
-            STaR writes one chain per problem. Switch to sampling to write more.
-          </p>
-        ) : (
-          <div className="self-end">
-            <Slider
-              label="Chains sampled per problem"
-              min={1}
-              max={N}
-              value={k}
-              onChange={(v) => {
-                setK(v);
-                setPick(null);
-              }}
-              ticks={[1, 4, 8, 12, 16]}
-            />
+          <div className="flex flex-col gap-0.5">
+            <Toggle label="Rationalization (lines 8 and 9)" checked={rationalize} onChange={setRationalize} />
+            <span className="text-[11px] text-ink-muted">A missed problem is retried once with the answer as a hint.</span>
           </div>
-        )}
+        ) : null}
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-ink-muted">
+            problem {at + 1} of {problems.length}
+          </span>
+          <button type="button" aria-label="previous problem" onClick={() => goTo(at - 1)} className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute">
+            ←
+          </button>
+          <button type="button" aria-label="next problem" onClick={() => goTo(at + 1)} className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute">
+            →
+          </button>
+        </div>
       </div>
 
       {/* The pass for one problem, beside the chain it keeps. */}
       <div className="grid gap-3 rounded-lg border border-grid bg-canvas p-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         <div className="flex min-w-0 flex-col gap-3">
+          <p className="text-sm text-ink">
+            <span className="font-semibold">{WALK[at].note[0].toUpperCase() + WALK[at].note.slice(1)}.</span>{" "}
+            <span className="text-ink-muted">
+              {problem.subject}, level {problem.level}; the answer key says {tidyMath(problem.ground_truth)}.
+            </span>
+          </p>
+
           <div className="flex flex-col gap-1">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-mono text-xs text-ink-muted">
-                problem {at + 1} of {problems.length} · {problem.subject}, level {problem.level}
-              </span>
-              <span className="flex gap-1">
-                <button type="button" aria-label="previous problem" onClick={() => goTo(at - 1)} className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute">
-                  ←
-                </button>
-                <button type="button" aria-label="next problem" onClick={() => goTo(at + 1)} className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute">
-                  →
-                </button>
-              </span>
+            <Stage n={1}>Generate · one chain, greedily</Stage>
+            <div className="flex gap-1" role="group" aria-label="the one chain decoded greedily for this problem">
+              <ChainChip
+                label="greedy"
+                answer={g.extracted_answer}
+                tone={g.correct ? "right" : "plain"}
+                dim={!g.correct}
+                title={`the greedy chain: answered ${g.extracted_answer ? tidyMath(g.extracted_answer) : "nothing"}${g.correct ? ", kept" : ", dropped"}`}
+              />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <Stage n={2}>Filter · answer key</Stage>
             <p className="text-sm text-ink">
-              <span className="font-semibold">{WALK[at].note[0].toUpperCase() + WALK[at].note.slice(1)}.</span>{" "}
-              <span className="text-ink-muted">
-                The answer key says {tidyMath(problem.ground_truth)}; {problem.correct.filter(Boolean).length} of {N} sampled chains reached it.
-              </span>
+              {g.correct
+                ? "It matches the answer key, so it is kept."
+                : rationalize
+                  ? "It misses the answer key."
+                  : "It misses the answer key, so it is dropped. Turn rationalization on to retry it."}
             </p>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <Stage n={1}>
-              Generate · {greedy ? "greedy" : k === 1 ? "1 sample" : `${k} samples`}
-            </Stage>
-            <div
-              className="flex flex-wrap gap-1"
-              role="group"
-              aria-label={greedy ? "the one chain decoded greedily for this problem" : k === 1 ? "the one chain sampled for this problem" : `the ${k} chains sampled for this problem`}
-            >
-              {greedy ? (
-                <ChainChip
-                  n="greedy"
-                  answer={g.extracted_answer}
-                  tone={g.correct ? "kept" : "plain"}
-                  dim={!g.correct}
-                  title={`the greedy chain: answered ${g.extracted_answer ? tidyMath(g.extracted_answer) : "nothing"}${g.correct ? ", kept" : ", dropped"}`}
-                />
-              ) : (
-                Array.from({ length: k }, (_, j) => chipOf(j, false, k > 8))
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <Stage n={2}>Select · answer key</Stage>
-            <p className="text-sm text-ink">{selection[0].toUpperCase() + selection.slice(1)}.</p>
-          </div>
-
-          {rationalizing ? (
+          {retried ? (
             <div className="flex flex-col gap-1">
-              <Stage n={3}>Rationalize · hint</Stage>
-              <p className="text-sm text-ink">
-                {problem.hint!.correct
-                  ? "The hinted chain reaches the answer: kept, with the hint deleted from the question."
-                  : "The hinted chain still misses, so this problem gives nothing to train on."}
-              </p>
+              <Stage n={3}>Rationalize · retry with the answer as a hint</Stage>
+              <div className="flex items-center gap-2">
+                <ChainChip
+                  label="hinted"
+                  answer={hint!.answer}
+                  tone={rescued ? "hint" : "plain"}
+                  dim={!rescued}
+                  title={`the hinted chain: answered ${hint!.answer ? tidyMath(hint!.answer) : "nothing"}${rescued ? ", kept" : ", dropped"}`}
+                />
+                <p className="text-sm text-ink">
+                  {rescued
+                    ? "It reaches the answer: kept, with the hint deleted from the question."
+                    : "Even told the answer, it misses, so nothing is kept."}
+                </p>
+              </div>
             </div>
           ) : null}
 
           <div className="flex flex-col gap-1 rounded-lg border border-dashed border-compute/60 bg-surface p-2">
-            <Stage n={rationalizing ? 4 : 3}>Training set</Stage>
+            <Stage n={retried ? 4 : 3}>Training set</Stage>
             <p className="text-sm text-ink">
               <strong>Selected by the answer. Trained on the reasoning.</strong> What the weights are fitted to:{" "}
-              {state === "none"
-                ? "nothing from this problem."
-                : state === "hint"
-                  ? "one chain, written with the hint, filed under the question without it."
-                  : greedy || kept.length === 1
-                    ? "one chain, every line of it."
-                    : `${kept.length} chains, every line of them.`}
+              {g.correct
+                ? "the greedy chain, every line of it."
+                : rescued
+                  ? "the hinted chain, every line of it, filed under the question without the hint."
+                  : "nothing from this problem."}
             </p>
-            {state !== "none" ? (
-              <div className="flex flex-wrap gap-1" role="group" aria-label="the chains in the training set">
-                {greedy && g.correct ? (
-                  <ChainChip n="greedy" answer={g.extracted_answer} tone="right" pressed title="the greedy chain in the training set, correct answer" />
-                ) : null}
-                {trayGroups.map((js) => {
-                  const j0 = js[0];
-                  if (js.length === 1) return chipOf(j0, true);
-                  const answer = problem.cls[j0] >= 0 ? problem.labels[problem.cls[j0]] : "";
-                  const open = js.find((j) => String(j) in problem.chains);
-                  return (
-                    <ChainChip
-                      key={j0}
-                      n={`${js.length} chains`}
-                      answer={answer}
-                      tone={problem.correct[j0] ? "right" : "wrong"}
-                      pressed={open !== undefined ? js.includes(openIdx!) : undefined}
-                      onClick={open !== undefined ? () => setPick(open) : undefined}
-                      title={`${js.length} chains in the training set answering ${answer ? tidyMath(answer) : "nothing"}, ${problem.correct[j0] ? "correct" : "wrong"}${open !== undefined ? "; open one" : ""}`}
-                    />
-                  );
-                })}
-                {state === "hint" ? (
-                  <ChainChip n="hinted" answer={problem.hint!.answer} tone="hint" title="the hinted chain, in the training set" />
-                ) : null}
-              </div>
-            ) : null}
-            {state === "hint" ? (
-              <p className="flex items-center gap-1 text-[11px] text-ink-muted">
-                <span aria-hidden="true" className={`inline-block h-2.5 w-2.5 rounded-sm border ${TONE_STYLE.hint}`} />
-                reached with the hint; filed without it
-              </p>
-            ) : null}
           </div>
         </div>
 
         <div className="flex min-w-0 flex-col gap-1">
-          {state === "hint" && problem.hint ? (
+          {retried ? (
             <>
-              <Step>The retry, with the answer given as a hint</Step>
+              <Step>{rescued ? "The hinted chain, as it would be trained on" : "The hinted chain, dropped"}</Step>
               <Exchange
                 prompt={problem.question}
                 hintText={`(Hint: the correct answer is ${tidyMath(problem.ground_truth)}.)`}
-                reply={problem.hint.trace}
+                reply={hint!.trace}
                 verdict={
                   <>
-                    <Verdict correct={problem.hint.correct} answer={problem.hint.answer} groundTruth={problem.ground_truth} />
-                    {problem.hint.mentions_hint ? (
+                    {verdictOf(hint!)}
+                    {rescued && hint!.mentions_hint ? (
                       <p className="text-sm text-ink-muted">
                         This reasoning refers to the hint, so with the hint deleted it argues from an answer it was never shown.
                       </p>
@@ -820,23 +616,10 @@ function StarHarvest() {
                 }
               />
             </>
-          ) : greedy ? (
-            <>
-              <Step>{g.correct ? "The greedy chain, as it would be trained on" : "The greedy chain, dropped"}</Step>
-              <Exchange prompt={problem.question} reply={g.trace} verdict={verdictOf(g)} />
-            </>
-          ) : openChain ? (
-            <>
-              <Step>
-                Chain {openIdx! + 1} of {k}, as it would be trained on
-                {kept.length > 1 && !openChain.correct && pick === null ? " (the first with a wrong answer)" : ""}
-              </Step>
-              <Exchange prompt={problem.question} reply={openChain.trace} verdict={verdictOf(openChain)} />
-            </>
           ) : (
             <>
-              <Step>{k === 1 ? "The one chain, dropped" : `Chain 1 of ${k}, dropped like the rest`}</Step>
-              <Exchange prompt={problem.question} reply={first.trace} verdict={verdictOf(first)} />
+              <Step>{g.correct ? "The greedy chain, as it would be trained on" : "The greedy chain, dropped"}</Step>
+              <Exchange prompt={problem.question} reply={g.trace} verdict={verdictOf({ correct: g.correct, answer: g.extracted_answer })} />
             </>
           )}
         </div>
@@ -845,34 +628,32 @@ function StarHarvest() {
       {/* The same pass over every problem. */}
       <div className="flex flex-col gap-1">
         <p className="text-xs text-ink-muted">
-          Run the same pass on all {PAGE12.manifest.n_items} problems,{" "}
-          {greedy ? "one greedy chain each" : nChains === 1 ? "one sampled chain each" : `${nChains} sampled chains each`}. How many put reasoning into the training set?
+          Run the same pass on all {n} problems. How many put reasoning into the training set?
         </p>
         <div
           role="img"
-          aria-label={`${all.right + all.hinted} of ${PAGE12.manifest.n_items} problems put reasoning into the training set${all.hinted ? `, ${all.hinted} of them through the hint` : ""}, ${all.chains} chains in all`}
+          aria-label={`${inSet} of ${n} problems put reasoning into the training set${rationalize ? `, ${HINT_RESCUED} of them through rationalization` : ""}, none with a wrong answer`}
           className="flex flex-col gap-0.5"
         >
           <div className="flex h-4 w-full overflow-hidden rounded-sm bg-surface-raised">
-            <span className="h-full bg-correct transition-[width]" style={{ width: pct(all.right) }} />
-            <span className="h-full bg-compute transition-[width]" style={{ width: pct(all.hinted) }} />
+            <span className="h-full bg-correct transition-[width]" style={{ width: pct(GREEDY_RIGHT) }} />
+            <span className="h-full bg-compute transition-[width]" style={{ width: pct(rationalize ? HINT_RESCUED : 0) }} />
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-[11px] tabular-nums text-ink-muted">
-            <span className="text-ink">{all.right + all.hinted} of {PAGE12.manifest.n_items} problems · {all.chains} chains, none with a wrong answer</span>
-            <span className="flex items-center gap-1"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm bg-correct" /> a chain reached the answer</span>
-            {all.hinted > 0 ? <span className="flex items-center gap-1"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm bg-compute" /> {all.hinted} rescued by the hint</span> : null}
+            <span className="text-ink">{inSet} of {n} problems, none with a wrong answer</span>
+            <span className="flex items-center gap-1"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm bg-correct" /> {GREEDY_RIGHT} greedy chain right</span>
+            {rationalize ? <span className="flex items-center gap-1"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm bg-compute" /> {HINT_RESCUED} rescued by the hint</span> : null}
             <span className="flex items-center gap-1"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm bg-surface-raised" /> nothing kept</span>
           </div>
         </div>
       </div>
 
       <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-        This is the data one round of STaR would fine-tune on; nothing here is trained. With the
-        answer key no wrong answer gets in. STaR&apos;s own greedy chain yields a lesson on{" "}
-        {PAGE12.greedy_lessons} problems; sampling chains instead, the RFT variant,
-        <Cite n={REF.rft} /> yields {PAGE12.curves.key[0].problems_with_lesson} at one chain and{" "}
-        {PAGE12.curves.key[N - 1].problems_with_lesson} at {N}. More chains per problem also reach more
-        problems through wrong reasoning, which is why STaR decodes greedily.
+        This is the data one round of STaR would fine-tune on; nothing here is trained. Sampling{" "}
+        {PAGE12.n_chains} chains per problem instead of one greedy chain, the RFT variant,
+        <Cite n={REF.rft} /> reaches {PAGE12.curves.key[PAGE12.n_chains - 1].problems_with_lesson} problems
+        without a hint, but more samples also reach more right answers through wrong reasoning, which
+        is why STaR decodes greedily.
         <Cite n={REF.star} />
       </figcaption>
     </figure>
@@ -903,15 +684,15 @@ function Exchange({ prompt, hintText, reply, verdict }: {
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-grid bg-canvas p-3">
       <div className="flex max-w-[95%] items-start gap-2 self-end">
-        <p className="max-h-32 overflow-y-auto whitespace-pre-wrap text-right font-code text-sm text-ink">
-          {tidyMath(prompt)}
+        {/* The question scrolls past a few lines; the hint sits outside it so it is never cut off. */}
+        <div className="flex flex-col items-end gap-1">
+          <p className="max-h-32 overflow-y-auto whitespace-pre-wrap text-right font-code text-sm text-ink">
+            {tidyMath(prompt)}
+          </p>
           {hintText ? (
-            <>
-              {"\n\n"}
-              <mark className="rounded bg-compute/25 px-1 text-ink">{hintText}</mark>
-            </>
+            <mark className="rounded bg-compute/25 px-1 text-right font-code text-sm text-ink">{hintText}</mark>
           ) : null}
-        </p>
+        </div>
         <UserIcon />
       </div>
       <div className="flex max-w-[95%] items-start gap-2 self-start">
@@ -1045,8 +826,8 @@ export function Page12() {
             <strong className="text-ink">STaR gets to see something no answer-time method ever does: the
             answer key.</strong> Pages 7 to 9 picked an answer with no key in the room, by vote or by a
             grader. STaR checks every chain against the key, and the chains that pass become the training
-            set, reasoning and all. Below, {modelLabel} wrote up to {PAGE12.n_chains} chains for each of{" "}
-            {PAGE12.manifest.n_items} hard MATH problems; nothing is trained. The figure builds the set.
+            set, reasoning and all. Below, {modelLabel} answered each of {PAGE12.manifest.n_items} hard MATH
+            problems once, greedily, as STaR does; nothing is trained. The figure builds the set.
           </p>
           <StarHarvest />
           {PAGE12.hint ? (
@@ -1066,10 +847,10 @@ export function Page12() {
           ) : null}
           <p className="text-ink">
             <strong className="text-ink">Does training on this set beat answer-time methods?</strong> This
-            page cannot say; nothing here is trained. What it shows is the input to that bet: at{" "}
-            {PAGE12.n_chains} chains the key hands training {PAGE12.curves.key[PAGE12.n_chains - 1].chains_kept}{" "}
-            chains of reasoning with no wrong answer among them, and pages 7 to 9 picked their answers with
-            no such key. That training on the clean set pays is the paper&apos;s result, not this page&apos;s: on
+            page cannot say; nothing here is trained. What it shows is the input to that bet: one greedy
+            pass hands training {PAGE12.greedy_lessons} chains of reasoning
+            {PAGE12.hint ? <>, and rationalization {PAGE12.hint.recovered.length} more</> : null}, with no
+            wrong answer among them, and pages 7 to 9 picked their answers with no such key. That training on the clean set pays is the paper&apos;s result, not this page&apos;s: on
             CommonsenseQA the loop lifted GPT-J from {p.fewShotCot}% with few-shot chain of thought to{" "}
             {p.star}%.
             <Cite n={REF.star} />
@@ -1077,7 +858,7 @@ export function Page12() {
         </section>
 
         <Note kicker="Try it">
-          <p>Walk the five problems with the hint on, then switch to sampling and slide to {PAGE12.n_chains} chains to see what the RFT variant adds.</p>
+          <p>Walk the {walked.length} problems with rationalization off, then on. Two of them gain a chain of reasoning; the last still gives nothing.</p>
         </Note>
 
         {/* The two closing blocks — kept at the page bottom on purpose, reading

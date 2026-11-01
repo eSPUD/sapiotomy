@@ -229,15 +229,14 @@ function load(raw: unknown): Derived & { order: Problem[] } {
 export const PAGE12 = load(rawDerived);
 
 /**
- * The five problems the figure walks through, in order, each with the one thing it shows.
+ * The problems the figure walks through, in order, each with the one thing it shows.
  * `page12.test.ts` checks that the data still says what each note says.
  */
 export const WALK: readonly { id: string; note: string }[] = [
-  { id: "test/algebra/2064.json", note: "the usual case: the greedy chain is right, and so are most samples" },
-  { id: "test/algebra/1184.json", note: "the greedy chain is right; most samples agree on a wrong answer" },
-  { id: "test/number_theory/357.json", note: "the greedy chain misses; one sample in 16 reaches the answer" },
-  { id: "test/prealgebra/1139.json", note: "the greedy chain misses; the hint reaches the answer, and so do two samples" },
-  { id: "test/intermediate_algebra/1806.json", note: "no chain reaches the answer; the hint does" },
+  { id: "test/algebra/2064.json", note: "the greedy chain is right, so its reasoning goes in" },
+  { id: "test/algebra/224.json", note: "the greedy chain misses; with the answer as a hint, the model finds the route" },
+  { id: "test/number_theory/357.json", note: "the greedy chain misses; with the hint, the model reaches the answer by leaning on it" },
+  { id: "test/number_theory/737.json", note: "the greedy chain misses, and so does the hinted retry" },
 ];
 
 export const walked: Problem[] = WALK.map(({ id }) => {

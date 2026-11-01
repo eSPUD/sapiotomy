@@ -14,27 +14,24 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     expect(screen.getByRole("heading", { name: /2\. Which reasoning goes into the training set\?/ })).toBeInTheDocument();
     expect(screen.queryByText("LaMDA 137B, few-shot CoT")).not.toBeInTheDocument();
-    // STaR alone: the answer key is the rule, with no alternative selector and nothing behind a button.
-    expect(screen.queryByRole("radiogroup", { name: /Which chains go into the training set/ })).not.toBeInTheDocument();
+    // STaR as published and nothing else: one greedy chain, the answer key, and a rationalization switch.
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /take the answer key away/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/majority/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/step grader/i)).not.toBeInTheDocument();
-    // It opens on STaR's own decoding: one greedy chain per problem, the RFT variant's sampled chains a switch away.
-    expect(screen.getByRole("radio", { name: /decoded greedily/ })).toHaveAttribute("aria-checked", "true");
-    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
     expect(screen.getByRole("group", { name: /the one chain decoded greedily/ })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: /^43 of 100 problems put reasoning into the training set, 43 chains in all/ })).toBeInTheDocument();
-    // The hint retry is a choice like every other control here, not a checkbox.
-    expect(screen.getByRole("radio", { name: /Retry once with the correct answer given as a hint/ })).toHaveAttribute("aria-checked", "false");
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: /Retry once/ }));
-    expect(screen.getByRole("img", { name: /^96 of 100 problems put reasoning into the training set, 53 of them through the hint/ })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: /Several, sampled/ }));
-    expect(screen.getByRole("slider", { name: /Chains sampled per problem/ })).toBeInTheDocument();
-    // One problem walked through the pass: its chains, the key's pick, the training set.
-    expect(screen.getByRole("group", { name: /chains? sampled for this problem/ })).toBeInTheDocument();
     expect(screen.getByText(/Selected by the answer\. Trained on the reasoning\./)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "next problem" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /^43 of 100 problems put reasoning into the training set, none with a wrong answer/ })).toBeInTheDocument();
+    // Rationalization is a small switch, off by default, not a checkbox.
+    const sw = screen.getByRole("switch", { name: /Rationalization/ });
+    expect(sw).toHaveAttribute("aria-checked", "false");
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    fireEvent.click(sw);
+    expect(screen.getByRole("img", { name: /^96 of 100 problems put reasoning into the training set, 53 of them through rationalization/ })).toBeInTheDocument();
+    // The walked problems: the second is rescued by the hint once rationalization is on.
+    fireEvent.click(screen.getByRole("button", { name: "next problem" }));
+    expect(screen.getByText(/the hinted chain, every line of it/)).toBeInTheDocument();
     expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
   });
 
@@ -52,7 +49,9 @@ describe("Page 12 (STaR and self-improvement)", () => {
   it("keeps section 1 free of controls: the loop's correctness check is always on", () => {
     render(<Page12 />);
     expect(screen.queryByRole("button", { name: /Run iteration/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    // Section 2 has its rationalization switch; section 1 has none.
+    const s1 = screen.getByRole("heading", { name: "1. Run the loop" }).closest("section")!;
+    expect(within(s1).queryByRole("switch")).not.toBeInTheDocument();
     expect(screen.queryByText(/No answer key: every rationale trains/)).not.toBeInTheDocument();
   });
 
