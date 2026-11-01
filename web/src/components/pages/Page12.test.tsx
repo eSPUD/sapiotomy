@@ -14,16 +14,23 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     expect(screen.getByRole("heading", { name: /2\. Which reasoning goes into the training set\?/ })).toBeInTheDocument();
     expect(screen.queryByText("LaMDA 137B, few-shot CoT")).not.toBeInTheDocument();
+    // Beat one is STaR alone: no rule picker until the reader takes the key away.
+    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/retry once with the correct answer given as a hint/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /take the answer key away/ }));
     expect(screen.getByRole("radiogroup", { name: /Which chains go into the training set/ })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /majority/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByText(/each chain is its own majority/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /take the answer key away/ })).not.toBeInTheDocument();
     expect(screen.getByRole("slider", { name: /Reasoning chains written per problem/ })).toBeInTheDocument();
     // The figure stands on its own: no references to earlier pages' tools in its controls.
     expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
-    expect(screen.getByLabelText(/retry once with the correct answer given as a hint/)).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /level \d/ })).toHaveLength(100);
   });
 
   it("offers a step grader as a third rule, and shows its verdict beside the answer key's", () => {
     render(<Page12 />);
+    fireEvent.click(screen.getByRole("button", { name: /take the answer key away/ }));
     const radios = within(screen.getByRole("radiogroup", { name: /Which chains go into the training set/ })).getAllByRole("radio");
     expect(radios).toHaveLength(3);
     fireEvent.click(screen.getByRole("radio", { name: /step grader passes/ }));

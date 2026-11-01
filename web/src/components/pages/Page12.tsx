@@ -446,18 +446,30 @@ const STATE_STYLE: Record<CellState, string> = {
 
 const STATE_LABEL: Record<CellState, string> = {
   right: "trains on a correct answer",
-  wrong: "trains on a wrong answer",
+  wrong: "wrong answer, kept anyway",
   hint: "trains on a correct answer found with a hint",
   none: "no training data",
 };
 
+/**
+ * The figure has two beats. First the reader builds one round's training set with STaR's
+ * own rule and its hint retry; only then does a button take the answer key away and
+ * reveal the two no-key rules beside it. The order is the section's argument: understand
+ * the mechanism before meeting what it is compared against.
+ */
 function StarHarvest() {
   const N = PAGE12.n_chains;
   const [k, setK] = useState(1);
   const [rule, setRule] = useState<Rule>("key");
   const [useHint, setUseHint] = useState(false);
+  const [compare, setCompare] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const hintOn = useHint && rule === "key";
+  const takeKeyAway = () => {
+    setCompare(true);
+    setRule("popular");
+    setOpenId(null);
+  };
 
   const cells = PAGE12.order.map((p) => {
     const kept = harvest(p, k, rule);
@@ -478,6 +490,7 @@ function StarHarvest() {
   return (
     <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
       <div className="flex flex-col gap-4">
+        {compare ? (
         <div className="flex flex-col gap-1">
           <span id="star-rule" className="text-sm text-ink-muted">
             Which chains go into the training set?
@@ -501,6 +514,12 @@ function StarHarvest() {
             ))}
           </div>
         </div>
+        ) : (
+          <p className="text-sm text-ink">
+            <span className="text-ink-muted">Rule:</span> only chains with the correct answer go into the
+            training set (STaR, line 6).
+          </p>
+        )}
         <Slider
           label="Reasoning chains written per problem"
           min={1}
@@ -566,10 +585,27 @@ function StarHarvest() {
         ))}
       </dl>
 
+      {rule === "popular" && k === 1 ? (
+        <p className="rounded border-l-4 border-compute bg-compute/10 px-3 py-2 text-sm text-ink">
+          With one chain there is nothing to vote against: each chain is its own majority, so every
+          problem gets in and nothing is filtered. Add chains to see the vote start to work.
+        </p>
+      ) : null}
+
       {open ? (
         <OpenProblem problem={open.p} kept={open.kept} state={open.state} k={k} rule={rule} />
       ) : (
         <p className="text-sm text-ink-muted">Click a square to see the problem and what the model wrote for it.</p>
+      )}
+
+      {compare ? null : (
+        <button
+          type="button"
+          onClick={takeKeyAway}
+          className="self-start rounded border border-compute bg-compute/15 px-3 py-1.5 text-sm text-ink hover:bg-compute/25"
+        >
+          Now take the answer key away →
+        </button>
       )}
 
       <figcaption className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
@@ -577,11 +613,16 @@ function StarHarvest() {
         answer key no wrong answer gets in, and writing more chains per problem puts more problems
         in: {PAGE12.curves.key[0].problems_with_lesson} at one chain, {PAGE12.curves.key[N - 1].problems_with_lesson}{" "}
         at {N}. STaR writes one chain per problem; writing several is the RFT variant.
-        <Cite n={REF.rft} /> Without the key, keeping whatever the majority answered puts{" "}
-        {PAGE12.curves.popular[N - 1].chains_wrong} wrong answers among {PAGE12.curves.popular[N - 1].chains_kept}{" "}
-        chains at {N}, and the model would be trained to reason its way to them. The step grader is
-        page 9&apos;s process reward model, {PAGE12.prm.model_id.split("/").pop()}, at page 9&apos;s
-        cutoff of {PAGE12.prm.threshold.toFixed(2)}; it never sees the answer key.
+        <Cite n={REF.rft} />
+        {compare ? (
+          <>
+            {" "}Without the key, keeping whatever the majority answered puts{" "}
+            {PAGE12.curves.popular[N - 1].chains_wrong} wrong answers among {PAGE12.curves.popular[N - 1].chains_kept}{" "}
+            chains at {N}, and the model would be trained to reason its way to them. The step grader is
+            page 9&apos;s process reward model, {PAGE12.prm.model_id.split("/").pop()}, at page 9&apos;s
+            cutoff of {PAGE12.prm.threshold.toFixed(2)}; it never sees the answer key.
+          </>
+        ) : null}
       </figcaption>
     </figure>
   );
@@ -890,12 +931,34 @@ export function Page12() {
             <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
           </div>
           <p className="text-ink">
+            <strong className="text-ink">STaR gets to see something no answer-time method ever does: the
+            answer key.</strong> Pages 7 to 9 had to pick an answer with no key in the room, by vote or by
+            a grader. STaR checks every chain against the key before anything is trained, and pays for
+            that with a labelled dataset and a training run. This section builds the training set one
+            round would fine-tune on, then takes the key away to see what the answer-time tools would
+            have kept instead.
+          </p>
+          <p className="text-ink">
             STaR can be tried without training anything, because its first step is just asking. Here{" "}
             {modelLabel} was given each of {PAGE12.manifest.n_items} hard MATH problems and wrote up to{" "}
             {PAGE12.n_chains} reasoning chains for each, and every chain was checked against the answer
-            key. The figure builds the training set one round of STaR would fine-tune on.
+            key. Nothing below is trained; the figure shows what one round of training would be fed.
           </p>
           <StarHarvest />
+          {PAGE12.hint ? (
+            <p className="text-ink">
+              <strong className="text-ink">The hint retry reaches the problems no chain solves.</strong>{" "}
+              Of the {PAGE12.never.length} problems where all {PAGE12.n_chains} chains were wrong, the
+              retry recovers {PAGE12.hint.recovered_never.length}. But a hint can carry an argument that
+              does not hold: of the {PAGE12.hint.recovered.length} problems the model's single greedy try
+              missed and the retry recovered, {PAGE12.hint.mentions_hint.length} reason by pointing at the
+              hint, and STaR keeps them anyway once the answer matches. On CommonsenseQA the retry lifted
+              GPT-J from {p.starNoRationalization}% to {p.star}%.
+              <Cite n={REF.star} />
+            </p>
+          ) : null}
+
+          <h3 className="mt-2 text-lg font-semibold text-ink">Without the answer key</h3>
           <p className="text-ink">
             <strong className="text-ink">The answer key finds what majority vote misses.</strong> On{" "}
             {PAGE12.vote_missed.length} problems at least one of the {PAGE12.n_chains} chains was correct,
@@ -916,22 +979,20 @@ export function Page12() {
             here they do a different job, choosing what to train on. STaR uses the answer key because
             that check cannot be talked into a wrong answer, even though it cannot see the reasoning.
           </p>
-          {PAGE12.hint ? (
-            <p className="text-ink">
-              <strong className="text-ink">The hint retry reaches the problems no chain solves.</strong>{" "}
-              Of the {PAGE12.never.length} problems where all {PAGE12.n_chains} chains were wrong, the
-              retry recovers {PAGE12.hint.recovered_never.length}. But a hint can carry an argument that
-              does not hold: of the {PAGE12.hint.recovered.length} problems the model's single greedy try
-              missed and the retry recovered, {PAGE12.hint.mentions_hint.length} reason by pointing at the
-              hint, and STaR keeps them anyway once the answer matches. On CommonsenseQA the retry lifted
-              GPT-J from {p.starNoRationalization}% to {p.star}%.
-              <Cite n={REF.star} />
-            </p>
-          ) : null}
+          <p className="text-ink">
+            <strong className="text-ink">Does training on the clean set beat voting?</strong> This page
+            cannot say; nothing here is trained. What it can show is the input to that bet: at{" "}
+            {PAGE12.n_chains} chains the key hands training {PAGE12.curves.key[PAGE12.n_chains - 1].chains_kept}{" "}
+            chains with no wrong answer among them, and the vote would hand it{" "}
+            {PAGE12.curves.popular[PAGE12.n_chains - 1].chains_wrong} wrong ones. That training on the
+            clean set pays is the paper&apos;s result, not this page&apos;s: on CommonsenseQA the loop lifted
+            GPT-J from {p.fewShotCot}% with few-shot chain of thought to {p.star}%.
+            <Cite n={REF.star} />
+          </p>
         </section>
 
         <Note kicker="Try it">
-          <p>Write {PAGE12.n_chains} chains per problem, then switch to the majority rule and the step grader.</p>
+          <p>Build STaR&apos;s set at {PAGE12.n_chains} chains with the hint on. Then take the key away and try the majority rule and the step grader at the same {PAGE12.n_chains}.</p>
         </Note>
 
         {/* The two closing blocks — kept at the page bottom on purpose, reading
