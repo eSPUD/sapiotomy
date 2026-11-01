@@ -477,17 +477,24 @@ const DOT_STYLE: Record<Dot, string> = {
 };
 
 /** One stop on the pass: a dot on a line that runs down to the next stop. */
-function PassStep({ label, detail, dot, last, children }: {
+function PassStep({ label, detail, dot, last, current, children }: {
   label: string;
   detail: string;
   dot: Dot;
   last?: boolean;
+  /** The step playback has just reached. */
+  current?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <li className={`relative flex gap-3 ${last ? "" : "pb-3"}`}>
       {last ? null : <span aria-hidden="true" className="absolute bottom-0 left-[6px] top-4 w-px bg-grid" />}
-      <span aria-hidden="true" className={`relative mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 ${DOT_STYLE[dot]}`} />
+      <span
+        aria-hidden="true"
+        className={`relative mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 ${DOT_STYLE[dot]} ${
+          current ? "ring-4 ring-compute/30" : ""
+        }`}
+      />
       <div className="flex min-w-0 flex-col gap-1">
         <p className="text-sm text-ink">
           <span className="font-semibold">{label}</span> <span className="text-ink-muted">· {detail}</span>
@@ -507,17 +514,40 @@ const HINT_RESCUED = PAGE12.problems.filter((p) => !p.greedy.correct && p.hint?.
  * laid out to fit one screen: the switch and the problem picker in a row, then the pass for
  * one problem on the left with the chain it keeps open on the right, then the meter.
  */
+/** How long playback holds on each step of the pass. */
+const STEP_MS = 1400;
+
 function StarHarvest() {
   const problems = walked;
   const [rationalize, setRationalize] = useState(false);
   const [at, setAt] = useState(0);
-  const goTo = (i: number) => setAt((i + problems.length) % problems.length);
+  // Playback: how many steps of the pass are showing, or null for all of them.
+  const [phase, setPhase] = useState<number | null>(null);
+  const goTo = (i: number) => {
+    setPhase(null);
+    setAt((i + problems.length) % problems.length);
+  };
 
   const problem = problems[at];
   const g = problem.greedy;
   const hint = problem.hint;
   const retried = rationalize && !g.correct && hint !== null;
   const rescued = retried && hint!.correct;
+  // Generate, filter, (rationalize), training set.
+  const nSteps = retried ? 4 : 3;
+  const shown = (i: number) => phase === null || i < phase;
+  const lastShown = phase === null ? nSteps - 1 : Math.min(phase, nSteps) - 1;
+  const current = (i: number) => phase !== null && i === lastShown;
+  useEffect(() => {
+    if (phase === null) return;
+    const t = setTimeout(() => setPhase(phase >= nSteps ? null : phase + 1), STEP_MS);
+    return () => clearTimeout(t);
+  }, [phase, nSteps]);
+  const play = () => {
+    // Reduced motion: no playback; the full pass is already on screen.
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    setPhase(phase === null ? 1 : null);
+  };
   const n = PAGE12.manifest.n_items;
   const inSet = GREEDY_RIGHT + (rationalize ? HINT_RESCUED : 0);
   const pct = (x: number) => `${(100 * x) / n}%`;
@@ -541,11 +571,26 @@ function StarHarvest() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         {hasHint ? (
           <div className="flex flex-col gap-0.5">
-            <Toggle label="Rationalization (lines 8 and 9)" checked={rationalize} onChange={setRationalize} />
+            <Toggle
+              label="Rationalization (lines 8 and 9)"
+              checked={rationalize}
+              onChange={(v) => {
+                setPhase(null);
+                setRationalize(v);
+              }}
+            />
             <span className="text-[11px] text-ink-muted">A missed problem is retried once with the answer as a hint.</span>
           </div>
         ) : null}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={play}
+            aria-label={phase === null ? "play this problem's pass step by step" : "stop playback"}
+            className="rounded border border-compute bg-compute/15 px-2 py-0.5 text-xs text-ink hover:bg-compute/25"
+          >
+            {phase === null ? "▶ Play" : "■ Stop"}
+          </button>
           <span className="font-mono text-xs text-ink-muted">
             problem {at + 1} of {problems.length}
           </span>
@@ -562,12 +607,12 @@ function StarHarvest() {
       <div className="grid gap-3 rounded-lg border border-grid bg-canvas p-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         <div className="flex min-w-0 flex-col gap-3">
           <p className="text-sm text-ink">
-            <span className="font-semibold">{headline}</span>{" "}
+            <span className="font-semibold">{phase === null ? headline : "One pass of STaR, step by step."}</span>{" "}
             <span className="text-ink-muted">The answer key says {tidyMath(problem.ground_truth)}.</span>
           </p>
 
           <ol className="m-0 flex list-none flex-col p-0" aria-label="STaR's pass for this problem">
-            <PassStep label="Generate" detail="one chain, decoded greedily" dot="neutral">
+            <PassStep label="Generate" detail="one chain, decoded greedily" dot="neutral" last={lastShown === 0} current={current(0)}>
               <div className="flex gap-1" role="group" aria-label="the one chain decoded greedily for this problem">
                 <ChainChip
                   label="greedy"
@@ -578,7 +623,8 @@ function StarHarvest() {
                 />
               </div>
             </PassStep>
-            <PassStep label="Filter" detail="against the answer key" dot={g.correct ? "kept" : "dropped"}>
+            {shown(1) ? (
+            <PassStep label="Filter" detail="against the answer key" dot={g.correct ? "kept" : "dropped"} last={lastShown === 1} current={current(1)}>
               <p className="text-sm text-ink">
                 {g.correct
                   ? "It matches, so it is kept."
@@ -587,8 +633,9 @@ function StarHarvest() {
                     : "It misses, so it is dropped. Turn rationalization on to retry it."}
               </p>
             </PassStep>
-            {retried ? (
-              <PassStep label="Rationalize" detail="retry with the answer as a hint" dot={rescued ? "hint" : "dropped"}>
+            ) : null}
+            {retried && shown(2) ? (
+              <PassStep label="Rationalize" detail="retry with the answer as a hint" dot={rescued ? "hint" : "dropped"} last={lastShown === 2} current={current(2)}>
                 <div className="flex items-center gap-2">
                   <ChainChip
                     label="hinted"
@@ -605,7 +652,8 @@ function StarHarvest() {
                 </div>
               </PassStep>
             ) : null}
-            <PassStep label="Training set" detail="what the weights are fitted to" dot={g.correct ? "kept" : rescued ? "hint" : "dropped"} last>
+            {shown(nSteps - 1) ? (
+            <PassStep label="Training set" detail="what the weights are fitted to" dot={g.correct ? "kept" : rescued ? "hint" : "dropped"} last current={current(nSteps - 1)}>
               <p className="text-sm text-ink">
                 <strong>Selected by the answer. Trained on the reasoning.</strong>{" "}
                 {g.correct
@@ -615,6 +663,7 @@ function StarHarvest() {
                     : "Nothing from this problem."}
               </p>
             </PassStep>
+            ) : null}
           </ol>
         </div>
 
@@ -622,7 +671,7 @@ function StarHarvest() {
           <p className="text-sm font-semibold text-ink">
             {problem.subject} <span className="font-normal text-ink-muted">· level {problem.level}</span>
           </p>
-          {retried ? (
+          {retried && shown(2) ? (
             <>
               <Step>{rescued ? "The hinted chain, as it would be trained on" : "The hinted chain, dropped"}</Step>
               <Exchange
@@ -643,8 +692,14 @@ function StarHarvest() {
             </>
           ) : (
             <>
-              <Step>{g.correct ? "The greedy chain, as it would be trained on" : "The greedy chain, dropped"}</Step>
-              <Exchange prompt={problem.question} reply={g.trace} verdict={verdictOf({ correct: g.correct, answer: g.extracted_answer })} />
+              <Step>
+                {!shown(1) ? "The greedy chain" : g.correct ? "The greedy chain, as it would be trained on" : "The greedy chain, dropped"}
+              </Step>
+              <Exchange
+                prompt={problem.question}
+                reply={g.trace}
+                verdict={shown(1) ? verdictOf({ correct: g.correct, answer: g.extracted_answer }) : null}
+              />
             </>
           )}
         </div>

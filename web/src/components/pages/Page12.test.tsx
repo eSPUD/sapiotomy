@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { Page12 } from "./Page12";
 
 describe("Page 12 (STaR and self-improvement)", () => {
@@ -40,6 +40,33 @@ describe("Page 12 (STaR and self-improvement)", () => {
     fireEvent.click(screen.getByRole("button", { name: "next problem" }));
     expect(screen.getByText(/The hinted chain goes in, every line of it/)).toBeInTheDocument();
     expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
+  });
+
+  it("plays one problem's pass a step at a time, and any control stops it", () => {
+    vi.useFakeTimers();
+    try {
+      render(<Page12 />);
+      const pass = screen.getByRole("list", { name: /STaR's pass for this problem/ });
+      const steps = () => within(pass).getAllByRole("listitem").length;
+      expect(steps()).toBe(3);
+      fireEvent.click(screen.getByRole("button", { name: /play this problem's pass/ }));
+      expect(steps()).toBe(1);
+      expect(screen.getByText("One pass of STaR, step by step.")).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1400));
+      expect(steps()).toBe(2);
+      act(() => vi.advanceTimersByTime(1400));
+      expect(steps()).toBe(3);
+      act(() => vi.advanceTimersByTime(1400));
+      expect(screen.getByRole("button", { name: /play this problem's pass/ })).toBeInTheDocument();
+      expect(screen.getByText("The greedy chain is right, so its reasoning goes in.")).toBeInTheDocument();
+      // Turning rationalization on mid-play shows the whole pass at once.
+      fireEvent.click(screen.getByRole("button", { name: /play this problem's pass/ }));
+      fireEvent.click(screen.getByRole("switch", { name: /Rationalization/ }));
+      expect(steps()).toBe(3);
+      expect(screen.queryByRole("button", { name: /stop playback/ })).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("draws the loop as a diagram, with no simulated accuracy chart", () => {
