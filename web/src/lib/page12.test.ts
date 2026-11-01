@@ -81,7 +81,7 @@ describe("Page 12: the harvest", () => {
   });
 
   it("walks four problems whose notes the data still supports", () => {
-    expect(WALK.map((w) => w.id)).toEqual(walked.map((p) => p.problem_id));
+    expect([...WALK]).toEqual(walked.map((p) => p.problem_id));
     const [right, rescued, leaning, lost] = walked;
     // the greedy chain is right, so its reasoning goes in
     expect(right.greedy.correct).toBe(true);

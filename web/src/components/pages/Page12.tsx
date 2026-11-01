@@ -80,7 +80,6 @@ import { STAR_LINES } from "@/lib/starListing";
 import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import {
   PAGE12,
-  WALK,
   hasHint,
   modelLabel,
   tidyMath,
@@ -467,15 +466,35 @@ function ChainChip({ label, answer, tone, dim, title }: {
   );
 }
 
-/** Small eyebrow over each stage of the pass. */
-function Stage({ n, children }: { n: number; children: React.ReactNode }) {
+type Dot = "neutral" | "kept" | "dropped" | "hint";
+
+/** Filled when the step keeps something, hollow when it drops, orange when the hint did it. */
+const DOT_STYLE: Record<Dot, string> = {
+  neutral: "border-ink-muted bg-ink-muted",
+  kept: "border-correct bg-correct",
+  dropped: "border-ink-muted bg-surface",
+  hint: "border-compute bg-compute",
+};
+
+/** One stop on the pass: a dot on a line that runs down to the next stop. */
+function PassStep({ label, detail, dot, last, children }: {
+  label: string;
+  detail: string;
+  dot: Dot;
+  last?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <p className="flex items-baseline gap-2 text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
-      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-grid font-mono text-[10px] normal-case text-ink">
-        {n}
-      </span>
-      {children}
-    </p>
+    <li className={`relative flex gap-3 ${last ? "" : "pb-3"}`}>
+      {last ? null : <span aria-hidden="true" className="absolute bottom-0 left-[6px] top-4 w-px bg-grid" />}
+      <span aria-hidden="true" className={`relative mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 ${DOT_STYLE[dot]}`} />
+      <div className="flex min-w-0 flex-col gap-1">
+        <p className="text-sm text-ink">
+          <span className="font-semibold">{label}</span> <span className="text-ink-muted">· {detail}</span>
+        </p>
+        {children}
+      </div>
+    </li>
   );
 }
 
@@ -502,6 +521,16 @@ function StarHarvest() {
   const n = PAGE12.manifest.n_items;
   const inSet = GREEDY_RIGHT + (rationalize ? HINT_RESCUED : 0);
   const pct = (x: number) => `${(100 * x) / n}%`;
+  // The headline follows the switch, so it never describes a retry that has not happened.
+  const headline = g.correct
+    ? "The greedy chain is right, so its reasoning goes in."
+    : !retried
+      ? "The greedy chain misses, so nothing goes in."
+      : !rescued
+        ? "The greedy chain misses, and so does the hinted retry."
+        : hint!.mentions_hint
+          ? "The greedy chain misses; with the hint, the model reaches the answer by leaning on it."
+          : "The greedy chain misses; with the answer as a hint, the model finds the route.";
   const verdictOf = (c: { correct: boolean; answer: string }) => (
     <Verdict correct={c.correct} answer={c.answer} groundTruth={problem.ground_truth} />
   );
@@ -533,70 +562,66 @@ function StarHarvest() {
       <div className="grid gap-3 rounded-lg border border-grid bg-canvas p-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         <div className="flex min-w-0 flex-col gap-3">
           <p className="text-sm text-ink">
-            <span className="font-semibold">{WALK[at].note[0].toUpperCase() + WALK[at].note.slice(1)}.</span>{" "}
-            <span className="text-ink-muted">
-              {problem.subject}, level {problem.level}; the answer key says {tidyMath(problem.ground_truth)}.
-            </span>
+            <span className="font-semibold">{headline}</span>{" "}
+            <span className="text-ink-muted">The answer key says {tidyMath(problem.ground_truth)}.</span>
           </p>
 
-          <div className="flex flex-col gap-1">
-            <Stage n={1}>Generate · one chain, greedily</Stage>
-            <div className="flex gap-1" role="group" aria-label="the one chain decoded greedily for this problem">
-              <ChainChip
-                label="greedy"
-                answer={g.extracted_answer}
-                tone={g.correct ? "right" : "plain"}
-                dim={!g.correct}
-                title={`the greedy chain: answered ${g.extracted_answer ? tidyMath(g.extracted_answer) : "nothing"}${g.correct ? ", kept" : ", dropped"}`}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <Stage n={2}>Filter · answer key</Stage>
-            <p className="text-sm text-ink">
-              {g.correct
-                ? "It matches the answer key, so it is kept."
-                : rationalize
-                  ? "It misses the answer key."
-                  : "It misses the answer key, so it is dropped. Turn rationalization on to retry it."}
-            </p>
-          </div>
-
-          {retried ? (
-            <div className="flex flex-col gap-1">
-              <Stage n={3}>Rationalize · retry with the answer as a hint</Stage>
-              <div className="flex items-center gap-2">
+          <ol className="m-0 flex list-none flex-col p-0" aria-label="STaR's pass for this problem">
+            <PassStep label="Generate" detail="one chain, decoded greedily" dot="neutral">
+              <div className="flex gap-1" role="group" aria-label="the one chain decoded greedily for this problem">
                 <ChainChip
-                  label="hinted"
-                  answer={hint!.answer}
-                  tone={rescued ? "hint" : "plain"}
-                  dim={!rescued}
-                  title={`the hinted chain: answered ${hint!.answer ? tidyMath(hint!.answer) : "nothing"}${rescued ? ", kept" : ", dropped"}`}
+                  label="greedy"
+                  answer={g.extracted_answer}
+                  tone={g.correct ? "right" : "plain"}
+                  dim={!g.correct}
+                  title={`the greedy chain: answered ${g.extracted_answer ? tidyMath(g.extracted_answer) : "nothing"}${g.correct ? ", kept" : ", dropped"}`}
                 />
-                <p className="text-sm text-ink">
-                  {rescued
-                    ? "It reaches the answer: kept, with the hint deleted from the question."
-                    : "Even told the answer, it misses, so nothing is kept."}
-                </p>
               </div>
-            </div>
-          ) : null}
-
-          <div className="flex flex-col gap-1 rounded-lg border border-dashed border-compute/60 bg-surface p-2">
-            <Stage n={retried ? 4 : 3}>Training set</Stage>
-            <p className="text-sm text-ink">
-              <strong>Selected by the answer. Trained on the reasoning.</strong> What the weights are fitted to:{" "}
-              {g.correct
-                ? "the greedy chain, every line of it."
-                : rescued
-                  ? "the hinted chain, every line of it, filed under the question without the hint."
-                  : "nothing from this problem."}
-            </p>
-          </div>
+            </PassStep>
+            <PassStep label="Filter" detail="against the answer key" dot={g.correct ? "kept" : "dropped"}>
+              <p className="text-sm text-ink">
+                {g.correct
+                  ? "It matches, so it is kept."
+                  : rationalize
+                    ? "It misses."
+                    : "It misses, so it is dropped. Turn rationalization on to retry it."}
+              </p>
+            </PassStep>
+            {retried ? (
+              <PassStep label="Rationalize" detail="retry with the answer as a hint" dot={rescued ? "hint" : "dropped"}>
+                <div className="flex items-center gap-2">
+                  <ChainChip
+                    label="hinted"
+                    answer={hint!.answer}
+                    tone={rescued ? "hint" : "plain"}
+                    dim={!rescued}
+                    title={`the hinted chain: answered ${hint!.answer ? tidyMath(hint!.answer) : "nothing"}${rescued ? ", kept" : ", dropped"}`}
+                  />
+                  <p className="text-sm text-ink">
+                    {rescued
+                      ? "It reaches the answer: kept, with the hint deleted from the question."
+                      : "Even told the answer, it misses, so nothing is kept."}
+                  </p>
+                </div>
+              </PassStep>
+            ) : null}
+            <PassStep label="Training set" detail="what the weights are fitted to" dot={g.correct ? "kept" : rescued ? "hint" : "dropped"} last>
+              <p className="text-sm text-ink">
+                <strong>Selected by the answer. Trained on the reasoning.</strong>{" "}
+                {g.correct
+                  ? "The greedy chain goes in, every line of it."
+                  : rescued
+                    ? "The hinted chain goes in, every line of it, filed under the question without the hint."
+                    : "Nothing from this problem."}
+              </p>
+            </PassStep>
+          </ol>
         </div>
 
         <div className="flex min-w-0 flex-col gap-1">
+          <p className="text-sm font-semibold text-ink">
+            {problem.subject} <span className="font-normal text-ink-muted">· level {problem.level}</span>
+          </p>
           {retried ? (
             <>
               <Step>{rescued ? "The hinted chain, as it would be trained on" : "The hinted chain, dropped"}</Step>
@@ -826,7 +851,9 @@ export function Page12() {
             <strong className="text-ink">STaR gets to see something no answer-time method ever does: the
             answer key.</strong> Pages 7 to 9 picked an answer with no key in the room, by vote or by a
             grader. STaR checks every chain against the key, and the chains that pass become the training
-            set, reasoning and all. Below, {modelLabel} answered each of {PAGE12.manifest.n_items} hard MATH
+            set, reasoning and all. Nobody writes a worked solution: the reasoning the model is trained on
+            is reasoning it wrote itself, checked only by its final answer, which is what makes the method
+            a way to make training data rather than collect it. Below, {modelLabel} answered each of {PAGE12.manifest.n_items} hard MATH
             problems once, greedily, as STaR does; nothing is trained. The figure builds the set.
           </p>
           <StarHarvest />

@@ -229,17 +229,18 @@ function load(raw: unknown): Derived & { order: Problem[] } {
 export const PAGE12 = load(rawDerived);
 
 /**
- * The problems the figure walks through, in order, each with the one thing it shows.
- * `page12.test.ts` checks that the data still says what each note says.
+ * The problems the figure walks through, in order, one per case of STaR's pass: the greedy
+ * chain is right; it misses and the hinted retry finds the route; it misses and the hinted
+ * retry leans on the hint; both miss. `page12.test.ts` checks the data still puts each in its case.
  */
-export const WALK: readonly { id: string; note: string }[] = [
-  { id: "test/algebra/2064.json", note: "the greedy chain is right, so its reasoning goes in" },
-  { id: "test/algebra/224.json", note: "the greedy chain misses; with the answer as a hint, the model finds the route" },
-  { id: "test/number_theory/357.json", note: "the greedy chain misses; with the hint, the model reaches the answer by leaning on it" },
-  { id: "test/number_theory/737.json", note: "the greedy chain misses, and so does the hinted retry" },
+export const WALK: readonly string[] = [
+  "test/algebra/2064.json",
+  "test/algebra/224.json",
+  "test/number_theory/357.json",
+  "test/number_theory/737.json",
 ];
 
-export const walked: Problem[] = WALK.map(({ id }) => {
+export const walked: Problem[] = WALK.map((id) => {
   const p = PAGE12.problems.find((q) => q.problem_id === id);
   if (!p) throw new Page12DataError(`${id} is walked by the figure but not in the run`);
   return p;

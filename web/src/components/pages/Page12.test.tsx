@@ -29,9 +29,16 @@ describe("Page 12 (STaR and self-improvement)", () => {
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     fireEvent.click(sw);
     expect(screen.getByRole("img", { name: /^96 of 100 problems put reasoning into the training set, 53 of them through rationalization/ })).toBeInTheDocument();
+    // The headline follows the switch: with it off, the last problem says nothing of a retry.
+    fireEvent.click(sw);
+    fireEvent.click(screen.getByRole("button", { name: "previous problem" }));
+    expect(screen.getByText("The greedy chain misses, so nothing goes in.")).toBeInTheDocument();
+    fireEvent.click(sw);
+    expect(screen.getByText("The greedy chain misses, and so does the hinted retry.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "next problem" }));
     // The walked problems: the second is rescued by the hint once rationalization is on.
     fireEvent.click(screen.getByRole("button", { name: "next problem" }));
-    expect(screen.getByText(/the hinted chain, every line of it/)).toBeInTheDocument();
+    expect(screen.getByText(/The hinted chain goes in, every line of it/)).toBeInTheDocument();
     expect(screen.queryByText(/page 7's vote/)).not.toBeInTheDocument();
   });
 
