@@ -21,8 +21,10 @@ describe("Page 12 (STaR and self-improvement)", () => {
       // STaR as published and nothing else: one greedy chain, the answer key, a rationalization switch.
       expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
       expect(screen.queryByRole("slider")).not.toBeInTheDocument();
-      expect(screen.queryByText(/majority/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/step grader/i)).not.toBeInTheDocument();
+      // The figure offers no majority vote or step grader (the prose may still mention page 7's vote).
+      const figure = screen.getByRole("button", { name: /Play/ }).closest("figure")!;
+      expect(within(figure).queryByText(/majority/i)).not.toBeInTheDocument();
+      expect(within(figure).queryByText(/step grader/i)).not.toBeInTheDocument();
       // As on page 5: empty until Play, cleared by Reset.
       const play = screen.getByRole("button", { name: /Play/ });
       const reset = screen.getByRole("button", { name: /Reset/ });

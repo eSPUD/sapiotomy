@@ -1156,27 +1156,30 @@ export function Page12() {
           <StarHarvest />
           {PAGE12.hint ? (
             <p className="text-ink">
-              <strong className="text-ink">The hinted chain is kept.</strong> When no chain reaches the
-              answer, the retry is told it, and whatever the model writes on the way to it goes into the
-              training set with the hint deleted from the question. That looks like letting the model
-              cheat, and it is the point: the answer was never what the model had to learn, the key
-              already holds it. The reasoning is, and a chain that reaches the right answer with a push
-              is reasoning the model could not produce unaided. The key cannot be talked into a wrong
-              answer, but it cannot see the reasoning either: of the {PAGE12.hint.recovered.length} problems
-              the retry recovered here, {PAGE12.hint.mentions_hint.length} argue from the hint itself,
-              and STaR keeps those too. On CommonsenseQA the retry lifted GPT-J from{" "}
-              {p.starNoRationalization}% to {p.star}%.
+              <strong className="text-ink">Why keep reasoning that was given the answer?</strong> It might
+              look like cheating, but the answer was never what we wanted the model to learn; the answer key
+              already has it. What we want is the reasoning that gets there. When the model reaches the
+              correct answer with the help of a hint, that reasoning is still useful training data, and the
+              hint is removed before it is stored. There is a catch. The answer key only checks the final
+              answer, not the steps in between. Of the {PAGE12.hint.recovered.length} problems
+              rationalization recovered here, {PAGE12.hint.mentions_hint.length} of the reasoning traces
+              refer to the hint directly, and STaR keeps those too. In the original paper, rationalization
+              raised GPT-J&apos;s accuracy on CommonsenseQA from {p.starNoRationalization}% to {p.star}%.
               <Cite n={REF.star} />
             </p>
           ) : null}
           <p className="text-ink">
-            <strong className="text-ink">Does training on this set beat answer-time methods?</strong> This
-            page cannot say; nothing here is trained. What it shows is the input to that bet: one greedy
-            pass hands training {PAGE12.greedy_lessons} chains of reasoning
-            {PAGE12.hint ? <>, and rationalization {PAGE12.hint.recovered.length} more</> : null}, with no
-            wrong answer among them, and pages 7 to 9 picked their answers with no such key. That training on the clean set pays is the paper&apos;s result, not this page&apos;s: on
-            CommonsenseQA the loop lifted GPT-J from {p.fewShotCot}% with few-shot chain of thought to{" "}
-            {p.star}%.
+            <strong className="text-ink">Training data without a human in the loop.</strong> Nobody wrote a
+            worked solution for any of these problems. Every reasoning trace in the training set was written
+            by the model and checked only against the final answer. One greedy pass gave{" "}
+            {PAGE12.greedy_lessons} of the {PAGE12.manifest.n_items} problems reasoning for the training set
+            {PAGE12.hint ? <>, and rationalization added {PAGE12.hint.recovered.length} more</> : null}, with
+            no wrong answers among them. The answer key also catches what voting misses: on page 7, majority
+            voting over {PAGE12.n_chains} chains got {PAGE12.vote_missed.length} problems wrong even though at
+            least one chain had found the right answer, and any of those chains could be kept here. We
+            don&apos;t train on this set, so we can&apos;t show how much it would improve Qwen. In the STaR
+            paper, repeating this loop took GPT-J from {p.fewShotCot}% with few-shot chain of thought to{" "}
+            {p.star}% on CommonsenseQA.
             <Cite n={REF.star} />
           </p>
         </section>
