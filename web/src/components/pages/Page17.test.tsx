@@ -41,6 +41,7 @@ describe("Page 17: the glossary", () => {
     const { container } = render(<Page17 />);
     expect(container.querySelector("#token")).not.toBeNull();
     expect(container.querySelector("#greedy")).not.toBeNull();
+    expect(container.querySelector("#rationalization")).not.toBeNull();
   });
 
   it("ends the deck: back to page 16, then The End", () => {

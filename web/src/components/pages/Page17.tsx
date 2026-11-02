@@ -21,6 +21,12 @@ const TERMS: { term: string; id: string; definition: string }[] = [
       "At every step the model takes its single most likely next token, so the same prompt always produces the same chain.",
   },
   {
+    term: "Rationalization",
+    id: "rationalization",
+    definition:
+      "STaR's second chance. A problem the model got wrong is asked again with the correct answer given as a hint; if the model then reasons its way to that answer, the reasoning is kept for training, filed under the question without the hint.",
+  },
+  {
     term: "Token",
     id: "token",
     definition:

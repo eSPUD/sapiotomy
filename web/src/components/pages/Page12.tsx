@@ -748,11 +748,9 @@ function StarHarvest() {
                 setRationalize(v);
               }}
             />
-            <span className="text-[11px] text-ink-muted">
-              {rationalize
-                ? "A missed problem is retried once with the answer as a hint."
-                : "Off: STaR without rationalization, the paper's ablation."}
-            </span>
+            {rationalize ? null : (
+              <span className="text-[11px] text-ink-muted">Off: STaR without rationalization, the paper&apos;s ablation.</span>
+            )}
           </div>
         ) : null}
         <div className="flex items-center gap-2">
@@ -1142,13 +1140,18 @@ export function Page12() {
             <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
           </div>
           <p className="text-ink">
-            <strong className="text-ink">STaR gets to see something no answer-time method ever does: the
-            answer key.</strong> Pages 7 to 9 picked an answer with no key in the room, by vote or by a
-            grader. STaR checks every chain against the key, and the chains that pass become the training
-            set, reasoning and all. Nobody writes a worked solution: the reasoning the model is trained on
-            is reasoning it wrote itself, checked only by its final answer, which is what makes the method
-            a way to make training data rather than collect it. Below, {modelLabel} answered each of {PAGE12.manifest.n_items} hard MATH
-            problems once, greedily, as STaR does; nothing is trained. The figure builds the set.
+            To understand how reasoning is selected for the training set, let&apos;s look at how STaR could
+            work with {modelLabel} on {walked.length} problems pulled from the MATH-500 dataset, below. We
+            won&apos;t be showing the training itself; rather, we will focus on how the reasoning is
+            selected for training in the first place.
+          </p>
+          <p className="text-ink">
+            Flip through each of the {walked.length} problems. Notice that when the model&apos;s answer does
+            not match the answer key, the model still gets another chance, through{" "}
+            <strong className="text-ink">rationalization</strong>. The model is re-prompted with the answer
+            as a hint, and as long as it produces reasoning that leads to the correct answer, that
+            reasoning trace is still stored. When you turn rationalization off, the model gets no second
+            chances.
           </p>
           <StarHarvest />
           {PAGE12.hint ? (
@@ -1178,9 +1181,12 @@ export function Page12() {
           </p>
         </section>
 
-        <Note kicker="Try it">
-          <p>Play each of the {walked.length} problems, then switch rationalization off: without it, the last three give the training set nothing.</p>
-        </Note>
+        {/* Beside the chart, and kept beside it as the reader scrolls through it. */}
+        <div className="lg:sticky lg:top-24 lg:self-start">
+          <Note kicker="Rationalization">
+            <p>A missed problem is retried once with the answer as a hint.</p>
+          </Note>
+        </div>
 
         {/* The two closing blocks — kept at the page bottom on purpose, reading
             over both the listing and the results above them. */}
