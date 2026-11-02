@@ -78,13 +78,7 @@ import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
 import { STAR_LINES } from "@/lib/starListing";
 import { ModelIcon, UserIcon } from "@/components/ChatIcons";
-import {
-  PAGE12,
-  hasHint,
-  modelLabel,
-  tidyMath,
-  walked,
-} from "@/lib/page12";
+import { PAGE12, hasHint, modelLabel, tidyMath, walked } from "@/lib/page12";
 
 const PAGE_N = 12;
 const N_CHAINS = PAGE12.n_chains;
@@ -105,7 +99,9 @@ const REF = { star: 1, exit: 2, rft: 3, gvm: 4 } as const;
  */
 const CODE_NOTES: Record<number, { note?: React.ReactNode }> = {
   0: { note: "one model is both student and teacher" },
-  1: { note: "expert iteration (Anthony et al. 2017): the same loop, before LLMs" },
+  1: {
+    note: "expert iteration (Anthony et al. 2017): the same loop, before LLMs",
+  },
   3: { note: "the only supervision that exists: answers, never reasoning" },
   4: {
     note: "one greedy rollout: low variance, biased exploration; RFT (Yuan et al. 2023) samples k instead",
@@ -131,10 +127,18 @@ const CODE_LINES: {
 }[] = STAR_LINES.map((line, i) => ({ ...line, ...CODE_NOTES[i] }));
 
 /** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+function Note({
+  kicker,
+  children,
+}: {
+  kicker: string;
+  children: React.ReactNode;
+}) {
   return (
     <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
-      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+        {kicker}
+      </p>
       {children}
     </aside>
   );
@@ -147,7 +151,10 @@ type Edge = { p0: Pt; p1: Pt; p2: Pt; p3: Pt };
 /** Point on cubic Bézier `e` at parameter `t`. */
 function bezier(e: Edge, t: number): Pt {
   const u = 1 - t;
-  const a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+  const a = u * u * u,
+    b = 3 * u * u * t,
+    c = 3 * u * t * t,
+    d = t * t * t;
   return [
     a * e.p0[0] + b * e.p1[0] + c * e.p2[0] + d * e.p3[0],
     a * e.p0[1] + b * e.p1[1] + c * e.p2[1] + d * e.p3[1],
@@ -177,7 +184,12 @@ const EDGES: Edge[] = [
 ];
 
 /** The shortcut a correct answer takes: straight from filter to fine-tune. */
-const SHORTCUT: Edge = { p0: N_FILTER, p1: [300, 150], p2: [180, 150], p3: N_TUNE };
+const SHORTCUT: Edge = {
+  p0: N_FILTER,
+  p1: [300, 150],
+  p2: [180, 150],
+  p3: N_TUNE,
+};
 
 /* A highlighted node gets a solid compute fill (not a translucent tint), so its
  * text flips light to stay legible. Full literals, so Tailwind's JIT emits them. */
@@ -191,7 +203,8 @@ const SUB_HOT = "fill-ink text-[10px]";
 /** A direction chevron at an edge's midpoint, angled along its chord. */
 function Chevron({ e, cls = "fill-ink-muted" }: { e: Edge; cls?: string }) {
   const [mx, my] = bezier(e, 0.5);
-  const deg = (Math.atan2(e.p3[1] - e.p0[1], e.p3[0] - e.p0[0]) * 180) / Math.PI;
+  const deg =
+    (Math.atan2(e.p3[1] - e.p0[1], e.p3[0] - e.p0[0]) * 180) / Math.PI;
   return (
     <path
       d="M0,0 L-8,-4 L-8,4 Z"
@@ -231,9 +244,22 @@ function StarLoop({ filter }: { filter: boolean }) {
     // Phase durations (ms). The split (SP) is shared by both paths, so they
     // arrive at fine-tune together: the correct dot eases the whole SP along the
     // shortcut while the wrong dot spends it on F→R, a dwell, then R→FT.
-    const DG = 480, GF = 620, DF = 480, SP = 1200, DFT = 480, FTG = 620;
-    const S1 = 440, SD = 320, S2 = SP - S1 - SD; // F→R, rationalize dwell, R→FT
-    const B = [DG, DG + GF, DG + GF + DF, DG + GF + DF + SP, DG + GF + DF + SP + DFT];
+    const DG = 480,
+      GF = 620,
+      DF = 480,
+      SP = 1200,
+      DFT = 480,
+      FTG = 620;
+    const S1 = 440,
+      SD = 320,
+      S2 = SP - S1 - SD; // F→R, rationalize dwell, R→FT
+    const B = [
+      DG,
+      DG + GF,
+      DG + GF + DF,
+      DG + GF + DF + SP,
+      DG + GF + DF + SP + DFT,
+    ];
     const TOTAL = B[4] + FTG;
     let raf = 0;
     let start = 0;
@@ -260,8 +286,10 @@ function StarLoop({ filter }: { filter: boolean }) {
       } else if (e < B[3]) {
         const ls = e - B[2]; // the split
         a = bezier(SHORTCUT, ls / SP); // correct answer, straight to fine-tune
-        if (ls < S1) b = bezier(EDGES[1], ls / S1); // wrong answer → rationalize
-        else if (ls < S1 + SD) hi = 2; // rationalize with the hint (dwell)
+        if (ls < S1)
+          b = bezier(EDGES[1], ls / S1); // wrong answer → rationalize
+        else if (ls < S1 + SD)
+          hi = 2; // rationalize with the hint (dwell)
         else b = bezier(EDGES[2], (ls - S1 - SD) / S2); // rationalized → fine-tune
       } else if (e < B[4]) {
         hi = 3; // both have arrived: dwell at fine-tune
@@ -271,11 +299,17 @@ function StarLoop({ filter }: { filter: boolean }) {
       for (let i = 0; i < rectRefs.current.length; i++) {
         const hot = i === hi;
         rectRefs.current[i]?.setAttribute("class", hot ? RECT_HOT : RECT_BASE);
-        titleRefs.current[i]?.setAttribute("class", hot ? TITLE_HOT : TITLE_BASE);
+        titleRefs.current[i]?.setAttribute(
+          "class",
+          hot ? TITLE_HOT : TITLE_BASE,
+        );
         subRefs.current[i]?.setAttribute("class", hot ? SUB_HOT : SUB_BASE);
       }
       // tint the trunk signal green while it rides the correct-answer shortcut
-      dotARef.current?.setAttribute("class", e >= B[2] && e < B[3] ? "fill-correct" : "fill-compute");
+      dotARef.current?.setAttribute(
+        "class",
+        e >= B[2] && e < B[3] ? "fill-correct" : "fill-compute",
+      );
       place(dotARef, a ? a[0] : 0, a ? a[1] : 0, !!a);
       place(dotBRef, b ? b[0] : 0, b ? b[1] : 0, !!b);
       raf = requestAnimationFrame(tick);
@@ -301,14 +335,27 @@ function StarLoop({ filter }: { filter: boolean }) {
       viewBox="0 0 480 324"
       role="img"
       aria-label={`STaR's loop. Generate a rationale and answer. Filter: ${
-        filter ? "check the answer against the key" : "the key is off, so every rationale is kept"
+        filter
+          ? "check the answer against the key"
+          : "the key is off, so every rationale is kept"
       }. A correct answer is kept directly. A wrong one is handed the correct answer as a hint, and the model rationalizes its way to that answer; the successful rationalization is kept too. The base model is fine-tuned on the keepers, and the loop repeats.`}
       className="mx-auto w-full max-w-[480px]"
     >
       {/* the correct-answer shortcut: dashed, straight from filter to fine-tune */}
-      <path d={edgeD(SHORTCUT)} fill="none" strokeWidth={1.6} strokeDasharray="5 4" className="stroke-ink-muted" />
+      <path
+        d={edgeD(SHORTCUT)}
+        fill="none"
+        strokeWidth={1.6}
+        strokeDasharray="5 4"
+        className="stroke-ink-muted"
+      />
       <Chevron e={SHORTCUT} cls="fill-correct" />
-      <text x={240} y={148} textAnchor="middle" className="fill-correct-ink text-[11px] font-semibold">
+      <text
+        x={240}
+        y={148}
+        textAnchor="middle"
+        className="fill-correct-ink text-[11px] font-semibold"
+      >
         correct ✓ keep
       </text>
 
@@ -325,20 +372,49 @@ function StarLoop({ filter }: { filter: boolean }) {
       ))}
 
       {/* branch labels: the wrong-answer path and its hint-driven recovery */}
-      <text x={432} y={214} textAnchor="middle" className="fill-wrong-ink text-[11px] font-semibold">
+      <text
+        x={432}
+        y={214}
+        textAnchor="middle"
+        className="fill-wrong-ink text-[11px] font-semibold"
+      >
         wrong ✗
       </text>
-      <text x={104} y={256} textAnchor="middle" className="fill-correct-ink text-[11px] font-semibold">
+      <text
+        x={104}
+        y={256}
+        textAnchor="middle"
+        className="fill-correct-ink text-[11px] font-semibold"
+      >
         ✓ kept
       </text>
-      <text x={70} y={108} textAnchor="middle" className="fill-ink-muted text-[11px]">
+      <text
+        x={70}
+        y={108}
+        textAnchor="middle"
+        className="fill-ink-muted text-[11px]"
+      >
         ↺ repeat
       </text>
 
       {/* the travelling signals (positioned by the rAF loop); hidden while dwelling.
           A = trunk, tinted green on the correct-answer shortcut; B = wrong-answer detour */}
-      <circle ref={dotARef} cx={N_GEN[0]} cy={N_GEN[1]} r={5.5} opacity={0} className="fill-compute" />
-      <circle ref={dotBRef} cx={N_FILTER[0]} cy={N_FILTER[1]} r={5.5} opacity={0} className="fill-compute" />
+      <circle
+        ref={dotARef}
+        cx={N_GEN[0]}
+        cy={N_GEN[1]}
+        r={5.5}
+        opacity={0}
+        className="fill-compute"
+      />
+      <circle
+        ref={dotBRef}
+        cx={N_FILTER[0]}
+        cy={N_FILTER[1]}
+        r={5.5}
+        opacity={0}
+        className="fill-compute"
+      />
 
       {/* the four nodes; each fills solid compute when the signal dwells on it */}
       {nodes.map((n, i) => (
@@ -399,7 +475,10 @@ function CodeLine({
 }) {
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 py-0.5 sm:min-h-[3rem] sm:grid-cols-[auto_minmax(0,20rem)_minmax(0,1fr)] sm:items-start sm:content-start sm:gap-x-4">
-      <span className="w-5 select-none text-right font-code text-xs tabular-nums text-ink-muted" aria-hidden="true">
+      <span
+        className="w-5 select-none text-right font-code text-xs tabular-nums text-ink-muted"
+        aria-hidden="true"
+      >
         {n}
       </span>
       <span className="flex items-baseline font-code text-sm text-ink">
@@ -416,7 +495,9 @@ function CodeLine({
         <code className="whitespace-pre">{code}</code>
       </span>
       {note ? (
-        <span className="col-start-2 text-xs text-ink-muted sm:col-start-3">{note}</span>
+        <span className="col-start-2 text-xs text-ink-muted sm:col-start-3">
+          {note}
+        </span>
       ) : null}
     </div>
   );
@@ -444,7 +525,13 @@ const TONE_STYLE: Record<Tone, string> = {
 };
 
 /** One chain as a small card: what it is, and the answer it boxed. */
-function ChainChip({ label, answer, tone, dim, title }: {
+function ChainChip({
+  label,
+  answer,
+  tone,
+  dim,
+  title,
+}: {
   label: string;
   answer: string;
   tone: Tone;
@@ -461,8 +548,12 @@ function ChainChip({ label, answer, tone, dim, title }: {
         dim ? "opacity-40" : ""
       }`}
     >
-      <span className="text-[10px] uppercase tracking-wide opacity-70">{label}</span>
-      <span className="max-w-full truncate">{shown.length > 12 ? `${shown.slice(0, 11)}…` : shown}</span>
+      <span className="text-[10px] uppercase tracking-wide opacity-70">
+        {label}
+      </span>
+      <span className="max-w-full truncate">
+        {shown.length > 12 ? `${shown.slice(0, 11)}…` : shown}
+      </span>
     </span>
   );
 }
@@ -479,7 +570,14 @@ const DOT_STYLE: Record<Dot, string> = {
 };
 
 /** One stop on the pass: a dot on a line that runs down to the next stop. */
-function PassStep({ label, detail, dot, last, current, children }: {
+function PassStep({
+  label,
+  detail,
+  dot,
+  last,
+  current,
+  children,
+}: {
   label: string;
   detail: string;
   dot: Dot;
@@ -490,7 +588,12 @@ function PassStep({ label, detail, dot, last, current, children }: {
 }) {
   return (
     <li className={`relative flex gap-3 ${last ? "" : "pb-3"}`}>
-      {last ? null : <span aria-hidden="true" className="absolute bottom-0 left-[6px] top-4 w-px bg-grid" />}
+      {last ? null : (
+        <span
+          aria-hidden="true"
+          className="absolute bottom-0 left-[6px] top-4 w-px bg-grid"
+        />
+      )}
       <span
         aria-hidden="true"
         className={`relative mt-1 h-3.5 w-3.5 shrink-0 rounded-full border-2 ${DOT_STYLE[dot]} ${
@@ -499,7 +602,8 @@ function PassStep({ label, detail, dot, last, current, children }: {
       />
       <div className="flex min-w-0 flex-col gap-1">
         <p className="text-sm text-ink">
-          <span className="font-semibold">{label}</span> <span className="text-ink-muted">· {detail}</span>
+          <span className="font-semibold">{label}</span>{" "}
+          <span className="text-ink-muted">· {detail}</span>
         </p>
         {children}
       </div>
@@ -509,7 +613,9 @@ function PassStep({ label, detail, dot, last, current, children }: {
 
 /** The pass over all 100 problems: the greedy chain's lessons, and what rationalization adds. */
 const GREEDY_RIGHT = PAGE12.problems.filter((p) => p.greedy.correct).length;
-const HINT_RESCUED = PAGE12.problems.filter((p) => !p.greedy.correct && p.hint?.correct).length;
+const HINT_RESCUED = PAGE12.problems.filter(
+  (p) => !p.greedy.correct && p.hint?.correct,
+).length;
 
 /**
  * Playback is a script of beats, each held for its own time. The first five check the
@@ -519,27 +625,62 @@ const HINT_RESCUED = PAGE12.problems.filter((p) => !p.greedy.correct && p.hint?.
  * checked the same way, or, with rationalization off, nothing more happens.
  */
 type Beat =
-  | "gen" | "mark" | "fly" | "cmp" | "back"
-  | "skip" | "off"
-  | "hint" | "hgen" | "hmark" | "hfly" | "hcmp" | "hback"
-  | "drop" | "none";
+  | "gen"
+  | "mark"
+  | "fly"
+  | "cmp"
+  | "back"
+  | "skip"
+  | "off"
+  | "hint"
+  | "hgen"
+  | "hmark"
+  | "hfly"
+  | "hcmp"
+  | "hback"
+  | "drop"
+  | "none";
 
 const BEAT_MS: Record<Beat, number> = {
-  gen: 3200, mark: 1800, fly: 1500, cmp: 2000, back: 1300,
-  skip: 1800, off: 1800,
-  hint: 2400, hgen: 3200, hmark: 1800, hfly: 1500, hcmp: 2000, hback: 1300,
-  drop: 2200, none: 1800,
+  gen: 3200,
+  mark: 1800,
+  fly: 1500,
+  cmp: 2000,
+  back: 1300,
+  skip: 1800,
+  off: 1800,
+  hint: 2400,
+  hgen: 3200,
+  hmark: 1800,
+  hfly: 1500,
+  hcmp: 2000,
+  hback: 1300,
+  drop: 2200,
+  none: 1800,
 };
 
 /** How long the key and the reasoning take to travel; each sits inside its beat's hold. */
 const FLY_MS = 1100;
 const DROP_MS = 1500;
 
-function scriptFor(greedyRight: boolean, rationalize: boolean, rescued: boolean): Beat[] {
+function scriptFor(
+  greedyRight: boolean,
+  rationalize: boolean,
+  rescued: boolean,
+): Beat[] {
   const s: Beat[] = ["gen", "mark", "fly", "cmp", "back"];
   if (greedyRight) return [...s, "skip", "drop"];
   if (!rationalize) return [...s, "off", "none"];
-  return [...s, "hint", "hgen", "hmark", "hfly", "hcmp", "hback", rescued ? "drop" : "none"];
+  return [
+    ...s,
+    "hint",
+    "hgen",
+    "hmark",
+    "hfly",
+    "hcmp",
+    "hback",
+    rescued ? "drop" : "none",
+  ];
 }
 
 type Box = { x: number; y: number; w: number; h: number };
@@ -548,7 +689,17 @@ type Box = { x: number; y: number; w: number; h: number };
  * A copy of something on the page carried from one place to another: it starts over `from`
  * and slides and scales onto `to`. The original stays put; the copy is drawn on top.
  */
-function Flyer({ from, to, ms, children }: { from: Box; to: Box; ms: number; children: React.ReactNode }) {
+function Flyer({
+  from,
+  to,
+  ms,
+  children,
+}: {
+  from: Box;
+  to: Box;
+  ms: number;
+  children: React.ReactNode;
+}) {
   const [go, setGo] = useState(false);
   useEffect(() => {
     let r2 = 0;
@@ -565,12 +716,20 @@ function Flyer({ from, to, ms, children }: { from: Box; to: Box; ms: number; chi
     <div
       aria-hidden="true"
       className="pointer-events-none absolute left-0 top-0 z-20"
-      style={{ transform: `translate(${from.x}px, ${from.y}px)`, width: from.w, height: from.h }}
+      style={{
+        transform: `translate(${from.x}px, ${from.y}px)`,
+        width: from.w,
+        height: from.h,
+      }}
     >
       {/* Solid and lifted, so it reads as carried over the page rather than seen through. */}
       <div
         className="h-full w-full rounded bg-surface shadow-lg"
-        style={{ transformOrigin: "0 0", transform: go ? move : "none", transition: `transform ${ms}ms cubic-bezier(.4,0,.2,1)` }}
+        style={{
+          transformOrigin: "0 0",
+          transform: go ? move : "none",
+          transition: `transform ${ms}ms cubic-bezier(.4,0,.2,1)`,
+        }}
       >
         {children}
       </div>
@@ -579,24 +738,44 @@ function Flyer({ from, to, ms, children }: { from: Box; to: Box; ms: number; chi
 }
 
 /** Clip text for a preview, at a word boundary. */
-const clip = (t: string, n: number) => (t.length <= n ? t : `${t.slice(0, t.lastIndexOf(" ", n) > n * 0.6 ? t.lastIndexOf(" ", n) : n)}…`);
+const clip = (t: string, n: number) =>
+  t.length <= n
+    ? t
+    : `${t.slice(0, t.lastIndexOf(" ", n) > n * 0.6 ? t.lastIndexOf(" ", n) : n)}…`;
 
 /** The answer key as a chip: at home in the pass column, or carried over to the model's answer. */
-function KeyChip({ answer, lit = false, faint = false }: { answer: string; lit?: boolean; faint?: boolean }) {
+function KeyChip({
+  answer,
+  lit = false,
+  faint = false,
+}: {
+  answer: string;
+  lit?: boolean;
+  faint?: boolean;
+}) {
   return (
     <span
       className={`inline-flex items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-sm transition-all duration-500 ${
-        lit ? "border-correct bg-correct/30 ring-4 ring-correct/30" : "border-ink-muted/40 bg-surface-raised"
+        lit
+          ? "border-correct bg-correct/30 ring-4 ring-correct/30"
+          : "border-ink-muted/40 bg-surface-raised"
       } ${faint ? "opacity-25" : ""}`}
     >
       <span className="text-[10px] text-ink-muted">key</span>
-      <span className="font-mono font-semibold text-ink">{tidyMath(answer)}</span>
+      <span className="font-mono font-semibold text-ink">
+        {tidyMath(answer)}
+      </span>
     </span>
   );
 }
 
 /** One training example, as it sits in the training set. */
-function ExampleCard({ question, reasoning, answer, hinted }: {
+function ExampleCard({
+  question,
+  reasoning,
+  answer,
+  hinted,
+}: {
   question: string;
   reasoning: string;
   answer: string;
@@ -609,11 +788,22 @@ function ExampleCard({ question, reasoning, answer, hinted }: {
       }`}
     >
       {hinted ? (
-        <p className="self-start rounded bg-compute/20 px-1 text-[10px] text-compute-ink">written with the hint; filed without it</p>
+        <p className="self-start rounded bg-compute/20 px-1 text-[10px] text-compute-ink">
+          written with the hint; filed without it
+        </p>
       ) : null}
-      <p><span className="text-ink-muted">question </span>{clip(tidyMath(question), 48)}</p>
-      <p><span className="text-ink-muted">reasoning </span>{clip(tidyMath(reasoning), 64)}</p>
-      <p><span className="text-ink-muted">answer </span>{tidyMath(answer)}</p>
+      <p>
+        <span className="text-ink-muted">question </span>
+        {clip(tidyMath(question), 48)}
+      </p>
+      <p>
+        <span className="text-ink-muted">reasoning </span>
+        {clip(tidyMath(reasoning), 64)}
+      </p>
+      <p>
+        <span className="text-ink-muted">answer </span>
+        {tidyMath(answer)}
+      </p>
     </div>
   );
 }
@@ -649,23 +839,32 @@ function StarHarvest() {
   const playing = typeof bi === "number";
   const beat: Beat | null = playing ? script[bi] : null;
   // Whether the pass has reached a beat: always once it is done, never while empty.
-  const reached = (b: Beat) => bi === "done" || (playing && script.indexOf(b) !== -1 && script.indexOf(b) <= bi);
+  const reached = (b: Beat) =>
+    bi === "done" ||
+    (playing && script.indexOf(b) !== -1 && script.indexOf(b) <= bi);
   const on = (...bs: Beat[]) => beat !== null && bs.includes(beat);
   // Whether a beat is over: always once the pass is done.
-  const past = (b: Beat) => bi === "done" || (playing && script.indexOf(b) !== -1 && script.indexOf(b) < bi);
+  const past = (b: Beat) =>
+    bi === "done" ||
+    (playing && script.indexOf(b) !== -1 && script.indexOf(b) < bi);
 
   // Keyed on the script's contents, not the array, so a re-render mid-beat does not restart the clock.
   const nBeats = script.length;
   const holdMs = playing ? BEAT_MS[script[bi]] : 0;
   useEffect(() => {
     if (typeof bi !== "number") return;
-    const t = setTimeout(() => setBi(bi + 1 >= nBeats ? "done" : bi + 1), holdMs);
+    const t = setTimeout(
+      () => setBi(bi + 1 >= nBeats ? "done" : bi + 1),
+      holdMs,
+    );
     return () => clearTimeout(t);
   }, [bi, nBeats, holdMs]);
 
   const play = () => {
     // Reduced motion: no animation; the whole pass appears at once.
-    const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     setBi(reduced ? "done" : 0);
   };
   const reset = () => setBi("empty");
@@ -676,23 +875,41 @@ function StarHarvest() {
   const keyLanding = useRef<HTMLSpanElement>(null);
   const replyBox = useRef<HTMLParagraphElement>(null);
   const trayCard = useRef<HTMLDivElement>(null);
-  const [flight, setFlight] = useState<{ id: string; kind: "key" | "card"; from: Box; to: Box; ms: number } | null>(null);
+  const [flight, setFlight] = useState<{
+    id: string;
+    kind: "key" | "card";
+    from: Box;
+    to: Box;
+    ms: number;
+  } | null>(null);
   useLayoutEffect(() => {
     const fig = figRef.current;
     const box = (el: HTMLElement | null): Box | null => {
       if (!fig || !el) return null;
       const f = fig.getBoundingClientRect();
       const r = el.getBoundingClientRect();
-      return { x: r.left - f.left, y: r.top - f.top, w: r.width || 1, h: r.height || 1 };
+      return {
+        x: r.left - f.left,
+        y: r.top - f.top,
+        w: r.width || 1,
+        h: r.height || 1,
+      };
     };
-    const home = box(keyHome.current), land = box(keyLanding.current);
+    const home = box(keyHome.current),
+      land = box(keyLanding.current);
     const id = `${at}-${String(bi)}`;
-    if (on("fly", "hfly") && home && land) setFlight({ id, kind: "key", from: home, to: land, ms: FLY_MS });
-    else if (on("cmp", "hcmp") && land) setFlight({ id, kind: "key", from: land, to: land, ms: 0 });
-    else if (on("back", "hback") && home && land) setFlight({ id, kind: "key", from: land, to: home, ms: FLY_MS });
+    if (on("fly", "hfly") && home && land)
+      setFlight({ id, kind: "key", from: home, to: land, ms: FLY_MS });
+    else if (on("cmp", "hcmp") && land)
+      setFlight({ id, kind: "key", from: land, to: land, ms: 0 });
+    else if (on("back", "hback") && home && land)
+      setFlight({ id, kind: "key", from: land, to: home, ms: FLY_MS });
     else if (on("drop")) {
-      const from = box(replyBox.current), to = box(trayCard.current);
-      setFlight(from && to ? { id, kind: "card", from, to, ms: DROP_MS } : null);
+      const from = box(replyBox.current),
+        to = box(trayCard.current);
+      setFlight(
+        from && to ? { id, kind: "card", from, to, ms: DROP_MS } : null,
+      );
     } else setFlight(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bi, at]);
@@ -710,13 +927,37 @@ function StarHarvest() {
 
   // What the chat shows: the greedy exchange until the retry starts, then the hinted one.
   const hinted = retried && reached("hint");
-  const replyText = hinted ? (reached("hgen") ? hint!.trace : null) : reached("gen") ? g.trace : null;
+  const replyText = hinted
+    ? reached("hgen")
+      ? hint!.trace
+      : null
+    : reached("gen")
+      ? g.trace
+      : null;
   const modelAnswer = hinted ? hint!.answer : g.extracted_answer;
   const matched = hinted ? hint!.correct : g.correct;
   // The check is settled once the key is home again.
   const checked = hinted ? past("hback") : past("back");
-  const keyLit = on("mark", "fly", "cmp", "back", "hmark", "hfly", "hcmp", "hback");
-  const modelLit = on("mark", "fly", "cmp", "back", "hmark", "hfly", "hcmp", "hback");
+  const keyLit = on(
+    "mark",
+    "fly",
+    "cmp",
+    "back",
+    "hmark",
+    "hfly",
+    "hcmp",
+    "hback",
+  );
+  const modelLit = on(
+    "mark",
+    "fly",
+    "cmp",
+    "back",
+    "hmark",
+    "hfly",
+    "hcmp",
+    "hback",
+  );
   const keyAway = on("fly", "cmp", "back", "hfly", "hcmp", "hback");
   const kept: { trace: string; hinted: boolean } | null = g.correct
     ? { trace: g.trace, hinted: false }
@@ -734,7 +975,10 @@ function StarHarvest() {
   const lastShown = steps.lastIndexOf(true);
 
   return (
-    <figure ref={figRef} className="relative m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-3">
+    <figure
+      ref={figRef}
+      className="relative m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-3"
+    >
       {/* The switch, and which problem is shown. */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         {hasHint ? (
@@ -749,7 +993,9 @@ function StarHarvest() {
               }}
             />
             {rationalize ? null : (
-              <span className="text-[11px] text-ink-muted">Off: STaR without rationalization, the paper&apos;s ablation.</span>
+              <span className="text-[11px] text-ink-muted">
+                Off: STaR without rationalization, the paper&apos;s ablation.
+              </span>
             )}
           </div>
         ) : null}
@@ -757,10 +1003,20 @@ function StarHarvest() {
           <span className="font-mono text-xs text-ink-muted">
             problem {at + 1} of {problems.length}
           </span>
-          <button type="button" aria-label="previous problem" onClick={() => goTo(at - 1)} className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute">
+          <button
+            type="button"
+            aria-label="previous problem"
+            onClick={() => goTo(at - 1)}
+            className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute"
+          >
             ←
           </button>
-          <button type="button" aria-label="next problem" onClick={() => goTo(at + 1)} className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute">
+          <button
+            type="button"
+            aria-label="next problem"
+            onClick={() => goTo(at + 1)}
+            className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute"
+          >
             →
           </button>
         </div>
@@ -770,20 +1026,41 @@ function StarHarvest() {
       <div className="grid gap-3 rounded-lg border border-grid bg-canvas p-3 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
         <div className="flex min-w-0 flex-col gap-3">
           <p className="text-sm font-semibold text-ink">
-            {bi === "done" ? headline : playing ? "One pass of STaR, step by step." : "Press Play to run one pass of STaR on this problem."}
+            {bi === "done"
+              ? headline
+              : playing
+                ? "One pass of STaR, step by step."
+                : "Press Play to run one pass of STaR on this problem."}
           </p>
           {/* The answer key, shown from the start: its home, where it leaves from and comes back to. */}
           <p className="flex items-center gap-2 text-sm text-ink-muted">
             The answer key for this problem:
             <span ref={keyHome}>
-              <KeyChip answer={problem.ground_truth} lit={keyLit} faint={keyAway} />
+              <KeyChip
+                answer={problem.ground_truth}
+                lit={keyLit}
+                faint={keyAway}
+              />
             </span>
           </p>
 
-          <ol className="m-0 flex list-none flex-col p-0" aria-label="STaR's pass for this problem">
+          <ol
+            className="m-0 flex list-none flex-col p-0"
+            aria-label="STaR's pass for this problem"
+          >
             {steps[0] ? (
-              <PassStep label="Generate" detail="one chain, decoded greedily" dot="neutral" last={lastShown === 0} current={on("gen")}>
-                <div className="flex gap-1" role="group" aria-label="the one chain decoded greedily for this problem">
+              <PassStep
+                label="Generate"
+                detail="one chain, decoded greedily"
+                dot="neutral"
+                last={lastShown === 0}
+                current={on("gen")}
+              >
+                <div
+                  className="flex gap-1"
+                  role="group"
+                  aria-label="the one chain decoded greedily for this problem"
+                >
                   <ChainChip
                     label="greedy"
                     answer={g.extracted_answer}
@@ -798,7 +1075,9 @@ function StarHarvest() {
               <PassStep
                 label="Filter"
                 detail="against the answer key"
-                dot={reached("back") ? (g.correct ? "kept" : "dropped") : "neutral"}
+                dot={
+                  reached("back") ? (g.correct ? "kept" : "dropped") : "neutral"
+                }
                 last={lastShown === 1}
                 current={on("mark", "fly", "cmp", "back")}
               >
@@ -817,14 +1096,38 @@ function StarHarvest() {
               <PassStep
                 label="Rationalize"
                 detail="retry with the answer as a hint"
-                dot={g.correct ? "skipped" : !retried ? "skipped" : reached("hback") ? (rescued ? "hint" : "dropped") : "neutral"}
+                dot={
+                  g.correct
+                    ? "skipped"
+                    : !retried
+                      ? "skipped"
+                      : reached("hback")
+                        ? rescued
+                          ? "hint"
+                          : "dropped"
+                        : "neutral"
+                }
                 last={lastShown === 2}
-                current={on("skip", "off", "hint", "hgen", "hmark", "hfly", "hcmp", "hback")}
+                current={on(
+                  "skip",
+                  "off",
+                  "hint",
+                  "hgen",
+                  "hmark",
+                  "hfly",
+                  "hcmp",
+                  "hback",
+                )}
               >
                 {g.correct ? (
-                  <p className="text-sm text-ink-muted">Skipped: no hint needed, so the chain goes straight to the training set.</p>
+                  <p className="text-sm text-ink-muted">
+                    Skipped: no hint needed, so the chain goes straight to the
+                    training set.
+                  </p>
                 ) : !retried ? (
-                  <p className="text-sm text-ink-muted">Off: the miss is not retried.</p>
+                  <p className="text-sm text-ink-muted">
+                    Off: the miss is not retried.
+                  </p>
                 ) : (
                   <div className="flex items-center gap-2">
                     {reached("hgen") ? (
@@ -855,17 +1158,31 @@ function StarHarvest() {
                 last
                 current={on("drop", "none")}
               >
-                <div className="flex flex-col gap-1.5 rounded-lg border-2 border-dashed border-grid bg-surface p-2" aria-label="the training set">
+                <div
+                  className="flex flex-col gap-1.5 rounded-lg border-2 border-dashed border-grid bg-surface p-2"
+                  aria-label="the training set"
+                >
                   <p className="text-sm text-ink">
-                    <strong>Selected by the answer. Trained on the reasoning.</strong>{" "}
-                    {kept === null ? <span className="text-ink-muted">Nothing from this problem.</span> : null}
+                    <strong>
+                      Selected by the answer. Trained on the reasoning.
+                    </strong>{" "}
+                    {kept === null ? (
+                      <span className="text-ink-muted">
+                        Nothing from this problem.
+                      </span>
+                    ) : null}
                   </p>
                   {kept === null ? null : (
                     <div
                       ref={trayCard}
                       className={`motion-safe:transition-opacity motion-safe:duration-300 ${cardIn ? "opacity-100" : "opacity-0"}`}
                     >
-                      <ExampleCard question={problem.question} reasoning={kept.trace} answer={problem.ground_truth} hinted={kept.hinted} />
+                      <ExampleCard
+                        question={problem.question}
+                        reasoning={kept.trace}
+                        answer={problem.ground_truth}
+                        hinted={kept.hinted}
+                      />
                     </div>
                   )}
                 </div>
@@ -877,7 +1194,10 @@ function StarHarvest() {
         {/* The chat: the question (and, on the retry, the hint), the reasoning, and the model's answer. */}
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-sm font-semibold text-ink">
-            {problem.subject} <span className="font-normal text-ink-muted">· level {problem.level}</span>
+            {problem.subject}{" "}
+            <span className="font-normal text-ink-muted">
+              · level {problem.level}
+            </span>
           </p>
           <Step>
             {!hinted
@@ -902,10 +1222,13 @@ function StarHarvest() {
                 {hinted ? (
                   <mark
                     className={`rounded px-1 text-right font-code text-sm text-ink transition-all duration-500 ${
-                      on("hint") ? "scale-105 bg-compute/50 ring-4 ring-compute/40" : "bg-compute/25"
+                      on("hint")
+                        ? "scale-105 bg-compute/50 ring-4 ring-compute/40"
+                        : "bg-compute/25"
                     }`}
                   >
-                    (Hint: the correct answer is {tidyMath(problem.ground_truth)}.)
+                    (Hint: the correct answer is{" "}
+                    {tidyMath(problem.ground_truth)}.)
                   </mark>
                 ) : null}
               </div>
@@ -916,8 +1239,15 @@ function StarHarvest() {
               <div className="flex min-w-0 flex-col gap-2">
                 {replyText === null ? (
                   <p className="flex items-center gap-2 text-sm text-ink-muted">
-                    <span aria-hidden="true" className="animate-pulse text-compute-ink">▍</span>
-                    {bi === "empty" ? "press Play to see its reply" : "the model tries again, told the answer"}
+                    <span
+                      aria-hidden="true"
+                      className="animate-pulse text-compute-ink"
+                    >
+                      ▍
+                    </span>
+                    {bi === "empty"
+                      ? "press Play to see its reply"
+                      : "the model tries again, told the answer"}
                   </p>
                 ) : (
                   <>
@@ -930,24 +1260,47 @@ function StarHarvest() {
                       {tidyMath(replyText)}
                     </p>
                     {/* The model's answer, and the place the key lands beside it. */}
-                    <div className="flex flex-nowrap items-center gap-1.5 text-sm" role="group" aria-label={`the model answered ${tidyMath(modelAnswer || "nothing")}`}>
+                    <div
+                      className="flex flex-nowrap items-center gap-1.5 text-sm"
+                      role="group"
+                      aria-label={`the model answered ${tidyMath(modelAnswer || "nothing")}`}
+                    >
                       <span
                         className={`inline-flex items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 transition-all duration-500 ${
-                          modelLit ? "border-compute bg-compute/30 ring-4 ring-compute/30" : "border-ink-muted/40 bg-surface-raised"
+                          modelLit
+                            ? "border-compute bg-compute/30 ring-4 ring-compute/30"
+                            : "border-ink-muted/40 bg-surface-raised"
                         }`}
                       >
-                        <span className="text-[10px] text-ink-muted">model</span>
-                        <span className="font-mono font-semibold text-ink">{tidyMath(modelAnswer || "none")}</span>
+                        <span className="text-[10px] text-ink-muted">
+                          model
+                        </span>
+                        <span className="font-mono font-semibold text-ink">
+                          {tidyMath(modelAnswer || "none")}
+                        </span>
                       </span>
                       <span
                         className={`font-mono font-bold transition-opacity duration-300 ${matched ? "text-correct-ink" : "text-wrong-ink"} ${
-                          on("cmp", "hcmp", "back", "hback") ? "text-xl opacity-100" : checked ? "text-sm opacity-100" : "opacity-0"
+                          on("cmp", "hcmp", "back", "hback")
+                            ? "text-xl opacity-100"
+                            : checked
+                              ? "text-sm opacity-100"
+                              : "opacity-0"
                         }`}
                       >
-                        {!checked ? (matched ? "==" : "!=") : matched ? "== the key ✓" : "!= the key ✗"}
+                        {!checked
+                          ? matched
+                            ? "=="
+                            : "!="
+                          : matched
+                            ? "== the key ✓"
+                            : "!= the key ✗"}
                       </span>
                       {/* Where the key lands; the key itself is the copy in flight, so this stays invisible. */}
-                      <span ref={keyLanding} className={`invisible ${checked ? "absolute" : ""}`}>
+                      <span
+                        ref={keyLanding}
+                        className={`invisible ${checked ? "absolute" : ""}`}
+                      >
                         <KeyChip answer={problem.ground_truth} />
                       </span>
                     </div>
@@ -965,7 +1318,12 @@ function StarHarvest() {
           {flight.kind === "key" ? (
             <KeyChip answer={problem.ground_truth} lit />
           ) : kept ? (
-            <ExampleCard question={problem.question} reasoning={kept.trace} answer={problem.ground_truth} hinted={kept.hinted} />
+            <ExampleCard
+              question={problem.question}
+              reasoning={kept.trace}
+              answer={problem.ground_truth}
+              hinted={kept.hinted}
+            />
           ) : null}
         </Flyer>
       ) : null}
@@ -993,7 +1351,8 @@ function StarHarvest() {
       {/* The same pass over every problem. */}
       <div className="flex flex-col gap-1">
         <p className="text-xs text-ink-muted">
-          Run the same pass on all {n} problems. How many put reasoning into the training set?
+          Run the same pass on all {n} problems. How many put reasoning into the
+          training set?
         </p>
         <div
           role="img"
@@ -1001,24 +1360,54 @@ function StarHarvest() {
           className="flex flex-col gap-0.5"
         >
           <div className="flex h-4 w-full overflow-hidden rounded-sm bg-surface-raised">
-            <span className="h-full bg-correct transition-[width]" style={{ width: pct(GREEDY_RIGHT) }} />
-            <span className="h-full bg-compute transition-[width]" style={{ width: pct(rationalize ? HINT_RESCUED : 0) }} />
+            <span
+              className="h-full bg-correct transition-[width]"
+              style={{ width: pct(GREEDY_RIGHT) }}
+            />
+            <span
+              className="h-full bg-compute transition-[width]"
+              style={{ width: pct(rationalize ? HINT_RESCUED : 0) }}
+            />
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-[11px] tabular-nums text-ink-muted">
-            <span className="text-ink">{inSet} of {n} problems, none with a wrong answer</span>
-            <span className="flex items-center gap-1"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm bg-correct" /> {GREEDY_RIGHT} greedy chain right</span>
-            {rationalize ? <span className="flex items-center gap-1"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm bg-compute" /> {HINT_RESCUED} rescued by the hint</span> : null}
-            <span className="flex items-center gap-1"><span aria-hidden="true" className="inline-block h-2.5 w-2.5 rounded-sm bg-surface-raised" /> nothing kept</span>
+            <span className="text-ink">
+              {inSet} of {n} problems, none with a wrong answer
+            </span>
+            <span className="flex items-center gap-1">
+              <span
+                aria-hidden="true"
+                className="inline-block h-2.5 w-2.5 rounded-sm bg-correct"
+              />{" "}
+              {GREEDY_RIGHT} greedy chain right
+            </span>
+            {rationalize ? (
+              <span className="flex items-center gap-1">
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-2.5 w-2.5 rounded-sm bg-compute"
+                />{" "}
+                {HINT_RESCUED} rescued by the hint
+              </span>
+            ) : null}
+            <span className="flex items-center gap-1">
+              <span
+                aria-hidden="true"
+                className="inline-block h-2.5 w-2.5 rounded-sm bg-surface-raised"
+              />{" "}
+              nothing kept
+            </span>
           </div>
         </div>
       </div>
 
       <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-        This is the data one round of STaR would fine-tune on; nothing here is trained. Sampling{" "}
-        {PAGE12.n_chains} chains per problem instead of one greedy chain, the RFT variant,
-        <Cite n={REF.rft} /> reaches {PAGE12.curves.key[PAGE12.n_chains - 1].problems_with_lesson} problems
-        without a hint, but more samples also reach more right answers through wrong reasoning, which
-        is why STaR decodes greedily.
+        This is the data one round of STaR would fine-tune on; nothing here is
+        trained. Sampling {PAGE12.n_chains} chains per problem instead of one
+        greedy chain, the RFT variant,
+        <Cite n={REF.rft} /> reaches{" "}
+        {PAGE12.curves.key[PAGE12.n_chains - 1].problems_with_lesson} problems
+        without a hint, but more samples also reach more right answers through
+        wrong reasoning, which is why STaR decodes greedily.
         <Cite n={REF.star} />
       </figcaption>
     </figure>
@@ -1027,15 +1416,17 @@ function StarHarvest() {
 
 /** Small eyebrow over each exchange. */
 function Step({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{children}</p>;
+  return (
+    <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+      {children}
+    </p>
+  );
 }
-
 
 export function Page12() {
   const page = getPage(PAGE_N)!;
   const paper = curves.starCqa;
   const p = paper.fit!.params;
-
 
   return (
     <article className="flex flex-col gap-6">
@@ -1049,9 +1440,11 @@ export function Page12() {
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        A model writes its own reasoning, an answer key discards what&apos;s wrong, and the
-        survivors become its next training set.{" "}
-        <strong className="text-ink">What happens when you take the answer key away?</strong>
+        A model writes its own reasoning, an answer key discards what&apos;s
+        wrong, and the survivors become its next training set.{" "}
+        <strong className="text-ink">
+          What happens when you take the answer key away?
+        </strong>
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -1060,14 +1453,16 @@ export function Page12() {
           <h2 className="text-xl font-semibold text-ink">1. Run the loop</h2>
 
           <p className="text-ink">
-            <strong className="text-ink">The algorithm, explained.</strong> Start with a
-            pretrained model and a stack of problems whose correct answers you know. There are no
-            worked solutions, only the answers. For each problem, the model writes out its
-            reasoning and ends with an answer. If that answer matches the key, the reasoning is
-            kept. If it misses, the model gets one more try with the correct answer shown as a
-            hint; if it now reasons its way there, the reasoning is kept and the hint is deleted
-            from the record. Finally, the <em>original</em> pretrained model is fine-tuned on
-            everything kept, and the loop starts over with a slightly better model writing the
+            <strong className="text-ink">The algorithm, explained.</strong>{" "}
+            Start with a pretrained model and a stack of problems whose correct
+            answers you know. There are no worked solutions, only the answers.
+            For each problem, the model writes out its reasoning and ends with
+            an answer. If that answer matches the key, the reasoning is kept. If
+            it misses, the model gets one more try with the correct answer shown
+            as a hint; if it now reasons its way there, the reasoning is kept
+            and the hint is deleted from the record. Finally, the{" "}
+            <em>original</em> pretrained model is fine-tuned on everything kept,
+            and the loop starts over with a slightly better model writing the
             next round of reasoning.
           </p>
 
@@ -1077,17 +1472,21 @@ export function Page12() {
 
             <p className="text-ink">
               This is <strong>STaR</strong>&apos;s loop.
-              <Cite n={REF.star} /> It still needs a dataset, questions <em>with correct
-              answers</em>, but nobody has to write the reasoning; the model authors that itself.
-              Everything rests on the answer key: the correctness check that decides which rationales
-              are allowed to train, and the external signal deciding what the model may study.
+              <Cite n={REF.star} /> It still needs a dataset, questions{" "}
+              <em>with correct answers</em>, but nobody has to write the
+              reasoning; the model authors that itself. Everything rests on the
+              answer key: the correctness check that decides which rationales
+              are allowed to train, and the external signal deciding what the
+              model may study.
             </p>
           </div>
 
           {/* the loop written down — merged in from the former section 2 */}
           <h3 className="mt-2 text-lg font-semibold text-ink">Algorithm</h3>
 
-          <p className="text-ink">The same loop from section 1, in ten lines.</p>
+          <p className="text-ink">
+            The same loop from section 1, in ten lines.
+          </p>
 
           <figure
             className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
@@ -1095,16 +1494,23 @@ export function Page12() {
           >
             <div className="flex flex-col">
               {CODE_LINES.map((l, i) => (
-                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} />
+                <CodeLine
+                  key={i}
+                  n={i + 1}
+                  indent={l.indent}
+                  code={l.code}
+                  note={l.note}
+                />
               ))}
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
               The ten lines above are STaR&apos;s Algorithm 1, condensed.
-              <Cite n={REF.star} /> Line 2&apos;s loop is not just similar to reinforcement learning:
-              it is the same procedure, <em>expert iteration</em>, from five years before LLM
-              reasoning.
-              <Cite n={REF.exit} /> Line 5 makes one attempt per problem; the <em>RFT</em> variant
-              samples several instead and keeps the ones that reach the right answer.
+              <Cite n={REF.star} /> Line 2&apos;s loop is not just similar to
+              reinforcement learning: it is the same procedure,{" "}
+              <em>expert iteration</em>, from five years before LLM reasoning.
+              <Cite n={REF.exit} /> Line 5 makes one attempt per problem; the{" "}
+              <em>RFT</em> variant samples several instead and keeps the ones
+              that reach the right answer.
               <Cite n={REF.rft} />
             </figcaption>
           </figure>
@@ -1114,16 +1520,22 @@ export function Page12() {
         <div className="flex flex-col gap-6 lg:gap-0">
           <Note kicker="References">
             <RefItem n={REF.star} href="https://arxiv.org/abs/2203.14465">
-              Zelikman et al. 2022, <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
+              Zelikman et al. 2022,{" "}
+              <em>STaR: Bootstrapping Reasoning With Reasoning</em>, NeurIPS
               2022.
             </RefItem>
             <RefItem n={REF.exit} href="https://arxiv.org/abs/1705.08439">
-              Anthony, Tian &amp; Barber 2017, <em>Thinking Fast and Slow with Deep Learning and
-              Tree Search</em>, NeurIPS 2017.
+              Anthony, Tian &amp; Barber 2017,{" "}
+              <em>Thinking Fast and Slow with Deep Learning and Tree Search</em>
+              , NeurIPS 2017.
             </RefItem>
             <RefItem n={REF.rft} href="https://arxiv.org/abs/2308.01825">
-              Yuan et al. 2023, <em>Scaling Relationship on Learning Mathematical Reasoning with
-              Large Language Models</em>.
+              Yuan et al. 2023,{" "}
+              <em>
+                Scaling Relationship on Learning Mathematical Reasoning with
+                Large Language Models
+              </em>
+              .
             </RefItem>
           </Note>
         </div>
@@ -1134,60 +1546,60 @@ export function Page12() {
             <h2 className="text-xl font-semibold text-ink">
               2. Which reasoning goes into the training set?
               <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                measured · {modelLabel} · {PAGE12.manifest.n_items} MATH-500 problems
+                measured · {modelLabel} · {PAGE12.manifest.n_items} MATH-500
+                problems
               </span>
             </h2>
             <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
           </div>
           <p className="text-ink">
-            To understand how reasoning is selected for the training set, let&apos;s look at how STaR could
-            work with {modelLabel} on {walked.length} problems pulled from the MATH-500 dataset, below. We
-            won&apos;t be showing the training itself; rather, we will focus on how the reasoning is
-            selected for training in the first place.
+            To understand how reasoning is selected for the training set,
+            let&apos;s look at how STaR could work with {modelLabel} on{" "}
+            {walked.length} problems pulled from the MATH-500 dataset, below. We
+            won&apos;t be showing the training itself; rather, we will focus on
+            how the reasoning is selected for training in the first place.
           </p>
           <p className="text-ink">
-            Press <strong className="text-ink">Play</strong> to watch one pass of STaR, use the arrows to
-            flip through all {walked.length} problems, and press <strong className="text-ink">Reset</strong>{" "}
-            to run a problem again. Notice that when the model&apos;s answer does not match the answer key,
-            the model still gets another chance, through{" "}
-            <strong className="text-ink">rationalization</strong>. The model is re-prompted with the answer
-            as a hint, and as long as it produces reasoning that leads to the correct answer, that
-            reasoning trace is still stored. Turn rationalization off and play the last three problems
-            again: the model gets no second chances.
+            Notice that when the model&apos;s answer does not match the answer
+            key, the model still gets another chance, through{" "}
+            <strong className="text-ink">rationalization</strong>. The model is
+            re-prompted with the answer as a hint, and as long as it produces
+            reasoning that leads to the correct answer, that reasoning trace is
+            still stored. When rationalization is off, the model gets no second
+            chances.
           </p>
           <StarHarvest />
           {PAGE12.hint ? (
             <p className="text-ink">
-              <strong className="text-ink">Why keep reasoning that was given the answer?</strong> It might
-              look like cheating, but the answer was never what we wanted the model to learn; the answer key
-              already has it. What we want is the reasoning that gets there. When the model reaches the
-              correct answer with the help of a hint, that reasoning is still useful training data, and the
-              hint is removed before it is stored. There is a catch. The answer key only checks the final
-              answer, not the steps in between. Of the {PAGE12.hint.recovered.length} problems
-              rationalization recovered here, {PAGE12.hint.mentions_hint.length} of the reasoning traces
-              refer to the hint directly, and STaR keeps those too. In the original paper, rationalization
-              raised GPT-J&apos;s accuracy on CommonsenseQA from {p.starNoRationalization}% to {p.star}%.
+              <strong className="text-ink">
+                Why keep reasoning that was given the answer?
+              </strong>{" "}
+              The reasoning is what we want the model to learn, and the hint is
+              removed before the trace is stored. In the STaR paper,
+              rationalization raised accuracy on CommonsenseQA from{" "}
+              {p.starNoRationalization}% to {p.star}%.
               <Cite n={REF.star} />
             </p>
           ) : null}
           <p className="text-ink">
-            <strong className="text-ink">Training data without a human in the loop.</strong> Nobody wrote a
-            worked solution for any of these problems. Every reasoning trace in the training set was written
-            by the model and checked only against the final answer. One greedy pass gave{" "}
-            {PAGE12.greedy_lessons} of the {PAGE12.manifest.n_items} problems reasoning for the training set
-            {PAGE12.hint ? <>, and rationalization added {PAGE12.hint.recovered.length} more</> : null}, with
-            no wrong answers among them. The answer key also catches what voting misses: on page 7, majority
-            voting over {PAGE12.n_chains} chains got {PAGE12.vote_missed.length} problems wrong even though at
-            least one chain had found the right answer, and any of those chains could be kept here. We
-            don&apos;t train on this set, so we can&apos;t show how much it would improve Qwen. In the STaR
-            paper, repeating this loop took GPT-J from {p.fewShotCot}% with few-shot chain of thought to{" "}
-            {p.star}% on CommonsenseQA.
-            <Cite n={REF.star} />
+            <strong className="text-ink">No human in the loop.</strong> Every
+            trace in the training set was written by the model and checked only
+            against the answer key: {PAGE12.greedy_lessons} from one greedy pass
+            {PAGE12.hint ? (
+              <>, {PAGE12.hint.recovered.length} more from rationalization</>
+            ) : null}
+            .
           </p>
         </section>
 
         {/* Beside the chart, and kept beside it as the reader scrolls through it. */}
-        <div className="lg:sticky lg:top-24 lg:self-start">
+        <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+          <Note kicker="Try it">
+            <p>
+              Press Play, then flip through the problems. Turn rationalization
+              off and play the last three again.
+            </p>
+          </Note>
           <Note kicker="Rationalization">
             <p>A missed problem is retried once with the answer as a hint.</p>
           </Note>
@@ -1197,47 +1609,63 @@ export function Page12() {
             over both the listing and the results above them. */}
         <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <p className="text-ink">
-            <strong className="text-ink">Trained on reasoning, graded on answers.</strong> The
-            rationale enters the weights, but only the answer key decides whether it gets there, so
-            a flawed argument that lands correctly isn&apos;t just kept, it&apos;s imitated.
-            <Cite n={REF.star} /> That is not hypothetical: models often follow a wrong reasoning
-            path to the right answer.
-            <Cite n={REF.gvm} /> Page 9&apos;s outcome-versus-process trade, now deciding what the
-            model becomes.
+            <strong className="text-ink">
+              Trained on reasoning, graded on answers.
+            </strong>{" "}
+            The answer key checks only the final answer, so a flawed argument
+            that lands correctly is kept and imitated. Models often follow a
+            wrong reasoning path to the right answer.
+            <Cite n={REF.gvm} />
+            {PAGE12.hint ? (
+              <>
+                {" "}
+                Here, {PAGE12.hint.mentions_hint.length} of the{" "}
+                {PAGE12.hint.recovered.length} rescued traces refer to the hint
+                directly.
+              </>
+            ) : null}
           </p>
 
           <Handoff>
             <p>
-              <strong className="text-ink">There are now two ways to buy reasoning:</strong> spend
-              the compute when the question arrives, or spend it long before, building the reasoning
-              into the model.
+              <strong className="text-ink">
+                There are now two ways to buy reasoning:
+              </strong>{" "}
+              spend the compute when the question arrives, or spend it long
+              before, building the reasoning into the model.
             </p>
             <ul className="list-disc space-y-1.5 pl-5 marker:text-ink-muted">
               <li>
-                <strong className="text-ink">Spend at answer time.</strong> All of Act 2 spends the
-                compute after the question lands (show the road, cap the tokens, sample and vote,
-                score and re-rank, search the tree) and page 11 priced that shelf against
-                parameters.
+                <strong className="text-ink">Spend at answer time.</strong> All
+                of Act 2 spends the compute after the question lands (show the
+                road, cap the tokens, sample and vote, score and re-rank, search
+                the tree) and page 11 priced that shelf against parameters.
               </li>
               <li>
-                <strong className="text-ink">Spend at training time.</strong> This page is the other
-                way: it spends long before the question exists, the first knob that lifts the curve
-                without buying a single parameter.
+                <strong className="text-ink">Spend at training time.</strong>{" "}
+                This page is the other way: it spends long before the question
+                exists, the first knob that lifts the curve without buying a
+                single parameter.
               </li>
             </ul>
             <p>
-              o1 and R1 keep this loop&apos;s shape and drop the disguise, so the filter becomes an
-              explicit RL reward on checkable tasks and the model&apos;s own sampling becomes the
-              training set. Next comes the frontier, where one lab turns both kinds of spending at
-              once and bills you for each. <em>Page 13 picks it up from there.</em>
+              o1 and R1 keep this loop&apos;s shape and drop the disguise, so
+              the filter becomes an explicit RL reward on checkable tasks and
+              the model&apos;s own sampling becomes the training set. Next comes
+              the frontier, where one lab turns both kinds of spending at once
+              and bills you for each. <em>Page 13 picks it up from there.</em>
             </p>
           </Handoff>
         </div>
 
         <Note kicker="References">
           <RefItem n={REF.gvm} href="https://arxiv.org/abs/2505.02391">
-            Yao et al. 2025, <em>Optimizing Chain-of-Thought Reasoners via Gradient Variance
-            Minimization in Rejection Sampling and RL</em>.
+            Yao et al. 2025,{" "}
+            <em>
+              Optimizing Chain-of-Thought Reasoners via Gradient Variance
+              Minimization in Rejection Sampling and RL
+            </em>
+            .
           </RefItem>
         </Note>
       </div>
