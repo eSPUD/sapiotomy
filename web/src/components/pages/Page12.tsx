@@ -1146,12 +1146,14 @@ export function Page12() {
             selected for training in the first place.
           </p>
           <p className="text-ink">
-            Flip through each of the {walked.length} problems. Notice that when the model&apos;s answer does
-            not match the answer key, the model still gets another chance, through{" "}
+            Press <strong className="text-ink">Play</strong> to watch one pass of STaR, use the arrows to
+            flip through all {walked.length} problems, and press <strong className="text-ink">Reset</strong>{" "}
+            to run a problem again. Notice that when the model&apos;s answer does not match the answer key,
+            the model still gets another chance, through{" "}
             <strong className="text-ink">rationalization</strong>. The model is re-prompted with the answer
             as a hint, and as long as it produces reasoning that leads to the correct answer, that
-            reasoning trace is still stored. When you turn rationalization off, the model gets no second
-            chances.
+            reasoning trace is still stored. Turn rationalization off and play the last three problems
+            again: the model gets no second chances.
           </p>
           <StarHarvest />
           {PAGE12.hint ? (
