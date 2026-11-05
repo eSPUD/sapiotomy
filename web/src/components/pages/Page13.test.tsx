@@ -323,8 +323,8 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       expect(screen.getByText("R1-Zero, one model read two ways")).toBeInTheDocument();
       expect(screen.getByText("no learned chain")).toBeInTheDocument();
       expect(screen.getByText(/one instant answer from a strong LLM \(GPT-4o\)/)).toBeInTheDocument();
-      expect(screen.getAllByText("page 7's voting")).toHaveLength(2);
-      expect(screen.getByText("page 8's re-ranker")).toBeInTheDocument();
+      expect(screen.getAllByText("majority vote")).toHaveLength(2);
+      expect(screen.getByText("learned re-ranker")).toBeInTheDocument();
       expect(screen.queryByText("+8.9")).not.toBeInTheDocument();
       expect(screen.queryByText("+9.7")).not.toBeInTheDocument();
       const figure = screen.getByRole("img", { name: /every bar drawn from a common zero/ });
@@ -374,7 +374,7 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       expect(screen.getByText(/The curve-lifting knob got cheap/)).toBeInTheDocument();
       expect(screen.getByText(/someone still paid for\s+the RL once/)).toBeInTheDocument();
       expect(screen.getByText(/a lifted curve fits in weights you can download/)).toBeInTheDocument();
-      expect(screen.getByText(/no RL and no reward, which is page\s+12's recipe/)).toBeInTheDocument();
+      expect(screen.getByText(/no RL and no reward, which is STaR's\s+recipe/)).toBeInTheDocument();
       expect(screen.getByText(/One good reasoner now writes the\s+curriculum for everyone else/)).toBeInTheDocument();
     });
 

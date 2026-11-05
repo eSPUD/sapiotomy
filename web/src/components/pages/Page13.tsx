@@ -1038,15 +1038,15 @@ export function Page13() {
       heading: "o1, one model read three ways",
       readings: [
         { label: "one chain", note: "the private chain answers once, scored pass@1", value: P.o1Pass1, tone: "bg-compute" },
-        { label: "page 7's voting", note: "the majority answer across 64 of those chains", value: P.o1Cons64, tone: "bg-compute" },
-        { label: "page 8's re-ranker", note: "a learned judge picks one of 1000 of those chains", value: P.o1Rerank1000, tone: "bg-correct" },
+        { label: "majority vote", note: "the majority answer across 64 of those chains", value: P.o1Cons64, tone: "bg-compute" },
+        { label: "learned re-ranker", note: "a learned judge picks one of 1000 of those chains", value: P.o1Rerank1000, tone: "bg-correct" },
       ],
     },
     {
       heading: "R1-Zero, one model read two ways",
       readings: [
         { label: "one chain", note: "its readable chain answers once, scored pass@1", value: T.passAt1, tone: "bg-compute" },
-        { label: "page 7's voting", note: "the majority answer across 64 of those chains", value: T.cons64, tone: "bg-compute" },
+        { label: "majority vote", note: "the majority answer across 64 of those chains", value: T.cons64, tone: "bg-compute" },
       ],
     },
   ];
@@ -1197,7 +1197,7 @@ export function Page13() {
           </h2>
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              Page 11&apos;s law: <em>model size picks your curve; test-time compute slides you
+              The test-time compute scaling law: <em>model size picks your curve; test-time compute slides you
               along it.</em> Learned reasoning swaps the curve-picker:{" "}
               <strong className="text-ink">RL training picks your curve now</strong>. Here is the
               loop above, run once on R1-Zero:
@@ -1439,7 +1439,7 @@ export function Page13() {
             <div
               className="flex flex-col gap-2"
               role="img"
-              aria-label={`AIME 2024 readings, every bar drawn from a common zero. A strong LLM with no learned chain, GPT-4o, scores ${P.gpt4oAime} percent. o1 is read three ways: ${P.o1Pass1} percent with its private chain answering once, ${P.o1Cons64} percent taking the majority across 64 of those chains with page 7's voting, and ${P.o1Rerank1000} percent when page 8's learned judge picks one of 1000 of those chains. R1-Zero is read two ways: ${T.passAt1.toFixed(1)} percent with one chain, ${T.cons64} percent with the majority across 64. Within each model the readings are alternatives, so no bar starts where another one ends.`}
+              aria-label={`AIME 2024 readings, every bar drawn from a common zero. A strong LLM with no learned chain, GPT-4o, scores ${P.gpt4oAime} percent. o1 is read three ways: ${P.o1Pass1} percent with its private chain answering once, ${P.o1Cons64} percent taking the majority across 64 of those chains by majority vote, and ${P.o1Rerank1000} percent when a learned re-ranker picks one of 1000 of those chains. R1-Zero is read two ways: ${T.passAt1.toFixed(1)} percent with one chain, ${T.cons64} percent with the majority across 64. Within each model the readings are alternatives, so no bar starts where another one ends.`}
             >
               <Reading
                 label="no learned chain"
@@ -1527,8 +1527,8 @@ export function Page13() {
                 <Key shape="dash" className="border-ink-muted" label="closed model (size undisclosed)" />
               </div>
               <figcaption className="text-xs text-ink-muted">
-                plain supervised fine-tuning on the traces, no RL and no reward, which is page
-                12&apos;s recipe with a far stronger teacher · the released R1 adds a small cold
+                plain supervised fine-tuning on the traces, no RL and no reward, which is STaR&apos;s
+                recipe with a far stronger teacher · the released R1 adds a small cold
                 start of curated traces before its own RL, and scores {D.r1Aime}% here · rows are
                 ordered by size, smallest at the top; the teacher&apos;s {D.teacherParamsB}B is a
                 mixture-of-experts total that activates ~{D.teacherActiveB}B per token · GPT-4o
@@ -1570,8 +1570,8 @@ export function Page13() {
 
             <p className="text-sm text-ink-muted">
               Where a dot lands right of a dashed rule, a model you can download beats a closed
-              frontier product by thinking longer at answer time. And page 3 said the stock of
-              human text was finite: these traces were not in it. One good reasoner now writes the
+              frontier product by thinking longer at answer time. And the stock of human-written
+              text is limited: these traces were never in it. One good reasoner now writes the
               curriculum for everyone else.
             </p>
 
