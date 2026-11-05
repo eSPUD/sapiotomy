@@ -1589,7 +1589,7 @@ export function Page13() {
         </section>
       </div>
 
-      {/* PROTOTYPES (2026-11-04): four loop animations under review. Delete this line to revert. */}
+      {/* PROTOTYPES (2026-11-04): five loop animations under review. Delete this line to revert. */}
       <LoopPrototypes />
 
       <PageNav n={PAGE_N} />

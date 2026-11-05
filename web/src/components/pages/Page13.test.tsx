@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { curves } from "@/lib/curves";
 import { Page13 } from "./Page13";
 
@@ -149,7 +149,9 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       setLuck(3);
       expect(screen.getByText(/teaches it nothing/)).toBeInTheDocument();
       expect(screen.getByText(/group mean · 1\.00/)).toBeInTheDocument();
-      expect(screen.queryByText(/[+−]0\.\d\d/)).not.toBeInTheDocument();
+      // Scoped to this chart: the loop prototypes further down draw push labels of their own.
+      const chart = screen.getByRole("img", { name: /Line 2 of the recipe, drawn/ });
+      expect(within(chart).queryByText(/[+−]0\.\d\d/)).not.toBeInTheDocument();
     });
   });
 

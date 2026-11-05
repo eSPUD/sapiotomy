@@ -20,6 +20,13 @@
  *                         problem (Qwen2.5-3B, T 0.3), where 1 chain is right
  *                         and the vote picks 40. Pushes are computed from those
  *                         rewards, not authored.
+ *   E. LoopStepped        A's fan, panel and return wire on D's measured
+ *                         groups, one beat per click (or play): every problem
+ *                         page 7 bundles, in its order, none picked here. The
+ *                         push is reward minus the group mean, the same rule
+ *                         as section 1's luck dial (D also divides by the
+ *                         group's spread). The model shows no percentage:
+ *                         nothing here measures one update.
  *
  * Every number here is authored for illustration (lap counts, ring shares,
  * curve weights). C's ~1k and ~9k token endpoints are R1-Zero's reported
@@ -1000,6 +1007,510 @@ function LoopSlides() {
 }
 
 /* ---------------------------------------------------------------------------
+ * E: A's fan on D's measured groups, stepped by the reader
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Every problem page 7 bundles, in its order, so the opening group is page 7's
+ * own specimen rather than one picked here (no pinned specimens). One rule
+ * drops a problem: a chain whose answer reads the same as the key once both are
+ * tidied but is labelled wrong is a grading error in the run, and the figure
+ * would draw a false 0. On the shipped run that drops
+ * test/precalculus/398.json (three chains write the key's matrix with \frac,
+ * the key writes it with a slash, all three marked wrong).
+ */
+const sameAnswer = (a: string, b: string) =>
+  tidyMath(a).replace(/\s+/g, "") === tidyMath(b).replace(/\s+/g, "");
+const E_PROBLEMS = PAGE7.figure1.problems
+  .filter(
+    (p) =>
+      !p.chains.some((c) => !c.correct && sameAnswer(c.extracted_answer, p.ground_truth)),
+  )
+  .map((p) => {
+    const chains = [...p.chains].sort((a, b) => a.sample_index - b.sample_index);
+    const rewards: number[] = chains.map((c) => (c.correct ? 1 : 0));
+    const n = rewards.length;
+    const k = rewards.reduce((a, b) => a + b, 0);
+    return {
+      id: p.problem_id,
+      question: tidyMath(p.question),
+      key: tidyMath(p.ground_truth),
+      answers: chains.map((c) => tidyMath(c.extracted_answer || "none")),
+      rewards,
+      n,
+      k,
+      /** The push is reward minus the group's average: the luck dial's rule. */
+      mean: k / n,
+      distinct: p.distinct_answers,
+      plurality: p.tie ? null : p.plurality_answer,
+      pluralityRight: p.plurality_correct,
+      topVotes: p.ranked[0]?.votes ?? 0,
+    };
+  });
+
+/** How long each beat's own change takes to play, ms. */
+const E_DUR = [1300, 1000, 1500, 1500];
+/**
+ * How long play mode holds a finished beat before moving on: long enough to
+ * read the beat's two lines (about 220 ms a word) and look at the figure.
+ */
+const eHold = (text: string) =>
+  Math.max(4000, 2000 + 220 * text.split(/\s+/).filter(Boolean).length);
+
+const E_BEATS = ["Generate", "Reward", "Reinforce", "Repeat"] as const;
+
+const E_MODEL: [number, number] = [56, 140];
+const E_R = 24;
+const E_FAN_X = 290;
+const E_PANEL = { x0: 500, x1: 690, y1: 62, y0: 214 };
+const eLane = (r: number) => lerp(E_PANEL.y0, E_PANEL.y1, r);
+const E_RET = {
+  p0: [595, 230],
+  p1: [565, 290],
+  p2: [70, 290],
+  p3: [E_MODEL[0], E_MODEL[1] + E_R + 6],
+} as const;
+const eRetAt = (u: number): [number, number] => {
+  const v = 1 - u;
+  const a = v * v * v,
+    b = 3 * v * v * u,
+    c = 3 * v * u * u,
+    d = u * u * u;
+  return [
+    a * E_RET.p0[0] + b * E_RET.p1[0] + c * E_RET.p2[0] + d * E_RET.p3[0],
+    a * E_RET.p0[1] + b * E_RET.p1[1] + c * E_RET.p2[1] + d * E_RET.p3[1],
+  ];
+};
+const E_RET_D = `M${E_RET.p0[0]} ${E_RET.p0[1]} C ${E_RET.p1[0]} ${E_RET.p1[1]} ${E_RET.p2[0]} ${E_RET.p2[1]} ${E_RET.p3[0]} ${E_RET.p3[1]}`;
+
+/** An answer short enough to sit at the end of a chain. */
+const shortAnswer = (a: string) => (a.length > 12 ? `${a.slice(0, 11)}…` : a);
+const fmtPush = (v: number) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(2)}`;
+
+type EProblem = (typeof E_PROBLEMS)[number];
+
+/** The beat's headline and its one line read off this group's labels. */
+function eCopy(P: EProblem, beat: number): [string, string] {
+  const { n, k, mean } = P;
+  const mixed = k > 0 && k < n;
+  if (beat === 0)
+    return [
+      `One problem, ${n} chains from the same model.`,
+      `They land on ${P.distinct} different answers.`,
+    ];
+  if (beat === 1)
+    return [
+      "A program checks each final answer against the key: 1 if it matches, 0 if not.",
+      `${k} of ${n} right. ${
+        P.plurality === null
+          ? `A majority vote ties at ${P.topVotes} votes.`
+          : `A majority vote picks ${shortAnswer(tidyMath(P.plurality))} (${P.topVotes} of ${n}), ${
+              P.pluralityRight ? "the right answer" : "a wrong one"
+            }.`
+      }`,
+    ];
+  if (beat === 2)
+    return [
+      "Each chain's push is its reward minus the group's average.",
+      mixed
+        ? `The average is ${mean.toFixed(2)}, so each right chain gets ${fmtPush(1 - mean)} and each wrong chain ${fmtPush(-mean)}.${
+            P.pluralityRight ? "" : " The vote missed the right answer; training pushes hardest on it."
+          }`
+        : `Every chain scored ${k === 0 ? 0 : 1}, so every push is 0: nothing to tell apart.`,
+    ];
+  return [
+    "The pushes update the same model, and the next problem gets a fresh group.",
+    mixed
+      ? `Toward what the ${k === 1 ? "right chain" : `${k} right chains`} did, away from the other ${n - k}.`
+      : "This group moves nothing: no chain stood out.",
+  ];
+}
+
+function LoopStepped() {
+  const [view, setView] = useState({ problem: 0, beat: 0 });
+  /** Continuous position: beat b plays s from b to b + 1. */
+  const [s, setS] = useState(1);
+  const [playing, setPlaying] = useState(false);
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    const from = view.beat;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setS(from + 1);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      const p = clamp01((now - t0) / E_DUR[from]);
+      setS(from + p);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    setS(from);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [view]);
+
+  const advance = () =>
+    setView((v) =>
+      v.beat < E_BEATS.length - 1
+        ? { problem: v.problem, beat: v.beat + 1 }
+        : { problem: (v.problem + 1) % E_PROBLEMS.length, beat: 0 },
+    );
+
+  useEffect(() => {
+    if (!playing || s < view.beat + 1 || E_PROBLEMS.length === 0) return;
+    const id = setTimeout(advance, eHold(eCopy(E_PROBLEMS[view.problem], view.beat).join(" ")));
+    return () => clearTimeout(id);
+  }, [playing, s, view]);
+
+  if (E_PROBLEMS.length === 0)
+    return <p className="text-sm text-wrong-ink">Page 7 bundles no usable group.</p>;
+
+  const P = E_PROBLEMS[view.problem];
+  const { n, k, mean, rewards } = P;
+  const [headline, detail] = eCopy(P, view.beat);
+  const mixed = k > 0 && k < n;
+
+  /* stage progress, all read off s */
+  const fanFade = lerp(1, 0.15, span(s, 2, 2.3));
+  const labelFade = 1 - span(s, 2, 2.25);
+  const keyP = span(s, 1, 1.3);
+  const panelP = lerp(0.3, 1, span(s, 2, 2.3));
+  const meanP = span(s, 2.45, 2.65);
+  const arrowP = span(s, 2.6, 2.95);
+  const panelFade = 1 - span(s, 3, 3.25);
+  const travel = span(s, 3.15, 3.75);
+  const pulse = Math.sin(Math.PI * clamp01((s - 3.7) / 0.3));
+  const nudgedP = span(s, 3.75, 3.95);
+
+  const startX = E_MODEL[0] + E_R + 6;
+  const ends = Array.from(
+    { length: n },
+    (_, i) => [E_FAN_X, 26 + (i * 228) / (n - 1)] as [number, number],
+  );
+  const colX = (i: number) =>
+    E_PANEL.x0 + ((i + 0.5) * (E_PANEL.x1 - E_PANEL.x0)) / n;
+  const yMean = eLane(mean);
+
+  const label = `Prototype E, ${E_BEATS[view.beat]}: ${headline} ${detail} The model sends ${n} chains to one problem; each chain ends in its answer. At the reward each chain turns green for reward 1 or red for reward 0. At the reinforce step every chain drops into a panel with a lane for reward 1, a lane for reward 0 and a dashed line at the group's average, and its push is an arrow from the average to its lane. At the repeat step the pushes travel back into the model.`;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <ol className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Beats">
+          {E_BEATS.map((b, i) => (
+            <li key={b}>
+              <button
+                type="button"
+                onClick={() => setView((v) => ({ problem: v.problem, beat: i }))}
+                aria-current={i === view.beat ? "step" : undefined}
+                className={`rounded-full border px-3 py-1 text-xs font-eyebrow uppercase tracking-wide ${
+                  i === view.beat
+                    ? "border-compute bg-compute/15 font-semibold text-compute-ink"
+                    : i < view.beat
+                      ? "border-grid text-ink"
+                      : "border-grid text-ink-muted"
+                }`}
+              >
+                {i + 1}. {b}
+              </button>
+            </li>
+          ))}
+        </ol>
+        <button
+          type="button"
+          onClick={() => setPlaying((p) => !p)}
+          aria-pressed={playing}
+          className="rounded border border-grid bg-surface-raised px-3 py-1 text-xs text-ink"
+        >
+          {playing ? "❚❚ Pause" : "▶ Play"}
+        </button>
+      </div>
+
+      <div aria-live="polite" className="flex min-h-[3.5rem] flex-col gap-0.5">
+        <p className="text-base font-semibold text-ink">{headline}</p>
+        <p className="text-sm text-ink-muted">{detail}</p>
+      </div>
+
+      <p className="rounded-lg border border-grid bg-surface-raised px-3 py-2 text-sm text-ink">
+        <span className="mr-2 text-[10px] font-eyebrow uppercase tracking-wide text-ink-muted">
+          problem {view.problem + 1} of {E_PROBLEMS.length}
+        </span>
+        {P.question}
+      </p>
+
+      <svg viewBox="0 0 720 300" role="img" aria-label={label} className="mx-auto w-full max-w-[600px]">
+        {/* the return wire */}
+        <path
+          d={E_RET_D}
+          fill="none"
+          strokeWidth={1.6}
+          strokeDasharray="5 4"
+          className="stroke-ink-muted"
+          opacity={0.7}
+        />
+        <text x={330} y={296} textAnchor="middle" className="fill-ink-muted text-[11px]">
+          ↺ every push, right or wrong, updates the same model
+        </text>
+        {travel > 0 && travel < 1 && mixed
+          ? [1, 0].map((r) => {
+              const [px, py] = eRetAt(clamp01(travel - (r ? 0 : 0.06)));
+              return (
+                <circle
+                  key={r}
+                  cx={px}
+                  cy={py}
+                  r={r ? 7 : 4}
+                  className={r ? "fill-correct" : "fill-wrong"}
+                />
+              );
+            })
+          : null}
+
+        {/* the answer key */}
+        <text
+          x={E_FAN_X + 10}
+          y={12}
+          className="fill-correct-ink font-mono text-[12px] font-semibold"
+          opacity={keyP * labelFade}
+        >
+          answer key: {shortAnswer(P.key)}
+        </text>
+
+        {/* the fan */}
+        <g opacity={fanFade}>
+          {ends.map(([ex, ey], i) => {
+            const a = i * 0.03;
+            const drawP = span(s, a, a + 0.55);
+            const scored = s >= 1.05 + i * 0.035;
+            const ok = rewards[i] === 1;
+            return (
+              <path
+                key={i}
+                d={`M${startX} ${E_MODEL[1]} C ${startX + 70} ${E_MODEL[1]} ${ex - 80} ${ey} ${ex} ${ey}`}
+                fill="none"
+                pathLength={1}
+                strokeDasharray="1 2"
+                strokeDashoffset={1 - drawP}
+                strokeWidth={ok && scored ? 2.4 : 1.5}
+                className={scored ? (ok ? "stroke-correct" : "stroke-wrong") : "stroke-ink-muted"}
+                style={{ strokeOpacity: scored ? (ok ? 0.95 : 0.45) : 0.55 }}
+              />
+            );
+          })}
+        </g>
+
+        {/* the group panel */}
+        <g opacity={panelP * (s < 3 ? 1 : lerp(1, 0.3, span(s, 3, 3.3)))}>
+          {[1, 0].map((r) => (
+            <g key={r}>
+              <line
+                x1={E_PANEL.x0}
+                x2={E_PANEL.x1}
+                y1={eLane(r)}
+                y2={eLane(r)}
+                className="stroke-grid"
+                strokeWidth={0.75}
+              />
+              <text
+                x={E_PANEL.x0 - 8}
+                y={eLane(r)}
+                dy="0.32em"
+                textAnchor="end"
+                className="fill-ink-muted font-mono text-[11px]"
+              >
+                reward {r}
+              </text>
+            </g>
+          ))}
+        </g>
+        <g opacity={meanP * panelFade}>
+          <line
+            x1={E_PANEL.x0}
+            x2={E_PANEL.x1}
+            y1={yMean}
+            y2={yMean}
+            className="stroke-ink"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+          />
+          <text
+            x={E_PANEL.x0 - 8}
+            y={yMean + (mean === 0 ? 16 : mean === 1 ? -16 : mean < 0.12 ? -10 : mean > 0.88 ? 10 : 0)}
+            dy="0.32em"
+            textAnchor="end"
+            className="fill-ink text-[11px] font-semibold"
+          >
+            average {mean.toFixed(2)}
+          </text>
+        </g>
+        {mixed ? (
+          <g opacity={arrowP * panelFade} className="font-mono text-[12px] font-bold">
+            <text x={E_PANEL.x1} y={eLane(1) - 16} textAnchor="end" className="fill-correct-ink">
+              push {fmtPush(1 - mean)}
+            </text>
+            <text x={E_PANEL.x1} y={eLane(0) + 18} textAnchor="end" className="fill-wrong-ink">
+              push {fmtPush(-mean)}
+            </text>
+          </g>
+        ) : (
+          <text
+            x={(E_PANEL.x0 + E_PANEL.x1) / 2}
+            y={(E_PANEL.y0 + E_PANEL.y1) / 2}
+            textAnchor="middle"
+            className="fill-ink text-[12px] font-semibold"
+            opacity={arrowP * panelFade}
+          >
+            no push: all {n} scored {k === 0 ? 0 : 1}
+          </text>
+        )}
+
+        {/* the chains' ends: scored at the fan, then carried into the panel */}
+        {ends.map(([ex, ey], i) => {
+          const a = i * 0.03;
+          const shown = span(s, a + 0.45, a + 0.6);
+          const scored = s >= 1.05 + i * 0.035;
+          const ok = rewards[i] === 1;
+          const moveP = span(s, 2 + i * 0.012, 2.4 + i * 0.012);
+          const tx = colX(i);
+          const ty = eLane(ok ? 1 : 0);
+          const cx = lerp(ex, tx, moveP);
+          const cy = lerp(ey, ty, moveP);
+          const ans = shortAnswer(P.answers[i]);
+          const isVote = P.plurality !== null && P.answers[i] === tidyMath(P.plurality);
+          const yFrom = yMean + (ok ? -2 : 2);
+          const yTo = ty + (ok ? 7 : -7);
+          const len = Math.abs(yTo - yFrom);
+          return (
+            <g key={i} opacity={shown * panelFade}>
+              {arrowP > 0 && mixed ? (
+                <g
+                  className={ok ? "stroke-correct fill-correct" : "stroke-wrong fill-wrong"}
+                  opacity={arrowP}
+                >
+                  <line
+                    x1={tx}
+                    x2={tx}
+                    y1={yFrom}
+                    y2={lerp(yFrom, yTo + (ok && len > 7 ? 5 : !ok && len > 7 ? -5 : 0), arrowP)}
+                    strokeWidth={ok ? 2.4 : 1.6}
+                  />
+                  {arrowP > 0.9 && len > 7 ? (
+                    <polygon
+                      points={`${tx},${yTo} ${tx - 3.5},${yTo + (ok ? 6 : -6)} ${tx + 3.5},${yTo + (ok ? 6 : -6)}`}
+                      stroke="none"
+                    />
+                  ) : null}
+                </g>
+              ) : null}
+              <circle
+                cx={cx}
+                cy={cy}
+                r={ok && scored ? 6 : 5}
+                className={
+                  scored
+                    ? `${ok ? "fill-correct" : "fill-wrong"} stroke-canvas`
+                    : "fill-ink-muted stroke-canvas"
+                }
+                strokeWidth={1.5}
+              />
+              <g opacity={labelFade}>
+                <text
+                  x={ex + 10}
+                  y={ey}
+                  dy="0.32em"
+                  className={`font-mono text-[11px] ${
+                    scored ? (ok ? "fill-correct-ink font-bold" : "fill-wrong-ink") : "fill-ink"
+                  }`}
+                >
+                  {ans}
+                </text>
+                {isVote ? (
+                  <text
+                    x={ex + 16 + ans.length * 6.7}
+                    y={ey}
+                    dy="0.32em"
+                    className="fill-ink-muted text-[10px] font-semibold uppercase tracking-wide"
+                    opacity={keyP}
+                  >
+                    ◂ vote
+                  </text>
+                ) : null}
+              </g>
+            </g>
+          );
+        })}
+
+        {/* the model */}
+        <circle
+          cx={E_MODEL[0]}
+          cy={E_MODEL[1]}
+          r={E_R + 6 * pulse}
+          className="fill-compute"
+          opacity={0.12 * pulse}
+        />
+        <circle
+          cx={E_MODEL[0]}
+          cy={E_MODEL[1]}
+          r={E_R}
+          strokeWidth={3 + 3 * pulse}
+          className="fill-surface stroke-compute"
+        />
+        <text
+          x={E_MODEL[0]}
+          y={E_MODEL[1]}
+          dy="0.32em"
+          textAnchor="middle"
+          className="fill-ink text-[12px] font-semibold"
+        >
+          model
+        </text>
+        <text
+          x={E_MODEL[0]}
+          y={E_MODEL[1] - E_R - 12}
+          textAnchor="middle"
+          className="fill-compute-ink text-[11px] font-semibold"
+          opacity={nudgedP}
+        >
+          {mixed ? "nudged" : "unchanged"}
+        </text>
+      </svg>
+
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() =>
+            setView((v) =>
+              v.beat > 0
+                ? { problem: v.problem, beat: v.beat - 1 }
+                : { problem: (v.problem - 1 + E_PROBLEMS.length) % E_PROBLEMS.length, beat: 0 },
+            )
+          }
+          className="rounded border border-grid bg-surface-raised px-3 py-1 text-sm text-ink"
+        >
+          {view.beat > 0 ? "← Back" : "← Previous problem"}
+        </button>
+        <span className="font-mono text-xs text-ink-muted">
+          {view.beat + 1} / {E_BEATS.length}
+        </span>
+        <button
+          type="button"
+          onClick={advance}
+          className="rounded border border-compute bg-compute/15 px-3 py-1 text-sm font-semibold text-ink"
+        >
+          {view.beat === E_BEATS.length - 1 ? "Next problem →" : "Next →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------------------
  * The review block
  * ------------------------------------------------------------------------- */
 
@@ -1036,12 +1547,12 @@ export function LoopPrototypes() {
           Prototypes · for review, not page copy
         </p>
         <h2 className="text-xl font-semibold text-ink">
-          Four animations for the loop in section 1
+          Five animations for the loop in section 1
         </h2>
         <p className="text-sm text-ink-muted">
           A to C: each lap is one problem, eight chains, every chain scored and
           every chain fed back; the counts (1, 3, 5, then 7 of 8 right) are
-          drawn for illustration, not measured. D runs on measured chains.
+          drawn for illustration, not measured. D and E run on measured chains.
         </p>
       </div>
       <Proto
@@ -1071,6 +1582,13 @@ export function LoopPrototypes() {
         caption={`Page 7's 16 chains from ${PAGE7.primary.label} at temperature 0.3 on one MATH problem, rewards from its answer key, pushes computed from those rewards as GRPO does (reward minus the group mean, over the group's spread). Click through the beats.`}
       >
         <LoopSlides />
+      </Proto>
+      <Proto
+        tag="E"
+        title="A's fan on D's measured groups, stepped"
+        caption={`Page 7's chains from ${PAGE7.primary.label} at temperature 0.3, ${E_PROBLEMS.length} of the problems it bundles, in its order. Rewards come from each answer key; each push is reward minus the group's average, the luck dial's rule. Step through the beats, or press play.`}
+      >
+        <LoopStepped />
       </Proto>
     </section>
   );
