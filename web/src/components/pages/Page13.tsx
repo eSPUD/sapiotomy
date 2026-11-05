@@ -87,6 +87,8 @@ import { ACTS, getPage } from "@/lib/pages";
 import { curves, interpolate } from "@/lib/curves";
 import { twoAxisAccuracy } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
+/* PROTOTYPES (2026-11-04): remove this import and the block above PageNav to revert */
+import { LoopPrototypes } from "./Page13LoopPrototypes";
 
 const PAGE_N = 13;
 
@@ -1586,6 +1588,9 @@ export function Page13() {
           </div>
         </section>
       </div>
+
+      {/* PROTOTYPES (2026-11-04): four loop animations under review. Delete this line to revert. */}
+      <LoopPrototypes />
 
       <PageNav n={PAGE_N} />
     </article>
