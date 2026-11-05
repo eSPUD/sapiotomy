@@ -17,7 +17,7 @@ test.describe("M7 polish — accessibility across every page", () => {
 });
 
 test.describe("M7 polish — no console errors", () => {
-  for (const path of ["/", "/p/5", "/p/7", "/p/13", "/p/15", "/p/16"]) {
+  for (const path of ["/", "/p/5", "/p/7", "/p/13", "/p/14", "/p/15"]) {
     test(`${path}: no console errors on load`, async ({ page }) => {
       const errors: string[] = [];
       page.on("console", (m) => m.type() === "error" && errors.push(m.text()));

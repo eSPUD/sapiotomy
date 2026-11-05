@@ -1,10 +1,10 @@
 /**
- * The 16-page route map for *The Story of Inference-Time Scaling*.
+ * The 15-page route map for *The Story of Inference-Time Scaling*.
  *
  * Three Acts (Nicky Case's "this happens, THEREFORE that, BUT that…"):
  *   Act 1 — Building Intuition (pages 1–4)
  *   Act 2 — The Toolbox       (pages 5–11)
- *   Act 3 — Frontier & Caveats(pages 12–16)
+ *   Act 3 — Frontier & Caveats(pages 12–15)
  *
  * The seam is 11|12, set by review 2026-07-30 against the act definitions the
  * author states: Act 2 is "thinking longer, the searching algorithms, more
@@ -20,21 +20,31 @@
  * own adaptive-allocation content and opens Act 3 on a page with no frontier
  * model on it). Both are recorded in the old 19-page numbering.
  *
- * The deck ends at 16. Six pages have been cut. On 2026-07-30, 20 ("You Be the
- * Judge", the Illusion-of-Thinking debate) and 21 ("The Grand Sandbox + Your
- * Toolkit"); both sat off the end, so no survivor moved. On 2026-08-10, four
+ * The deck ends at 15 (16 until the 2026-11-04 merge). Six pages have been
+ * cut. On 2026-07-30, 20 ("You Be the Judge", the Illusion-of-Thinking debate)
+ * and 21 ("The Grand Sandbox + Your Toolkit"); both sat off the end, so no
+ * survivor moved. On 2026-08-10, four
  * more: 15 ("The Scoreboard"), 16 ("The Bill Comes Due"), 18 ("Can We Trust the
  * Thoughts?") and 19 ("The Frontier"). That cut took a bite out of the middle of
  * Act 3, so its one survivor did move: old 17 ("When Reasoning Breaks") is now
  * 15. Page 16 ("Wrap-Up") was written the same day to close the deck the cut
  * had left ending on a caveat: it is the only page that draws every lever on
- * one axis, plus a ten-question concept check. Every cross-page reference in
- * the app is written against the 1-16 numbering.
+ * one axis, plus a ten-question concept check.
  *
- * Page 17 is the glossary (added 2026-09-27, author): an appendix, and only
- * ever the glossary. It belongs to NO act (the author: never show it as part
+ * On 2026-11-04 pages 13 ("Frontier Reasoners I: o1, o3, and the Two-Axis
+ * Scaling Curve") and 14 ("Frontier Reasoners II: DeepSeek-R1, GRPO, and the
+ * 'Aha Moment'") were merged into one page 13, "Learned Reasoning: One Law,
+ * Two Knobs", reordered around the concept rather than the calendar. Everything
+ * after it moved down one: old 15 ("When Reasoning Breaks") is 14, old 16
+ * ("Wrap-Up") is 15, and the glossary is 16. Every cross-page reference in the
+ * app is written against the 1-15 numbering. Lib modules keep their older
+ * names (page15Price.ts, page16.ts, page17.ts), as page17.ts already did after
+ * the August cut; their headers say which page draws them now.
+ *
+ * Page 16 is the glossary (added 2026-09-27 as page 17, author): an appendix,
+ * and only ever the glossary. It belongs to NO act (the author: never show it as part
  * of Act 3, on the landing page or anywhere else), so its entry has no `act`
- * and the type forbids one. The story is still pages 1-16: `getPage` and
+ * and the type forbids one. The story is pages 1-15: `getPage` and
  * `STORY_PAGES` return story pages only, analytics count only those, and the
  * glossary is reached through `GLOSSARY`. docs/ and planning/ predate
  * the cut and still speak in the old numbers.
@@ -53,7 +63,7 @@ interface PageBase {
   milestone: string;
 }
 
-/** Pages 1-16: each sits in exactly one act. */
+/** Pages 1-15: each sits in exactly one act. */
 export interface StoryPage extends PageBase {
   act: Act;
   appendix?: undefined;
@@ -70,7 +80,7 @@ export type PageMeta = StoryPage | AppendixPage;
 export const ACTS: Record<Act, { title: string; range: string }> = {
   1: { title: "Building Intuition", range: "Pages 1–4" },
   2: { title: "The Toolbox", range: "Pages 5–11" },
-  3: { title: "Frontier & Caveats", range: "Pages 12–16" },
+  3: { title: "Frontier & Caveats", range: "Pages 12–15" },
 };
 
 export const PAGES: PageMeta[] = [
@@ -86,17 +96,16 @@ export const PAGES: PageMeta[] = [
   { n: 10, slug: "searching-thoughts", title: "Searching Through Thoughts", act: 2, concept: "Reasoning as a maze: branch, evaluate, prune, backtrack. And pay for every node you look at.", milestone: "M4" },
   { n: 11, slug: "test-time-compute-scaling-law", title: "The Keystone: The Test-Time Compute Scaling Law", act: 2, concept: "Parameters and test-time compute spend the same FLOPs. Measured on our own instrument, no amount of sampling and voting out-buys a bigger model at a matched bill: the answer is in the pile, but no answer-time rule reliably picks it.", milestone: "M4" },
   { n: 12, slug: "star-self-improvement", title: "Teaching Models to Reason: STaR and Self-Improvement", act: 3, concept: "Generate rationales, keep only the ones that reach the right answer, fine-tune on them, repeat: the model becomes its own teacher — for exactly as long as an external check filters what it studies.", milestone: "M4" },
-  { n: 13, slug: "frontier-reasoners-o1", title: "Frontier Reasoners I: o1, o3, and the Two-Axis Scaling Curve", act: 3, concept: "The first commercial model trained by RL to reason in a long private chain: accuracy climbs log-linearly with train-time RL compute and with test-time thinking, and the chain itself is hidden.", milestone: "M5" },
-  { n: 14, slug: "frontier-reasoners-deepseek-r1", title: "Frontier Reasoners II: DeepSeek-R1, GRPO, and the “Aha Moment”", act: 3, concept: "Open weights answer the black box: reward only verifiable right answers (GRPO) and the pausing and self-correcting emerge on their own — then get distilled into models 1.5B–70B.", milestone: "M4" },
-  { n: 15, slug: "when-reasoning-breaks", title: "When Reasoning Breaks: Self-Correction, Verifier Reliability, Overthinking", act: 3, concept: "More thinking can make things worse: unaided self-correction degrades answers, longer reasoning can subtract, and the verifiers doing the rescuing are fallible themselves.", milestone: "M5" },
-  { n: 16, slug: "wrap-up", title: "Wrap-Up: What You Now Know", act: 3, concept: "Every lever in the deck on one axis for the first time, measured on the same hundred problems, and ten questions that check the mechanisms rather than the magnitudes.", milestone: "M5" },
-  { n: 17, slug: "glossary", title: "Glossary", concept: "The terms the deck uses, defined once.", milestone: "—", appendix: true },
+  { n: 13, slug: "learned-reasoning", title: "Learned Reasoning: One Law, Two Knobs", act: 3, concept: "RL on verifiable problems builds reasoning into the weights and lifts the compute curve; thinking at answer time slides along it; and the lifted curve is portable, distilled into weights anyone can download.", milestone: "M5" },
+  { n: 14, slug: "when-reasoning-breaks", title: "When Reasoning Breaks: Self-Correction, Verifier Reliability, Overthinking", act: 3, concept: "More thinking can make things worse: unaided self-correction degrades answers, longer reasoning can subtract, and the verifiers doing the rescuing are fallible themselves.", milestone: "M5" },
+  { n: 15, slug: "wrap-up", title: "Wrap-Up: What You Now Know", act: 3, concept: "Every lever in the deck on one axis for the first time, measured on the same hundred problems, and ten questions that check the mechanisms rather than the magnitudes.", milestone: "M5" },
+  { n: 16, slug: "glossary", title: "Glossary", concept: "The terms the deck uses, defined once.", milestone: "—", appendix: true },
 ];
 
 /** The story proper: every page but the glossary appendix. */
 export const STORY_PAGES: StoryPage[] = PAGES.filter((p): p is StoryPage => !p.appendix);
 
-/** The glossary, page 17: the last page, in no act. */
+/** The glossary, page 16: the last page, in no act. */
 export const GLOSSARY: AppendixPage = PAGES.find((p): p is AppendixPage => p.appendix === true)!;
 
 /** A story page by number. The glossary is not one: use GLOSSARY. */

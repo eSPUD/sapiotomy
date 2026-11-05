@@ -143,7 +143,7 @@ function assertSameItems(): number {
     ["page 8's paired comparison", PAGE8.paired.items],
     ["page 9's step grading", PAGE9.run.items],
     ["page 11's hard band", PAGE11.bands.hard.nItems],
-    ["page 15's re-read", PAGE17.run.items],
+    ["page 14's re-read", PAGE17.run.items],
   ];
   const [, first] = counts[0];
   for (const [what, n] of counts) {
@@ -678,7 +678,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: "q13-self-correction",
-    page: 15,
+    page: 14,
     concept: "why unaided revision fails",
     stem: `Ask a model to look over its own answer and fix any mistakes. No hints, no tools, nothing it did not already have. On CommonSenseQA that took GPT-3.5 from ${SC.gpt35Csqa0}% down to ${SC.gpt35Csqa1}%. Why does asking make it worse?`,
     options: [

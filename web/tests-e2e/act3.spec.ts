@@ -2,21 +2,22 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 /**
- * Act 3 is pages 12 to 16 since the 2026-08-10 cut. The scoreboard, economics,
- * faithfulness and frontier pages were removed; old 17 ("When Reasoning
- * Breaks") became 15, and a wrap-up was written as 16 to close the deck. The
- * FrontierMath courtroom test that used to lead this file went with its page.
+ * Act 3 is pages 12 to 15. The 2026-08-10 cut removed the scoreboard,
+ * economics, faithfulness and frontier pages, made old 17 ("When Reasoning
+ * Breaks") 15 and added a wrap-up as 16; the 2026-11-04 merge of 13 and 14
+ * moved both down one, to 14 and 15. The FrontierMath courtroom test that used
+ * to lead this file went with its page.
  */
-test.describe("Act 3 (pages 12–16)", () => {
-  test("Page 15 turns the dial over, then hands forward", async ({ page }) => {
-    await page.goto("/p/15");
+test.describe("Act 3 (pages 12–15)", () => {
+  test("Page 14 turns the dial over, then hands forward", async ({ page }) => {
+    await page.goto("/p/14");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("When Reasoning Breaks");
-    await expect(page.getByText(/For fourteen pages the dial has mostly pointed one way/)).toBeVisible();
-    await expect(page.getByRole("link", { name: /^Page 16 →/ })).toBeVisible();
+    await expect(page.getByText(/For thirteen pages the dial has mostly pointed one way/)).toBeVisible();
+    await expect(page.getByRole("link", { name: /^Page 15 →/ })).toBeVisible();
   });
 
-  test("Page 16 closes the deck: one axis, ten questions, scrambled options", async ({ page }) => {
-    await page.goto("/p/16");
+  test("Page 15 closes the deck: one axis, ten questions, scrambled options", async ({ page }) => {
+    await page.goto("/p/15");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Wrap-Up");
     await expect(page.getByRole("group", { name: /of 10/ })).toHaveCount(10);
 
@@ -25,8 +26,8 @@ test.describe("Act 3 (pages 12–16)", () => {
     await first.getByRole("radio").first().check();
     await expect(first.getByText(/Right\.|Not quite\./)).toBeVisible();
 
-    // The story's last page: the next page is the glossary appendix, page 17.
-    await expect(page.getByRole("link", { name: "Page 17 →" })).toHaveAttribute("href", "/p/17");
+    // The story's last page: the next page is the glossary appendix, page 16.
+    await expect(page.getByRole("link", { name: "Page 16 →" })).toHaveAttribute("href", "/p/16");
   });
 
   /**
@@ -38,9 +39,9 @@ test.describe("Act 3 (pages 12–16)", () => {
    * keeps it from being flaky: four options have 24 orders, so ten independent
    * loads all landing on the authored one is not something that happens.
    */
-  test("Page 16 re-scrambles the quiz options on every load", async ({ page }) => {
+  test("Page 15 re-scrambles the quiz options on every load", async ({ page }) => {
     const readFirstQuestion = async () => {
-      await page.goto("/p/16");
+      await page.goto("/p/15");
       const first = page.getByRole("group", { name: /^1 of 10/ });
       await expect(first).toBeVisible();
       return (await first.getByRole("radio").all()).length > 0

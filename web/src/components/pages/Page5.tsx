@@ -849,7 +849,7 @@ export function Page5() {
           </section>
         </section>
         {/* Beside the merged step: its references. The "Terms" note that defined token
-            and greedy decoding moved to the glossary, page 17, on 2026-09-27
+            and greedy decoding moved to the glossary (then page 17, now 16) on 2026-09-27
             (author); do not bring it back here. */}
         <div className="flex flex-col gap-6">
           <Note kicker="References">

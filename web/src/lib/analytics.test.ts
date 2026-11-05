@@ -2,15 +2,16 @@ import { describe, expect, it } from "vitest";
 import { engagementReport, learningGain } from "./analytics";
 
 describe("engagement analytics (M8 instrumentation)", () => {
-  it("computes manipulation rate over the 16 pages", () => {
-    // reachedEnd keys off the last page in PAGES, which is 16: 20 and 21 were
-    // cut in 2026-07, then 15, 16, 18 and 19 in 2026-08, and the wrap-up was
-    // added as the new 16. Page 17 is the glossary appendix, which has nothing
-    // to manipulate, so the count is the story pages (STORY_PAGES), never hardcoded.
-    const r = engagementReport({ 1: 3, 6: 1, 16: 2 });
-    expect(r.totalPages).toBe(16);
+  it("computes manipulation rate over the 15 pages", () => {
+    // reachedEnd keys off the last story page, which is 15: 20 and 21 were
+    // cut in 2026-07, then 15, 16, 18 and 19 in 2026-08, the wrap-up was added
+    // as the new 16, and the 2026-11-04 merge of 13 and 14 moved it to 15. Page
+    // 16 is the glossary appendix, which has nothing to manipulate, so the count
+    // is the story pages (STORY_PAGES), never hardcoded.
+    const r = engagementReport({ 1: 3, 6: 1, 15: 2 });
+    expect(r.totalPages).toBe(15);
     expect(r.pagesManipulated).toBe(3);
-    expect(r.manipulationRate).toBeCloseTo(3 / 16, 5);
+    expect(r.manipulationRate).toBeCloseTo(3 / 15, 5);
     expect(r.reachedEnd).toBe(true);
   });
 

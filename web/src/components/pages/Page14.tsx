@@ -1,224 +1,98 @@
 "use client";
 
 /**
- * Page 14, "Frontier Reasoners II: DeepSeek-R1, GRPO, and the 'Aha Moment'" —
- * the open-weight answer to the closed frontier. Page 13 closed with four
- * questions it could not answer ("The questions o1 cannot answer") and a
- * handoff promising four deliverables: the algorithm, a readable chain, a
- * training curve showing where the extra thinking comes from, and the
- * distills. This page cashes all four in.
- * The page's one idea: reward ONLY verifiable right answers and the pausing /
- * second-guessing / self-correcting emerges on its own — nobody writes it in.
+ * Page 14, "When Reasoning Breaks". Act 3's candour page: the compute knob has
+ * a wrong side. Three failure modes, in the order the title names them. It
+ * briefly closed the deck after the 2026-08-10 cut and no longer does; page 15
+ * wraps up, and this page hands its open question forward rather than ending on
+ * it. It was page 15 until the 2026-11-04 merge of pages 13 and 14.
  *
- * The lede answers rather than restates. Page 13 now builds the demand
- * itself, so the intro must not re-erect the frame (an earlier draft opened
- * "page 13 priced the exchange, then hid the machinery", which duplicated
- * page 13's own section 4). It is held to page 12's length — three clauses:
- * the four questions, the four deliverables, the hook. Two beats an earlier
- * draft spent here were moved down to where they are shown rather than
- * previewed: "no worked examples at all" now opens section 1 beside the
- * recipe that has none, and "taught itself to spend test-time compute nobody
- * told it to spend" is section 2's reading under the training chart. What the
- * lede keeps of the hook is the concrete thing the skeleton draws (a chain
- * that stops mid-solution to re-check), so "backtracking" has a referent
- * before the question asks where it came from.
- * The four do not map one-to-one onto this page's three sections, so the page
- * never promises "answered in order" — the sections answer without
- * announcing. Q1/Q2/Q3 land in section 2, Q4 in section 3; section 1 is the
- * handoff's separate "algorithm in full".
+ * This was page 17 until the scoreboard, economics, faithfulness and frontier
+ * pages came out. Its instrument did not move with it, so `lib/page17.ts`,
+ * `data/page-17-derived.json` and `page_17_when_reasoning_breaks.ipynb` keep
+ * their old names: those are provenance identifiers for one notebook run, not
+ * route numbers. PROVENANCE.md records the pairing.
  *
- * The page SHOWS what settles the four; it never recaps them as answers.
- * A closing block that restated each question with its answer was built and
- * cut on review — it read as a quiz key and did the reader's thinking, which
- * is the same academic-paper reflex page 13 rejected when its own ledger went.
- * Do not reintroduce it; Page14.test.tsx guards against it. What carries each
- * question is the thing the reader drives: the scrubber grows a loop (what ten
- * times the thinking is spent on), the skeleton stays ONE chain rather than
- * four parallel ones (what the dial buys), the dot plot puts a 1.5B dot past a
- * closed model's rule (whether the law needs frontier scale). The lede points
- * back at the four so the reader knows what to watch for; exactly one clause later
- * ("the distinction page 13 could only assert") ties a figure back. One
- * thread is a thread, several are a quiz.
+ * Step 1 is verbatim published data (Huang et al., ICLR 2024, Table 3): asked
+ * to re-check its own reasoning with no new information, a model gets WORSE.
  *
- * The narration question is the one with nothing to drive, so it is argued in
- * prose under the skeleton, where the chain is in front of the reader. The
- * argument is structural, not a measurement: in R1-Zero the chain IS the
- * sampled object that training pushed on, so there was never a separate step
- * in which a description could be written beside the real work. Deliberately
- * not reached for: the faithfulness question (whether the chain is an HONEST
- * account is a different claim from whether it is load-bearing). Old page 18
- * owned it and was cut on 2026-08-10; page 15 now raises it as the deck's
- * closing question and this page still does not answer it here.
+ * THE SPINE OF THE PAGE IS ONE FAILURE WITH TWO TRIGGERS, and the section titles
+ * carry it. Step 1 ("Fix your mistakes") is revision the reader asked for. Step 2
+ * ("Thinking too hard") is revision the model performs unprompted, when a chain
+ * left running overwrites an answer it had already reached. Nothing new enters in
+ * either case. Step 3 ("Scoring gone wrong") is the verifier that could have caught
+ * either one, and its claim, that reliability is a coordinate rather than a property,
+ * is made in the copy rather than in the title so the four headings stay one register.
+ * The titles also answer the page's own subtitle: without
+ * them a reader cannot map self-correction, overthinking and verifier reliability
+ * onto the sections that measure them.
  *
- * Act 2 callbacks are held to two, and both carry an argument: page 7 at
- * GRPO's line 2, page 10 at the aha loop. Page 13's header records the review
- * instruction "lets not cite everything like page 6, page 7…", so decorative
- * back-references are not to be added here, and there is deliberately NO test
- * asserting a count of page numbers.
+ * Steps 2 and 3 were an authored Markov chain and an authored inverse-U until
+ * `page_17_when_reasoning_breaks.ipynb` re-read pages 5 to 9. Both are now the
+ * deck's own runs (lib/page17.ts), and what replaced them is smaller than what
+ * they claimed, which is the point of the page.
  *
- * Step 1 is the recipe, GRPO, abstracted honestly: five lines of annotated
- * pseudocode (sample a group, score with a rule, advantage = distance from
- * the group's own mean) instead of the clipped-surrogate objective. Below
- * it, line 2 of that pseudocode is DRAWN: four answers to page 4's 350 × 638
- * (the model samples stochastically — that is where the group comes from;
- * each wrong answer is a named arithmetic slip, not an invented number), as
- * dots at reward 1/0 with the group mean as a dashed rule and each push as
- * an arrow from the rule to the dot. One dial sets how many of the other
- * three match sample 1's fixed 223,300; as luck rises the rule chases the
- * crowd, the same right answer's arrow shrinks to nothing, the lone
- * dissenter's stretches (rarity cuts both ways), and a uniform group leaves
- * an arrowless picture — nothing to teach. No critic network anywhere: that
- * is what made RL at this scale affordable, and the copy says so against
- * PPO.
- * Between the listing and the PPO paragraph sits the section's deck bridge
- * (lineage before cost): line 2 is page 7's parallel sampling moved across
- * the train/test line. Page 7 paid for many chains at answer time and threw
- * them away after the vote; GRPO runs the same sampling in training and keeps
- * what the winners did in the weights. The claim stops there on purpose —
- * NOT "tomorrow's single sample looks like today's best-of-four", because
- * GRPO is a policy gradient with a group baseline, not best-of-N
- * distillation. Note this listing is now the deck's ONLY training algorithm:
- * page 13's rumored o1 recipe was cut on review 2026-07-30 precisely so that
- * a checkable algorithm never shares a grammar with a hypothesized one, and
- * page 13's section 1 points here for it. Keep this listing honest and keep
- * it printed.
+ * Step 2 is page 6's budget sweep with the losses drawn back in. Its centre is
+ * ONE problem: right when cut off and made to commit, wrong when allowed to
+ * finish, and its mistake is an unjustified symmetry assumption a reader can
+ * check. Three controls were run against it. Stopping early is not a strategy,
+ * because a fixed cut is worse than finishing and the best cut buys no more
+ * coverage per token than plain resampling: that one defends the READER'S
+ * TAKEAWAY, so it stays in the body, and without it a reader leaves with a
+ * technique that does not exist. The other two defend the specimen's reading
+ * against a skeptic. They sat in the margin until 2026-08-10 and are now the
+ * notebook's, under the rule that a margin note may only help a reader read the
+ * figure beside it. The figure carries the first of them by itself: at the
+ * middle cuts the bad assumption is already written and the forced commit
+ * ignores it, which is that control drawn rather than asserted. The second (page
+ * 5's zero-token blurt arm gets 6 of 16, so this is not the model already
+ * knowing) is NOT drawn anywhere, and it is the one thing this page now asserts
+ * that a reader cannot check on screen. `PAGE17.controls` still gates both, and
+ * Page14.test.tsx still pins them false, so a rerun that flips one is a finding
+ * rather than a green suite.
  *
- * Step 2 is the training scrubber over R1-Zero (curves.deepseekTraining),
- * both variables on a dual y-axis: AIME pass@1 (left, 15.6 → 71.0) and
- * average response length (right, ~1k → ~9k tokens). Neither curve is a
- * schedule — no term in the reward mentions length (the chart says so in an
- * annotation); the model buys itself thinking time because re-checking pays.
- * The prose names the right axis as page 11's x axis (test-time compute)
- * with nobody's hand on the dial: the model finds the scaling law itself and
- * walks up it. It also answers page 13's first open question outright, which
- * is the answer no closed model could supply: this is ONE chain allowed to
- * run longer, not many chains sampled and voted behind an API — the
- * distinction page 13's section 2 had to assert and could not prove.
- * Below the chart, the trace is shown as a SHAPE, not text: a skeleton of
- * forward steps early and mid, and past the aha step an interrupt node with
- * a loop back to the trace's own first line and a second, re-deriving pass.
- * The skeleton is the abstraction of the paper's Table-3 trace — structure
- * only, nothing quoted — and it is what the right axis's extra tokens are
- * made of. The paper places the behaviour at "an intermediate version", so
- * where the aha lands on the slider is an illustrative placement — said
- * under the skeleton and again in the footer.
+ * The old step 3 asserted that easy problems cross an overthinking threshold
+ * before hard ones. Pooled over three checkpoints our own run puts both medians
+ * at the same budget, and the budget axis cannot carry the claim anyway: under
+ * greedy decoding a chain that has stopped itself is not rerun at a larger
+ * budget. The claim is deleted rather than softened; docs/page_17_findings.md
+ * section 4 is why, and the loader keeps it reachable as a stated null.
  *
- * The interrupt has a stated REASON (review: it read as the trace hiccupping).
- * Page 10's machinery is branch, SCORE, backtrack; the skeleton drew the
- * branch and the backtrack and no score, so the fourth block of the first
- * pass is now outlined as the step the trace doubts, and STAGE_NOTE.aha names
- * the trigger. Two constraints hold this in place:
- *   - It is DOUBT, never a found mistake. R1's traces re-evaluate rather than
- *     locate an error, and "found a mistake" would contradict section 1's
- *     reward (`rᵢ ← 1 if answerᵢ is right, else 0`, outcome only): nothing
- *     ever scored a step, so nothing could have told the model which was bad.
- *     That is the better story anyway, and it pays off page 9 — pure outcome
- *     reward grew a step-level habit nobody supervised.
- *   - The marked block takes the COMPUTE hue, dashed, never the wrong hue.
- *     Wrong-hue asserts a located error and would undo the above.
+ * Step 3 is now the verifier, measured once. Reliability falls with the very
+ * temperature that makes best-of-N worth running, and only the judge trained to
+ * score stays flat, so the figure is a crossing and must be read left to right.
  *
- * Step 3 is the give-away, reframed as its actual thesis: reasoning
- * transfers as data. ~800K traces, plain SFT, no RL and no reward — page
- * 12's recipe with a stronger teacher — and six dense models inherit the
- * behaviour (curves.deepseekDistill, Table 5), drawn as a horizontal dot
- * plot: score on the x axis, one row per model ordered by size (teacher at
- * the bottom), closed models as vertical dashed rules because they publish
- * scores but not sizes. Reading down the rows the dots march right through
- * the closed rules, and Llama-70B left of Qwen-32B is a visible kink. Where
- * a dot lands right of a rule, page 11's law has been compressed into
- * weights anyone can download. R1's own scoreboard is
- * deliberately NOT tabled here — one number places the teacher, the rest is
- * beside the point. The closing handoff used to defer that reckoning to a
- * scoreboard page; that page was cut on 2026-08-10, so the handoff now points
- * at what page 15 actually does next, which is the wrong side of the dial.
+ * It carried a second coordinate until 2026-08-10: the share of a chain we can
+ * audit a grader against, drawn as a sliver. Three of its four claims were page
+ * 9's own, restated a page later. The fourth, that the reward model's AUC,
+ * recall and specificity were all taken inside that sliver, was real and is now
+ * nowhere in the deck. The beat was moved to page 9 beat 3, which is where it
+ * belonged if it belonged anywhere, and cut the same day: that beat is already
+ * one figure with three qualifications under it, and a second bar restating page
+ * 9's own step 1 pushed it past what a reader will carry. The claim survives
+ * only as page 16's q9, which gives a reader the two facts and asks what
+ * follows. Do not restage it here; the reason it left was length, not truth.
  *
- * Footer keeps the deck-wide two-label provenance pattern: Simulated (the
- * interpolated curve, the schematic skeleton, the illustrative aha
- * placement) and Cited (every number pinned to DeepSeek-AI 2025).
+ * Step 4 is the balance: what still works, and the contamination caveat, which
+ * discounts every accuracy number in Acts 2 and 3 and is therefore a callout
+ * rather than a trailing muted line.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Handoff } from "@/components/Handoff";
-import { scaleLinear } from "d3";
-import { ChartFrame, CHART_MARGIN } from "@/components/ChartFrame";
+import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves, interpolate } from "@/lib/curves";
+import { curves } from "@/lib/curves";
+import { PAGE17, Page17DataError, pct, tidyMath } from "@/lib/page17";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 14;
-const MAX_STEP = 8000;
-/** Skeleton staging thresholds on the scrubber (illustrative placement — see
-    the provenance line under the skeleton). */
-const MID_STEP = 2500;
-const AHA_STEP = 5000;
 
-/** Page 14's references, numbered in order of first appearance. */
-const REF = { r1: 1, grpo: 2 } as const;
-
-/*
- * Page 4's multiplication, not page 1's. The figure's own punchline (a uniform
- * group teaches nothing) rules out an easy problem: 17 × 24 is exactly what a
- * 671B model already aces, so using it as the example of a PRODUCTIVE learning
- * group contradicted the caption three lines below. Page 4 sets the precedent
- * for the fix — it recalls page 1's 17 × 24 and escalates to 350 × 638 — and
- * the escalation earns a second callback besides: page 4 walked three human
- * roads to 223,300, and this figure watches a model sample four.
- *
- * Sample 1 always gets it right; the other three slots have fixed wrong
- * answers so the dial is deterministic, and each is a real arithmetic slip,
- * not an invented number:
- *   350 × 628 = 219,800 (one digit misread)
- *    35 × 638 =  22,330 (a dropped zero)
- *   210,000 + 13,300 written as 213,300 (the partials mis-added)
- */
-const RIGHT_ANSWER = "223,300";
-const OTHER_WRONGS = [
-  { v: "219,800", slip: "read 638 as 628" },
-  { v: "22,330", slip: "dropped a zero" },
-  { v: "213,300", slip: "mis-added the partials" },
-];
-
-/** The GRPO recipe as five annotated lines — the honest abstraction of the
-    objective (advantage from the group's own statistics), minus the clipped
-    surrogate machinery. */
-const PSEUDO: { code: string; note?: string }[] = [
-  { code: "for each problem q:" },
-  { code: "  sample G answers from the current policy" },
-  { code: "  rᵢ ← 1 if answerᵢ is right, else 0", note: "the reward is a program, not a second model" },
-  { code: "  Aᵢ ← (rᵢ − mean(r)) / std(r)", note: "the group is its own baseline: no critic network" },
-  { code: "  push toward answers with Aᵢ > 0, away from Aᵢ < 0", note: "plus a leash (KL) back to the reference model" },
-];
-
-type Stage = "early" | "mid" | "aha";
-
-const STAGE_CHIP: Record<Stage, string> = {
-  early: "early in training",
-  mid: "mid training",
-  aha: "after the aha",
-};
-const STAGE_NOTE: Record<Stage, string> = {
-  early: "A few steps forward, an answer, stop. Nothing looks back.",
-  mid: "Longer now, more algebra per attempt, but still strictly forward: whatever was written first, stands.",
-  aha: "Four steps in, the trace stops, doubts what it has just written, and goes back to its own first line to derive it again. Nothing scored those steps: the reward only sees the final answer, so nobody told the model that its last step was shaky. It learned to suspect itself anyway, because re-checking lands more right answers and right answers are all the reward pays. Page 10's branch, score, backtrack, with the harness deleted and the scoring moved inside the chain. The extra tokens on the right axis are these loops.",
-};
-
-interface Distill {
-  size: number;
-  label: string;
-  family: "qwen" | "llama";
-  note: string;
-}
-const DISTILLS: Distill[] = [
-  { size: 1.5, label: "Qwen-1.5B", family: "qwen", note: "beats GPT-4o on AIME, from a model that fits on a phone" },
-  { size: 7, label: "Qwen-7B", family: "qwen", note: "most of the way to o1-mini, at laptop scale" },
-  { size: 8, label: "Llama-8B", family: "llama", note: "a Llama base instead of Qwen: the same traces teach a different family" },
-  { size: 14, label: "Qwen-14B", family: "qwen", note: "clears the best open reasoning model that existed the week before, at under half its size" },
-  { size: 32, label: "Qwen-32B", family: "qwen", note: "within seven points of the 671B teacher" },
-  { size: 70, label: "Llama-70B", family: "llama", note: "bigger is not automatically better: the 32B Qwen edges it" },
-];
+/** Page 15's references, numbered in order of first appearance. */
+const REF = { huang: 1, zeng: 2, wang: 3, stroebl: 4 } as const;
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -230,129 +104,126 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
-const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}`;
+/** One model × benchmark panel of the Huang et al. Table 3 bars. */
+function SelfCorrectPanel({
+  heading,
+  rows,
+}: {
+  heading: string;
+  rows: { label: string; value: number; broke: boolean }[];
+}) {
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-3"
+      role="img"
+      aria-label={`${heading}: ${rows.map((r) => `${r.label} ${r.value} percent`).join(", ")}`}
+    >
+      <p className="text-sm font-semibold text-ink">{heading}</p>
+      {rows.map((r) => (
+        <div key={r.label} className="flex items-center gap-2 text-sm">
+          <span className="w-28 shrink-0 text-ink-muted">{r.label}</span>
+          <div className="h-5 flex-1 rounded bg-surface">
+            <div
+              className={`h-5 rounded ${r.broke ? "bg-wrong" : "bg-correct"}`}
+              style={{ width: `${r.value}%` }}
+            />
+          </div>
+          <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">
+            {r.value.toFixed(1)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ step 2a */
+
+const L_W = 640;
+const L_H = 210;
+const L_M = { top: 18, right: 16, bottom: 40, left: 56 };
+const L_IW = L_W - L_M.left - L_M.right;
+const L_IH = L_H - L_M.top - L_M.bottom;
+
+const LEDGER = PAGE17.ledger.primary;
+const L_MAX = Math.max(...LEDGER.map((r) => Math.max(r.gained, r.lost)));
+const L_ZERO = (L_IH * L_MAX) / (L_MAX + Math.max(...LEDGER.map((r) => r.lost)) * 1.6);
 
 /**
- * Line 2 of the recipe, drawn. Four sampled answers as dots at reward 1 or
- * 0, the group mean as a dashed rule (the deck's reference-rule idiom), and
- * each sample's push as an arrow FROM the rule TO its dot — the push
- * literally is the sample's distance from the group's own average. As the
- * dial raises the group's luck the rule chases the right answers: up-arrows
- * shrink, the lone dissenter's arrow stretches, and at a uniform group the
- * rule reaches the dots and every arrow vanishes.
+ * What page 6's curve is the difference of. Gains rise from the baseline, losses
+ * hang below it, so the thing the reader is meant to notice is that no rung is
+ * clean: there is a red stub under every one of them, including the two that
+ * look like unambiguous wins.
+ *
+ * The last rung is drawn like the others and captioned differently, because its
+ * emptiness is a fact about the axis rather than about the model.
  */
-function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number }) {
-  /*
-   * The viewBox is sized close to the column it renders into (~615px at the
-   * deck's desktop width). ChartFrame scales to width="100%", so a viewBox
-   * much wider than its container shrinks every label with it — at 720 the
-   * 9px slip captions rendered near 7px and the figure read as unreadable.
-   */
-  const width = 620;
-  /* top margin carries the problem, which used to be a text block above the
-     figure; the height grew with it so the plot itself did not shrink */
-  const height = 288;
-  /* right margin holds "group mean · 0.50" at 11px, which needs ~100px clear */
-  const margin = { top: 42, right: 106, bottom: 56, left: 62 };
-  const innerW = width - margin.left - margin.right;
-  const innerH = height - margin.top - margin.bottom;
-  const yOf = (r: number) => 12 + (1 - r) * (innerH - 24);
-  const colX = (i: number) => (innerW * (i + 0.5)) / 4;
-  const dotR = 7;
-
-  const k = rewards.slice(1).filter((r) => r === 1).length;
-  const title = `Line 2 of the recipe, drawn: four answers to 350 times 638 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 223,300, correct. The wrong answers are real slips: 219,800 from reading 638 as 628, 22,330 from dropping a zero, 213,300 from mis-adding the partials. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
-    k === 3 ? " The rule sits on the dots and every arrow has vanished: a uniform group teaches nothing." : ""
-  }`;
-
+function RungLedger({ active }: { active: number }) {
+  const band = L_IW / LEDGER.length;
+  const activeRung = active > 0 ? LEDGER[active - 1] : null;
   return (
-    <ChartFrame title={title} width={width} height={height} margin={margin}>
-      {/* the problem, inside the frame: it was a text block above the figure */}
-      <text x={0} y={-24} textAnchor="start" className="fill-ink font-mono text-[13px] font-semibold">
-        350 × 638 = ?
-      </text>
-      <text x={0} y={-10} textAnchor="start" className="fill-ink-muted text-[10px]">
-        the rule checks one thing: does the answer equal 223,300?
-      </text>
-
-      {/* reward axis: two ticks are the whole scale */}
-      {[1, 0].map((t) => (
-        <g key={t}>
-          <line x1={0} x2={innerW} y1={yOf(t)} y2={yOf(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[11px]">
-            reward {t}
-          </text>
-        </g>
-      ))}
-
-      {/* the group mean: the baseline, as the deck's dashed reference rule */}
-      <line
-        x1={0}
-        x2={innerW}
-        y1={yOf(mean)}
-        y2={yOf(mean)}
-        className="stroke-ink"
-        strokeWidth={1}
-        strokeDasharray="4 3"
-      />
-      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[11px] font-semibold">
-        group mean · {mean.toFixed(2)}
-      </text>
-
-      {/* one column per sample: dot, push arrow, labels */}
-      {rewards.map((r, i) => {
-        const px = colX(i);
-        const py = yOf(r);
-        const adv = r - mean;
-        const right = r === 1;
-        const wrong = OTHER_WRONGS[i - 1];
-        const up = adv > 0;
-        const yFrom = yOf(mean) + (up ? -2 : 2);
-        const yTo = py + (up ? dotR + 3 : -(dotR + 3));
+    <ChartFrame
+      title={`Answers gained and lost at each doubling of the token budget, on ${PAGE17.run.items} problems at ${PAGE17.run.primaryLabel}. ${LEDGER.map(
+        (r) => `${r.from_budget} to ${r.to_budget} tokens: ${r.gained} gained, ${r.lost} lost`,
+      ).join(". ")}. Every rung loses answers.`}
+      width={L_W}
+      height={L_H}
+      margin={L_M}
+      yLabel="answers"
+    >
+      <line x1={0} x2={L_IW} y1={L_ZERO} y2={L_ZERO} className="stroke-ink-muted" strokeWidth={1} />
+      {LEDGER.map((r, i) => {
+        const cx = i * band + band / 2;
+        const up = (r.gained / L_MAX) * (L_ZERO - 6);
+        const down = (r.lost / L_MAX) * (L_IH - L_ZERO - 14);
+        const on = activeRung === r;
         return (
-          <g key={i}>
-            {adv !== 0 ? (
-              <g className={up ? "stroke-correct fill-correct" : "stroke-wrong fill-wrong"}>
-                <line x1={px} x2={px} y1={yFrom} y2={yTo + (up ? 4 : -4)} strokeWidth={2} />
-                <polygon
-                  points={`${px},${yTo} ${px - 3.5},${yTo + (up ? 6 : -6)} ${px + 3.5},${yTo + (up ? 6 : -6)}`}
-                  stroke="none"
-                />
-                <text
-                  x={px + 9}
-                  y={(yFrom + yTo) / 2}
-                  dy="0.32em"
-                  textAnchor="start"
-                  stroke="none"
-                  className={`font-mono text-[11px] font-semibold ${up ? "fill-correct-ink" : "fill-wrong-ink"}`}
-                >
-                  {fmtPush(adv)}
-                </text>
-              </g>
-            ) : null}
-            {i === 0 ? (
-              <circle cx={px} cy={py} r={dotR + 4} fill="none" className="stroke-compute" strokeWidth={1.5} />
-            ) : null}
-            <circle
-              cx={px}
-              cy={py}
-              r={dotR}
-              className={`${right ? "fill-correct" : "fill-wrong"} stroke-canvas`}
-              strokeWidth={1.5}
+          <g key={r.to_budget} opacity={activeRung === null || on ? 1 : 0.45}>
+            <rect
+              x={cx - 26}
+              y={L_ZERO - up}
+              width={52}
+              height={up}
+              className="fill-correct"
+              opacity={on ? 1 : 0.75}
             />
-            <text x={px} y={innerH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] font-eyebrow uppercase tracking-wide">
-              sample {i + 1}
-            </text>
-            <text x={px} y={innerH + 31} textAnchor="middle" className="fill-ink font-mono text-[13px] font-semibold">
-              {right ? RIGHT_ANSWER : wrong.v}
+            <rect
+              x={cx - 26}
+              y={L_ZERO}
+              width={52}
+              height={down}
+              className="fill-wrong"
+              opacity={on ? 1 : 0.75}
+            />
+            {r.gained > 0 ? (
+              <text
+                x={cx}
+                y={L_ZERO - up - 5}
+                textAnchor="middle"
+                className="fill-ink text-[11px] font-semibold"
+              >
+                +{r.gained}
+              </text>
+            ) : (
+              <text x={cx} y={L_ZERO - 6} textAnchor="middle" className="fill-ink-muted text-[11px]">
+                nothing gained
+              </text>
+            )}
+            <text
+              x={cx}
+              y={L_ZERO + down + 12}
+              textAnchor="middle"
+              className="fill-wrong-ink text-[11px] font-semibold"
+            >
+              &minus;{r.lost}
             </text>
             <text
-              x={px}
-              y={innerH + 45}
+              x={cx}
+              y={L_IH + 16}
               textAnchor="middle"
-              className={i === 0 ? "fill-compute-ink text-[10px] font-semibold" : "fill-ink-muted text-[10px]"}
+              className={`text-[10px] ${on ? "fill-ink font-semibold" : "fill-ink-muted"}`}
             >
-              {i === 0 ? "watch this one" : right ? "" : wrong.slip}
+              {r.from_budget} to {r.to_budget}
             </text>
           </g>
         );
@@ -361,460 +232,455 @@ function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number
   );
 }
 
-/** A small legend swatch + label (page-11 idiom). */
-function Key({ shape, className, label }: { shape: "circle" | "diamond" | "line" | "dash"; className: string; label: string }) {
+/* ------------------------------------------------------------------ step 2b */
+
+type Seg = { text: string; tone: "plain" | "wrong" | "commit" } | { elided: number };
+
+/**
+ * Fold a chain down to what is worth reading: a head, the spans that carry the
+ * argument, and an honest count of the characters dropped between them. The
+ * elision has to state its size, or a reader cannot tell a tidy chain from a
+ * cropped one.
+ */
+function fold(
+  trace: string,
+  marks: { span: [number, number]; tone: "wrong" | "commit" }[],
+  head = 200,
+  pad = 96,
+): Seg[] {
+  // Snap a cut to the nearest space, or the fold lands mid-word and the elision reads
+  // as a rendering fault rather than as an omission.
+  const snap = (i: number, dir: 1 | -1): number => {
+    for (let k = 0; k < 40; k++) {
+      const j = i + dir * k;
+      if (j <= 0) return 0;
+      if (j >= trace.length) return trace.length;
+      if (/\s/.test(trace[j])) return j;
+    }
+    return i;
+  };
+  const keep: [number, number][] = [[0, snap(Math.min(head, trace.length), -1)]];
+  for (const m of marks) {
+    keep.push([
+      snap(Math.max(0, m.span[0] - pad), -1),
+      snap(Math.min(trace.length, m.span[1] + pad), 1),
+    ]);
+  }
+  keep.sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const r of keep) {
+    const last = merged[merged.length - 1];
+    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
+    else merged.push([...r] as [number, number]);
+  }
+
+  const out: Seg[] = [];
+  let cursor = 0;
+  for (const [s, e] of merged) {
+    if (s > cursor) out.push({ elided: s - cursor });
+    // Split this kept range around whichever marks fall inside it.
+    let at = s;
+    for (const m of marks.filter((m) => m.span[0] >= s && m.span[0] < e).sort((a, b) => a.span[0] - b.span[0])) {
+      if (m.span[0] > at) out.push({ text: trace.slice(at, m.span[0]), tone: "plain" });
+      out.push({ text: trace.slice(m.span[0], Math.min(m.span[1], e)), tone: m.tone });
+      at = Math.min(m.span[1], e);
+    }
+    if (at < e) out.push({ text: trace.slice(at, e), tone: "plain" });
+    cursor = e;
+  }
+  if (cursor < trace.length) out.push({ elided: trace.length - cursor });
+  return out;
+}
+
+const SP = PAGE17.specimen;
+
+/**
+ * One problem, one chain, the budget on a dial.
+ *
+ * The reveal the figure is built for is not "short is better". It is that the
+ * bad assumption is ALREADY on screen at 256 and 512 tokens and the model
+ * commits to the right answer anyway, then commits to the assumption's result
+ * once allowed to finish. That is control 1 drawn rather than asserted: the
+ * answer is coming from the commit, not from the working above it.
+ */
+function SpecimenChain({ budgetIndex }: { budgetIndex: number }) {
+  const row = SP.byBudget[budgetIndex];
+  const isEnd = !row.truncated;
+  const written = SP.zones.assumption[1] <= row.trace.length;
+  const segs = useMemo(() => {
+    const marks: { span: [number, number]; tone: "wrong" | "commit" }[] = [];
+    // The assumption is lit wherever it has been written, which at the middle cuts
+    // means it is on screen AND ignored by the commit below it. That is control 1
+    // drawn rather than asserted.
+    if (SP.zones.assumption[1] <= row.trace.length) {
+      marks.push({ span: SP.zones.assumption, tone: "wrong" });
+    }
+    if (!row.truncated) {
+      marks.push({ span: SP.zones.conclusion, tone: "wrong" });
+    } else if (row.commit !== null) {
+      marks.push({ span: [row.commit, row.trace.length], tone: "commit" });
+    }
+    return fold(row.trace, marks);
+  }, [row.trace, row.truncated, row.commit]);
+
   return (
-    <span className="flex items-center gap-1.5">
-      <span
-        aria-hidden="true"
-        className={`inline-block ${
-          shape === "line"
-            ? "h-0.5 w-4"
-            : shape === "dash"
-              ? "h-0 w-4 border-t border-dashed"
-              : shape === "diamond"
-                ? "h-3 w-3 rotate-45"
-                : "h-3 w-3 rounded-full"
-        } ${className}`}
-      />
-      {label}
-    </span>
+    <div className="flex flex-col gap-2 rounded-lg border border-grid bg-surface-raised p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+          {isEnd
+            ? `its own ending, ${row.own_tokens} tokens`
+            : `cut at ${row.budget} tokens, then made to commit`}
+        </p>
+        <p className={`text-sm font-semibold ${row.correct ? "text-correct-ink" : "text-wrong-ink"}`}>
+          answered <span className="font-mono">{tidyMath(row.extracted_answer ?? "")}</span>,{" "}
+          {row.correct ? "right" : "wrong"}
+        </p>
+      </div>
+      <p className="max-h-64 overflow-y-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-ink-muted">
+        {segs.map((s, i) =>
+          "elided" in s ? (
+            <span key={i} className="mx-1 rounded bg-surface px-1 text-[10px] not-italic text-ink-muted">
+              [{s.elided.toLocaleString()} more characters of working]
+            </span>
+          ) : (
+            <span
+              key={i}
+              className={
+                s.tone === "wrong"
+                  ? "rounded bg-wrong/20 px-0.5 text-ink"
+                  : s.tone === "commit"
+                    ? "rounded bg-correct/20 px-0.5 text-ink"
+                    : undefined
+              }
+            >
+              {tidyMath(s.text)}
+            </span>
+          ),
+        )}
+      </p>
+      {written ? (
+        <p className="text-xs text-ink-muted">
+          Lit in blue: {SP.zones.why}.
+          {!isEnd
+            ? " It is already written, and the forced commit below ignores it."
+            : " The box at the end is what it carries the assumption to."}
+        </p>
+      ) : (
+        <p className="text-xs text-ink-muted">
+          Cut before it makes its mistake. The assumption that costs it has not been written yet.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ step 3a */
+
+const R_W = 700;
+const R_H = 300;
+const R_M = { top: 24, right: 196, bottom: 46, left: 52 };
+const R_IW = R_W - R_M.left - R_M.right;
+const R_IH = R_H - R_M.top - R_M.bottom;
+
+const REL = PAGE17.reliability;
+const T_MIN = REL.temperatures[0];
+const T_MAX = REL.temperatures[REL.temperatures.length - 1];
+const rx = (t: number) => ((t - T_MIN) / (T_MAX - T_MIN)) * R_IW;
+
+/**
+ * The axis floor. Every line lives between 38 and 77, so a 0 baseline spent a
+ * third of the canvas on emptiness and squeezed five series into a band too
+ * narrow to follow. 100 stays on the axis because "no judge here is anywhere
+ * near perfect" is part of the claim; the floor is what gives way. Kept below
+ * the lowest measured point so no line is ever clipped by it.
+ */
+const R_FLOOR = 0.25;
+const ry = (r: number) => R_IH - ((r - R_FLOOR) / (1 - R_FLOOR)) * R_IH;
+
+/** The two lines the reader is meant to follow: the flat one and the one that falls. */
+const TRAINED = "best-of-N (skywork-prm)";
+const NO_JUDGE = "one chain";
+/** Both are a model asked to judge, and they land on the same point at the hot end. */
+const MODEL_JUDGES = ["best-of-N (self)", "best-of-N (qwen7b)"];
+
+/**
+ * The wedge's lower edge: the best of everything that is not the trained scorer,
+ * at each temperature, which is the fairest thing to charge the trained line
+ * against. Module level so the figure's annotation and the paragraph beneath it
+ * cannot quote different numbers for the same gap.
+ */
+const R_OTHERS = REL.lines.filter((l) => !l.trained);
+const R_BEST_OTHER = REL.temperatures.map((t, i) =>
+  Math.max(...R_OTHERS.map((o) => o.points[i].reliability)),
+);
+const R_HOT = REL.temperatures.length - 1;
+const TRAINED_CLEAR_PTS =
+  (REL.trained.points[R_HOT].reliability - R_BEST_OTHER[R_HOT]) * 100;
+
+/**
+ * Which line the trained scorer is actually being charged against at each column.
+ * The reader who moves the dial is owed the name, not just the gap: "clear of what"
+ * is half the claim.
+ *
+ * ALL of the lines that reach the top, not the first one found. On this run the
+ * 0.60 column is an exact tie between the majority vote and the bigger model, and
+ * naming only one of them would tell the reader that one selector was uniquely
+ * best at a setting where two were level.
+ */
+const R_TIE_EPS = 1e-9;
+const R_BEST_OTHER_LINES = REL.temperatures.map((t, i) =>
+  R_OTHERS.filter((o) => Math.abs(o.points[i].reliability - R_BEST_OTHER[i]) < R_TIE_EPS),
+);
+
+/** "majority vote", or "majority vote and judged by a bigger model" when they tie. */
+const bestOtherLabel = (i: number): string => {
+  const ls = R_BEST_OTHER_LINES[i].map((l) => l.label);
+  if (ls.length === 1) return ls[0];
+  return `${ls.slice(0, -1).join(", ")} and ${ls[ls.length - 1]}`;
+};
+
+/** The trained scorer's lead over the best alternative, in points, at one column. */
+const gapAt = (i: number) => (REL.trained.points[i].reliability - R_BEST_OTHER[i]) * 100;
+
+/**
+ * "1 point behind", never "1 points behind". The coldest column rounds to exactly
+ * one point, so the singular is reachable on first render rather than being a
+ * theoretical case.
+ */
+const pointsWord = (n: number) => (Math.abs(Number(n.toFixed(0))) === 1 ? "point" : "points");
+
+/**
+ * The sweep's coldest column is the one that makes the page's point, so it is where
+ * the dial starts: there the trained scorer is BEHIND, and a reader who drags from
+ * there watches a deficit turn into a lead without any judge getting better. If a
+ * rerun ever removes that inversion, the crossing the figure is built around is gone
+ * and the module says so rather than opening on a column that no longer surprises.
+ */
+const R_START = 0;
+if (gapAt(R_START) >= 0) {
+  // Typed, as lib/page17.ts does for every other data invariant on this page's
+  // run: a data failure has to be distinguishable from an ordinary bug.
+  throw new Page17DataError(
+    "page 14's reliability dial opens on the column where the trained scorer trails, and on " +
+      "this run it leads there, so the sweep no longer crosses",
   );
 }
 
 /**
- * The section-2 chart: BOTH of the section's variables against training step.
- * Accuracy (left axis, correct hue) saturates while average response length
- * (right axis, compute hue) keeps climbing — that divergence is the argument,
- * so both series live on one plot, and an annotation under the length curve
- * states the fact the divergence rests on: no term in the reward mentions
- * length. A dashed rule marks the (illustrative) aha step so the chart and
- * the skeleton below are visibly the same moment.
+ * Push overlapping right-hand labels apart. Three selectors land within a point
+ * of each other at the hottest column, and stacked-on-top-of-each-other labels
+ * would read as a rendering fault rather than as a tie.
  */
-function TrainingChart({ step, pass, length }: { step: number; pass: number; length: number }) {
-  const training = curves.deepseekTraining;
-  const { lengthStart, lengthEnd } = training.fit!.params;
+function dodge(ys: number[], gap = 13): number[] {
+  const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
+  for (let i = 1; i < order.length; i++) {
+    if (order[i].y - order[i - 1].y < gap) order[i].y = order[i - 1].y + gap;
+  }
+  const out = new Array<number>(ys.length);
+  for (const o of order) out[o.i] = o.y;
+  return out;
+}
 
-  const width = 720;
-  const height = 320;
-  const margin = { ...CHART_MARGIN, right: 44 };
-  const innerW = width - margin.left - margin.right;
-  const innerH = height - margin.top - margin.bottom;
-  const x = scaleLinear().domain([0, MAX_STEP]).range([0, innerW]);
-  const yAcc = scaleLinear().domain([0, 90]).range([innerH, 0]);
-  const yLen = scaleLinear().domain([0, 10000]).range([innerH, 0]);
+/**
+ * Reliability against the temperature that buys candidate diversity, every line
+ * measured at one candidate depth so temperature is the only thing moving.
+ *
+ * The claim is a CROSSING and not a column: at the coldest setting the trained
+ * reward model is mid-pack, and by the hottest it leads every model-as-judge by
+ * a wide margin, because it is the only line that does not decay. So the figure
+ * is built to be read left to right. The widening wedge between the trained line
+ * and the best model-judge is drawn as area, which is the comparison the reader
+ * would otherwise have to do four times by eye. 100 stays on the axis because
+ * "no judge here is anywhere near perfect" is also page 17's point; the floor
+ * does not, because no line goes near it. Two lines carry the argument and are
+ * the two drawn to be followed: the trained scorer, flat, and the unexamined
+ * chain, falling furthest. The three in between are the field they move against.
+ */
+function ReliabilitySweep({ tempIndex }: { tempIndex: number }) {
+  const trained = REL.trained;
+  // Five labels at the right edge, three of them inside a few points of each
+  // other, read as a rendering fault. The two model-as-judge lines finish on the
+  // same value, so they get one label between them rather than two stacked on a
+  // single point. If a rerun ever pulls them apart, they label themselves again.
+  const endOf = (l: (typeof REL.lines)[number]) => l.points[l.points.length - 1].reliability;
+  const judgeEnds = REL.lines.filter((l) => MODEL_JUDGES.includes(l.selector)).map(endOf);
+  const mergeJudges =
+    judgeEnds.length === MODEL_JUDGES.length &&
+    Math.max(...judgeEnds) - Math.min(...judgeEnds) <= 0.02;
 
-  const lengthAt = (s: number) => lengthStart + (lengthEnd - lengthStart) * (s / MAX_STEP);
-  const accPath = training.points.map((p, i) => `${i ? "L" : "M"}${x(p.x)},${yAcc(p.y)}`).join("");
-  const lenPath = training.points
-    .map((p, i) => `${i ? "L" : "M"}${x(p.x)},${yLen(lengthAt(p.x))}`)
-    .join("");
-
-  const title = `R1-Zero across RL training, two y axes. Left axis, AIME 2024 pass at 1: from 15.6 percent at step 0 to 71.0 percent at step ${MAX_STEP}, flattening late. Right axis, average response length: from about ${lengthStart.toLocaleString()} to about ${lengthEnd.toLocaleString()} tokens, still climbing after accuracy flattens; annotations note that no term in the reward mentions length and that nobody is turning this dial; the axis is labelled as page 11's test-time compute. A dashed rule at step ${AHA_STEP.toLocaleString()} marks where the aha trace appears (illustrative placement). Marker at step ${step.toLocaleString()}: ${pass.toFixed(1)} percent, about ${length.toLocaleString()} tokens.`;
+  const entries = REL.lines.flatMap((l) => {
+    const tone = l.trained
+      ? "fill-compute-ink font-semibold"
+      : l.selector === NO_JUDGE
+        ? "fill-wrong-ink font-semibold"
+        : "fill-ink-muted";
+    const leader = l.trained
+      ? "stroke-compute"
+      : l.selector === NO_JUDGE
+        ? "stroke-wrong"
+        : "stroke-grid";
+    if (mergeJudges && MODEL_JUDGES.includes(l.selector)) {
+      if (l.selector !== MODEL_JUDGES[0]) return [];
+      return [
+        {
+          key: "model-judges",
+          text: "two model judges",
+          y: ry(judgeEnds.reduce((a, b) => a + b, 0) / judgeEnds.length),
+          tone,
+          leader,
+        },
+      ];
+    }
+    return [{ key: l.selector, text: l.label, y: ry(endOf(l)), tone, leader }];
+  });
+  const labelYs = dodge(entries.map((e) => e.y));
 
   return (
-    <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="RL training step">
-      {/* gridlines + left (accuracy) ticks */}
-      {[0, 20, 40, 60, 80].map((t) => (
-        <g key={`y${t}`}>
-          <line x1={0} x2={innerW} y1={yAcc(t)} y2={yAcc(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-6} y={yAcc(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
-            {t}
+    <ChartFrame
+      title={`Reliability of five ways of picking an answer, against sampling temperature, all measured over ${REL.depth} candidates. ${REL.lines
+        .map(
+          (l) =>
+            `${l.label}: ${l.points.map((p) => `${pct(p.reliability)} at temperature ${p.temperature}`).join(", ")}`,
+        )
+        .join(". ")}. Every judge that is a model asked to judge decays; the trained reward model does not. The dial is on temperature ${REL.temperatures[tempIndex]}, where the trained reward model is ${Math.abs(gapAt(tempIndex)).toFixed(0)} ${pointsWord(gapAt(tempIndex))} ${gapAt(tempIndex) >= 0 ? "clear of" : "behind"} ${bestOtherLabel(tempIndex)}, the best of the rest.`}
+      width={R_W}
+      height={R_H}
+      margin={R_M}
+      xLabel="sampling temperature, the knob that buys candidate diversity"
+      yLabel="reliability (%)"
+    >
+      {[0.25, 0.5, 0.75, 1].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={R_IW} y1={ry(t)} y2={ry(t)} className="stroke-grid" strokeWidth={1} />
+          <text x={-8} y={ry(t) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t * 100}
           </text>
         </g>
       ))}
-      {/* right (length) ticks, in the length line's hue */}
-      {[0, 5000, 10000].map((t) => (
-        <text
-          key={`r${t}`}
-          x={innerW + 6}
-          y={yLen(t)}
-          dy="0.32em"
-          textAnchor="start"
-          className="fill-compute-ink text-[10px]"
-        >
-          {t === 0 ? "0" : `${t / 1000}k`}
-        </text>
-      ))}
-      {[0, 2000, 4000, 6000, 8000].map((t) => (
-        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-          {t === 0 ? "0" : `${t / 1000}k`}
-        </text>
-      ))}
 
-      {/* axis titles, color-bound to their series */}
-      <text
-        transform={`translate(-32,${innerH / 2}) rotate(-90)`}
-        textAnchor="middle"
-        className="fill-correct-ink text-xs"
-      >
-        pass@1 (%)
-      </text>
-      {/* the right axis names itself in the deck's terms: this IS page 11's x
-          axis. It used to cost a whole sentence of prose above the figure. */}
-      <text
-        transform={`translate(${innerW + 36},${innerH / 2}) rotate(90)`}
-        textAnchor="middle"
-        className="fill-compute-ink text-xs"
-      >
-        avg response (tokens) · page 11&apos;s test-time compute
-      </text>
-
-      {/* the aha step: the chart's moment is the skeleton's moment */}
-      <line
-        x1={x(AHA_STEP)}
-        x2={x(AHA_STEP)}
-        y1={0}
-        y2={innerH}
-        className="stroke-ink-muted"
-        strokeWidth={1}
-        strokeDasharray="4 3"
+      {/* The gap the trained model opens up, as area rather than as four subtractions.
+          It is a sliver at the cold end and a wedge at the hot end, and it inverts at
+          the left because the vote is genuinely ahead there. That inversion is the
+          crossing, so it is drawn rather than tidied away. */}
+      <polygon
+        className="fill-compute opacity-[0.16]"
+        points={[
+          ...REL.temperatures.map((t, i) => `${rx(t)},${ry(trained.points[i].reliability)}`),
+          ...REL.temperatures.map((t, i) => `${rx(t)},${ry(R_BEST_OTHER[i])}`).reverse(),
+        ].join(" ")}
       />
-      <text x={x(AHA_STEP) + 4} y={12} textAnchor="start" className="fill-ink-muted text-[10px]">
-        the aha appears
-      </text>
 
-      <path d={lenPath} fill="none" className="stroke-compute" strokeWidth={2.5} />
-      <path d={accPath} fill="none" className="stroke-correct" strokeWidth={2.5} />
-
-      {/* the fact the divergence rests on, said in the length line's hue */}
-      <text
-        x={innerW * 0.42}
-        y={innerH - 24}
-        textAnchor="middle"
-        className="fill-compute-ink text-[10px]"
-      >
-        no term in the reward mentions length
-      </text>
-      <text
-        x={innerW * 0.42}
-        y={innerH - 11}
-        textAnchor="middle"
-        className="fill-compute-ink text-[10px] font-semibold"
-      >
-        nobody is turning this dial
-      </text>
-
-      {/* legend, top-left (the curves start bottom-left) */}
-      <rect x={8} y={8} width={10} height={3} className="fill-correct" />
-      <text x={22} y={12} className="fill-ink text-[10px]">AIME pass@1 · left axis</text>
-      <rect x={8} y={22} width={10} height={3} className="fill-compute" />
-      <text x={22} y={26} className="fill-ink text-[10px]">avg response length · right axis</text>
-
-      {/* the slider's marker, dotted onto both series */}
-      <line
-        x1={x(step)}
-        x2={x(step)}
-        y1={0}
-        y2={innerH}
-        className="stroke-compute"
-        strokeWidth={1}
-        strokeDasharray="3 3"
-      />
-      <circle cx={x(step)} cy={yLen(length)} r={5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
-      <circle cx={x(step)} cy={yAcc(pass)} r={5} className="fill-correct stroke-canvas" strokeWidth={1.5} />
-    </ChartFrame>
-  );
-}
-
-/** Geometry shared by the skeleton's rows. */
-const SK_BLOCK_W = 46;
-const SK_BLOCK_H = 16;
-const SK_GAP = 16;
-const skX = (i: number) => 8 + i * (SK_BLOCK_W + SK_GAP);
-
-/** One row of forward steps: neutral blocks joined by arrows, optionally
-    dashed (the aha's second pass) and optionally ending in an answer pill. */
-function SkeletonRow({
-  y,
-  count,
-  dashed = false,
-  answer = false,
-  answerCorrect = false,
-}: {
-  y: number;
-  count: number;
-  dashed?: boolean;
-  answer?: boolean;
-  answerCorrect?: boolean;
-}) {
-  const mid = y + SK_BLOCK_H / 2;
-  return (
-    <g>
-      {Array.from({ length: count }, (_, i) => (
-        <g key={i}>
-          <rect
-            x={skX(i)}
-            y={y}
-            width={SK_BLOCK_W}
-            height={SK_BLOCK_H}
-            rx={3}
-            className={dashed ? "stroke-correct" : "fill-grid"}
-            fill={dashed ? "none" : undefined}
-            strokeDasharray={dashed ? "3 2" : undefined}
-          />
-          {i < count - 1 || answer ? (
+      {/* The wedge alone is a shape; this gives it a number, at the column the reader
+          has the dial on. It is drawn after the wedge and before the lines so the
+          measured points stay on top of their own measurement. */}
+      {(() => {
+        const gx = rx(REL.temperatures[tempIndex]);
+        const yT = ry(trained.points[tempIndex].reliability);
+        const yO = ry(R_BEST_OTHER[tempIndex]);
+        const gap = gapAt(tempIndex);
+        // Anchor the label away from the plot edge, or it clips at either end.
+        const leftHalf = gx < R_IW / 2;
+        return (
+          <g>
             <line
-              x1={skX(i) + SK_BLOCK_W + 2}
-              x2={skX(i + 1) - 5}
-              y1={mid}
-              y2={mid}
+              x1={gx}
+              x2={gx}
+              y1={0}
+              y2={R_IH}
               className="stroke-ink-muted"
               strokeWidth={1}
-              markerEnd="url(#skel-fwd)"
+              strokeDasharray="3 3"
+              strokeOpacity={0.7}
             />
-          ) : null}
-        </g>
-      ))}
-      {answer ? (
-        <g>
-          <rect
-            x={skX(count)}
-            y={y}
-            width={58}
-            height={SK_BLOCK_H}
-            rx={SK_BLOCK_H / 2}
-            fill="none"
-            className={answerCorrect ? "stroke-correct" : "stroke-ink-muted"}
-          />
-          <text
-            x={skX(count) + 29}
-            y={mid}
-            dy="0.32em"
-            textAnchor="middle"
-            className={`text-[9px] ${answerCorrect ? "fill-correct-ink" : "fill-ink-muted"}`}
-          >
-            answer
-          </text>
-        </g>
-      ) : null}
-    </g>
-  );
-}
-
-/**
- * The trace as a shape, no text. Early and mid are strictly forward chains
- * of different lengths; the aha stage adds the only structure that matters:
- * an interrupt node and a loop back to the trace's own first line, then a
- * second, re-deriving pass. This is the abstraction of the paper's Table-3
- * trace — the structure it exhibits, not the words it uses.
- */
-function TraceSkeleton({ stage }: { stage: Stage }) {
-  const label =
-    stage === "early"
-      ? "Trace skeleton, early in training: three steps forward, then an answer. Nothing looks back. Schematic, structure only, no text."
-      : stage === "mid"
-        ? "Trace skeleton, mid training: six steps forward, then an answer. Longer, still strictly forward. Schematic, structure only, no text."
-        : "Trace skeleton after the aha: four steps forward, the last of them outlined as the step the trace doubts, then the trace interrupts itself and loops back to its own first line; a second pass of five dashed steps re-derives the solution and ends in an answer. Schematic, structure only, no text.";
-
-  const height = stage === "aha" ? 140 : 52;
-
-  return (
-    <svg role="img" aria-label={label} viewBox={`0 0 560 ${height}`} className="w-full">
-      <defs>
-        <marker id="skel-fwd" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
-          <path d="M0,0 L5,3 L0,6" fill="none" className="stroke-ink-muted" strokeWidth={1} />
-        </marker>
-        <marker id="skel-loop" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
-          <path d="M0,0 L6,3.5 L0,7" fill="none" className="stroke-correct" strokeWidth={1.2} />
-        </marker>
-      </defs>
-
-      <text x={8} y={14} className="fill-ink-muted text-[9px] font-eyebrow uppercase tracking-wide">
-        {stage === "aha" ? "first pass" : "one pass"}
-      </text>
-
-      {stage === "early" ? <SkeletonRow y={22} count={3} answer /> : null}
-      {stage === "mid" ? <SkeletonRow y={22} count={6} answer /> : null}
-
-      {stage === "aha" ? (
-        <g>
-          {/* first pass: four steps, then the interrupt */}
-          <SkeletonRow y={22} count={4} />
-          {/*
-           * The step the trace is about to doubt, marked so the interrupt has a
-           * visible reason. Compute hue, dashed: attention, not error. It must
-           * never take the wrong hue — nothing ever scored this step (the reward
-           * sees only the final answer), so asserting a located mistake here
-           * would contradict the outcome-only reward in section 1.
-           */}
-          <rect
-            x={skX(3)}
-            y={22}
-            width={SK_BLOCK_W}
-            height={SK_BLOCK_H}
-            rx={3}
-            fill="none"
-            className="stroke-compute"
-            strokeWidth={1.5}
-            strokeDasharray="3 2"
-          />
-          <line
-            x1={skX(3) + SK_BLOCK_W + 2}
-            x2={skX(4) - 5}
-            y1={30}
-            y2={30}
-            className="stroke-ink-muted"
-            strokeWidth={1}
-            markerEnd="url(#skel-fwd)"
-          />
-          <rect x={skX(4)} y={22} width={64} height={SK_BLOCK_H} rx={3} fill="none" className="stroke-correct" strokeWidth={1.5} />
-          <text x={skX(4) + 32} y={30} dy="0.32em" textAnchor="middle" className="fill-correct-ink text-[9px] font-semibold">
-            interrupt
-          </text>
-
-          {/* the loop: back to the trace's own first line */}
-          <path
-            d={`M ${skX(4) + 32} 42 C ${skX(4) + 32} 76, 30 54, 30 90`}
-            fill="none"
-            className="stroke-correct"
-            strokeWidth={1.5}
-            markerEnd="url(#skel-loop)"
-          />
-          <text x={160} y={82} textAnchor="middle" className="fill-correct-ink text-[9px]">
-            back to line 1
-          </text>
-
-          {/* second pass: re-derivation, ending in the answer */}
-          <SkeletonRow y={96} count={5} dashed answer answerCorrect />
-          <text x={8} y={130} className="fill-ink-muted text-[9px] font-eyebrow uppercase tracking-wide">
-            second pass
-          </text>
-        </g>
-      ) : null}
-    </svg>
-  );
-}
-
-/**
- * The section-3 chart, reframed for the section's thesis. Score is the axis;
- * size is just row order. One row per distilled model (smallest at the top),
- * the 671B teacher as the bottom row, and the closed models as vertical
- * dashed rules — they have scores but no disclosed sizes, so rules, not
- * rows. Reading down the rows, the dots march right through the closed
- * models' rules as size grows; Llama-70B sitting left of Qwen-32B is a
- * visible kink. Clicking a row (or a chip below) picks it.
- */
-function DistillDotPlot({ picked, onPick }: { picked: number; onPick: (size: number) => void }) {
-  const distill = curves.deepseekDistill;
-  const P = distill.fit!.params;
-  const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
-
-  const width = 720;
-  const height = 280;
-  const margin = { top: 26, right: 16, bottom: 40, left: 118 };
-  const innerW = width - margin.left - margin.right;
-  const innerH = height - margin.top - margin.bottom;
-  const x = scaleLinear().domain([0, 90]).range([0, innerW]);
-  const rows = DISTILLS.length + 1;
-  const rowH = innerH / rows;
-  const rowY = (i: number) => (i + 0.5) * rowH;
-
-  const title = `AIME 2024 pass at 1 as a horizontal dot plot, one row per model, smallest at the top. Rows: ${DISTILLS.map(
-    (d) => `${d.label} ${aimeOf(d.size)} percent`,
-  ).join(", ")}, and the R1 teacher, a ${P.teacherParamsB}B mixture-of-experts, at ${P.r1Aime} percent. Dashed vertical rules mark closed models with undisclosed sizes: GPT-4o at ${P.gpt4oAime} percent and OpenAI o1-mini at ${P.o1miniAime} percent; a dotted rule marks the teacher's score. Reading down the rows, the dots move right past the closed-model rules; Llama-70B sits left of Qwen-32B. ${DISTILLS.find((d) => d.size === picked)?.label} is selected.`;
-
-  return (
-    <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="AIME 2024 pass@1 (%)">
-      {/* vertical gridlines + x ticks */}
-      {[0, 20, 40, 60, 80].map((t) => (
-        <g key={`x${t}`}>
-          <line x1={x(t)} x2={x(t)} y1={0} y2={innerH} className="stroke-grid" strokeWidth={0.5} />
-          <text x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-            {t}
-          </text>
-        </g>
-      ))}
-
-      {/* closed models: rules, not rows — their sizes are undisclosed */}
-      {[
-        { label: "GPT-4o", v: P.gpt4oAime, anchor: "start" as const, dx: 4 },
-        { label: "o1-mini", v: P.o1miniAime, anchor: "end" as const, dx: -4 },
-      ].map((r) => (
-        <g key={r.label}>
-          <line
-            x1={x(r.v)}
-            x2={x(r.v)}
-            y1={0}
-            y2={innerH}
-            className="stroke-ink-muted"
-            strokeWidth={1}
-            strokeDasharray="4 3"
-          />
-          <text
-            x={x(r.v) + r.dx}
-            y={-8}
-            textAnchor={r.anchor}
-            className="fill-ink-muted text-[10px]"
-          >
-            {r.label} · {r.v}%
-          </text>
-        </g>
-      ))}
-
-      {/* the teacher's score, ruled so "within seven points" is visible */}
-      <line
-        x1={x(P.r1Aime)}
-        x2={x(P.r1Aime)}
-        y1={0}
-        y2={innerH}
-        className="stroke-correct"
-        strokeWidth={1}
-        strokeDasharray="2 3"
-      />
-      <text x={x(P.r1Aime) - 4} y={-8} textAnchor="end" className="fill-correct-ink text-[10px]">
-        R1 teacher · {P.r1Aime}%
-      </text>
-
-      {/* the six distills, one row each */}
-      {DISTILLS.map((d, i) => {
-        const py = rowY(i);
-        const px = x(aimeOf(d.size));
-        const active = d.size === picked;
-        return (
-          <g key={d.size} onClick={() => onPick(d.size)} className="cursor-pointer" aria-hidden="true">
-            <rect x={-margin.left} y={py - rowH / 2} width={margin.left + innerW} height={rowH} fill="transparent" />
-            <line x1={0} x2={innerW} y1={py} y2={py} className="stroke-grid" strokeWidth={0.5} />
+            <line
+              x1={gx}
+              x2={gx}
+              y1={yT}
+              y2={yO}
+              className={gap >= 0 ? "stroke-compute" : "stroke-wrong"}
+              strokeWidth={3}
+            />
             <text
-              x={-8}
-              y={py}
-              dy="0.32em"
-              textAnchor="end"
-              className={`text-[10px] ${active ? "fill-ink font-semibold" : "fill-ink-muted"}`}
+              x={gx + (leftHalf ? 8 : -8)}
+              y={(yT + yO) / 2 + 3}
+              textAnchor={leftHalf ? "start" : "end"}
+              className={`text-[10px] font-semibold ${gap >= 0 ? "fill-compute-ink" : "fill-wrong-ink"}`}
             >
-              {d.label}
+              {gap >= 0
+                ? `${gap.toFixed(0)} ${pointsWord(gap)} clear`
+                : `${Math.abs(gap).toFixed(0)} ${pointsWord(gap)} behind`}
             </text>
-            {active ? <circle cx={px} cy={py} r={9} fill="none" className="stroke-ink" strokeWidth={1.5} /> : null}
-            {d.family === "llama" ? (
-              <rect
-                x={px - 4}
-                y={py - 4}
-                width={8}
-                height={8}
-                transform={`rotate(45 ${px} ${py})`}
-                className="fill-wrong stroke-canvas"
-                strokeWidth={1.5}
-              />
-            ) : (
-              <circle cx={px} cy={py} r={4.5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
-            )}
-            {active ? (
-              <text x={px + 13} y={py} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
-                {aimeOf(d.size).toFixed(1)}%
-              </text>
-            ) : null}
+          </g>
+        );
+      })()}
+
+      {REL.temperatures.map((t, i) => (
+        <text
+          key={t}
+          x={rx(t)}
+          y={R_IH + 16}
+          textAnchor="middle"
+          className={
+            i === tempIndex ? "fill-ink text-[11px] font-semibold" : "fill-ink-muted text-[11px]"
+          }
+        >
+          {t.toFixed(1)}
+        </text>
+      ))}
+
+      {REL.lines.map((line) => {
+        const falls = line.selector === NO_JUDGE;
+        const stroke = line.trained ? "stroke-compute" : falls ? "stroke-wrong" : "stroke-ink-muted";
+        const fill = line.trained ? "fill-compute" : falls ? "fill-wrong" : "fill-ink-muted";
+        return (
+          <g key={line.selector}>
+            <polyline
+              fill="none"
+              className={stroke}
+              strokeWidth={line.trained || falls ? 2.5 : 1.25}
+              strokeOpacity={line.trained || falls ? 1 : 0.6}
+              points={line.points.map((p) => `${rx(p.temperature)},${ry(p.reliability)}`).join(" ")}
+            />
+            {line.points.map((p, i) => {
+              // The two the dial is comparing get a ring at the selected column, so
+              // the gap bar is visibly drawn between two measured points and not
+              // between a point and an abstraction.
+              const charged =
+                i === tempIndex &&
+                (line.trained ||
+                  R_BEST_OTHER_LINES[tempIndex].some((o) => o.selector === line.selector));
+              return (
+                <circle
+                  key={p.temperature}
+                  cx={rx(p.temperature)}
+                  cy={ry(p.reliability)}
+                  r={charged ? 5 : line.trained || falls ? 3.5 : 2}
+                  className={fill}
+                  stroke={charged ? "currentColor" : undefined}
+                  strokeWidth={charged ? 1.5 : undefined}
+                  strokeOpacity={charged ? 1 : undefined}
+                />
+              );
+            })}
           </g>
         );
       })}
 
-      {/* the teacher's row, at the bottom: the biggest model, the rightmost dot */}
-      <g aria-hidden="true">
-        <line x1={0} x2={innerW} y1={rowY(rows - 1)} y2={rowY(rows - 1)} className="stroke-grid" strokeWidth={0.5} />
-        <text x={-8} y={rowY(rows - 1)} dy="0.32em" textAnchor="end" className="fill-ink text-[10px] font-semibold">
-          R1 teacher · {P.teacherParamsB}B
-        </text>
-        <circle cx={x(P.r1Aime)} cy={rowY(rows - 1)} r={6} className="fill-correct stroke-canvas" strokeWidth={1.5} />
-      </g>
+      {entries.map((e, i) => (
+        <g key={`label-${e.key}`}>
+          <line
+            x1={R_IW}
+            x2={R_IW + 8}
+            y1={e.y}
+            y2={labelYs[i]}
+            className={e.leader}
+            strokeWidth={1}
+          />
+          <text x={R_IW + 12} y={labelYs[i] + 3} className={`text-[10px] ${e.tone}`}>
+            {e.text}
+          </text>
+        </g>
+      ))}
     </ChartFrame>
   );
 }
@@ -822,43 +688,11 @@ function DistillDotPlot({ picked, onPick }: { picked: number; onPick: (size: num
 export function Page14() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-  const training = curves.deepseekTraining;
-  const distill = curves.deepseekDistill;
-  const { cons64, lengthStart, lengthEnd } = training.fit!.params;
-  const P = distill.fit!.params;
+  const huang = curves.selfCorrection;
+  const h = huang.fit!.params;
 
-  const [step, setStep] = useState(0);
-  const [pickedSize, setPickedSize] = useState(14);
-  /* — step 1: how many of the OTHER three samples also get 223,300 — */
-  const [luck, setLuck] = useState(1);
-
-  const rewards: number[] = [1, ...OTHER_WRONGS.map((_, i) => (i < luck ? 1 : 0))];
-  const mean = rewards.reduce((a, b) => a + b, 0) / rewards.length;
-  const uniform = luck === 3;
-  const push1 = 1 - mean;
-  const setLuckAnd = (v: number) => {
-    setLuck(v);
-    recordInteraction(PAGE_N);
-  };
-  const LUCK_READ: Record<number, string> = {
-    0: `Sample 1 is the only right answer in the group: the biggest push on offer (+${push1.toFixed(2)}).`,
-    1: `Same right answer, luckier group: sample 1's push drops to +${push1.toFixed(2)}.`,
-    2: `Luckier still: +${push1.toFixed(2)}. Now watch sample 4: a wrong answer in a mostly-right group is punished hardest (−${mean.toFixed(2)}). Rarity amplifies the signal in both directions.`,
-    3: "",
-  };
-
-  /* — step 2: the scrubber — */
-  const pass = interpolate(training, step);
-  const length = Math.round(lengthStart + (lengthEnd - lengthStart) * (step / MAX_STEP));
-  const stage: Stage = step >= AHA_STEP ? "aha" : step >= MID_STEP ? "mid" : "early";
-
-  /* — step 3: the distills — */
-  const picked = DISTILLS.find((d) => d.size === pickedSize)!;
-  const paramRatio = Math.round(P.teacherParamsB / picked.size);
-  const pick = (size: number) => {
-    setPickedSize(size);
-    recordInteraction(PAGE_N);
-  };
+  const [budgetIndex, setBudgetIndex] = useState(0);
+  const [tempIndex, setTempIndex] = useState(R_START);
 
   return (
     <article className="flex flex-col gap-6">
@@ -872,338 +706,344 @@ export function Page14() {
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        Page 13 closed with four questions about what sits behind the thinking dial, and no way to
-        answer any of them from outside. In January 2025, DeepSeek published all of it: algorithm,
-        weights, training curve, and a chain that stops mid-solution to re-check its own work.{" "}
-        <strong className="text-ink">Where does the backtracking come from?</strong>
-        <Cite n={REF.r1} />
+        For thirteen pages the dial has mostly pointed one way: more samples, deeper search, longer
+        chains, more accuracy. This page is the fine print. Left alone, models{" "}
+        <strong className="text-ink">cannot reliably fix their own mistakes</strong>, thinking
+        longer can <strong className="text-ink">subtract</strong> accuracy, and the verifiers doing
+        the rescuing are fallible themselves.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the recipe */}
+        {/* Step 1 — intrinsic self-correction fails */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. The recipe: the group grades itself
+            1. Fix your mistakes
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              GRPO · rule-based reward · no worked examples
+              verbatim published numbers
             </span>
           </h2>
-
-          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
-            <p className="text-ink">
-              <strong>R1-Zero</strong> deletes the usual supervised warm-up entirely and starts RL
-              from a plain base model, with <strong>no worked examples at all</strong>: only
-              problems whose final answers can be checked. The whole recipe,{" "}
-              <strong>Group Relative Policy Optimization</strong>, fits in five lines:
-              <Cite n={REF.grpo} />
-            </p>
-
-            <figure className="m-0 flex flex-col gap-2">
-              <div className="flex flex-col gap-1 rounded-lg border border-dashed border-grid bg-surface-raised p-3 font-mono text-sm">
-                {PSEUDO.map((line, i) => (
-                  <div key={i} className="flex flex-wrap items-baseline gap-x-3">
-                    <code className="whitespace-pre text-ink">{line.code}</code>
-                    {line.note ? (
-                      <span className="text-xs text-compute-ink">{`# ${line.note}`}</span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-              {/* the PPO contrast, as a note ON the code rather than a fourth
-                  body paragraph: one fact, one sentence (review) */}
-              <figcaption className="text-xs text-ink-muted">
-                no critic network anywhere, which at 671B parameters is what made RL at this scale
-                affordable: PPO, the standard alternative, learns its baseline from a second
-                network about as large as the policy itself
-              </figcaption>
-            </figure>
-
-            <p className="text-ink">
-              Line 2 should look familiar. <strong>Page 7 sampled many chains and picked among
-              them at answer time</strong>, then threw every sample away once the vote was
-              counted. GRPO runs the same sampling during training and keeps what the winners did
-              in the weights: sampling paid for once, instead of on every question.
-            </p>
-
-            {/*
-             * The section's central figure, at full card width in page 11's
-             * grammar: figure, fine-print line, dial beneath. It used to sit
-             * inside a nested dashed card, whose padding stacked on the
-             * section card's and squeezed the chart into a column narrow
-             * enough to shrink every label past reading (review).
-             */}
-            {/*
-             * The chart's own setup used to be three blocks above it: the
-             * problem line, a paragraph saying the wrong answers are real
-             * slips, and the drag instruction. The problem is now the chart's
-             * title, the slip labels under each dot already make the second
-             * point, and the instruction moved to the margin Try-it note,
-             * which is page 2's grammar and which this section lacked.
-             */}
-            <figure className="m-0 flex flex-col gap-2 border-t border-dashed border-grid pt-4">
-              <GroupBaselineChart rewards={rewards} mean={mean} />
-              <figcaption className="text-xs text-ink-muted">
-                each sample&apos;s push is its distance from the dashed rule, its reward minus the
-                group mean (GRPO then divides by the group&apos;s spread)
-              </figcaption>
-            </figure>
-
-            <div className="flex flex-col gap-3">
-              <Slider
-                label="of the other three samples, how many are also right"
-                min={0}
-                max={3}
-                step={1}
-                ticks={[0, 1, 2, 3]}
-                value={luck}
-                onChange={setLuckAnd}
+          <p className="text-ink-muted">
+            You have almost certainly tried this yourself: you ask a model a question, the answer
+            comes back wrong, so you send it straight back with &ldquo;check that again and fix any
+            mistakes.&rdquo; No hints, no tools, just re-reading. Measured across two rounds of
+            exactly that, accuracy goes <strong className="text-ink">down</strong>.
+          </p>
+          <section
+            aria-label="Two rounds of unaided self-correction, on two published benchmarks"
+            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SelfCorrectPanel
+                heading="GPT-4 · GSM8K"
+                rows={[
+                  { label: "first answer", value: h.gpt4Gsm8k0, broke: false },
+                  { label: "after 1 round", value: h.gpt4Gsm8k1, broke: true },
+                  { label: "after 2 rounds", value: h.gpt4Gsm8k2, broke: true },
+                ]}
               />
-              {uniform ? (
-                <p className="rounded border-l-4 border-compute bg-surface-raised p-2 text-sm text-ink">
-                  The limit of that trend: everyone scored the same, so every push is{" "}
-                  <span className="font-mono">0.00</span>. A problem the model already aces, or
-                  is hopeless on, teaches it nothing. Learning lives where the group disagrees.
-                </p>
-              ) : (
-                <p className="text-sm text-ink">{LUCK_READ[luck]}</p>
-              )}
+              <SelfCorrectPanel
+                heading="GPT-3.5 · CommonSenseQA"
+                rows={[
+                  { label: "first answer", value: h.gpt35Csqa0, broke: false },
+                  { label: "after 1 round", value: h.gpt35Csqa1, broke: true },
+                  { label: "after 2 rounds", value: h.gpt35Csqa2, broke: true },
+                ]}
+              />
             </div>
-          </div>
+          </section>
+          <p className="text-ink-muted">
+            The reason is structural: the same weights that produced the error are asked to find it,
+            so the review mostly re-approves the answer, and when the model does change something,
+            it flips correct answers to wrong <em>more often than the reverse</em>.
+            <Cite n={REF.huang} /> Nothing new enters the system; &ldquo;are you sure?&rdquo; just
+            adds noise, and on CommonSenseQA one round of it cost GPT-3.5 half its score.
+          </p>
         </section>
 
-        <div className="flex flex-col gap-8">
-          <Note kicker="Try it">
-            <p>
-              Drag the dial: the group&apos;s luck changes, sample 1&apos;s answer never does.
-            </p>
-          </Note>
-          <Note kicker="References">
-            <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
-              DeepSeek-AI 2025, <em>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via
-              Reinforcement Learning</em>.
-            </RefItem>
-            <RefItem n={REF.grpo} href="https://arxiv.org/abs/2402.03300">
-              Shao et al. 2024, <em>DeepSeekMath</em> (GRPO).
-            </RefItem>
-          </Note>
-        </div>
-
-        {/* Step 2 — the scrubber */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. Scrub through R1-Zero&apos;s training
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              AIME 2024 · pass@1 · DeepSeek-AI 2025
-            </span>
-          </h2>
-
-          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
-            {/* setup only: the meaning moved below the chart, where the reader
-                can check it against what they are looking at (review) */}
-            <p className="text-ink">
-              Nothing in the recipe mentions reflection. Nothing in the reward mentions length.{" "}
-              <strong>Watch both curves anyway.</strong>
-            </p>
-
-            <div className="flex flex-col gap-4">
-              <Slider
-                label="RL training step"
-                min={0}
-                max={MAX_STEP}
-                step={500}
-                value={step}
-                onChange={(v) => {
-                  setStep(v);
-                  recordInteraction(PAGE_N);
-                }}
-              />
-              <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
-                <div>
-                  <p className="font-mono text-5xl font-bold tabular-nums text-correct-ink">
-                    {pass.toFixed(1)}%
-                  </p>
-                  <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
-                </div>
-                <div>
-                  <p className="font-mono text-2xl font-bold tabular-nums text-compute-ink">
-                    ≈{length.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-ink-muted">avg response tokens</p>
-                </div>
-                <p className="min-w-[16rem] flex-1 text-sm text-ink-muted">
-                  From 15.6% to 71.0% pass@1 with no supervised examples. Add page 7&apos;s
-                  majority vote across 64 samples and it reaches{" "}
-                  <strong className="text-ink">{cons64}%</strong>, level with OpenAI-o1-0912.
-                  <Cite n={REF.r1} />
-                </p>
-              </div>
-              <TrainingChart step={step} pass={pass} length={length} />
-            </div>
-
-            {/* the meaning, after the evidence */}
-            <p className="text-ink">
-              Length is not a schedule anyone set: longer, re-checking traces win more reward, so
-              the model <strong>buys itself more thinking time</strong>. The skeleton below shows
-              what the extra tokens are made of.
-            </p>
-
-            {/* the trace, as a shape */}
-            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
-                  the trace, as a shape · {STAGE_CHIP[stage]}
-                </p>
-                <p className="font-mono text-xs tabular-nums text-compute-ink">
-                  ≈{length.toLocaleString()} tokens
-                </p>
-              </div>
-              <TraceSkeleton stage={stage} />
-              <p className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
-                {STAGE_NOTE[stage]}
-              </p>
-            </div>
-            {/* the one-chain point belongs here, beside a single unbroken trace,
-                not three blocks above the chart where it used to sit */}
-            <p className="text-ink">
-              Count the traces: there is <strong>one</strong>, allowed to run longer. Not many
-              chains sampled and voted on behind an API, which is the distinction page 13 could
-              only assert.
-            </p>
-            <p className="text-ink">
-              Notice what the loops rule out. A chain nobody can read might be a running commentary
-              written beside the real work, and from outside there is no way to tell.{" "}
-              <strong>
-                These tokens cannot be that: the chain is what the model sampled and what training
-                pushed on
-              </strong>
-              , and no separate step ever wrote a description of anything. Re-derivation is not
-              narration, and the score climbs as the loops arrive.
-            </p>
-            <p className="text-xs text-ink-muted">
-              the skeleton abstracts the trace in Table 3 of DeepSeek-AI 2025, where R1-Zero
-              interrupts a solution mid-stream, flags the moment, and restarts from its own first
-              line at &ldquo;an intermediate version&rdquo; of training; the structure is
-              theirs, no text is quoted, and where the aha lands on the slider and the chart is an
-              illustrative placement: the paper gives the behaviour, not a step number
-            </p>
-          </div>
-        </section>
-
-        <Note kicker="Try it">
-          <p>Drag past step {AHA_STEP.toLocaleString()}.</p>
+        <Note kicker="References">
+          <RefItem n={REF.huang} href="https://arxiv.org/abs/2310.01798">
+            Huang et al. 2024, <em>Large Language Models Cannot Self-Correct Reasoning Yet</em>{" "}
+            (ICLR 2024), Table 3. &ldquo;Round&rdquo; = the model is shown its own answer and asked
+            to review and revise it, with no external feedback.
+          </RefItem>
         </Note>
 
-        {/* Step 3 — the give-away */}
+        {/* Step 2 — thinking too hard: page 6's curve with the losses drawn back in */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            3. Then it was given away
+            2. Thinking too hard
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              Table 5 · ~800K samples · MIT license
+              our run · {PAGE17.run.items} problems · {PAGE17.run.primaryLabel} · greedy
             </span>
           </h2>
+          <p className="text-ink-muted">
+            Step 1 was a revision <strong className="text-ink">you asked for</strong>. This one the
+            model performs on its own: left running, a chain keeps writing, and what it writes can
+            replace an answer it had already reached. Raise the token cap and page 6&apos;s accuracy
+            curve climbs, though most of the climb is chains that were being cut off mid-thought
+            finally reaching an end. But a rising curve only shows the{" "}
+            <strong className="text-ink">balance</strong> of two things happening at once. Each
+            doubling of the budget wins some answers and loses others, and the curve reports only
+            the difference. The figure below separates them.
+          </p>
+          <section
+            aria-label="Answers won and lost at each doubling of the token budget"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            <Slider
+              label="Token budget"
+              min={0}
+              max={PAGE17.run.budgets.length - 1}
+              value={budgetIndex}
+              format={(i) => `${PAGE17.run.budgets[i]} tokens`}
+              onChange={(v) => {
+                setBudgetIndex(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
+            <RungLedger active={budgetIndex} />
+          </section>
+          <p className="text-ink-muted">
+            Every rung loses answers as well as gaining them, and those losses were never drawn
+            until now. The top rung gains <strong className="text-ink">nothing</strong>, for a
+            reason that is about the axis rather than about thinking: under greedy decoding a chain
+            that has already stopped itself is not run again at a larger budget, it is the same
+            generation, and {pct(PAGE17.axisBound.shareSelfTerminated, 0)} of these end themselves
+            before {PAGE17.axisBound.maxBudget} tokens. The axis runs out before the model does.
+          </p>
 
-          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-grid bg-surface p-4">
-            {/*
-             * The section's thesis, stated up top with the dot plot as its
-             * evidence. It used to be a trailing aside ("page 11's law,
-             * compressed into weights") after the reader had stopped looking
-             * for one, under an intro paragraph doing five jobs at once.
-             */}
-            <p className="text-ink">
-              Page 13&apos;s two knobs were never equally available. Anyone can pay for thinking
-              at answer time; lifting the curve took frontier-scale RL, which meant being a
-              frontier lab. Then R1 wrote out <strong>~{P.samplesK}K of its own reasoning
-              traces</strong>, six small models were fine-tuned on them, and the behaviour came
-              with the text.
-              <Cite n={REF.r1} />
-            </p>
-            <p className="text-ink">
-              <strong>The curve-lifting knob got cheap.</strong> Not free: someone still paid for
-              the RL once. But they paid once, and the result copies, so the reasoning does not
-              have to be re-earned by anyone who wants it. The claim to check on the chart is not
-              &ldquo;R1 is good&rdquo;; it is that{" "}
-              <strong>a lifted curve fits in weights you can download</strong>. Pick a size:
-            </p>
+          {/* The invitation is the last line of the intro, directly above the figure it invites
+              the reader into, as on pages 5 and 7. */}
+          <p className="text-ink-muted">
+            So look at one of the losses. The budget above still drives what follows. Watch a single
+            problem: <span className="font-mono text-xs text-ink">{PAGE17.specimen.shortId}</span>,
+            minimise <em>(x+y)(y+z)</em> given <em>xyz(x+y+z) = 1</em>. The answer is{" "}
+            {PAGE17.specimen.groundTruth}.
+          </p>
+          <section
+            aria-label="One chain at the chosen budget, from a forced commit to its own ending"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            <SpecimenChain budgetIndex={budgetIndex} />
+          </section>
+          <p className="text-ink-muted">
+            Cut at {PAGE17.specimen.rightWhenCutAt.join(", ")} tokens and forced to commit, it
+            answers {PAGE17.specimen.groundTruth} three times over. Allowed to run to its own{" "}
+            {PAGE17.specimen.naturalLength}-token ending, it answers{" "}
+            <span className="font-mono text-xs">{tidyMath(PAGE17.specimen.wrongAnswer ?? "")}</span>.
+            The step that costs it is lit, and every line after it is correct arithmetic carrying a
+            wrong assumption to a confident finish. It breaks on{" "}
+            {PAGE17.specimen.alsoRegressesOn.join(" and ")} too.
+          </p>
 
-            <figure className="m-0 flex flex-col gap-2">
-              <DistillDotPlot picked={pickedSize} onPick={pick} />
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                <Key shape="circle" className="bg-compute" label="Qwen base" />
-                <Key shape="diamond" className="bg-wrong" label="Llama base" />
-                <Key shape="circle" className="bg-correct" label="R1 teacher (671B MoE)" />
-                <Key shape="dash" className="border-ink-muted" label="closed model (size undisclosed)" />
-              </div>
-              <figcaption className="text-xs text-ink-muted">
-                plain supervised fine-tuning on the traces, no RL and no reward, which is page
-                12&apos;s recipe with a far stronger teacher · the released R1 adds a small cold
-                start of curated traces before its own RL, and scores {P.r1Aime}% here · rows are
-                ordered by size, smallest at the top; the teacher&apos;s {P.teacherParamsB}B is a
-                mixture-of-experts total that activates ~{P.teacherActiveB}B per token · GPT-4o
-                and o1-mini publish scores but not sizes, so they are rules, not rows
-              </figcaption>
-            </figure>
+          {/* Control 3 stays in the body because without it a reader leaves with a technique
+              that does not exist. Controls 1 and 2 defend the specimen's reading rather than
+              the reader's takeaway, so they are the notebook's (see the file header).
 
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Pick a distilled model">
-              {DISTILLS.map((d) => {
-                const active = d.size === pickedSize;
-                return (
-                  <button
-                    key={d.label}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => pick(d.size)}
-                    className={`rounded border px-3 py-1.5 text-sm ${
-                      active
-                        ? "border-compute bg-compute/15 font-semibold text-ink"
-                        : "border-grid bg-surface-raised text-ink-muted"
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                );
-              })}
-            </div>
+              This used to be a boxed aside, and the two readings under it two more boxes, which
+              made the close of the step three stacked cards of the same weight. Only the counts
+              are a figure, so only the counts keep a frame; the rest is body prose like the
+              paragraphs above it. */}
+          <p className="text-ink-muted">
+            <strong className="text-ink">Not a strategy.</strong> Stopping every problem at{" "}
+            {PAGE17.controls.isItARule.fixedCut} tokens scores{" "}
+            {pct(PAGE17.controls.isItARule.fixedCutAccuracy, 0)} against{" "}
+            {pct(PAGE17.controls.isItARule.natural, 0)} for finishing, and the best cut per problem
+            reaches {pct(PAGE17.controls.isItARule.oracle, 0)} for about{" "}
+            {Math.round(PAGE17.controls.isItARule.oracleTokenCost)} tokens where plain resampling
+            reaches {pct(PAGE17.controls.isItARule.samplingCoverage, 0)} at the same cost. This is
+            page 7&apos;s coverage without page 8&apos;s selector: a better answer is in the pile
+            and nothing we tested finds it.
+          </p>
 
-            <p className="text-sm text-ink">
-              <strong>R1-Distill-{picked.label}</strong>{" "}
-              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher,</span>{" "}
-              {picked.note}.
-            </p>
-
+          <section
+            aria-label="Problems each model talks itself out of"
+            className="flex flex-col gap-2 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
             <p className="text-sm text-ink-muted">
-              Where a dot lands right of a dashed rule, a model you can download beats a closed
-              frontier product by thinking longer at answer time. And page 3 said the stock of
-              human text was finite: these traces were not in it. One good reasoner now writes the
-              curriculum for everyone else.
+              Problems the model talks itself out of, per {PAGE17.run.items}:
             </p>
+            <div className="flex items-end gap-6">
+              {PAGE17.affected.byModel.map((m) => (
+                <div key={m.model} className="flex flex-col items-center gap-1">
+                  <span className="font-mono text-2xl font-bold tabular-nums text-wrong-ink">
+                    {m.rescued}
+                  </span>
+                  <span className="text-xs text-ink-muted">
+                    {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+          <p className="text-ink-muted">
+            The one aggregate claim here, and it is about capability rather than budgets: the
+            better the model, the less of this it does.
+          </p>
 
-            <Handoff>
-              Two pages of frontier claims, and every one of them arrived as a benchmark score:
-              71.0% on AIME, level with o1-0912, a 14B crossing o1-mini&apos;s line. Every one of
-              them is also a number for thinking longer.{" "}
-              <em className="text-ink-muted">
-                Next: the side of that dial where thinking longer makes the answer worse.
-              </em>
-            </Handoff>
-          </div>
+          <p className="text-ink-muted">
+            <strong className="text-ink">Length alone is worth something.</strong> Guess right from
+            wrong by how long the chain is and you score{" "}
+            <span className="font-mono font-bold tabular-nums text-compute-ink">
+              {PAGE17.length.auc.toFixed(2)}
+            </span>{" "}
+            over page 8&apos;s whole pile, because a correct candidate is the longer one only about
+            a quarter of the time. Invert it, prefer the{" "}
+            <strong className="text-ink">shorter</strong> chain, and you score{" "}
+            {PAGE17.length.inverted.toFixed(2)}, beating {PAGE17.length.beats.length} of the models
+            that page asked to judge, at no cost. Wrong answers elsewhere burn ~225% more tokens
+            amid ~4× more strategy switches: thrashing, not depth.
+            <Cite n={[REF.zeng, REF.wang]} />
+          </p>
         </section>
 
-        {/* Simulated vs cited, in the content column rather than across the whole
-            page: it qualifies the figures above it, and a line that runs under the
-            margin notes reads as a footer for the spread instead. */}
-        <div className="flex flex-col gap-1 text-xs text-ink-muted lg:col-start-1">
-          <p>
-            <strong className="text-ink">Simulated</strong>: the training curve&apos;s intermediate
-            points are interpolated along the reported 15.6% → 71.0% climb; the trace skeleton is a
-            schematic of the Table 3 trace&apos;s structure, not its text; and where the aha lands
-            on the slider is an illustrative placement; the paper gives the behaviour, not a step
-            number.
-          </p>
-          <p>
-            <strong className="text-ink">Cited</strong>: every benchmark number is transcribed from
-            DeepSeek-AI 2025 (Tables 3 to 5, Figures 2 and 3) and pinned in the test suite.
-          </p>
+        <div className="flex flex-col gap-6">
+          <Note kicker="Try it">
+            <p>Drag to {PAGE17.axisBound.maxBudget} and read what it commits to.</p>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.zeng} href="https://arxiv.org/abs/2502.12215">
+              Zeng et al. 2025, <em>Revisiting the Test-Time Scaling of o1-like Models</em> (ACL
+              2025).
+            </RefItem>
+            <RefItem n={REF.wang} href="https://arxiv.org/abs/2501.18585">
+              Wang et al. 2025, <em>Thoughts Are All Over the Place</em>.
+            </RefItem>
+            <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
+              Stroebl et al. 2024, <em>Inference Scaling fLaws</em>: the verifier ceiling, from
+              page 8.
+            </RefItem>
+          </Note>
         </div>
+
+        {/* Step 3 — scoring gone wrong: reliability is a coordinate, not a property */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">
+            3. Scoring gone wrong
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              our run · the same {PAGE17.run.items} problems · page 8&apos;s judges
+            </span>
+          </h2>
+          <p className="text-ink-muted">
+            Step 2 leaned on a judge, and page 8 sold one: selection beats voting, up to the ceiling
+            its reliability sets. That sentence quotes reliability as though it were a property of
+            the judge. It is not. It is a reading taken at a setting, and the setting is a knob page
+            8 turned two pages ago.
+          </p>
+          <section
+            aria-label="Reliability of five ways of picking an answer, against sampling temperature"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+          >
+            <Slider
+              label="Sampling temperature"
+              min={0}
+              max={REL.temperatures.length - 1}
+              value={tempIndex}
+              format={(i) => REL.temperatures[i].toFixed(2)}
+              ticks={REL.temperatures.map((t, i) => i)}
+              onChange={(v) => {
+                setTempIndex(v);
+                recordInteraction(PAGE_N);
+              }}
+            />
+            <ReliabilitySweep tempIndex={tempIndex} />
+            <p className="text-sm text-ink-muted">
+              At <strong className="text-ink">{REL.temperatures[tempIndex].toFixed(2)}</strong>, the
+              trained scorer is{" "}
+              <strong className={gapAt(tempIndex) >= 0 ? "text-ink" : "text-wrong-ink"}>
+                {Math.abs(gapAt(tempIndex)).toFixed(0)} {pointsWord(gapAt(tempIndex))}{" "}
+                {gapAt(tempIndex) >= 0 ? "clear of" : "behind"}
+              </strong>{" "}
+              {bestOtherLabel(tempIndex)},{" "}
+              {R_BEST_OTHER_LINES[tempIndex].length > 1
+                ? "which tie for best of everything else at this setting"
+                : "the best of everything else at this setting"}
+              .{" "}
+              {gapAt(tempIndex) < 0
+                ? "Start here and the trained scorer looks like the wrong pick. Turn the dial up."
+                : null}
+            </p>
+            <p className="text-xs text-ink-muted">
+              The dial moves between the four settings this run measured. It does not interpolate,
+              because nothing was measured between them.
+            </p>
+          </section>
+          <p className="text-ink-muted">
+            Temperature is what buys the candidate diversity page 8 was selling. It is also what
+            blinds whatever has to pick from those candidates. Take one chain and pick nothing, and
+            reliability drops {REL.steepest.fallPts.toFixed(0)} points across the sweep. Put{" "}
+            <strong className="text-ink">a model asked to judge</strong> in charge of the picking
+            and it drops anyway.
+          </p>
+          <p className="text-ink-muted">
+            Only the line <strong className="text-ink">trained to score</strong> holds, and not by
+            judging better: it sits mid-pack at the cold end and never improves. It finishes{" "}
+            {TRAINED_CLEAR_PTS.toFixed(0)} points clear because everything else came down to meet
+            it. What this sweep measures is the verifier, not the reasoning, and with an imperfect
+            one, more resampling eventually lowers true accuracy outright.
+            <Cite n={REF.stroebl} />
+          </p>
+          {/* Two limits on the figure. A limit is a caption, not a margin note, so they
+              sit in the body under the sweep they qualify rather than beside it. */}
+          <p className="text-sm text-ink-muted">
+            Candidate depth is held at {REL.depth} throughout, because reliability decays with that
+            too. And reliability is undefined where no candidate is right, so the denominator
+            shrinks as the temperature rises, which makes this decline the conservative reading.
+          </p>
+        </section>
+
+        <div className="flex flex-col gap-6">
+          <Note kicker="Try it">
+            <p>
+              Turn the temperature up and watch the trained scorer go from behind to clear without
+              ever getting better.
+            </p>
+          </Note>
+        </div>
+
+        {/* Step 4 — what still works */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">4. What still works</h2>
+          <p className="text-ink">
+            <strong className="text-ink">Feedback from outside the model.</strong> Self-correction
+            fails <em>unaided</em>; give the reviser real information, a failing unit test, a
+            calculator, a proof checker, and revision has something to push against. Page 9 is why
+            that is not a platitude: {PAGE17.readable.nChainsUnreadable.toLocaleString()} of{" "}
+            {PAGE17.readable.nChains.toLocaleString()} real chains (
+            {pct(PAGE17.readable.shareChainsUnreadable, 0)}) carry no closed-form numeric claim
+            anywhere, so a calculator never fires at all on two chains in three.
+          </p>
+          <p className="text-ink">
+            <strong className="text-ink">
+              Verifiers, where answers are checkable, and trained ones by preference.
+            </strong>{" "}
+            Selection with a judge (page 8) still beats blind voting, up to the ceiling its
+            reliability sets. Step 3 adds which judge: the trained scorer held across the whole
+            sweep while every model asked to judge lost ground.
+          </p>
+          <p className="text-ink">
+            <strong className="text-ink">Training, not prompting.</strong> The mid-chain
+            &ldquo;wait, let me re-check&rdquo; that RL taught DeepSeek-R1 (page 13) was learned
+            against verified rewards, not requested politely at inference time.
+          </p>
+        </section>
+
+        {/* Handoff to 16. This used to hand off to a faithfulness page, cut on
+            2026-08-10, and then briefly closed the deck. Page 16 now does the
+            closing, so the assumption the cut page was going to attack is handed
+            forward as the open question rather than delivered as a last word.
+            In the content column, page 3's shape for a handoff: outside the grid
+            on its own max-w-2xl it was the one block on the page set narrower
+            than everything above it. */}
+        <Handoff className="lg:col-start-1">
+          Notice what every repair on this page assumed. The verifier reads the chain, the reviser
+          reads the chain, and the reader reads the chain, and all three take it for what it says
+          it is: the working that produced the answer.{" "}
+          <em className="text-ink-muted">
+            Hold that. Next: every lever in this story on one axis, and ten questions on the
+            mechanisms rather than the magnitudes.
+          </em>
+        </Handoff>
       </div>
 
       <PageNav n={PAGE_N} />

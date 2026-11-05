@@ -1,157 +1,71 @@
 "use client";
 
 /**
- * Page 13, "Frontier Reasoners I: o1, o3, and the Two-Axis Scaling Curve".
- * Page 12 closed on a promise — o1 keeps the loop's shape and drops the
- * disguise — and this page holds it to that promise with abstractions, not
- * announcement transcription. The reader should leave with three things the
- * literature never states in one place: the loop-diff (section 1), the
- * unified two-knob law (section 2), and the visibility boundary (section 4).
+ * Page 13, "Learned Reasoning: One Law, Two Knobs". Merged 2026-11-04 from
+ * the old page 13 ("Frontier Reasoners I: o1, o3, and the Two-Axis Scaling
+ * Curve") and the old page 14 ("Frontier Reasoners II: DeepSeek-R1, GRPO, and
+ * the 'Aha Moment'"). The two pages told one idea in calendar order, and the
+ * numbering itself was a historical device; the merge reorders them around the
+ * concept. The thesis, in one line: RL on verifiable problems builds reasoning
+ * into the weights and lifts the compute curve; thinking at answer time slides
+ * along it; the lifted curve is portable.
  *
- * The lede picks up page 12's closing block, which names the two ways to buy
- * reasoning (Act 2's toolbox spends once the question lands; page 12's loop
- * spends long before it does) and hands over. The lede reaches the same pair
- * before saying o1 turns both dials, so section 2's two compute axes land as
- * the reader's own question answered rather than a new frame. Two claims are
- * banned here: "everything so far bolted reasoning on from outside" (page 12
- * already trained it in, so it reads as a skipped page) and anything implying
- * this page opens Act 3 — the seam is 11|12, so Act 3 started on page 12 and
- * this is its second page. See pages.ts for why.
+ * What the merge cut, and must not come back: old page 13's four open
+ * questions and closing teaser, old page 14's lede that re-asked them, the
+ * "Frontier Reasoners I/II" framing, one of the two "Where this leaves us"
+ * codas (old page 14's survives, since it sets up page 14's wrong side of the
+ * dial), and every date used as plot ("four months later", "an open lab
+ * answered", "the week before"). The chronology lives in one margin timeline
+ * for readers who want it. The LRM-definition quote went with section 1's
+ * tightening; El-Kishky et al. is still cited for the ablation.
  *
- * The seam must RHYME, not repeat (review). An earlier lede reached the pair
- * in page 12's own words — "two ways to buy reasoning", "spend once the
- * question lands", "spend long before it does" — which put ~20 words of
- * near-verbatim overlap on either side of a page turn, so the reader re-read a
- * sentence instead of recognising a shape. The structure is what carries the
- * seam (two modes, each with its page pointer, then o1 doing both, then the
- * two axes); the wording is deliberately this page's own. Page 12 owns the
- * when ("after the question lands" / "long before the question exists"); this
- * lede owns the where ("spent at answer time" / "already sunk into the
- * weights"), which also sets up section 2's axes more directly, since one axis
- * belongs to each place. Page13.test.tsx pins the divergence with negative
- * assertions, so a later tightening pass cannot drift back into page 12's
- * phrasing.
+ * Section 1 is the loop and its cheapest published instance. Old page 13's
+ * three-station strip (the same three stations as page 12, two renamed, each
+ * sub-label carrying its diff), then GRPO in five lines and the 350 × 638
+ * group-luck dial. The deck prints NO o1 algorithm, because nobody outside
+ * OpenAI can check one; one sentence says so and points at GRPO, which is
+ * published. Keep the two in different grammars: a strip for the confirmed
+ * frame, a code listing only for the published recipe. Line 2's bridge to page
+ * 7 stops at "sampling paid for once": GRPO is a policy gradient with a group
+ * baseline, not best-of-N distillation.
  *
- * Section 1 is the loop STRIP and nothing else. It used to also print a
- * six-line reconstruction of the o1 recipe, badged "rumored recipe"; that was
- * cut on review 2026-07-30 and must not come back. Three reasons, in order of
- * force: (1) section 4 is titled "The questions o1 cannot answer" and its
- * handoff promises page 14 will deliver "the algorithm in full", so a printed
- * o1 algorithm was a counterexample to this page's own thesis and spent page
- * 14's payoff early; (2) page 14 section 1 prints GRPO, which is real and
- * checkable, and putting a hypothesized listing in the same grammar one page
- * earlier taught the reader that the two have equal standing; (3) a deck whose
- * bar is "better than reading the literature" cannot lead with the one artifact
- * nobody can verify. What survives is the part OpenAI actually confirmed: the
- * three stations, two renamed (filter → reward, fine-tune → reinforce), each
- * sub-label carrying its own diff against page 12's line (one greedy try → k
- * sampled chains, filter → explicit reward, finetune-from-base →
- * reinforce-in-place). The figcaption states the boundary in the deck's voice
- * ("the shape is the whole of what was confirmed") and points at page 14 for
- * an algorithm from a lab that published one. The h2 badge is therefore
- * "confirmed frame only": with the listing gone the page publishes no rumor.
- * The callout below carries the page's two build-ons: no human anywhere in the
- * loop (vs RLHF), and no draw on page 3's finite stock of human text.
+ * Section 2 is old page 13's two-knob lab, with one change of evidence. The
+ * handoff asked for R1-Zero's training curve to carry the RL dial, but that
+ * run's answers grew from ~1k to ~9k tokens over the same steps, so its score
+ * mixes both knobs, its intermediate points are authored, and its x axis is
+ * steps rather than log compute. The author chose (2026-11-04) to show it as
+ * BOTH KNOBS AT ONCE: the two reported endpoint pairs, captioned as training
+ * lifting the curve while the model slides itself along it, handing the length
+ * to section 3. The o1 surface then separates the knobs, as the interactive
+ * construction it is. The two exponents enter twoAxisAccuracy as a sum, so the
+ * dials substitute exactly (law(2,0) = law(0,2) = 21.0): never claim they do
+ * not. The page's ONE disclosure block sits at the end of this section and
+ * covers both constructions (the o1 surface and the R1-Zero points, skeleton
+ * and aha placement); there is no second block and no Simulated/Cited footer.
  *
- * Section 2 keeps the two-knob lab, redrawn in page 11's chart grammar after
- * review: the old half-width two-curve LineChart hid the law — the training
- * knob's effect existed only between frames, and the default state (full RL)
- * showed a single line and a +0.0 delta. Now the whole family of RL runs
- * (×1, ×10, ×100 — the same authored line, slid one decade right per decade
- * of RL forgone, clamped at the floor) is drawn at once at full card width,
- * page 11's FamilyChart idiom: the training dial picks your curve, the
- * thinking dial slides your marker along it, and a bracket at the marker
- * prices the missing RL. The staircase arrows state the law statically — up
- * one curve and along one decade buy the same +29.5 — so "one law, two
- * knobs" is legible before anything is dragged. Both dials are named in units
- * before the figure (review: "×10" reads as "ten runs" next to section 3's
- * 64-chain vote and 1000-chain re-rank) — the training dial is compute inside
- * one run, the thinking dial is compute inside one answer, and sampling many
- * answers is section 3's separate purchase. The score is named too: pass@1 on
- * AIME 2024, in the prose, on the y axis, and on the readout; the default
- * (×10, ×10) opens
- * with the bracket showing exactly one decade forgone. The Try-it note is a
- * single imperative sentence, page 2's margin grammar — the interpretation
- * lives in the card's closing line, where the deck puts meaning. That line
- * used to say the dials "do not substitute", which the parametrization
- * contradicts: the two exponents enter as a sum, so law(2,0) = law(0,2) = 21.0
- * and a decade of one is exactly a decade of the other. It now states the
- * equality and puts the real asymmetry where it belongs, in WHEN the compute is
- * bought (RL once, thinking on every answer). Do not reintroduce a
- * non-substitution claim without changing the law it describes. The fidelity
- * note discloses the joint surface itself as authored, not just its span and
- * slope: the announcement published two SEPARATE charts, and one shared law in
- * which training is a pure horizontal shift appears in no source. "The slope is
- * the claim; the absolute compute is a secret" survives on purpose — it is
- * itself an abstraction (labs publish shapes, not units).
+ * Section 3 turns old page 13's first three questions into claims, shown
+ * rather than recapped: the dial buys one longer chain (the skeleton is one
+ * trace), and the tokens do the work (the chain is the reinforced object, so
+ * there was never a step where a narration could be written beside it). No
+ * term in the reward mentions length. The dual-axis chart became two stacked
+ * panels sharing the step axis. The interrupt is DOUBT, never a found mistake,
+ * and its marked block takes the compute hue, never the wrong hue: the reward
+ * is outcome-only, so nothing ever scored a step.
  *
- * Section 3 is one question asked twice — "Stack the toolbox, or turn the
- * knobs?" The bars are the stacking answer (Act 2's tricks as a second storey
- * on the learned chain; rows are mechanisms, model names demoted to
- * parentheses). They used to be a WATERFALL, each row starting where the last
- * ended and printing an invented +8.9 and +9.7; that was wrong and must not
- * come back. The announcement reports 74.4 pass@1, 83.3 with consensus among 64
- * samples and 93 re-ranking 1000 samples as three readings of ONE model, so
- * re-ranking is an alternative to the 64-way vote, not a storey on top of it,
- * and the increments between them are nowhere in the source. The rows are
- * therefore drawn from a common zero and print absolute scores only, with the
- * three o1 readings grouped under their own heading, so the 74.4-to-93 gap
- * reads as one model measured three ways. (That grouping was also what the
- * scoreboard page's first courtroom case ran on; the page was cut 2026-08-10
- * and the grouping is right on its own terms, so it stays.) The
- * knob answer is El-Kishky's own ablation, compressed to
- * one paragraph in the deck's vocabulary — o1-ioi is the toolbox bolted on
- * by hand at the frontier, an early o3 is the knobs turned further, and the
- * knobs won — with the paper's conclusion as the one verbatim anchor. No
- * benchmark numbers anywhere: the medals, percentiles, and the AIME pair
- * were reviewed out as retelling. They used to live on page 15 (The
- * Scoreboard); that page was cut on 2026-08-10, so the deck no longer teaches
- * how to read a benchmark score anywhere. Page 15's contamination callout is
- * all that is left of it. Do not answer that by importing the medals back
- * here: they were retelling before the cut and they still are.
- * o3-preview.json is no longer read here (its reference dropped off the
- * page).
+ * Section 4 is old page 13's bars, drawn from a common zero (the readings are
+ * alternatives, never a waterfall), with R1-Zero's cons@64 added as a second
+ * model so the stacking claim holds across two. The o1-ioi vs o3 ablation is a
+ * short callout and the only place o3 appears.
  *
- * Section 4 is the page's epistemic close, restructured after review: it used
- * to be a safety essay (the case for hiding, the monitor's deception rate, the
- * price of an unauditable chain) that related to inference-time scaling
- * through exactly one ledger cell, and duplicated the faithfulness page's
- * charter besides — old page 18 section 3 ("Why not train the thoughts to be
- * good?") made the don't-train-the-chain argument at length. That page was cut
- * on 2026-08-10, but the first reason stands on its own: the essay was off this
- * page's subject then and still is. What page 13 owes the reader here
- * is instead what a CLOSED model cannot be asked, so the ledger is gone and
- * the section is four questions. Every one is aimed at the thinking dial
- * rather than at o1's opacity in general (review: an earlier set asked about
- * the algorithm and about emergence, which any closed system would provoke and
- * which left the deck's own subject behind). What survives is what a buyer of
- * test-time compute cannot learn: whether ×10 thinking is one long chain or a
- * hidden vote (the distinction section 2 has to assert and cannot prove),
- * whether the billed tokens are load-bearing, what the extra tokens actually
- * do, and whether the law needs frontier scale at all. Two earlier drafts were
- * rejected on the way here — a ledger whose columns read "what this page
- * claimed / what backs it" (a page narrating its own contributions is an
- * academic-paper reflex that puts the reader outside the story) and a parts
- * list of what OpenAI shipped versus kept (better subject, still a
- * retrospective). The questions are not rhetorical: page 14 answers all four
- * in this order (the visible chain settles what ×N thinking buys and whether
- * it is load-bearing, the R1-Zero curve's response-length axis and its aha
- * loops say what the extra tokens do, the 1.5B-to-70B distills answer scale),
- * and the handoff promises exactly those.
- * Plain numbered prose, no card — house rule for a section of short ideas. Deliberately absent: any back-reference chain through
- * Act 2's pages (review: "lets not cite everything like page 6, page 7…"), the
- * 0.17% deception stat (a system-card number, and the faithfulness page that
- * was going to spend it was cut; it does not come back here), and the
- * safety argument itself. Every cell still carries words (review: an em-dash
- * cell reads as a rendering bug); the sealed column carries tone so the
- * nothing-to-everything gradient is scannable.
+ * Section 5 is old page 14's distillation, framed as the answer to "does the
+ * law need a frontier-scale model?": SFT on traces, no RL, and traces are new
+ * data outside page 3's finite stock. GPT-4o carries two published AIME
+ * scores, OpenAI's 12 (sections 2 and 4) and DeepSeek's 9.3 (section 5); each
+ * figure keeps its own lab's number and the dot plot's caption says so.
  *
- * No Simulated/Cited footer (review): pages 1-3 carry none either —
- * provenance is declared inline, in the h2 badges, section 1's caption, and
- * section 2's fidelity note.
- *
- * Anchored to data/o1-scaling.json; the law and the printed anchors are
- * pinned in frontier.test.ts, the page's structure in Page13.test.tsx.
+ * Anchored to data/o1-scaling.json, deepseek-r1-training.json and
+ * deepseek-r1-distill.json; the law is pinned in frontier.test.ts, the page in
+ * Page13.test.tsx.
  */
 
 import { useState } from "react";
@@ -163,14 +77,184 @@ import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
-import { curves } from "@/lib/curves";
+import { curves, interpolate } from "@/lib/curves";
 import { twoAxisAccuracy } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 13;
 
 /** Page 13's references, numbered in order of first appearance. */
-const REF = { announce: 1, competitive: 2 } as const;
+const REF = { announce: 1, r1: 2, grpo: 3, competitive: 4 } as const;
+
+/* ---------------------------------------------------------------------------
+ * Section 1: the loop, and GRPO
+ * ------------------------------------------------------------------------- */
+
+/*
+ * Page 4's multiplication, not page 1's: a uniform group teaches nothing, so
+ * an easy problem a 671B model already aces cannot be the example of a
+ * productive group. Sample 1 is always right; the other three slots carry
+ * fixed wrong answers, each a real arithmetic slip, so the dial is
+ * deterministic:
+ *   350 × 628 = 219,800 (one digit misread)
+ *    35 × 638 =  22,330 (a dropped zero)
+ *   210,000 + 13,300 written as 213,300 (the partials mis-added)
+ */
+const RIGHT_ANSWER = "223,300";
+const OTHER_WRONGS = [
+  { v: "219,800", slip: "read 638 as 628" },
+  { v: "22,330", slip: "dropped a zero" },
+  { v: "213,300", slip: "mis-added the partials" },
+];
+
+/** The GRPO recipe as five annotated lines: advantage from the group's own
+    statistics, minus the clipped-surrogate machinery. */
+const PSEUDO: { code: string; note?: string }[] = [
+  { code: "for each problem q:" },
+  { code: "  sample G answers from the current policy" },
+  { code: "  rᵢ ← 1 if answerᵢ is right, else 0", note: "the reward is a program, not a second model" },
+  { code: "  Aᵢ ← (rᵢ − mean(r)) / std(r)", note: "the group is its own baseline: no critic network" },
+  { code: "  push toward answers with Aᵢ > 0, away from Aᵢ < 0", note: "plus a leash (KL) back to the reference model" },
+];
+
+/** For readers who want the chronology; the page itself never uses it as plot. */
+const TIMELINE: { when: string; what: string }[] = [
+  { when: "Sept 2024", what: "OpenAI announces o1" },
+  { when: "Dec 2024", what: "OpenAI announces o3" },
+  { when: "Jan 2025", what: "DeepSeek releases R1, R1-Zero and six distilled models, weights open" },
+];
+
+/** One stage of the loop strip, page 12's grammar. */
+function Stage({ tone, title, sub }: { tone: string; title: string; sub: string }) {
+  return (
+    <div className={`min-w-0 flex-1 rounded-lg border-l-4 bg-surface-raised p-2.5 ${tone}`}>
+      <p className="text-sm font-semibold text-ink">{title}</p>
+      <p className="text-xs text-ink-muted">{sub}</p>
+    </div>
+  );
+}
+
+const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}`;
+
+/**
+ * Line 2 of the recipe, drawn. Four sampled answers as dots at reward 1 or
+ * 0, the group mean as a dashed rule, and each sample's push as an arrow FROM
+ * the rule TO its dot. As the dial raises the group's luck the rule chases the
+ * right answers: up-arrows shrink, the lone dissenter's arrow stretches, and at
+ * a uniform group the rule reaches the dots and every arrow vanishes.
+ */
+function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number }) {
+  /* sized close to the column it renders into, so its 10px labels stay 10px */
+  const width = 620;
+  const height = 288;
+  /* right margin holds "group mean · 0.50" at 11px */
+  const margin = { top: 42, right: 106, bottom: 56, left: 62 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const yOf = (r: number) => 12 + (1 - r) * (innerH - 24);
+  const colX = (i: number) => (innerW * (i + 0.5)) / 4;
+  const dotR = 7;
+
+  const k = rewards.slice(1).filter((r) => r === 1).length;
+  const title = `Line 2 of the recipe, drawn: four answers to 350 times 638 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 223,300, correct. The wrong answers are real slips: 219,800 from reading 638 as 628, 22,330 from dropping a zero, 213,300 from mis-adding the partials. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
+    k === 3 ? " The rule sits on the dots and every arrow has vanished: a uniform group teaches nothing." : ""
+  }`;
+
+  return (
+    <ChartFrame title={title} width={width} height={height} margin={margin}>
+      <text x={0} y={-24} textAnchor="start" className="fill-ink font-mono text-[13px] font-semibold">
+        350 × 638 = ?
+      </text>
+      <text x={0} y={-10} textAnchor="start" className="fill-ink-muted text-[10px]">
+        the rule checks one thing: does the answer equal 223,300?
+      </text>
+
+      {[1, 0].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={innerW} y1={yOf(t)} y2={yOf(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[11px]">
+            reward {t}
+          </text>
+        </g>
+      ))}
+
+      <line
+        x1={0}
+        x2={innerW}
+        y1={yOf(mean)}
+        y2={yOf(mean)}
+        className="stroke-ink"
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[11px] font-semibold">
+        group mean · {mean.toFixed(2)}
+      </text>
+
+      {rewards.map((r, i) => {
+        const cx = colX(i);
+        const cy = yOf(r);
+        const adv = r - mean;
+        const right = r === 1;
+        const wrong = OTHER_WRONGS[i - 1];
+        const up = adv > 0;
+        const yFrom = yOf(mean) + (up ? -2 : 2);
+        const yTo = cy + (up ? dotR + 3 : -(dotR + 3));
+        return (
+          <g key={i}>
+            {adv !== 0 ? (
+              <g className={up ? "stroke-correct fill-correct" : "stroke-wrong fill-wrong"}>
+                <line x1={cx} x2={cx} y1={yFrom} y2={yTo + (up ? 4 : -4)} strokeWidth={2} />
+                <polygon
+                  points={`${cx},${yTo} ${cx - 3.5},${yTo + (up ? 6 : -6)} ${cx + 3.5},${yTo + (up ? 6 : -6)}`}
+                  stroke="none"
+                />
+                <text
+                  x={cx + 9}
+                  y={(yFrom + yTo) / 2}
+                  dy="0.32em"
+                  textAnchor="start"
+                  stroke="none"
+                  className={`font-mono text-[11px] font-semibold ${up ? "fill-correct-ink" : "fill-wrong-ink"}`}
+                >
+                  {fmtPush(adv)}
+                </text>
+              </g>
+            ) : null}
+            {i === 0 ? (
+              <circle cx={cx} cy={cy} r={dotR + 4} fill="none" className="stroke-compute" strokeWidth={1.5} />
+            ) : null}
+            <circle
+              cx={cx}
+              cy={cy}
+              r={dotR}
+              className={`${right ? "fill-correct" : "fill-wrong"} stroke-canvas`}
+              strokeWidth={1.5}
+            />
+            <text x={cx} y={innerH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] font-eyebrow uppercase tracking-wide">
+              sample {i + 1}
+            </text>
+            <text x={cx} y={innerH + 31} textAnchor="middle" className="fill-ink font-mono text-[13px] font-semibold">
+              {right ? RIGHT_ANSWER : wrong.v}
+            </text>
+            <text
+              x={cx}
+              y={innerH + 45}
+              textAnchor="middle"
+              className={i === 0 ? "fill-compute-ink text-[10px] font-semibold" : "fill-ink-muted text-[10px]"}
+            >
+              {i === 0 ? "watch this one" : right ? "" : wrong.slip}
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * Section 2: one law, two knobs
+ * ------------------------------------------------------------------------- */
 
 const SCALING = curves.o1Scaling;
 const P = SCALING.fit!.params;
@@ -187,8 +271,8 @@ const O1_DOT = { x: 10 ** ((P.o1Pass1 - P.intercept) / P.slopePerDecade), y: P.o
 /*
  * The family of RL runs, one per decade of train-time compute: the same
  * authored line, slid one decade right for each decade of RL forgone, clamped
- * at the floor. One hue per run, page 11's family style; every curve carries
- * its own end label, so identity is never colour alone.
+ * at the floor. Every curve carries its own end label, so identity is never
+ * colour alone.
  */
 const TRAIN_STOPS = [0, 1, 2] as const;
 const RUN_HUES: Record<number, { stroke: string; fill: string; text: string; label: string }> = {
@@ -205,7 +289,7 @@ const RUN_HUES: Record<number, { stroke: string; fill: string; text: string; lab
 const px = (v: number) => Math.round(v * 100) / 100;
 
 /* The staircase: from one point on the ×10 run, up one curve and along one
-   decade buy the same +29.5 — equal rise, different knob. */
+   decade buy the same +29.5. */
 const STAIR_EXP = 0.5;
 const STAIR_LO = law(STAIR_EXP, 1);
 const STAIR_HI = law(STAIR_EXP, 2);
@@ -264,9 +348,7 @@ function RunFamilyChart({
   const bracketLeft = testExp > 1.5;
 
   /* The staircase's two arrows: a riser between the runs, then a tread along
-     the top run, drawn just above it so neither overdraws a curve. The tread
-     label is rotated to the arrow's own slope, keeping it out of the marker's
-     lane. */
+     the top run, drawn just above it so neither overdraws a curve. */
   const sx = x(10 ** STAIR_EXP);
   const riserY1 = y(STAIR_LO) - 4;
   const riserY2 = y(STAIR_HI) + 4;
@@ -315,7 +397,6 @@ function RunFamilyChart({
         GPT-4o {P.gpt4oAime}%
       </text>
 
-      {/* every run, drawn in full; only the selected one is emphasized */}
       {family.map((f) => {
         const selected = f.t === trainExp;
         const end = f.pts[f.pts.length - 1];
@@ -366,8 +447,7 @@ function RunFamilyChart({
         strokeWidth={1.5}
       />
 
-      {/* the staircase, drawn last so the marker's lane never cuts its labels:
-          up one curve = along one decade = +29.5 */}
+      {/* the staircase, drawn last so the marker's lane never cuts its labels */}
       <Arrow x1={sx} y1={riserY1} x2={sx} y2={riserY2} />
       <text
         x={sx - 6}
@@ -394,45 +474,316 @@ function RunFamilyChart({
   );
 }
 
+/* ---------------------------------------------------------------------------
+ * Section 3: where the thinking comes from
+ * ------------------------------------------------------------------------- */
 
-/*
- * Section 4's four questions: the things a closed model cannot be asked, each
- * one a door page 14 opens (GRPO in full, the R1-Zero training curve with its
- * emergence annotation, the readable trace, the 1.5B-to-70B distills). Every
- * question is about mechanism, which is the section's one line; the closing
- * handoff answers them in the same order they are asked.
+const MAX_STEP = 8000;
+/** Skeleton staging thresholds on the scrubber (an illustrative placement,
+    disclosed in section 2's block). */
+const MID_STEP = 2500;
+const AHA_STEP = 5000;
+
+type TraceStage = "early" | "mid" | "aha";
+
+const STAGE_CHIP: Record<TraceStage, string> = {
+  early: "early in training",
+  mid: "mid training",
+  aha: "after the aha",
+};
+const STAGE_NOTE: Record<TraceStage, string> = {
+  early: "A few steps forward, an answer, stop. Nothing looks back.",
+  mid: "Longer now, more algebra per attempt, but still strictly forward: whatever was written first, stands.",
+  aha: "Four steps in, the trace stops, doubts what it has just written, and goes back to its own first line to derive it again. Nothing scored those steps: the reward only sees the final answer, so nobody told the model that its last step was shaky. It learned to suspect itself anyway, because re-checking lands more right answers and right answers are all the reward pays. Page 10's branch, score, backtrack, with the harness deleted and the scoring moved inside the chain. The extra tokens in the length panel are these loops.",
+};
+
+/**
+ * Both of R1-Zero's training variables against one step axis, as two stacked
+ * panels: accuracy on top (correct hue), average response length below
+ * (compute hue). It replaced a dual-axis chart, the hardest of the page's
+ * charts to read. One dashed rule marks the (illustrative) aha step across
+ * both panels, so the chart and the skeleton below are visibly one moment.
  */
-const OPEN_QUESTIONS: { q: string; why: string }[] = [
-  {
-    q: "What are you actually buying when you turn the thinking dial?",
-    why: "One chain allowed to run longer, or many chains sampled and voted on behind the API? The bill counts tokens either way, and nothing visible from outside tells the two apart.",
-  },
-  {
-    q: "Are the thinking tokens doing the work, or describing it?",
-    why: "They are priced by the thousand and never shown, so there is no way to check whether the private chain is the reasoning itself or a narration running alongside it.",
-  },
-  {
-    q: "What does the model do with ten times the thinking that it would not do with one?",
-    why: "From outside you watch the score climb and the bill climb with nothing in between. The mechanism the whole test-time axis rests on is the one part never shown.",
-  },
-  {
-    q: "Does the law need a frontier-scale model at all?",
-    why: "o1 sells in one size, at one price. If trained-in reasoning survives in something small enough to run yourself, thinking gets cheap and the economics of the entire curve change.",
-  },
-];
+function TrainingPanels({ step, pass, length }: { step: number; pass: number; length: number }) {
+  const training = curves.deepseekTraining;
+  const { lengthStart, lengthEnd } = training.fit!.params;
 
-/** One stage of the loop strip, page 12's grammar. */
-function Stage({ tone, title, sub }: { tone: string; title: string; sub: string }) {
+  const width = 720;
+  const height = 360;
+  const margin = { top: 16, right: 16, bottom: 40, left: 52 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const split = innerH / 2;
+  const x = scaleLinear().domain([0, MAX_STEP]).range([0, innerW]);
+  const yAcc = scaleLinear().domain([0, 90]).range([split - 4, 22]);
+  const yLen = scaleLinear().domain([0, 10000]).range([innerH - 4, split + 22]);
+
+  const lengthAt = (s: number) => lengthStart + (lengthEnd - lengthStart) * (s / MAX_STEP);
+  const accPath = training.points.map((p, i) => `${i ? "L" : "M"}${x(p.x)},${yAcc(p.y)}`).join("");
+  const lenPath = training.points
+    .map((p, i) => `${i ? "L" : "M"}${x(p.x)},${yLen(lengthAt(p.x))}`)
+    .join("");
+  const first = training.points[0];
+  const last = training.points[training.points.length - 1];
+
+  const title = `R1-Zero across RL training, two stacked panels sharing the training step axis. Top panel, AIME 2024 pass at 1: from 15.6 percent at step 0 to 71.0 percent at step ${MAX_STEP}, flattening late; the two endpoints are reported and the points between are drawn along the reported climb. Bottom panel, average response length, labelled as page 11's test-time compute: from about ${lengthStart.toLocaleString()} to about ${lengthEnd.toLocaleString()} tokens, still climbing after accuracy flattens; annotations note that no term in the reward mentions length and that nobody is turning this dial. A dashed rule at step ${AHA_STEP.toLocaleString()} marks where the aha trace appears (illustrative placement). Marker at step ${step.toLocaleString()}: ${pass.toFixed(1)} percent, about ${length.toLocaleString()} tokens.`;
+
   return (
-    <div className={`min-w-0 flex-1 rounded-lg border-l-4 bg-surface-raised p-2.5 ${tone}`}>
-      <p className="text-sm font-semibold text-ink">{title}</p>
-      <p className="text-xs text-ink-muted">{sub}</p>
-    </div>
+    <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="RL training step">
+      {/* the seam between the panels */}
+      <line x1={0} x2={innerW} y1={split} y2={split} className="stroke-grid" strokeWidth={1} />
+
+      {/* top panel: accuracy */}
+      <text x={8} y={14} className="fill-correct-ink text-[11px] font-semibold">
+        AIME 2024 pass@1 (%)
+      </text>
+      {[0, 40, 80].map((t) => (
+        <g key={`a${t}`}>
+          <line x1={0} x2={innerW} y1={yAcc(t)} y2={yAcc(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-6} y={yAcc(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t}
+          </text>
+        </g>
+      ))}
+
+      {/* bottom panel: length, named in the deck's terms */}
+      <text x={8} y={split + 14} className="fill-compute-ink text-[11px] font-semibold">
+        avg response (tokens) · page 11&apos;s test-time compute
+      </text>
+      {[0, 5000, 10000].map((t) => (
+        <g key={`l${t}`}>
+          <line x1={0} x2={innerW} y1={yLen(t)} y2={yLen(t)} className="stroke-grid" strokeWidth={0.5} />
+          <text x={-6} y={yLen(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[10px]">
+            {t === 0 ? "0" : `${t / 1000}k`}
+          </text>
+        </g>
+      ))}
+
+      {[0, 2000, 4000, 6000, 8000].map((t) => (
+        <text key={`x${t}`} x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+          {t === 0 ? "0" : `${t / 1000}k`}
+        </text>
+      ))}
+
+      {/* the aha step, across both panels */}
+      <line
+        x1={x(AHA_STEP)}
+        x2={x(AHA_STEP)}
+        y1={0}
+        y2={innerH}
+        className="stroke-ink-muted"
+        strokeWidth={1}
+        strokeDasharray="4 3"
+      />
+      <text x={x(AHA_STEP) + 4} y={14} textAnchor="start" className="fill-ink-muted text-[10px]">
+        the aha appears
+      </text>
+
+      <path d={accPath} fill="none" className="stroke-correct" strokeWidth={2.5} />
+      {/* the reported endpoints, solid; the line between them is drawn */}
+      <circle cx={x(first.x)} cy={yAcc(first.y)} r={3.5} className="fill-correct stroke-canvas" strokeWidth={1} />
+      <circle cx={x(last.x)} cy={yAcc(last.y)} r={3.5} className="fill-correct stroke-canvas" strokeWidth={1} />
+      <path d={lenPath} fill="none" className="stroke-compute" strokeWidth={2.5} />
+
+      <text x={innerW * 0.62} y={yLen(1500)} textAnchor="middle" className="fill-compute-ink text-[10px]">
+        no term in the reward mentions length
+      </text>
+      <text
+        x={innerW * 0.62}
+        y={yLen(1500) + 13}
+        textAnchor="middle"
+        className="fill-compute-ink text-[10px] font-semibold"
+      >
+        nobody is turning this dial
+      </text>
+
+      {/* the slider's marker, through both panels */}
+      <line
+        x1={x(step)}
+        x2={x(step)}
+        y1={0}
+        y2={innerH}
+        className="stroke-compute"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
+      <circle cx={x(step)} cy={yAcc(pass)} r={5} className="fill-correct stroke-canvas" strokeWidth={1.5} />
+      <circle cx={x(step)} cy={yLen(length)} r={5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
+    </ChartFrame>
+  );
+}
+
+/** Geometry shared by the skeleton's rows. */
+const SK_BLOCK_W = 46;
+const SK_BLOCK_H = 16;
+const SK_GAP = 16;
+const skX = (i: number) => 8 + i * (SK_BLOCK_W + SK_GAP);
+
+/** One row of forward steps: neutral blocks joined by arrows, optionally
+    dashed (the aha's second pass) and optionally ending in an answer pill. */
+function SkeletonRow({
+  y,
+  count,
+  dashed = false,
+  answer = false,
+  answerCorrect = false,
+}: {
+  y: number;
+  count: number;
+  dashed?: boolean;
+  answer?: boolean;
+  answerCorrect?: boolean;
+}) {
+  const mid = y + SK_BLOCK_H / 2;
+  return (
+    <g>
+      {Array.from({ length: count }, (_, i) => (
+        <g key={i}>
+          <rect
+            x={skX(i)}
+            y={y}
+            width={SK_BLOCK_W}
+            height={SK_BLOCK_H}
+            rx={3}
+            className={dashed ? "stroke-correct" : "fill-grid"}
+            fill={dashed ? "none" : undefined}
+            strokeDasharray={dashed ? "3 2" : undefined}
+          />
+          {i < count - 1 || answer ? (
+            <line
+              x1={skX(i) + SK_BLOCK_W + 2}
+              x2={skX(i + 1) - 5}
+              y1={mid}
+              y2={mid}
+              className="stroke-ink-muted"
+              strokeWidth={1}
+              markerEnd="url(#skel-fwd)"
+            />
+          ) : null}
+        </g>
+      ))}
+      {answer ? (
+        <g>
+          <rect
+            x={skX(count)}
+            y={y}
+            width={58}
+            height={SK_BLOCK_H}
+            rx={SK_BLOCK_H / 2}
+            fill="none"
+            className={answerCorrect ? "stroke-correct" : "stroke-ink-muted"}
+          />
+          <text
+            x={skX(count) + 29}
+            y={mid}
+            dy="0.32em"
+            textAnchor="middle"
+            className={`text-[9px] ${answerCorrect ? "fill-correct-ink" : "fill-ink-muted"}`}
+          >
+            answer
+          </text>
+        </g>
+      ) : null}
+    </g>
   );
 }
 
 /**
- * One bar in section 3's figure. Every bar is drawn from a common zero and
+ * The trace as a shape, no text. Early and mid are strictly forward chains
+ * of different lengths; the aha stage adds the only structure that matters:
+ * an interrupt and a loop back to the trace's own first line, then a second,
+ * re-deriving pass. The abstraction of the paper's Table-3 trace: the
+ * structure it exhibits, not the words it uses.
+ */
+function TraceSkeleton({ stage }: { stage: TraceStage }) {
+  const label =
+    stage === "early"
+      ? "Trace skeleton, early in training: three steps forward, then an answer. Nothing looks back. Schematic, structure only, no text."
+      : stage === "mid"
+        ? "Trace skeleton, mid training: six steps forward, then an answer. Longer, still strictly forward. Schematic, structure only, no text."
+        : "Trace skeleton after the aha: four steps forward, the last of them outlined as the step the trace doubts, then the trace interrupts itself and loops back to its own first line; a second pass of five dashed steps re-derives the solution and ends in an answer. Schematic, structure only, no text.";
+
+  const height = stage === "aha" ? 140 : 52;
+
+  return (
+    <svg role="img" aria-label={label} viewBox={`0 0 560 ${height}`} className="w-full">
+      <defs>
+        <marker id="skel-fwd" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+          <path d="M0,0 L5,3 L0,6" fill="none" className="stroke-ink-muted" strokeWidth={1} />
+        </marker>
+        <marker id="skel-loop" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+          <path d="M0,0 L6,3.5 L0,7" fill="none" className="stroke-correct" strokeWidth={1.2} />
+        </marker>
+      </defs>
+
+      <text x={8} y={14} className="fill-ink-muted text-[9px] font-eyebrow uppercase tracking-wide">
+        {stage === "aha" ? "first pass" : "one pass"}
+      </text>
+
+      {stage === "early" ? <SkeletonRow y={22} count={3} answer /> : null}
+      {stage === "mid" ? <SkeletonRow y={22} count={6} answer /> : null}
+
+      {stage === "aha" ? (
+        <g>
+          <SkeletonRow y={22} count={4} />
+          {/*
+           * The step the trace is about to doubt. Compute hue, dashed:
+           * attention, not error. It must never take the wrong hue: nothing
+           * ever scored this step, so a located mistake would contradict the
+           * outcome-only reward in section 1.
+           */}
+          <rect
+            x={skX(3)}
+            y={22}
+            width={SK_BLOCK_W}
+            height={SK_BLOCK_H}
+            rx={3}
+            fill="none"
+            className="stroke-compute"
+            strokeWidth={1.5}
+            strokeDasharray="3 2"
+          />
+          <line
+            x1={skX(3) + SK_BLOCK_W + 2}
+            x2={skX(4) - 5}
+            y1={30}
+            y2={30}
+            className="stroke-ink-muted"
+            strokeWidth={1}
+            markerEnd="url(#skel-fwd)"
+          />
+          <rect x={skX(4)} y={22} width={64} height={SK_BLOCK_H} rx={3} fill="none" className="stroke-correct" strokeWidth={1.5} />
+          <text x={skX(4) + 32} y={30} dy="0.32em" textAnchor="middle" className="fill-correct-ink text-[9px] font-semibold">
+            interrupt
+          </text>
+
+          <path
+            d={`M ${skX(4) + 32} 42 C ${skX(4) + 32} 76, 30 54, 30 90`}
+            fill="none"
+            className="stroke-correct"
+            strokeWidth={1.5}
+            markerEnd="url(#skel-loop)"
+          />
+          <text x={160} y={82} textAnchor="middle" className="fill-correct-ink text-[9px]">
+            back to line 1
+          </text>
+
+          <SkeletonRow y={96} count={5} dashed answer answerCorrect />
+          <text x={8} y={130} className="fill-ink-muted text-[9px] font-eyebrow uppercase tracking-wide">
+            second pass
+          </text>
+        </g>
+      ) : null}
+    </svg>
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * Section 4: stacking on top
+ * ------------------------------------------------------------------------- */
+
+/**
+ * One bar in section 4's figure. Every bar is drawn from a common zero and
  * carries its own published score: the readings are alternatives, so none of
  * them may start where another ended.
  */
@@ -463,6 +814,170 @@ function Reading({
   );
 }
 
+/* ---------------------------------------------------------------------------
+ * Section 5: the curve is portable
+ * ------------------------------------------------------------------------- */
+
+interface Distill {
+  size: number;
+  label: string;
+  family: "qwen" | "llama";
+  note: string;
+}
+const DISTILLS: Distill[] = [
+  { size: 1.5, label: "Qwen-1.5B", family: "qwen", note: "beats GPT-4o on AIME, from a model that fits on a phone" },
+  { size: 7, label: "Qwen-7B", family: "qwen", note: "most of the way to o1-mini, at laptop scale" },
+  { size: 8, label: "Llama-8B", family: "llama", note: "a Llama base instead of Qwen: the same traces teach a different family" },
+  { size: 14, label: "Qwen-14B", family: "qwen", note: "clears o1-mini's line at a size a single workstation can serve" },
+  { size: 32, label: "Qwen-32B", family: "qwen", note: "within seven points of the 671B teacher" },
+  { size: 70, label: "Llama-70B", family: "llama", note: "bigger is not automatically better: the 32B Qwen edges it" },
+];
+
+/** A small legend swatch + label (page-11 idiom). */
+function Key({ shape, className, label }: { shape: "circle" | "diamond" | "line" | "dash"; className: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span
+        aria-hidden="true"
+        className={`inline-block ${
+          shape === "line"
+            ? "h-0.5 w-4"
+            : shape === "dash"
+              ? "h-0 w-4 border-t border-dashed"
+              : shape === "diamond"
+                ? "h-3 w-3 rotate-45"
+                : "h-3 w-3 rounded-full"
+        } ${className}`}
+      />
+      {label}
+    </span>
+  );
+}
+
+/**
+ * Score is the axis; size is just row order. One row per distilled model
+ * (smallest at the top), the 671B teacher as the bottom row, and the closed
+ * models as vertical dashed rules: they have scores but no disclosed sizes.
+ * Reading down the rows the dots march right through the rules; Llama-70B
+ * sitting left of Qwen-32B is a visible kink. Clicking a row picks it.
+ */
+function DistillDotPlot({ picked, onPick }: { picked: number; onPick: (size: number) => void }) {
+  const distill = curves.deepseekDistill;
+  const D = distill.fit!.params;
+  const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
+
+  const width = 720;
+  const height = 280;
+  const margin = { top: 26, right: 16, bottom: 40, left: 118 };
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const x = scaleLinear().domain([0, 90]).range([0, innerW]);
+  const rows = DISTILLS.length + 1;
+  const rowH = innerH / rows;
+  const rowY = (i: number) => (i + 0.5) * rowH;
+
+  const title = `AIME 2024 pass at 1 as a horizontal dot plot, one row per model, smallest at the top. Rows: ${DISTILLS.map(
+    (d) => `${d.label} ${aimeOf(d.size)} percent`,
+  ).join(", ")}, and the R1 teacher, a ${D.teacherParamsB}B mixture-of-experts, at ${D.r1Aime} percent. Dashed vertical rules mark closed models with undisclosed sizes: GPT-4o at ${D.gpt4oAime} percent and OpenAI o1-mini at ${D.o1miniAime} percent; a dotted rule marks the teacher's score. Reading down the rows, the dots move right past the closed-model rules; Llama-70B sits left of Qwen-32B. ${DISTILLS.find((d) => d.size === picked)?.label} is selected.`;
+
+  return (
+    <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="AIME 2024 pass@1 (%)">
+      {[0, 20, 40, 60, 80].map((t) => (
+        <g key={`x${t}`}>
+          <line x1={x(t)} x2={x(t)} y1={0} y2={innerH} className="stroke-grid" strokeWidth={0.5} />
+          <text x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+            {t}
+          </text>
+        </g>
+      ))}
+
+      {/* closed models: rules, not rows; their sizes are undisclosed */}
+      {[
+        { label: "GPT-4o", v: D.gpt4oAime, anchor: "start" as const, dx: 4 },
+        { label: "o1-mini", v: D.o1miniAime, anchor: "end" as const, dx: -4 },
+      ].map((r) => (
+        <g key={r.label}>
+          <line
+            x1={x(r.v)}
+            x2={x(r.v)}
+            y1={0}
+            y2={innerH}
+            className="stroke-ink-muted"
+            strokeWidth={1}
+            strokeDasharray="4 3"
+          />
+          <text x={x(r.v) + r.dx} y={-8} textAnchor={r.anchor} className="fill-ink-muted text-[10px]">
+            {r.label} · {r.v}%
+          </text>
+        </g>
+      ))}
+
+      {/* the teacher's score, ruled so "within seven points" is visible */}
+      <line
+        x1={x(D.r1Aime)}
+        x2={x(D.r1Aime)}
+        y1={0}
+        y2={innerH}
+        className="stroke-correct"
+        strokeWidth={1}
+        strokeDasharray="2 3"
+      />
+      <text x={x(D.r1Aime) - 4} y={-8} textAnchor="end" className="fill-correct-ink text-[10px]">
+        R1 teacher · {D.r1Aime}%
+      </text>
+
+      {DISTILLS.map((d, i) => {
+        const cy = rowY(i);
+        const cx = x(aimeOf(d.size));
+        const active = d.size === picked;
+        return (
+          <g key={d.size} onClick={() => onPick(d.size)} className="cursor-pointer" aria-hidden="true">
+            <rect x={-margin.left} y={cy - rowH / 2} width={margin.left + innerW} height={rowH} fill="transparent" />
+            <line x1={0} x2={innerW} y1={cy} y2={cy} className="stroke-grid" strokeWidth={0.5} />
+            <text
+              x={-8}
+              y={cy}
+              dy="0.32em"
+              textAnchor="end"
+              className={`text-[10px] ${active ? "fill-ink font-semibold" : "fill-ink-muted"}`}
+            >
+              {d.label}
+            </text>
+            {active ? <circle cx={cx} cy={cy} r={9} fill="none" className="stroke-ink" strokeWidth={1.5} /> : null}
+            {d.family === "llama" ? (
+              <rect
+                x={cx - 4}
+                y={cy - 4}
+                width={8}
+                height={8}
+                transform={`rotate(45 ${cx} ${cy})`}
+                className="fill-wrong stroke-canvas"
+                strokeWidth={1.5}
+              />
+            ) : (
+              <circle cx={cx} cy={cy} r={4.5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
+            )}
+            {active ? (
+              <text x={cx + 13} y={cy} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
+                {aimeOf(d.size).toFixed(1)}%
+              </text>
+            ) : null}
+          </g>
+        );
+      })}
+
+      {/* the teacher's row, at the bottom: the biggest model, the rightmost dot */}
+      <g aria-hidden="true">
+        <line x1={0} x2={innerW} y1={rowY(rows - 1)} y2={rowY(rows - 1)} className="stroke-grid" strokeWidth={0.5} />
+        <text x={-8} y={rowY(rows - 1)} dy="0.32em" textAnchor="end" className="fill-ink text-[10px] font-semibold">
+          R1 teacher · {D.teacherParamsB}B
+        </text>
+        <circle cx={x(D.r1Aime)} cy={rowY(rows - 1)} r={6} className="fill-correct stroke-canvas" strokeWidth={1.5} />
+      </g>
+    </ChartFrame>
+  );
+}
+
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
@@ -473,43 +988,66 @@ function Note({ kicker, children }: { kicker: string; children: React.ReactNode 
   );
 }
 
-
 export function Page13() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
+  const training = curves.deepseekTraining;
+  const T = training.fit!.params;
+  const D = curves.deepseekDistill.fit!.params;
 
-  /* Open mid-family: ×10 thinking on the ×10 run — the marker on the middle
-     curve with the bracket showing exactly one forgone decade (+29.5). */
+  /* — section 1: how many of the OTHER three samples also get 223,300 — */
+  const [luck, setLuck] = useState(1);
+  const rewards: number[] = [1, ...OTHER_WRONGS.map((_, i) => (i < luck ? 1 : 0))];
+  const mean = rewards.reduce((a, b) => a + b, 0) / rewards.length;
+  const uniform = luck === 3;
+  const push1 = 1 - mean;
+  const LUCK_READ: Record<number, string> = {
+    0: `Sample 1 is the only right answer in the group: the biggest push on offer (+${push1.toFixed(2)}).`,
+    1: `Same right answer, luckier group: sample 1's push drops to +${push1.toFixed(2)}.`,
+    2: `Luckier still: +${push1.toFixed(2)}. Now watch sample 4: a wrong answer in a mostly-right group is punished hardest (−${mean.toFixed(2)}). Rarity amplifies the signal in both directions.`,
+    3: "",
+  };
+
+  /* — section 2: open mid-family, ×10 thinking on the ×10 run, so the bracket
+       shows exactly one forgone decade (+29.5) — */
   const [testExp, setTestExp] = useState(1);
   const [trainExp, setTrainExp] = useState(1);
-
   const acc = law(testExp, trainExp);
-  /* The finding, not the parking spot: what the forgone RL would have added here. */
   const gap = law(testExp, P.maxExp) - acc;
 
+  /* — section 3: the scrubber — */
+  const [step, setStep] = useState(0);
+  const pass = interpolate(training, step);
+  const length = Math.round(T.lengthStart + (T.lengthEnd - T.lengthStart) * (step / MAX_STEP));
+  const stage: TraceStage = step >= AHA_STEP ? "aha" : step >= MID_STEP ? "mid" : "early";
+
+  /* — section 5: the distills — */
+  const [pickedSize, setPickedSize] = useState(14);
+  const picked = DISTILLS.find((d) => d.size === pickedSize)!;
+  const paramRatio = Math.round(D.teacherParamsB / picked.size);
+
+  const touch = () => recordInteraction(PAGE_N);
+
   /*
-   * Section 3's three readings: one o1, one benchmark, three sampling budgets.
-   * The announcement reports them as alternatives for the same model, so they
-   * are three bars from a common zero, never an additive stack.
+   * Section 4's readings, grouped by model. Each group is one model on one
+   * benchmark at several sampling budgets, reported as alternatives, so every
+   * bar starts from zero and none is a storey on another.
    */
-  const readings = [
+  const groups = [
     {
-      label: "one chain",
-      note: "the private chain answers once, scored pass@1",
-      value: P.o1Pass1,
-      tone: "bg-compute",
+      heading: "o1, one model read three ways",
+      readings: [
+        { label: "one chain", note: "the private chain answers once, scored pass@1", value: P.o1Pass1, tone: "bg-compute" },
+        { label: "page 7's voting", note: "the majority answer across 64 of those chains", value: P.o1Cons64, tone: "bg-compute" },
+        { label: "page 8's re-ranker", note: "a learned judge picks one of 1000 of those chains", value: P.o1Rerank1000, tone: "bg-correct" },
+      ],
     },
     {
-      label: "page 7's voting",
-      note: "the majority answer across 64 of those chains",
-      value: P.o1Cons64,
-      tone: "bg-compute",
-    },
-    {
-      label: "page 8's re-ranker",
-      note: "a learned judge picks one of 1000 of those chains",
-      value: P.o1Rerank1000,
-      tone: "bg-correct",
+      heading: "R1-Zero, one model read two ways",
+      readings: [
+        { label: "one chain", note: "its readable chain answers once, scored pass@1", value: T.passAt1, tone: "bg-compute" },
+        { label: "page 7's voting", note: "the majority answer across 64 of those chains", value: T.cons64, tone: "bg-compute" },
+      ],
     },
   ];
 
@@ -525,41 +1063,28 @@ export function Page13() {
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        By page 12, compute had split in two: the compute spent at answer time (pages 5 to 11:
-        votes, judges, search) and the compute already sunk into the weights (page 12: the reasoning
-        trained in). <strong className="text-ink">o1</strong> is the first commercial model to
-        turn both dials, and it kept the recipe. Its signature is{" "}
-        <strong className="text-ink">a curve with two compute axes</strong>: how much of the score
-        did the training buy, and how much did the thinking?
+        Page 12 built a model that teaches itself from its own right answers. Run that idea with
+        reinforcement learning, at scale, and the result is{" "}
+        <strong className="text-ink">learned reasoning</strong>: a model that reasons because
+        training paid it to, and that still scores higher the longer it thinks. So which bought the
+        score, the training or the thinking?
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — the loop-diff */}
+        {/* Step 1: the loop, and its cheapest published instance */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">
-            1. The human leaves the loop
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              confirmed frame only
-            </span>
-          </h2>
+          <h2 className="text-xl font-semibold text-ink">1. The loop</h2>
           <p className="text-ink-muted">
-            Page 12 closed on a promise: same shape, disguise dropped. OpenAI confirmed the
-            frame, that o1 is trained with large-scale reinforcement learning to think in a long
-            private chain
-            <Cite n={REF.announce} />, and its own researchers later named the category:
-            &ldquo;large reasoning models (LRMs): language models trained via reinforcement
-            learning to &lsquo;reason&rsquo; and &lsquo;think through&rsquo; extended chains of
-            thought&rdquo;.
-            <Cite n={REF.competitive} /> The algorithm itself was never published.
+            OpenAI confirmed the frame: o1 is trained with large-scale reinforcement learning to think
+            in a long private chain.
+            <Cite n={REF.announce} /> The loop keeps page 12&apos;s three stations and renames two.
           </p>
 
           <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            {/* page 12's loop strip, redrawn: the same three stations, two
-                renamed, each carrying its own diff against page 12's line */}
             <div
               className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center"
               role="img"
-              aria-label="Page 12's three-station loop redrawn for o1: generate becomes k sampled chains per problem instead of one greedy try, filter becomes an explicit reward that is still the answer key, and fine-tune becomes reinforce in place on the current model rather than the base model. The loop repeats."
+              aria-label="Page 12's three-station loop redrawn for learned reasoning: generate becomes k sampled chains per problem instead of one greedy try, filter becomes an explicit reward that is still the answer key, and fine-tune becomes reinforce in place on the current model rather than the base model. The loop repeats."
             >
               <Stage
                 tone="border-ink"
@@ -581,32 +1106,116 @@ export function Page13() {
               <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">↺</span>
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-              Page 12&apos;s strip, redrawn: the same three stations, two renamed, and the
-              sub-labels name what each was before.{" "}
-              <strong className="text-ink">The shape is the whole of what was confirmed.</strong>{" "}
-              This deck will not print a line of o1&apos;s pseudocode, because nobody outside
-              OpenAI can check one; page 14 prints an algorithm from the lab that published it.
+              OpenAI never published o1&apos;s algorithm, so this deck prints none; the one below is
+              DeepSeek&apos;s, published in full.
             </figcaption>
           </figure>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-sm text-ink">
-            Even at this resolution one thing is legible by its absence: a human. RLHF pays people
-            to judge outputs; here nobody writes an example and nobody grades one, because the
-            model authors the reasoning and the answer key scores it. And the training set never
-            touches page 3&apos;s finite stock of human text: the model writes its own curriculum.
+            One thing is legible by its absence: a human. RLHF pays people to judge outputs; here
+            nobody writes an example and nobody grades one, because the model authors the reasoning
+            and the answer key scores it. The training set never touches page 3&apos;s finite stock
+            of human text: the model writes its own curriculum.
           </p>
+
+          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
+            <p className="text-ink">
+              The cheapest published instance is <strong>Group Relative Policy Optimization</strong>
+              , which DeepSeek used to train <strong>R1-Zero</strong> straight from a plain base
+              model, with <strong>no worked examples at all</strong>: only problems whose final
+              answers can be checked.
+              <Cite n={REF.r1} /> It fits in five lines:
+              <Cite n={REF.grpo} />
+            </p>
+
+            <figure className="m-0 flex flex-col gap-2">
+              <div className="flex flex-col gap-1 rounded-lg border border-dashed border-grid bg-surface-raised p-3 font-mono text-sm">
+                {PSEUDO.map((line, i) => (
+                  <div key={i} className="flex flex-wrap items-baseline gap-x-3">
+                    <code className="whitespace-pre text-ink">{line.code}</code>
+                    {line.note ? (
+                      <span className="text-xs text-compute-ink">{`# ${line.note}`}</span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+              <figcaption className="text-xs text-ink-muted">
+                no critic network anywhere, which at 671B parameters is what made RL at this scale
+                affordable: PPO, the standard alternative, learns its baseline from a second
+                network about as large as the policy itself
+              </figcaption>
+            </figure>
+
+            <p className="text-ink">
+              Line 2 should look familiar. <strong>Page 7 sampled many chains and picked among
+              them at answer time</strong>, then threw every sample away once the vote was
+              counted. GRPO runs the same sampling during training and keeps what the winners did
+              in the weights: sampling paid for once, instead of on every question.
+            </p>
+
+            <figure className="m-0 flex flex-col gap-2 border-t border-dashed border-grid pt-4">
+              <GroupBaselineChart rewards={rewards} mean={mean} />
+              <figcaption className="text-xs text-ink-muted">
+                each sample&apos;s push is its distance from the dashed rule, its reward minus the
+                group mean (GRPO then divides by the group&apos;s spread)
+              </figcaption>
+            </figure>
+
+            <div className="flex flex-col gap-3">
+              <Slider
+                label="of the other three samples, how many are also right"
+                min={0}
+                max={3}
+                step={1}
+                ticks={[0, 1, 2, 3]}
+                value={luck}
+                onChange={(v) => {
+                  setLuck(v);
+                  touch();
+                }}
+              />
+              {uniform ? (
+                <p className="rounded border-l-4 border-compute bg-surface-raised p-2 text-sm text-ink">
+                  The limit of that trend: everyone scored the same, so every push is{" "}
+                  <span className="font-mono">0.00</span>. A problem the model already aces, or
+                  is hopeless on, teaches it nothing. Learning lives where the group disagrees.
+                </p>
+              ) : (
+                <p className="text-sm text-ink">{LUCK_READ[luck]}</p>
+              )}
+            </div>
+          </div>
         </section>
 
-        <Note kicker="References">
-          <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/">
-            OpenAI 2024, <em>Learning to Reason with LLMs</em>.
-          </RefItem>
-          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807">
-            El-Kishky et al. 2025, <em>Competitive Programming with Large Reasoning Models</em>.
-          </RefItem>
-        </Note>
+        <div className="flex flex-col gap-8">
+          <Note kicker="Timeline">
+            <dl className="flex flex-col gap-1.5">
+              {TIMELINE.map((t) => (
+                <div key={t.what} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2">
+                  <dt className="font-mono text-xs tabular-nums text-ink-muted">{t.when}</dt>
+                  <dd className="m-0">{t.what}</dd>
+                </div>
+              ))}
+            </dl>
+          </Note>
+          <Note kicker="References">
+            <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/">
+              OpenAI 2024, <em>Learning to Reason with LLMs</em>.
+            </RefItem>
+            <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
+              DeepSeek-AI 2025, <em>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via
+              Reinforcement Learning</em>.
+            </RefItem>
+            <RefItem n={REF.grpo} href="https://arxiv.org/abs/2402.03300">
+              Shao et al. 2024, <em>DeepSeekMath</em> (GRPO).
+            </RefItem>
+          </Note>
+          <Note kicker="Try it">
+            <p>Drag the dial: the group&apos;s luck changes, sample 1&apos;s answer never does.</p>
+          </Note>
+        </div>
 
-        {/* Step 2 — the two-axis lab */}
+        {/* Step 2: what the loop buys */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">
             2. One law, two knobs
@@ -617,11 +1226,46 @@ export function Page13() {
           <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
               Page 11&apos;s law: <em>model size picks your curve; test-time compute slides you
-              along it.</em> o1&apos;s announcement charts are the same picture with the
-              curve-picker swapped: <strong className="text-ink">RL training picks your curve
-              now</strong>.
-              <Cite n={REF.announce} /> Both are log-linear, accuracy against the{" "}
-              <em>logarithm</em> of compute, whichever axis it arrives on.
+              along it.</em> Learned reasoning swaps the curve-picker:{" "}
+              <strong className="text-ink">RL training picks your curve now</strong>. Here is the
+              loop above, run once on R1-Zero:
+              <Cite n={REF.r1} />
+            </p>
+
+            <div
+              className="grid gap-3 rounded-lg bg-surface-raised p-3 sm:grid-cols-2"
+              role="img"
+              aria-label={`R1-Zero, from the start of RL training to the end: AIME 2024 pass at 1 rose from ${T.start} to ${T.passAt1.toFixed(1)} percent, and the average answer grew from about ${T.lengthStart.toLocaleString()} to about ${T.lengthEnd.toLocaleString()} tokens.`}
+            >
+              <div>
+                <p className="font-mono text-2xl font-bold tabular-nums text-correct-ink">
+                  {T.start}% → {T.passAt1.toFixed(1)}%
+                </p>
+                <p className="text-xs text-ink-muted">AIME 2024 pass@1, start to end of training</p>
+              </div>
+              <div>
+                <p className="font-mono text-2xl font-bold tabular-nums text-compute-ink">
+                  ≈{T.lengthStart.toLocaleString()} → ≈{T.lengthEnd.toLocaleString()}
+                </p>
+                <p className="text-xs text-ink-muted">tokens per answer, over the same run</p>
+              </div>
+            </div>
+            <p className="text-sm text-ink-muted">
+              The score climbed, and so did the length of every answer.{" "}
+              <strong className="text-ink">This is both knobs moving at once</strong>: training
+              lifted the curve while the model slid itself along it by thinking about nine times
+              longer. Section 3 follows the length.
+            </p>
+
+            <p className="text-sm text-ink-muted">
+              Turning the knobs one at a time takes a lab that measured them one at a time, and
+              OpenAI&apos;s o1 announcement did: one chart against RL training compute, one against
+              thinking compute, both log-linear, accuracy against the <em>logarithm</em> of compute.
+              <Cite n={REF.announce} /> Below, the two are joined into one surface, all three runs
+              drawn at once: the same line, slid one decade right for every decade of RL forgone.{" "}
+              <strong className="text-ink">The training dial picks your curve; the thinking dial
+              slides your marker along it</strong>, and the bracket prices what the missing RL
+              would have bought.
             </p>
             <p className="text-sm text-ink-muted">
               Both dials count compute, not attempts.{" "}
@@ -629,28 +1273,19 @@ export function Page13() {
               the training compute</strong>, not a hundred runs; ×100 thinking is one answer
               whose private chain is allowed to run a hundred times as long, not a hundred
               sampled answers; sampling many chains and voting is a separate purchase, and
-              section 3 stacks it on top. The score being climbed is{" "}
-              <strong className="text-ink">pass@1 on AIME 2024</strong>, the same competition
-              maths as section 3: fifteen problems, one chain each, graded against the answer key.
-            </p>
-            <p className="text-sm text-ink-muted">
-              All three runs are drawn below: the same line, slid one decade right for every
-              decade of RL forgone.{" "}
-              <strong className="text-ink">The training dial picks your curve; the thinking dial
-              slides your marker along it</strong>, and the bracket at your marker prices what
-              the missing RL would have bought.
+              section 4 stacks it on top. The score is{" "}
+              <strong className="text-ink">pass@1 on AIME 2024</strong>: fifteen problems, one
+              chain each, graded against the answer key.
             </p>
 
-            {/* the centerpiece at full card width, dials in a strip beneath */}
             <RunFamilyChart trainExp={trainExp} testExp={testExp} acc={acc} gap={gap} />
             <p className="text-xs text-ink-muted">
-              all three RL runs are drawn in full and the dials never move them; only the
-              highlight and your marker respond. The staircase says it without dragging: up one
-              curve and along one decade buy the same +{P.slopePerDecade}.
+              the dials never move the runs; only the highlight and your marker respond. The
+              staircase says it without dragging: up one curve and along one decade buy the same +
+              {P.slopePerDecade}.
             </p>
 
             <div className="flex flex-col gap-4 border-t border-dashed border-grid pt-3">
-              {/* the two dials share one row, so they always sit at the same height */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <Slider
                   label="RL training (compute in one training run)"
@@ -661,7 +1296,7 @@ export function Page13() {
                   format={(v) => `×${Math.round(10 ** v)}`}
                   onChange={(v) => {
                     setTrainExp(v);
-                    recordInteraction(PAGE_N);
+                    touch();
                   }}
                 />
                 <Slider
@@ -673,7 +1308,7 @@ export function Page13() {
                   format={(v) => `×${Math.round(10 ** v)}`}
                   onChange={(v) => {
                     setTestExp(v);
-                    recordInteraction(PAGE_N);
+                    touch();
                   }}
                 />
               </div>
@@ -701,17 +1336,23 @@ export function Page13() {
               trade one for one: a decade of thinking buys back exactly the decade of RL you
               skipped, which is why ×1 training with ×100 thinking scores the same{" "}
               {law(2, 0).toFixed(1)} as ×100 training with ×1 thinking. What differs is how often
-              you pay. The RL is bought once, before any question arrives, and in a currency page
-              3&apos;s wall does not price: chains the model writes itself, not the finite stock of
-              human text. The thinking is bought again on every answer.
+              you pay. The RL is bought once, before any question arrives. The thinking is bought
+              again on every answer.
             </p>
+            {/* The page's one disclosure block: every authored construction on
+                the page, o1's and R1-Zero's together. */}
             <p className="text-xs text-ink-muted">
               OpenAI published two separate charts, one per axis, both with the compute axis
               unlabeled: a log scale in undisclosed, relative units. Joining them into one surface,
               so that a decade of either dial buys the same points and training is a clean sideways
               shift, is this deck&apos;s construction and not a published result; so are the ×1 to
               ×100 span and the +{P.slopePerDecade}-per-decade slope. The dashed GPT-4o line and
-              the o1 dot are verbatim. The slope is the claim; the absolute compute is a secret.
+              the o1 dot are verbatim. For R1-Zero, the start and end of each training curve are
+              DeepSeek&apos;s; the points between them are drawn along the reported climb, the
+              trace skeleton in section 3 is a schematic of the structure in the paper&apos;s
+              Table 3, not its text, and where the aha lands on the slider is an illustrative
+              placement, since the paper gives the behaviour and not a step number. The slope is
+              the claim; the absolute compute is a secret.
             </p>
           </div>
         </section>
@@ -723,20 +1364,103 @@ export function Page13() {
           </p>
         </Note>
 
-        {/* Step 3 — the second storey, and the generality ablation */}
+        {/* Step 3: where the thinking comes from */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
+          <h2 className="text-xl font-semibold text-ink">
+            3. Where the thinking comes from
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              R1-Zero · AIME 2024 · DeepSeek-AI 2025
+            </span>
+          </h2>
+
+          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
+            <p className="text-ink">
+              Nothing in the recipe mentions reflection. Nothing in the reward mentions length.{" "}
+              <strong>Watch both panels anyway.</strong>
+            </p>
+
+            <div className="flex flex-col gap-4">
+              <Slider
+                label="RL training step"
+                min={0}
+                max={MAX_STEP}
+                step={500}
+                value={step}
+                onChange={(v) => {
+                  setStep(v);
+                  touch();
+                }}
+              />
+              <div className="flex flex-wrap items-end gap-x-8 gap-y-3">
+                <div>
+                  <p className="font-mono text-5xl font-bold tabular-nums text-correct-ink">
+                    {pass.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-ink-muted">AIME 2024 pass@1</p>
+                </div>
+                <div>
+                  <p className="font-mono text-2xl font-bold tabular-nums text-compute-ink">
+                    ≈{length.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-ink-muted">avg response tokens</p>
+                </div>
+              </div>
+              <TrainingPanels step={step} pass={pass} length={length} />
+            </div>
+
+            <p className="text-ink">
+              Length is not a schedule anyone set: longer, re-checking traces win more reward, so
+              the model <strong>buys itself more thinking time</strong>. The skeleton below shows
+              what the extra tokens are made of.
+            </p>
+
+            <div className="flex flex-col gap-2 rounded-lg border border-dashed border-grid bg-surface-raised p-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
+                  the trace, as a shape · {STAGE_CHIP[stage]}
+                </p>
+                <p className="font-mono text-xs tabular-nums text-compute-ink">
+                  ≈{length.toLocaleString()} tokens
+                </p>
+              </div>
+              <TraceSkeleton stage={stage} />
+              <p className="border-t border-dashed border-grid pt-2 text-sm text-ink-muted">
+                {STAGE_NOTE[stage]}
+              </p>
+            </div>
+
+            <p className="text-ink">
+              <strong>The thinking dial buys one longer chain.</strong> Count the traces: there is
+              one, allowed to run longer, not many chains sampled and voted on behind an API. That
+              is what section 2&apos;s thinking dial assumed and could not show.
+            </p>
+            <p className="text-ink">
+              <strong>The tokens do the work, not describe it.</strong> A chain nobody can read
+              might be a running commentary written beside the real work, and from outside there is
+              no way to tell. These tokens cannot be that: the chain is what the model sampled and
+              what training pushed on, and no separate step ever wrote a description of anything.
+              Re-derivation is not narration, and the score climbs as the loops arrive.
+            </p>
+          </div>
+        </section>
+
+        <Note kicker="Try it">
+          <p>Drag past step {AHA_STEP.toLocaleString()}.</p>
+        </Note>
+
+        {/* Step 4: stacking on top */}
         <section className="flex min-w-0 flex-col gap-4 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">3. Stack the toolbox, or turn the knobs?</h2>
+          <h2 className="text-xl font-semibold text-ink">4. Stack the toolbox on top</h2>
           <figure className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4">
             <p className="text-sm text-ink-muted">
-              First answer: stack. Act 2 did not become obsolete; it became the second storey: put
-              one of its mechanisms over the learned chain and the score moves. Below, one o1 on
-              competition maths (AIME 2024) read three ways, against a strong LLM with no learned
-              chain at all:
+              Act 2 did not become obsolete; it became the second storey. Put one of its mechanisms
+              over a learned chain and the score moves, on both models that published the reading.
+              Competition maths (AIME 2024), against a strong LLM with no learned chain at all:
             </p>
             <div
               className="flex flex-col gap-2"
               role="img"
-              aria-label={`AIME 2024, four readings, every bar drawn from a common zero. A strong LLM with no learned chain, GPT-4o, scores ${P.gpt4oAime} percent. The same o1 is then read three ways: ${P.o1Pass1} percent with its private chain answering once, ${P.o1Cons64} percent taking the majority across 64 of those chains with page 7's voting, and ${P.o1Rerank1000} percent when page 8's learned judge picks one of 1000 of those chains. The three o1 readings are alternatives, so no bar starts where another one ends.`}
+              aria-label={`AIME 2024 readings, every bar drawn from a common zero. A strong LLM with no learned chain, GPT-4o, scores ${P.gpt4oAime} percent. o1 is read three ways: ${P.o1Pass1} percent with its private chain answering once, ${P.o1Cons64} percent taking the majority across 64 of those chains with page 7's voting, and ${P.o1Rerank1000} percent when page 8's learned judge picks one of 1000 of those chains. R1-Zero is read two ways: ${T.passAt1.toFixed(1)} percent with one chain, ${T.cons64} percent with the majority across 64. Within each model the readings are alternatives, so no bar starts where another one ends.`}
             >
               <Reading
                 label="no learned chain"
@@ -744,89 +1468,143 @@ export function Page13() {
                 value={P.gpt4oAime}
                 tone="bg-grid"
               />
-              <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-2">
-                <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
-                  o1, one model read three ways
-                </p>
-                {readings.map((r) => (
-                  <Reading key={r.label} {...r} />
-                ))}
-              </div>
+              {groups.map((g) => (
+                <div key={g.heading} className="flex flex-col gap-2 border-t border-dashed border-grid pt-2">
+                  <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+                    {g.heading}
+                  </p>
+                  {g.readings.map((r) => (
+                    <Reading key={r.label} {...r} />
+                  ))}
+                </div>
+              ))}
             </div>
             <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-              Every bar starts at zero, because the last three are alternatives and not a ladder:
-              the vote and the re-ranker each replace the single chain, and neither runs on the
-              other.{" "}
-              <strong className="text-ink">Same model, same fifteen problems; what changed is how
-              many chains were bought and who picked among them.</strong>
+              Every bar starts at zero, because within a model the readings are alternatives and not
+              a ladder: the vote and the re-ranker each replace the single chain, and neither runs on
+              the other.{" "}
+              <strong className="text-ink">Within each model the problems never change; what
+              changes is how many chains were bought and who picked among them.</strong>
             </figcaption>
           </figure>
 
-          <h3 className="text-lg font-semibold text-ink">
-            One recipe, no domain tricks
-            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-              El-Kishky et al. 2025 · IOI 2024
-            </span>
-          </h3>
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <p className="text-sm text-ink-muted">
-              Second answer: turn the knobs, and OpenAI ran the ablation itself. Take o1 and
-              bolt on hand-engineered, contest-specific strategies (
-              <strong className="text-ink">o1-ioi</strong>), which is Act 2&apos;s move done by
-              hand at the frontier, or just turn the two knobs further. The knob-turning branch, an
-              early <strong className="text-ink">o3</strong>, beat the hand-built specialist on
-              its own contest, no tricks attached.
-              <Cite n={REF.competitive} /> Their conclusion, verbatim: scaling
-              &ldquo;general-purpose reinforcement learning, rather than relying on
-              domain-specific techniques, offers a robust path toward state-of-the-art
-              AI&rdquo;.
-              <Cite n={REF.competitive} />{" "}
-              <strong className="text-ink">Stacking pays once; the knobs compound.</strong>
-            </p>
-          </div>
+          <p className="rounded border-l-4 border-compute bg-surface p-4 text-sm text-ink-muted">
+            <strong className="text-ink">One recipe, no domain tricks.</strong> OpenAI also ran the
+            opposite experiment: bolt hand-engineered, contest-specific strategies onto o1 (
+            <strong className="text-ink">o1-ioi</strong>), or just turn the two knobs further. The
+            knob-turning branch, an early <strong className="text-ink">o3</strong>, beat the
+            hand-built specialist on its own contest, no tricks attached. In their words, scaling
+            &ldquo;general-purpose reinforcement learning, rather than relying on domain-specific
+            techniques, offers a robust path toward state-of-the-art AI&rdquo;.
+            <Cite n={REF.competitive} />{" "}
+            <strong className="text-ink">Stacking pays once; the knobs compound.</strong>
+          </p>
         </section>
 
-        <div aria-hidden="true" />
+        <Note kicker="References">
+          <RefItem n={REF.competitive} href="https://arxiv.org/abs/2502.06807">
+            El-Kishky et al. 2025, <em>Competitive Programming with Large Reasoning Models</em>.
+          </RefItem>
+        </Note>
 
-        {/* Step 4 — the evidence audit, and why an open model comes next */}
+        {/* Step 5: the curve is portable */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">4. The questions o1 cannot answer</h2>
-          <p className="text-ink-muted">
-            The two knobs are priced precisely: a decade of either buys the same +{P.slopePerDecade}
-            . What no amount of measuring from outside can tell you is{" "}
-            <strong className="text-ink">what you get for the money</strong>. Four questions the
-            curve does not answer:
-          </p>
+          <h2 className="text-xl font-semibold text-ink">
+            5. The curve is portable
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              Table 5 · ~800K samples · MIT license
+            </span>
+          </h2>
 
-          <ol className="flex flex-col gap-4">
-            {OPEN_QUESTIONS.map((item, i) => (
-              <li key={item.q} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3">
-                <span
-                  className="w-5 select-none text-right font-code text-sm tabular-nums text-ink-muted"
-                  aria-hidden="true"
-                >
-                  {i + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-semibold text-ink">{item.q}</p>
-                  <p className="text-sm text-ink-muted">{item.why}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-grid bg-surface p-4">
+            <p className="text-ink">
+              The two knobs were never equally available. Anyone can pay for thinking at answer
+              time; lifting the curve took frontier-scale RL, which meant being a frontier lab.{" "}
+              <strong>Does the law need one?</strong> R1 wrote out{" "}
+              <strong>~{D.samplesK}K of its own reasoning traces</strong>, six small models were
+              fine-tuned on them, and the behaviour came with the text.
+              <Cite n={REF.r1} />
+            </p>
+            <p className="text-ink">
+              <strong>The curve-lifting knob got cheap.</strong> Not free: someone still paid for
+              the RL once. But they paid once, and the result copies, so the reasoning does not
+              have to be re-earned by anyone who wants it. The claim to check on the chart is not
+              &ldquo;R1 is good&rdquo;; it is that{" "}
+              <strong>a lifted curve fits in weights you can download</strong>. Pick a size:
+            </p>
 
-          <p className="text-sm text-ink-muted">
-            Every one of them asks what is behind the thinking dial, and{" "}
-            <strong className="text-ink">that is exactly what a closed lab keeps</strong>. It will
-            sell you the curve; it will not show you the machine that makes it.
-          </p>
+            <figure className="m-0 flex flex-col gap-2">
+              <DistillDotPlot
+                picked={pickedSize}
+                onPick={(size) => {
+                  setPickedSize(size);
+                  touch();
+                }}
+              />
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+                <Key shape="circle" className="bg-compute" label="Qwen base" />
+                <Key shape="diamond" className="bg-wrong" label="Llama base" />
+                <Key shape="circle" className="bg-correct" label="R1 teacher (671B MoE)" />
+                <Key shape="dash" className="border-ink-muted" label="closed model (size undisclosed)" />
+              </div>
+              <figcaption className="text-xs text-ink-muted">
+                plain supervised fine-tuning on the traces, no RL and no reward, which is page
+                12&apos;s recipe with a far stronger teacher · the released R1 adds a small cold
+                start of curated traces before its own RL, and scores {D.r1Aime}% here · rows are
+                ordered by size, smallest at the top; the teacher&apos;s {D.teacherParamsB}B is a
+                mixture-of-experts total that activates ~{D.teacherActiveB}B per token · GPT-4o
+                and o1-mini publish scores but not sizes, so they are rules, not rows · GPT-4o&apos;s{" "}
+                {D.gpt4oAime}% is DeepSeek&apos;s measurement, where sections 2 and 4 use
+                OpenAI&apos;s {P.gpt4oAime}%
+              </figcaption>
+            </figure>
 
-          <Handoff>
-            Four months later an open lab answered every one of them: the algorithm in full, a chain
-            you can read token by token, a training curve that shows where the extra thinking comes
-            from, and the whole thing distilled small enough to run yourself.{" "}
-            <em className="text-ink-muted">Turn the page.</em>
-          </Handoff>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Pick a distilled model">
+              {DISTILLS.map((d) => {
+                const active = d.size === pickedSize;
+                return (
+                  <button
+                    key={d.label}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => {
+                      setPickedSize(d.size);
+                      touch();
+                    }}
+                    className={`rounded border px-3 py-1.5 text-sm ${
+                      active
+                        ? "border-compute bg-compute/15 font-semibold text-ink"
+                        : "border-grid bg-surface-raised text-ink-muted"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-sm text-ink">
+              <strong>R1-Distill-{picked.label}</strong>{" "}
+              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher,</span>{" "}
+              {picked.note}.
+            </p>
+
+            <p className="text-sm text-ink-muted">
+              Where a dot lands right of a dashed rule, a model you can download beats a closed
+              frontier product by thinking longer at answer time. And page 3 said the stock of
+              human text was finite: these traces were not in it. One good reasoner now writes the
+              curriculum for everyone else.
+            </p>
+
+            <Handoff>
+              Every claim on this page arrived as a benchmark score: {T.passAt1.toFixed(1)}% on AIME,{" "}
+              {T.cons64}% with a vote, a 14B crossing o1-mini&apos;s line. Every one of them is also
+              a number for thinking longer.{" "}
+              <em className="text-ink-muted">
+                Next: the side of that dial where thinking longer makes the answer worse.
+              </em>
+            </Handoff>
+          </div>
         </section>
       </div>
 

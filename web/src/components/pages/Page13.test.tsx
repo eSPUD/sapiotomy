@@ -1,357 +1,425 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { curves } from "@/lib/curves";
 import { Page13 } from "./Page13";
 
 const follows = (a: Element, b: Element) =>
   Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
-describe("Page 13 (frontier reasoners I)", () => {
-  it("opens on the lede: the two ways to buy reasoning, both dials at once", () => {
+const setStep = (value: number) =>
+  fireEvent.change(screen.getByRole("slider", { name: /RL training step/i }), {
+    target: { value: String(value) },
+  });
+
+const setLuck = (value: number) =>
+  fireEvent.change(screen.getByRole("slider", { name: /how many are also right/i }), {
+    target: { value: String(value) },
+  });
+
+describe("Page 13 (learned reasoning: one law, two knobs)", () => {
+  it("opens on the lede: one bold term, no results, and a question", () => {
     render(<Page13 />);
-    // The lede picks up page 12's hand-off: Act 2's answer-time toolbox and
-    // page 12's train-time loop are both named, so the two compute axes below
-    // are the two threads the reader already holds. It must not re-open Act 3,
-    // which started on page 12 (the seam is 11|12, see pages.ts).
-    const lede = screen
-      .getByText(/how much of the score did the training buy, and how much did the thinking\?/)
-      .closest("p")!;
-    expect(lede.textContent).toMatch(/spent at answer time/);
-    expect(lede.textContent).toMatch(/already sunk into the weights/);
-    expect(lede.textContent).toMatch(/first commercial model to turn both dials/);
-    // Act 3 started on page 12, so the lede may not stage this page as its
-    // opening (the seam is 11|12, see pages.ts).
-    expect(lede.textContent).not.toMatch(/Act 2 ended/);
-    expect(lede.textContent).toMatch(/kept the recipe/);
-    // The seam must rhyme with page 12's closing block, not restate it: page 12
-    // owns "two ways to buy reasoning / after the question lands / long before
-    // the question exists", and the lede reaches the same pair in its own words.
+    const lede = screen.getByText(/So which bought the score, the training or the thinking\?/).closest("p")!;
+    expect(lede.querySelectorAll("strong")).toHaveLength(1);
+    expect(lede.querySelector("strong")!.textContent).toBe("learned reasoning");
+    expect(lede.textContent).not.toMatch(/\d+(\.\d+)?%/);
+    // The seam must rhyme with page 12's closing block, not restate it.
     expect(lede.textContent).not.toMatch(/two ways to buy reasoning/);
     expect(lede.textContent).not.toMatch(/the question lands/);
     expect(lede.textContent).not.toMatch(/long before/);
   });
 
-  it("prints NO o1 algorithm: the strip is the whole of what was confirmed", () => {
+  it("cut the I/II framing, the open questions, and the dates used as plot", () => {
     render(<Page13 />);
-    // The six-line rumored recipe was cut on review. It is a counterexample to
-    // section 4 ("The questions o1 cannot answer"), it spends page 14's
-    // promised "algorithm in full" a page early, and it is the one artifact in
-    // the deck nobody outside OpenAI can check. Do not restore it.
-    expect(screen.queryByText("loop: while the compute budget lasts")).not.toBeInTheDocument();
-    expect(screen.queryByText("r₁…rₖ, ŷ₁…ŷₖ ← M(x)")).not.toBeInTheDocument();
-    expect(screen.queryByText("rewardᵢ ← check(ŷᵢ, y)")).not.toBeInTheDocument();
-    expect(screen.queryByText("M ← reinforce(M, rewards)")).not.toBeInTheDocument();
-    expect(document.querySelector("code")).toBeNull();
-    // And with no listing the page badges no rumor.
-    expect(screen.queryByText("confirmed frame · rumored recipe")).not.toBeInTheDocument();
-    expect(screen.queryByText(/rumor, not record/)).not.toBeInTheDocument();
-    expect(screen.getByText("confirmed frame only")).toBeInTheDocument();
-    // The boundary is stated, and page 14 is named as where a real one lives.
-    expect(screen.getByText(/The shape is the whole of what was confirmed/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/page 14 prints an algorithm from the lab that published it/),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/Frontier Reasoners/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/The questions o1 cannot answer/)).not.toBeInTheDocument();
+    expect(screen.queryByText("What are you actually buying when you turn the thinking dial?")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Four months later/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/an open lab answered/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/the week before/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Turn the page\./)).not.toBeInTheDocument();
+    // One coda, not two.
+    expect(screen.getAllByLabelText("Where this leaves us")).toHaveLength(1);
   });
 
-  it("carries the page-12 diff on the strip's three stations", () => {
+  it("keeps the chronology in one margin timeline", () => {
     render(<Page13 />);
-    // Same three stations, two renamed; each sub-label names what it was on
-    // page 12, which is the whole loop-diff now that the listing is gone.
-    const generate = screen.getByText("generate ×k");
-    expect(screen.getByText("reward")).toBeInTheDocument();
-    expect(screen.getByText("reinforce")).toBeInTheDocument();
-    expect(screen.getByText(/page 12 took one greedy try/)).toBeInTheDocument();
-    expect(screen.getByText(/page 12's filter, made explicit/)).toBeInTheDocument();
-    expect(screen.getByText(/page 12 fine-tuned the base/)).toBeInTheDocument();
-    // STaR itself is still never re-printed.
-    expect(screen.queryByText(/hint = y/)).not.toBeInTheDocument();
-    // The strip leads the section, ahead of the no-human callout.
-    const callout = screen.getByText(/RLHF pays people to judge outputs/);
-    expect(follows(generate, callout)).toBe(true);
+    for (const when of ["Sept 2024", "Dec 2024", "Jan 2025"]) {
+      expect(screen.getByText(when)).toBeInTheDocument();
+    }
+    expect(screen.getByText("OpenAI announces o1")).toBeInTheDocument();
+    expect(screen.getByText("OpenAI announces o3")).toBeInTheDocument();
   });
 
-  it("cites the confirmed frame: the announcement and the LRM definition", () => {
+  it("orders the page by concept: loop, law, thinking, stacking, portability", () => {
     render(<Page13 />);
-    expect(screen.getByText(/large reasoning models \(LRMs\)/)).toBeInTheDocument();
-    expect(screen.getByText(/The algorithm itself was never published\./)).toBeInTheDocument();
+    const headings = [
+      "1. The loop",
+      "2. One law, two knobs",
+      "3. Where the thinking comes from",
+      "4. Stack the toolbox on top",
+      "5. The curve is portable",
+    ].map((h) => screen.getByRole("heading", { level: 2, name: new RegExp(`^${h.replace(".", "\\.")}`) }));
+    for (let i = 1; i < headings.length; i++) {
+      expect(follows(headings[i - 1], headings[i])).toBe(true);
+    }
+    const handoff = screen.getByLabelText("Where this leaves us");
+    expect(follows(headings[4], handoff)).toBe(true);
   });
 
-  it("carries the build-ons: no human in the loop, and page 3's data wall unpriced", () => {
-    render(<Page13 />);
-    expect(screen.getByText(/RLHF pays people to judge outputs/)).toBeInTheDocument();
-    expect(screen.getByText(/writes its own curriculum/)).toBeInTheDocument();
-    // Section 2 restates the currency point against page 3's finite stock.
-    expect(screen.getByText(/page 3's wall does not price/)).toBeInTheDocument();
-  });
-
-  it("frames the lab with page 11's idiom, curve-picker swapped for RL", () => {
-    render(<Page13 />);
-    expect(
-      screen.getByText(/model size picks your curve; test-time compute slides you along it/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/RL training picks your curve now/)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Thinking slides you along the curve; only training lifts it\./),
-    ).toBeInTheDocument();
-    // The lab itself survives: two sliders, the delta readout, the fidelity note.
-    expect(screen.getByText("Thinking time (compute in one answer)")).toBeInTheDocument();
-    expect(screen.getByText("RL training (compute in one training run)")).toBeInTheDocument();
-    expect(screen.getByText("the missing RL's share")).toBeInTheDocument();
-    expect(screen.getByText(/The slope is the claim; the absolute compute is a secret\./)).toBeInTheDocument();
-  });
-
-  it("says what the dials count and what the score is scored on", () => {
-    render(<Page13 />);
-    // Both dials are compute, never a count of runs or of sampled answers.
-    expect(
-      screen.getByText(/×100 RL training is one run given a hundred times the training compute/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/not a hundred sampled answers/)).toBeInTheDocument();
-    // The benchmark is named in the prose, on the axis, and on the readout.
-    expect(screen.getByText(/pass@1 on AIME 2024/)).toBeInTheDocument();
-    expect(screen.getByText("AIME 2024 pass@1 (%)")).toBeInTheDocument();
-    expect(screen.getByText("AIME 2024 pass@1 here")).toBeInTheDocument();
-  });
-
-  it("puts the instruction in the margin and the meaning in the card", () => {
-    render(<Page13 />);
-    // Pages 2/3 grammar: the Try-it note is a single imperative sentence.
-    expect(
-      screen.getByText(/all that thinking lands exactly where the full run/),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/spend the other's decades/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/That equality is the law/)).not.toBeInTheDocument();
-    // The interpretation lives in the card's closing line.
-    expect(
-      screen.getByText(/a decade of thinking buys back exactly the decade of RL you skipped/),
-    ).toBeInTheDocument();
-  });
-
-  it("states the substitution the law actually has, not the opposite", () => {
-    render(<Page13 />);
-    // The two exponents enter twoAxisAccuracy as a sum, so they substitute
-    // exactly: law(2, 0) = law(0, 2) = 21.0 (pinned in frontier.test.ts). The
-    // page used to claim they do not, which the Try-it note itself walks the
-    // reader into disproving.
-    expect(screen.queryByText(/they do not\s+substitute/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/×1 training with ×100 thinking scores the same 21\.0 as ×100 training/),
-    ).toBeInTheDocument();
-    // The real asymmetry is when the compute is bought, not what it buys.
-    expect(screen.getByText(/The thinking is bought again on every answer\./)).toBeInTheDocument();
-  });
-
-  it("discloses the joint surface itself as authored, not just its span and slope", () => {
-    render(<Page13 />);
-    // o1-scaling.json's provenance records TWO separate published charts with
-    // unlabeled axes; one shared law in which training is a horizontal shift is
-    // the deck's construction and appears in no source.
-    expect(screen.getByText(/OpenAI published two separate charts, one per axis/)).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /Joining them into one surface, so that a decade of either dial buys the same points/,
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/is this deck's construction and not a published result/),
-    ).toBeInTheDocument();
-  });
-
-  it("draws the whole run family at once, staircase stated, opening gap priced", () => {
-    render(<Page13 />);
-    const chart = screen.getByRole("img", {
-      name: /Three RL training runs, each one run at a different training-compute budget, are drawn in full as parallel lines/,
+  describe("section 1: the loop", () => {
+    it("draws page 12's strip with each station's diff", () => {
+      render(<Page13 />);
+      const generate = screen.getByText("generate ×k");
+      expect(screen.getByText("reward")).toBeInTheDocument();
+      expect(screen.getByText("reinforce")).toBeInTheDocument();
+      expect(screen.getByText(/page 12 took one greedy try/)).toBeInTheDocument();
+      expect(screen.getByText(/page 12's filter, made explicit/)).toBeInTheDocument();
+      expect(screen.getByText(/page 12 fine-tuned the base/)).toBeInTheDocument();
+      expect(screen.queryByText(/hint = y/)).not.toBeInTheDocument();
+      const callout = screen.getByText(/RLHF pays people to judge outputs/);
+      expect(follows(generate, callout)).toBe(true);
+      expect(screen.getByText(/writes its own curriculum/)).toBeInTheDocument();
     });
-    expect(chart).toBeInTheDocument();
-    // The law is stated statically: up one curve = along one decade = +29.5.
-    expect(chart.getAttribute("aria-label")).toMatch(
-      /times 10 more RL and times 10 more thinking buy the same 29\.5 points/,
-    );
-    // Default state opens mid-family with exactly one forgone decade priced.
-    expect(chart.getAttribute("aria-label")).toMatch(
-      /times 10 run at times 10 thinking, scoring 21\.0 percent, with 29\.5 points forgone/,
-    );
+
+    it("prints NO o1 algorithm: one sentence, then the published one", () => {
+      render(<Page13 />);
+      // The rumored o1 recipe was cut on review 2026-07-30: nobody outside
+      // OpenAI can check one, and a hypothesized listing beside GRPO would
+      // teach the reader the two have equal standing.
+      expect(screen.queryByText("loop: while the compute budget lasts")).not.toBeInTheDocument();
+      expect(screen.queryByText("M ← reinforce(M, rewards)")).not.toBeInTheDocument();
+      expect(screen.queryByText(/rumor/)).not.toBeInTheDocument();
+      const caption = screen.getByText(/OpenAI never published o1's algorithm, so this deck prints none/);
+      expect(caption.textContent).toMatch(/DeepSeek's, published in full/);
+      // The only code on the page is GRPO, and it follows that sentence.
+      const codes = Array.from(document.querySelectorAll("code"));
+      expect(codes.map((c) => c.textContent)).toContain("  sample G answers from the current policy");
+      expect(follows(caption, codes[0])).toBe(true);
+    });
+
+    it("teaches GRPO as pseudocode: rule reward, group baseline, no critic", () => {
+      render(<Page13 />);
+      expect(screen.getByText(/sample G answers from the current policy/)).toBeInTheDocument();
+      expect(screen.getByText(/mean\(r\)\) \/ std\(r\)/)).toBeInTheDocument();
+      expect(screen.getByText(/the group is its own baseline: no critic network/)).toBeInTheDocument();
+      expect(screen.getByText(/no critic network anywhere, which at 671B parameters/)).toBeInTheDocument();
+      expect(screen.getByText(/Page 7 sampled many chains and picked among them at answer time/)).toBeInTheDocument();
+      expect(screen.getByText(/sampling paid for once, instead of on every question/)).toBeInTheDocument();
+    });
+
+    it("GRPO dial: the baseline chases the group and the same right answer's push shrinks", () => {
+      render(<Page13 />);
+      const group = screen.getByRole("img", { name: /Line 2 of the recipe, drawn/ });
+      expect(group.getAttribute("aria-label")).toMatch(/350 times 638/);
+      expect(screen.getByText(/group mean · 0\.50/)).toBeInTheDocument();
+      expect(screen.getAllByText("+0.50")).toHaveLength(2);
+      expect(screen.getByText(/push drops to \+0\.50/)).toBeInTheDocument();
+      expect(screen.getByText("mis-added the partials")).toBeInTheDocument();
+      expect(screen.getByText("dropped a zero")).toBeInTheDocument();
+
+      setLuck(0);
+      expect(screen.getByText("+0.75")).toBeInTheDocument();
+      expect(screen.getByText(/the biggest push on offer/)).toBeInTheDocument();
+      expect(screen.getByText("read 638 as 628")).toBeInTheDocument();
+
+      setLuck(2);
+      expect(screen.getByText("−0.75")).toBeInTheDocument();
+      expect(screen.getByText(/Rarity amplifies the signal in both directions/)).toBeInTheDocument();
+
+      setLuck(3);
+      expect(screen.getByText(/teaches it nothing/)).toBeInTheDocument();
+      expect(screen.getByText(/group mean · 1\.00/)).toBeInTheDocument();
+      expect(screen.queryByText(/[+−]0\.\d\d/)).not.toBeInTheDocument();
+    });
   });
 
-  it("keeps the bars as mechanisms, model names demoted to parentheses", () => {
-    render(<Page13 />);
-    expect(screen.getByText("3. Stack the toolbox, or turn the knobs?")).toBeInTheDocument();
-    expect(screen.getByText("no learned chain")).toBeInTheDocument();
-    expect(screen.getByText(/one instant answer from a strong LLM \(GPT-4o\)/)).toBeInTheDocument();
-    expect(screen.getByText("page 7's voting")).toBeInTheDocument();
-    expect(screen.getByText("page 8's re-ranker")).toBeInTheDocument();
+  describe("section 2: one law, two knobs", () => {
+    it("leads with R1-Zero's reported endpoints, read as both knobs at once", () => {
+      render(<Page13 />);
+      const evidence = screen.getByRole("img", { name: /R1-Zero, from the start of RL training to the end/ });
+      expect(evidence.textContent).toMatch(/15\.6% → 71\.0%/);
+      expect(evidence.textContent).toMatch(/≈1,000 → ≈9,000/);
+      // The run moved both dials, so the page may not sell it as pure RL.
+      expect(screen.getByText(/This is both knobs moving at once/)).toBeInTheDocument();
+      expect(screen.getByText(/Section 3 follows the length\./)).toBeInTheDocument();
+      // And it comes before the constructed o1 surface.
+      const toy = screen.getByRole("img", { name: /Three RL training runs/ });
+      expect(follows(evidence, toy)).toBe(true);
+    });
+
+    it("frames the lab with page 11's idiom, curve-picker swapped for RL", () => {
+      render(<Page13 />);
+      expect(
+        screen.getByText(/model size picks your curve; test-time compute slides you along it/),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/RL training picks your curve now/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Thinking slides you along the curve; only training lifts it\./),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Thinking time (compute in one answer)")).toBeInTheDocument();
+      expect(screen.getByText("RL training (compute in one training run)")).toBeInTheDocument();
+      expect(screen.getByText("the missing RL's share")).toBeInTheDocument();
+    });
+
+    it("says what the dials count and what the score is scored on", () => {
+      render(<Page13 />);
+      expect(
+        screen.getByText(/×100 RL training is one run given a hundred times the training compute/),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/not a hundred sampled answers/)).toBeInTheDocument();
+      expect(screen.getByText(/section 4 stacks it on top/)).toBeInTheDocument();
+      expect(screen.getByText(/pass@1 on AIME 2024/)).toBeInTheDocument();
+      expect(screen.getByText("AIME 2024 pass@1 here")).toBeInTheDocument();
+    });
+
+    it("states the substitution the law actually has, not the opposite", () => {
+      render(<Page13 />);
+      // The exponents enter twoAxisAccuracy as a sum: law(2, 0) = law(0, 2) = 21.0.
+      expect(screen.queryByText(/they do not\s+substitute/)).not.toBeInTheDocument();
+      expect(
+        screen.getByText(/×1 training with ×100 thinking scores the same 21\.0 as ×100 training/),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/The thinking is bought again on every answer\./)).toBeInTheDocument();
+      expect(
+        screen.getByText(/all that thinking lands exactly where the full run/),
+      ).toBeInTheDocument();
+    });
+
+    it("draws the whole run family at once, staircase stated, opening gap priced", () => {
+      render(<Page13 />);
+      const chart = screen.getByRole("img", {
+        name: /Three RL training runs, each one run at a different training-compute budget, are drawn in full as parallel lines/,
+      });
+      expect(chart.getAttribute("aria-label")).toMatch(
+        /times 10 more RL and times 10 more thinking buy the same 29\.5 points/,
+      );
+      expect(chart.getAttribute("aria-label")).toMatch(
+        /times 10 run at times 10 thinking, scoring 21\.0 percent, with 29\.5 points forgone/,
+      );
+    });
+
+    it("discloses every construction on the page in ONE block", () => {
+      render(<Page13 />);
+      const block = screen.getByText(/OpenAI published two separate charts, one per axis/);
+      // The o1 surface.
+      expect(block.textContent).toMatch(
+        /Joining them into one surface, so that a decade of either dial buys the same points/,
+      );
+      expect(block.textContent).toMatch(/is this deck's construction and not a published result/);
+      // The R1-Zero curve, skeleton and aha, in the same block.
+      expect(block.textContent).toMatch(/the points between them are drawn along the reported climb/);
+      expect(block.textContent).toMatch(/schematic of the structure in the paper's Table 3/);
+      expect(block.textContent).toMatch(/illustrative\s+placement/);
+      expect(block.textContent).toMatch(/The slope is the claim; the absolute compute is a secret\./);
+      // No second block, no two-label footer.
+      expect(screen.getAllByText(/illustrative placement|is an illustrative/)).toHaveLength(1);
+      expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
+      expect(screen.queryByText("Cited")).not.toBeInTheDocument();
+    });
   });
 
-  it("draws the three o1 scores as parallel readings, never as an additive stack", () => {
-    render(<Page13 />);
-    // The announcement reports 74.4 pass@1, 83.3 with consensus among 64
-    // samples and 93 re-ranking 1000 samples as three readings of ONE model.
-    // Re-ranking is an alternative to the 64-way vote, not a storey on top of
-    // it, so the rows print absolute scores from a common zero.
-    expect(screen.getByText("o1, one model read three ways")).toBeInTheDocument();
-    for (const score of ["12%", "74.4%", "83.3%", "93%"]) {
-      expect(screen.getByText(score)).toBeInTheDocument();
-    }
-    // The invented increments are gone and must not come back.
-    expect(screen.queryByText("+8.9")).not.toBeInTheDocument();
-    expect(screen.queryByText("+9.7")).not.toBeInTheDocument();
-    expect(screen.queryByText("+62.4")).not.toBeInTheDocument();
-    expect(screen.queryByText(/majority across 64 chains/)).not.toBeInTheDocument();
-    // Every bar is drawn from zero, so none of them starts where another ended.
-    const figure = screen.getByRole("img", { name: /every bar drawn from a common zero/ });
-    const bars = Array.from(figure.querySelectorAll<HTMLElement>("div.absolute"));
-    expect(bars.length).toBe(4);
-    for (const bar of bars) {
-      expect(bar.className).toContain("left-0");
-      expect(bar.style.left).toBe("");
-    }
-    expect(bars.map((b) => b.style.width)).toEqual(["12%", "74.4%", "83.3%", "93%"]);
-    // Page 15's first courtroom case needs the gap legible as one model
-    // measured three ways.
-    expect(
-      screen.getByText(/Same model, same fifteen problems; what changed is how many chains/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/the vote and the re-ranker each replace the single chain/),
-    ).toBeInTheDocument();
+  describe("section 3: where the thinking comes from", () => {
+    it("pins the training run to DeepSeek-AI 2025", () => {
+      const p = curves.deepseekTraining.fit!.params;
+      expect(p.start).toBe(15.6);
+      expect(p.passAt1).toBe(71.0);
+      expect(p.cons64).toBe(86.7);
+    });
+
+    it("opens at step 0: 15.6% pass@1 and a strictly forward trace skeleton", () => {
+      render(<Page13 />);
+      expect(screen.getByText("15.6%")).toBeInTheDocument();
+      expect(screen.getByText("≈1,000")).toBeInTheDocument();
+      const skeleton = screen.getByRole("img", { name: /trace skeleton, early in training/i });
+      expect(skeleton.getAttribute("aria-label")).toMatch(/three steps forward/i);
+      expect(skeleton.getAttribute("aria-label")).not.toMatch(/loops back/i);
+      expect(screen.queryByText(/doubts what it has just written/)).not.toBeInTheDocument();
+    });
+
+    it("scrubbing to the end reaches 71.0% / ≈9,000 tokens and the skeleton grows its loop", () => {
+      render(<Page13 />);
+      setStep(8000);
+      expect(screen.getAllByText("71.0%").length).toBeGreaterThan(0);
+      expect(screen.getByText("≈9,000")).toBeInTheDocument();
+      const skeleton = screen.getByRole("img", { name: /trace skeleton after the aha/i });
+      expect(skeleton.getAttribute("aria-label")).toMatch(/loops back to its own first line/i);
+      expect(skeleton.getAttribute("aria-label")).toMatch(/second pass/i);
+      expect(screen.getByText(/The extra tokens in the length panel are these loops/)).toBeInTheDocument();
+    });
+
+    it("keeps the mid stage strictly forward: longer skeleton, still no loop", () => {
+      render(<Page13 />);
+      setStep(3000);
+      const skeleton = screen.getByRole("img", { name: /trace skeleton, mid training/i });
+      expect(skeleton.getAttribute("aria-label")).toMatch(/six steps forward/i);
+      expect(skeleton.getAttribute("aria-label")).not.toMatch(/loops back/i);
+    });
+
+    it("gives the interrupt a reason, and never calls it a located mistake", () => {
+      render(<Page13 />);
+      setStep(8000);
+      expect(screen.getByText(/doubts what it has just written/)).toBeInTheDocument();
+      expect(screen.getByText(/Nothing scored those steps/)).toBeInTheDocument();
+      expect(screen.getByText(/Page 10's branch, score, backtrack/)).toBeInTheDocument();
+      const skeleton = screen.getByRole("img", { name: /trace skeleton after the aha/i });
+      expect(skeleton.getAttribute("aria-label")).toMatch(/the step the trace doubts/i);
+      expect(
+        screen.queryByText(/found (a |an )?(mistake|error)|wrong step|catches (a|its) (mistake|error)/i),
+      ).not.toBeInTheDocument();
+    });
+
+    it("plots both variables as two stacked panels on one step axis", () => {
+      render(<Page13 />);
+      const chart = screen.getByRole("img", { name: /two stacked panels sharing the training step axis/ });
+      const label = chart.getAttribute("aria-label")!;
+      expect(label).toMatch(/15\.6 percent .* 71\.0 percent/);
+      expect(label).toMatch(/1,000 to about 9,000 tokens/);
+      expect(label).toMatch(/no term in the reward mentions length/);
+      expect(label).toMatch(/page 11's test-time compute/);
+      expect(label).toMatch(/aha trace appears \(illustrative placement\)/);
+      expect(screen.queryByRole("img", { name: /two y axes/i })).not.toBeInTheDocument();
+    });
+
+    it("turns the old questions into claims shown, never a recap", () => {
+      render(<Page13 />);
+      expect(screen.getByText(/Nothing in the reward mentions length/)).toBeInTheDocument();
+      const chart = screen.getByRole("img", { name: /two stacked panels/ });
+      const meaning = screen.getByText(/Length is not a schedule anyone set/).closest("p")!;
+      expect(follows(chart, meaning)).toBe(true);
+      expect(screen.getByText("The thinking dial buys one longer chain.")).toBeInTheDocument();
+      expect(screen.getByText(/not many chains sampled and voted on behind an API/)).toBeInTheDocument();
+      expect(screen.getByText("The tokens do the work, not describe it.")).toBeInTheDocument();
+      expect(screen.getByText(/the chain is what the model sampled and what training pushed on/)).toBeInTheDocument();
+      expect(screen.getByText(/Re-derivation is not narration/)).toBeInTheDocument();
+      // Guard: no quiz-key block restating questions with answers.
+      expect(screen.queryByText(/^\s*(What|Whether) the (thinking|model|law)/)).not.toBeInTheDocument();
+    });
   });
 
-  it("cut the scoreboard: no benchmark table, no product chronology", () => {
-    render(<Page13 />);
-    expect(screen.queryByText(/o1 · Sept 2024/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/o3 · Dec 2024 preview/)).not.toBeInTheDocument();
-    expect(screen.queryByText("GPQA Diamond (PhD science)")).not.toBeInTheDocument();
-    expect(screen.queryByText("SWE-bench Verified (real bug fixes)")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Three months apart/)).not.toBeInTheDocument();
+  describe("section 4: stack the toolbox on top", () => {
+    it("draws every reading from a common zero, two models, never a waterfall", () => {
+      render(<Page13 />);
+      expect(screen.getByText("o1, one model read three ways")).toBeInTheDocument();
+      expect(screen.getByText("R1-Zero, one model read two ways")).toBeInTheDocument();
+      expect(screen.getByText("no learned chain")).toBeInTheDocument();
+      expect(screen.getByText(/one instant answer from a strong LLM \(GPT-4o\)/)).toBeInTheDocument();
+      expect(screen.getAllByText("page 7's voting")).toHaveLength(2);
+      expect(screen.getByText("page 8's re-ranker")).toBeInTheDocument();
+      expect(screen.queryByText("+8.9")).not.toBeInTheDocument();
+      expect(screen.queryByText("+9.7")).not.toBeInTheDocument();
+      const figure = screen.getByRole("img", { name: /every bar drawn from a common zero/ });
+      const bars = Array.from(figure.querySelectorAll<HTMLElement>("div.absolute"));
+      for (const bar of bars) {
+        expect(bar.className).toContain("left-0");
+        expect(bar.style.left).toBe("");
+      }
+      expect(bars.map((b) => b.style.width)).toEqual(["12%", "74.4%", "83.3%", "93%", "71%", "86.7%"]);
+      expect(
+        screen.getByText(/the vote and the re-ranker each replace the single chain/),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps the ablation as one short callout, the only place o3 appears", () => {
+      render(<Page13 />);
+      expect(screen.getByText("One recipe, no domain tricks.")).toBeInTheDocument();
+      expect(screen.getByText(/beat the\s+hand-built specialist on its own contest/)).toBeInTheDocument();
+      expect(screen.getByText(/Stacking pays once; the knobs compound\./)).toBeInTheDocument();
+      const o3 = screen.getAllByText(/\bo3\b/);
+      // The callout's strong, and the margin timeline.
+      expect(o3.map((el) => el.tagName)).toEqual(["DD", "STRONG"]);
+      expect(screen.queryByText(/96\.7/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/gold/)).not.toBeInTheDocument();
+    });
   });
 
-  it("answers the knob half with the ablation in the deck's vocabulary, no scores", () => {
-    render(<Page13 />);
-    expect(screen.getByText("One recipe, no domain tricks")).toBeInTheDocument();
-    expect(screen.getByText(/o1-ioi/)).toBeInTheDocument();
-    expect(screen.getByText(/beat the hand-built specialist on its own contest/)).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /general-purpose reinforcement learning, rather than relying on domain-specific techniques/,
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Stacking pays once; the knobs compound\./)).toBeInTheDocument();
-    // No benchmark retelling — medals, percentiles, and score pairs live on page 15.
-    expect(screen.queryByText(/96\.7/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/49th percentile/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/gold/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/the law held/)).not.toBeInTheDocument();
+  describe("section 5: the curve is portable", () => {
+    it("pins the distilled-model table to DeepSeek-AI 2025 Table 5", () => {
+      expect(curves.deepseekDistill.points).toEqual([
+        { x: 1.5, y: 28.9 },
+        { x: 7, y: 55.5 },
+        { x: 8, y: 50.4 },
+        { x: 14, y: 69.7 },
+        { x: 32, y: 72.6 },
+        { x: 70, y: 70.0 },
+      ]);
+      const p = curves.deepseekDistill.fit!.params;
+      expect(p.r1Aime).toBe(79.8);
+      expect(p.o1miniAime).toBe(63.6);
+      expect(p.gpt4oAime).toBe(9.3);
+    });
+
+    it("answers whether the law needs a frontier-scale model", () => {
+      render(<Page13 />);
+      expect(screen.getByText("Does the law need one?")).toBeInTheDocument();
+      expect(screen.getByText(/lifting the curve took frontier-scale RL/)).toBeInTheDocument();
+      expect(screen.getByText(/The curve-lifting knob got cheap/)).toBeInTheDocument();
+      expect(screen.getByText(/someone still paid for\s+the RL once/)).toBeInTheDocument();
+      expect(screen.getByText(/a lifted curve fits in weights you can download/)).toBeInTheDocument();
+      expect(screen.getByText(/no RL and no reward, which is page\s+12's recipe/)).toBeInTheDocument();
+      expect(screen.getByText(/One good reasoner now writes the\s+curriculum for everyone else/)).toBeInTheDocument();
+    });
+
+    it("names whose GPT-4o score each figure uses", () => {
+      render(<Page13 />);
+      expect(
+        screen.getByText(/9\.3% is DeepSeek's measurement, where sections 2 and 4 use\s+OpenAI's 12%/),
+      ).toBeInTheDocument();
+    });
+
+    it("defaults the distill picker to Qwen-14B and updates on selection", () => {
+      render(<Page13 />);
+      expect(screen.getByRole("button", { name: /Qwen-14B/ })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText(/R1-Distill-Qwen-14B/)).toBeInTheDocument();
+      expect(screen.getByText(/clears o1-mini's line/)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /Qwen-32B/ }));
+      expect(screen.getByText(/R1-Distill-Qwen-32B/)).toBeInTheDocument();
+      expect(screen.getByText(/within seven points of the 671B teacher/)).toBeInTheDocument();
+    });
+
+    it("draws the distillation trade as a dot plot: rows by size, closed models as rules", () => {
+      render(<Page13 />);
+      const label = screen.getByRole("img", { name: /horizontal dot plot/i }).getAttribute("aria-label")!;
+      expect(label).toMatch(/Qwen-14B 69\.7 percent/);
+      expect(label).toMatch(/Llama-70B 70 percent/);
+      expect(label).toMatch(/671B mixture-of-experts, at 79\.8 percent/);
+      expect(label).toMatch(/GPT-4o at 9\.3 percent and OpenAI o1-mini at 63\.6 percent/);
+      expect(label).toMatch(/Llama-70B sits left of Qwen-32B/);
+    });
+
+    it("keeps old page 14's coda, aimed at the wrong side of the dial", () => {
+      render(<Page13 />);
+      const coda = screen.getByLabelText("Where this leaves us");
+      expect(coda.textContent).toMatch(/Every claim on this page arrived as a benchmark score/);
+      expect(coda.textContent).not.toMatch(/Two pages/);
+      expect(coda.textContent).toMatch(/the side of that dial where thinking longer makes the answer worse/);
+    });
   });
 
-  it("asks the four questions a closed model cannot answer", () => {
-    render(<Page13 />);
-    expect(screen.getByText("4. The questions o1 cannot answer")).toBeInTheDocument();
-    // Every question is about the thinking dial, not about opacity in general.
-    const questions = [
-      "What are you actually buying when you turn the thinking dial?",
-      "Are the thinking tokens doing the work, or describing it?",
-      "What does the model do with ten times the thinking that it would not do with one?",
-      "Does the law need a frontier-scale model at all?",
-    ];
-    for (const q of questions) {
-      expect(screen.getByText(q)).toBeInTheDocument();
-    }
-    // Asked in the order page 14 answers them.
-    const rendered = questions.map((q) => screen.getByText(q));
-    for (let i = 1; i < rendered.length; i++) {
-      expect(follows(rendered[i - 1], rendered[i])).toBe(true);
-    }
-    expect(screen.getByText(/that is exactly what a closed lab keeps/)).toBeInTheDocument();
-  });
-
-  it("never narrates its own contribution: the subject is o1, not the deck", () => {
-    render(<Page13 />);
-    expect(screen.queryByText(/this page claimed/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/what this page/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/this page actually established/)).not.toBeInTheDocument();
-    // The retrospective ledger and parts list are both gone.
-    expect(screen.queryByText("What stays sealed")).not.toBeInTheDocument();
-    expect(screen.queryByText("What you would be missing")).not.toBeInTheDocument();
-  });
-
-  it("hands off by answering all four, in the order they were asked", () => {
-    render(<Page13 />);
-    const lastQuestion = screen.getByText("Does the law need a frontier-scale model at all?");
-    const closer = screen.getByText(
-      /Four months later an open lab answered every one of them: the algorithm in full, a chain you can read token by token, a training curve that shows where the extra thinking comes from, and the whole thing distilled small enough to run yourself\./,
-    );
-    expect(screen.getByText(/Turn the page\./)).toBeInTheDocument();
-    expect(follows(lastQuestion, closer)).toBe(true);
-  });
-
-  // The essay was cut because it was off this page's subject, and separately
-  // because old page 18 argued it at length. That page went on 2026-08-10; the
-  // first reason stands alone, so the guard stays.
-  it("cut the safety essay: that thread was never page 13's", () => {
-    render(<Page13 />);
-    expect(screen.queryByText(/The case for hiding:/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/must be left untrained/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/0\.17%/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/deceptive/)).not.toBeInTheDocument();
-    expect(screen.queryByText("Who can read it")).not.toBeInTheDocument();
-    // No back-reference chain through Act 2's pages (review).
-    expect(screen.queryByText(/page 6/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/page 9/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/page 10/)).not.toBeInTheDocument();
-  });
-
-  it("orders the page: strip, lab, waterfall, ablation, open questions, handoff", () => {
-    render(<Page13 />);
-    const diff = screen.getByText("generate ×k");
-    const lab = screen.getByText("Thinking time (compute in one answer)");
-    const waterfall = screen.getByText("no learned chain");
-    const ablation = screen.getByText("One recipe, no domain tricks");
-    const open = screen.getByText("What are you actually buying when you turn the thinking dial?");
-    const handoff = screen.getByText(/Turn the page\./);
-    expect(follows(diff, lab)).toBe(true);
-    expect(follows(lab, waterfall)).toBe(true);
-    expect(follows(waterfall, ablation)).toBe(true);
-    expect(follows(ablation, open)).toBe(true);
-    expect(follows(open, handoff)).toBe(true);
-  });
-
-  it("links both surviving references from the sidenote", () => {
+  it("links every reference, each once, numbered by first appearance", () => {
     render(<Page13 />);
     const hrefs = [
       "https://openai.com/index/learning-to-reason-with-llms/",
+      "https://arxiv.org/abs/2501.12948",
+      "https://arxiv.org/abs/2402.03300",
       "https://arxiv.org/abs/2502.06807",
     ];
     for (const href of hrefs) {
-      expect(document.querySelector(`a[href="${href}"]`)).toBeInTheDocument();
+      expect(document.querySelectorAll(`a[href="${href}"]`)).toHaveLength(1);
     }
-    // The ARC Prize o3-preview link left with the benchmark numbers; the system
-    // card left with the safety essay.
-    expect(document.querySelector('a[href*="arcprize.org"]')).not.toBeInTheDocument();
-    expect(document.querySelector('a[href*="o1-system-card"]')).not.toBeInTheDocument();
-    // References carry no preprint tag.
     expect(screen.queryByText("preprint")).toBeNull();
   });
 
-  it("carries no Simulated/Cited footer — provenance is inline, as on pages 1-3", () => {
+  it("tags the page Act 3", () => {
     render(<Page13 />);
-    expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
-    expect(screen.queryByText("Cited")).not.toBeInTheDocument();
-    // The inline declarations that replace it.
-    expect(screen.getByText("confirmed frame only")).toBeInTheDocument();
-    expect(screen.getByText("authored redrawing · anchors verbatim")).toBeInTheDocument();
-    expect(screen.getByText(/The slope is the claim; the absolute compute is a secret\./)).toBeInTheDocument();
+    expect(screen.getByText(/Act 3 · Frontier & Caveats/)).toBeInTheDocument();
   });
 
   it("carries no em dash or en dash in rendered copy", () => {
-    // House rule, swept and enforced: visible copy uses commas, colons, or
-    // semicolons instead, and ranges are spelled out ("1.5B to 70B"). This
-    // covers aria-labels and chart titles too, which screen readers speak.
     const { container } = render(<Page13 />);
     const offenders = Array.from(container.querySelectorAll("*"))
-      .flatMap((el) => [
-        el.textContent ?? "",
-        el.getAttribute("aria-label") ?? "",
-      ])
-      .filter((t) => t.includes("\u2014") || t.includes("\u2013"));
+      .flatMap((el) => [el.textContent ?? "", el.getAttribute("aria-label") ?? ""])
+      .filter((t) => t.includes("—") || t.includes("–"));
     expect(offenders).toEqual([]);
   });
 });

@@ -345,7 +345,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
     }
   });
 
-  it("closes on the hand-off to page 13's frontier reasoners, in page 11's idiom", () => {
+  it("closes on the hand-off to page 13's learned reasoning, in page 11's idiom", () => {
     render(<Page12 />);
     // The hand-off is a bulleted block now, so read its wrapping div.
     const handoff = screen
