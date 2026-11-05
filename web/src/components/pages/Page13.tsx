@@ -15,19 +15,26 @@
  * "Frontier Reasoners I/II" framing, one of the two "Where this leaves us"
  * codas (old page 14's survives, since it sets up page 14's wrong side of the
  * dial), and every date used as plot ("four months later", "an open lab
- * answered", "the week before"). The chronology lives in one margin timeline
- * for readers who want it. The LRM-definition quote went with section 1's
- * tightening; El-Kishky et al. is still cited for the ablation.
+ * answered", "the week before"). The page is not a history: the margin
+ * timeline the merge first kept went on 2026-11-04 (author), with o1's place
+ * in section 1. The LRM-definition quote went too; El-Kishky et al. is still
+ * cited for the ablation.
  *
- * Section 1 is the loop and its cheapest published instance. Old page 13's
- * three-station strip (the same three stations as page 12, two renamed, each
- * sub-label carrying its diff), then GRPO in five lines and the 350 × 638
- * group-luck dial. The deck prints NO o1 algorithm, because nobody outside
- * OpenAI can check one; one sentence says so and points at GRPO, which is
- * published. Keep the two in different grammars: a strip for the confirmed
- * frame, a code listing only for the published recipe. Line 2's bridge to page
- * 7 stops at "sampling paid for once": GRPO is a policy gradient with a group
- * baseline, not best-of-N distillation.
+ * The lede is the author's (2026-11-04): STaR isolates good reasoning by
+ * whether it reaches a correct answer; RL goes further and learns from every
+ * chain, right or wrong. Never call RL "process-based" here: both grade only
+ * the answer, and "process" is page 9's word for step grading.
+ *
+ * Section 1, "What can a wrong chain teach?", is the RL loop for reasoning
+ * models as it stands, with no o1 in it (author: the page does not need o1 to
+ * explain the loop). The strip's three stations are labelled on their own
+ * terms, then the no-human / page 3 data callout, then GRPO in five lines with
+ * plain-language notes, and the 350 × 638 group-luck dial; its lone-right-chain
+ * reading ties back to Act 2's answer that was in the pile but could not be
+ * picked out. Line 2's bridge to page 7 stops at "keeps what the right ones
+ * did": GRPO is a policy gradient with a group baseline, not best-of-N
+ * distillation. The author is training a model for this page, so sections 2
+ * and 3's figures are placeholders until that run exists.
  *
  * Section 2 is old page 13's two-knob lab, with one change of evidence. The
  * handoff asked for R1-Zero's training curve to carry the RL dial, but that
@@ -84,7 +91,7 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 13;
 
 /** Page 13's references, numbered in order of first appearance. */
-const REF = { announce: 1, r1: 2, grpo: 3, competitive: 4 } as const;
+const REF = { r1: 1, grpo: 2, announce: 3, competitive: 4 } as const;
 
 /* ---------------------------------------------------------------------------
  * Section 1: the loop, and GRPO
@@ -112,16 +119,9 @@ const OTHER_WRONGS = [
 const PSEUDO: { code: string; note?: string }[] = [
   { code: "for each problem q:" },
   { code: "  sample G answers from the current policy" },
-  { code: "  rᵢ ← 1 if answerᵢ is right, else 0", note: "the reward is a program, not a second model" },
-  { code: "  Aᵢ ← (rᵢ − mean(r)) / std(r)", note: "the group is its own baseline: no critic network" },
-  { code: "  push toward answers with Aᵢ > 0, away from Aᵢ < 0", note: "plus a leash (KL) back to the reference model" },
-];
-
-/** For readers who want the chronology; the page itself never uses it as plot. */
-const TIMELINE: { when: string; what: string }[] = [
-  { when: "Sept 2024", what: "OpenAI announces o1" },
-  { when: "Dec 2024", what: "OpenAI announces o3" },
-  { when: "Jan 2025", what: "DeepSeek releases R1, R1-Zero and six distilled models, weights open" },
+  { code: "  rᵢ ← 1 if answerᵢ is right, else 0", note: "the reward is a short program, not another model" },
+  { code: "  Aᵢ ← (rᵢ − mean(r)) / std(r)", note: "each chain is measured against its group's average" },
+  { code: "  push toward answers with Aᵢ > 0, away from Aᵢ < 0", note: "plus a pull back toward the starting model, so it doesn't drift too far" },
 ];
 
 /** One stage of the loop strip, page 12's grammar. */
@@ -1002,7 +1002,7 @@ export function Page13() {
   const uniform = luck === 3;
   const push1 = 1 - mean;
   const LUCK_READ: Record<number, string> = {
-    0: `Sample 1 is the only right answer in the group: the biggest push on offer (+${push1.toFixed(2)}).`,
+    0: `Sample 1 is the only right answer in its group, so it gets the biggest push on offer (+${push1.toFixed(2)}). That's the chain no answer-time selector could find: right, but outnumbered. A vote would bury it. Training pushes hardest on it.`,
     1: `Same right answer, luckier group: sample 1's push drops to +${push1.toFixed(2)}.`,
     2: `Luckier still: +${push1.toFixed(2)}. Now watch sample 4: a wrong answer in a mostly-right group is punished hardest (−${mean.toFixed(2)}). Rarity amplifies the signal in both directions.`,
     3: "",
@@ -1063,67 +1063,53 @@ export function Page13() {
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        Page 12 built a model that teaches itself from its own right answers. Run that idea with
-        reinforcement learning, at scale, and the result is{" "}
-        <strong className="text-ink">learned reasoning</strong>: a model that reasons because
-        training paid it to, and that still scores higher the longer it thinks. So which bought the
-        score, the training or the thinking?
+        STaR bakes reasoning into the weights by attempting to isolate good reasoning based on
+        whether or not that reasoning results in a correct answer.{" "}
+        <strong className="text-ink">Reinforcement learning</strong> goes further: it learns from
+        every chain, right or wrong, and at scale it teaches the model something new, to think
+        longer on its own.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         {/* Step 1: the loop, and its cheapest published instance */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">1. The loop</h2>
+          <h2 className="text-xl font-semibold text-ink">1. What can a wrong chain teach?</h2>
           <p className="text-ink-muted">
-            OpenAI confirmed the frame: o1 is trained with large-scale reinforcement learning to think
-            in a long private chain.
-            <Cite n={REF.announce} /> The loop keeps page 12&apos;s three stations and renames two.
+            The reinforcement learning loop illustrated below is very similar to STaR. Where the
+            two differ is that STaR writes one chain per problem, while reinforcement
+            learning writes several and scores every one. Through reinforcement, the model is
+            penalized for chains that scored poorly and rewarded for chains that scored well.
           </p>
 
           <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <div
               className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center"
               role="img"
-              aria-label="Page 12's three-station loop redrawn for learned reasoning: generate becomes k sampled chains per problem instead of one greedy try, filter becomes an explicit reward that is still the answer key, and fine-tune becomes reinforce in place on the current model rather than the base model. The loop repeats."
+              aria-label="The reinforcement learning loop: generate several chains for every problem, the answer key scores each one 1 or 0, and the current model is pushed toward the high scores and away from the low ones. The loop repeats."
             >
-              <Stage
-                tone="border-ink"
-                title="generate ×k"
-                sub="page 12 took one greedy try; k sampled chains explore instead"
-              />
+              <Stage tone="border-ink" title="generate ×k" sub="several chains for every problem" />
               <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">→</span>
-              <Stage
-                tone="border-correct"
-                title="reward"
-                sub="page 12's filter, made explicit: still the answer key, still free"
-              />
+              <Stage tone="border-correct" title="reward" sub="the answer key scores each one, 1 or 0" />
               <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">→</span>
               <Stage
                 tone="border-compute"
                 title="reinforce"
-                sub="page 12 fine-tuned the base; this updates the current model, so gains compound"
+                sub="toward the high scores, away from the low, on the current model"
               />
               <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">↺</span>
             </div>
-            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
-              OpenAI never published o1&apos;s algorithm, so this deck prints none; the one below is
-              DeepSeek&apos;s, published in full.
-            </figcaption>
           </figure>
 
           <p className="rounded border-l-4 border-compute bg-surface p-4 text-sm text-ink">
-            One thing is legible by its absence: a human. RLHF pays people to judge outputs; here
-            nobody writes an example and nobody grades one, because the model authors the reasoning
-            and the answer key scores it. The training set never touches page 3&apos;s finite stock
-            of human text: the model writes its own curriculum.
+            Nobody writes the reasoning and nobody grades it by hand. The model writes its own
+            chains and a program checks the answers, so the training data doesn&apos;t draw on the
+            limited stock of human-written text.
           </p>
 
           <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
             <p className="text-ink">
-              The cheapest published instance is <strong>Group Relative Policy Optimization</strong>
-              , which DeepSeek used to train <strong>R1-Zero</strong> straight from a plain base
-              model, with <strong>no worked examples at all</strong>: only problems whose final
-              answers can be checked.
+              One recipe for this, the one DeepSeek used to train R1-Zero, is{" "}
+              <strong>GRPO</strong> (Group Relative Policy Optimization).
               <Cite n={REF.r1} /> It fits in five lines:
               <Cite n={REF.grpo} />
             </p>
@@ -1140,17 +1126,16 @@ export function Page13() {
                 ))}
               </div>
               <figcaption className="text-xs text-ink-muted">
-                no critic network anywhere, which at 671B parameters is what made RL at this scale
-                affordable: PPO, the standard alternative, learns its baseline from a second
-                network about as large as the policy itself
+                Because each chain is compared with the others from the same problem, GRPO needs no
+                second network to say what an average answer looks like. At 671 billion
+                parameters, skipping that network is what made the training affordable.
               </figcaption>
             </figure>
 
             <p className="text-ink">
-              Line 2 should look familiar. <strong>Page 7 sampled many chains and picked among
-              them at answer time</strong>, then threw every sample away once the vote was
-              counted. GRPO runs the same sampling during training and keeps what the winners did
-              in the weights: sampling paid for once, instead of on every question.
+              Line 2 is the same sampling self-consistency uses. Self-consistency draws many
+              chains at answer time and throws them away after the vote. GRPO draws them during
+              training and keeps what the right ones did.
             </p>
 
             <figure className="m-0 flex flex-col gap-2 border-t border-dashed border-grid pt-4">
@@ -1188,20 +1173,7 @@ export function Page13() {
         </section>
 
         <div className="flex flex-col gap-8">
-          <Note kicker="Timeline">
-            <dl className="flex flex-col gap-1.5">
-              {TIMELINE.map((t) => (
-                <div key={t.what} className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-x-2">
-                  <dt className="font-mono text-xs tabular-nums text-ink-muted">{t.when}</dt>
-                  <dd className="m-0">{t.what}</dd>
-                </div>
-              ))}
-            </dl>
-          </Note>
           <Note kicker="References">
-            <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/">
-              OpenAI 2024, <em>Learning to Reason with LLMs</em>.
-            </RefItem>
             <RefItem n={REF.r1} href="https://arxiv.org/abs/2501.12948">
               DeepSeek-AI 2025, <em>DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via
               Reinforcement Learning</em>.
@@ -1357,12 +1329,19 @@ export function Page13() {
           </div>
         </section>
 
-        <Note kicker="Try it">
-          <p>
-            Drag training to ×1 and push thinking to ×100: all that thinking lands exactly where
-            the full run <em>starts</em>.
-          </p>
-        </Note>
+        <div className="flex flex-col gap-8">
+          <Note kicker="References">
+            <RefItem n={REF.announce} href="https://openai.com/index/learning-to-reason-with-llms/">
+              OpenAI 2024, <em>Learning to Reason with LLMs</em>.
+            </RefItem>
+          </Note>
+          <Note kicker="Try it">
+            <p>
+              Drag training to ×1 and push thinking to ×100: all that thinking lands exactly where
+              the full run <em>starts</em>.
+            </p>
+          </Note>
+        </div>
 
         {/* Step 3: where the thinking comes from */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">

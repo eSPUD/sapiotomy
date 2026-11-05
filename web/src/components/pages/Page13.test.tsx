@@ -17,11 +17,16 @@ const setLuck = (value: number) =>
   });
 
 describe("Page 13 (learned reasoning: one law, two knobs)", () => {
-  it("opens on the lede: one bold term, no results, and a question", () => {
+  it("opens on the lede: STaR's filter, then RL going further, one bold term, no results", () => {
     render(<Page13 />);
-    const lede = screen.getByText(/So which bought the score, the training or the thinking\?/).closest("p")!;
+    const lede = screen.getByText(/STaR bakes reasoning into the weights/).closest("p")!;
+    expect(lede.textContent).toMatch(/it learns from\s+every chain, right or wrong/);
+    expect(lede.textContent).toMatch(/to think\s+longer on its own\./);
+    // Both STaR and RL grade only the answer: "process" is page 9's word for
+    // step grading, which R1-Zero's reward never does.
+    expect(lede.textContent).not.toMatch(/process/);
     expect(lede.querySelectorAll("strong")).toHaveLength(1);
-    expect(lede.querySelector("strong")!.textContent).toBe("learned reasoning");
+    expect(lede.querySelector("strong")!.textContent).toBe("Reinforcement learning");
     expect(lede.textContent).not.toMatch(/\d+(\.\d+)?%/);
     // The seam must rhyme with page 12's closing block, not restate it.
     expect(lede.textContent).not.toMatch(/two ways to buy reasoning/);
@@ -42,24 +47,25 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
     expect(screen.getAllByLabelText("Where this leaves us")).toHaveLength(1);
   });
 
-  it("keeps the chronology in one margin timeline", () => {
+  it("is not a history: no margin timeline", () => {
     render(<Page13 />);
+    expect(screen.queryByText("Timeline")).not.toBeInTheDocument();
     for (const when of ["Sept 2024", "Dec 2024", "Jan 2025"]) {
-      expect(screen.getByText(when)).toBeInTheDocument();
+      expect(screen.queryByText(when)).not.toBeInTheDocument();
     }
-    expect(screen.getByText("OpenAI announces o1")).toBeInTheDocument();
-    expect(screen.getByText("OpenAI announces o3")).toBeInTheDocument();
+    expect(screen.queryByText(/OpenAI announces/)).not.toBeInTheDocument();
   });
 
   it("orders the page by concept: loop, law, thinking, stacking, portability", () => {
     render(<Page13 />);
+    const escape = (s: string) => s.replace(/[.?]/g, "\\$&");
     const headings = [
-      "1. The loop",
+      "1. What can a wrong chain teach?",
       "2. One law, two knobs",
       "3. Where the thinking comes from",
       "4. Stack the toolbox on top",
       "5. The curve is portable",
-    ].map((h) => screen.getByRole("heading", { level: 2, name: new RegExp(`^${h.replace(".", "\\.")}`) }));
+    ].map((h) => screen.getByRole("heading", { level: 2, name: new RegExp(`^${escape(h)}`) }));
     for (let i = 1; i < headings.length; i++) {
       expect(follows(headings[i - 1], headings[i])).toBe(true);
     }
@@ -67,45 +73,57 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
     expect(follows(headings[4], handoff)).toBe(true);
   });
 
-  describe("section 1: the loop", () => {
-    it("draws page 12's strip with each station's diff", () => {
+  describe("section 1: what can a wrong chain teach?", () => {
+    it("states the loop against STaR by name, never by page number", () => {
       render(<Page13 />);
+      const section = screen.getByRole("heading", { level: 2, name: /^1\. What can a wrong chain teach\?/ }).closest("section")!;
+      // "Similar", not "the same three steps": STaR filters and fine-tunes from
+      // the base; RL scores a group and updates in place (author, 2026-11-04).
+      expect(section.textContent).toMatch(/is very similar to STaR/);
+      expect(section.textContent).not.toMatch(/same three steps/);
+      // STaR samples one chain per problem; only RL writes a group, and that
+      // group is what lets every chain be scored against the others.
+      expect(section.textContent).toMatch(/STaR writes one chain per problem, while reinforcement\s+learning writes several and scores every one/);
+      expect(section.textContent).toMatch(/penalized for chains that scored poorly and rewarded for chains that scored well/);
+      // Author, 2026-11-04: no "page N did this" back-references.
+      expect(section.textContent).not.toMatch(/\bpage \d+/i);
+      expect(section.textContent).not.toMatch(/\bAct \d/);
+      // The strip labels each station by what it does.
       const generate = screen.getByText("generate ×k");
-      expect(screen.getByText("reward")).toBeInTheDocument();
-      expect(screen.getByText("reinforce")).toBeInTheDocument();
-      expect(screen.getByText(/page 12 took one greedy try/)).toBeInTheDocument();
-      expect(screen.getByText(/page 12's filter, made explicit/)).toBeInTheDocument();
-      expect(screen.getByText(/page 12 fine-tuned the base/)).toBeInTheDocument();
-      expect(screen.queryByText(/hint = y/)).not.toBeInTheDocument();
-      const callout = screen.getByText(/RLHF pays people to judge outputs/);
+      expect(screen.getByText("several chains for every problem")).toBeInTheDocument();
+      expect(screen.getByText("the answer key scores each one, 1 or 0")).toBeInTheDocument();
+      expect(screen.getByText(/toward the high scores, away from the low/)).toBeInTheDocument();
+      expect(screen.queryByText(/page 12 took one greedy try/)).not.toBeInTheDocument();
+      // Then the no-human / finite-data callout.
+      const callout = screen.getByText(/Nobody writes the reasoning and nobody grades it by hand/);
       expect(follows(generate, callout)).toBe(true);
-      expect(screen.getByText(/writes its own curriculum/)).toBeInTheDocument();
+      expect(callout.textContent).toMatch(/limited stock of human-written text/);
     });
 
-    it("prints NO o1 algorithm: one sentence, then the published one", () => {
+    it("explains the loop with no o1 in it, and prints no o1 algorithm", () => {
       render(<Page13 />);
-      // The rumored o1 recipe was cut on review 2026-07-30: nobody outside
-      // OpenAI can check one, and a hypothesized listing beside GRPO would
-      // teach the reader the two have equal standing.
+      const section = screen.getByRole("heading", { level: 2, name: /^1\. / }).closest("section")!;
+      expect(section.textContent).not.toMatch(/\bo1\b|OpenAI/);
+      // The rumored o1 recipe was cut on review 2026-07-30 and stays cut.
       expect(screen.queryByText("loop: while the compute budget lasts")).not.toBeInTheDocument();
       expect(screen.queryByText("M ← reinforce(M, rewards)")).not.toBeInTheDocument();
-      expect(screen.queryByText(/rumor/)).not.toBeInTheDocument();
-      const caption = screen.getByText(/OpenAI never published o1's algorithm, so this deck prints none/);
-      expect(caption.textContent).toMatch(/DeepSeek's, published in full/);
-      // The only code on the page is GRPO, and it follows that sentence.
       const codes = Array.from(document.querySelectorAll("code"));
-      expect(codes.map((c) => c.textContent)).toContain("  sample G answers from the current policy");
-      expect(follows(caption, codes[0])).toBe(true);
+      expect(codes.every((c) => section.contains(c))).toBe(true);
     });
 
-    it("teaches GRPO as pseudocode: rule reward, group baseline, no critic", () => {
+    it("teaches GRPO as pseudocode, in plain notes", () => {
       render(<Page13 />);
       expect(screen.getByText(/sample G answers from the current policy/)).toBeInTheDocument();
       expect(screen.getByText(/mean\(r\)\) \/ std\(r\)/)).toBeInTheDocument();
-      expect(screen.getByText(/the group is its own baseline: no critic network/)).toBeInTheDocument();
-      expect(screen.getByText(/no critic network anywhere, which at 671B parameters/)).toBeInTheDocument();
-      expect(screen.getByText(/Page 7 sampled many chains and picked among them at answer time/)).toBeInTheDocument();
-      expect(screen.getByText(/sampling paid for once, instead of on every question/)).toBeInTheDocument();
+      expect(screen.getByText(/each chain is measured against its group's average/)).toBeInTheDocument();
+      expect(screen.getByText(/so it doesn't drift too far/)).toBeInTheDocument();
+      expect(screen.getByText(/GRPO needs no\s+second network/)).toBeInTheDocument();
+      // Jargon the plain notes replaced.
+      expect(screen.queryByText(/critic/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/PPO/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/KL/)).not.toBeInTheDocument();
+      expect(screen.getByText(/Line 2 is the same sampling self-consistency uses/)).toBeInTheDocument();
+      expect(screen.getByText(/keeps what the right\s+ones did/)).toBeInTheDocument();
     });
 
     it("GRPO dial: the baseline chases the group and the same right answer's push shrinks", () => {
@@ -121,6 +139,7 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       setLuck(0);
       expect(screen.getByText("+0.75")).toBeInTheDocument();
       expect(screen.getByText(/the biggest push on offer/)).toBeInTheDocument();
+      expect(screen.getByText(/That.s the chain no answer-time selector could find/)).toBeInTheDocument();
       expect(screen.getByText("read 638 as 628")).toBeInTheDocument();
 
       setLuck(2);
@@ -326,8 +345,7 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       expect(screen.getByText(/beat the\s+hand-built specialist on its own contest/)).toBeInTheDocument();
       expect(screen.getByText(/Stacking pays once; the knobs compound\./)).toBeInTheDocument();
       const o3 = screen.getAllByText(/\bo3\b/);
-      // The callout's strong, and the margin timeline.
-      expect(o3.map((el) => el.tagName)).toEqual(["DD", "STRONG"]);
+      expect(o3.map((el) => el.tagName)).toEqual(["STRONG"]);
       expect(screen.queryByText(/96\.7/)).not.toBeInTheDocument();
       expect(screen.queryByText(/gold/)).not.toBeInTheDocument();
     });
