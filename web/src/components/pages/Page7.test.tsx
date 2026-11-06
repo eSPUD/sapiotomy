@@ -72,16 +72,18 @@ describe("Page 7 (frequency voting) component", () => {
     ).toBeInTheDocument();
   });
 
-  // A row is a place in the tally, not a switch. Clicking the open row a second time
-  // used to close it, which hid the chain the reader was in the middle of.
-  it("keeps a row open when it is clicked again", () => {
+  // Since 2026-11-05 the chains are folded until a row is clicked, and clicking the
+  // open row folds them again (author: section 2 down to one figure, the tally).
+  it("folds the chains until a row is clicked, and again when the open row is clicked", () => {
     render(<Page7 />);
+    expect(screen.queryByTestId("chain-reader")).toBeNull();
+    tallyRows().forEach((r) => expect(r).toHaveAttribute("aria-expanded", "false"));
     fireEvent.click(tallyRows()[1]);
-    const before = screen.getByTestId("chain-trace").textContent;
-    fireEvent.click(tallyRows()[1]);
-    fireEvent.doubleClick(tallyRows()[1]);
+    expect(screen.getByTestId("chain-reader")).toBeInTheDocument();
     expect(tallyRows()[1]).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByTestId("chain-trace").textContent).toBe(before);
+    fireEvent.click(tallyRows()[1]);
+    expect(screen.queryByTestId("chain-reader")).toBeNull();
+    expect(tallyRows()[1]).toHaveAttribute("aria-expanded", "false");
   });
 
   // The vote coming out wrong was a third choice until the author cut it (2026-10-11).
@@ -93,7 +95,6 @@ describe("Page 7 (frequency voting) component", () => {
       "the vote is right",
       "the vote ties",
     ]);
-    // Scoped to the picker and its card: the heat map below names wrong votes, and should.
     expect(picker.textContent).not.toMatch(/wrong/);
     expect(
       screen.getByRole("region", { name: /One problem, \d+ chains, tallied/ }).textContent,
@@ -102,10 +103,12 @@ describe("Page 7 (frequency voting) component", () => {
     for (const [i, { problem }] of PAGE7.figure1.showcase.entries()) {
       fireEvent.click(choices[i]);
       expect(tallyRows()).toHaveLength(problem.ranked.length);
-      // Each problem opens on its correct answer, even where the vote did not return it.
+      // A problem opens folded, whatever was open on the last one.
+      expect(screen.queryByTestId("chain-reader")).toBeNull();
+      // Its correct answer is among the rows, even where the vote did not return it.
       const right = problem.ranked.findIndex((r) => r.correct);
       expect(right).toBeGreaterThanOrEqual(0);
-      expect(tallyRows()[right]).toHaveAttribute("aria-expanded", "true");
+      fireEvent.click(tallyRows()[right]);
       expect(chainPosition()).toBe(`chain 1 of ${problem.ranked[right].votes}`);
       expect(screen.getByText(/of 16 chains · correct$/)).toBeInTheDocument();
     }
@@ -162,7 +165,8 @@ describe("Page 7 (frequency voting) component", () => {
     const chain = chainsFor(PAGE7.figure1.specimen, PAGE7.figure1.specimen.ranked[0].answer)[0];
     const { head, middle, tail } = foldTrace(tidyMath(chain.trace));
     expect(middle.length).toBeGreaterThan(0);
-    const trace = () => screen.getByTestId("chain-trace").textContent ?? "";
+    fireEvent.click(tallyRows()[0]);
+    const trace =() => screen.getByTestId("chain-trace").textContent ?? "";
     expect(trace()).toContain(head[0]);
     expect(trace()).toContain(tail[tail.length - 1]);
     expect(trace()).not.toContain(middle[Math.floor(middle.length / 2)]);
@@ -189,7 +193,8 @@ describe("Page 7 (frequency voting) component", () => {
   it("steps with the arrow keys inside the card instead of turning the page", () => {
     render(<Page7 />);
     expect(PAGE7.figure1.specimen.ranked[0].votes).toBeGreaterThan(1);
-    const next = screen.getByRole("button", { name: "Next chain" });
+    fireEvent.click(tallyRows()[0]);
+    const next =screen.getByRole("button", { name: "Next chain" });
     const pageTurn = vi.fn();
     window.addEventListener("keydown", pageTurn);
     fireEvent.keyDown(next, { key: "ArrowRight" });
@@ -200,51 +205,20 @@ describe("Page 7 (frequency voting) component", () => {
     window.removeEventListener("keydown", pageTurn);
   });
 
-  // Section 2's heat map, on its side: a row per temperature, a column per problem, sorted
-  // by how often the vote gets the problem right.
-  it("draws the temperature sweep as a row per temperature and a column per problem", () => {
+  // Section 2 is one figure, the tally (author, 2026-11-05): the temperature heat map
+  // and the shape stat are cut, since section 3 says the same in aggregate. The sweep
+  // they drew from still feeds section 3.
+  it("keeps section 2 to the tally: no heat map and no shape stat", () => {
     render(<Page7 />);
+    expect(screen.queryByRole("region", { name: /Chains right and the vote, at every temperature/ })).toBeNull();
+    expect(screen.queryByTestId("heatmap-problem")).toBeNull();
+    const body = document.body.textContent ?? "";
+    expect(body).not.toMatch(/distinct answers\. Agreement concentrates/);
+    expect(body).not.toMatch(/said exactly once/);
+    expect(body).not.toMatch(/got there by different mistakes/);
     const HM = PAGE7.figure1.heatmap;
-    // 0, 0.1, ... in steps of 0.1: 12 temperatures on the 40, 13 (to 1.2) on the 100
     HM.temperatures.forEach((t, j) => expect(t).toBeCloseTo(j / 10, 9));
-    expect(HM.temperatures.length).toBeGreaterThanOrEqual(12);
     expect(HM.n_chains).toBe(16);
-    const n = HM.problems.length;
-    const map = screen.getByRole("region", { name: /Chains right and the vote, at every temperature/ });
-    const rows = within(within(map).getByRole("table")).getAllByRole("row");
-    expect(rows).toHaveLength(HM.temperatures.length);
-    rows.forEach((row, j) => {
-      const cells = within(row).getAllByRole("cell");
-      expect(cells).toHaveLength(n + 1);
-      // the row ends with how many problems the vote got right at that temperature
-      expect(cells[n].textContent).toBe(`${Math.round(HM.summary[j].vote_accuracy * n)}/${n}`);
-    });
-    // columns run from the problems the vote always gets to the ones it never does
-    const rightAt = (col: number) =>
-      HM.temperatures.filter((_, j) => /the vote is right/.test(screen.getByTestId(`heat-${col}-${j}`).textContent ?? "")).length;
-    for (let col = 1; col < n; col++) expect(rightAt(col)).toBeLessThanOrEqual(rightAt(col - 1));
-  });
-
-  it("pins a problem and shows which temperatures got it right", () => {
-    render(<Page7 />);
-    const HM = PAGE7.figure1.heatmap;
-    expect(screen.queryByTestId("heatmap-problem")).toBeNull();
-    fireEvent.click(screen.getByTestId("heat-0-3"));
-    const panel = screen.getByTestId("heatmap-problem");
-    expect(panel.textContent).toMatch(/^Problem 1 · level/);
-    const items = within(panel).getAllByRole("listitem");
-    expect(items).toHaveLength(HM.temperatures.length);
-    const rightCount = items.filter((li) => li.textContent?.includes("✓")).length;
-    expect(panel.textContent).toContain(`the vote gets it at ${rightCount} of ${HM.temperatures.length} temperatures`);
-    for (const [j, t] of HM.temperatures.entries()) {
-      expect(items[j].textContent).toContain(`T = ${t === 0 ? "0" : t.toFixed(1)}`);
-      expect(items[j].textContent).toMatch(/\d+\/16/);
-    }
-    // the arrows step through the columns in order, and the same column again unpins
-    fireEvent.click(screen.getByRole("button", { name: "Next problem" }));
-    expect(screen.getByTestId("heatmap-problem").textContent).toMatch(/^Problem 2 · level/);
-    fireEvent.click(screen.getByTestId("heat-1-0"));
-    expect(screen.queryByTestId("heatmap-problem")).toBeNull();
   });
 
   it("names the three lines in plain English, not in the notebook's vocabulary", () => {

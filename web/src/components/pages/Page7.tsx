@@ -67,16 +67,16 @@
  *   Step 2 — figure 1, the pile. Two problems, the vote coming out right and the
  *   vote tying with the truth among the chains (the author cut a third, the vote
  *   coming out wrong, on 2026-10-11), each with 16 chains tallied into a ranked
- *   histogram. A row click opens that answer's chains and
- *   never closes the reader; the arrows step only within the open answer, so
- *   every chain, wrong ones included, is a row click and some arrow presses away.
- *   Each chain shows its opening and its ending with the middle folded, because
- *   chains run to 272 lines and the ending is what a reader is looking for. Truth concentrates (the modal answer holds 9.9 of 16 votes on
- *   average) and the tail is real (41% of answer classes appear exactly once).
- *   Lead with the CONCENTRATION: the run's `errors_are_diffuse` gate is FALSE at
- *   a 50% threshold, so "wrong answers all disagree" overstates it. Opening a bar
- *   shows the chains that landed there, and two chains agreeing on a wrong answer
- *   usually made different mistakes. Do not bucket the singletons.
+ *   histogram. Since 2026-11-05 that tally is the step's ONE figure (author): the
+ *   temperature heat map and the shape stat (9.9 of 16 votes, 5.1 distinct
+ *   answers) are cut, since step 3 says the same in aggregate. The chains are
+ *   folded until a row is clicked, and clicking the open row folds it again; the
+ *   arrows step only within the open answer. Each chain shows its opening and its
+ *   ending with the middle folded, because chains run to 272 lines and the ending
+ *   is what a reader is looking for. The run's `errors_are_diffuse` gate is FALSE
+ *   at a 50% threshold, so no sentence may say wrong answers all disagree or that
+ *   chains sharing a wrong answer made different mistakes. Do not bucket the
+ *   singletons.
  *
  *   Step 3 — figure 2, what the vote buys. Accuracy against N, built by
  *   subsampling one pile so chain length is fixed. The figure opens on two lines,
@@ -144,7 +144,6 @@ import {
   pct,
   tidyMath,
   tokens,
-  type HeatCell,
   type Problem,
   type ShowcaseOutcome,
   type SpecimenChain,
@@ -330,7 +329,6 @@ function ProblemPicker({ value, onChange }: { value: number; onChange: (i: numbe
 }
 
 /** The row a problem opens on: its correct answer, or the top row if none is right. */
-const firstOpen = (p: Problem): string => (p.ranked.find((r) => r.correct) ?? p.ranked[0]).answer;
 
 /** How this problem's vote came out, read off the run, for the specimen card. */
 function outcomeLine(outcome: ShowcaseOutcome, p: Problem): string {
@@ -510,212 +508,6 @@ function TempPicker({ value, onChange }: { value: number; onChange: (t: number) 
     </div>
   );
 }
-const OUTCOME_SAYS: Record<HeatCell["outcome"], string> = {
-  right: "the vote is right",
-  wrong: "the vote is wrong",
-  tie: "the vote ties",
-};
-
-/**
- * The fill for one cell. Hue says how the vote came out: Cactus where it is right,
- * Sky where it is not (wrong or tied, which the readout tells apart). Strength says how
- * many chains are right, from a 30% tint at none to the full hue at all of them, so a
- * cell with no right chain still shows its hue: at 12% the two hues read as one grey.
- * Ink stays AA on both hues at full.
- */
-const heatFill = (c: HeatCell) =>
-  `color-mix(in srgb, var(${c.outcome === "right" ? "--correct" : "--wrong"}) ${Math.round(
-    30 + (70 * c.n_correct) / HM.n_chains,
-  )}%, transparent)`;
-
-/**
- * The temperature sweep on its side: a row per temperature, a column per problem, one
- * small square each. Colour says whether the vote is right; strength says how many of
- * the 16 chains are. No numbers in the squares, so the grid stays compact at a hundred
- * problems (about 500 x 170 px) instead of running a row per problem down the page.
- *
- * Columns are sorted by how many temperatures the vote gets the problem right at (then
- * by chains right in total), so the grid reads as a picture: a solid block of problems
- * the vote always gets, a pale block it never does, and a ragged middle band where the
- * temperature decides. "Problem k" in the readout is a column's place in that order.
- *
- * Hover reads a square out; clicking any square pins its problem in a panel underneath,
- * which names, temperature by temperature, what the vote returned and whether it is
- * right. The panel's arrows step through the problems in column order, which is how a
- * keyboard reaches them without tabbing through hundreds of squares.
- */
-const HEAT_ORDER = HM.problems
-  .map((p, q) => ({
-    q,
-    right: p.cells.filter((c) => c.outcome === "right").length,
-    chains: p.cells.reduce((a, c) => a + c.n_correct, 0),
-  }))
-  .sort((a, b) => b.right - a.right || b.chains - a.chains || a.q - b.q)
-  .map((r) => r.q);
-
-function TemperatureHeatmap() {
-  const [at, setAt] = useState<{ col: number; j: number } | null>(null);
-  const [pinned, setPinned] = useState<number | null>(null);
-  const n = HEAT_ORDER.length;
-  const shown = at ? HM.problems[HEAT_ORDER[at.col]].cells[at.j] : null;
-  const pin = (col: number) => setPinned((cur) => (cur === col ? null : col));
-  const step = (by: number) =>
-    setPinned((cur) => (cur === null ? (by > 0 ? 0 : n - 1) : Math.min(n - 1, Math.max(0, cur + by))));
-  const legend = (outcome: HeatCell["outcome"], label: string) => (
-    <div className="flex items-center gap-1.5">
-      <span className="flex gap-px" aria-hidden="true">
-        {[0, 4, 8, 12, 16].map((k) => (
-          <span
-            key={k}
-            className="h-3 w-3 rounded-[1px]"
-            style={{ background: heatFill({ temperature: 0, n_correct: (k * HM.n_chains) / 16, outcome }) }}
-          />
-        ))}
-      </span>
-      <span className="text-xs text-ink-muted">{label}</span>
-    </div>
-  );
-  const p = pinned === null ? null : HM.problems[HEAT_ORDER[pinned]];
-  const rightAt = p ? p.cells.filter((c) => c.outcome === "right").length : 0;
-  return (
-    <section
-      aria-label="Chains right and the vote, at every temperature"
-      className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
-    >
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
-        {legend("right", "the vote is right")}
-        {legend("wrong", "the vote is wrong or ties")}
-        <span className="text-xs text-ink-muted">darker: more of the {HM.n_chains} chains right</span>
-      </div>
-      <table
-        className="w-full table-fixed border-separate font-mono text-[10px] tabular-nums"
-        style={{ borderSpacing: "1px" }}
-        onMouseLeave={() => setAt(null)}
-      >
-        <caption className="sr-only">
-          The vote and the chains right of {HM.n_chains}, for {n} problems (columns, sorted by how
-          often the vote is right) at {HM.temperatures.length} temperatures (rows)
-        </caption>
-        <colgroup>
-          <col className="w-12" />
-          {HEAT_ORDER.map((q) => (
-            <col key={q} />
-          ))}
-          <col className="w-10" />
-        </colgroup>
-        <tbody>
-          {HM.temperatures.map((t, j) => (
-            <tr key={t}>
-              <th scope="row" className="pr-1 text-left font-normal text-ink-muted">
-                T = {tLabel(t)}
-              </th>
-              {HEAT_ORDER.map((q, col) => {
-                const c = HM.problems[q].cells[j];
-                return (
-                  <td
-                    key={q}
-                    data-testid={`heat-${col}-${j}`}
-                    onMouseEnter={() => setAt({ col, j })}
-                    onClick={() => pin(col)}
-                    className={`h-3.5 cursor-pointer rounded-[1px] p-0 ${
-                      at?.col === col && at.j === j
-                        ? "outline outline-2 outline-ink"
-                        : pinned === col
-                          ? "outline outline-1 outline-compute"
-                          : ""
-                    }`}
-                    style={{ background: heatFill(c) }}
-                  >
-                    <span className="sr-only">
-                      problem {col + 1}: {c.n_correct} of {HM.n_chains} chains right, {OUTCOME_SAYS[c.outcome]}
-                    </span>
-                  </td>
-                );
-              })}
-              <td className="pl-1 text-right text-correct-ink">
-                {HM.problems.filter((r) => r.cells[j].outcome === "right").length}/{n}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {/* The hover readout; it holds its line so the panel does not jump. */}
-      <p aria-hidden="true" className="min-h-[1rem] font-mono text-xs text-ink">
-        {shown && at
-          ? `problem ${at.col + 1} · T = ${tLabel(shown.temperature)} · ${shown.n_correct} of ${HM.n_chains} right · ${OUTCOME_SAYS[shown.outcome]}`
-          : "Click a column to see that problem at every temperature."}
-      </p>
-      <div className="flex items-center gap-2 text-xs">
-        <button
-          type="button"
-          aria-label="Previous problem"
-          onClick={() => step(-1)}
-          className="h-6 w-6 rounded border border-grid text-ink hover:bg-surface-raised"
-        >
-          ‹
-        </button>
-        <span className="font-mono tabular-nums text-ink-muted">
-          {pinned === null ? `${n} problems` : `problem ${pinned + 1} of ${n}`}
-        </span>
-        <button
-          type="button"
-          aria-label="Next problem"
-          onClick={() => step(1)}
-          className="h-6 w-6 rounded border border-grid text-ink hover:bg-surface-raised"
-        >
-          ›
-        </button>
-      </div>
-      {p && pinned !== null ? (
-        <div
-          data-testid="heatmap-problem"
-          aria-live="polite"
-          className="flex flex-col gap-2 rounded border border-compute bg-compute/5 p-3 text-xs"
-        >
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="font-semibold text-ink">
-              Problem {pinned + 1} · level {p.level} · {p.subject}
-            </p>
-            <button
-              type="button"
-              onClick={() => setPinned(null)}
-              aria-label="Close this problem"
-              className="text-ink-muted hover:text-ink"
-            >
-              ×
-            </button>
-          </div>
-          <p className="max-h-24 overflow-y-auto font-code leading-relaxed text-ink">{tidyMath(p.question)}</p>
-          <p className="text-ink-muted">
-            answer <span className="font-mono text-ink">{tidyMath(p.ground_truth)}</span> · the vote gets
-            it at {rightAt} of {HM.temperatures.length} temperatures
-          </p>
-          <ul className="grid grid-cols-1 gap-px font-mono tabular-nums sm:grid-cols-2 lg:grid-cols-3">
-            {p.cells.map((c) => (
-              <li
-                key={c.temperature}
-                className="flex items-center gap-2 rounded-sm px-1"
-                style={{ background: heatFill(c) }}
-              >
-                <span className="w-11 shrink-0 text-ink">T = {tLabel(c.temperature)}</span>
-                <span className="min-w-0 flex-1 truncate text-ink" title={c.answer ?? "tie"}>
-                  {c.outcome === "tie" ? "tie" : tidyMath(c.answer ?? "")}
-                </span>
-                <span className="shrink-0 text-ink">
-                  {c.n_correct}/{HM.n_chains}
-                </span>
-                <span className="w-3 shrink-0 text-center text-ink" aria-label={OUTCOME_SAYS[c.outcome]}>
-                  {c.outcome === "right" ? "✓" : "✗"}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
 /* ------------------------------------------------------------------ figure 2 */
 
 const W = 620;
@@ -1132,8 +924,10 @@ export function Page7() {
   // reader starts on a right solution, even when the vote did not return it; every
   // other answer is a row click away. The arrows only ever step within the open
   // answer: "64" has eight chains to read, "128" has two.
+  // Since 2026-11-05 nothing is open until the reader clicks a row (author: section 2
+  // down to one figure, the tally); clicking the open row folds it again.
   const [problemIx, setProblemIx] = useState(0);
-  const [open, setOpen] = useState(firstOpen(F1.showcase[0].problem));
+  const [open, setOpen] = useState<string | null>(null);
   const [chainIx, setChainIx] = useState(0);
   // Index into the measured N axis, not N itself. Opens at the top of the axis,
   // so the reader's first sight of the chart is the finished result the prose
@@ -1168,8 +962,8 @@ export function Page7() {
 
   const shown = F1.showcase[problemIx];
   const s = shown.problem;
-  const openRow = s.ranked.find((r) => r.answer === open) ?? s.ranked[0];
-  const rowChains = chainsFor(s, openRow.answer);
+  const openRow = open === null ? null : (s.ranked.find((r) => r.answer === open) ?? null);
+  const rowChains = openRow ? chainsFor(s, openRow.answer) : [];
   const chain = rowChains[chainIx];
   const last = F2.hot.points[F2.hot.points.length - 1];
   // What one chain spends against what the pile spends. The gap between them is what
@@ -1178,12 +972,10 @@ export function Page7() {
   const oneChainTokens = F2.hot.points[0].mean_tokens;
   const pileTokens = last.mean_tokens;
 
-  // Clicking a row opens its first chain, unless that row is already open, in which
-  // case nothing moves: a second click must not close it or lose the reader's place.
+  // Clicking a row opens its first chain; clicking the open row folds it again.
   const pick = (answer: string) => {
     recordInteraction(PAGE_N);
-    if (answer === openRow.answer) return;
-    setOpen(answer);
+    setOpen((cur) => (cur === answer ? null : answer));
     setChainIx(0);
   };
   const step = (by: number) => {
@@ -1193,7 +985,7 @@ export function Page7() {
   const pickProblem = (i: number) => {
     recordInteraction(PAGE_N);
     setProblemIx(i);
-    setOpen(firstOpen(F1.showcase[i].problem));
+    setOpen(null);
     setChainIx(0);
   };
   // The arrow keys step through the open answer while focus is in the card. Everywhere else
@@ -1292,7 +1084,11 @@ export function Page7() {
                 card. It used to be repeated here, near-verbatim. */}
             <Tally problem={s} onOpen={pick} open={open} />
 
+            {/* The chains stay folded until a row is clicked (author, 2026-11-05: section 2
+                down to one figure, the tally). */}
+            {openRow && chain ? (
             <div
+              data-testid="chain-reader"
               className={`flex flex-col gap-3 rounded-lg border-l-4 p-3 ${
                 chain.correct ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
               }`}
@@ -1345,27 +1141,14 @@ export function Page7() {
                 <ChainText key={`${problemIx}-${chain.sample_index}`} chain={chain} />
               </div>
             </div>
+            ) : null}
           </section>
-          <p className="text-sm text-ink-muted">
-            The winning answer holds {F1.shape.mean_top_votes.toFixed(1)} of {F1.shape.n_chains}{" "}
-            votes on average across all {M.items.n} problems, against{" "}
-            {F1.shape.mean_distinct.toFixed(1)} distinct answers. Agreement concentrates; the rest
-            is a scatter of near-misses, {pct(F1.shape.singleton_share)} of which are said exactly
-            once.
-          </p>
-          <p className="text-ink-muted">
-            Here is the vote on {HM.problems.length} of these problems at{" "}
-            {HM.temperatures.length} temperatures, {HM.n_chains} chains each. Click a column to
-            see which temperatures got that problem right.
-          </p>
-          <TemperatureHeatmap />
         </section>
+        {/* The note's second sentence, that chains sharing a wrong answer got there by
+            different mistakes, went with the cut: it was never checked, and on algebra 224
+            fifteen chains make the same slip. */}
         <Note kicker="Read it as">
-          <p>
-            Each chain is one student, and each answer is a number on the board. Two chains landing on the
-            same wrong answer usually got there by different mistakes, which is why the tail stays a
-            scatter.
-          </p>
+          <p>Each chain is one student, and each answer is a number on the board.</p>
         </Note>
 
         {/* Step 3 */}
