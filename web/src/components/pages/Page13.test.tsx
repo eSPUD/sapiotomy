@@ -11,22 +11,19 @@ const setStep = (value: number) =>
     target: { value: String(value) },
   });
 
-const setLuck = (value: number) =>
-  fireEvent.change(screen.getByRole("slider", { name: /how many are also right/i }), {
-    target: { value: String(value) },
-  });
-
 describe("Page 13 (learned reasoning: one law, two knobs)", () => {
-  it("opens on the lede: STaR's filter, then RL going further, one bold term, no results", () => {
+  it("opens on the lede: STaR as RL's simplest form, then GRPO going further, one bold term, no results", () => {
     render(<Page13 />);
-    const lede = screen.getByText(/STaR bakes reasoning into the weights/).closest("p")!;
-    expect(lede.textContent).toMatch(/it learns from\s+every chain, right or wrong/);
-    expect(lede.textContent).toMatch(/to think\s+longer on its own\./);
+    // STaR is already RL (expert iteration, as page 12 says), so GRPO is the step up (author, 2026-11-04).
+    const lede = screen.getByText(/STaR is reinforcement learning in its simplest form/).closest("p")!;
+    expect(lede.textContent).toMatch(/the reward is 1 or 0, and only the\s+1s are trained on/);
+    expect(lede.textContent).toMatch(/keeps that reward but goes\s+further: it learns from every chain, right or wrong/);
+    expect(lede.textContent).toMatch(/to think longer on its own\./);
     // Both STaR and RL grade only the answer: "process" is page 9's word for
     // step grading, which R1-Zero's reward never does.
     expect(lede.textContent).not.toMatch(/process/);
     expect(lede.querySelectorAll("strong")).toHaveLength(1);
-    expect(lede.querySelector("strong")!.textContent).toBe("Reinforcement learning");
+    expect(lede.querySelector("strong")!.textContent).toBe("GRPO");
     expect(lede.textContent).not.toMatch(/\d+(\.\d+)?%/);
     // The seam must rhyme with page 12's closing block, not restate it.
     expect(lede.textContent).not.toMatch(/two ways to buy reasoning/);
@@ -77,26 +74,36 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
     it("states the loop against STaR by name, never by page number", () => {
       render(<Page13 />);
       const section = screen.getByRole("heading", { level: 2, name: /^1\. What can a wrong chain teach\?/ }).closest("section")!;
-      // "Similar", not "the same three steps": STaR filters and fine-tunes from
-      // the base; RL scores a group and updates in place (author, 2026-11-04).
-      expect(section.textContent).toMatch(/is very similar to STaR/);
+      // The loop is GRPO's, named and spelled out; STaR is already RL, so the
+      // section no longer says RL is "very similar to STaR" (author, 2026-11-04).
+      expect(section.textContent).toMatch(/The loop illustrated below is GRPO.s \(Group Relative Policy Optimization\), the\s+recipe DeepSeek used to train R1-Zero\./);
+      // Named once, in the opening: the closing paragraph doesn't restate it (author, 2026-11-05).
+      expect(section.textContent).not.toMatch(/The seven lines above are/);
+      expect(section.textContent).not.toMatch(/very similar to STaR/);
       expect(section.textContent).not.toMatch(/same three steps/);
-      // STaR samples one chain per problem; only RL writes a group, and that
+      // STaR samples one chain per problem; GRPO writes a group, and that
       // group is what lets every chain be scored against the others.
-      expect(section.textContent).toMatch(/STaR writes one chain per problem, while reinforcement\s+learning writes several and scores every one/);
+      expect(section.textContent).toMatch(/STaR writes one chain per problem, while GRPO writes\s+several and scores every one/);
       expect(section.textContent).toMatch(/penalized for chains that scored poorly and rewarded for chains that scored well/);
+      // Every chain trains: wrong ones are not dropped, as STaR drops them (author, 2026-11-04).
+      expect(section.textContent).toMatch(/every chain the model writes is kept for training, instead of dropping\s+the chains that led to a wrong answer/);
+      // The opening previews the figure, then the algorithm (author, 2026-11-05).
+      expect(section.textContent).toMatch(/Below, the loop is drawn first, so you can watch\s+every chain reach reinforce, and then written out as an algorithm in the same form as\s+STaR.s\./);
       // Author, 2026-11-04: no "page N did this" back-references.
       expect(section.textContent).not.toMatch(/\bpage \d+/i);
       expect(section.textContent).not.toMatch(/\bAct \d/);
-      // The strip labels each station by what it does.
-      const generate = screen.getByText("generate ×k");
-      expect(screen.getByText("several chains for every problem")).toBeInTheDocument();
-      expect(screen.getByText("the answer key scores each one, 1 or 0")).toBeInTheDocument();
-      expect(screen.getByText(/toward the high scores, away from the low/)).toBeInTheDocument();
+      // The loop graph (page 12's grammar) labels each station by what it does,
+      // and says no chain is dropped (author, 2026-11-05).
+      const loop = within(section).getByRole("img", { name: /^GRPO's loop/ });
+      expect(loop.getAttribute("aria-label")).toMatch(/Nothing is dropped/);
+      const generate = within(loop).getByText("generate ×G");
+      expect(within(loop).getByText("each answer vs. the key: 1 or 0")).toBeInTheDocument();
+      expect(within(loop).getByText(/every chain kept/)).toBeInTheDocument();
       expect(screen.queryByText(/page 12 took one greedy try/)).not.toBeInTheDocument();
-      // Then the no-human / finite-data callout.
-      const callout = screen.getByText(/Nobody writes the reasoning and nobody grades it by hand/);
+      // The no-human / finite-data point closes the section, in the paragraph after the listing.
+      const callout = screen.getByText(/Nobody writes that reasoning and nobody grades it/);
       expect(follows(generate, callout)).toBe(true);
+      expect(follows(screen.getByRole("figure", { name: /^GRPO pseudocode/ }), callout)).toBe(true);
       expect(callout.textContent).toMatch(/limited stock of human-written text/);
     });
 
@@ -113,45 +120,45 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
 
     it("teaches GRPO as pseudocode, in plain notes", () => {
       render(<Page13 />);
-      expect(screen.getByText(/sample G answers from the current policy/)).toBeInTheDocument();
-      expect(screen.getByText(/mean\(r\)\) \/ std\(r\)/)).toBeInTheDocument();
-      expect(screen.getByText(/each chain is measured against its group's average/)).toBeInTheDocument();
-      expect(screen.getByText(/so it doesn't drift too far/)).toBeInTheDocument();
+      // Page 12's listing form and notation: numbered lines, STaR's M, x, y, r, ŷ.
+      const listing = screen.getByRole("figure", { name: /^GRPO pseudocode/ });
+      expect(within(listing).getAllByText(/^[1-7]$/)).toHaveLength(7);
+      expect(listing.textContent).toMatch(/for \(x, y\) in problems:/);
+      expect(listing.textContent).toMatch(/for i = 1…G/);
+      expect(listing.textContent).toMatch(/mean\(s\)\) \/ std\(s\)/);
+      expect(screen.getByText(/a group of G chains per problem; STaR writes one/)).toBeInTheDocument();
+      expect(screen.getByText(/a wrong chain gets a negative weight instead of being dropped/)).toBeInTheDocument();
+      expect(listing.textContent).toMatch(/M ← update\(M, r, A\)/);
+      expect(listing.textContent).toMatch(/keeps it from drifting too far/);
+      // GRPO is named in the opening as the figure's loop; the box says whose recipe it is.
+      expect(screen.getByText(/the recipe DeepSeek used to train R1-Zero/)).toBeInTheDocument();
+      expect(screen.queryByText(/One recipe for this/)).not.toBeInTheDocument();
       expect(screen.getByText(/GRPO needs no\s+second network/)).toBeInTheDocument();
       // Jargon the plain notes replaced.
       expect(screen.queryByText(/critic/)).not.toBeInTheDocument();
       expect(screen.queryByText(/PPO/)).not.toBeInTheDocument();
       expect(screen.queryByText(/KL/)).not.toBeInTheDocument();
-      expect(screen.getByText(/Line 2 is the same sampling self-consistency uses/)).toBeInTheDocument();
-      expect(screen.getByText(/keeps what the right\s+ones did/)).toBeInTheDocument();
+      // Self-consistency's sampling, now at training time, said above the listing (author, 2026-11-05).
+      expect(screen.getByText(/Notice that line 4 is the same sampling self-consistency uses/)).toBeInTheDocument();
+      expect(screen.getByText(/drawn at training time instead of answer time/)).toBeInTheDocument();
+      // Every chain trains, so GRPO learns from every one, not only the right ones.
+      expect(screen.getByText(/learns from every one of them/)).toBeInTheDocument();
+      expect(screen.queryByText(/keeps what the right\s+ones did/)).not.toBeInTheDocument();
     });
 
-    it("GRPO dial: the baseline chases the group and the same right answer's push shrinks", () => {
+    it("keeps the GRPO line and pseudocode, with no group-luck chart or dial", () => {
       render(<Page13 />);
-      const group = screen.getByRole("img", { name: /Line 2 of the recipe, drawn/ });
-      expect(group.getAttribute("aria-label")).toMatch(/350 times 638/);
-      expect(screen.getByText(/group mean · 0\.50/)).toBeInTheDocument();
-      expect(screen.getAllByText("+0.50")).toHaveLength(2);
-      expect(screen.getByText(/push drops to \+0\.50/)).toBeInTheDocument();
-      expect(screen.getByText("mis-added the partials")).toBeInTheDocument();
-      expect(screen.getByText("dropped a zero")).toBeInTheDocument();
-
-      setLuck(0);
-      expect(screen.getByText("+0.75")).toBeInTheDocument();
-      expect(screen.getByText(/the biggest push on offer/)).toBeInTheDocument();
-      expect(screen.getByText(/That.s the chain no answer-time selector could find/)).toBeInTheDocument();
-      expect(screen.getByText("read 638 as 628")).toBeInTheDocument();
-
-      setLuck(2);
-      expect(screen.getByText("−0.75")).toBeInTheDocument();
-      expect(screen.getByText(/Rarity amplifies the signal in both directions/)).toBeInTheDocument();
-
-      setLuck(3);
-      expect(screen.getByText(/teaches it nothing/)).toBeInTheDocument();
-      expect(screen.getByText(/group mean · 1\.00/)).toBeInTheDocument();
-      // Scoped to this chart: the loop prototypes further down draw push labels of their own.
-      const chart = screen.getByRole("img", { name: /Line 2 of the recipe, drawn/ });
-      expect(within(chart).queryByText(/[+−]0\.\d\d/)).not.toBeInTheDocument();
+      // The GRPO paragraph follows the listing and names it (author, 2026-11-05).
+      const grpoPara = screen.getByText(/Notice that line 4/).closest("p")!;
+      // An "Algorithm" divider sits between the loop graph and the listing, as on page 12.
+      const divider = screen.getByRole("heading", { level: 3, name: "Algorithm" });
+      expect(follows(screen.getByRole("img", { name: /^GRPO's loop/ }), divider)).toBe(true);
+      expect(follows(divider, screen.getByRole("figure", { name: /^GRPO pseudocode/ }))).toBe(true);
+      expect(follows(screen.getByRole("figure", { name: /^GRPO pseudocode/ }), grpoPara)).toBe(true);
+      expect(screen.getByRole("figure", { name: /^GRPO pseudocode/ })).toBeInTheDocument();
+      expect(screen.queryByRole("img", { name: /Line 2 of the recipe, drawn/ })).not.toBeInTheDocument();
+      expect(screen.queryByText(/350 × 638/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Drag the dial/)).not.toBeInTheDocument();
     });
   });
 

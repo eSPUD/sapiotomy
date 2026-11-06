@@ -29,9 +29,11 @@
  * models as it stands, with no o1 in it (author: the page does not need o1 to
  * explain the loop). The strip's three stations are labelled on their own
  * terms, then the no-human / page 3 data callout, then GRPO in five lines with
- * plain-language notes, and the 350 × 638 group-luck dial; its lone-right-chain
- * reading ties back to Act 2's answer that was in the pile but could not be
- * picked out. Line 2's bridge to page 7 stops at "keeps what the right ones
+ * plain-language notes. Its figure is a page-12-style loop graph (Page13GrpoLoop):
+ * a group leaves generate, every chain is scored, every chain reaches
+ * reinforce. The pseudocode uses page 12's listing (CodeLine) and notation.
+ * The stepped figure on measured groups (Page13LoopStepped) moved back to the
+ * prototype block (author, 2026-11-05). Line 2's bridge to page 7 stops at "keeps what the right ones
  * did": GRPO is a policy gradient with a group baseline, not best-of-N
  * distillation. The author is training a model for this page, so sections 2
  * and 3's figures are placeholders until that run exists.
@@ -87,6 +89,8 @@ import { ACTS, getPage } from "@/lib/pages";
 import { curves, interpolate } from "@/lib/curves";
 import { twoAxisAccuracy } from "@/lib/frontier";
 import { useStore } from "@/store/useStore";
+import { GrpoLoop } from "./Page13GrpoLoop";
+import { CodeLine } from "@/components/CodeLine";
 /* PROTOTYPES (2026-11-04): remove this import and the block above PageNav to revert */
 import { LoopPrototypes } from "./Page13LoopPrototypes";
 
@@ -99,160 +103,37 @@ const REF = { r1: 1, grpo: 2, announce: 3, competitive: 4 } as const;
  * Section 1: the loop, and GRPO
  * ------------------------------------------------------------------------- */
 
-/*
- * Page 4's multiplication, not page 1's: a uniform group teaches nothing, so
- * an easy problem a 671B model already aces cannot be the example of a
- * productive group. Sample 1 is always right; the other three slots carry
- * fixed wrong answers, each a real arithmetic slip, so the dial is
- * deterministic:
- *   350 × 628 = 219,800 (one digit misread)
- *    35 × 638 =  22,330 (a dropped zero)
- *   210,000 + 13,300 written as 213,300 (the partials mis-added)
- */
-const RIGHT_ANSWER = "223,300";
-const OTHER_WRONGS = [
-  { v: "219,800", slip: "read 638 as 628" },
-  { v: "22,330", slip: "dropped a zero" },
-  { v: "213,300", slip: "mis-added the partials" },
-];
-
-/** The GRPO recipe as five annotated lines: advantage from the group's own
-    statistics, minus the clipped-surrogate machinery. */
-const PSEUDO: { code: string; note?: string }[] = [
-  { code: "for each problem q:" },
-  { code: "  sample G answers from the current policy" },
-  { code: "  rᵢ ← 1 if answerᵢ is right, else 0", note: "the reward is a short program, not another model" },
-  { code: "  Aᵢ ← (rᵢ − mean(r)) / std(r)", note: "each chain is measured against its group's average" },
-  { code: "  push toward answers with Aᵢ > 0, away from Aᵢ < 0", note: "plus a pull back toward the starting model, so it doesn't drift too far" },
-];
-
-/** One stage of the loop strip, page 12's grammar. */
-function Stage({ tone, title, sub }: { tone: string; title: string; sub: string }) {
-  return (
-    <div className={`min-w-0 flex-1 rounded-lg border-l-4 bg-surface-raised p-2.5 ${tone}`}>
-      <p className="text-sm font-semibold text-ink">{title}</p>
-      <p className="text-xs text-ink-muted">{sub}</p>
-    </div>
-  );
-}
-
-const fmtPush = (v: number) => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}`;
-
 /**
- * Line 2 of the recipe, drawn. Four sampled answers as dots at reward 1 or
- * 0, the group mean as a dashed rule, and each sample's push as an arrow FROM
- * the rule TO its dot. As the dial raises the group's luck the rule chases the
- * right answers: up-arrows shrink, the lone dissenter's arrow stretches, and at
- * a uniform group the rule reaches the dots and every arrow vanishes.
+ * GRPO in page 12's listing form and notation (M, x, y, r, ŷ), so it reads
+ * against STaR's ten lines: a group where STaR writes one chain, a score in
+ * place of STaR's keep-or-drop, and the current model updated where STaR
+ * re-fine-tunes M₀. Plain notes, no critic / PPO / KL.
  */
-function GroupBaselineChart({ rewards, mean }: { rewards: number[]; mean: number }) {
-  /* sized close to the column it renders into, so its 10px labels stay 10px */
-  const width = 620;
-  const height = 288;
-  /* right margin holds "group mean · 0.50" at 11px */
-  const margin = { top: 42, right: 106, bottom: 56, left: 62 };
-  const innerW = width - margin.left - margin.right;
-  const innerH = height - margin.top - margin.bottom;
-  const yOf = (r: number) => 12 + (1 - r) * (innerH - 24);
-  const colX = (i: number) => (innerW * (i + 0.5)) / 4;
-  const dotR = 7;
-
-  const k = rewards.slice(1).filter((r) => r === 1).length;
-  const title = `Line 2 of the recipe, drawn: four answers to 350 times 638 sampled from the model, as dots at reward 1 or reward 0, with the group mean as a dashed horizontal rule and each sample's push as an arrow from the rule to its dot. Sample 1 answers 223,300, correct. The wrong answers are real slips: 219,800 from reading 638 as 628, 22,330 from dropping a zero, 213,300 from mis-adding the partials. Currently ${k} of the other three samples are also right: the group mean is ${mean.toFixed(2)}, so each right answer's push is +${(1 - mean).toFixed(2)} and each wrong answer's is −${mean.toFixed(2)}.${
-    k === 3 ? " The rule sits on the dots and every arrow has vanished: a uniform group teaches nothing." : ""
-  }`;
-
-  return (
-    <ChartFrame title={title} width={width} height={height} margin={margin}>
-      <text x={0} y={-24} textAnchor="start" className="fill-ink font-mono text-[13px] font-semibold">
-        350 × 638 = ?
-      </text>
-      <text x={0} y={-10} textAnchor="start" className="fill-ink-muted text-[10px]">
-        the rule checks one thing: does the answer equal 223,300?
-      </text>
-
-      {[1, 0].map((t) => (
-        <g key={t}>
-          <line x1={0} x2={innerW} y1={yOf(t)} y2={yOf(t)} className="stroke-grid" strokeWidth={0.5} />
-          <text x={-8} y={yOf(t)} dy="0.32em" textAnchor="end" className="fill-ink-muted text-[11px]">
-            reward {t}
-          </text>
-        </g>
-      ))}
-
-      <line
-        x1={0}
-        x2={innerW}
-        y1={yOf(mean)}
-        y2={yOf(mean)}
-        className="stroke-ink"
-        strokeWidth={1}
-        strokeDasharray="4 3"
-      />
-      <text x={innerW + 8} y={yOf(mean)} dy="0.32em" textAnchor="start" className="fill-ink text-[11px] font-semibold">
-        group mean · {mean.toFixed(2)}
-      </text>
-
-      {rewards.map((r, i) => {
-        const cx = colX(i);
-        const cy = yOf(r);
-        const adv = r - mean;
-        const right = r === 1;
-        const wrong = OTHER_WRONGS[i - 1];
-        const up = adv > 0;
-        const yFrom = yOf(mean) + (up ? -2 : 2);
-        const yTo = cy + (up ? dotR + 3 : -(dotR + 3));
-        return (
-          <g key={i}>
-            {adv !== 0 ? (
-              <g className={up ? "stroke-correct fill-correct" : "stroke-wrong fill-wrong"}>
-                <line x1={cx} x2={cx} y1={yFrom} y2={yTo + (up ? 4 : -4)} strokeWidth={2} />
-                <polygon
-                  points={`${cx},${yTo} ${cx - 3.5},${yTo + (up ? 6 : -6)} ${cx + 3.5},${yTo + (up ? 6 : -6)}`}
-                  stroke="none"
-                />
-                <text
-                  x={cx + 9}
-                  y={(yFrom + yTo) / 2}
-                  dy="0.32em"
-                  textAnchor="start"
-                  stroke="none"
-                  className={`font-mono text-[11px] font-semibold ${up ? "fill-correct-ink" : "fill-wrong-ink"}`}
-                >
-                  {fmtPush(adv)}
-                </text>
-              </g>
-            ) : null}
-            {i === 0 ? (
-              <circle cx={cx} cy={cy} r={dotR + 4} fill="none" className="stroke-compute" strokeWidth={1.5} />
-            ) : null}
-            <circle
-              cx={cx}
-              cy={cy}
-              r={dotR}
-              className={`${right ? "fill-correct" : "fill-wrong"} stroke-canvas`}
-              strokeWidth={1.5}
-            />
-            <text x={cx} y={innerH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] font-eyebrow uppercase tracking-wide">
-              sample {i + 1}
-            </text>
-            <text x={cx} y={innerH + 31} textAnchor="middle" className="fill-ink font-mono text-[13px] font-semibold">
-              {right ? RIGHT_ANSWER : wrong.v}
-            </text>
-            <text
-              x={cx}
-              y={innerH + 45}
-              textAnchor="middle"
-              className={i === 0 ? "fill-compute-ink text-[10px] font-semibold" : "fill-ink-muted text-[10px]"}
-            >
-              {i === 0 ? "watch this one" : right ? "" : wrong.slip}
-            </text>
-          </g>
-        );
-      })}
-    </ChartFrame>
-  );
-}
+const GRPO_LINES: { indent: number; code: React.ReactNode; note?: React.ReactNode }[] = [
+  { indent: 0, code: <>M ← M<sub>0</sub></>, note: "the same starting point as STaR" },
+  { indent: 0, code: "loop: for many steps" },
+  { indent: 1, code: "for (x, y) in problems:" },
+  {
+    indent: 2,
+    code: <>r<sub>i</sub>, ŷ<sub>i</sub> ← M(x)  for i = 1…G</>,
+    note: "a group of G chains per problem; STaR writes one",
+  },
+  {
+    indent: 2,
+    code: <>s<sub>i</sub> ← 1 if ŷ<sub>i</sub> = y, else 0</>,
+    note: "the same answer key as STaR: a short program, not another model",
+  },
+  {
+    indent: 2,
+    code: <>A<sub>i</sub> ← (s<sub>i</sub> − mean(s)) / std(s)</>,
+    note: "each chain against its group's average; a wrong chain gets a negative weight instead of being dropped",
+  },
+  {
+    indent: 1,
+    code: "M ← update(M, r, A)",
+    note: <>each r<sub>i</sub> pushed by its A<sub>i</sub>, on the current model, not M<sub>0</sub>; a pull toward M<sub>0</sub> keeps it from drifting too far</>,
+  },
+];
 
 /* ---------------------------------------------------------------------------
  * Section 2: one law, two knobs
@@ -997,19 +878,6 @@ export function Page13() {
   const T = training.fit!.params;
   const D = curves.deepseekDistill.fit!.params;
 
-  /* — section 1: how many of the OTHER three samples also get 223,300 — */
-  const [luck, setLuck] = useState(1);
-  const rewards: number[] = [1, ...OTHER_WRONGS.map((_, i) => (i < luck ? 1 : 0))];
-  const mean = rewards.reduce((a, b) => a + b, 0) / rewards.length;
-  const uniform = luck === 3;
-  const push1 = 1 - mean;
-  const LUCK_READ: Record<number, string> = {
-    0: `Sample 1 is the only right answer in its group, so it gets the biggest push on offer (+${push1.toFixed(2)}). That's the chain no answer-time selector could find: right, but outnumbered. A vote would bury it. Training pushes hardest on it.`,
-    1: `Same right answer, luckier group: sample 1's push drops to +${push1.toFixed(2)}.`,
-    2: `Luckier still: +${push1.toFixed(2)}. Now watch sample 4: a wrong answer in a mostly-right group is punished hardest (−${mean.toFixed(2)}). Rarity amplifies the signal in both directions.`,
-    3: "",
-  };
-
   /* — section 2: open mid-family, ×10 thinking on the ×10 run, so the bracket
        shows exactly one forgone decade (+29.5) — */
   const [testExp, setTestExp] = useState(1);
@@ -1065,11 +933,10 @@ export function Page13() {
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        STaR bakes reasoning into the weights by attempting to isolate good reasoning based on
-        whether or not that reasoning results in a correct answer.{" "}
-        <strong className="text-ink">Reinforcement learning</strong> goes further: it learns from
-        every chain, right or wrong, and at scale it teaches the model something new, to think
-        longer on its own.
+        STaR is reinforcement learning in its simplest form: the reward is 1 or 0, and only the
+        1s are trained on. <strong className="text-ink">GRPO</strong> keeps that reward but goes
+        further: it learns from every chain, right or wrong. At scale, it teaches the model
+        something new, to think longer on its own.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -1077,101 +944,52 @@ export function Page13() {
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">1. What can a wrong chain teach?</h2>
           <p className="text-ink-muted">
-            The reinforcement learning loop illustrated below is very similar to STaR. Where the
-            two differ is that STaR writes one chain per problem, while reinforcement
-            learning writes several and scores every one. Through reinforcement, the model is
+            The loop illustrated below is GRPO&apos;s (Group Relative Policy Optimization), the
+            recipe DeepSeek used to train R1-Zero.
+            <Cite n={REF.r1} />
+            <sup className="text-compute-ink">,</sup>
+            <Cite n={REF.grpo} /> Where
+            it differs from STaR is that STaR writes one chain per problem, while GRPO writes
+            several and scores every one. Through reinforcement, the model is
             penalized for chains that scored poorly and rewarded for chains that scored well.
+            This means every chain the model writes is kept for training, instead of dropping
+            the chains that led to a wrong answer. Below, the loop is drawn first, so you can watch
+            every chain reach reinforce, and then written out as an algorithm in the same form as
+            STaR&apos;s.
           </p>
 
-          <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-            <div
-              className="flex flex-col items-stretch gap-1 sm:flex-row sm:items-center"
-              role="img"
-              aria-label="The reinforcement learning loop: generate several chains for every problem, the answer key scores each one 1 or 0, and the current model is pushed toward the high scores and away from the low ones. The loop repeats."
-            >
-              <Stage tone="border-ink" title="generate ×k" sub="several chains for every problem" />
-              <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">→</span>
-              <Stage tone="border-correct" title="reward" sub="the answer key scores each one, 1 or 0" />
-              <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">→</span>
-              <Stage
-                tone="border-compute"
-                title="reinforce"
-                sub="toward the high scores, away from the low, on the current model"
-              />
-              <span className="shrink-0 self-center text-ink-muted" aria-hidden="true">↺</span>
+          <div className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+            {/* the loop: a group leaves generate, every chain is scored, every chain reaches reinforce */}
+            <GrpoLoop />
+          </div>
+
+          {/* the loop written down, divided off as page 12 divides STaR's */}
+          <h3 className="mt-2 text-lg font-semibold text-ink">Algorithm</h3>
+
+          <figure
+            className="m-0 flex flex-col gap-2 rounded-lg border border-grid bg-surface p-4"
+            aria-label="GRPO pseudocode: start from the base model; for many steps, for each problem sample a group of chains, score each answer 1 or 0 against the key, measure each score against the group's average, then update the current model, toward the above-average chains and away from the rest."
+          >
+            <div className="flex flex-col">
+              {GRPO_LINES.map((l, i) => (
+                <CodeLine key={i} n={i + 1} indent={l.indent} code={l.code} note={l.note} />
+              ))}
             </div>
+            <figcaption className="border-t border-dashed border-grid pt-2 text-xs text-ink-muted">
+              Because each chain is compared with the others from the same problem, GRPO needs no
+              second network to say what an average answer looks like. At 671 billion parameters,
+              skipping that network is what made the training affordable.
+            </figcaption>
           </figure>
 
-          <p className="rounded border-l-4 border-compute bg-surface p-4 text-sm text-ink">
-            Nobody writes the reasoning and nobody grades it by hand. The model writes its own
-            chains and a program checks the answers, so the training data doesn&apos;t draw on the
-            limited stock of human-written text.
+
+          <p className="text-ink-muted">
+            Notice that line 4 is the same sampling self-consistency uses,
+            but this time the chains are drawn at training time instead of answer time, and the
+            model learns from every one of them. Nobody writes that reasoning and nobody grades it
+            by hand: the model writes its own chains and a program checks the answers, so the
+            training data doesn&apos;t draw on the limited stock of human-written text.
           </p>
-
-          <div className="flex flex-col gap-4 rounded-lg border-l-4 border-compute bg-surface p-4">
-            <p className="text-ink">
-              One recipe for this, the one DeepSeek used to train R1-Zero, is{" "}
-              <strong>GRPO</strong> (Group Relative Policy Optimization).
-              <Cite n={REF.r1} /> It fits in five lines:
-              <Cite n={REF.grpo} />
-            </p>
-
-            <figure className="m-0 flex flex-col gap-2">
-              <div className="flex flex-col gap-1 rounded-lg border border-dashed border-grid bg-surface-raised p-3 font-mono text-sm">
-                {PSEUDO.map((line, i) => (
-                  <div key={i} className="flex flex-wrap items-baseline gap-x-3">
-                    <code className="whitespace-pre text-ink">{line.code}</code>
-                    {line.note ? (
-                      <span className="text-xs text-compute-ink">{`# ${line.note}`}</span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-              <figcaption className="text-xs text-ink-muted">
-                Because each chain is compared with the others from the same problem, GRPO needs no
-                second network to say what an average answer looks like. At 671 billion
-                parameters, skipping that network is what made the training affordable.
-              </figcaption>
-            </figure>
-
-            <p className="text-ink">
-              Line 2 is the same sampling self-consistency uses. Self-consistency draws many
-              chains at answer time and throws them away after the vote. GRPO draws them during
-              training and keeps what the right ones did.
-            </p>
-
-            <figure className="m-0 flex flex-col gap-2 border-t border-dashed border-grid pt-4">
-              <GroupBaselineChart rewards={rewards} mean={mean} />
-              <figcaption className="text-xs text-ink-muted">
-                each sample&apos;s push is its distance from the dashed rule, its reward minus the
-                group mean (GRPO then divides by the group&apos;s spread)
-              </figcaption>
-            </figure>
-
-            <div className="flex flex-col gap-3">
-              <Slider
-                label="of the other three samples, how many are also right"
-                min={0}
-                max={3}
-                step={1}
-                ticks={[0, 1, 2, 3]}
-                value={luck}
-                onChange={(v) => {
-                  setLuck(v);
-                  touch();
-                }}
-              />
-              {uniform ? (
-                <p className="rounded border-l-4 border-compute bg-surface-raised p-2 text-sm text-ink">
-                  The limit of that trend: everyone scored the same, so every push is{" "}
-                  <span className="font-mono">0.00</span>. A problem the model already aces, or
-                  is hopeless on, teaches it nothing. Learning lives where the group disagrees.
-                </p>
-              ) : (
-                <p className="text-sm text-ink">{LUCK_READ[luck]}</p>
-              )}
-            </div>
-          </div>
         </section>
 
         <div className="flex flex-col gap-8">
@@ -1183,9 +1001,6 @@ export function Page13() {
             <RefItem n={REF.grpo} href="https://arxiv.org/abs/2402.03300">
               Shao et al. 2024, <em>DeepSeekMath</em> (GRPO).
             </RefItem>
-          </Note>
-          <Note kicker="Try it">
-            <p>Drag the dial: the group&apos;s luck changes, sample 1&apos;s answer never does.</p>
           </Note>
         </div>
 
