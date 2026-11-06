@@ -38,6 +38,8 @@
  */
 import rawDerived from "@data/page-07-derived.json";
 import rawHeatmap from "@data/page-07-heatmap.json";
+import rawTiming from "@data/page-07-timing.json";
+import rawGreedy from "@data/page-07-greedy-specimens.json";
 import { pct, tidyMath } from "./traceText";
 
 export { pct, tidyMath };
@@ -544,6 +546,78 @@ if (HM.source.run_id !== D.manifest.run_id) {
 }
 
 export const HEATMAP = HM;
+
+/* ------------------------------------------------------------ the timing */
+
+/**
+ * Section 4's wall clock: greedy decoding and majority voting (16 chains at the
+ * sweep's best temperature), each timed on one GPU over the same problems
+ * (`notebooks/runs/page-07-section-3-timing/timing.json`, copied to `web/data/`).
+ * Checked here: same model as the run, one greedy chain against the sweep's best
+ * temperature at its most chains, and tokens over seconds matching the recorded rate.
+ */
+interface RawTimingArm {
+  arm: string;
+  temperature: number;
+  chains_per_problem: number;
+  problems: number;
+  chains: number;
+  tokens: number;
+  seconds: number;
+  minutes: number;
+  tokens_per_second: number;
+}
+const T = rawTiming as { gpu: string; model: string; arms: RawTimingArm[] };
+if (T.model !== D.manifest.primary_model) {
+  throw new Page07DataError(`the timing run used ${T.model}, not ${D.manifest.primary_model}`);
+}
+const TIMED_GREEDY = T.arms.find((a) => a.temperature === 0 && a.chains_per_problem === 1);
+const TIMED_VOTE = T.arms.find(
+  (a) => a.temperature === HM.best_temperature && a.chains_per_problem === HM.n_chains,
+);
+if (!TIMED_GREEDY || !TIMED_VOTE) {
+  throw new Page07DataError(
+    `the timing run needs greedy and ${HM.n_chains} chains at T = ${HM.best_temperature}`,
+  );
+}
+if (TIMED_GREEDY.problems !== TIMED_VOTE.problems) {
+  throw new Page07DataError("the two timed arms ran on different numbers of problems");
+}
+for (const a of [TIMED_GREEDY, TIMED_VOTE]) {
+  if (a.chains !== a.problems * a.chains_per_problem) {
+    throw new Page07DataError(`${a.arm}: ${a.chains} chains for ${a.problems} problems`);
+  }
+  if (Math.abs(a.tokens / a.seconds - a.tokens_per_second) > 0.1) {
+    throw new Page07DataError(`${a.arm}: tokens over seconds is not the recorded rate`);
+  }
+}
+export const TIMING = { gpu: T.gpu, greedy: TIMED_GREEDY, vote: TIMED_VOTE } as const;
+
+/* ------------------------------------------------------ the greedy specimens */
+
+/**
+ * Section 4's figure: the greedy chain for each of figure 1's problems, beside that
+ * problem's sampled chains. Only its length and answer are bundled
+ * (`web/data/page-07-greedy-specimens.json`, read from the sweep's T = 0 traces).
+ * Checked here: same run as the page, and one entry for every showcase problem.
+ */
+interface GreedySpecimen {
+  problem_id: string;
+  own_tokens: number;
+  extracted_answer: string;
+  correct: boolean;
+  truncated: boolean;
+}
+const G = rawGreedy as { source: { run_id: string }; greedy: GreedySpecimen[] };
+if (G.source.run_id !== D.manifest.run_id) {
+  throw new Page07DataError("the greedy specimens come from a different run than derived.json");
+}
+export const GREEDY_SPECIMENS = new Map(G.greedy.map((g) => [g.problem_id, g]));
+for (const { problem } of SHOWCASE) {
+  if (!GREEDY_SPECIMENS.has(problem.problem_id)) {
+    throw new Page07DataError(`no greedy chain bundled for ${problem.problem_id}`);
+  }
+}
 
 /** The chains that landed on one answer, in the order they were sampled. */
 export function chainsFor(problem: Problem, answer: string): SpecimenChain[] {

@@ -128,7 +128,7 @@
  *     numbers.
  */
 
-import { Fragment, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -136,7 +136,9 @@ import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
 import { ACTS, getPage } from "@/lib/pages";
 import {
+  GREEDY_SPECIMENS,
   PAGE7,
+  TIMING,
   type SweepPoint,
   chainsFor,
   foldTrace,
@@ -152,7 +154,6 @@ import { useStore } from "@/store/useStore";
 
 const PAGE_N = 7;
 const F1 = PAGE7.figure1;
-const F2 = PAGE7.figure2;
 const H = PAGE7.handoff;
 const M = PAGE7.manifest;
 
@@ -460,19 +461,18 @@ const SWEEP_TEMPS = HM.temperatures;
 const BAND_TEMPS = SWEEP_TEMPS.filter((t) => t > 0);
 const GREEDY = sweepLine(0)[0].accuracy;
 const SWEEP_PROBLEMS = HM.problems.length;
-/* The bar figure's caption, read off the sweep: the temperatures tied with the best (the
-   page says so rather than naming one winner), and one chain alone from the coolest
-   sampled setting to the hottest. */
+/* Read off the sweep for section 3's bridge: the temperatures tied with the best (the
+   page says so rather than naming one winner). */
 const SWEEP_BY_T = [...HM.summary].sort((a, b) => a.temperature - b.temperature);
 const SWEEP_TIED = SWEEP_BY_T.filter(
   (d) =>
     Math.abs(d.vote_accuracy - Math.max(...SWEEP_BY_T.map((x) => x.vote_accuracy))) < 1e-9 &&
     d.temperature !== HM.best_temperature,
 ).map((d) => `T = ${tLabel(d.temperature)}`);
-const COOL = SWEEP_BY_T.find((d) => d.temperature > 0)!;
-/** The bar figure's scale: the tallest value, rounded up to a whole answer. */
-const DISTINCT_TOP = Math.ceil(Math.max(...SWEEP_BY_T.map((d) => d.mean_distinct)));
-const HOT = SWEEP_BY_T[SWEEP_BY_T.length - 1];
+/* The bridge's last claims, read off the sweep: every sampled temperature's vote at the
+   most chains. Its "only at two chains" claim is held by Page7.test.tsx. */
+const AT_MOST = BAND_TEMPS.map((t) => sweepLine(t)[sweepLine(t).length - 1].accuracy);
+const MOST_N = sweepLine(BAND_TEMPS[0])[sweepLine(BAND_TEMPS[0]).length - 1].n;
 
 /** Cool to warm as temperature rises: the page's blue into its orange. */
 const tempColour = (t: number) => {
@@ -765,152 +765,137 @@ function PileChart({
 
 /* ------------------------------------------------------------------ figure 3 */
 
-const FW = 620;
-const FHGT = 290;
-const FMARGIN = { top: 30, right: 128, bottom: 46, left: 46 };
-const FIW = FW - FMARGIN.left - FMARGIN.right;
-const FIH = FHGT - FMARGIN.top - FMARGIN.bottom;
-
-/** The three shared budgets get one hue, light to dark as the budget grows. */
-const BUDGET_SHADE = [0.4, 0.68, 1];
+/** One column of a Columns panel. `greedy` draws it muted rather than in the
+ *  majority-voting colour. */
+interface CostCol {
+  key: string;
+  label: string;
+  aria: string;
+  value: number;
+  text: string;
+  greedy: boolean;
+  /** A fill of its own, in place of the grey and orange (section 3: by temperature). */
+  color?: string;
+  /** Marked with a star and set in bold (section 3: the best temperature). */
+  best?: boolean;
+}
 
 /**
- * Step 4 as a fan: N chains sharing a fixed budget of 2,048, 4,096 or 8,192
- * tokens, B/N each, against the same chains each allowed to finish.
- *
- * Allowed to finish IS section 3's majority-voting line (the pile, which about 1%
- * of chains ever reach the cap of), so it is drawn in that line's colour and the
- * page quotes one number for sixteen chains, not two draws that differ by chance.
- * The three budgets are one hue, light to dark as the budget grows.
- *
- * At one chain no cap binds and all four lines start together, which is the
- * control that makes this one experiment rather than four. They fan apart as N
- * grows, and the order of the fan is the finding: the smaller the budget each
- * chain gets, the further the vote falls. The cause, the share of chains cut off
- * by their cap, is behind the widget's toggle (CutOffGrid) rather than drawn under
- * the axis, where four series of gauges would crowd the chart.
- *
- * The right-hand labels are spread so they never overlap; at N = 4 three of the
- * lines sit at the same height, which is a fact about the data, not a drawing
- * error, and the readers see the lines merge there.
+ * A panel of labelled columns on its own scale, starting at zero. Section 3 colours
+ * its columns by temperature.
  */
-function ForkChart() {
-  const budgets = F2.budgets;
-  const finish = F2.uncapped.points;
-  const ns = finish.map((p) => p.n);
-  const top = Math.max(...ns);
-  const x = (n: number) => (Math.log2(n) / Math.log2(top)) * FIW;
-  const y = (share: number) => FIH - share * FIH;
-  const path = (pts: { n: number; accuracy: number }[]) =>
-    pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(p.accuracy)}`).join(" ");
-
-  // Right-hand labels at each line's last point, nudged apart to a minimum gap.
-  const ends = [
-    ...budgets.map((b, i) => ({
-      key: `b${b.budget}`,
-      text: `${tokens(b.budget)} shared`,
-      y: y(b.points[b.points.length - 1].accuracy),
-      shade: BUDGET_SHADE[i] ?? 1,
-      finish: false,
-    })),
-    { key: "finish", text: "allowed to finish", y: y(finish[finish.length - 1].accuracy), shade: 1, finish: true },
-  ].sort((a, b) => a.y - b.y);
-  for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 12);
-  const lastFinish = finish[finish.length - 1];
-
+function Columns({
+  title,
+  axis,
+  cols,
+  testId,
+}: {
+  title: string;
+  axis: string;
+  cols: CostCol[];
+  testId: string;
+}) {
+  const top = Math.max(...cols.map((c) => c.value));
   return (
-    <ChartFrame
-      title={`Share of ${M.items.n} problems solved against the number of chains, when the chains share a fixed budget of ${budgets.map((b) => tokens(b.budget)).join(", ")} tokens, and when each is allowed to finish. At one chain all four solve about ${pct(finish[0].accuracy)}. At ${top} chains, allowed to finish solves ${pct(lastFinish.accuracy)}; ${budgets.map((b) => `${tokens(b.budget)} shared solves ${pct(b.points[b.points.length - 1].accuracy)}`).join(", ")}.`}
-      width={FW}
-      height={FHGT}
-      margin={FMARGIN}
-      xLabel="# of sampled chains"
-      yLabel="solved (%)"
-    >
-      {[0, 25, 50, 75, 100].map((t) => (
-        <g key={t}>
-          <line x1={0} x2={FIW} y1={FIH - (t / 100) * FIH} y2={FIH - (t / 100) * FIH} className="stroke-grid" strokeWidth={1} />
-          <text x={-8} y={FIH - (t / 100) * FIH + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
-            {t}
-          </text>
-        </g>
-      ))}
-      {ns.map((n) => (
-        <text key={n} x={x(n)} y={FIH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] tabular-nums">
-          {n}
-        </text>
-      ))}
-
-      {budgets.map((b, i) => (
-        <g key={b.budget} data-testid={`budget-line-${b.budget}`} strokeOpacity={BUDGET_SHADE[i] ?? 1}>
-          <path d={path(b.points)} fill="none" className="stroke-wrong" strokeWidth={2.2} />
-          {b.points.map((p) => (
-            <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy)} r={3.2} className="fill-wrong" fillOpacity={BUDGET_SHADE[i] ?? 1} />
-          ))}
-        </g>
-      ))}
-      {/* Drawn last: where the lines meet, the one the reader came from stays on top. */}
-      <g data-testid="finish-line">
-        <path d={path(finish)} fill="none" className="stroke-compute" strokeWidth={2.6} />
-        {finish.map((p) => (
-          <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy)} r={3.6} className="fill-compute" />
+    <figure aria-label={title} data-testid={testId} className="flex min-w-0 flex-col gap-1.5">
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{title}</p>
+      <div className="flex h-56 items-end gap-4 border-b border-grid pb-px">
+        {cols.map((c) => (
+          <div
+            key={c.key}
+            data-testid={`${testId}-bar`}
+            data-value={c.value}
+            aria-label={c.aria}
+            className="flex h-full flex-1 flex-col items-center justify-end gap-0.5"
+          >
+            <span
+              className={`font-mono text-[10px] tabular-nums ${
+                c.color ? (c.best ? "font-semibold text-ink" : "text-ink") : c.greedy ? "text-ink" : "text-compute-ink"
+              }`}
+            >
+              {c.text}
+            </span>
+            <span
+              data-testid="column-fill"
+              className={`w-full max-w-[5rem] rounded-t-sm ${
+                c.color ? "" : c.greedy ? "bg-ink-faint/50" : "bg-compute"
+              }`}
+              style={{ height: `${(c.value / top) * 86}%`, ...(c.color ? { background: c.color } : {}) }}
+            />
+          </div>
         ))}
-      </g>
-
-      <text x={6} y={y(finish[0].accuracy) - 14} className="fill-ink-muted text-[10px]">
-        at one chain no cap binds: all four start together
-      </text>
-
-      {ends.map((e) => (
-        <text
-          key={e.key}
-          x={FIW + 8}
-          y={e.y + 3}
-          className={`text-[10px] font-semibold ${e.finish ? "fill-compute-ink" : "fill-wrong-ink"}`}
-          fillOpacity={e.finish ? 1 : Math.max(e.shade, 0.55)}
-        >
-          {e.text}
-        </text>
-      ))}
-    </ChartFrame>
+      </div>
+      <div className="flex gap-4" aria-hidden="true">
+        {cols.map((c) => (
+          <span
+            key={c.key}
+            className={`flex-1 text-center font-mono text-[10px] tabular-nums ${
+              c.color ? (c.best ? "font-semibold text-ink" : "text-ink-muted") : c.greedy ? "text-ink-muted" : "text-compute-ink"
+            }`}
+          >
+            {c.label}
+            {c.best ? " ★" : ""}
+          </span>
+        ))}
+      </div>
+      <p className="text-center text-[10px] text-ink-muted" aria-hidden="true">
+        {axis}
+      </p>
+    </figure>
   );
 }
 
 /**
- * Why the budget lines fall: the share of each budget's chains cut off by their cap
- * and made to commit mid-thought, at every N. Behind the widget's toggle. It is a
- * property of the run, not a score, so it is a small grid of gauges and not a line.
+ * Section 4 (author, 2026-11-05): what majority voting costs, shown on real chains.
+ * Every chain the model wrote for figure 1's first problem, each drawn as long as the
+ * tokens it wrote: the one greedy chain, then the sixteen sampled ones. Lengths are on
+ * one scale, up to the cap; a chain that hit the cap is marked. Tokens only: section 3
+ * shows accuracy, and the averages over every problem are in the sentence under it.
  */
-function CutOffGrid() {
-  const budgets = F2.budgets;
-  const ns = budgets[0].points.map((p) => p.n);
-  return (
-    <div data-testid="cut-off-grid" className="flex flex-col gap-1.5 text-xs">
-      <p className="text-ink-muted">Share of chains cut off by their cap before they finished:</p>
-      <div className="grid max-w-md grid-cols-[6.5rem_repeat(3,minmax(0,1fr))] items-center gap-x-3 gap-y-1">
-        <span />
-        {ns.map((n) => (
-          <span key={n} className="font-mono tabular-nums text-ink-muted">
-            {n === 1 ? "1 chain" : `${n} chains`}
-          </span>
-        ))}
-        {budgets.map((b, i) => (
-          <Fragment key={b.budget}>
-            <span className="font-semibold text-wrong-ink" style={{ opacity: Math.max(BUDGET_SHADE[i] ?? 1, 0.55) }}>
-              {tokens(b.budget)} shared
-            </span>
-            {b.points.map((p) => (
-              <span key={p.n} className="flex items-center gap-1.5">
-                <span className="h-2 w-12 overflow-hidden rounded-sm bg-surface-raised ring-1 ring-grid">
-                  <span className="block h-full bg-wrong/70" style={{ width: `${p.truncated_rate * 100}%` }} />
-                </span>
-                <span className="font-mono tabular-nums text-ink-muted">{pct(p.truncated_rate)}</span>
-              </span>
-            ))}
-          </Fragment>
-        ))}
-      </div>
+function CostFigure() {
+  const problem = F1.showcase[0].problem;
+  const greedy = GREEDY_SPECIMENS.get(problem.problem_id)!;
+  const chains = problem.chains;
+  const cap = problem.chain_cap;
+  const total = chains.reduce((s, c) => s + c.own_tokens, 0);
+  const strip = (tokensUsed: number, isGreedy: boolean, capped: boolean, key: string, label: string) => (
+    <div key={key} data-testid="chain-strip" data-tokens={tokensUsed} className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
+      <span className="text-right font-mono text-[10px] tabular-nums text-ink-muted">{label}</span>
+      <span className="flex items-center gap-2">
+        <span
+          className={`h-2.5 rounded-sm ${isGreedy ? "bg-ink-faint/60" : "bg-compute"}`}
+          style={{ width: `${(tokensUsed / cap) * 82}%` }}
+        />
+        <span className="font-mono text-[10px] tabular-nums text-ink-muted">
+          {tokens(tokensUsed)}
+          {capped ? " · hit the cap" : ""}
+        </span>
+      </span>
     </div>
+  );
+  return (
+    <section
+      aria-label="Every chain written for one problem"
+      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+    >
+      <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(problem.question)}</p>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+          greedy decoding · {tokens(greedy.own_tokens)} tokens
+        </p>
+        {strip(greedy.own_tokens, true, greedy.truncated, "greedy", "1 chain")}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+          majority voting, {chains.length} chains at T = {tLabel(problem.temperature)} ·{" "}
+          <span data-testid="chains-total">{tokens(total)}</span> tokens
+        </p>
+        {chains.map((c, i) => strip(c.own_tokens, false, c.truncated, `c${c.sample_index}`, `chain ${i + 1}`))}
+      </div>
+      <p className="font-mono text-[10px] text-ink-muted">
+        each bar is one chain&apos;s tokens, on one scale up to the {tokens(cap)}-token cap
+      </p>
+    </section>
   );
 }
 
@@ -937,20 +922,8 @@ export function Page7() {
   // Section 3's highlighted temperature; it starts on the sweep's best.
   const [tempSel, setTempSel] = useState(HM.best_temperature);
   const voters = sweepLine(tempSel)[voterIx];
-  // The headline: the best temperature's vote at 16 chains against one greedy chain.
-  const bestTop = sweepLine(HM.best_temperature)[HM.n_axis.length - 1].accuracy;
-  const gainPts = Math.round((bestTop - GREEDY) * 100);
   // The third line and its band, what the vote threw away, are drawn on request.
   const [showLost, setShowLost] = useState(false);
-  // Section 4's cause, the share of chains cut off by their cap, is shown on request.
-  const [showCut, setShowCut] = useState(false);
-  // The closing paragraph's two cases: the smallest and largest budget at the most chains.
-  const atTop = (b: (typeof F2.budgets)[number]) => ({
-    budget: b.budget,
-    ...b.points[b.points.length - 1],
-  });
-  const cutLow = atTop(F2.budgets[0]);
-  const cutHigh = atTop(F2.budgets[F2.budgets.length - 1]);
   // The readout's baseline is the flat line the chart draws: one greedy chain.
   const cold = GREEDY;
   const pointsVsGreedy = (acc: number) => {
@@ -965,12 +938,12 @@ export function Page7() {
   const openRow = open === null ? null : (s.ranked.find((r) => r.answer === open) ?? null);
   const rowChains = openRow ? chainsFor(s, openRow.answer) : [];
   const chain = rowChains[chainIx];
-  const last = F2.hot.points[F2.hot.points.length - 1];
-  // What one chain spends against what the pile spends. The gap between them is what
-  // "just give one chain more" would have to beat, and page 6 measured that arm: the
-  // chain does carry on when it is pushed, it just does not score any better for it.
-  const oneChainTokens = F2.hot.points[0].mean_tokens;
-  const pileTokens = last.mean_tokens;
+  // Section 4's numbers: the best temperature's vote at the most chains against one
+  // greedy chain, in tokens per problem, and the two timed arms.
+  const costTop = sweepLine(HM.best_temperature)[HM.n_axis.length - 1];
+  const greedyTokens = sweepLine(0)[0].mean_tokens;
+  const tokenRatio = TIMING.vote.tokens / TIMING.greedy.tokens;
+  const timeRatio = TIMING.vote.seconds / TIMING.greedy.seconds;
 
   // Clicking a row opens its first chain; clicking the open row folds it again.
   const pick = (answer: string) => {
@@ -1053,15 +1026,10 @@ export function Page7() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">2. Sixteen answers to the same question</h2>
           <p className="text-ink-muted">
-            {/* Temperature glossed operationally, which is all this page is allowed to
-                say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens and
-                probability distributions, off this page and on page 10. */}
+            {/* Temperature is introduced in section 3, not here (author, 2026-11-05). */}
             Now the model is the whole class. Here are two problems: on one the vote is right,
-            and on the other it ties. Each one went to {PAGE7.primary.label} {F1.n_chains} times with sampling
-            turned on, which is what <strong className="text-ink">temperature</strong> does.
-            Temperature is a dial, written <span className="font-mono text-ink">T</span> on every
-            chart on this page: at zero every chain comes back identical, and turning it up makes
-            them disagree more.
+            and on the other it ties. Each one went to {PAGE7.primary.label} {F1.n_chains} times,
+            with the same prompt every time.
             Every answer it came back with is tallied, like the answers on the board. Click a row to
             read the chains that landed there, wrong answers included, and use the arrows to step
             between them.
@@ -1154,18 +1122,64 @@ export function Page7() {
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. Greedy decoding against majority voting</h2>
-          {/* Step 2 showed the vote on two problems; this asks how it compares with one
-              plain chain at scale. Majority voting is not re-explained: step 1's analogy
-              does that. The flat line's meaning (every greedy chain is the same chain) is
-              said under the chart, where the headline leads into the temperature card. */}
-          <p className="text-ink-muted">
-            Just now, we saw majority voting on two separate problems, and how different
-            reasoning across many chains of thought can lead to many different answers. But how
-            does majority voting compare with a single, pure chain of thought? Below, we compare
-            majority voting at {SWEEP_TEMPS.length} temperatures against greedy decoding, on{" "}
-            {SWEEP_PROBLEMS === M.items.n ? `all ${M.items.n}` : `${SWEEP_PROBLEMS} of the ${M.items.n}`}{" "}
-            {BENCHMARK} problems at {LEVELS}. <strong className="text-ink">One greedy chain</strong>{" "}
-            is the baseline to beat.
+          {/* Section 3 opens on temperature, with the bar chart, then bridges to the
+              vote against one plain chain (author, 2026-11-05). The lead-in is the
+              author's. Temperature is glossed operationally, which is all this page is
+              allowed to say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens
+              and probability distributions, off this page and on page 10. */}
+          <p data-testid="temperature-lead" className="text-ink-muted">
+            In the figure above, the {F1.n_chains} chains on the first problem gave{" "}
+            {F1.showcase[0].problem.distinct_answers} different answers. Each chain came from the
+            exact same prompt, so why was the reasoning so different across them, even among chains
+            that arrived at the same answer? <strong className="text-ink">Temperature</strong> is
+            the hidden machinery behind this variation. It is a dial, written{" "}
+            <span className="font-mono text-ink">T</span> on every chart on this page. At T = 0,
+            every chain comes back identical, which is what is called{" "}
+            <strong className="text-ink">greedy decoding</strong>. As you increase the temperature,
+            to say 0.3, you introduce variation in the model&apos;s answers, even though the same
+            prompt is being fed. The chart below shows how many different answers arise as you
+            increase the temperature gradually, to {tLabel(Math.max(...HM.temperatures))}.
+          </p>
+          {/* The temperature sweep, framed across the content column like section 4's
+              tokens (author, 2026-11-05). One column per temperature, each labelled with
+              its value, coloured by temperature as in the picker under the line chart,
+              and the best temperature starred. */}
+          <section
+            aria-label="Different answers by temperature"
+            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+          >
+            <Columns
+              title={`Different answers among ${HM.n_chains} chains, by temperature`}
+              axis="temperature (T)"
+              testId="diversity"
+              cols={SWEEP_BY_T.map((d) => ({
+                key: tLabel(d.temperature),
+                label: tLabel(d.temperature),
+                aria: `T = ${tLabel(d.temperature)}: ${d.mean_distinct.toFixed(1)} different answers`,
+                value: d.mean_distinct,
+                text: d.mean_distinct.toFixed(1),
+                greedy: false,
+                color: tempColour(d.temperature),
+                best: d.temperature === HM.best_temperature,
+              }))}
+            />
+          </section>
+          {/* The bridge, reworded from the author's draft (2026-11-05). Majority voting is
+              counted at the sampled temperatures only: at T = 0 it is greedy decoding,
+              the dashed line. The bar figure has no caption (author, 2026-11-05). */}
+          <p data-testid="sweep-bridge" className="text-ink">
+            Raising the temperature gives more different answers, but more answers do not mean
+            better results. The chart below shows how often majority voting gets the right answer
+            at each of the {BAND_TEMPS.length} temperatures from {tLabel(BAND_TEMPS[0])} to{" "}
+            {tLabel(BAND_TEMPS[BAND_TEMPS.length - 1])}, in steps of 0.1, against{" "}
+            greedy decoding, the dashed line. Step through the temperatures and
+            you&apos;ll find the vote does best at T = {tLabel(HM.best_temperature)}
+            {SWEEP_TIED.length ? `, with ${SWEEP_TIED.join(" and ")} level with it` : ""}.
+            You&apos;ll also see that whichever temperature you pick, the vote at {MOST_N} chains
+            still beats one greedy chain: it solves between {pct(Math.min(...AT_MOST))} and{" "}
+            {pct(Math.max(...AT_MOST))}, against {pct(GREEDY)}. Two chains are the exception, due
+            to tie votes. That is the only place we found majority voting doing worse than greedy
+            decoding.
           </p>
           {/* The widget is the chart and its controls. Every sentence that used to sit
               in here (the band note, the headline, two footnotes) is outside it now or
@@ -1239,130 +1253,28 @@ export function Page7() {
               </button>
             </div>
           </section>
-          {/* The headline, and the bridge into the temperature card below it. Its guard
-              (some of the 12 is sampling, not counting) is carried by the figure: the vote
-              line starts above the greedy line at one chain, and the readout there says
-              so. See the file header. "Every chain gives the same answer" at T = 0 is the
-              card's own first number, 1.0, and the tests hold it there. */}
-          <p className="text-ink">
-            One greedy chain solves <strong className="font-mono">{pct(GREEDY)}</strong>, which is{" "}
-            <strong>{gainPts} points</strong> less than majority voting with {HM.n_chains} sampled
-            chains at T = {tLabel(HM.best_temperature)}. Those {gainPts} points exist only
-            because the chains disagree. At T = 0 every chain gives the same answer, so there is
-            nothing to vote on; turn the temperature up and the answers start to differ. Here is by
-            how much:
-          </p>
-          {/* The temperature sweep as a small figure, not a second boxed widget: the
-              chart above is the step's one framed panel, and this is what the paragraph's
-              "Here is by how much:" points at. Columns start at zero and are labelled
-              with their values. It reads the same sweep as the chart above and the heat
-              map, and the best temperature is drawn in the majority-voting colour. */}
-          <figure
-            aria-label={`Different answers among ${HM.n_chains} chains, by temperature`}
-            className="flex max-w-md flex-col gap-1.5"
-          >
-            <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
-              different answers among {HM.n_chains} chains, by temperature
-            </p>
-            {/* Columns, temperature left to right like an axis. Each is labelled with its
-                value, so the scale only has to start at zero: it tops out at the tallest
-                value rounded up, which keeps the figure free of empty space. */}
-            <div className="flex h-28 items-end gap-1 border-b border-grid pb-px">
-              {SWEEP_BY_T.map((d) => {
-                const best = d.temperature === HM.best_temperature;
-                return (
-                  <div
-                    key={d.temperature}
-                    data-testid="diversity-bar"
-                    data-value={d.mean_distinct}
-                    className="flex h-full flex-1 flex-col items-center justify-end gap-0.5"
-                    aria-label={`T = ${tLabel(d.temperature)}: ${d.mean_distinct.toFixed(1)} different answers`}
-                  >
-                    <span
-                      className={`font-mono text-[10px] tabular-nums ${best ? "font-semibold text-compute-ink" : "text-ink"}`}
-                    >
-                      {d.mean_distinct.toFixed(1)}
-                    </span>
-                    <span
-                      className={`w-full max-w-[1.75rem] rounded-t-sm ${best ? "bg-compute" : "bg-ink-faint/40"}`}
-                      style={{ height: `${(d.mean_distinct / DISTINCT_TOP) * 82}%` }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex gap-1" aria-hidden="true">
-              {SWEEP_BY_T.map((d) => (
-                <span
-                  key={d.temperature}
-                  className={`flex-1 text-center font-mono text-[10px] tabular-nums ${
-                    d.temperature === HM.best_temperature ? "font-semibold text-compute-ink" : "text-ink-muted"
-                  }`}
-                >
-                  {tLabel(d.temperature)}
-                </span>
-              ))}
-            </div>
-            <p className="text-center text-[10px] text-ink-muted" aria-hidden="true">
-              temperature (T)
-            </p>
-            <figcaption className="pt-1 text-xs text-ink-muted">
-              Averaged over {SWEEP_PROBLEMS} problems; a count of answers, not an accuracy. More
-              is not better: one chain alone falls from {pct(COOL.single_chain_accuracy)} at T ={" "}
-              {tLabel(COOL.temperature)} to {pct(HOT.single_chain_accuracy)} at T ={" "}
-              {tLabel(HOT.temperature)}, and the vote is best at T = {tLabel(HM.best_temperature)}
-              {SWEEP_TIED.length ? `, tied with ${SWEEP_TIED.join(" and ")}` : ""}.
-            </figcaption>
-          </figure>
         </section>
         {/* Step 4. Starts a new grid row explicitly: step 3 has no margin note, so
             without this the section would flow into the note column. */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">4. Sharing a fixed budget between chains</h2>
+          <h2 className="text-xl font-semibold text-ink">4. What majority voting costs</h2>
+          {/* Section 4 is about cost, majority voting against greedy decoding, not about
+              dividing a fixed budget (author, 2026-11-05). */}
           <p className="text-ink-muted">
-            Sixteen chains cost sixteen times the tokens. So what if you do not have sixteen times
-            the budget? Below, a fixed budget of{" "}
-            {F2.budgets
-              .map((b) => tokens(b.budget))
-              .map((b, i, all) => (i === 0 ? b : i === all.length - 1 ? ` or ${b}` : `, ${b}`))
-              .join("")}{" "}
-            tokens is divided between the chains, and the same chains are also allowed to finish.
-            At every point on the x axis the model gets the same number of chains; the only thing
-            that changes between the lines is how many tokens each chain may use.
+            Majority voting is not free. Every chain is a full answer the model has to write, so
+            each one you add costs as much as the first. Below is every chain the model wrote for
+            the first problem in the figure above: one greedy chain, then the {F1.n_chains} chains
+            the vote counted, each drawn as long as the tokens it wrote.
           </p>
-          {/* The widget is the chart and its one toggle, as in step 3. */}
-          <section
-            aria-label="A fixed budget shared between chains"
-            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
-          >
-            <ForkChart />
-            {showCut ? <CutOffGrid /> : null}
-            <button
-              type="button"
-              aria-pressed={showCut}
-              onClick={() => {
-                recordInteraction(PAGE_N);
-                setShowCut((v) => !v);
-              }}
-              className="inline-flex items-center gap-1.5 self-start rounded border border-compute bg-compute/10 px-2.5 py-1 text-xs font-semibold text-compute transition-colors hover:bg-compute hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-compute focus-visible:ring-offset-1"
-            >
-              <span aria-hidden="true">{showCut ? "▾" : "▸"}</span>
-              {showCut ? "Hide how many chains were cut off" : "Show how many chains were cut off"}
-            </button>
-          </section>
-          <p className="text-ink">
-            Dividing a budget does two things at once. One, it adds chains, and two, it shortens
-            every one of them. The shortening is the one that lands. At {cutLow.n} chains,{" "}
-            {tokens(cutLow.budget)} tokens leaves each chain only {tokens(cutLow.chain_budget)}, and{" "}
-            {pct(cutLow.truncated_rate)} of them are cut off before they finish; even{" "}
-            {tokens(cutHigh.budget)} tokens leaves {tokens(cutHigh.chain_budget)} each, and{" "}
-            {pct(cutHigh.truncated_rate)} are cut off. The vote is counting fragments of arguments
-            rather than arguments.{" "}
-            <strong className="text-ink">Splitting is not what fails, capping is.</strong> Let the
-            same chains run to their own end and the vote indeed works, at {tokens(pileTokens)}{" "}
-            tokens for {last.n} chains vs {tokens(oneChainTokens)} for one. There are two ways of
-            spending here, divide one budget, or let every chain finish. The second one is the
-            winner.
+          <CostFigure />
+          <p data-testid="cost-summary" className="text-ink">
+            {costTop.n} chains write {tokens(costTop.mean_tokens)} tokens per problem, against{" "}
+            {tokens(greedyTokens)} for one greedy chain, about{" "}
+            {Math.round(costTop.mean_tokens / greedyTokens)} times as many, to go from{" "}
+            {pct(GREEDY)} to {pct(costTop.accuracy)}. Tokens are not the same as time, though.
+            Timed on one GPU, {TIMING.vote.chains_per_problem} chains wrote{" "}
+            {Math.round(tokenRatio)} times the tokens of one greedy chain but took only{" "}
+            {Math.round(timeRatio)} times as long, because the GPU writes the chains side by side.
           </p>
         </section>
         {/* Step 5. Page 12's closing shape: prose at full width in the reading

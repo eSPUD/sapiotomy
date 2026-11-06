@@ -1,0 +1,23 @@
+{
+  "source": {
+    "run_id": "full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda",
+    "config_id": "t0.00-c2048",
+    "from": "notebooks/runs/page-07-temperature-sweep.zip, traces.jsonl, sample_index 0"
+  },
+  "greedy": [
+    {
+      "problem_id": "test/number_theory/13.json",
+      "own_tokens": 532,
+      "extracted_answer": "128",
+      "correct": false,
+      "truncated": false
+    },
+    {
+      "problem_id": "test/algebra/1837.json",
+      "own_tokens": 784,
+      "extracted_answer": "4",
+      "correct": false,
+      "truncated": false
+    }
+  ]
+}
