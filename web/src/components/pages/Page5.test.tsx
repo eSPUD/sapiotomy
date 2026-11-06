@@ -49,11 +49,11 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     expect(body()).toContain("A common way to ask a model for one is to end the prompt with “Let's think step by step.”");
   });
 
-  // The worked solutions are ours: the page says so in the words the handoff allows.
   // The worked solutions are ours; the figure's caption on the examples says so in the
   // words the handoff allows.
   it("says the worked solutions were written for this experiment, expanding MATH's own", () => {
     render(<Page5 />);
+    fireEvent.click(screen.getByRole("radio", { name: "Few-shot" }));
     expect(screen.getByTestId("examples-caption")).toHaveTextContent(
       "worked solutions written for this experiment, expanding MATH's own solutions.",
     );
@@ -74,8 +74,8 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     );
     expect(body()).not.toMatch(/it is common to put a few worked examples/i);
     expect(body()).not.toMatch(/smallest models/i);
-    expect(screen.getByRole("region", { name: "Zero-shot: the problem alone" })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Few-shot: after the five worked examples" })).toBeInTheDocument();
+    const prompt = within(screen.getByRole("radiogroup", { name: "Prompt" }));
+    expect(prompt.getAllByRole("radio").map((r) => r.textContent)).toEqual(["Zero-shot", "Few-shot"]);
   });
 
   it("marks the techniques and the dataset, resolved in the References sidenote beside the step", () => {
@@ -112,17 +112,28 @@ describe("Page 5, step 1: what a chain of thought is", () => {
 
 describe("Page 5, figure 1: one problem, two prompts", () => {
   const problemGroup = () => within(screen.getByRole("group", { name: "Test problem" }));
-  const zeroShot = () => within(screen.getByRole("region", { name: "Zero-shot: the problem alone" }));
-  const fewShot = () => within(screen.getByRole("region", { name: "Few-shot: after the five worked examples" }));
+  const modeBtn = (name: "Zero-shot" | "Few-shot") => screen.getByRole("radio", { name });
+  const reply = () => screen.getByTestId("model-reply");
   const playBtn = () => screen.getByRole("button", { name: /▶ play/i });
   const resetBtn = () => screen.getByRole("button", { name: /reset/i });
   const figure = () => within(screen.getByRole("region", { name: "One problem, two prompts" }));
 
-  it("offers the three test problems, the first chosen, and names its one model", () => {
+  const next = () => problemGroup().getByRole("button", { name: "Next problem" });
+  const prev = () => problemGroup().getByRole("button", { name: "Previous problem" });
+  const verdict = (r: { extracted: string }) => (r.extracted ? `Final answer: ${tidyPrompt(r.extracted)}.` : "No boxed answer.");
+
+  // One problem at a time (author, 2026-11-05): quiet arrows step through the three, wrapping.
+  it("steps through the three test problems one at a time, the first shown", () => {
     render(<Page5 />);
-    const problems = problemGroup().getAllByRole("button");
-    expect(problems.map((b) => b.textContent)).toEqual(["Easy · level 1", "Medium · level 3", "Hard · level 5"]);
-    expect(problems[0]).toHaveAttribute("aria-pressed", "true");
+    expect(problemGroup().getAllByRole("button")).toHaveLength(2);
+    const seen = [];
+    for (let i = 0; i < 3; i++) {
+      seen.push(problemGroup().getByText(/^problem \d of 3/).textContent);
+      fireEvent.click(next());
+    }
+    expect(seen).toEqual(["problem 1 of 3 · level 1", "problem 2 of 3 · level 3", "problem 3 of 3 · level 5"]);
+    fireEvent.click(prev());
+    expect(problemGroup().getByText("problem 3 of 3 · level 5")).toBeInTheDocument();
     expect(PAGE5.testProblems.map((p) => p.uniqueId)).toEqual([
       "test/intermediate_algebra/134.json",
       "test/algebra/2584.json",
@@ -130,61 +141,55 @@ describe("Page 5, figure 1: one problem, two prompts", () => {
     ]);
   });
 
-  // One model, the base 3B (author, 2026-10-18): no size picker, and the prose says so.
+  // One model, the base 3B (author, 2026-10-18): no size picker, and the prose names it.
   it("shows the base Qwen2.5-3B only, with no model picker", () => {
     render(<Page5 />);
     expect(PAGE5.figure1Model.label).toBe("Qwen2.5-3B");
     expect(screen.queryByRole("group", { name: "Base model" })).toBeNull();
-    expect(figure().getByText("Qwen2.5-3B")).toBeInTheDocument();
     const para = screen.getByText(/The original way, though/).closest("p")!;
     expect(para.textContent).toContain("Below, the base model Qwen2.5-3B");
   });
 
-  // Fits one screen: the test problem shows once, and the two replies sit side by
-  // side with no reply yet.
-  it("shows the test problem once and the two replies side by side, nothing revealed yet", () => {
+  // As clean as the old figure (author, 2026-11-05): one chat, zero-shot first, the
+  // question alone in the user's turn, no reply yet.
+  it("opens on one chat, zero-shot, the question alone and nothing revealed", () => {
     render(<Page5 />);
+    expect(modeBtn("Zero-shot")).toHaveAttribute("aria-checked", "true");
     expect(screen.getAllByTestId("test-problem")).toHaveLength(1);
+    expect(screen.getAllByTestId("model-reply")).toHaveLength(1);
     expect(screen.getByTestId("test-problem")).toHaveTextContent(
       tidyPrompt(PAGE5.testProblems[0].problem).replace(/\s+/g, " ").trim(),
     );
-    const split = screen.getByTestId("split");
-    expect(split).toHaveClass("sm:grid-cols-2");
-    expect([...split.children].map((c) => c.getAttribute("aria-label"))).toEqual([
-      "Zero-shot: the problem alone",
-      "Few-shot: after the five worked examples",
-    ]);
-    for (const side of [zeroShot(), fewShot()]) {
-      expect(side.getByText("press Play to see its reply")).toBeInTheDocument();
-    }
+    expect(screen.queryByTestId("worked-example")).toBeNull();
+    expect(figure().getByRole("img", { name: "User" })).toBeInTheDocument();
+    expect(figure().getByRole("img", { name: "Model" })).toBeInTheDocument();
+    expect(within(reply()).getByText("press Play to see its reply")).toBeInTheDocument();
     expect(resetBtn()).toBeDisabled();
   });
 
-  it("Play shows both whole replies, as graded, with their verdicts; Reset clears them", () => {
+  it("Play shows the whole reply, as graded, with its verdict; Reset clears it", () => {
     render(<Page5 />);
     fireEvent.click(playBtn());
-    const r = PAGE5.testProblems[0].replies;
-    for (const [side, reply] of [[zeroShot(), r.zeroShot], [fewShot(), r.fewShot]] as const) {
-      const text = side.getByTestId("model-reply").textContent ?? "";
-      expect(text).toContain(`${reply.correct ? "✓" : "✗"} Final answer: ${tidyPrompt(reply.extracted)}.`);
-      expect(text).toContain(`${reply.tokens} tokens`);
-      expect(side.getAllByRole("listitem")).toHaveLength(textSteps(gradedText(reply)).length);
-    }
+    const r = PAGE5.testProblems[0].replies.zeroShot;
+    const text = reply().textContent ?? "";
+    expect(text).toContain(`${r.correct ? "✓" : "✗"} ${verdict(r)}`);
+    expect(text).toContain(`${r.tokens} tokens`);
+    expect(within(reply()).getAllByRole("listitem")).toHaveLength(textSteps(gradedText(r)).length);
     expect(playBtn()).toBeDisabled();
     fireEvent.click(resetBtn());
-    expect(zeroShot().getByText("press Play to see its reply")).toBeInTheDocument();
+    expect(within(reply()).getByText("press Play to see its reply")).toBeInTheDocument();
   });
 
-  it("switches the test problem with the replies showing", () => {
+  it("switches prompt and problem with the reply showing", () => {
     render(<Page5 />);
     fireEvent.click(playBtn());
     for (const [i, p] of PAGE5.testProblems.entries()) {
-      fireEvent.click(problemGroup().getAllByRole("button")[i]);
+      if (i > 0) fireEvent.click(next());
       expect(screen.getByTestId("test-problem")).toHaveTextContent(tidyPrompt(p.problem).replace(/\s+/g, " ").trim());
-      for (const [side, reply] of [[zeroShot(), p.replies.zeroShot], [fewShot(), p.replies.fewShot]] as const) {
-        const verdict = reply.extracted ? `Final answer: ${tidyPrompt(reply.extracted)}.` : "No boxed answer.";
-        expect(side.getByTestId("model-reply")).toHaveTextContent(verdict);
-      }
+      fireEvent.click(modeBtn("Zero-shot"));
+      expect(reply()).toHaveTextContent(verdict(p.replies.zeroShot));
+      fireEvent.click(modeBtn("Few-shot"));
+      expect(reply()).toHaveTextContent(verdict(p.replies.fewShot));
     }
   });
 
@@ -198,16 +203,33 @@ describe("Page 5, figure 1: one problem, two prompts", () => {
     ]);
   });
 
-  it("lists the five worked examples as rows that open to their steps", () => {
+  // The user's turn is the prompt in one box, so the worked example is plainly part
+  // of it (author, 2026-11-05).
+  it("puts the prompt in one box, the example inside it under few-shot", () => {
     render(<Page5 />);
-    const rows = within(screen.getByTestId("examples")).getAllByRole("listitem", { hidden: true });
-    const summaries = screen.getByTestId("examples").querySelectorAll("summary");
-    expect(summaries).toHaveLength(5);
-    for (const [i, e] of PAGE5.examples.entries()) {
-      expect(summaries[i]).toHaveTextContent(`level ${e.level}`);
-      expect(summaries[i]).toHaveTextContent(`${textSteps(e.solution).length} steps →`);
-    }
-    expect(rows.length).toBeGreaterThanOrEqual(5);
+    const box = () => screen.getByTestId("prompt");
+    expect(box()).toHaveTextContent("the prompt · about 55 tokens");
+    expect(box()).toContainElement(screen.getByTestId("test-problem"));
+    fireEvent.click(modeBtn("Few-shot"));
+    expect(box()).toHaveTextContent("the prompt · about 3,750 tokens");
+    expect(box()).toContainElement(screen.getByTestId("worked-example"));
+    expect(box()).toContainElement(screen.getByTestId("test-problem"));
+  });
+
+  // One worked example, the last of the five, UNDER the test problem (author,
+  // 2026-11-05); its lead line keeps the prompt's real order and count.
+  it("shows one worked example under the question, saying there are five before it, opening to its steps", () => {
+    render(<Page5 />);
+    fireEvent.click(modeBtn("Few-shot"));
+    const card = screen.getByTestId("worked-example");
+    const last = PAGE5.examples[PAGE5.examples.length - 1];
+    expect(card).toHaveTextContent("+ one of 5 worked examples, sent before the problem");
+    expect(card).toHaveTextContent(`Problem: ${tidyPrompt(last.problem).replace(/\s+/g, " ").trim()}`);
+    expect(card.querySelector("summary")).toHaveTextContent(
+      `Solution:${textSteps(last.solution).length} worked steps → ${tidyPrompt(last.answer)}`,
+    );
+    expect(within(card).getAllByRole("listitem", { hidden: true })).toHaveLength(textSteps(last.solution).length);
+    expect(card.compareDocumentPosition(screen.getByTestId("test-problem")) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
     // Every step of every solution is there to open, nothing dropped.
     for (const e of PAGE5.examples) {
       expect(textSteps(e.solution).join("\n\n").replace(/\s+/g, "")).toBe(e.solution.replace(/\s+/g, ""));

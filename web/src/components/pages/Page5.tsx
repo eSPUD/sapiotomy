@@ -27,13 +27,15 @@
  * "37.6% of the same 495 problems" is.
  *
  *   Step 1: the definition and figure 1, interactive like the old figure 1 (author,
- *   2026-10-18). The reader picks one of three test problems (levels 1, 3 and 5:
- *   the first test problem at each level in MATH-500 order, skipping [asy]
- *   diagrams, fixed before any results); Play shows the base Qwen2.5-3B's
- *   zero-shot and few-shot replies side by side, Reset clears them. One model, the
- *   3B, with no size picker (author, 2026-10-18). The five worked examples are a
- *   list of rows (level, problem, "N steps → answer") that open one by one. The
- *   whole figure fits one laptop screen.
+ *   2026-10-18), and as clean as the old one (author, 2026-11-05): one chat set
+ *   like page 2's, a Zero-shot / Few-shot switch, and a quiet stepper over three
+ *   test problems (levels 1, 3 and 5: the first test problem at each level in
+ *   MATH-500 order, skipping [asy] diagrams, fixed before any results). Play shows
+ *   the base Qwen2.5-3B's reply under the chosen prompt, Reset clears it. One
+ *   model, the 3B, with no size picker (author, 2026-10-18). Under few-shot the
+ *   user's turn shows ONE worked example, the last of the five, inside the same
+ *   prompt box as the question and under it, with a line saying there are five,
+ *   placed before the problem (author, 2026-11-05): the run is still five-shot.
  *
  *   Step 2: figure 2, zero-shot against few-shot for the three base models. The
  *   figure comes first, then the prose explaining Shashank's sentence: the
@@ -64,6 +66,7 @@
 
 import { useState } from "react";
 import { Handoff } from "@/components/Handoff";
+import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
@@ -159,227 +162,237 @@ function Ledger({ rows }: { rows: [string, string][] }) {
 
 /* ------------------------------------------------------------------ figure 1 */
 
-const DIFFICULTY: Record<number, string> = { 1: "Easy", 3: "Medium", 5: "Hard" };
-const tabLabel = (p: Problem) => `${DIFFICULTY[p.level] ?? "Level"} · level ${p.level}`;
 /** Figure 1's one model (author, 2026-10-18: the base 3B, no size picker). */
 const FIG1_MODEL = PAGE5.figure1Model;
 
-/** A row of mutually exclusive choices: the test problem. */
-function Choice<T extends string | number>({
-  label,
-  options,
-  value,
-  onChange,
-  render,
-}: {
-  label: string;
-  options: readonly T[];
-  value: T;
-  onChange: (v: T) => void;
-  render: (v: T) => string;
-}) {
+/** Figure 1's two prompts, one at a time (author, 2026-11-05). */
+type Mode = "zeroShot" | "fewShot";
+const MODES: { key: Mode; label: string }[] = [
+  { key: "zeroShot", label: "Zero-shot" },
+  { key: "fewShot", label: "Few-shot" },
+];
+
+/** The prompt switch: a segmented control, one setting on at a time. */
+function ModeSwitch({ mode, onMode }: { mode: Mode; onMode: (m: Mode) => void }) {
   return (
-    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-1.5">
-      <span className="mr-0.5 text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{label}</span>
-      {options.map((o) => (
+    <div role="radiogroup" aria-label="Prompt" className="inline-flex rounded-md border border-grid bg-canvas p-0.5">
+      {MODES.map((m) => (
         <button
-          key={String(o)}
+          key={m.key}
           type="button"
-          aria-pressed={o === value}
-          onClick={() => onChange(o)}
-          className={`rounded px-2 py-0.5 text-xs font-semibold ${
-            o === value ? "bg-compute text-ink" : "border border-grid text-ink-muted hover:text-ink"
+          role="radio"
+          aria-checked={m.key === mode}
+          onClick={() => onMode(m.key)}
+          className={`rounded px-3 py-1 text-sm font-semibold ${
+            m.key === mode ? "bg-compute text-ink" : "text-ink-muted hover:text-ink"
           }`}
         >
-          {render(o)}
+          {m.label}
         </button>
       ))}
     </div>
   );
 }
 
-/**
- * The five worked examples as a list a reader can scan: each row gives the level,
- * the problem and the shape of its solution (how many steps, and the answer it
- * reaches), and opens to the solution itself, step by step, in a box of its own
- * height so the figure does not grow.
- */
-function ExampleList() {
+/** The test problem, one at a time: a quiet "‹ 1 of 3 ›", wrapping round the three. */
+function ProblemStepper({ active, onProblem }: { active: number; onProblem: (i: number) => void }) {
+  const n = PAGE5.testProblems.length;
+  const arrow = "rounded px-1.5 text-ink-muted hover:bg-grid/40 hover:text-ink";
   return (
-    <ol data-testid="examples" aria-label="The five worked examples" className="flex flex-col gap-1">
-      {PAGE5.examples.map((e) => {
-        const steps = textSteps(e.solution);
-        return (
-          <li key={e.uniqueId}>
-            <details className="group rounded border border-grid bg-canvas">
-              <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-1.5 text-sm">
-                <span className="shrink-0 rounded-full border border-grid px-2 py-0.5 text-xs tabular-nums text-ink-muted">
-                  level {e.level}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-code text-ink">{tidyPrompt(e.problem)}</span>
-                <span className="shrink-0 text-xs tabular-nums text-ink-muted">
-                  {steps.length} steps → <span className="font-code text-ink">{tidyPrompt(e.answer)}</span>
-                </span>
-                <span aria-hidden="true" className="shrink-0 text-ink-muted transition-transform group-open:rotate-90">
-                  ›
-                </span>
-              </summary>
-              <div className="flex max-h-64 flex-col gap-2 overflow-y-auto border-t border-grid px-3 py-3">
-                <p className="whitespace-pre-wrap break-words font-code text-sm text-ink">{tidyPrompt(e.problem)}</p>
-                <ol className="flex flex-col gap-2">
-                  {steps.map((s, i) => (
-                    <li key={i} className="flex gap-2 font-code text-sm leading-relaxed text-ink">
-                      <span className="shrink-0 text-wrong-ink">{i + 1}</span>
-                      <span className="min-w-0 whitespace-pre-wrap break-words">{tidyPrompt(s)}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </details>
-          </li>
-        );
-      })}
-    </ol>
+    <div role="group" aria-label="Test problem" className="flex items-center gap-1 text-xs tabular-nums text-ink-muted">
+      <button type="button" aria-label="Previous problem" onClick={() => onProblem((active + n - 1) % n)} className={arrow}>
+        ‹
+      </button>
+      <span aria-live="polite">
+        problem {active + 1} of {n} · level {PAGE5.testProblems[active].level}
+      </span>
+      <button type="button" aria-label="Next problem" onClick={() => onProblem((active + 1) % n)} className={arrow}>
+        ›
+      </button>
+    </div>
   );
 }
 
 /**
- * One model's reply under one prompt, as a card: the verdict first (right or
- * wrong, the answer, tokens, steps), then the reply itself in a box of fixed
- * height, so two replies of very different lengths sit side by side and the
- * figure stays on one screen. Play shows the whole reply at once, grouped into
- * steps; there is no streaming.
+ * The few-shot prompt's worked examples, shown as one (author, 2026-11-05: "1
+ * worked example instead of five"): the last of the five, the one right before
+ * the question, written as the notebook wrote it, "Problem:" then "Solution:". Its
+ * lead line says there are five, placed before the problem, so the run is still
+ * five-shot. The solution is folded to its shape and opens to its steps.
  */
-function ReplyCard({ title, reply, withExamples, shown }: { title: string; reply: Reply; withExamples: boolean; shown: boolean }) {
+const SHOWN_EXAMPLE = PAGE5.examples[PAGE5.examples.length - 1];
+
+function WorkedExample() {
+  const e = SHOWN_EXAMPLE;
+  const steps = textSteps(e.solution);
+  const rest = PAGE5.examples.length - 1;
+  return (
+    <div data-testid="worked-example" className="flex flex-col gap-1.5 border-t border-dashed border-grid pt-3">
+      <p className="font-sans text-xs text-wrong-ink">
+        + one of {rest + 1} worked examples, sent before the problem
+      </p>
+      <p className="line-clamp-3 whitespace-pre-wrap break-words">
+        <span className="text-ink-muted">Problem:</span> {tidyPrompt(e.problem)}
+      </p>
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5">
+          <span className="text-ink-muted">Solution:</span>
+          <span className="rounded border border-wrong/60 px-1.5 font-sans text-xs text-wrong-ink">
+            {steps.length} worked steps → {tidyPrompt(e.answer)}
+          </span>
+          <span aria-hidden="true" className="text-ink-muted transition-transform group-open:rotate-90">
+            ›
+          </span>
+        </summary>
+        <div className="mt-1.5 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
+          <ol className="flex flex-col gap-1.5">
+            {steps.map((s, i) => (
+              <li key={i} className="flex gap-1.5 leading-relaxed">
+                <span className="shrink-0 text-wrong-ink">{i + 1}</span>
+                <span className="min-w-0 whitespace-pre-wrap break-words">{tidyPrompt(s)}</span>
+              </li>
+            ))}
+          </ol>
+          <p data-testid="examples-caption" className="font-sans text-xs text-ink-muted">
+            One MATH-500 problem per level, with worked solutions written for this experiment, expanding
+            MATH&apos;s own solutions.
+          </p>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+/**
+ * The user's turn: the prompt in one box, so the worked example is plainly part of
+ * it. The test problem comes first and the example under it (author, 2026-11-05),
+ * though the notebook put the examples before the problem; the example's lead line
+ * says so.
+ */
+function PromptBox({ mode, active }: { mode: Mode; active: number }) {
+  const test = PAGE5.testProblems[active];
+  const tokens = mode === "fewShot" ? FEW_PROMPT_ROUNDED : FIG1_MODEL.zeroShot.medianPromptTokens;
+  return (
+    <div data-testid="prompt" className="flex min-w-0 flex-col gap-3 rounded-lg border border-grid bg-surface px-3 py-2 font-code text-sm text-ink">
+      <p className="font-sans text-xs text-ink-muted">
+        the prompt · about {tokens.toLocaleString("en-GB")} tokens
+      </p>
+      {/* Display maths keeps its own line, without the blank lines around it. */}
+      <p data-testid="test-problem" className="whitespace-pre-wrap break-words">
+        <span className="text-ink-muted">Problem:</span> {tidyPrompt(test.problem).replace(/\n{2,}/g, "\n")}
+      </p>
+      {mode === "fewShot" ? <WorkedExample /> : null}
+    </div>
+  );
+}
+
+/**
+ * Figure 1's chat, set like the old figure 1 and page 2: the user's turn on the
+ * right and the model's on the left, each marked by an icon. The user's turn is
+ * the prompt in one box, so it is plain the worked example is part of it (author,
+ * 2026-11-05). Play shows the whole reply at once, grouped into
+ * steps, with its verdict under it; there is no streaming. A long reply scrolls
+ * inside its own box so the figure keeps its height.
+ */
+function Chat({ mode, active, shown }: { mode: Mode; active: number; shown: boolean }) {
+  const test = PAGE5.testProblems[active];
+  const reply = test.replies[mode];
   const steps = textSteps(gradedText(reply));
   return (
-    <section aria-label={title} className="flex min-w-0 flex-col gap-1.5">
-      <h3 className={`text-xs font-semibold ${withExamples ? "text-wrong-ink" : "text-crimson-ink"}`}>{title}</h3>
-      <div
-        data-testid="model-reply"
-        className={`flex min-w-0 flex-col overflow-hidden rounded border-l-4 bg-canvas ${
-          withExamples ? "border-wrong" : "border-crimson"
-        }`}
-      >
-        {shown ? (
-          <p className="border-b border-grid px-2 py-1.5 text-xs">
-            <span className={`font-semibold ${reply.correct ? "text-correct-ink" : "text-crimson-ink"}`}>
-              {reply.correct ? "✓" : "✗"}{" "}
-              {reply.extracted ? `Final answer: ${tidyPrompt(reply.extracted)}.` : "No boxed answer."}
-            </span>{" "}
-            <span className="font-mono tabular-nums text-ink-muted">
-              {reply.tokens.toLocaleString("en-GB")} tokens · {steps.length} {steps.length === 1 ? "step" : "steps"}
-              {reply.truncated ? ` · cut off at ${DEC.max_new_tokens.toLocaleString("en-GB")}` : ""}
-            </span>
-          </p>
-        ) : null}
-        <div className="h-44 overflow-y-auto px-2 py-1.5">
+    <div className="flex flex-col gap-5 rounded-lg border border-grid bg-canvas p-3">
+      <div className="flex max-w-[95%] items-start gap-2 self-end">
+        <PromptBox mode={mode} active={active} />
+        <UserIcon />
+      </div>
+
+      <div className="flex max-w-[95%] items-start gap-2 self-start">
+        <ModelIcon />
+        <div data-testid="model-reply" className="flex min-w-0 flex-col gap-2">
           {!shown ? (
-            <p className="flex h-full items-center justify-center gap-2 text-xs text-ink-muted">
+            <p className="flex items-center gap-2 text-sm text-ink-muted">
               <span aria-hidden="true" className="animate-pulse text-compute-ink">
                 ▍
               </span>
               press Play to see its reply
             </p>
           ) : (
-            <ol className="flex flex-col gap-1.5">
-              {steps.map((s, i) => (
-                <li key={i} className="flex gap-1.5 font-code text-xs leading-relaxed text-ink">
-                  {steps.length > 1 ? <span className="shrink-0 text-compute-ink">{i + 1}</span> : null}
-                  <span className="min-w-0 whitespace-pre-wrap break-words">{tidyPrompt(s)}</span>
-                </li>
-              ))}
-            </ol>
+            <>
+              <ol className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+                {steps.map((s, i) => (
+                  <li key={i} className="flex gap-2 font-code text-sm leading-relaxed text-ink">
+                    {steps.length > 1 ? <span className="shrink-0 text-compute-ink">{i + 1}</span> : null}
+                    <span className="min-w-0 whitespace-pre-wrap break-words">{tidyPrompt(s)}</span>
+                  </li>
+                ))}
+              </ol>
+              <p
+                className={`rounded border-l-4 px-3 py-2 ${
+                  reply.correct ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
+                }`}
+              >
+                <span className={`font-semibold ${reply.correct ? "text-correct-ink" : "text-wrong-ink"}`}>
+                  {reply.correct ? "✓" : "✗"}{" "}
+                  {reply.extracted ? `Final answer: ${tidyPrompt(reply.extracted)}.` : "No boxed answer."}
+                </span>{" "}
+                <span className="font-mono text-xs tabular-nums text-ink-muted">
+                  {reply.tokens.toLocaleString("en-GB")} tokens · {steps.length} {steps.length === 1 ? "step" : "steps"}
+                  {reply.truncated ? ` · cut off at ${DEC.max_new_tokens.toLocaleString("en-GB")}` : ""}
+                </span>
+              </p>
+            </>
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
 /**
- * Figure 1, sized to fit one laptop screen (author, 2026-10-18: "way too large,
- * information wise"). One toolbar (test problem, Play, Reset); the prompt (the
- * five worked examples as rows, then the test problem, shown once); and the base
- * 3B's two replies side by side, each a verdict over a fixed-height box.
+ * Figure 1, as clean as the old one (author, 2026-11-05): a switch between the two
+ * prompts and a quiet stepper over the three problems on top, one chat, and Play
+ * and Reset under it, as before. The model is named in the prose, not here.
  */
 function PromptFigure({
+  mode,
   active,
   shown,
+  onMode,
   onProblem,
   onPlay,
   onReset,
 }: {
+  mode: Mode;
   active: number;
   shown: boolean;
+  onMode: (m: Mode) => void;
   onProblem: (i: number) => void;
   onPlay: () => void;
   onReset: () => void;
 }) {
-  const test = PAGE5.testProblems[active];
-  const replies = test.replies;
   return (
-    <section aria-label="One problem, two prompts" className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-3">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Choice
-          label="Test problem"
-          options={PAGE5.testProblems.map((_, i) => i)}
-          value={active}
-          onChange={onProblem}
-          render={(i) => tabLabel(PAGE5.testProblems[i])}
-        />
-        <span className="text-xs text-ink-muted">
-          model <span className="font-semibold text-ink">{FIG1_MODEL.label}</span> (base)
-        </span>
-        <div className="ml-auto flex gap-1.5">
-          <button
-            type="button"
-            onClick={onPlay}
-            disabled={shown}
-            className="rounded bg-compute px-3 py-1 text-xs font-semibold text-ink disabled:opacity-50"
-          >
-            ▶ Play
-          </button>
-          <button
-            type="button"
-            onClick={onReset}
-            disabled={!shown}
-            className="rounded bg-crimson px-3 py-1 text-xs font-semibold text-canvas disabled:opacity-50"
-          >
-            ↺ Reset
-          </button>
-        </div>
+    <section aria-label="One problem, two prompts" className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <ModeSwitch mode={mode} onMode={onMode} />
+        <ProblemStepper active={active} onProblem={onProblem} />
       </div>
-
-      <div className="flex flex-col gap-1">
-        <p className="text-xs text-ink-muted">
-          <span className="font-semibold font-eyebrow uppercase tracking-wide">Five worked examples</span>
-          <span data-testid="examples-caption">
-            {" "}
-            · few-shot prompt only · one MATH-500 problem per level, with worked solutions written for
-            this experiment, expanding MATH&apos;s own solutions.
-          </span>
-        </p>
-        <ExampleList />
-        {/* The test problem, once: the last thing in the few-shot prompt, and the whole
-            of the zero-shot one. */}
-        <div
-          data-testid="test-problem"
-          className="flex items-start gap-3 rounded border border-l-4 border-compute bg-compute/10 px-3 py-1.5 text-sm"
+      <Chat mode={mode} active={active} shown={shown} />
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onPlay}
+          disabled={shown}
+          className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
         >
-          <span className="shrink-0 rounded-full bg-compute px-2 py-0.5 text-xs font-semibold text-ink">
-            test · level {test.level}
-          </span>
-          {/* Display maths keeps its own line, without the blank lines around it. */}
-          <span className="min-w-0 flex-1 whitespace-pre-wrap break-words font-code text-ink">
-            {tidyPrompt(test.problem).replace(/\n{2,}/g, "\n")}
-          </span>
-        </div>
-      </div>
-
-      <div data-testid="split" className="grid gap-3 sm:grid-cols-2">
-        <ReplyCard title="Zero-shot: the problem alone" reply={replies.zeroShot} withExamples={false} shown={shown} />
-        <ReplyCard title="Few-shot: after the five worked examples" reply={replies.fewShot} withExamples shown={shown} />
+          ▶ Play
+        </button>
+        <button
+          type="button"
+          onClick={onReset}
+          disabled={!shown}
+          className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+        >
+          ↺ Reset
+        </button>
       </div>
     </section>
   );
@@ -668,24 +681,31 @@ export function Page5() {
 
   const [announce, setAnnounce] = useState("");
   // ---- Step 1: the test problem, and whether the replies show ----
+  const [mode, setMode] = useState<Mode>("zeroShot");
   const [active, setActive] = useState(0);
   const [shown, setShown] = useState(false);
 
-  const describeReplies = (i: number) => {
+  const describeReply = (m: Mode, i: number) => {
     const t = PAGE5.testProblems[i];
-    const said = (x: Reply) => `${x.extracted ? `answered ${x.extracted}` : "gave no boxed answer"} (${x.correct ? "right" : "wrong"})`;
-    return `${FIG1_MODEL.label}, zero-shot, ${said(t.replies.zeroShot)}; few-shot, ${said(t.replies.fewShot)}. The answer is ${t.answer}.`;
+    const x = t.replies[m];
+    const said = `${x.extracted ? `answered ${x.extracted}` : "gave no boxed answer"} (${x.correct ? "right" : "wrong"})`;
+    return `${FIG1_MODEL.label}, ${m === "fewShot" ? "few-shot" : "zero-shot"}, ${said}. The answer is ${t.answer}.`;
   };
 
+  const chooseMode = (m: Mode) => {
+    recordInteraction(PAGE_N);
+    setMode(m);
+    setAnnounce(shown ? describeReply(m, active) : m === "fewShot" ? "Few-shot: five worked examples, then the problem." : "Zero-shot: the problem alone.");
+  };
   const chooseProblem = (i: number) => {
     recordInteraction(PAGE_N);
     setActive(i);
-    setAnnounce(shown ? describeReplies(i) : `The ${tabLabel(PAGE5.testProblems[i]).toLowerCase()} test problem.`);
+    setAnnounce(shown ? describeReply(mode, i) : `Problem ${i + 1} of ${PAGE5.testProblems.length}, level ${PAGE5.testProblems[i].level}.`);
   };
   const play = () => {
     recordInteraction(PAGE_N);
     setShown(true);
-    setAnnounce(describeReplies(active));
+    setAnnounce(describeReply(mode, active));
   };
   const reset = () => {
     recordInteraction(PAGE_N);
@@ -751,7 +771,15 @@ export function Page5() {
             <Cite n={REF.qwen} /> answers MATH-500 problems
             <Cite n={REF.math500} /> with and without them.
           </p>
-          <PromptFigure active={active} shown={shown} onProblem={chooseProblem} onPlay={play} onReset={reset} />
+          <PromptFigure
+            mode={mode}
+            active={active}
+            shown={shown}
+            onMode={chooseMode}
+            onProblem={chooseProblem}
+            onPlay={play}
+            onReset={reset}
+          />
         </section>
         <Note kicker="References">
           <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
