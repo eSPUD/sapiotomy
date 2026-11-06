@@ -35,7 +35,7 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
     expect(headings).toEqual([
       "1. Chain of Thought (CoT): System 2, written down",
-      "2. At inference time: zero-shot versus few-shot",
+      "2. Zero-shot versus few-shot CoT prompting",
       "3. In post-training: instruct models, with no examples",
       "4. Smaller reasoning models do better than larger non-reasoning models",
     ]);
@@ -250,7 +250,10 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
     render(<Page5 />);
     expect(N).toBe(495);
     // The old section 2's opening sentence, with the new denominator.
-    expect(body()).toContain(`One trace proves nothing, so both prompts were run across the other ${N} MATH-500 problems, with base models of three sizes.`);
+    expect(body()).toContain(`One trace proves nothing, so both prompts were run across MATH-500, with base models of three sizes. The few-shot prompt's five worked examples are MATH-500 problems themselves, so they are excluded from testing: every count below is on the other ${N} problems.`);
+    // The five examples are the ones left out: 500 less five is the denominator.
+    expect(PAGE5.examples).toHaveLength(5);
+    expect(N + PAGE5.examples.length).toBe(500);
   });
 
   // Dot-and-arrow rows (author, 2026-10-18): a dot where each model starts, an arrow

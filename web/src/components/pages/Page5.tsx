@@ -803,12 +803,18 @@ export function Page5() {
         {/* Step 2: figure first, then the prose explaining Shashank's sentence. */}
         <section className="flex min-w-0 flex-col gap-3">
           {/* Headings 2 and 3 name Shashank's two solutions: one at inference time, one
-              in post-training (author, 2026-10-18). */}
-          <h2 className="text-xl font-semibold text-ink">2. At inference time: zero-shot versus few-shot</h2>
+              in post-training (author, 2026-10-18). Heading 2 renamed by the author
+              2026-11-06 to name the prompting it compares. */}
+          <h2 className="text-xl font-semibold text-ink">2. Zero-shot versus few-shot CoT prompting</h2>
           <p className="text-ink-muted">
-            {/* The old section 2's opening sentence, with the new run's denominator. */}
-            One trace proves nothing, so both prompts were run across the other {N} MATH-500
-            problems, with base models of three sizes.
+            {/* The old section 2's opening sentence, with the new run's denominator, then
+                why it is 495 and not 500 (author, 2026-11-06): the five worked examples
+                are MATH-500 problems, so testing on them would test the answer key. The
+                data file pins n and the exclusion (provenance.problems). */}
+            One trace proves nothing, so both prompts were run across MATH-500, with base models of
+            three sizes. The few-shot prompt&apos;s five worked examples are MATH-500 problems
+            themselves, so they are excluded from testing: every count below is on the other {N}{" "}
+            problems.
           </p>
           <section
             aria-label="Zero-shot against few-shot"
