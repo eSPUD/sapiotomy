@@ -98,9 +98,9 @@
  * belongs in the download.
  *
  * Load-bearing and easy to lose:
- *   · the notebook download is the whole point of the pipeline. The link carries
- *     the notebook, `harness.py` and all 900 traces, so a reader who doubts a
- *     figure re-derives it. It sits at the top right of the page, beside the act
+ *   · the notebook download. Since 2026-10-14 the link is the author's single
+ *     notebook, 5_CoT.ipynb, in place of the bundle (notebook, `harness.py` and all
+ *     900 traces) that re-derives each figure; see NOTEBOOK_HREF. It sits at the top right of the page, beside the act
  *     kicker; the references sit in right-hand References sidenotes beside the
  *     steps that cite them (Wei, Kojima and the model card beside step 1, the
  *     dataset beside step 2, Kaplan and the Qwen2.5 report beside step 4's
@@ -162,9 +162,14 @@ const BLURT_MIN = Math.min(...F3.models.map((m) => m.blurtMedianTokens));
 const BLURT_MAX = Math.max(...F3.models.map((m) => m.blurtMedianTokens));
 const BLURT_MEDIAN_RANGE = BLURT_MIN === BLURT_MAX ? `${BLURT_MIN}` : `${BLURT_MIN} or ${BLURT_MAX}`;
 
-/** The download: notebook + harness + every generation the page rests on. */
-const NOTEBOOK_ZIP = "/notebooks/page-05-how-to-reason.zip";
-const NOTEBOOK_SIZE = "0.8 MB";
+/**
+ * The download: the author's notebook, 5_CoT.ipynb, as a single file (author,
+ * 2026-10-14; it replaced the zip bundle here). The bundle, with harness.py and
+ * the 900 traces this page's figures replay, stays in public/notebooks for page
+ * 16 and notebookBundles.test.ts.
+ */
+const NOTEBOOK_HREF = "/notebooks/5_CoT.ipynb";
+const NOTEBOOK_SIZE = "0.9 MB";
 
 /**
  * Numbered in order of first appearance. Wei and Kojima are cited for the
@@ -202,9 +207,19 @@ export const COST_ESTIMATE = (() => {
 const ZERO_SHOT_COT_TRIGGER = "Let's think step by step.";
 
 /** A margin note that sits beside its step and scrolls with the page. */
-function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
+function Note({
+  kicker,
+  flush = false,
+  children,
+}: {
+  kicker: string;
+  /** Drop the top padding. That padding clears a step's h2 so the note lines up
+   *  with the prose under it; beside the headingless lede it drops a line too low. */
+  flush?: boolean;
+  children: React.ReactNode;
+}) {
   return (
-    <aside className="flex flex-col gap-2 text-sm text-ink-muted lg:pt-9">
+    <aside className={`flex flex-col gap-2 text-sm text-ink-muted ${flush ? "" : "lg:pt-9"}`}>
       <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{kicker}</p>
       {children}
     </aside>
@@ -759,24 +774,31 @@ export function Page5() {
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
+        <NotebookDownload href={NOTEBOOK_HREF} size={NOTEBOOK_SIZE} format="ipynb" />
       </div>
-      {/* Held to the content column: the margin is the notes column (15rem) plus the
-          grid's column gap (2rem), so its right edge meets the body text's. */}
-      <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        Humans solve complex problems by taking a series of small steps towards the solution. This
-        step-by-step approach helps us apply our System&nbsp;2 thinking to problem-solving. It is
-        very similar to solving a quadratic equation in clear and simple steps, rather than trying
-        to blurt out its solutions.
-      </p>
-
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* Act 2's opener: picks up page 4's open question in its own words and maps the
+            act, as page 11's closing box maps Act 3. Page 4 already covers step-by-step
+            reasoning, so this does not restate it. A grid row of its own, so the
+            hardware note can sit beside it (author, 2026-10-14). */}
+        <p className="text-lg text-ink-muted">
+          Act 1 ended on a question: can a language model reason through a problem instead of
+          answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on
+          each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best
+          (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply
+          using a bigger model (page 11). The first tool is the simplest: have the model write out
+          its steps.
+        </p>
+        <Note kicker="Hardware" flush>
+          <p>An A100 GPU with 80GB VRAM was used in these experiments.</p>
+        </Note>
+
         {/* Step 1 — the definition and the specimen, merged 2026-09-27 under the
             reviewer-response plan (planning/reviewer_response_changes_plan.md,
             page 5, sections 1 and 2). The first paragraph is the author's draft. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. What is the Chain of Thought (CoT) for LLM reasoning?</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Chain of Thought (CoT): System 2, written down</h2>
           <p className="text-ink">
             We&apos;ve previously illustrated what step-by-step reasoning looks like for a couple of real-world
             problems. <strong>Chain-of-thought prompting</strong> simulates human reasoning by using
@@ -791,8 +813,9 @@ export function Page5() {
             <Cite n={REF.qwen} /> into System&nbsp;1, answering immediately, and compare against
             System&nbsp;2 results.
           </p>
-          {/* Figure 1 is a split: the same question put to the same model twice, side
-              by side, System 1 on the left and System 2 on the right. No mode buttons;
+          {/* Figure 1 is a split: the same question put to the same model twice, one
+              above the other, System 1 on top and System 2 below (author, 2026-10-11:
+              stacked, so each reply has the full width). No mode buttons;
               Play shows both whole replies at once, with no streaming and no progress
               bar (author, 2026-09-27); Reset clears them. System 1's
               appended instruction is not shown in its question (author, 2026-09-27). */}
@@ -800,7 +823,7 @@ export function Page5() {
             aria-label="One problem, two prompts"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div data-testid="split" className="flex flex-col gap-4">
               <ChatColumn title="System 1" tab={BLURT_TAB} shown={revealed} />
               <ChatColumn title="System 2" tab={BARE_TAB} shown={revealed} />
             </div>

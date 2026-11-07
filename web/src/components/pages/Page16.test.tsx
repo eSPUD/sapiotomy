@@ -202,6 +202,10 @@ describe("Page 16 (wrap-up) component", () => {
       expect(link).toHaveAttribute("download");
       expect(link.getAttribute("aria-label")).toContain(n.size);
     }
+    // Page 5's link is its author's single notebook, the same file page 5 offers.
+    const p5 = screen.getByRole("link", { name: /^Page 5:/ });
+    expect(p5).toHaveAttribute("href", "/notebooks/5_CoT.ipynb");
+    expect(p5.getAttribute("aria-label")).toMatch(/Download the notebook, ipynb, 0\.9 MB$/);
     // Derived from the ladder, so a rung can never quietly outlive its source.
     const pages = [...new Set(LADDER.map((r) => r.page))].sort((a, b) => a - b);
     expect(NOTEBOOKS.map((n) => n.page)).toEqual(pages);

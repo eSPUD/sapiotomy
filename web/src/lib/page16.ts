@@ -283,8 +283,11 @@ if (WAIT.before / WAIT.table.n !== PAGE5.figure2.bare.accuracy) {
  * the right one. Any page that gains a rung must gain an entry here, and NOTEBOOKS
  * throws rather than silently omitting a source.
  */
-const NOTEBOOK_BY_PAGE: Record<number, { title: string; href: string; size: string }> = {
-  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/page-05-how-to-reason.zip", size: "0.8 MB" },
+/** A page's download: a zip bundle (notebook, harness, traces) unless `format` says the bare notebook. */
+type NotebookLink = { title: string; href: string; size: string; format?: "zip" | "ipynb" };
+const NOTEBOOK_BY_PAGE: Record<number, NotebookLink> = {
+  // Page 5 links the author's single notebook since 2026-10-14, as page 5 itself does.
+  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/5_CoT.ipynb", size: "0.9 MB", format: "ipynb" },
   6: { title: "Thinking longer, and budget forcing", href: "/notebooks/page-06-thinking-longer.zip", size: "2.0 MB" },
   7: { title: "Sampling and voting", href: "/notebooks/page-07-frequency-voting.zip", size: "3.0 MB" },
   8: { title: "Best-of-N and the judges", href: "/notebooks/page-08-best-of-n.zip", size: "9.7 MB" },
@@ -379,7 +382,7 @@ export const WRITER = GREEDY_3B.label;
  * The notebooks behind the rungs, derived from the ladder rather than listed by
  * hand, so a rung that is added or cut cannot leave the download list lying.
  */
-export const NOTEBOOKS: { page: number; title: string; href: string; size: string }[] = [
+export const NOTEBOOKS: ({ page: number } & NotebookLink)[] = [
   ...new Set(LADDER.map((r) => r.page)),
 ]
   .sort((a, b) => a - b)
