@@ -21,6 +21,8 @@
  * wrong figure.
  */
 import rawDerived from "@data/page-05-derived.json";
+import rawShots from "@data/page-05-few-shot.json";
+import rawWorked from "@data/page-05-worked-solutions.json";
 import { pct, tidyMath } from "./traceText";
 
 export class Page05DataError extends Error {}
@@ -309,6 +311,85 @@ export const PAGE5 = {
     cross,
   },
 } as const;
+
+/** One MATH-500 problem with the dataset's own worked solution: section 1. */
+export interface WorkedSolution {
+  uniqueId: string;
+  subject: string;
+  level: number;
+  problem: string;
+  solution: string;
+  answer: string;
+  /** The solution cut into its moves for display. */
+  steps: string[];
+}
+
+/**
+ * Section 1's three worked solutions, copied verbatim from MATH-500 into
+ * `web/data/page-05-worked-solutions.json` (the dataset itself is gitignored).
+ * Nothing was run to produce them. The steps are only a display cut, so they
+ * have to rebuild the dataset's solution exactly, whitespace aside.
+ */
+const collapse = (s: string) => s.replace(/\s+/g, " ").trim();
+export const WORKED_SOLUTIONS: WorkedSolution[] = rawWorked.items.map((it) => {
+  if (collapse(it.steps.join(" ")) !== collapse(it.solution)) {
+    throw new Page05DataError(
+      `page-05-worked-solutions.json: the steps for ${it.unique_id} do not rebuild its solution`,
+    );
+  }
+  return {
+    uniqueId: it.unique_id,
+    subject: it.subject,
+    level: it.level,
+    problem: it.problem,
+    solution: it.solution,
+    answer: it.answer,
+    steps: it.steps,
+  };
+});
+
+/** Section 2's conditions, in the notebook's keys and display order. */
+export const SHOT_KEYS = ["zero_shot", "1_shot", "5_shot", "10_shot"] as const;
+export type ShotKey = (typeof SHOT_KEYS)[number];
+export const SHOT_LABEL: Record<ShotKey, string> = {
+  zero_shot: "zero-shot",
+  "1_shot": "1-shot",
+  "5_shot": "5-shot",
+  "10_shot": "10-shot",
+};
+
+export interface ShotRow {
+  modelId: string;
+  /** The notebook's own display name: `model.split('/')[-1]`. */
+  label: string;
+  /** Percent of problems solved, keyed by condition. */
+  solved: Record<ShotKey, number>;
+}
+
+/**
+ * Section 2's figure, from its own notebook: `web/data/page-05-few-shot.json`
+ * holds that notebook's `results` dict as it dumps it (model id -> percent solved
+ * per condition) and the number of test problems. It is a separate run from
+ * `page-05-derived.json`, on 490 problems (MATH-500 less its 10 example
+ * problems), so its `n` is its own. While `placeholder` is true the numbers are
+ * arbitrary and the figure says so on its face.
+ */
+const shotRaw = rawShots as { placeholder: boolean; n: number; results: Record<string, Record<string, number>> };
+export const SHOTS = {
+  placeholder: shotRaw.placeholder,
+  n: shotRaw.n,
+  rows: Object.entries(shotRaw.results).map(([modelId, metrics]): ShotRow => {
+    const solved = {} as Record<ShotKey, number>;
+    for (const k of SHOT_KEYS) {
+      const v = metrics[k];
+      if (typeof v !== "number" || v < 0 || v > 100) {
+        throw new Page05DataError(`page-05-few-shot.json: ${modelId} has no percentage for ${k}`);
+      }
+      solved[k] = v;
+    }
+    return { modelId, label: modelId.split("/").pop()!, solved };
+  }),
+};
 
 /**
  * Display-only tidying for figure 1's prompt text. The worked solutions use display

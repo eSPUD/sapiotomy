@@ -187,7 +187,7 @@ const FUNCTIONS = new Set([
 const SUPERS = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 const SUBS = "₀₁₂₃₄₅₆₇₈₉";
 const raise = (digits: string, glyphs: string) =>
-  [...digits].map((d) => glyphs[Number(d)]).join("");
+  [...digits].map((d) => (d === "-" ? "⁻" : glyphs[Number(d)])).join("");
 
 export function tidyMath(text: string): string {
   let out = text.replace(/\\displaystyle\s*/g, "");
@@ -224,8 +224,9 @@ export function tidyMath(text: string): string {
       })
       // Exponents and indices, once no macro can be hiding in one. Only runs of
       // digits: `x^{2n}` is an expression, and flattening it would change what
-      // it says rather than how it looks.
-      .replace(/\^\{(\d+)\}/g, (_, d: string) => raise(d, SUPERS))
+      // it says rather than how it looks. A negative exponent (`7^{-1}`) is still
+      // only digits, so it is raised too.
+      .replace(/\^\{(-?\d+)\}/g, (_, d: string) => raise(d, SUPERS))
       .replace(/\^(\d)/g, (_, d: string) => raise(d, SUPERS))
       .replace(/_\{(\d+)\}/g, (_, d: string) => raise(d, SUBS))
       .replace(/_(\d)/g, (_, d: string) => raise(d, SUBS))

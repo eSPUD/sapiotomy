@@ -26,20 +26,26 @@
  * with a sentence saying what the figure is a picture OF: "37.6%" is not a claim,
  * "37.6% of the same 495 problems" is.
  *
- *   Step 1: the definition and figure 1, interactive like the old figure 1 (author,
- *   2026-10-18), and as clean as the old one (author, 2026-11-05): one chat set
- *   like page 2's, a Zero-shot / Few-shot switch, and a quiet stepper over three
- *   test problems (levels 1, 3 and 5: the first test problem at each level in
- *   MATH-500 order, skipping [asy] diagrams, fixed before any results). Play shows
- *   the base Qwen2.5-3B's reply under the chosen prompt, Reset clears it. One
- *   model, the 3B, with no size picker (author, 2026-10-18). Under few-shot the
- *   user's turn shows ONE worked example, the last of the five, inside the same
- *   prompt box as the question and under it, with a line saying there are five,
- *   placed before the problem (author, 2026-11-05): the run is still five-shot.
+ *   Step 1: the definition and figure 1 (author, 2026-11-08): three MATH-500
+ *   problems with the dataset's own worked solutions (number_theory/515,
+ *   algebra/858, number_theory/13), set in page 2's chat template: the question
+ *   on the right with the user icon, the solution on the left with the model
+ *   icon, one plain line per step, no highlighting. A quiet "‹ 1 of 3 ›" stepper
+ *   sits above the chat.
+ *   NOTHING IS RUN for it: the records are copied verbatim into
+ *   `web/data/page-05-worked-solutions.json` and `@/lib/page05` checks the steps
+ *   rebuild each solution. It replaced the base 3B's zero-shot and few-shot
+ *   replies side by side; the Qwen model card's citation moved to step 2, which
+ *   is where the models are first named.
  *
- *   Step 2: figure 2, zero-shot against few-shot for the three base models. The
- *   figure comes first, then the prose explaining Shashank's sentence: the
- *   examples make the model work out each intermediate result before it answers.
+ *   Step 2 (rebuilt 2026-11-08, author): figure 2, a simple vertical bar chart of
+ *   the few-shot notebook's results: Qwen2.5 0.5B, 1.5B, 3B and 7B, each zero-shot
+ *   and with 1, 5 and 10 worked examples. Its data is that notebook's `results`
+ *   dict, verbatim, in `web/data/page-05-few-shot.json`, on its own 490 problems
+ *   (MATH-500 less the 10 example problems), not the 495 below. Until the run
+ *   lands the numbers are PLACEHOLDERS and the figure carries a "placeholder
+ *   numbers" chip. Shashank's two sentences follow the figure; the rest of the
+ *   prose is a stand-in to iterate on.
  *
  *   Step 3: figure 3, the instruct models with no examples against the base
  *   models with five. Its opening says what an instruct model is and follows from
@@ -74,13 +80,15 @@ import { NotebookDownload } from "@/components/NotebookDownload";
 import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE5,
-  gradedText,
+  SHOTS,
+  SHOT_KEYS,
+  SHOT_LABEL,
+  WORKED_SOLUTIONS,
   pct,
-  textSteps,
-  tidyPrompt,
+  tidyMath,
   type ArmStats,
-  type Problem,
-  type Reply,
+  type ShotKey,
+  type WorkedSolution,
 } from "@/lib/page05";
 import { useStore } from "@/store/useStore";
 
@@ -91,7 +99,6 @@ const BASE = PAGE5.base;
 const INSTRUCT = PAGE5.instruct;
 const S4 = PAGE5.section4;
 const DEC = PAGE5.provenance.decoding;
-const BASE_7B = BASE[BASE.length - 1];
 
 /**
  * Percentage points between two accuracies, as the difference of the two
@@ -116,7 +123,7 @@ const NOTEBOOK_SIZE = "14 KB";
  * instruments the runs were made with. Every number on this page is ours, so no
  * entry may carry a figure.
  */
-const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4, qwenReport: 5 } as const;
+const REF = { wei: 1, kojima: 2, math500: 3, qwen: 4, qwenReport: 5 } as const;
 
 /**
  * The trigger Kojima et al. published, quoted as they published it, because the
@@ -162,49 +169,18 @@ function Ledger({ rows }: { rows: [string, string][] }) {
 
 /* ------------------------------------------------------------------ figure 1 */
 
-/** Figure 1's one model (author, 2026-10-18: the base 3B, no size picker). */
-const FIG1_MODEL = PAGE5.figure1Model;
-
-/** Figure 1's two prompts, one at a time (author, 2026-11-05). */
-type Mode = "zeroShot" | "fewShot";
-const MODES: { key: Mode; label: string }[] = [
-  { key: "zeroShot", label: "Zero-shot" },
-  { key: "fewShot", label: "Few-shot" },
-];
-
-/** The prompt switch: a segmented control, one setting on at a time. */
-function ModeSwitch({ mode, onMode }: { mode: Mode; onMode: (m: Mode) => void }) {
-  return (
-    <div role="radiogroup" aria-label="Prompt" className="inline-flex rounded-md border border-grid bg-canvas p-0.5">
-      {MODES.map((m) => (
-        <button
-          key={m.key}
-          type="button"
-          role="radio"
-          aria-checked={m.key === mode}
-          onClick={() => onMode(m.key)}
-          className={`rounded px-3 py-1 text-sm font-semibold ${
-            m.key === mode ? "bg-compute text-ink" : "text-ink-muted hover:text-ink"
-          }`}
-        >
-          {m.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/** The test problem, one at a time: a quiet "‹ 1 of 3 ›", wrapping round the three. */
+/** The worked problem, one at a time: a quiet "‹ 1 of 3 ›", wrapping round the three. */
 function ProblemStepper({ active, onProblem }: { active: number; onProblem: (i: number) => void }) {
-  const n = PAGE5.testProblems.length;
+  const n = WORKED_SOLUTIONS.length;
+  const w = WORKED_SOLUTIONS[active];
   const arrow = "rounded px-1.5 text-ink-muted hover:bg-grid/40 hover:text-ink";
   return (
-    <div role="group" aria-label="Test problem" className="flex items-center gap-1 text-xs tabular-nums text-ink-muted">
+    <div role="group" aria-label="Worked problem" className="flex items-center gap-1 text-xs tabular-nums text-ink-muted">
       <button type="button" aria-label="Previous problem" onClick={() => onProblem((active + n - 1) % n)} className={arrow}>
         ‹
       </button>
       <span aria-live="polite">
-        problem {active + 1} of {n} · level {PAGE5.testProblems[active].level}
+        problem {active + 1} of {n} · {w.subject} · level {w.level}
       </span>
       <button type="button" aria-label="Next problem" onClick={() => onProblem((active + 1) % n)} className={arrow}>
         ›
@@ -214,185 +190,36 @@ function ProblemStepper({ active, onProblem }: { active: number; onProblem: (i: 
 }
 
 /**
- * The few-shot prompt's worked examples, shown as one (author, 2026-11-05: "1
- * worked example instead of five"): the last of the five, the one right before
- * the question, written as the notebook wrote it, "Problem:" then "Solution:". Its
- * lead line says there are five, placed before the problem, so the run is still
- * five-shot. The solution is folded to its shape and opens to its steps.
+ * Figure 1 (author, 2026-11-08): page 2's chat template, followed as is. The
+ * question is the user's turn on the right, the dataset's worked solution the
+ * reply on the left, each marked by its icon, as plain font-code text with no
+ * bubbles and no highlighting. The solution keeps one line per step, unnumbered.
+ * The stepper sits above the chat.
  */
-const SHOWN_EXAMPLE = PAGE5.examples[PAGE5.examples.length - 1];
-
-function WorkedExample() {
-  const e = SHOWN_EXAMPLE;
-  const steps = textSteps(e.solution);
-  const rest = PAGE5.examples.length - 1;
+function WorkedFigure({ active, onProblem }: { active: number; onProblem: (i: number) => void }) {
+  const w = WORKED_SOLUTIONS[active];
   return (
-    <div data-testid="worked-example" className="flex flex-col gap-1.5 border-t border-dashed border-grid pt-3">
-      <p className="font-sans text-xs text-wrong-ink">
-        + one of {rest + 1} worked examples, sent before the problem
-      </p>
-      <p className="line-clamp-3 whitespace-pre-wrap break-words">
-        <span className="text-ink-muted">Problem:</span> {tidyPrompt(e.problem)}
-      </p>
-      <details className="group">
-        <summary className="flex cursor-pointer list-none items-center gap-1.5">
-          <span className="text-ink-muted">Solution:</span>
-          <span className="rounded border border-wrong/60 px-1.5 font-sans text-xs text-wrong-ink">
-            {steps.length} worked steps → {tidyPrompt(e.answer)}
-          </span>
-          <span aria-hidden="true" className="text-ink-muted transition-transform group-open:rotate-90">
-            ›
-          </span>
-        </summary>
-        <div className="mt-1.5 flex max-h-64 flex-col gap-1.5 overflow-y-auto">
-          <ol className="flex flex-col gap-1.5">
-            {steps.map((s, i) => (
-              <li key={i} className="flex gap-1.5 leading-relaxed">
-                <span className="shrink-0 text-wrong-ink">{i + 1}</span>
-                <span className="min-w-0 whitespace-pre-wrap break-words">{tidyPrompt(s)}</span>
-              </li>
-            ))}
-          </ol>
-          <p data-testid="examples-caption" className="font-sans text-xs text-ink-muted">
-            One MATH-500 problem per level, with worked solutions written for this experiment, expanding
-            MATH&apos;s own solutions.
-          </p>
-        </div>
-      </details>
-    </div>
-  );
-}
-
-/**
- * The user's turn: the prompt in one box, so the worked example is plainly part of
- * it. The test problem comes first and the example under it (author, 2026-11-05),
- * though the notebook put the examples before the problem; the example's lead line
- * says so.
- */
-function PromptBox({ mode, active }: { mode: Mode; active: number }) {
-  const test = PAGE5.testProblems[active];
-  const tokens = mode === "fewShot" ? FEW_PROMPT_ROUNDED : FIG1_MODEL.zeroShot.medianPromptTokens;
-  return (
-    <div data-testid="prompt" className="flex min-w-0 flex-col gap-3 rounded-lg border border-grid bg-surface px-3 py-2 font-code text-sm text-ink">
-      <p className="font-sans text-xs text-ink-muted">
-        the prompt · about {tokens.toLocaleString("en-GB")} tokens
-      </p>
-      {/* Display maths keeps its own line, without the blank lines around it. */}
-      <p data-testid="test-problem" className="whitespace-pre-wrap break-words">
-        <span className="text-ink-muted">Problem:</span> {tidyPrompt(test.problem).replace(/\n{2,}/g, "\n")}
-      </p>
-      {mode === "fewShot" ? <WorkedExample /> : null}
-    </div>
-  );
-}
-
-/**
- * Figure 1's chat, set like the old figure 1 and page 2: the user's turn on the
- * right and the model's on the left, each marked by an icon. The user's turn is
- * the prompt in one box, so it is plain the worked example is part of it (author,
- * 2026-11-05). Play shows the whole reply at once, grouped into
- * steps, with its verdict under it; there is no streaming. A long reply scrolls
- * inside its own box so the figure keeps its height.
- */
-function Chat({ mode, active, shown }: { mode: Mode; active: number; shown: boolean }) {
-  const test = PAGE5.testProblems[active];
-  const reply = test.replies[mode];
-  const steps = textSteps(gradedText(reply));
-  return (
-    <div className="flex flex-col gap-5 rounded-lg border border-grid bg-canvas p-3">
-      <div className="flex max-w-[95%] items-start gap-2 self-end">
-        <PromptBox mode={mode} active={active} />
-        <UserIcon />
-      </div>
-
-      <div className="flex max-w-[95%] items-start gap-2 self-start">
-        <ModelIcon />
-        <div data-testid="model-reply" className="flex min-w-0 flex-col gap-2">
-          {!shown ? (
-            <p className="flex items-center gap-2 text-sm text-ink-muted">
-              <span aria-hidden="true" className="animate-pulse text-compute-ink">
-                ▍
-              </span>
-              press Play to see its reply
-            </p>
-          ) : (
-            <>
-              <ol className="flex max-h-72 flex-col gap-2 overflow-y-auto">
-                {steps.map((s, i) => (
-                  <li key={i} className="flex gap-2 font-code text-sm leading-relaxed text-ink">
-                    {steps.length > 1 ? <span className="shrink-0 text-compute-ink">{i + 1}</span> : null}
-                    <span className="min-w-0 whitespace-pre-wrap break-words">{tidyPrompt(s)}</span>
-                  </li>
-                ))}
-              </ol>
-              <p
-                className={`rounded border-l-4 px-3 py-2 ${
-                  reply.correct ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
-                }`}
-              >
-                <span className={`font-semibold ${reply.correct ? "text-correct-ink" : "text-wrong-ink"}`}>
-                  {reply.correct ? "✓" : "✗"}{" "}
-                  {reply.extracted ? `Final answer: ${tidyPrompt(reply.extracted)}.` : "No boxed answer."}
-                </span>{" "}
-                <span className="font-mono text-xs tabular-nums text-ink-muted">
-                  {reply.tokens.toLocaleString("en-GB")} tokens · {steps.length} {steps.length === 1 ? "step" : "steps"}
-                  {reply.truncated ? ` · cut off at ${DEC.max_new_tokens.toLocaleString("en-GB")}` : ""}
-                </span>
-              </p>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Figure 1, as clean as the old one (author, 2026-11-05): a switch between the two
- * prompts and a quiet stepper over the three problems on top, one chat, and Play
- * and Reset under it, as before. The model is named in the prose, not here.
- */
-function PromptFigure({
-  mode,
-  active,
-  shown,
-  onMode,
-  onProblem,
-  onPlay,
-  onReset,
-}: {
-  mode: Mode;
-  active: number;
-  shown: boolean;
-  onMode: (m: Mode) => void;
-  onProblem: (i: number) => void;
-  onPlay: () => void;
-  onReset: () => void;
-}) {
-  return (
-    <section aria-label="One problem, two prompts" className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <ModeSwitch mode={mode} onMode={onMode} />
+    <section aria-label="Worked solutions from MATH-500" className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+      <div className="flex justify-end">
         <ProblemStepper active={active} onProblem={onProblem} />
       </div>
-      <Chat mode={mode} active={active} shown={shown} />
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={onPlay}
-          disabled={shown}
-          className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
-        >
-          ▶ Play
-        </button>
-        <button
-          type="button"
-          onClick={onReset}
-          disabled={!shown}
-          className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
-        >
-          ↺ Reset
-        </button>
+      <div className="flex flex-col gap-6 rounded-lg border border-grid bg-canvas p-3">
+        <div className="flex max-w-[90%] items-start gap-2 self-end">
+          <p data-testid="worked-question" className="min-w-0 break-words text-right font-code text-[15px] text-ink">
+            {tidyMath(w.problem)}
+          </p>
+          <UserIcon />
+        </div>
+        <div className="flex max-w-[90%] items-start gap-2 self-start">
+          <ModelIcon />
+          <div data-testid="worked-steps" className="flex min-w-0 flex-col gap-2 font-code text-[15px] text-ink">
+            {w.steps.map((s, i) => (
+              <p key={i} className="whitespace-pre-wrap break-words">
+                {tidyMath(s)}
+              </p>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -517,13 +344,97 @@ const SIZES = BASE.map((m) => m.size);
  * and 4). Crimson is dark so it stays apart from Clay for colour-blind readers.
  */
 const FEW_SHOT = { fill: "fill-wrong", stroke: "stroke-wrong" };
-const BASELINE = { fill: "fill-crimson", stroke: "stroke-crimson" };
 const INSTRUCT_REASONING = { fill: "fill-compute", stroke: "stroke-compute" };
 
-const FIG2_SERIES: [DotSeries, DotSeries] = [
-  { key: "zero", label: "zero-shot, the problem alone", ...BASELINE, arms: BASE.map((m) => m.zeroShot) },
-  { key: "few", label: "few-shot, five worked examples first", ...FEW_SHOT, arms: BASE.map((m) => m.fewShot) },
-];
+/* ------------------------------------------------------------------ figure 2 */
+
+/**
+ * Figure 2's four conditions keep the page's colours: crimson for the baseline
+ * (zero-shot, the problem alone), and Sky for few-shot, deepening with the number
+ * of worked examples (Sky, then its line step, then its text step).
+ */
+const SHOT_FILL: Record<ShotKey, string> = {
+  zero_shot: "fill-crimson",
+  "1_shot": "fill-wrong",
+  "5_shot": "fill-wrong-bright",
+  "10_shot": "fill-wrong-ink",
+};
+
+/** The run's model sizes, from the notebook's names ("Qwen2.5-0.5B" is "0.5B"). */
+const SHOT_SIZES = SHOTS.rows.map((r) => r.label.replace(/^Qwen2\.5-/, ""));
+/** "four sizes" in the prose, spelled out the way the page writes small counts. */
+const SIZE_COUNT_WORD =
+  ["no", "one", "two", "three", "four", "five", "six"][SHOT_SIZES.length] ?? String(SHOT_SIZES.length);
+
+const SHOT_W = 660;
+const SHOT_H = 300;
+const SHOT_MARGIN = { top: 16, right: 16, bottom: 44, left: 48 };
+const SHOT_INNER_W = SHOT_W - SHOT_MARGIN.left - SHOT_MARGIN.right;
+const SHOT_INNER_H = SHOT_H - SHOT_MARGIN.top - SHOT_MARGIN.bottom;
+
+/**
+ * Figure 2 (author, 2026-11-08): a simple vertical bar chart of the few-shot
+ * notebook's results. One group per model, four bars in each, zero-shot to
+ * 10-shot, each the percent of the run's problems solved. The y axis runs 0 to
+ * 100, so a bar's height is its share of the whole set.
+ */
+function ShotBars() {
+  const rows = SHOTS.rows;
+  const y = (v: number) => SHOT_INNER_H - (v / 100) * SHOT_INNER_H;
+  const groupW = SHOT_INNER_W / rows.length;
+  const gap = 3;
+  const barW = Math.min(28, (groupW - 24 - (SHOT_KEYS.length - 1) * gap) / SHOT_KEYS.length);
+  const clusterW = SHOT_KEYS.length * barW + (SHOT_KEYS.length - 1) * gap;
+  return (
+    <ChartFrame
+      title={`Percent of ${SHOTS.n} MATH-500 problems solved with zero, 1, 5 and 10 worked examples in the prompt. ${rows
+        .map((r) => `${r.label}: ${SHOT_KEYS.map((k) => `${SHOT_LABEL[k]} ${r.solved[k]}%`).join(", ")}`)
+        .join(". ")}.`}
+      width={SHOT_W}
+      height={SHOT_H}
+      margin={SHOT_MARGIN}
+      yLabel={`percent of ${SHOTS.n} problems solved`}
+    >
+      {[0, 25, 50, 75, 100].map((t) => (
+        <g key={t}>
+          <line x1={0} x2={SHOT_INNER_W} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={1} />
+          <text x={-8} y={y(t) + 4} textAnchor="end" className="fill-ink-muted text-[11px]">
+            {t}
+          </text>
+        </g>
+      ))}
+      {rows.map((r, i) => {
+        const x0 = i * groupW + (groupW - clusterW) / 2;
+        return (
+          <g key={r.modelId} data-testid={`shots-${r.label}`}>
+            {SHOT_KEYS.map((k, j) => {
+              const x = x0 + j * (barW + gap);
+              const v = r.solved[k];
+              return (
+                <g key={k}>
+                  <rect x={x} y={y(v)} width={barW} height={SHOT_INNER_H - y(v)} className={SHOT_FILL[k]}>
+                    <title>{`${r.label}, ${SHOT_LABEL[k]}: ${v}%`}</title>
+                  </rect>
+                  <text x={x + barW / 2} y={y(v) - 5} textAnchor="middle" className="fill-ink text-[10px] tabular-nums">
+                    {v}
+                  </text>
+                </g>
+              );
+            })}
+            <text
+              x={i * groupW + groupW / 2}
+              y={SHOT_INNER_H + 18}
+              textAnchor="middle"
+              className="fill-ink text-xs font-semibold"
+            >
+              {r.label}
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
+  );
+}
 
 /**
  * The prompt each side of figure 3 reads, in tokens (median over the 495): the cost
@@ -680,40 +591,17 @@ export function Page5() {
   const recordInteraction = useStore((s) => s.recordInteraction);
 
   const [announce, setAnnounce] = useState("");
-  // ---- Step 1: the test problem, and whether the replies show ----
-  const [mode, setMode] = useState<Mode>("zeroShot");
+  // ---- Step 1: which worked problem is showing ----
   const [active, setActive] = useState(0);
-  const [shown, setShown] = useState(false);
 
-  const describeReply = (m: Mode, i: number) => {
-    const t = PAGE5.testProblems[i];
-    const x = t.replies[m];
-    const said = `${x.extracted ? `answered ${x.extracted}` : "gave no boxed answer"} (${x.correct ? "right" : "wrong"})`;
-    return `${FIG1_MODEL.label}, ${m === "fewShot" ? "few-shot" : "zero-shot"}, ${said}. The answer is ${t.answer}.`;
-  };
-
-  const chooseMode = (m: Mode) => {
-    recordInteraction(PAGE_N);
-    setMode(m);
-    setAnnounce(shown ? describeReply(m, active) : m === "fewShot" ? "Few-shot: five worked examples, then the problem." : "Zero-shot: the problem alone.");
-  };
   const chooseProblem = (i: number) => {
     recordInteraction(PAGE_N);
     setActive(i);
-    setAnnounce(shown ? describeReply(mode, i) : `Problem ${i + 1} of ${PAGE5.testProblems.length}, level ${PAGE5.testProblems[i].level}.`);
+    const w = WORKED_SOLUTIONS[i];
+    setAnnounce(
+      `Problem ${i + 1} of ${WORKED_SOLUTIONS.length}, ${w.subject}, level ${w.level}. The worked solution has ${w.steps.length} steps; the answer is ${w.answer}.`,
+    );
   };
-  const play = () => {
-    recordInteraction(PAGE_N);
-    setShown(true);
-    setAnnounce(describeReply(mode, active));
-  };
-  const reset = () => {
-    recordInteraction(PAGE_N);
-    setShown(false);
-    setAnnounce("Both replies cleared.");
-  };
-
-  const gains = BASE.map((m) => ptsLabel(m.fewShot.accuracy, m.zeroShot.accuracy));
 
   return (
     <article className="flex flex-col gap-6">
@@ -746,8 +634,8 @@ export function Page5() {
           <p>An A100 GPU with 80GB VRAM was used in these experiments.</p>
         </Note>
 
-        {/* Step 1: the definition (the author's first paragraph, unchanged) and the
-            few-shot prompt itself. */}
+        {/* Step 1: the definition (the author's first paragraph, unchanged) and three
+            worked solutions from MATH-500. */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Chain of Thought (CoT): System 2, written down</h2>
           <p className="text-ink">
@@ -758,28 +646,15 @@ export function Page5() {
             &ldquo;{ZERO_SHOT_COT_TRIGGER}&rdquo;
             <Cite n={REF.kojima} />
           </p>
-          {/* The author's paragraph (2026-10-18), cut to two sentences so the figure
-              carries the rest (author, same day): its column titles define zero-shot and
-              few-shot, and the examples' caption says whose solutions they are. One
-              model, the base 3B (author, same day). It opens as the alternative to
-              paragraph 1's ask, not a second "common way" (author, same day): Wei et al.
-              introduced chain of thought with worked examples, before Kojima's phrase. */}
           <p className="text-ink">
-            The original way, though, is to show rather than ask: put a few{" "}
-            <strong>worked examples</strong> in the prompt.
-            <Cite n={REF.wei} /> Below, the base model {FIG1_MODEL.label}
-            <Cite n={REF.qwen} /> answers MATH-500 problems
-            <Cite n={REF.math500} /> with and without them.
+            Below are three problems from MATH-500, each with the worked solution that comes with
+            the dataset.
+            <Cite n={REF.math500} />
           </p>
-          <PromptFigure
-            mode={mode}
-            active={active}
-            shown={shown}
-            onMode={chooseMode}
-            onProblem={chooseProblem}
-            onPlay={play}
-            onReset={reset}
-          />
+          {/* Figure 1 (author, 2026-11-08): the old chat figure, the question then the
+              dataset's own solution, one problem at a time. Nothing is run; it shows
+              what a chain of steps looks like before the page measures one. */}
+          <WorkedFigure active={active} onProblem={chooseProblem} />
         </section>
         <Note kicker="References">
           <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
@@ -789,10 +664,6 @@ export function Page5() {
           <RefItem n={REF.kojima} href="https://arxiv.org/abs/2205.11916">
             Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em> (NeurIPS
             2022).
-          </RefItem>
-          <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B">
-            Qwen team 2024, <em>Qwen2.5-3B</em> model card (Hugging Face). The 1.5B and 7B cards,
-            and the Instruct versions, sit alongside it.
           </RefItem>
           <RefItem n={REF.math500} href="https://huggingface.co/datasets/HuggingFaceH4/MATH-500">
             <em>MATH-500</em> dataset card (Hugging Face): 500 MATH test problems (Hendrycks et
@@ -807,14 +678,15 @@ export function Page5() {
               2026-11-06 to name the prompting it compares. */}
           <h2 className="text-xl font-semibold text-ink">2. Zero-shot versus few-shot CoT prompting</h2>
           <p className="text-ink-muted">
-            {/* The old section 2's opening sentence, with the new run's denominator, then
-                why it is 495 and not 500 (author, 2026-11-06): the five worked examples
-                are MATH-500 problems, so testing on them would test the answer key. The
-                data file pins n and the exclusion (provenance.problems). */}
-            One trace proves nothing, so both prompts were run across MATH-500, with base models of
-            three sizes. The few-shot prompt&apos;s five worked examples are MATH-500 problems
-            themselves, so they are excluded from testing: every count below is on the other {N}{" "}
-            problems.
+            {/* The old opening sentence, rewritten for the few-shot notebook's run
+                (author, 2026-11-08): four sizes, four prompts, and its own denominator,
+                490, because the ten example problems are MATH-500 problems and testing
+                on them would test the answer key. A stand-in until the prose is
+                iterated on. */}
+            One trace proves nothing, so every prompt was run across MATH-500, with Qwen2.5 models
+            <Cite n={REF.qwen} /> of {SIZE_COUNT_WORD} sizes: zero-shot, and with 1, 5 or 10 worked examples. The worked
+            examples are MATH-500 problems themselves, so they are excluded from testing: every
+            count below is on the other {SHOTS.n} problems.
           </p>
           <section
             aria-label="Zero-shot against few-shot"
@@ -822,42 +694,59 @@ export function Page5() {
           >
             <Ledger
               rows={[
-                ["model", "Qwen2.5 base · 1.5B, 3B, 7B · bf16"],
-                ["decoding", `${DEC.strategy} · ${DEC.max_new_tokens.toLocaleString("en-GB")}-token cap`],
-                ["problems", `MATH-500 · n = ${N} paired`],
-                ["output", `${(BASE.length * 2 * N).toLocaleString("en-GB")} replies`],
+                ["model", `Qwen2.5 · ${SHOT_SIZES.join(", ")}`],
+                ["problems", `MATH-500 · n = ${SHOTS.n}`],
+                ["output", `${(SHOTS.rows.length * SHOT_KEYS.length * SHOTS.n).toLocaleString("en-GB")} replies`],
               ]}
             />
             <figure className="flex flex-col gap-2">
-              <SeriesLegend series={FIG2_SERIES} />
-              <ArrowRows
-                id="p5-fig2"
-                title={`Share of the same ${N} MATH-500 problems solved by three base Qwen2.5 models, from zero-shot to few-shot. Zero-shot: ${describeSeries(FIG2_SERIES[0])}. Few-shot: ${describeSeries(FIG2_SERIES[1])}.`}
-                series={FIG2_SERIES}
-                sizes={SIZES}
-              />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
+                <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                  {SHOT_KEYS.map((k) => (
+                    <li key={k} className="flex items-center gap-1.5">
+                      <svg aria-hidden="true" width="12" height="12">
+                        <rect width="12" height="12" rx="2" className={SHOT_FILL[k]} />
+                      </svg>
+                      {SHOT_LABEL[k]}
+                    </li>
+                  ))}
+                </ul>
+                {SHOTS.placeholder ? (
+                  <span
+                    data-testid="shots-placeholder"
+                    className="ml-auto rounded-full border border-crimson px-2 py-0.5 font-semibold text-crimson-ink"
+                  >
+                    placeholder numbers
+                  </span>
+                ) : null}
+              </div>
+              <ShotBars />
               <figcaption className="text-center text-base font-semibold text-ink">
-                Zero-shot vs few-shot: base Qwen2.5 on {N} MATH-500 problems
+                Zero-shot vs few-shot: Qwen2.5 on {SHOTS.n} MATH-500 problems
                 <span className="block text-sm font-normal text-ink-muted">
-                  How many problems each prompt solved, and the examples&apos; lead in points
+                  How many problems each model solved with zero, 1, 5 and 10 worked examples
                 </span>
               </figcaption>
             </figure>
           </section>
           <p className="text-ink-muted">
-            The worked examples help at every size, by {gains[0]}, {gains[1]} and {gains[2]} points,
-            though less as the model grows.{" "}
-            {/* Shashank's two sentences, verbatim (author, 2026-10-18); they replace the
-                page's paraphrase of the same idea. Page5.test.tsx pins the wording. */}
+            {/* Shashank's two sentences, verbatim (author, 2026-10-18). Page5.test.tsx
+                pins the wording. The sentences around them read the old five-shot run's
+                numbers, so they went with its figure (2026-11-08). */}
             By providing the step-by-step intermediate logic in the examples, you force the model to
             generate its own reasoning pathway before committing to a final answer. This prevents
             the model from hallucinating a final state because it has to calculate the state
-            sequentially. Without them, the 7B answers{" "}
-            <strong className="text-ink">{BASE_7B.zeroShot.wroteCode}</strong> of the {N} problems by
-            writing a Python program that nothing runs. After the examples, it never does.
+            sequentially.
           </p>
         </section>
-        <div aria-hidden="true" />
+        {/* The model card's citation moved here with section 1's figure (2026-11-08):
+            this is where the models are first named. */}
+        <Note kicker="References">
+          <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B">
+            Qwen team 2024, <em>Qwen2.5-3B</em> model card (Hugging Face). The 0.5B, 1.5B and 7B
+            cards, and the Instruct versions, sit alongside it.
+          </RefItem>
+        </Note>
 
         {/* Step 3. Its opening says what an instruct model is, picking up where step 2
             ends (author, 2026-10-18): the examples work, but they ride with every
