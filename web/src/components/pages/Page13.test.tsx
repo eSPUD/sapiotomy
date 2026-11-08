@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { curves } from "@/lib/curves";
+import { BASE, BUDGETS, CHECKPOINTS, DISTILL, FINAL, RUN, pct } from "@/lib/page13";
 import { Page13 } from "./Page13";
 
 const follows = (a: Element, b: Element) =>
@@ -58,16 +59,19 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
     const escape = (s: string) => s.replace(/[.?]/g, "\\$&");
     const headings = [
       "1. What can a wrong chain teach?",
-      "2. One law, two knobs",
-      "3. Where the thinking comes from",
-      "4. Stack the toolbox on top",
-      "5. The curve is portable",
+      "2. Better answers, longer chains",
+      "3. At scale, the chains keep growing",
+      "4. Training stacks with inference-time scaling",
+      "5. Data the model writes itself",
     ].map((h) => screen.getByRole("heading", { level: 2, name: new RegExp(`^${escape(h)}`) }));
     for (let i = 1; i < headings.length; i++) {
       expect(follows(headings[i - 1], headings[i])).toBe(true);
     }
     const handoff = screen.getByLabelText("Where this leaves us");
     expect(follows(headings[4], handoff)).toBe(true);
+    // Author, 2026-11-06: the loop-animation prototypes are gone from the bottom of the page.
+    expect(screen.queryByText(/Five animations for the loop/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/PROTOTYPES/i)).not.toBeInTheDocument();
   });
 
   describe("section 1: what can a wrong chain teach?", () => {
@@ -81,14 +85,25 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       expect(section.textContent).not.toMatch(/The seven lines above are/);
       expect(section.textContent).not.toMatch(/very similar to STaR/);
       expect(section.textContent).not.toMatch(/same three steps/);
-      // STaR samples one chain per problem; GRPO writes a group, and that
-      // group is what lets every chain be scored against the others.
-      expect(section.textContent).toMatch(/STaR writes one chain per problem, while GRPO writes\s+several and scores every one/);
-      expect(section.textContent).toMatch(/penalized for chains that scored poorly and rewarded for chains that scored well/);
-      // Every chain trains: wrong ones are not dropped, as STaR drops them (author, 2026-11-04).
-      expect(section.textContent).toMatch(/every chain the model writes is kept for training, instead of dropping\s+the chains that led to a wrong answer/);
+      // The opening is GRPO on its own terms: no STaR in it (author, 2026-11-06).
+      const opening = screen.getByText(/The loop illustrated below is GRPO/).closest("p")!;
+      expect(opening.textContent).not.toMatch(/STaR/);
+      expect(opening.textContent).toMatch(/For\s+every problem, the model writes several chains, and a program scores each answer 1 or\s+0\./);
+      expect(opening.textContent).toMatch(/penalized for chains that scored poorly and\s+rewarded for chains that scored well/);
       // The opening previews the figure, then the algorithm (author, 2026-11-05).
-      expect(section.textContent).toMatch(/Below, the loop is drawn first, so you can watch\s+every chain reach reinforce, and then written out as an algorithm in the same form as\s+STaR.s\./);
+      expect(opening.textContent).toMatch(/Below, the loop is drawn first, so you can watch\s+every chain reach reinforce, and then written out as an algorithm\./);
+      // The STaR comparison comes after the algorithm: a wrong chain is trained on, not dropped.
+      // In the author's words (2026-11-06).
+      const comparison = screen.getByText(/GRPO differs from STaR, and some other reinforcement-learning approaches/).closest("p")!;
+      expect(follows(screen.getByRole("figure", { name: /^GRPO pseudocode/ }), comparison)).toBe(true);
+      expect(comparison.textContent).toMatch(/in what\s+happens to a wrong chain\./);
+      expect(comparison.textContent).toMatch(/STaR writes one chain per problem, and drops it when the\s+answer is wrong\./);
+      expect(comparison.textContent).toMatch(/GRPO, however, writes several and trains on every one\./);
+      expect(comparison.textContent).toMatch(/A wrong chain\s+still teaches the model what not to do, so it is kept\./);
+      // It closes on where GRPO steers: at training time, against best-of-N at inference time.
+      // The reward checks only the answer, so the copy says "reasoning that reaches the right answer".
+      expect(comparison.textContent).toMatch(/steer\s+the model toward reasoning that reaches the right answer/);
+      expect(comparison.textContent).toMatch(/The steering happens at training time, unlike inference-time approaches\s+such as best-of-N with a process reward model\.\s*$/);
       // Author, 2026-11-04: no "page N did this" back-references.
       expect(section.textContent).not.toMatch(/\bpage \d+/i);
       expect(section.textContent).not.toMatch(/\bAct \d/);
@@ -100,11 +115,11 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       expect(within(loop).getByText("each answer vs. the key: 1 or 0")).toBeInTheDocument();
       expect(within(loop).getByText(/every chain kept/)).toBeInTheDocument();
       expect(screen.queryByText(/page 12 took one greedy try/)).not.toBeInTheDocument();
-      // The no-human / finite-data point closes the section, in the paragraph after the listing.
-      const callout = screen.getByText(/Nobody writes that reasoning and nobody grades it/);
-      expect(follows(generate, callout)).toBe(true);
-      expect(follows(screen.getByRole("figure", { name: /^GRPO pseudocode/ }), callout)).toBe(true);
-      expect(callout.textContent).toMatch(/limited stock of human-written text/);
+      expect(follows(generate, comparison)).toBe(true);
+      // Section 1 is only what GRPO is and how it differs: the self-consistency
+      // and human-text points are parked for elsewhere (author, 2026-11-06).
+      expect(section.textContent).not.toMatch(/Notice that line 4/);
+      expect(section.textContent).not.toMatch(/Nobody writes that reasoning/);
     });
 
     it("explains the loop with no o1 in it, and prints no o1 algorithm", () => {
@@ -133,23 +148,21 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       // GRPO is named in the opening as the figure's loop; the box says whose recipe it is.
       expect(screen.getByText(/the recipe DeepSeek used to train R1-Zero/)).toBeInTheDocument();
       expect(screen.queryByText(/One recipe for this/)).not.toBeInTheDocument();
-      expect(screen.getByText(/GRPO needs no\s+second network/)).toBeInTheDocument();
+      // The no-second-network caption under the listing was cut (author, 2026-11-06).
+      expect(screen.queryByText(/second network/)).not.toBeInTheDocument();
       // Jargon the plain notes replaced.
       expect(screen.queryByText(/critic/)).not.toBeInTheDocument();
       expect(screen.queryByText(/PPO/)).not.toBeInTheDocument();
       expect(screen.queryByText(/KL/)).not.toBeInTheDocument();
-      // Self-consistency's sampling, now at training time, said above the listing (author, 2026-11-05).
-      expect(screen.getByText(/Notice that line 4 is the same sampling self-consistency uses/)).toBeInTheDocument();
-      expect(screen.getByText(/drawn at training time instead of answer time/)).toBeInTheDocument();
       // Every chain trains, so GRPO learns from every one, not only the right ones.
-      expect(screen.getByText(/learns from every one of them/)).toBeInTheDocument();
+      expect(screen.getByText(/GRPO, however, writes several and trains on every one/)).toBeInTheDocument();
       expect(screen.queryByText(/keeps what the right\s+ones did/)).not.toBeInTheDocument();
     });
 
     it("keeps the GRPO line and pseudocode, with no group-luck chart or dial", () => {
       render(<Page13 />);
-      // The GRPO paragraph follows the listing and names it (author, 2026-11-05).
-      const grpoPara = screen.getByText(/Notice that line 4/).closest("p")!;
+      // The STaR comparison follows the listing (author, 2026-11-06).
+      const grpoPara = screen.getByText(/GRPO differs from STaR/).closest("p")!;
       // An "Algorithm" divider sits between the loop graph and the listing, as on page 12.
       const divider = screen.getByRole("heading", { level: 3, name: "Algorithm" });
       expect(follows(screen.getByRole("img", { name: /^GRPO's loop/ }), divider)).toBe(true);
@@ -162,88 +175,79 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
     });
   });
 
-  describe("section 2: one law, two knobs", () => {
-    it("leads with R1-Zero's reported endpoints, read as both knobs at once", () => {
-      render(<Page13 />);
-      const evidence = screen.getByRole("img", { name: /R1-Zero, from the start of RL training to the end/ });
-      expect(evidence.textContent).toMatch(/15\.6% → 71\.0%/);
-      expect(evidence.textContent).toMatch(/≈1,000 → ≈9,000/);
-      // The run moved both dials, so the page may not sell it as pure RL.
-      expect(screen.getByText(/This is both knobs moving at once/)).toBeInTheDocument();
-      expect(screen.getByText(/Section 3 follows the length\./)).toBeInTheDocument();
-      // And it comes before the constructed o1 surface.
-      const toy = screen.getByRole("img", { name: /Three RL training runs/ });
-      expect(follows(evidence, toy)).toBe(true);
+  describe("section 2: better answers, longer chains", () => {
+    const setTrain = (i: number) =>
+      fireEvent.change(screen.getByRole("slider", { name: /RL training \(steps/ }), { target: { value: String(i) } });
+    const setBudget = (i: number) =>
+      fireEvent.change(screen.getByRole("slider", { name: /Thinking budget/ }), { target: { value: String(i) } });
+
+    it("pins the page data to the author's run", () => {
+      expect(RUN.model).toBe("Qwen/Qwen2.5-1.5B-Instruct");
+      expect(RUN.full_finetune).toBe(true);
+      expect(RUN.rl_steps).toBe(400);
+      expect([RUN.n_eval, RUN.k]).toEqual([600, 32]);
+      expect(CHECKPOINTS.map((c) => c.step)).toEqual([0, 25, 50, 100, 200, 400]);
+      expect(BUDGETS).toEqual([64, 128, 256, 512, 1024]);
+      expect([pct(BASE.pass1), pct(FINAL.pass1)]).toEqual([64.9, 73.8]);
+      expect([Math.round(BASE.mean_len), Math.round(FINAL.mean_len)]).toEqual([191, 225]);
     });
 
-    it("frames the lab with page 11's idiom, curve-picker swapped for RL", () => {
+    it("opens on the run in prose, ~9 points and ~18% more tokens, and hands the length to section 3", () => {
       render(<Page13 />);
-      expect(
-        screen.getByText(/model size picks your curve; test-time compute slides you along it/),
-      ).toBeInTheDocument();
-      expect(screen.getByText(/RL training picks your curve now/)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Thinking slides you along the curve; only training lifts it\./),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Thinking time (compute in one answer)")).toBeInTheDocument();
-      expect(screen.getByText("RL training (compute in one training run)")).toBeInTheDocument();
-      expect(screen.getByText("the missing RL's share")).toBeInTheDocument();
+      const section = screen.getByRole("heading", { level: 2, name: /^2\. / }).closest("section")!;
+      // Author, 2026-11-06: the shaded before/after strip is gone; the graph carries the visuals.
+      expect(screen.queryByRole("img", { name: /before and after 400 steps of GRPO/ })).not.toBeInTheDocument();
+      expect(section.textContent).not.toMatch(/64\.9% → 73\.8%|191 → 225/);
+      const intro = screen.getByText(/To show how GRPO improves a model/).closest("p")!;
+      const text = intro.textContent!.replace(/\s+/g, " ");
+      expect(text).toMatch(/we ran 400 steps of it on Qwen2\.5-1\.5B-Instruct/);
+      expect(text).toMatch(/already been fine-tuned to follow instructions/);
+      expect(text).toMatch(/raised its accuracy by about 9 points/);
+      expect(text).toMatch(/about 18% more tokens per answer, though nothing in the reward asks for length\.$/);
+      // Author, 2026-11-06: no pointer to section 3 here.
+      expect(section.textContent).not.toMatch(/Section 3 follows/);
+      // R1-Zero's endpoints and the o1 surface are gone from this section.
+      expect(section.textContent).not.toMatch(/R1-Zero|AIME|\bo1\b|OpenAI|GPT-4o/);
+      expect(screen.queryByRole("img", { name: /Three RL training runs/ })).not.toBeInTheDocument();
+      expect(screen.queryByText(/the missing RL/)).not.toBeInTheDocument();
     });
 
-    it("says what the dials count and what the score is scored on", () => {
+    it("goes from the opening straight to the chart, with no run ledger on top of the card", () => {
       render(<Page13 />);
-      expect(
-        screen.getByText(/×100 RL training is one run given a hundred times the training compute/),
-      ).toBeInTheDocument();
-      expect(screen.getByText(/not a hundred sampled answers/)).toBeInTheDocument();
-      expect(screen.getByText(/section 4 stacks it on top/)).toBeInTheDocument();
-      expect(screen.getByText(/pass@1 on AIME 2024/)).toBeInTheDocument();
-      expect(screen.getByText("AIME 2024 pass@1 here")).toBeInTheDocument();
+      // Author, 2026-11-06: the scaling-law restatement before the chart is gone;
+      // the dial labels say what each knob does.
+      expect(screen.queryByText(/model size picks your curve/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/RL training picks your curve now/)).not.toBeInTheDocument();
+      // The model / training / test / dials ledger was removed (author, 2026-11-06).
+      const section = screen.getByRole("heading", { level: 2, name: /^2\. / }).closest("section")!;
+      expect(section.querySelector("dl")).toBeNull();
     });
 
-    it("states the substitution the law actually has, not the opposite", () => {
+    it("reads every dial position off the run: training lifts the ceiling", () => {
       render(<Page13 />);
-      // The exponents enter twoAxisAccuracy as a sum: law(2, 0) = law(0, 2) = 21.0.
-      expect(screen.queryByText(/they do not\s+substitute/)).not.toBeInTheDocument();
-      expect(
-        screen.getByText(/×1 training with ×100 thinking scores the same 21\.0 as ×100 training/),
-      ).toBeInTheDocument();
-      expect(screen.getByText(/The thinking is bought again on every answer\./)).toBeInTheDocument();
-      expect(
-        screen.getByText(/all that thinking lands exactly where the full run/),
-      ).toBeInTheDocument();
+      const chart = screen.getByRole("img", { name: /accuracy of one chain against its thinking budget/ });
+      // Opens on the finished run with room to think.
+      expect(chart.getAttribute("aria-label")).toMatch(/Your marker: after 400 steps, 1024 tokens, 74\.2 percent, \+9\.7 points/);
+      setTrain(0);
+      expect(chart.getAttribute("aria-label")).toMatch(/Your marker: before training, 1024 tokens, 64\.5 percent\.$/);
     });
 
-    it("draws the whole run family at once, staircase stated, opening gap priced", () => {
+    it("shows training costing points under a tight budget, and never claims o1's tidy trade", () => {
       render(<Page13 />);
-      const chart = screen.getByRole("img", {
-        name: /Three RL training runs, each one run at a different training-compute budget, are drawn in full as parallel lines/,
-      });
-      expect(chart.getAttribute("aria-label")).toMatch(
-        /times 10 more RL and times 10 more thinking buy the same 29\.5 points/,
-      );
-      expect(chart.getAttribute("aria-label")).toMatch(
-        /times 10 run at times 10 thinking, scoring 21\.0 percent, with 29\.5 points forgone/,
-      );
-    });
-
-    it("discloses every construction on the page in ONE block", () => {
-      render(<Page13 />);
-      const block = screen.getByText(/OpenAI published two separate charts, one per axis/);
-      // The o1 surface.
-      expect(block.textContent).toMatch(
-        /Joining them into one surface, so that a decade of either dial buys the same points/,
-      );
-      expect(block.textContent).toMatch(/is this deck's construction and not a published result/);
-      // The R1-Zero curve, skeleton and aha, in the same block.
-      expect(block.textContent).toMatch(/the points between them are drawn along the reported climb/);
-      expect(block.textContent).toMatch(/schematic of the structure in the paper's Table 3/);
-      expect(block.textContent).toMatch(/illustrative\s+placement/);
-      expect(block.textContent).toMatch(/The slope is the claim; the absolute compute is a secret\./);
-      // No second block, no two-label footer.
-      expect(screen.getAllByText(/illustrative placement|is an illustrative/)).toHaveLength(1);
-      expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
-      expect(screen.queryByText("Cited")).not.toBeInTheDocument();
+      setBudget(1);
+      const chart = screen.getByRole("img", { name: /accuracy of one chain against its thinking budget/ });
+      expect(chart.getAttribute("aria-label")).toMatch(/after 400 steps, 128 tokens, 13\.8 percent, −14\.2 points/);
+      expect(screen.getByText("what training did at this budget")).toBeInTheDocument();
+      expect(screen.getByText(/But the trained model needs that\s+room\./)).toBeInTheDocument();
+      // The closing paragraph quotes the chart's own cells, so the dials can confirm each one.
+      const closing = screen.getByText(/Training raises the ceiling\./).closest("p")!;
+      const text = closing.textContent!.replace(/\s+/g, " ");
+      expect(text).toMatch(/With room to finish \(1,024 tokens\), the trained model is right more often: 64\.5% before training, 71\.5% after 50 steps, 74\.2% after 400\. Most of the gain comes early\./);
+      expect(text).toMatch(/the trained one scores 13\.8% against the untrained model's 28\.0%, because its longer answers are less likely to finish in time\./);
+      expect(text).toMatch(/Past 512 tokens, neither curve moves; on these problems, the chain is already done\.$/);
+      expect(screen.getByText(/at that budget, training costs\s+points/)).toBeInTheDocument();
+      expect(screen.queryByText(/trade one for one/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/buys back exactly the decade/)).not.toBeInTheDocument();
     });
   });
 
@@ -273,7 +277,6 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       const skeleton = screen.getByRole("img", { name: /trace skeleton after the aha/i });
       expect(skeleton.getAttribute("aria-label")).toMatch(/loops back to its own first line/i);
       expect(skeleton.getAttribute("aria-label")).toMatch(/second pass/i);
-      expect(screen.getByText(/The extra tokens in the length panel are these loops/)).toBeInTheDocument();
     });
 
     it("keeps the mid stage strictly forward: longer skeleton, still no loop", () => {
@@ -284,12 +287,27 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       expect(skeleton.getAttribute("aria-label")).not.toMatch(/loops back/i);
     });
 
-    it("gives the interrupt a reason, and never calls it a located mistake", () => {
+    it("shows the aha in one fixed paragraph that never changes with the dial", () => {
       render(<Page13 />);
+      const flat = (el: Element) => el.textContent!.replace(/\s+/g, " ").trim();
+      // Author's wording, 2026-11-06 (spelling and punctuation copy-edited), with Liu et al.
+      // cited for the base-model claim.
+      const aha = screen.getByText(/As you can see above, there is a very interesting side effect of RL here\./).closest("p")!;
+      const before = flat(aha);
+      expect(before).toBe(
+        "As you can see above, there is a very interesting side effect of RL here. R1-Zero's chains begin to interrupt themselves. In the trace DeepSeek shows, the model stops mid-solution and second-guesses its reasoning. It then goes back to re-derive an earlier step. This was not the goal of RL, nor is it exclusive to RL: on rare occasions, it can actually happen in Qwen2.5 base models.reference 3 However, RL made it significantly more common.",
+      );
+      expect(within(aha).getByRole("link", { name: /reference 3/ })).toBeInTheDocument();
+      // Author, 2026-11-06: the words below the figure no longer change with the slider.
       setStep(8000);
-      expect(screen.getByText(/doubts what it has just written/)).toBeInTheDocument();
-      expect(screen.getByText(/Nothing scored those steps/)).toBeInTheDocument();
-      expect(screen.getByText(/Page 10's branch, score, backtrack/)).toBeInTheDocument();
+      expect(flat(aha)).toBe(before);
+      expect(screen.queryByText(/Nothing looks back|still strictly forward|doubts what it has just written/)).not.toBeInTheDocument();
+      // The verified finding (base models re-check before RL) rules out "learned to suspect itself".
+      expect(screen.queryByText(/learned to suspect itself/)).not.toBeInTheDocument();
+      // It follows the figure directly.
+      const chart = screen.getByRole("img", { name: /^R1-Zero across RL training/ });
+      expect(follows(chart, aha)).toBe(true);
+      expect(aha.previousElementSibling).toBe(chart.closest("figure"));
       const skeleton = screen.getByRole("img", { name: /trace skeleton after the aha/i });
       expect(skeleton.getAttribute("aria-label")).toMatch(/the step the trace doubts/i);
       expect(
@@ -299,68 +317,142 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
 
     it("plots both variables as two stacked panels on one step axis", () => {
       render(<Page13 />);
-      const chart = screen.getByRole("img", { name: /two stacked panels sharing the training step axis/ });
+      const chart = screen.getByRole("img", { name: /^R1-Zero across RL training, two stacked panels sharing the training step axis/ });
       const label = chart.getAttribute("aria-label")!;
       expect(label).toMatch(/15\.6 percent .* 71\.0 percent/);
       expect(label).toMatch(/1,000 to about 9,000 tokens/);
       expect(label).toMatch(/no term in the reward mentions length/);
-      expect(label).toMatch(/page 11's test-time compute/);
+      expect(label).toMatch(/labelled as test-time compute/);
+      expect(label).not.toMatch(/page \d+/i);
       expect(label).toMatch(/aha trace appears \(illustrative placement\)/);
       expect(screen.queryByRole("img", { name: /two y axes/i })).not.toBeInTheDocument();
     });
 
-    it("turns the old questions into claims shown, never a recap", () => {
+    it("opens on the claim, bridges from section 2 to R1-Zero, then reads it outside the card", () => {
       render(<Page13 />);
-      expect(screen.getByText(/Nothing in the reward mentions length/)).toBeInTheDocument();
-      const chart = screen.getByRole("img", { name: /two stacked panels/ });
-      const meaning = screen.getByText(/Length is not a schedule anyone set/).closest("p")!;
+      const section = screen.getByRole("heading", { level: 2, name: /^3\. / }).closest("section")!;
+      // Author's wording, 2026-11-06: three paragraphs, word for word.
+      const flat = (el: Element) => el.textContent!.replace(/\s+/g, " ").trim();
+      const opening = screen.getByText(/The GRPO reward function only steers the model/).closest("p")!;
+      expect(flat(opening)).toBe(
+        "The GRPO reward function only steers the model based on whether the reasoning produced a correct answer. It does not reward longer responses or tell the model to double-check its work.",
+      );
+      expect(within(opening).getByText("does not").tagName).toBe("STRONG");
+      const chart = screen.getByRole("img", { name: /^R1-Zero across RL training/ });
+      const meaning = screen.getByText(/As you can see above, there is a very interesting side effect/).closest("p")!;
+      // No small-scale panel (section 2 already shows our model writing longer answers).
+      expect(screen.queryByRole("heading", { level: 3, name: /At small scale|At frontier scale/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("img", { name: /^Qwen2\.5-1\.5B-Instruct across 400 steps of GRPO/ })).not.toBeInTheDocument();
+      const intro = screen.getByText(/We.ve already seen how a small model/).closest("p")!;
+      expect(follows(opening, intro)).toBe(true);
+      expect(flat(intro)).toMatch(
+        /^We've already seen how a small model \(Qwen2\.5-1\.5B-Instruct\) reacted to this setup: as accuracy climbed, it naturally started using more tokens to work through problems\. To see what happens when you scale this up, we can look at DeepSeek's R1-Zero, which used the exact same training method on a much larger base model \(the start and end of each curve come from DeepSeek's paper; the climb between them is drawn\)\./,
+      );
+      const instruct = screen.getByText(/Move the slider forward in 500-step increments/).closest("p")!;
+      expect(follows(intro, instruct)).toBe(true);
+      expect(flat(instruct)).toBe(
+        "Move the slider forward in 500-step increments and keep an eye on how both accuracy and response length change over time.",
+      );
+      expect(follows(instruct, chart)).toBe(true);
       expect(follows(chart, meaning)).toBe(true);
-      expect(screen.getByText("The thinking dial buys one longer chain.")).toBeInTheDocument();
-      expect(screen.getByText(/not many chains sampled and voted on behind an API/)).toBeInTheDocument();
-      expect(screen.getByText("The tokens do the work, not describe it.")).toBeInTheDocument();
-      expect(screen.getByText(/the chain is what the model sampled and what training pushed on/)).toBeInTheDocument();
-      expect(screen.getByText(/Re-derivation is not narration/)).toBeInTheDocument();
+      // Figure cards hold only the figure (author, 2026-11-06): the prose sits outside.
+      const card = chart.closest("figure")!;
+      expect(card.contains(meaning)).toBe(false);
+      // Author, 2026-11-06: the aha paragraph ends the section; "Either way…" moved to section 4.
+      expect(section.lastElementChild).toBe(meaning);
+      expect(screen.queryByText(/Either way, what training buys/)).not.toBeInTheDocument();
+      // Removed 2026-11-06: the API aside (o1 is off the page) and the narration argument,
+      // which the base-model findings below now contest.
+      expect(section.textContent).not.toMatch(/behind an API|The tokens do the work|Re-derivation is not narration/);
       // Guard: no quiz-key block restating questions with answers.
       expect(screen.queryByText(/^\s*(What|Whether) the (thinking|model|law)/)).not.toBeInTheDocument();
+    });
+
+    it("cites the base-model finding, without the jargon paragraphs", () => {
+      render(<Page13 />);
+      expect(screen.getByRole("link", { name: /Understanding R1-Zero-Like Training/ })).toHaveAttribute(
+        "href",
+        "https://arxiv.org/abs/2503.20783",
+      );
+      // Author, 2026-11-06: "jargon". The length-schedule line, "Learned, or brought out?"
+      // and with it the DAPO reference are gone.
+      expect(screen.queryByText(/Length is not a schedule anyone set/)).not.toBeInTheDocument();
+      expect(screen.queryByText("Learned, or brought out?")).not.toBeInTheDocument();
+      expect(screen.queryByText(/DAPO/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /DAPO: An Open-Source LLM/ })).not.toBeInTheDocument();
+    });
+
+    it("carries no disclosure paragraph under R1-Zero's figure", () => {
+      render(<Page13 />);
+      // Author, 2026-11-06: the "start and end of each R1-Zero curve" block is gone from the page.
+      expect(screen.queryByText(/The start and end of each R1-Zero curve/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/schematic of the structure/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/OpenAI published two separate charts/)).not.toBeInTheDocument();
+      expect(screen.queryByText("Simulated")).not.toBeInTheDocument();
+      expect(screen.queryByText("Cited")).not.toBeInTheDocument();
     });
   });
 
   describe("section 4: stack the toolbox on top", () => {
-    it("draws every reading from a common zero, two models, never a waterfall", () => {
+    it("opens on the author's question, outside the card, before the readings", () => {
       render(<Page13 />);
-      expect(screen.getByText("o1, one model read three ways")).toBeInTheDocument();
-      expect(screen.getByText("R1-Zero, one model read two ways")).toBeInTheDocument();
-      expect(screen.getByText("no learned chain")).toBeInTheDocument();
-      expect(screen.getByText(/one instant answer from a strong LLM \(GPT-4o\)/)).toBeInTheDocument();
-      expect(screen.getAllByText("majority vote")).toHaveLength(2);
-      expect(screen.getByText("learned re-ranker")).toBeInTheDocument();
-      expect(screen.queryByText("+8.9")).not.toBeInTheDocument();
-      expect(screen.queryByText("+9.7")).not.toBeInTheDocument();
-      const figure = screen.getByRole("img", { name: /every bar drawn from a common zero/ });
+      const heading = screen.getByRole("heading", { level: 2, name: /^4\. / });
+      const opening = heading.nextElementSibling!;
+      expect(opening.tagName).toBe("P");
+      // Author's wording, 2026-11-06, copy-edited for grammar.
+      expect(opening.textContent!.replace(/\s+/g, " ").trim()).toBe(
+        "It is now clear that RL methods such as GRPO and STaR result in longer chains and better accuracy. You may wonder whether we still need inference-time scaling methods at all, or whether we should simply train more. To answer that question, here is a quick overview of how inference-time scaling methods can actually be stacked with reasoning-focused RL.",
+      );
+      const figure = screen.getByRole("img", { name: /readings of one run, every bar drawn from a common zero/ });
+      expect(follows(opening, figure)).toBe(true);
+      // The card holds only the bars: no "Act 2" lead-in inside it.
+      const card = figure.closest("figure")!;
+      expect(card.contains(opening)).toBe(false);
+      expect(card.textContent).not.toMatch(/Act 2|second storey/);
+    });
+
+    it("reads our run five ways from a common zero, never a waterfall", () => {
+      render(<Page13 />);
+      const figure = screen.getByRole("img", { name: /readings of one run, every bar drawn from a common zero/ });
+      // Author, 2026-11-06: one chain and a majority vote, each before and after training,
+      // then any of 32 right.
+      const labels = [
+        "before training",
+        "after training",
+        "majority vote, before training",
+        "majority vote, after training",
+        "any of 32 right",
+      ];
+      for (const label of labels) expect(within(figure).getByText(label)).toBeInTheDocument();
       const bars = Array.from(figure.querySelectorAll<HTMLElement>("div.absolute"));
       for (const bar of bars) {
         expect(bar.className).toContain("left-0");
         expect(bar.style.left).toBe("");
       }
-      expect(bars.map((b) => b.style.width)).toEqual(["12%", "74.4%", "83.3%", "93%", "71%", "86.7%"]);
-      expect(
-        screen.getByText(/the vote and the re-ranker each replace the single chain/),
-      ).toBeInTheDocument();
+      expect(bars.map((b) => b.style.width)).toEqual(["64.9%", "73.8%", "81.7%", "84.7%", "97.7%"]);
+      // Grey for the untrained model, the compute hue for the trained one.
+      expect(bars.map((b) => b.className.match(/bg-(grid|compute|correct)/)![1])).toEqual([
+        "grid",
+        "compute",
+        "grid",
+        "compute",
+        "correct",
+      ]);
     });
 
-    it("keeps the ablation as one short callout, the only place o3 appears", () => {
+    it("drops the caption and the trade callout under the bars", () => {
       render(<Page13 />);
-      expect(screen.getByText("One recipe, no domain tricks.")).toBeInTheDocument();
-      expect(screen.getByText(/beat the\s+hand-built specialist on its own contest/)).toBeInTheDocument();
-      expect(screen.getByText(/Stacking pays once; the knobs compound\./)).toBeInTheDocument();
-      const o3 = screen.getAllByText(/\bo3\b/);
-      expect(o3.map((el) => el.tagName)).toEqual(["STRONG"]);
-      expect(screen.queryByText(/96\.7/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/gold/)).not.toBeInTheDocument();
+      // Author, 2026-11-06: removed.
+      expect(screen.queryByText(/Every bar starts at zero, because the readings are alternatives/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Training is paid once; the vote is paid every time/)).not.toBeInTheDocument();
+      // The o1 bars and the o1-ioi / o3 callout are gone.
+      expect(screen.queryByText(/\bo3\b/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/o1-ioi/)).not.toBeInTheDocument();
+      expect(screen.queryByText("learned re-ranker")).not.toBeInTheDocument();
     });
   });
 
-  describe("section 5: the curve is portable", () => {
+  describe("section 5: data the model writes itself", () => {
     it("pins the distilled-model table to DeepSeek-AI 2025 Table 5", () => {
       expect(curves.deepseekDistill.points).toEqual([
         { x: 1.5, y: 28.9 },
@@ -376,22 +468,38 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       expect(p.gpt4oAime).toBe(9.3);
     });
 
-    it("answers whether the law needs a frontier-scale model", () => {
+    it("answers the bill and the finite stock of text with the run's own counts", () => {
       render(<Page13 />);
-      expect(screen.getByText("Does the law need one?")).toBeInTheDocument();
-      expect(screen.getByText(/lifting the curve took frontier-scale RL/)).toBeInTheDocument();
-      expect(screen.getByText(/The curve-lifting knob got cheap/)).toBeInTheDocument();
-      expect(screen.getByText(/someone still paid for\s+the RL once/)).toBeInTheDocument();
-      expect(screen.getByText(/a lifted curve fits in weights you can download/)).toBeInTheDocument();
-      expect(screen.getByText(/no RL and no reward, which is STaR's\s+recipe/)).toBeInTheDocument();
-      expect(screen.getByText(/One good reasoner now writes the\s+curriculum for everyone else/)).toBeInTheDocument();
+      expect(screen.getByText(/Qwen2\.5 was pre-trained on 18 trillion tokens/)).toBeInTheDocument();
+      const para = screen.getByText(/Reasoning-focused RL draws on neither/).textContent!;
+      // 400 steps x 16 questions over 2,538 kept questions; 8 chains each.
+      expect(para).toMatch(/reused 2,538 maths questions, each about 2\.5 times/);
+      expect(para).toMatch(/Every one of the 51,200 chains/);
+      expect(para).toMatch(/took 82 minutes on one GPU/);
+      expect(para).toMatch(/\$294,000 for R1's reasoning training/);
+      expect(para).toMatch(/about a twentieth of the \$5\.6 million/);
     });
 
-    it("names whose GPT-4o score each figure uses", () => {
+    it("states the two limits, then distillation as the payoff", () => {
       render(<Page13 />);
-      expect(
-        screen.getByText(/9\.3% is DeepSeek's measurement, where sections 2 and 4 use\s+OpenAI's 12%/),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/It has two limits/).textContent).toMatch(
+        /answers a program can check.*it adds no facts/s,
+      );
+      // Section 5b duplicates the opening sentence; section 5's copy carries R1's traces.
+      const [distill, dup] = screen.getAllByText(/What it does add is text/).map((e) => e.textContent!);
+      expect(dup).not.toMatch(/800K/);
+      expect(distill).toMatch(/about 800K reasoning traces/);
+      expect(distill).toMatch(/the same fine-tuning STaR uses and\s+no RL at all/);
+      expect(screen.getByText(/The RL is paid for once, by one model/)).toBeInTheDocument();
+      // The old framing is gone.
+      expect(screen.queryByText(/Does the law need one/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/curriculum for everyone else/)).not.toBeInTheDocument();
+    });
+
+    it("keeps the chart's disclosures in a margin note, not a caption", () => {
+      render(<Page13 />);
+      expect(screen.getByText(/9\.3% is\s+DeepSeek's measurement/)).toBeInTheDocument();
+      expect(screen.queryByText(/no RL and no reward, which is STaR's/)).not.toBeInTheDocument();
     });
 
     it("defaults the distill picker to Qwen-14B and updates on selection", () => {
@@ -423,18 +531,67 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
     });
   });
 
+  describe("section 5b: our distillation, a placeholder until the run exists", () => {
+    it("follows section 5 and carries the hand-off at its end", () => {
+      render(<Page13 />);
+      const s5 = screen.getByRole("heading", { level: 2, name: /^5\. Data the model writes itself/ });
+      const s5b = screen.getByRole("heading", { level: 2, name: /^5b\. Whose chains did the student read\?/ });
+      expect(follows(s5, s5b)).toBe(true);
+      expect(follows(s5b, screen.getByLabelText("Where this leaves us"))).toBe(true);
+      expect(s5b.textContent).toMatch(/placeholder · waiting on the distillation run/);
+    });
+
+    it("draws four empty students and no invented numbers", () => {
+      render(<Page13 />);
+      expect(DISTILL).toBeNull();
+      for (const name of [/^nothing/, /^its own chains/, /^1\.5B, before RL/, /^1\.5B, after RL/]) {
+        expect(screen.getByRole("button", { name })).toBeInTheDocument();
+      }
+      expect(screen.getAllByTestId("distill-empty-bar")).toHaveLength(4);
+      expect(screen.getByText(/accuracy not measured yet/)).toBeInTheDocument();
+      // The teacher rules are measured: the two-axis run's 1.5B before and after.
+      expect(screen.getByText("1.5B before RL · 64.9%")).toBeInTheDocument();
+      expect(screen.getByText("after · 73.8%")).toBeInTheDocument();
+    });
+
+    it("defaults to the after-RL chains and switches the readout with the dial", () => {
+      render(<Page13 />);
+      expect(screen.getByRole("button", { name: /^1\.5B, after RL/ })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText(/Of the teacher's \+8\.9\s+points from RL, the student kept/)).toBeInTheDocument();
+      expect(screen.getByTestId("distill-chain-placeholder")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /^nothing/ }));
+      expect(screen.getByText(/This student read nothing/)).toBeInTheDocument();
+      expect(screen.queryByText(/Of the teacher's/)).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: /^its own chains/ }));
+      expect(screen.getByText(/0\.5B trained on its own chains/)).toBeInTheDocument();
+      expect(screen.getByTestId("distill-chain-placeholder")).toBeInTheDocument();
+    });
+  });
+
   it("links every reference, each once, numbered by first appearance", () => {
     render(<Page13 />);
     const hrefs = [
-      "https://openai.com/index/learning-to-reason-with-llms/",
       "https://arxiv.org/abs/2501.12948",
       "https://arxiv.org/abs/2402.03300",
-      "https://arxiv.org/abs/2502.06807",
+      "https://arxiv.org/abs/2503.20783",
+      "https://arxiv.org/abs/2412.15115",
+      "https://www.nature.com/articles/s41586-025-09422-z",
+      "https://arxiv.org/abs/2412.19437",
     ];
     for (const href of hrefs) {
       expect(document.querySelectorAll(`a[href="${href}"]`)).toHaveLength(1);
     }
+    // o1's announcement and the o3 ablation went with the constructed surface and the o1 bars.
+    for (const gone of ["https://openai.com/index/learning-to-reason-with-llms/", "https://arxiv.org/abs/2502.06807"]) {
+      expect(document.querySelectorAll(`a[href="${gone}"]`)).toHaveLength(0);
+    }
     expect(screen.queryByText("preprint")).toBeNull();
+  });
+
+  it("offers the author's notebook beside the title", () => {
+    render(<Page13 />);
+    const link = screen.getByRole("link", { name: /Download the notebook \(ipynb, 0\.6 MB\)/ });
+    expect(link).toHaveAttribute("href", "/notebooks/page_13_two_axis_grpo.ipynb");
   });
 
   it("tags the page Act 3", () => {

@@ -10,6 +10,13 @@ describe("Page 12 (STaR and self-improvement)", () => {
     ).toBeInTheDocument();
   });
 
+  it("ties the self-written training set to the limited stock of human text", () => {
+    render(<Page12 />);
+    const para = screen.getByText("No human in the loop.").closest("p")!;
+    expect(para.textContent).toMatch(/questions and their answer keys are reused; the model writes\s+everything else/);
+    expect(para.textContent).toMatch(/without drawing on the\s+limited stock of human-written text that pre-training depends on/);
+  });
+
   it("runs STaR's filter over page 7's pile in section 2, with no Table 1 bar chart", () => {
     // Reduced motion, so Play shows the whole pass at once.
     const mm = window.matchMedia;

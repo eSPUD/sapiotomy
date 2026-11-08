@@ -1544,7 +1544,9 @@ export function Page12() {
             {PAGE12.hint ? (
               <>, {PAGE12.hint.recovered.length} more from rationalization</>
             ) : null}
-            .
+            . The questions and their answer keys are reused; the model writes
+            everything else. So the training set grows without drawing on the
+            limited stock of human-written text that pre-training depends on.
           </p>
         </section>
 

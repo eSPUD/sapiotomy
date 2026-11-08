@@ -1,0 +1,566 @@
+{
+ "source": {
+  "notebook": "page_13_two_axis_grpo.ipynb",
+  "sha256": "4b3b271e5b44933128566a6b72fe158cef1a8abf0d6c7fad0550e0c0af3caafe"
+ },
+ "run": {
+  "model": "Qwen/Qwen2.5-1.5B-Instruct",
+  "dataset": "GSM8K",
+  "gpu": "A100-80GB",
+  "full_finetune": true,
+  "rl_steps": 400,
+  "prompts_per_step": 16,
+  "chains_per_prompt": 8,
+  "learning_rate": 3e-06,
+  "filter_kept": 2538,
+  "filter_screened": 4000,
+  "train_minutes": 82.4,
+  "n_eval": 600,
+  "k": 32,
+  "temperature": 0.7,
+  "top_p": 0.95,
+  "max_tokens": 1024
+ },
+ "checkpoints": [
+  {
+   "step": 0,
+   "pass1": 0.649375,
+   "pass1_se": 0.013284,
+   "mean_len": 191.15,
+   "frac_truncated": 0.001406,
+   "maj": {
+    "1": 0.645,
+    "2": 0.645,
+    "4": 0.73,
+    "8": 0.78,
+    "16": 0.803333,
+    "32": 0.816667
+   },
+   "budget": {
+    "64": 0.101667,
+    "128": 0.28,
+    "256": 0.558333,
+    "512": 0.645,
+    "1024": 0.645
+   },
+   "pass_at_k_max": 0.972
+  },
+  {
+   "step": 25,
+   "pass1": 0.673698,
+   "pass1_se": 0.012839,
+   "mean_len": 218.6,
+   "frac_truncated": 0.001198,
+   "maj": {
+    "1": 0.648333,
+    "2": 0.648333,
+    "4": 0.738333,
+    "8": 0.78,
+    "16": 0.82,
+    "32": 0.83
+   },
+   "budget": {
+    "64": 0.058333,
+    "128": 0.171667,
+    "256": 0.53,
+    "512": 0.648333,
+    "1024": 0.648333
+   },
+   "pass_at_k_max": 0.97
+  },
+  {
+   "step": 50,
+   "pass1": 0.725677,
+   "pass1_se": 0.012923,
+   "mean_len": 235.24,
+   "frac_truncated": 0.000885,
+   "maj": {
+    "1": 0.715,
+    "2": 0.715,
+    "4": 0.805,
+    "8": 0.821667,
+    "16": 0.836667,
+    "32": 0.856667
+   },
+   "budget": {
+    "64": 0.023333,
+    "128": 0.13,
+    "256": 0.57,
+    "512": 0.711667,
+    "1024": 0.715
+   },
+   "pass_at_k_max": 0.968
+  },
+  {
+   "step": 100,
+   "pass1": 0.73224,
+   "pass1_se": 0.013072,
+   "mean_len": 229.54,
+   "frac_truncated": 0.001094,
+   "maj": {
+    "1": 0.741667,
+    "2": 0.741667,
+    "4": 0.791667,
+    "8": 0.83,
+    "16": 0.838333,
+    "32": 0.851667
+   },
+   "budget": {
+    "64": 0.025,
+    "128": 0.123333,
+    "256": 0.591667,
+    "512": 0.741667,
+    "1024": 0.741667
+   },
+   "pass_at_k_max": 0.97
+  },
+  {
+   "step": 200,
+   "pass1": 0.736354,
+   "pass1_se": 0.012995,
+   "mean_len": 226.46,
+   "frac_truncated": 0.000781,
+   "maj": {
+    "1": 0.736667,
+    "2": 0.736667,
+    "4": 0.793333,
+    "8": 0.833333,
+    "16": 0.851667,
+    "32": 0.855
+   },
+   "budget": {
+    "64": 0.025,
+    "128": 0.128333,
+    "256": 0.63,
+    "512": 0.735,
+    "1024": 0.736667
+   },
+   "pass_at_k_max": 0.97
+  },
+  {
+   "step": 400,
+   "pass1": 0.738437,
+   "pass1_se": 0.012952,
+   "mean_len": 225.28,
+   "frac_truncated": 0.001094,
+   "maj": {
+    "1": 0.741667,
+    "2": 0.741667,
+    "4": 0.798333,
+    "8": 0.833333,
+    "16": 0.843333,
+    "32": 0.846667
+   },
+   "budget": {
+    "64": 0.03,
+    "128": 0.138333,
+    "256": 0.623333,
+    "512": 0.74,
+    "1024": 0.741667
+   },
+   "pass_at_k_max": 0.977
+  }
+ ],
+ "train_log": [
+  {
+   "step": 5,
+   "reward": 0.5,
+   "length": 189.0
+  },
+  {
+   "step": 10,
+   "reward": 0.5641,
+   "length": 194.3
+  },
+  {
+   "step": 15,
+   "reward": 0.5672,
+   "length": 186.8
+  },
+  {
+   "step": 20,
+   "reward": 0.5766,
+   "length": 209.1
+  },
+  {
+   "step": 25,
+   "reward": 0.6625,
+   "length": 203.3
+  },
+  {
+   "step": 30,
+   "reward": 0.6047,
+   "length": 219.1
+  },
+  {
+   "step": 35,
+   "reward": 0.6562,
+   "length": 224.2
+  },
+  {
+   "step": 40,
+   "reward": 0.5859,
+   "length": 245.8
+  },
+  {
+   "step": 45,
+   "reward": 0.6203,
+   "length": 233.5
+  },
+  {
+   "step": 50,
+   "reward": 0.7031,
+   "length": 236.2
+  },
+  {
+   "step": 55,
+   "reward": 0.7,
+   "length": 245.4
+  },
+  {
+   "step": 60,
+   "reward": 0.6766,
+   "length": 243.4
+  },
+  {
+   "step": 65,
+   "reward": 0.7172,
+   "length": 230.8
+  },
+  {
+   "step": 70,
+   "reward": 0.7375,
+   "length": 243.4
+  },
+  {
+   "step": 75,
+   "reward": 0.6516,
+   "length": 250.9
+  },
+  {
+   "step": 80,
+   "reward": 0.7,
+   "length": 240.7
+  },
+  {
+   "step": 85,
+   "reward": 0.6656,
+   "length": 254.1
+  },
+  {
+   "step": 90,
+   "reward": 0.7,
+   "length": 246.5
+  },
+  {
+   "step": 95,
+   "reward": 0.7297,
+   "length": 254.2
+  },
+  {
+   "step": 100,
+   "reward": 0.7281,
+   "length": 221.2
+  },
+  {
+   "step": 105,
+   "reward": 0.6891,
+   "length": 240.3
+  },
+  {
+   "step": 110,
+   "reward": 0.725,
+   "length": 257.7
+  },
+  {
+   "step": 115,
+   "reward": 0.7516,
+   "length": 238.0
+  },
+  {
+   "step": 120,
+   "reward": 0.75,
+   "length": 254.6
+  },
+  {
+   "step": 125,
+   "reward": 0.7484,
+   "length": 238.0
+  },
+  {
+   "step": 130,
+   "reward": 0.7594,
+   "length": 242.3
+  },
+  {
+   "step": 135,
+   "reward": 0.7906,
+   "length": 238.4
+  },
+  {
+   "step": 140,
+   "reward": 0.7047,
+   "length": 243.0
+  },
+  {
+   "step": 145,
+   "reward": 0.7266,
+   "length": 246.7
+  },
+  {
+   "step": 150,
+   "reward": 0.75,
+   "length": 251.5
+  },
+  {
+   "step": 155,
+   "reward": 0.7125,
+   "length": 246.2
+  },
+  {
+   "step": 160,
+   "reward": 0.7375,
+   "length": 243.1
+  },
+  {
+   "step": 165,
+   "reward": 0.7641,
+   "length": 227.3
+  },
+  {
+   "step": 170,
+   "reward": 0.7781,
+   "length": 240.8
+  },
+  {
+   "step": 175,
+   "reward": 0.725,
+   "length": 237.0
+  },
+  {
+   "step": 180,
+   "reward": 0.7375,
+   "length": 250.5
+  },
+  {
+   "step": 185,
+   "reward": 0.8047,
+   "length": 222.8
+  },
+  {
+   "step": 190,
+   "reward": 0.7312,
+   "length": 234.1
+  },
+  {
+   "step": 195,
+   "reward": 0.7547,
+   "length": 254.9
+  },
+  {
+   "step": 200,
+   "reward": 0.7578,
+   "length": 230.0
+  },
+  {
+   "step": 205,
+   "reward": 0.8344,
+   "length": 232.2
+  },
+  {
+   "step": 210,
+   "reward": 0.7828,
+   "length": 235.4
+  },
+  {
+   "step": 215,
+   "reward": 0.7578,
+   "length": 231.3
+  },
+  {
+   "step": 220,
+   "reward": 0.7406,
+   "length": 236.9
+  },
+  {
+   "step": 225,
+   "reward": 0.7312,
+   "length": 240.6
+  },
+  {
+   "step": 230,
+   "reward": 0.6891,
+   "length": 238.0
+  },
+  {
+   "step": 235,
+   "reward": 0.7,
+   "length": 253.5
+  },
+  {
+   "step": 240,
+   "reward": 0.7422,
+   "length": 231.5
+  },
+  {
+   "step": 245,
+   "reward": 0.7297,
+   "length": 223.7
+  },
+  {
+   "step": 250,
+   "reward": 0.7063,
+   "length": 243.4
+  },
+  {
+   "step": 255,
+   "reward": 0.7328,
+   "length": 242.0
+  },
+  {
+   "step": 260,
+   "reward": 0.7281,
+   "length": 240.7
+  },
+  {
+   "step": 265,
+   "reward": 0.7609,
+   "length": 233.7
+  },
+  {
+   "step": 270,
+   "reward": 0.7438,
+   "length": 245.8
+  },
+  {
+   "step": 275,
+   "reward": 0.7672,
+   "length": 229.7
+  },
+  {
+   "step": 280,
+   "reward": 0.7516,
+   "length": 229.0
+  },
+  {
+   "step": 285,
+   "reward": 0.7656,
+   "length": 240.6
+  },
+  {
+   "step": 290,
+   "reward": 0.7078,
+   "length": 237.5
+  },
+  {
+   "step": 295,
+   "reward": 0.7156,
+   "length": 244.6
+  },
+  {
+   "step": 300,
+   "reward": 0.7391,
+   "length": 236.7
+  },
+  {
+   "step": 305,
+   "reward": 0.7297,
+   "length": 242.5
+  },
+  {
+   "step": 310,
+   "reward": 0.7156,
+   "length": 243.2
+  },
+  {
+   "step": 315,
+   "reward": 0.7719,
+   "length": 232.4
+  },
+  {
+   "step": 320,
+   "reward": 0.7688,
+   "length": 230.7
+  },
+  {
+   "step": 325,
+   "reward": 0.7594,
+   "length": 242.2
+  },
+  {
+   "step": 330,
+   "reward": 0.7312,
+   "length": 238.0
+  },
+  {
+   "step": 335,
+   "reward": 0.7188,
+   "length": 252.7
+  },
+  {
+   "step": 340,
+   "reward": 0.7219,
+   "length": 240.8
+  },
+  {
+   "step": 345,
+   "reward": 0.7594,
+   "length": 231.8
+  },
+  {
+   "step": 350,
+   "reward": 0.7297,
+   "length": 241.1
+  },
+  {
+   "step": 355,
+   "reward": 0.7797,
+   "length": 232.9
+  },
+  {
+   "step": 360,
+   "reward": 0.7656,
+   "length": 231.3
+  },
+  {
+   "step": 365,
+   "reward": 0.7063,
+   "length": 236.3
+  },
+  {
+   "step": 370,
+   "reward": 0.7328,
+   "length": 230.2
+  },
+  {
+   "step": 375,
+   "reward": 0.7344,
+   "length": 249.7
+  },
+  {
+   "step": 380,
+   "reward": 0.7656,
+   "length": 227.9
+  },
+  {
+   "step": 385,
+   "reward": 0.6797,
+   "length": 242.4
+  },
+  {
+   "step": 390,
+   "reward": 0.7281,
+   "length": 234.4
+  },
+  {
+   "step": 395,
+   "reward": 0.7156,
+   "length": 238.2
+  },
+  {
+   "step": 400,
+   "reward": 0.7219,
+   "length": 242.9
+  }
+ ]
+}
