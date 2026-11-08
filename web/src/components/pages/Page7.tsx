@@ -4,35 +4,30 @@
  * Page 7, "Frequency Voting" — page 6 made one chain longer. This page runs the
  * chain many times and keeps the answer the most chains agree on.
  *
- * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED. Nothing is redrawn from a
- * paper and nothing is simulated. The source is one run of
- * `notebooks/page_07_frequency_voting.ipynb` — Qwen2.5-3B-Instruct at bf16,
- * MATH-500 levels 4 and 5, the same 100 paired items pages 5 and 6 use, 16
- * sampled chains per problem, 5,920 generations. Its `derived.json` is committed
- * verbatim to `web/data/page-07-derived.json` and loaded through `@/lib/page07`,
- * which reads the run's `claims` gates BEFORE any number and throws if a
- * blocking one is false. No inference runs at demonstration time.
+ * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED, except step 1's classroom,
+ * which is an illustration and says so. Nothing is redrawn from a paper and
+ * nothing is simulated. The source is one run of
+ * `notebooks/page_7_frequency_voting_new.ipynb` — Qwen2.5-3B-Instruct at bf16,
+ * 100 MATH-500 problems drawn at random within each level (all five, in the
+ * 500's proportions), 16 chains per problem at each of 12 temperatures, 0.0 to
+ * 1.1, every chain capped at 2,048 tokens and left to stop where it stops: no
+ * forced answer, a chain with no boxed answer casts no vote.
+ * `notebooks/page_7_site_data.py` turns the saved chains into
+ * `web/data/page-07-run.json`, loaded through `@/lib/page07`, which checks the
+ * run's aggregates against each other and throws on a mismatch. No inference
+ * runs at demonstration time.
  *
- * WHAT THE OLD PAGE DID THAT THIS ONE MUST NOT. The previous build simulated the
- * vote with `CHAMBER_MODEL` (a Monte Carlo tuned to land on Wang et al.'s
- * published GSM8K curve) over four hand-authored "misreadings" in
- * `SAMPLING_CHAMBER`, and its temperature dial was explicitly modelled because
- * temperature appears in no reported number. All three are gone. Do not
- * reintroduce `lib/sim` or `lib/authored` here.
+ * THESE 100 PROBLEMS ARE NOT PAGES 5 AND 6'S. Those are MATH-500 levels 4 and 5;
+ * this run covers every level, so greedy decoding scores 68% here and the numbers
+ * do not pair with theirs. Page 16 reads this page's lines and page 8 opens on
+ * its handoff, so both have to be re-read against this run.
  *
- * THE HEADLINE, AND THE TRAP IN IT. Bare chain of thought is ONE GREEDY CHAIN —
- * page 5's `bare` condition, page 6's top rung, 43% on these items. The vote over
- * 16 sampled chains solves 55%: +12 points, p = 0.0075. Against one SAMPLED
- * chain the same vote gains only 4 points and does not resolve (p = 0.39),
- * because sampling at T=0.3 is already worth something on its own. The page
- * leads on the greedy contrast because that is what "improves on chain of
- * thought" means here, and the sampled contrast is the guard on it: a reader
- * who takes the 12 without it credits all of it to counting. The guard was a
- * margin note, then a sentence beside the +12; since 2026-10-11 the FIGURE
- * carries it. Figure 2's vote line starts at one sampled chain, above the flat
- * greedy line before any vote is taken, and the readout at one chain says so.
- * The p = 0.39 that says the rest does not resolve is in the download. Keep the
- * vote line starting at N = 1 and keep that readout, or the guard is gone.
+ * THE HEADLINE, AND THE TRAP IN IT. Bare chain of thought is ONE GREEDY CHAIN,
+ * the dashed line. The vote over 16 sampled chains at the best temperature
+ * solves more, but one SAMPLED chain already sits a point above the greedy line
+ * before any vote is taken, so not all of the gain is counting. The FIGURE
+ * carries that guard: the vote line starts at one sampled chain and the readout
+ * there says so. Keep the vote line starting at N = 1 and keep that readout.
  *
  * Layout: pages 5 and 6's shell. One reading column of numbered steps, each
  * beside its own margin note. Every step that carries a figure opens on a
@@ -65,45 +60,41 @@
  *   subject.
  *
  *   Step 2 — figure 1, the pile. Two problems, the vote coming out right and the
- *   vote tying with the truth among the chains (the author cut a third, the vote
- *   coming out wrong, on 2026-10-11), each with 16 chains tallied into a ranked
- *   histogram. Since 2026-11-05 that tally is the step's ONE figure (author): the
- *   temperature heat map and the shape stat (9.9 of 16 votes, 5.1 distinct
- *   answers) are cut, since step 3 says the same in aggregate. The chains are
- *   folded until a row is clicked, and clicking the open row folds it again; the
- *   arrows step only within the open answer. Each chain shows its opening and its
- *   ending with the middle folded, because chains run to 272 lines and the ending
- *   is what a reader is looking for. The run's `errors_are_diffuse` gate is FALSE
- *   at a 50% threshold, so no sentence may say wrong answers all disagree or that
- *   chains sharing a wrong answer made different mistakes. Do not bucket the
- *   singletons.
+ *   vote tying with the truth among the chains, each with 16 chains tallied into a
+ *   ranked histogram. Both are DRAWN at random by the builder from stated pools at
+ *   the best temperature (`showcase.rule`), never picked: a tie is rare (three
+ *   problems qualified), so a regenerated run may draw different ones. The tally is
+ *   the step's ONE figure. The chains are folded until a row is clicked, and
+ *   clicking the open row folds it again; the arrows step only within the open
+ *   answer. Each chain shows its opening and its ending with the middle folded,
+ *   because the ending is what a reader is looking for. A chain that hit the cap
+ *   just stops, with no answer, and says so. Do not claim wrong answers all
+ *   disagree, or that chains sharing a wrong answer made different mistakes: neither
+ *   is measured. Do not bucket the singletons.
  *
- *   Step 3 — figure 2, what the vote buys. Accuracy against N, built by
- *   subsampling one pile so chain length is fixed. The figure opens on two lines,
- *   the vote rising off the flat greedy chain, and the intro names both. The
- *   third, "at least one chain is right", and the band between it and the vote
- *   (what the rule discards, page 8's ceiling arriving early) are behind a
- *   toggle. The widget holds the chart, its slider, a one-sentence readout and
- *   that toggle, and nothing else: the figure carries the step. The temperature-0
- *   line is FLAT by construction and that is the page's cleanest proof that the
- *   vote needs diversity: sixteen identical chains are step 1's class that
- *   "copied one student's working". THE DIP AT N=2 IS REAL AND MUST
- *   BE EXPLAINED, not smoothed: with two chains a disagreement is a tie, a tie is
- *   not a vote, and 52% of N=2 votes tie.
+ *   Step 3 — temperature, then what the vote buys. A bar per temperature (how many
+ *   different answers 16 chains give), then accuracy against N, built by
+ *   subsampling the 16 chains so chain length is fixed. Every sampled temperature is
+ *   a line behind one band; the picked one is drawn on top. The third line, "at
+ *   least one chain is right", and the band between it and the vote (what the rule
+ *   discards, page 8's ceiling arriving early) are behind a toggle. The widget holds
+ *   the chart, its slider, a one-sentence readout and that toggle, and nothing else.
+ *   The temperature-0 line is FLAT by construction and that is the page's cleanest
+ *   proof that the vote needs diversity: sixteen identical chains are step 1's class
+ *   that "copied one student's working". THE DIP AT N=2 IS REAL AND MUST BE
+ *   EXPLAINED, not smoothed: with two chains a disagreement is a tie, a tie is not a
+ *   vote, and the readout says how many votes tie.
  *
- *   Step 4 — the split, and it is the honest half. At a FIXED budget, splitting
- *   loses: 46% / 35% / 8% at N = 1 / 4 / 16. `splitting_a_fixed_budget_pays` is
- *   false and the page says so, but says WHY, because "splitting loses" alone
- *   reads as "voting loses", which step 3 disproves. The cause is the cap: the
- *   cut-off column runs 1% / 55% / 100%, so at N=16 every chain is force-answered
- *   mid-thought and page 6 measured a chain that short at 7% alone. The table
- *   groups its headers because that column is a property of the run and not a
- *   score, and three bare percentages in a row invite reading it as one.
- *   The N=1 row is the control: the cap barely binds, so both runs ARE the same
- *   run and report the same 46%.
+ *   Step 4 — what the vote costs, in tokens: every chain written for the first
+ *   problem drawn as long as its tokens, the one greedy chain beside the sixteen, and
+ *   the averages over all 100 problems in the sentence under it. Tokens only. The
+ *   sentence about wall-clock time (16 chains taking far less than 16 times as long
+ *   as one, because the GPU writes them side by side) was cut on 2026-11-07: it was
+ *   measured on the old run's problems at T = 0.3 and needs a timing run on this
+ *   one before it comes back.
  *
- *   Step 5 — one number, no figure: 23% of problems where the model produced the
- *   right answer and the vote threw it away. That is page 8's whole subject and
+ *   Step 5 — one number, no figure: the share of problems where the model produced
+ *   the right answer and the vote threw it away. That is page 8's whole subject and
  *   it is deliberately not drawn here (see docs/page_8_refactor.md).
  *
  * The apparatus is in the margin, not in a footer. The three-paragraph tail this
@@ -120,10 +111,9 @@
  * carry `lg:col-start-1`, or the next one flows into the note column.
  *
  * Load-bearing and easy to lose:
- *   · the temperature figures (section 2's heat map, section 3's lines and the bar
- *     figure under them) all read the temperature sweep, and say how many problems it
- *     covers (40 of the 100 until the 100-problem run lands). The bars are a count of
- *     answers, not an accuracy, and the caption must keep saying so.
+ *   · the temperature figures (section 3's bars and lines) all read the temperature
+ *     sweep, and the chart says how many problems it covers. The bars are a count of
+ *     answers, not an accuracy, and the axis must keep saying so.
  *   · Wang et al. is cited for the TECHNIQUE. No cite may carry one of our
  *     numbers.
  */
@@ -136,13 +126,10 @@ import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
 import { ACTS, getPage } from "@/lib/pages";
 import {
-  GREEDY_SPECIMENS,
   PAGE7,
-  TIMING,
   type SweepPoint,
   chainsFor,
   foldTrace,
-  pLabel,
   pct,
   tidyMath,
   tokens,
@@ -155,7 +142,6 @@ import { useStore } from "@/store/useStore";
 const PAGE_N = 7;
 const F1 = PAGE7.figure1;
 const H = PAGE7.handoff;
-const M = PAGE7.manifest;
 
 const NOTEBOOK_ZIP = "/notebooks/page-07-frequency-voting.zip";
 const NOTEBOOK_SIZE = "7.5 MB";
@@ -167,7 +153,7 @@ const NOTEBOOK_SIZE = "7.5 MB";
    the apparatus — precision, top-p, run id, date, the item hash — is in the
    download on the top line. */
 const BENCHMARK = "MATH-500";
-const LEVELS = "levels 4 and 5";
+const LEVELS = "levels 1 to 5";
 /** Figure 2's x axis, and the control that moves along it. */
 const N_LABEL = "# of sampled chains";
 
@@ -332,15 +318,15 @@ function ProblemPicker({ value, onChange }: { value: number; onChange: (i: numbe
 /** The row a problem opens on: its correct answer, or the top row if none is right. */
 
 /** How this problem's vote came out, read off the run, for the specimen card. */
-function outcomeLine(outcome: ShowcaseOutcome, p: Problem): string {
+function outcomeLine(outcome: ShowcaseOutcome, p: Problem, pool: number): string {
   const top = p.ranked[0];
   const chains = (n: number) => (n === 1 ? "1 chain" : `${n} chains`);
   const truth = p.ranked.find((r) => r.correct)?.votes ?? 0;
   if (outcome === "right") {
-    return `the vote returns ${tidyMath(top.answer)} on ${top.votes} of ${p.chains.length} chains and it is right · picked from ${F1.n_candidates} problems that qualified`;
+    return `the vote returns ${tidyMath(top.answer)} on ${top.votes} of ${p.chains.length} chains and it is right · drawn at random from ${pool} problems like it`;
   }
   const tied = p.ranked.filter((r) => r.votes === top.votes).length;
-  return `${tied} answers tie at ${chains(top.votes)} each, so the vote returns nothing · the right answer came back from ${chains(truth)}`;
+  return `${tied} answers tie at ${chains(top.votes)} each, so the vote returns nothing · the right answer came back from ${chains(truth)} · drawn at random from ${pool} problems like it`;
 }
 
 /**
@@ -445,14 +431,14 @@ function Tally({
 
 /* --------------------------------------------------------- the heat map */
 
-const HM = F1.heatmap;
+const HM = PAGE7.sweep;
 /** One decimal for every temperature but zero, so 1.0 reads like its neighbours. */
 const tLabel = (t: number) => (t === 0 ? "0" : t.toFixed(1));
 
-/* Section 3 reads the same sweep: a line per temperature over the N axis. Temperature 0
-   is one greedy chain copied, so its line is the flat baseline, not one of the voting
-   lines. The page says how many problems the sweep covers (40 for now; 100 when the
-   overnight extension lands), so the chart and its prose always describe the same run. */
+/* Section 3 reads the temperature sweep: a line per temperature over the N axis. Temperature
+   0 is one greedy chain copied, so its line is the flat baseline, not one of the voting
+   lines. The chart says how many problems the sweep covers, so the chart and its prose
+   always describe the same run. */
 const sweepLine = (t: number): SweepPoint[] => HM.curves[t.toFixed(1)];
 /* Every temperature of the sweep, T = 0 included: its line is the greedy chain (16
    identical chains vote exactly as one does), so it lies on the dashed baseline. */
@@ -460,7 +446,7 @@ const SWEEP_TEMPS = HM.temperatures;
 /** The temperatures section 3's band spans: every sampled one (T = 0 is the greedy line). */
 const BAND_TEMPS = SWEEP_TEMPS.filter((t) => t > 0);
 const GREEDY = sweepLine(0)[0].accuracy;
-const SWEEP_PROBLEMS = HM.problems.length;
+const SWEEP_PROBLEMS = HM.n_problems;
 /* Read off the sweep for section 3's bridge: the temperatures tied with the best (the
    page says so rather than naming one winner). */
 const SWEEP_BY_T = [...HM.summary].sort((a, b) => a.temperature - b.temperature);
@@ -853,8 +839,7 @@ function Columns({
  * shows accuracy, and the averages over every problem are in the sentence under it.
  */
 function CostFigure() {
-  const problem = F1.showcase[0].problem;
-  const greedy = GREEDY_SPECIMENS.get(problem.problem_id)!;
+  const { problem, greedy } = F1.showcase[0];
   const chains = problem.chains;
   const cap = problem.chain_cap;
   const total = chains.reduce((s, c) => s + c.own_tokens, 0);
@@ -935,15 +920,14 @@ export function Page7() {
 
   const shown = F1.showcase[problemIx];
   const s = shown.problem;
+  const noAnswer = s.chains.filter((c) => c.vote_key === null).length;
   const openRow = open === null ? null : (s.ranked.find((r) => r.answer === open) ?? null);
   const rowChains = openRow ? chainsFor(s, openRow.answer) : [];
   const chain = rowChains[chainIx];
   // Section 4's numbers: the best temperature's vote at the most chains against one
-  // greedy chain, in tokens per problem, and the two timed arms.
+  // greedy chain, in tokens per problem.
   const costTop = sweepLine(HM.best_temperature)[HM.n_axis.length - 1];
   const greedyTokens = sweepLine(0)[0].mean_tokens;
-  const tokenRatio = TIMING.vote.tokens / TIMING.greedy.tokens;
-  const timeRatio = TIMING.vote.seconds / TIMING.greedy.seconds;
 
   // Clicking a row opens its first chain; clicking the open row folds it again.
   const pick = (answer: string) => {
@@ -1045,12 +1029,22 @@ export function Page7() {
             <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(s.question)}</p>
             <p className="font-mono text-xs text-ink-muted">
               {BENCHMARK}, level {s.level} · the answer is {tidyMath(s.ground_truth)} ·{" "}
-              {outcomeLine(shown.outcome, s)}
+              {outcomeLine(shown.outcome, s, shown.pool_size)}
             </p>
 
             {/* The invitation is the last line of the step's intro, directly above this
                 card. It used to be repeated here, near-verbatim. */}
             <Tally problem={s} onOpen={pick} open={open} />
+            {/* A chain that hit the cap wrote no answer, so it is on no row and cast no vote. */}
+            {noAnswer > 0 ? (
+              <p data-testid="no-answer" className="font-mono text-xs text-ink-muted">
+                {noAnswer === 1 ? "1 chain" : `${noAnswer} chains`}{" "}
+                {s.chains.every((c) => c.vote_key !== null || c.truncated)
+                  ? `hit the ${tokens(s.chain_cap)}-token cap and wrote no answer`
+                  : "wrote no answer"}
+                , so {noAnswer === 1 ? "it casts" : "they cast"} no vote
+              </p>
+            ) : null}
 
             {/* The chains stay folded until a row is clicked (author, 2026-11-05: section 2
                 down to one figure, the tally). */}
@@ -1103,7 +1097,7 @@ export function Page7() {
               <div className="flex flex-col gap-1">
                 <p className="font-mono text-xs text-ink-muted">
                   {tokens(chain.own_tokens)} tokens
-                  {chain.truncated ? " · hit its cap and was made to commit" : ""}
+                  {chain.truncated ? " · hit its cap and stopped" : ""}
                 </p>
                 {/* Keyed on the chain so the next one opens folded again. */}
                 <ChainText key={`${problemIx}-${chain.sample_index}`} chain={chain} />
@@ -1271,10 +1265,7 @@ export function Page7() {
             {costTop.n} chains write {tokens(costTop.mean_tokens)} tokens per problem, against{" "}
             {tokens(greedyTokens)} for one greedy chain, about{" "}
             {Math.round(costTop.mean_tokens / greedyTokens)} times as many, to go from{" "}
-            {pct(GREEDY)} to {pct(costTop.accuracy)}. Tokens are not the same as time, though.
-            Timed on one GPU, {TIMING.vote.chains_per_problem} chains wrote{" "}
-            {Math.round(tokenRatio)} times the tokens of one greedy chain but took only{" "}
-            {Math.round(timeRatio)} times as long, because the GPU writes the chains side by side.
+            {pct(GREEDY)} to {pct(costTop.accuracy)}.
           </p>
         </section>
         {/* Step 5. Page 12's closing shape: prose at full width in the reading
