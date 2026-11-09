@@ -202,15 +202,19 @@ describe("Page 16 (wrap-up) component", () => {
       expect(link).toHaveAttribute("download");
       expect(link.getAttribute("aria-label")).toContain(n.size);
     }
-    // Page 5's link is its author's two notebooks in one zip, the same file page 5 offers.
-    const p5 = screen.getByRole("link", { name: /^Page 5:/ });
-    expect(p5).toHaveAttribute("href", "/notebooks/page-05-chain-of-thought.zip");
-    expect(p5.getAttribute("aria-label")).toMatch(/Download the notebooks, zip, 62 KB$/);
+    // Page 5 offers its author's two notebooks as plain files, the same ones page 5 links.
+    const p5 = screen.getAllByRole("link", { name: /^Page 5:/ });
+    expect(p5.map((a) => a.getAttribute("href"))).toEqual([
+      "/notebooks/5_CoT_ZeroShot-vs-FewShot.ipynb",
+      "/notebooks/5_CoT_BaseFewShot-vs-Instruct.ipynb",
+    ]);
+    expect(p5[0].getAttribute("aria-label")).toMatch(/Download the notebook, ipynb, 228 KB$/);
+    expect(p5[1].getAttribute("aria-label")).toMatch(/Download the notebook, ipynb, 908 KB$/);
     // Derived from the ladder, so a rung can never quietly outlive its source.
     const pages = [...new Set(LADDER.map((r) => r.page))].sort((a, b) => a - b);
-    expect(NOTEBOOKS.map((n) => n.page)).toEqual(pages);
+    expect([...new Set(NOTEBOOKS.map((n) => n.page))]).toEqual(pages);
     // They belong above the chart, not between the chart and the conclusions.
-    const first = screen.getByRole("link", { name: new RegExp(`Page ${NOTEBOOKS[0].page}:`, "i") });
+    const first = screen.getAllByRole("link", { name: new RegExp(`Page ${NOTEBOOKS[0].page}:`, "i") })[0];
     const chart = screen.getByRole("img", { name: /What each lever scored/i });
     expect(first.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

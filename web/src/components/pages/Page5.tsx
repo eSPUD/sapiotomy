@@ -13,8 +13,8 @@
  *
  * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED, by notebooks greedy at bf16
  * and graded on the first \boxed{} with math_verify. Sections 2 and 3's few-shot
- * side: `page_5_zero_vs_ten_shot.ipynb` (base Qwen2.5 1.5B, 3B, 7B; zero-shot
- * and 10-shot; 2,048-token limit; 200 random problems), in
+ * side: `5_CoT_ZeroShot-vs-FewShot.ipynb` (base Qwen2.5 1.5B, 3B, 7B; zero-shot
+ * and 10-shot; 2,048-token limit; 480 random problems), in
  * `web/data/page-05-few-shot.json`. Section 3's instruct side:
  * `page_5_instruct_reasoning.ipynb` (Qwen2.5-Instruct 1.5B, 3B, 7B; reasoning and
  * final answer only; 1,024-token limit; tallied on 495 problems), via
@@ -40,12 +40,12 @@
  *
  *   Step 2 (rebuilt 2026-11-08, author): figure 2, a simple vertical bar chart of
  *   that notebook's results: Qwen2.5 1.5B, 3B and 7B, each zero-shot and with
- *   10 worked examples, on its own 200 random problems, not the 495 below.
+ *   10 worked examples, on its own 480 random problems, not the 495 below.
  *   Shashank's two sentences follow the figure; the rest of the prose is a stand-in
  *   to iterate on.
  *
  *   Step 3: figure 3, the instruct models with no examples (495 problems) against
- *   the base models with ten (that run's 200: author, 2026-11-08, few-shot
+ *   the base models with ten (that run's 480: author, 2026-11-08, few-shot
  *   numbers only). Its opening says what an instruct model is and follows from
  *   step 2 (author, 2026-10-18); the figure's legend gives each side's prompt
  *   length. ANY DISCUSSION OF THE RESULTS STILL WAITS FOR THE AUTHOR (handoff,
@@ -55,7 +55,8 @@
  *   answer only) moved verbatim to page 15's step 1 (author, 2026-11-08).
  *
  * Load-bearing and easy to lose:
- *   · the notebook download: one zip of the two notebooks, beside the title.
+ *   · the notebook downloads: two direct .ipynb links, no zip, beside the title,
+ *     each file keeping the name the author gave it.
  *   · the conditions are named plainly: no euphemism ("left alone", "forbidden to
  *     reason") may come back.
  *   · the worked solutions are ours, "written for this experiment, expanding
@@ -103,13 +104,14 @@ const pts = (a: number, b: number) => (Math.round(a * 1000) - Math.round(b * 100
 const ptsLabel = (a: number, b: number) => pts(a, b).toFixed(1);
 
 /**
- * The download: one zip of the page's two notebooks, page_5_zero_vs_ten_shot.ipynb
- * (base) and page_5_instruct_reasoning.ipynb (instruct). The retired run's bundle, with
- * harness.py and its 900 traces, stays in public/notebooks for
- * build_trace_report.py and notebookBundles.test.ts.
+ * The downloads: the author's two notebooks as plain files, named as the author
+ * named them. The retired run's bundle, with harness.py and its 900 traces, stays
+ * in public/notebooks for build_trace_report.py and notebookBundles.test.ts.
  */
-const NOTEBOOK_HREF = "/notebooks/page-05-chain-of-thought.zip";
-const NOTEBOOK_SIZE = "62 KB";
+const NOTEBOOK_LINKS = [
+  { label: "zero-shot vs few-shot", href: "/notebooks/5_CoT_ZeroShot-vs-FewShot.ipynb", size: "228 KB" },
+  { label: "base few-shot vs instruct", href: "/notebooks/5_CoT_BaseFewShot-vs-Instruct.ipynb", size: "908 KB" },
+];
 
 /**
  * Numbered in order of first appearance. Wei and Kojima are cited for the
@@ -525,7 +527,11 @@ export function Page5() {
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_HREF} size={NOTEBOOK_SIZE} format="notebooks" />
+        <div className="flex flex-wrap items-center gap-2">
+          {NOTEBOOK_LINKS.map((n) => (
+            <NotebookDownload key={n.href} href={n.href} size={n.size} label={n.label} />
+          ))}
+        </div>
       </div>
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">

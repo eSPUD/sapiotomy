@@ -307,13 +307,16 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
 
 
 describe("Page 5: provenance and what the page may claim", () => {
-  it("links the two notebooks as one zip, beside the title", () => {
+  it.each([
+    ["zero-shot vs few-shot", "5_CoT_ZeroShot-vs-FewShot.ipynb", "228 KB"],
+    ["base few-shot vs instruct", "5_CoT_BaseFewShot-vs-Instruct.ipynb", "908 KB"],
+  ])("links the %s notebook directly, beside the title", (label, file, size) => {
     render(<Page5 />);
-    const link = screen.getByRole("link", { name: /download the notebooks/i });
-    expect(link).toHaveAttribute("href", "/notebooks/page-05-chain-of-thought.zip");
-    expect(link).toHaveTextContent("Download the notebooks (zip, 62 KB)");
+    const link = screen.getByRole("link", { name: new RegExp(`download the ${label} notebook`, "i") });
+    expect(link).toHaveAttribute("href", `/notebooks/${file}`);
+    expect(link).toHaveTextContent(`Download the ${label} notebook (ipynb, ${size})`);
     expect(link).toHaveAttribute("download");
-    expect(link.parentElement?.querySelector("h1")).toBe(screen.getByRole("heading", { level: 1 }));
+    expect(link.parentElement?.parentElement?.querySelector("h1")).toBe(screen.getByRole("heading", { level: 1 }));
   });
 
   it("says reasoning and non-reasoning, never the old euphemisms", () => {

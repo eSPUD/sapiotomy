@@ -287,17 +287,18 @@ export function Page16() {
           <span className="text-xs text-ink-muted">the runs behind the chart:</span>
           {NOTEBOOKS.map((n) => (
             <a
-              key={n.page}
+              key={n.href}
               href={n.href}
               download
               aria-label={`Page ${n.page}: ${n.title}. ${
-                n.format === "notebooks"
-                  ? `Download the notebooks, zip, ${n.size}`
+                n.format === "ipynb"
+                  ? `Download the notebook, ipynb, ${n.size}`
                   : `Download the notebook and traces, zip, ${n.size}`
               }`}
               className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
             >
-              page {n.page} ({n.size}) ↓
+              page {n.page}
+              {n.format === "ipynb" ? `, ${n.title.toLowerCase()}` : ""} ({n.size}) ↓
             </a>
           ))}
         </div>

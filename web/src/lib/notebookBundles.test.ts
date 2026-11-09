@@ -38,7 +38,7 @@ const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
  */
 const PAGES = [
   // The retired page 5 run. Page 5 no longer links this bundle: pages 5 and 16 offer
-  // the page's two notebooks in one zip, checked below. The bundle stays on disk
+  // the page's two notebooks as plain files, checked below. The bundle stays on disk
   // because notebooks/build_trace_report.py reads its traces, and page 16's ladder
   // still plots its data, so it is still checked here, with no declared size.
   { n: 5, slug: "page-05-how-to-reason", notebook: "page_05_how_to_reason.ipynb",
@@ -195,36 +195,30 @@ describe.each(PAGES)("page $n's notebook bundle", ({
   });
 });
 
-// Page 5 ships its two notebooks, base (few-shot) and instruct, in one zip with no
-// traces, so it is not a bundle in the sense above. Both notebooks also sit in
-// public/notebooks as plain files, and the zip must carry exactly those bytes, which
-// are the repo's notebooks (the traces live in notebooks/traces/page_5).
-describe("page 5's two-notebook zip", () => {
-  const slug = "page-05-chain-of-thought";
-  const notebooks = ["page_5_instruct_reasoning.ipynb", "page_5_zero_vs_ten_shot.ipynb"];
+// Page 5 ships its two notebooks as plain .ipynb files with no traces, so they are not
+// bundles in the sense above. Each served file must be the repo's, byte for byte.
+describe("page 5's two notebooks", () => {
+  const notebooks = [
+    { file: "5_CoT_BaseFewShot-vs-Instruct.ipynb", declared: "908 KB" },
+    { file: "5_CoT_ZeroShot-vs-FewShot.ipynb", declared: "228 KB" },
+  ];
 
-  it("exists, and the size on the page is the size on disk", () => {
-    expect(`${Math.round(statSync(zipPath(slug)).size / 1e3)} KB`).toBe("62 KB");
+  it.each(notebooks)("$file: the size on the page is the size on disk", ({ file, declared }) => {
+    expect(`${Math.round(statSync(resolve(WEB, `public/notebooks/${file}`)).size / 1e3)} KB`).toBe(declared);
   });
 
-  it("unpacks into one folder holding the two notebooks and nothing else", () => {
-    expect(entries(slug).sort()).toEqual(notebooks.map((nb) => `${slug}/${nb}`));
+  it.each(notebooks)("$file: public/notebooks serves the repo's copy", ({ file }) => {
+    const served = readFileSync(resolve(WEB, `public/notebooks/${file}`));
+    expect(served.equals(readFileSync(resolve(WEB, `../notebooks/${file}`)))).toBe(true);
   });
 
-  it("carries the same notebooks that public/notebooks serves, which are the repo's", () => {
-    for (const nb of notebooks) {
-      const served = readFileSync(resolve(WEB, `public/notebooks/${nb}`));
-      expect(member(slug, `${slug}/${nb}`).equals(served)).toBe(true);
-      expect(served.equals(readFileSync(resolve(WEB, `../notebooks/${nb}`)))).toBe(true);
-    }
-  });
-
-  // Figure 3 compares the two runs' accuracies, and they do NOT grade alike: both take
-  // the first \boxed{} and use math_verify, but only the instruct notebook wraps the
-  // strings in $...$, which changes verdicts (web/data/PROVENANCE.md). This pins what
-  // each one does, so that bringing them into line has to be done on purpose.
+  // The two do NOT grade alike: both take the first \boxed{} and use math_verify, but
+  // only the instruct notebook wraps the strings in $...$, which changes verdicts
+  // (web/data/PROVENANCE.md). This pins what each one does, so that bringing them
+  // into line has to be done on purpose.
   it("pins each notebook's grader, which differ in whether they wrap the answer in $", () => {
-    const src = (nb: string) => codeCells(readFileSync(resolve(WEB, `public/notebooks/${nb}`))).join("\n");
+    const src = ({ file }: { file: string }) =>
+      codeCells(readFileSync(resolve(WEB, `public/notebooks/${file}`))).join("\n");
     const [instruct, tenShot] = notebooks.map(src);
     expect(instruct).toContain("def extract_answer(text):");
     expect(instruct).toContain('.find("\\\\boxed{")');
