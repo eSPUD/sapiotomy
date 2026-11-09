@@ -315,9 +315,14 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
     const inst = PAGE5.instruct.map((m) => m.cot.medianPromptTokens);
     expect(new Set(inst).size).toBe(1);
     expect([SHOTS.tenShotPromptTokens, inst[0]]).toEqual([3396, 88]);
-    const legend = screen.getByLabelText("Instruct models against few-shot base models").querySelector("ul")!;
-    expect(legend).toHaveTextContent("from: base model, ten worked examples· prompt 3,396 tokens");
-    expect(legend).toHaveTextContent("to: instruct model, no examples· prompt 88 tokens");
+    const fig = screen.getByLabelText("Base model with few-shot CoT prompting versus Instruct model");
+    const legend = fig.querySelector("ul")!;
+    expect(legend).toHaveTextContent("from: Base model with few-shot CoT prompting (ten examples)· prompt 3,396 tokens");
+    expect(legend).toHaveTextContent("to: Instruct model (no examples)· prompt 88 tokens");
+    // The labels and the caption use section 3's names for the two sides.
+    expect(fig.querySelector("figcaption")).toHaveTextContent(
+      "Base model with few-shot CoT prompting vs Instruct model: Qwen2.5 on MATH-500How many problems each solved, and the Instruct model's lead in points",
+    );
   });
 });
 
@@ -339,7 +344,9 @@ describe("Page 5: provenance and what the page may claim", () => {
     render(<Page5 />);
     expect(body()).not.toMatch(/forbidden to reason/i);
     expect(body()).not.toMatch(/left alone/i);
-    expect(body()).not.toMatch(/allowed to reason/i);
+    // "allowed to reason longer" is the author's closing (2026-11-08), a general
+    // claim and not a name for a condition; the euphemism stays banned otherwise.
+    expect(body()).not.toMatch(/allowed to reason(?! longer)/i);
   });
 
   it("carries no provenance prose and no grader talk", () => {
@@ -347,12 +354,26 @@ describe("Page 5: provenance and what the page may claim", () => {
     expect(body()).not.toMatch(/math_verify|sha256|notebook run|replay/i);
   });
 
-  it("closes on the cost, with no page number and no handoff question", () => {
+  it("closes on the cost and what the figures show, with no page number and no handoff question", () => {
     render(<Page5 />);
     expect(body()).toContain(
-      "A chain of thought makes a model better at hard problems, and it charges for that in tokens.",
+      "A chain of thought makes a model better at hard problems, and it charges for that in additional time and tokens. Smaller models can outperform larger models when allowed to reason longer, especially with examples of CoT provided at post-training or at inference-time. Post-training beats few-shot inference-time CoT prompting by good margins.",
     );
     expect(body()).not.toContain("Page 6 asks");
+  });
+
+  // The closing's two claims, held to the data so they cannot outlive it.
+  it("backs the closing's claims with the figures' numbers", () => {
+    const shot = (size: string) => SHOTS.rows.find((r) => r.label === `Qwen2.5-${size}`)!.solved;
+    const instruct = (size: string) => PAGE5.instruct.find((m) => m.size === size)!.cot.accuracy * 100;
+    // Smaller beats larger: with examples at inference time (3B ten-shot over 7B
+    // zero-shot) and after post-training (1.5B Instruct over 7B ten-shot).
+    expect(shot("3B")["10_shot"]).toBeGreaterThan(shot("7B").zero_shot);
+    expect(instruct("1.5B")).toBeGreaterThan(shot("7B")["10_shot"]);
+    // Post-training beats ten-shot prompting at every size, by a good margin.
+    for (const size of ["1.5B", "3B", "7B"]) {
+      expect(instruct(size) - shot(size)["10_shot"]).toBeGreaterThan(20);
+    }
   });
 
   it("has no em dash anywhere in its copy", () => {

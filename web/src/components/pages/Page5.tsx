@@ -523,14 +523,16 @@ const TEN_SHOT_ARMS = SIZES.map(tenShotArm);
 const FIG3_SERIES: [DotSeries, DotSeries] = [
   {
     key: "few",
-    label: "base model, ten worked examples",
+    // Figure 3's two labels repeat section 3's heading, each side by its name there
+    // (author, 2026-11-08), with how many examples it reads.
+    label: "Base model with few-shot CoT prompting (ten examples)",
     ...FEW_SHOT,
     arms: TEN_SHOT_ARMS,
     note: promptTokens(TEN_SHOT_ARMS),
   },
   {
     key: "instruct",
-    label: "instruct model, no examples",
+    label: "Instruct model (no examples)",
     ...INSTRUCT_REASONING,
     arms: INSTRUCT.map((m) => m.cot),
     note: promptTokens(INSTRUCT.map((m) => m.cot)),
@@ -724,7 +726,7 @@ export function Page5() {
             examples, against the base models with ten.
           </p>
           <section
-            aria-label="Instruct models against few-shot base models"
+            aria-label="Base model with few-shot CoT prompting versus Instruct model"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -735,14 +737,15 @@ export function Page5() {
               <SeriesLegend series={FIG3_SERIES} />
               <ArrowRows
                 id="p5-fig3"
-                title={`Share of MATH-500 problems solved, from base models with ten worked examples to instruct models with none. Base, few-shot: ${describeSeries(FIG3_SERIES[0])}. Instruct, no examples: ${describeSeries(FIG3_SERIES[1])}.`}
+                title={`Share of MATH-500 problems solved, from the base model with few-shot CoT prompting (ten examples) to the Instruct model (no examples). ${FIG3_SERIES[0].label}: ${describeSeries(FIG3_SERIES[0])}. ${FIG3_SERIES[1].label}: ${describeSeries(FIG3_SERIES[1])}.`}
                 series={FIG3_SERIES}
                 sizes={SIZES}
               />
               <figcaption className="text-center text-base font-semibold text-ink">
-                Few-shot base vs instruct: Qwen2.5 on MATH-500
+                Base model with few-shot CoT prompting vs Instruct model:{" "}
+                <span className="whitespace-nowrap">Qwen2.5 on MATH-500</span>
                 <span className="block text-sm font-normal text-ink-muted">
-                  How many problems each solved, and the instruct models&apos; lead in points
+                  How many problems each solved, and the Instruct model&apos;s lead in points
                 </span>
               </figcaption>
             </figure>
@@ -757,9 +760,14 @@ export function Page5() {
 
         <Handoff className="lg:col-start-1">
           <p className="text-ink">
-            {/* The old page's closing line, author, 2026-09-27. */}
+            {/* The closing, author, 2026-11-08: the old closing line widened to time and
+                tokens, then what figures 2 and 3 show. Each claim is pinned against the
+                data in Page5.test.tsx. */}
             A chain of thought makes a model better at hard problems, and it charges for that
-            in tokens.
+            in additional time and tokens. Smaller models can outperform larger models when
+            allowed to reason longer, especially with examples of CoT provided at post-training
+            or at inference-time. Post-training beats few-shot inference-time CoT prompting by
+            good margins.
           </p>
         </Handoff>
       </div>
