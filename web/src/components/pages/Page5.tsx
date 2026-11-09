@@ -592,7 +592,7 @@ export function Page5() {
           {/* Headings 2 and 3 name Shashank's two solutions: one at inference time, one
               in post-training (author, 2026-10-18). Both renamed by the author to name
               what each figure compares: heading 2 on 2026-11-06, heading 3 on 2026-11-08. */}
-          <h2 className="text-xl font-semibold text-ink">2. Zero-shot versus few-shot CoT prompting</h2>
+          <h2 className="text-xl font-semibold text-ink">2. ‘Zero-shot’ versus ‘few-shot CoT prompting’</h2>
           <p className="text-ink-muted">
             {/* The old opening sentence, rewritten for the zero-vs-ten-shot run
                 (author, 2026-11-08): three sizes, two prompts, and random problems, none

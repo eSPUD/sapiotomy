@@ -34,7 +34,7 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
     expect(headings).toEqual([
       "1. Chain-of-Thought (CoT): Reasoning over simple steps",
-      "2. Zero-shot versus few-shot CoT prompting",
+      "2. ‘Zero-shot’ versus ‘few-shot CoT prompting’",
       "3. ‘Base model with few-shot CoT prompting’ versus ‘Instruct model’",
     ]);
     expect(screen.queryByLabelText("The floor is flat")).toBeNull();
