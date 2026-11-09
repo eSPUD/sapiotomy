@@ -819,7 +819,7 @@ export function Page13() {
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_HREF} size={NOTEBOOK_SIZE} format="ipynb" />
+        <NotebookDownload href={NOTEBOOK_HREF} size={NOTEBOOK_SIZE} label="GRPO" />
       </div>
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}

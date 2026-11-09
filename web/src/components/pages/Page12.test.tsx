@@ -3,11 +3,12 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { Page12 } from "./Page12";
 
 describe("Page 12 (STaR and self-improvement)", () => {
-  it("opens on the two-sentence hook ending in the answer-key question", () => {
+  it("opens on STaR, and no longer asks about taking the answer key away", () => {
     render(<Page12 />);
-    expect(
-      screen.getByText(/What happens when you take the answer key away\?/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/a model writes its own/).textContent).toMatch(
+      /^In STaR, a model writes its own\s+reasoning/,
+    );
+    expect(screen.queryByText(/take the answer key away/)).not.toBeInTheDocument();
   });
 
   it("ties the self-written training set to the limited stock of human text", () => {
@@ -241,8 +242,8 @@ describe("Page 12 (STaR and self-improvement)", () => {
     const counterweight = screen.getByText(
       /Trained on reasoning, graded on answers/,
     );
-    const handoff = screen.getByText(/Page 13 picks it up from there/);
-    const follows = (a: Element, b: Element) =>
+    const handoff = screen.getByText(/Next: what a wrong chain can teach/);
+    const follows =(a: Element, b: Element) =>
       Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
     expect(follows(interactive, listing)).toBe(true);
     expect(follows(listing, results)).toBe(true);
@@ -356,24 +357,23 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     // The hand-off is a bulleted block now, so read its wrapping div.
     const handoff = screen
-      .getByText(/Page 13 picks it up from there/)
+      .getByText(/Next: what a wrong chain can teach/)
       .closest("div")!;
     // The lift-vs-slide bridge: page 11 said model size picks your curve; STaR
-    // is the first knob that lifts it, which page 13's two-knob law completes.
+    // is the first knob that lifts it.
     expect(handoff.textContent).toMatch(
       /lifts the curve without buying a single\s+parameter/i,
     );
   });
 
-  it("closes on both ways to spend, then the frontier turning both", () => {
+  it("closes on both ways to spend, then what page 13 opens with", () => {
     render(<Page12 />);
     // The hand-off is a bulleted block now, so read its wrapping div.
     const handoff = screen
-      .getByText(/Page 13 picks it up from there/)
+      .getByText(/Next: what a wrong chain can teach/)
       .closest("div")!;
-    // The hand-off sums the pair page 13's two compute axes pick up: Act 2's
-    // answer-time toolbox (5-11, priced by page 11) and this page's
-    // train-time loop.
+    // The hand-off sums Act 2's answer-time toolbox (5-11, priced by the
+    // scaling law) and this page's train-time loop.
     expect(handoff.textContent).toMatch(/two ways to buy reasoning/);
     expect(handoff.textContent).toMatch(
       /Act 2 spends the compute after the question lands/,
@@ -384,10 +384,10 @@ describe("Page 12 (STaR and self-improvement)", () => {
     // It must NOT announce Act 3 as upcoming: the seam is 11|12, so this page
     // is already Act 3's first page (see pages.ts).
     expect(handoff.textContent).not.toMatch(/Act 3/);
-    // And it names the price, which is what makes the frontier a trade.
-    expect(handoff.textContent).toMatch(
-      /turns both\s+kinds of spending at once and bills you for each/,
-    );
+    // And it hands to GRPO: o1 left page 13 in the merge with old page 14.
+    expect(handoff.textContent).toMatch(/GRPO/);
+    expect(handoff.textContent).toMatch(/trains on those chains too/);
+    expect(handoff.textContent).not.toMatch(/o1/);
   });
 
   it("sits in Act 3: page 12 opens the act, it does not close Act 2", () => {

@@ -10,7 +10,7 @@ import {
   solvedIn,
   tidyMath,
   type Contrast,
-} from "./page05";
+} from "./page05HowToReason";
 
 /**
  * The translation step's own guardrail. The notebook is the authority on every

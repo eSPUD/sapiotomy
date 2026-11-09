@@ -1,0 +1,10 @@
+{
+  "placeholder": false,
+  "note": "`results`: model id -> {zero_shot, 10_shot} as percent solved, from the results table the author supplied on 2026-11-08, to one decimal. That table does not state its problem count, so none is recorded here or printed on the page. median_10_shot_prompt_tokens is still that of the earlier 10-shot run.",
+  "median_10_shot_prompt_tokens": 3396,
+  "results": {
+    "Qwen/Qwen2.5-1.5B": { "zero_shot": 25.0, "10_shot": 26.2 },
+    "Qwen/Qwen2.5-3B": { "zero_shot": 31.9, "10_shot": 37.5 },
+    "Qwen/Qwen2.5-7B": { "zero_shot": 31.9, "10_shot": 43.8 }
+  }
+}

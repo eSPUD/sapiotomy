@@ -1,0 +1,51 @@
+{
+  "source": "HuggingFaceH4/MATH-500, test split (notebooks/data/math500_test.json)",
+  "note": "problem, solution, answer, subject, level and unique_id are verbatim dataset fields. steps is the solution cut into its moves for display; joined with whitespace collapsed, it is the solution exactly (src/lib/page05.ts checks).",
+  "items": [
+    {
+      "unique_id": "test/number_theory/515.json",
+      "subject": "Number Theory",
+      "level": 3,
+      "problem": "What is the smallest positive perfect cube that can be written as the sum of three consecutive integers?",
+      "solution": "The sum of three consecutive integers takes the form $(k-1)+(k)+(k+1)=3k$ and hence is a multiple of 3.  Conversely, if a number $n$ is a multiple of 3, then $n/3-1$, $n/3$, and $n/3+1$ are three consecutive integers that sum to give $n$.  Therefore, a number is a sum of three consecutive integers if and only if it is a multiple of 3.  The smallest positive perfect cube that is a multiple of 3 is $3^3=\\boxed{27}$.",
+      "answer": "27",
+      "steps": [
+        "The sum of three consecutive integers takes the form $(k-1)+(k)+(k+1)=3k$ and hence is a multiple of 3.",
+        "Conversely, if a number $n$ is a multiple of 3, then $n/3-1$, $n/3$, and $n/3+1$ are three consecutive integers that sum to give $n$.",
+        "Therefore, a number is a sum of three consecutive integers if and only if it is a multiple of 3.",
+        "The smallest positive perfect cube that is a multiple of 3 is $3^3=\\boxed{27}$."
+      ]
+    },
+    {
+      "unique_id": "test/algebra/858.json",
+      "subject": "Algebra",
+      "level": 4,
+      "problem": "What is the smallest number which is one less than twice its reciprocal?",
+      "solution": "The question is asking us to find the smallest value of $x$ such that $x = 2\\cdot\\frac{1}{x} - 1$. We multiply through by $x$ to clear the fraction, then rearrange terms: $x^2 + x - 2 = 0$. This can be factored as $(x + 2)(x - 1) = 0$. We could also use the quadratic formula to find $x$: $$x = \\frac{-1 \\pm \\sqrt{1^2 - 4(1)(-2)}}{2}.$$ Either way, we find that $x = 1$ or $x = -2$. Since we want the smallest value of $x$, our answer is $\\boxed{-2}$.",
+      "answer": "-2",
+      "steps": [
+        "The question is asking us to find the smallest value of $x$ such that $x = 2\\cdot\\frac{1}{x} - 1$.",
+        "We multiply through by $x$ to clear the fraction, then rearrange terms: $x^2 + x - 2 = 0$.",
+        "This can be factored as $(x + 2)(x - 1) = 0$.",
+        "We could also use the quadratic formula to find $x$: $$x = \\frac{-1 \\pm \\sqrt{1^2 - 4(1)(-2)}}{2}.$$",
+        "Either way, we find that $x = 1$ or $x = -2$.",
+        "Since we want the smallest value of $x$, our answer is $\\boxed{-2}$."
+      ]
+    },
+    {
+      "unique_id": "test/number_theory/13.json",
+      "subject": "Number Theory",
+      "level": 5,
+      "problem": "What is the average of the two smallest positive integer solutions to the congruence $$14u \\equiv 46 \\pmod{100}~?$$",
+      "solution": "Note that $14$, $46$, and $100$ all have a common factor of $2$, so we can divide it out: the solutions to $$14u \\equiv 46 \\pmod{100}$$ are identical to the solutions to $$7u \\equiv 23 \\pmod{50}.$$ Make sure you see why this is the case.\n\nNow we can multiply both sides of the congruence by $7$ to obtain $$49u \\equiv 161 \\pmod{50},$$ which also has the same solutions as the previous congruence, since we could reverse the step above by multiplying both sides by $7^{-1}$. (We know that $7^{-1}$ exists modulo $50$ because $7$ and $50$ are relatively prime.)\n\nReplacing each side of $49u\\equiv 161$ by a $\\pmod{50}$ equivalent, we have $$-u \\equiv 11\\pmod{50},$$ and thus $$u \\equiv -11\\pmod{50}.$$ This is the set of solutions to our original congruence. The two smallest positive solutions are $-11+50 = 39$ and $-11+2\\cdot 50 = 89$. Their average is $\\boxed{64}$.",
+      "answer": "64",
+      "steps": [
+        "Note that $14$, $46$, and $100$ all have a common factor of $2$, so we can divide it out: the solutions to $$14u \\equiv 46 \\pmod{100}$$ are identical to the solutions to $$7u \\equiv 23 \\pmod{50}.$$ Make sure you see why this is the case.",
+        "Now we can multiply both sides of the congruence by $7$ to obtain $$49u \\equiv 161 \\pmod{50},$$ which also has the same solutions as the previous congruence, since we could reverse the step above by multiplying both sides by $7^{-1}$. (We know that $7^{-1}$ exists modulo $50$ because $7$ and $50$ are relatively prime.)",
+        "Replacing each side of $49u\\equiv 161$ by a $\\pmod{50}$ equivalent, we have $$-u \\equiv 11\\pmod{50},$$ and thus $$u \\equiv -11\\pmod{50}.$$ This is the set of solutions to our original congruence.",
+        "The two smallest positive solutions are $-11+50 = 39$ and $-11+2\\cdot 50 = 89$.",
+        "Their average is $\\boxed{64}$."
+      ]
+    }
+  ]
+}

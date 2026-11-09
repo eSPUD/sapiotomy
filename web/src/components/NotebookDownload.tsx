@@ -3,16 +3,16 @@
  * so the button is uniform everywhere: one style, one wording, the size in the
  * label. Each page passes its own href and size string, and places it on the
  * title's row, right after the page heading. Most pages ship a zip bundle; a page
- * that ships the bare notebook passes format "ipynb", so the label says so.
+ * that links a bare .ipynb passes `label`, which says which notebook it is.
  */
 export function NotebookDownload({
   href,
   size,
-  format = "zip",
+  label,
 }: {
   href: string;
   size: string;
-  format?: "zip" | "ipynb";
+  label?: string;
 }) {
   return (
     <a
@@ -20,7 +20,7 @@ export function NotebookDownload({
       href={href}
       download
     >
-      Download the notebook ({format}, {size}) ↓
+      {label ? `Download the ${label} notebook (ipynb, ${size})` : `Download the notebook (zip, ${size})`} ↓
     </a>
   );
 }

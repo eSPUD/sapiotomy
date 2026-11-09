@@ -532,7 +532,7 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
 
   it("offers the author's notebook beside the title", () => {
     render(<Page13 />);
-    const link = screen.getByRole("link", { name: /Download the notebook \(ipynb, 0\.6 MB\)/ });
+    const link = screen.getByRole("link", { name: /Download the GRPO notebook \(ipynb, 0\.6 MB\)/ });
     expect(link).toHaveAttribute("href", "/notebooks/page_13_two_axis_grpo.ipynb");
   });
 

@@ -288,7 +288,7 @@ export function Page15() {
           <span className="text-xs text-ink-muted">the runs behind the chart:</span>
           {NOTEBOOKS.map((n) => (
             <a
-              key={n.page}
+              key={n.href}
               href={n.href}
               download
               aria-label={`Page ${n.page}: ${n.title}. ${
@@ -298,7 +298,8 @@ export function Page15() {
               }`}
               className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
             >
-              page {n.page} ({n.size}) ↓
+              page {n.page}
+              {n.format === "ipynb" ? `, ${n.title.toLowerCase()}` : ""} ({n.size}) ↓
             </a>
           ))}
         </div>

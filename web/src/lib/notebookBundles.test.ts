@@ -38,10 +38,10 @@ const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
  */
 
 const PAGES = [
-  // Page 5 no longer links this bundle: since 2026-10-14 pages 5 and 16 offer the
-  // author's single notebook, 5_CoT.ipynb. The bundle stays on disk because
-  // notebooks/build_trace_report.py reads page 5's traces from it, so it is still
-  // checked here, with no declared size (no page prints one).
+  // The retired page 5 run. Page 5 no longer links this bundle: pages 5 and 16 offer
+  // the page's two notebooks as plain files, checked below. The bundle stays on disk
+  // because notebooks/build_trace_report.py reads its traces, and page 16's ladder
+  // still plots its data, so it is still checked here, with no declared size.
   { n: 5, slug: "page-05-how-to-reason", notebook: "page_05_how_to_reason.ipynb",
     declared: null, extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
   // Page 6's repo copy has moved ahead: it lets a chain stop at its cap with no forced
@@ -94,6 +94,9 @@ const member = (slug: string, name: string) =>
 describe.each(PAGES)("page $n's notebook bundle", (page) => {
   const { n, slug, notebook, declared, extras, siteData, repoNotebookIsTheShippedOne } = page;
   const pad = String(n).padStart(2, "0");
+  // The retired page 5 run's data moved aside when page 5 was rebuilt on two new runs
+  // (2026-10-18); page 16's ladder still reads it.
+  const plottedFile = n === 5 ? "page-05-how-to-reason-derived.json" : `page-${pad}-derived.json`;
 
   it("exists, and the size on the page is the size on disk", () => {
     const mb = statSync(zipPath(slug)).size / 1e6;
@@ -151,7 +154,7 @@ describe.each(PAGES)("page $n's notebook bundle", (page) => {
   it("carries the same derived.json the page plots", () => {
     const sha = (b: Buffer | Uint8Array) => createHash("sha256").update(b).digest("hex");
     expect(sha(member(slug, `${slug}/out/page_${pad}/derived.json`))).toBe(
-      sha(readFileSync(resolve(WEB, `data/page-${pad}-derived.json`))),
+      sha(readFileSync(resolve(WEB, `data/${plottedFile}`))),
     );
   });
 
@@ -179,7 +182,7 @@ describe.each(PAGES)("page $n's notebook bundle", (page) => {
     const bundled = JSON.parse(member(slug, `${slug}/out/page_${pad}/manifest.json`).toString());
     expect(bundled.notebook_sha256).toBe(shipped);
     const plotted = JSON.parse(
-      readFileSync(resolve(WEB, `data/page-${pad}-derived.json`), "utf8"),
+      readFileSync(resolve(WEB, `data/${plottedFile}`), "utf8"),
     );
     expect(plotted.manifest.notebook_sha256).toBe(shipped);
   });
@@ -198,5 +201,39 @@ describe.each(PAGES)("page $n's notebook bundle", (page) => {
     expect(shipped.length === repo.length && shipped.every((c, i) => c === repo[i])).toBe(
       repoNotebookIsTheShippedOne,
     );
+  });
+});
+
+// Page 5 ships its two notebooks as plain .ipynb files with no traces, so they are not
+// bundles in the sense above. Each served file must be the repo's, byte for byte.
+describe("page 5's two notebooks", () => {
+  const notebooks = [
+    { file: "5_CoT_BaseFewShot-vs-Instruct.ipynb", declared: "908 KB" },
+    { file: "5_CoT_ZeroShot-vs-FewShot.ipynb", declared: "228 KB" },
+  ];
+
+  it.each(notebooks)("$file: the size on the page is the size on disk", ({ file, declared }) => {
+    expect(`${Math.round(statSync(resolve(WEB, `public/notebooks/${file}`)).size / 1e3)} KB`).toBe(declared);
+  });
+
+  it.each(notebooks)("$file: public/notebooks serves the repo's copy", ({ file }) => {
+    const served = readFileSync(resolve(WEB, `public/notebooks/${file}`));
+    expect(served.equals(readFileSync(resolve(WEB, `../notebooks/${file}`)))).toBe(true);
+  });
+
+  // The two do NOT grade alike: both take the first \boxed{} and use math_verify, but
+  // only the instruct notebook wraps the strings in $...$, which changes verdicts
+  // (web/data/PROVENANCE.md). This pins what each one does, so that bringing them
+  // into line has to be done on purpose.
+  it("pins each notebook's grader, which differ in whether they wrap the answer in $", () => {
+    const src = ({ file }: { file: string }) =>
+      codeCells(readFileSync(resolve(WEB, `public/notebooks/${file}`))).join("\n");
+    const [instruct, tenShot] = notebooks.map(src);
+    expect(instruct).toContain("def extract_answer(text):");
+    expect(instruct).toContain('.find("\\\\boxed{")');
+    expect(instruct).toContain('verify(parse(f"$');
+    expect(tenShot).toContain("def extract_boxed_answer(text):");
+    expect(tenShot).toContain('.find("\\\\boxed{")');
+    expect(tenShot).toContain("pred_parsed = parse(pred_str)");
   });
 });

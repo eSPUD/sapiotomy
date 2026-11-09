@@ -31,18 +31,16 @@
  * they read over both the listing and the results:
  * the page's one counterweight (trained on reasoning, graded on answers; the
  * paper's own stated limitation, and the only place the page admits the loop
- * can be wrong — do not trim it as the page tightens), and the o1/R1 hand-off
- * to page 13 ("this shape", not "this loop": R1's reward is documented, o1's
- * never was — page 13 owns o1's specifics). The hand-off carries page 11's
- * lift-vs-slide idiom (STaR = the first knob that lifts the curve without
- * buying parameters), so page 13's "training lifts, thinking slides" law
- * reads as the third beat of one pattern, not a callback that skipped a page.
- * It opens one altitude higher than the page, by review request: this is the
- * last page of Act 2, so the block first sums the act's two ways to buy
- * reasoning (spend after the question lands, pages 5-11; spend long before it
- * exists, this page) and closes on Act 3 turning both at once and billing for
- * each. Page 13's lede is written to receive exactly that pair — its two
- * compute axes ARE these two threads — so the seam is stated on both sides.
+ * can be wrong — do not trim it as the page tightens), and the hand-off to
+ * page 13. The hand-off carries page 11's lift-vs-slide idiom (STaR = the first
+ * knob that lifts the curve without buying parameters). It opens one altitude
+ * higher than the page, by review request: the block first sums the two ways to
+ * buy reasoning (spend after the question lands, pages 5-11; spend long before
+ * it exists, this page), then closes on what page 13 opens with (author,
+ * 2026-11-09): STaR discards the chains that miss, and GRPO trains on them too.
+ * o1 left page 13 in the 2026-11-04 merge and does not belong in this block.
+ * The lede's old closing question, about taking the answer key away, went the
+ * same day: the page no longer covers it.
  *
  * Outside citations, so the page's structural claims no longer rest on STaR
  * describing itself. Per the page 2/3 convention, Cite superscripts live in
@@ -1396,11 +1394,9 @@ export function Page12() {
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        A model writes its own reasoning, an answer key discards what&apos;s
-        wrong, and the survivors become its next training set.{" "}
-        <strong className="text-ink">
-          What happens when you take the answer key away?
-        </strong>
+        In <strong className="text-ink">STaR</strong>, a model writes its own
+        reasoning, an answer key discards what&apos;s wrong, and the survivors
+        become its next training set.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -1597,7 +1593,8 @@ export function Page12() {
                 <strong className="text-ink">Spend at answer time.</strong> All
                 of Act 2 spends the compute after the question lands (show the
                 road, cap the tokens, sample and vote, score and re-rank, search
-                the tree) and page 11 priced that shelf against parameters.
+                the tree) and the test-time compute scaling law priced that
+                shelf against parameters.
               </li>
               <li>
                 <strong className="text-ink">Spend at training time.</strong>{" "}
@@ -1607,11 +1604,10 @@ export function Page12() {
               </li>
             </ul>
             <p>
-              o1 and R1 keep this loop&apos;s shape and drop the disguise, so
-              the filter becomes an explicit RL reward on checkable tasks and
-              the model&apos;s own sampling becomes the training set. Next comes
-              the frontier, where one lab turns both kinds of spending at once
-              and bills you for each. <em>Page 13 picks it up from there.</em>
+              STaR discards every chain that misses the answer key. GRPO, the
+              reinforcement-learning recipe behind DeepSeek&apos;s R1-Zero,
+              trains on those chains too.{" "}
+              <em>Next: what a wrong chain can teach.</em>
             </p>
           </Handoff>
         </div>
