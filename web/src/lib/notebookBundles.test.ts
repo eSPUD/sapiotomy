@@ -51,9 +51,6 @@ const PAGES = [
   // notebooks/RUNBOOK_page6_full.md.
   { n: 6, slug: "page-06-thinking-longer", notebook: "page_06_thinking_longer.ipynb",
     declared: "2.0 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
-  { n: 7, slug: "page-07-frequency-voting", notebook: "page_07_frequency_voting.ipynb",
-    declared: "3.1 MB", extras: ["results.json"], siteData: "page_07_site_data.py",
-    repoNotebookIsTheShippedOne: true },
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
     declared: "10.1 MB", extras: ["scores.jsonl", "judge_solves.jsonl"], siteData: null,
     repoNotebookIsTheShippedOne: false },
@@ -201,6 +198,20 @@ describe.each(PAGES)("page $n's notebook bundle", (page) => {
     expect(shipped.length === repo.length && shipped.every((c, i) => c === repo[i])).toBe(
       repoNotebookIsTheShippedOne,
     );
+  });
+});
+
+// Page 7 ships one plain .ipynb, the author's notebook as run, with no traces.
+describe("page 7's notebook", () => {
+  const file = "7_FrequencyVoting_InstructModels.ipynb";
+
+  it("the size on the page is the size on disk", () => {
+    expect(`${Math.round(statSync(resolve(WEB, `public/notebooks/${file}`)).size / 1e3)} KB`).toBe("145 KB");
+  });
+
+  it("public/notebooks serves the repo's copy", () => {
+    const served = readFileSync(resolve(WEB, `public/notebooks/${file}`));
+    expect(served.equals(readFileSync(resolve(WEB, `../notebooks/${file}`)))).toBe(true);
   });
 });
 

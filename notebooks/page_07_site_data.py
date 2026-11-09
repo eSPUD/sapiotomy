@@ -3,7 +3,8 @@
 The notebook computes every number, and the claims the page may make, and saves them to
 `results.json` beside the run's `manifest.json` and `traces.jsonl`. This script computes
 nothing the notebook did not. It chooses which problems' chains the page embeds (figure 1's
-example and the widest tallies), writes the page's procedure sentence, and lays it all out
+example, the problems the page shows beside it, and the widest tallies), writes the page's
+procedure sentence, and lays it all out
 the way `web/src/lib/page07.ts` reads it.
 
     python page_07_site_data.py                                      # out/page_07/derived.json
@@ -21,6 +22,14 @@ from pathlib import Path
 HERE = Path(__file__).resolve()
 
 N_BUNDLED_PROBLEMS = 6
+# Figure 1 lets the reader switch from the specimen to a vote that comes out wrong and a
+# vote that ties. These are the problems it shows for those two, picked by hand from the
+# pile for being short and easy to follow. Their outcomes are checked against
+# results.json below, and again by web/src/lib/page07.ts, which names them too.
+SHOWCASE = {
+    "wrong": "test/algebra/224.json",   # 15 chains say 7; the one that says 8 is right
+    "tie": "test/algebra/1837.json",    # 7 say 5, which is right, and 7 say 4
+}
 # Pages 5 and 6 reveal a chain token by token and need the per-token strings; this page
 # opens a bar and shows prose, so `tokens` stays in traces.jsonl rather than putting
 # megabytes of per-token quoting into the web bundle.
@@ -61,8 +70,14 @@ def build(out_dir):
 
     pile, rows, spec = R["pile"], R["pile_rows"], R["specimen"]
     specimen_id = spec["specimen_id"]
+    for outcome, pid in SHOWCASE.items():
+        row = rows[pid]
+        got = "tie" if row["tie"] else "right" if row["plurality_correct"] else "wrong"
+        assert got == outcome, f"{pid} is shown as a vote that comes out {outcome!r}, but it is {got!r}"
+        assert row["any_correct"], f"{pid} is shown losing the right answer, but no chain has it"
+    shown = [specimen_id, *SHOWCASE.values()]
     widest = sorted(rows, key=lambda p: -rows[p]["distinct_answers"])
-    bundled_ids = [specimen_id] + [p for p in widest if p != specimen_id][:N_BUNDLED_PROBLEMS - 1]
+    bundled_ids = shown + [p for p in widest if p not in shown][:N_BUNDLED_PROBLEMS - len(shown)]
     chains = load_pile(out_dir / "traces.jsonl", R["run_id"], R["primary_model"],
                        pile["config_id"], set(bundled_ids))
 
@@ -98,7 +113,9 @@ def build(out_dir):
         "figure_2": {
             "pile": R["pile_curves"],
             "split": R["split"],
-            "split_prediction_from_page_6": R["split_prediction"],
+            # Every shared budget, and the same chains allowed to finish (the pile).
+            "split_budgets": R["split_budgets"],
+            "uncapped": R["uncapped"],
             "splitting_pays": R["splitting_pays"],
             "best_split_n": R["best_split_n"],
             # `n_items` here is the diversity family's smaller item set, not the pile's.

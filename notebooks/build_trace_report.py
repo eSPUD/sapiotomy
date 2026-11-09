@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Turn a page's run into one HTML page for reading every chain.
 
-    python build_trace_report.py --page 7                      # page 7's shipped run -> out/page_07/trace_report.html
+    python build_trace_report.py --page 9                      # page 9's shipped run -> out/page_09/trace_report.html
     python build_trace_report.py --page 6 --run-dir out/page_06_small
     python build_trace_report.py --page 8 --out ~/Desktop/page8.html
     python build_trace_report.py --all                         # every page with traces on disk or in a bundle
@@ -42,7 +42,6 @@ TEMPLATE = HERE / "trace_report_template.html"
 PAGES = {
     5: ("Chain of thought", "page-05-how-to-reason"),
     6: ("Thinking longer", "page-06-thinking-longer"),
-    7: ("Frequency voting", "page-07-frequency-voting"),
     8: ("Best-of-N and verifiers", "page-08-best-of-n"),
     9: ("Outcome vs process supervision", "page-09-outcome-vs-process"),
     11: ("The keystone", "page-11-training-vs-scale"),
