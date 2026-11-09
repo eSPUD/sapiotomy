@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
 import { DemoMode } from "./DemoMode";
 import { DEMO_STOPS } from "@/lib/demo";
 import { Page1 } from "./pages/Page1";
+import { Page3 } from "./pages/Page3";
 import { Page5 } from "./pages/Page5";
 import { Page6 } from "./pages/Page6";
 import { Page12 } from "./pages/Page12";
@@ -34,9 +35,10 @@ afterEach(() => {
 });
 
 describe("presentation mode stops", () => {
-  it("are the six widgets asked for, in order", () => {
+  it("are the seven widgets asked for, in order", () => {
     expect(DEMO_STOPS.map((s) => [s.page, s.target, s.problem ?? null])).toEqual([
       [1, "p1-s2", null],
+      [3, "p3-s1", null],
       [5, "p5-s2", null],
       [6, "p6-s2", null],
       [12, "p12-s2", 2],
@@ -47,6 +49,7 @@ describe("presentation mode stops", () => {
 
   it.each([
     [Page1, "p1-s2", /Click every task that needs/],
+    [Page3, "p3-s1", /Training budget/],
     [Page5, "p5-s2", /Zero-shot vs few-shot|zero-shot/i],
     [Page6, "p6-s2", /./],
     [Page12, "p12-s2", /problem 1 of \d/],
@@ -75,11 +78,11 @@ describe("DemoMode", () => {
     expect(w).toHaveAttribute("data-demo-active", "true");
     expect(w.scrollIntoView).toHaveBeenCalled();
     expect(screen.getByRole("status", { name: "Presentation mode" })).toHaveTextContent(
-      "Demo 1 / 6Page 1 · Which tasks need System 2?P next · Q quit",
+      `Demo 1 / ${DEMO_STOPS.length}Page 1 · Which tasks need System 2?P next · Q quit`,
     );
   });
 
-  it("each P moves on a stop, through all six, then returns to the landing page and leaves", () => {
+  it("each P moves on a stop, through all seven, then returns to the landing page and leaves", () => {
     const { rerender } = render(<DemoMode />);
     const visited: string[] = [];
     for (let i = 0; i < DEMO_STOPS.length; i++) {
@@ -87,7 +90,7 @@ describe("DemoMode", () => {
       rerender(<DemoMode />);
       visited.push(pathname);
     }
-    expect(visited).toEqual(["/p/1", "/p/5", "/p/6", "/p/12", "/p/13", "/p/15"]);
+    expect(visited).toEqual(["/p/1", "/p/3", "/p/5", "/p/6", "/p/12", "/p/13", "/p/15"]);
     // The last stop says so.
     expect(screen.getByRole("status", { name: "Presentation mode" })).toHaveTextContent("P finish · Q quit");
     press("p");
@@ -113,14 +116,14 @@ describe("DemoMode", () => {
     rerender(<DemoMode />);
     act(() => vi.advanceTimersByTime(200));
     expect(push).not.toHaveBeenCalled();
-    expect(screen.getByRole("status", { name: "Presentation mode" })).toHaveTextContent("Demo 1 / 6");
+    expect(screen.getByRole("status", { name: "Presentation mode" })).toHaveTextContent(`Demo 1 / ${DEMO_STOPS.length}`);
     window.history.replaceState(null, "", "/");
   });
 
   it("asks page 12's widget for problem 2", () => {
     vi.useRealTimers();
     pathname = "/p/12";
-    window.sessionStorage.setItem("demo-mode-step", "3");
+    window.sessionStorage.setItem("demo-mode-step", String(DEMO_STOPS.findIndex((s) => s.page === 12)));
     render(
       <>
         <Page12 />
@@ -164,9 +167,12 @@ describe("DemoMode", () => {
   });
 
   it("stays in the demo across a reload", () => {
-    window.sessionStorage.setItem("demo-mode-step", "4");
+    const at = DEMO_STOPS.findIndex((s) => s.page === 13);
+    window.sessionStorage.setItem("demo-mode-step", String(at));
     pathname = "/p/13";
     render(<DemoMode />);
-    expect(screen.getByRole("status", { name: "Presentation mode" })).toHaveTextContent("Demo 5 / 6");
+    expect(screen.getByRole("status", { name: "Presentation mode" })).toHaveTextContent(
+      `Demo ${at + 1} / ${DEMO_STOPS.length}`,
+    );
   });
 });

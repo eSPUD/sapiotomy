@@ -359,6 +359,7 @@ export function Page3() {
           </p>
           <figure
             aria-label="The scaling law: one training budget, many splits"
+            data-demo="p3-s1"
             className="m-0 rounded-lg border border-grid bg-surface p-4"
           >
             <IsoComputeExplorer height={SECTION1_CHART_H} />

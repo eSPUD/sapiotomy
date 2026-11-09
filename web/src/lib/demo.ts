@@ -19,6 +19,8 @@ export type DemoStop = {
 
 export const DEMO_STOPS: readonly DemoStop[] = [
   { page: 1, target: "p1-s2", title: "Which tasks need System 2?" },
+  // Second since 2026-11-09 (author): the scaling law's iso-compute explorer.
+  { page: 3, target: "p3-s1", title: "Why retraining looks like the answer: the scaling law" },
   { page: 5, target: "p5-s2", title: "Zero-shot versus few-shot CoT prompting" },
   { page: 6, target: "p6-s2", title: "The same dial, every problem" },
   { page: 12, target: "p12-s2", title: "Which reasoning goes into the training set?", problem: 2 },
