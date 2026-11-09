@@ -28,6 +28,12 @@ export function KeyboardHint() {
             <li>
               <Kbd>Tab</Kbd> then <Kbd>Enter</Kbd>: jump to any chapter via the chapter menu
             </li>
+            <li>
+              <Kbd>P</Kbd>: presentation mode, then the next demo stop
+            </li>
+            <li>
+              <Kbd>Q</Kbd>: leave presentation mode
+            </li>
           </ul>
         </div>
       ) : null}
