@@ -31,10 +31,11 @@ describe("PageNav", () => {
 });
 
 describe("TopPageNav", () => {
-  it("repeats the buttons at the top, below xl only, under its own landmark name", () => {
+  it("repeats the buttons at the top at every width, under its own landmark name", () => {
     pathname = "/p/5";
     const { container } = render(<TopPageNav />);
-    expect(container.firstElementChild).toHaveClass("xl:hidden");
+    // Not hidden at any breakpoint: it shows beside the chapter menu too.
+    expect(container.innerHTML).not.toMatch(/(^|[\s"])(\w+:)?hidden/);
     const nav = screen.getByRole("navigation", { name: "Previous and next page" });
     expect(within(nav).getByRole("link", { name: "6. Thinking Longer →" })).toHaveAttribute("href", "/p/6");
   });

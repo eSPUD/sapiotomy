@@ -21,9 +21,8 @@ const titled = (n: number) => `${n}. ${PAGES.find((p) => p.n === n)?.title ?? ""
  * "inference" does not reach them (Page3.test.tsx leaves them out).
  * Page 1's previous goes home; the last page ends on "The End".
  *
- * Each page renders it at its foot. TopPageNav renders it again at the top,
- * below xl, where the chapter menu is hidden; that copy is its own landmark, so
- * it carries its own name.
+ * Each page renders it at its foot. TopPageNav renders it again at the top, at
+ * every width; that copy is its own landmark, so it carries its own name.
  */
 export function PageNav({ n, top = false }: { n: number; top?: boolean }) {
   const prev = n > 1 ? n - 1 : null;
