@@ -37,6 +37,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { Cite, RefItem } from "@/components/Cite";
+import { NotebookDownload } from "@/components/NotebookDownload";
 import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { NEXT_WORD_SPEC } from "@/lib/authored";
@@ -322,21 +323,16 @@ export function Page10() {
       <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
-      {/* Pages 5 to 9 put the way to re-derive the page beside its title. This
-          page keeps the position and changes the promise, because there is no
-          run here to re-derive. */}
+      {/* Pages 5 to 9 put the way to re-derive the page beside its title. This page
+          keeps the position and the shared button (author, 2026-11-09: it was "the
+          search arm, written and not run"); the prose says outright that nothing here
+          was run by us. The size matches page 16's list. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h1 className="text-3xl font-bold text-ink">
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <a
-          className="rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:text-ink"
-          href={NOTEBOOK_ZIP}
-          download
-        >
-          the search arm, written and not run ↓
-        </a>
+        <NotebookDownload href={NOTEBOOK_ZIP} size="4.8 MB" />
       </div>
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}

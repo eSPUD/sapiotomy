@@ -361,9 +361,11 @@ describe("Page 10 — step 3 and house style", () => {
   // outright that nothing here was measured by us. Both halves are pinned, because
   // shipping one without the other is worse than shipping neither: the download in
   // page 5-9's position implies a run that does not exist.
-  it("offers the search arm and labels it as unrun", () => {
+  it("offers the search arm's notebook with the shared download button", () => {
     render(<Page10 />);
-    const link = screen.getByRole("link", { name: /search arm, written and not run/i });
+    // Labelled like every other page's download (author, 2026-11-09); the prose,
+    // pinned below, is what says nothing here was run.
+    const link = screen.getByRole("link", { name: "Download the notebook (zip, 4.8 MB) ↓" });
     expect(link).toHaveAttribute("href", "/notebooks/page-10-search-arm.zip");
     expect(link).toHaveAttribute("download");
   });
