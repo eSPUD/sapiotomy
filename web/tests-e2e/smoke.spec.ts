@@ -57,7 +57,7 @@ test.describe("M0 smoke", () => {
   test("navigation between two stub routes works", async ({ page }) => {
     await page.goto("/p/1");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Think Fast, Think Slow");
-    await page.getByRole("link", { name: "Page 2 →" }).click();
+    await page.getByRole("navigation", { name: "Page navigation" }).getByRole("link", { name: "2. Thinking in Reality →" }).click();
     await expect(page).toHaveURL(/\/p\/2$/);
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Thinking in Reality");
   });

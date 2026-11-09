@@ -163,9 +163,9 @@ describe("Page 1 (Think Fast, Think Slow)", () => {
     );
   });
 
-  it("keeps the Page 2 → nav link the e2e traversal follows", () => {
+  it("keeps the next-page button the e2e traversal follows", () => {
     render(<Page1 />);
-    expect(screen.getByRole("link", { name: /Page 2 →/ })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "2. Thinking in Reality →" })).toBeInTheDocument();
   });
 });
 

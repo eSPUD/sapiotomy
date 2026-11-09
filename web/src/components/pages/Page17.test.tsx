@@ -45,7 +45,7 @@ describe("Page 17: the glossary", () => {
 
   it("ends the deck: back to page 16, then The End", () => {
     render(<Page17 />);
-    expect(screen.getByRole("link", { name: "← Page 16" })).toHaveAttribute("href", "/p/16");
+    expect(screen.getByRole("link", { name: /^← 16\. Wrap-Up/ })).toHaveAttribute("href", "/p/16");
     expect(screen.getByText("The End")).toBeInTheDocument();
   });
 });
