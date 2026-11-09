@@ -68,8 +68,8 @@
  *     MATH's own solutions". No sentence may present them as MATH's.
  *   · Wei et al. and Kojima et al. are cited for the TECHNIQUES they introduced.
  *     No cite may carry one of our numbers.
- *   · page 15's ladder still reads the retired page 5 run (`page05HowToReason`),
- *     whose 100 problems are page 6's. Nothing on this page draws from it.
+ *   · the retired page 5 run (`page05HowToReason`) is rendered nowhere now. Nothing
+ *     on this page draws from it.
  */
 
 import { useState } from "react";

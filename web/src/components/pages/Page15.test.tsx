@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import {
   ADAPTIVE_NULL,
-  FORCED,
-  LADDER,
+  BASE_CHART,
+  GRPO_CHART,
+  GRPO_SCOPE,
+  INSTRUCT_CHART,
   NOTEBOOKS,
   OTHER_AXIS,
   QUIZ,
-  WRITER,
 } from "@/lib/page16";
 import { Page15 } from "./Page15";
 
@@ -16,12 +17,8 @@ import { Page15 } from "./Page15";
  * worth testing is not arithmetic, it is the two things a wrap-up page can get
  * wrong in ways nothing else would catch.
  *
- * FIRST, THE LADDER MUST NOT FLATTER THE DECK. Its whole job is to show the
- * steps getting smaller and then not arriving: the coverage line has to stay
- * above the best technique, and the bigger model's rule has to stay level with
- * or above everything answer-time bought. Those are the two comparisons a
- * cheerful edit would quietly soften, so they are asserted against the data
- * rather than against the copy.
+ * FIRST, THE CHARTS MUST SAY WHAT THEY COVER. GRPO is a different model and
+ * benchmark from the other two charts, and that has to stay on the figure.
  *
  * SECOND, THE QUIZ MUST NOT GIVE ITSELF AWAY. Before a question is answered
  * nothing on screen may distinguish the right option from the other three, and
@@ -59,118 +56,57 @@ describe("Page 15 (wrap-up) component", () => {
     expect(screen.getByRole("link", { name: "16. Glossary →" })).toHaveAttribute("href", "/p/16");
   });
 
-  // ---- section 1: the ladder ----
+  // ---- section 1: the charts ----
 
-  it("draws every lever on one axis, and says which page measured each", () => {
+  const CHARTS = [
+    { name: /^Qwen2\.5-3B base model/, bars: BASE_CHART },
+    { name: /^Qwen2\.5-3B-Instruct/, bars: INSTRUCT_CHART },
+    { name: /^GRPO on Qwen2\.5-1\.5B-Instruct/, bars: GRPO_CHART },
+  ];
+
+  it("draws three charts, each bar with its label and readout", () => {
     render(<Page15 />);
-    const fig = screen.getByRole("img", { name: /What each lever scored on the same/i });
-    for (const r of LADDER) {
-      expect(fig.getAttribute("aria-label")).toContain(r.label);
+    for (const { name, bars } of CHARTS) {
+      const fig = screen.getByRole("img", { name });
+      const texts = Array.from(fig.querySelectorAll("text")).map((t) => t.textContent);
+      for (const b of bars) {
+        expect(texts, b.label).toContain(b.label);
+        expect(texts, b.label).toContain(`${Math.round(b.accuracy * 100)}%`);
+        expect(fig.getAttribute("aria-label")).toContain(b.detail);
+      }
     }
   });
 
-  it("keeps the coverage ceiling above the best technique, in the label a reader hears", () => {
-    render(<Page15 />);
-    const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    // The chart's one argument: the last step does not happen. If the ceiling
-    // ever stops leading, the page's prose is wrong and this must fail.
-    const best = Math.max(
-      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
-    );
-    const ceiling = LADDER.find((r) => r.ceiling)!;
-    expect(ceiling.accuracy).toBeGreaterThan(best);
-    expect(fig.getAttribute("aria-label")).toMatch(/generated and not picked/i);
+  it("colours a bar by its category and names every category in the legend", () => {
+    const { container } = render(<Page15 />);
+    const fig = screen.getByRole("img", { name: /^GRPO on/ });
+    expect(fig.querySelectorAll("rect.fill-crimson")).toHaveLength(GRPO_CHART.length);
+    const instruct = screen.getByRole("img", { name: /^Qwen2\.5-3B-Instruct/ });
+    expect(instruct.querySelectorAll("rect.fill-compute")).toHaveLength(4);
+    expect(instruct.querySelectorAll("rect.fill-wrong-bright")).toHaveLength(1);
+    expect(container.textContent).toContain("inference + training-time scaling");
   });
 
-  it("draws no band headings, and speaks none either", () => {
-    // Headings over the groups turned the chart into a table of contents. The
-    // grouping still orders the rows; nothing renders or announces its titles,
-    // so sighted and screen-reader readers get the same chart.
+  it("says inside the GRPO figure that it covers only the 1.5B", () => {
     render(<Page15 />);
-    const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    for (const title of [
-      "what writing the reasoning is worth",
-      "what sampling and selecting add to it",
-      "what the same money buys elsewhere",
-    ]) {
-      expect(fig.getAttribute("aria-label")).not.toContain(title);
-      expect(fig.textContent).not.toContain(title.toUpperCase());
-    }
+    const figure = screen.getByRole("img", { name: /^GRPO on/ }).closest("figure")!;
+    expect(figure.textContent).toContain(GRPO_SCOPE);
   });
 
-  it("puts each readout on its own bar rather than in a side column", () => {
-    // The deck's bar-chart grammar: a row is read left to right in one move.
+  it("flags thinking longer's different problems under the charts", () => {
     render(<Page15 />);
-    const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    expect(fig.textContent).not.toMatch(/\bSCORE\b|\bFROM\b/);
-    // Every readout sits to the right of the bar end it belongs to.
-    const texts = Array.from(fig.querySelectorAll("text"));
-    for (const r of LADDER) {
-      const value = texts.find(
-        (el) => el.textContent === `${Math.round(r.accuracy * 100)}%` && el.getAttribute("x"),
-      );
-      expect(value, r.label).toBeTruthy();
-    }
-  });
-
-  it("speaks page 9's baseline, so its rung is not heard as a bare 58%", () => {
-    render(<Page15 />);
-    const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    for (const r of LADDER.filter((x) => x.baseline !== undefined)) {
-      expect(fig.getAttribute("aria-label")).toContain(
-        `up from ${Math.round(r.baseline! * 100)}% on that run's own vote`,
-      );
-    }
-  });
-
-  it("keeps the bill out of the chart and in the prose, where it has units", () => {
-    render(<Page15 />);
-    const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    // A column with four numbers and six blanks reads as missing data. The one
-    // comparison that turns on cost is made in a sentence instead.
-    expect(fig.getAttribute("aria-label")).not.toMatch(/greedy chains/);
-    expect(fig.textContent).not.toMatch(/\bBILL\b/i);
-  });
-
-  it("shows forcing more thinking as the null it measured", () => {
-    render(<Page15 />);
-    const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    const forced = LADDER.find((r) => r.label.includes("forced to keep thinking"))!;
-    expect(fig.getAttribute("aria-label")).toContain(forced.label);
-    // The chart may not flatter it: the rung sits at or below the chain above.
-    expect(forced.accuracy).toBeLessThanOrEqual(FORCED.before);
-  });
-
-
-  it("captions the chart with its shape, not with a restatement of every rung", () => {
-    render(<Page15 />);
-    // Four paragraphs used to walk the rungs the chart already draws. What a
-    // reader cannot get from the picture is the shape, so that is all the
-    // caption says, and the numbers are spent once in the takeaways.
-    const caption = screen.getByText(/Read it top to bottom as steps that keep getting smaller/i);
-    expect(caption.textContent).toMatch(/largest single move on the chart/i);
-    expect(caption.textContent).toMatch(/the only step that goes backwards/i);
-    // The clause about a 128-token chain went with the rung it described.
-    expect(caption.textContent).not.toMatch(/cut off at/i);
-  });
-
-  it("puts thinking longer on the chart", () => {
-    render(<Page15 />);
-    const fig = screen.getByRole("img", { name: /What each lever scored/i });
-    for (const r of LADDER.filter((x) => x.page === 6)) {
-      expect(fig.getAttribute("aria-label")).toContain(r.label);
-    }
+    expect(screen.getByText("*thinking longer")).toBeInTheDocument();
   });
 
   it("keeps the distilled result off the axis, and says why it cannot be one", () => {
     render(<Page15 />);
     // The conclusions carry no figures, so what has to survive is the REASON the
     // biggest move in the deck is not a bar: a different test, plus the deck's own
-    // admission that it cannot separate the easier test from the training.
-    const six = screen.getByText(/not on this axis/i).closest("section")!;
+    // admission that it cannot separate those differences from the training.
+    const six = screen.getByText(/training adds to what inference-time scaling buys/i).closest("section")!;
     expect(six.textContent).toMatch(/not a bar/i);
-    expect(six.textContent).toMatch(/not the same test/i);
-    expect(six.textContent).toMatch(/every difficulty level/i);
+    expect(six.textContent).toMatch(/not our run/i);
+    expect(six.textContent).toMatch(/published score/i);
     expect(six.textContent).toMatch(/cannot tell you how it splits/i);
   });
 
@@ -186,13 +122,7 @@ describe("Page 15 (wrap-up) component", () => {
 
   // ---- section 2: the concept check ----
 
-  /**
-   * The chart says where every number came from, in a stacked list of the
-   * notebooks that produced them, plus the one-writer disclaimer. Added
-   * 2026-08-10 with the removal of the other-model row, which is what made the
-   * disclaimer true: every remaining rung is the same model's chains.
-   */
-  it("offers every rung's run on the top line, where pages 5 to 10 put theirs", () => {
+  it("offers every bar's run on the top line, where pages 5 to 10 put theirs", () => {
     render(<Page15 />);
     expect(NOTEBOOKS.length).toBeGreaterThan(0);
     for (const n of NOTEBOOKS) {
@@ -202,30 +132,20 @@ describe("Page 15 (wrap-up) component", () => {
       expect(link).toHaveAttribute("download");
       expect(link.getAttribute("aria-label")).toContain(n.size);
     }
-    // Page 5 offers its author's two notebooks as plain files, the same ones page 5 links.
+    // Page 5's two links are the first chart's two runs.
     const p5 = screen.getAllByRole("link", { name: /^Page 5:/ });
     expect(p5.map((a) => a.getAttribute("href"))).toEqual([
       "/notebooks/5_CoT_ZeroShot-vs-FewShot.ipynb",
       "/notebooks/5_CoT_BaseFewShot-vs-Instruct.ipynb",
     ]);
-    expect(p5[0].getAttribute("aria-label")).toMatch(/Download the notebook, ipynb, 228 KB$/);
-    expect(p5[1].getAttribute("aria-label")).toMatch(/Download the notebook, ipynb, 908 KB$/);
-    // Derived from the ladder, so a rung can never quietly outlive its source.
-    const pages = [...new Set(LADDER.map((r) => r.page))].sort((a, b) => a - b);
+    // Derived from the charts, so a bar can never quietly outlive its source.
+    const bars = [...BASE_CHART, ...INSTRUCT_CHART, ...GRPO_CHART];
+    const pages = [...new Set(bars.map((b) => b.run))].sort((a, b) => a - b);
     expect([...new Set(NOTEBOOKS.map((n) => n.page))]).toEqual(pages);
-    // They belong above the chart, not between the chart and the conclusions.
+    // They belong above the charts, not between the charts and the conclusions.
     const first = screen.getAllByRole("link", { name: new RegExp(`Page ${NOTEBOOKS[0].page}:`, "i") })[0];
-    const chart = screen.getByRole("img", { name: /What each lever scored/i });
+    const chart = screen.getByRole("img", { name: /^Qwen2\.5-3B base model/ });
     expect(first.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  });
-
-  it("says one model wrote every chain on the chart, and can still say it", () => {
-    render(<Page15 />);
-    expect(screen.getByText(new RegExp(`Every chain above was written by ${WRITER}`))).toBeInTheDocument();
-    // The claim is only true while no rung belongs to another writer.
-    expect(LADDER.some((r) => r.band === "elsewhere")).toBe(false);
-    // A judge scores chains, it does not write them, and the page says so.
-    expect(screen.getByText(/it scores chains, it does not write them/i)).toBeInTheDocument();
   });
 
   it("asks ten questions, each naming the page it came from", () => {
@@ -345,9 +265,9 @@ describe("Page 15 (wrap-up) component", () => {
     expect(one.textContent).toMatch(/not worth forcing/i);
   });
 
-  it("names the judge as the bottleneck and prices the fix", () => {
+  it("says a trained judge helps and prices it", () => {
     render(<Page15 />);
-    const three = screen.getByText(/the judge is the bottleneck/i).closest("section")!;
+    const three = screen.getByText(/a trained judge helps/i).closest("section")!;
     expect(three.textContent).toMatch(/trained to score/);
     // The cost has to be in the same breath, or "get a better judge" reads free.
     // Priced in words now, but it must still say that matching a bigger model this
@@ -373,7 +293,7 @@ describe("Page 15 (wrap-up) component", () => {
     expect(five.textContent).toMatch(/never ran it/i);
     expect(five.textContent).toMatch(/second, larger model in memory/i);
     // Search has no rung, and must not acquire one without a run behind it.
-    expect(LADDER.some((r) => r.page === 10)).toBe(false);
+    expect([...BASE_CHART, ...INSTRUCT_CHART, ...GRPO_CHART].some((b) => b.run === 10)).toBe(false);
   });
 
   /**

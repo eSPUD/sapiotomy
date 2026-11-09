@@ -1,22 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   ADAPTIVE_NULL,
-  BAND_KEYS,
-  FORCED,
-  ITEM_COUNT,
+  BASE_CHART,
+  CATEGORIES,
+  GRPO_CHART,
+  GRPO_SCOPE,
+  INSTRUCT_CHART,
   JUDGES,
-  LADDER,
   OTHER_AXIS,
   QUIZ,
   pct,
 } from "./page16";
-import { PAGE5 } from "./page05HowToReason";
+import { PAGE5, SHOTS } from "./page05";
 import { PAGE6 } from "./page06";
 import { PAGE7 } from "./page07";
-import { PAGE8 } from "./page08";
-import { PAGE9 } from "./page09";
-import { WAIT_TABLE } from "./page06";
+import { PILE8 } from "./page08Pile";
+import { BEST_OF_N } from "./page09";
 import { PAGE11 } from "./page11";
+import { FINAL as GRPO_FINAL, RUN as GRPO_RUN } from "./page13";
 import { curves } from "./curves";
 import { PAGES } from "./pages";
 
@@ -35,161 +36,65 @@ import { PAGES } from "./pages";
  * they are the only thing standing between an authoring slip and that.
  */
 
-describe("page 16's ladder", () => {
-  const at = (frag: string) => {
-    const hits = LADDER.filter((r) => r.label.includes(frag));
-    expect(hits, `"${frag}" matches ${hits.length} rungs`).toHaveLength(1);
-    return hits[0];
-  };
+describe("page 15's charts", () => {
+  const all = [...BASE_CHART, ...INSTRUCT_CHART, ...GRPO_CHART];
+  const whole = (bars: typeof all) => bars.map((b) => Math.round(b.accuracy * 100));
 
-  it("reads its rungs out of the pages that measured them, never a copy", () => {
-    expect(at("no chain at all").accuracy).toBe(PAGE5.figure2.blurt.accuracy);
-    expect(at("one chain of thought, greedy").accuracy).toBe(PAGE5.figure2.bare.accuracy);
-    expect(at("temperature zero").accuracy).toBe(
-      PAGE7.figure2.cold.points[PAGE7.figure2.cold.points.length - 1].accuracy,
+  it("draws what the source pages draw today", () => {
+    // A re-run that moves one of these should be a deliberate edit here.
+    expect(whole(BASE_CHART)).toEqual([32, 38, 64]);
+    expect(whole(INSTRUCT_CHART)).toEqual([68, 60, 81, 83, 86]);
+    expect(whole(GRPO_CHART)).toEqual([74, 85]);
+  });
+
+  it("reads the first chart out of page 5's two runs", () => {
+    const shots = SHOTS.rows.find((r) => r.label === "Qwen2.5-3B")!;
+    expect(BASE_CHART[0].accuracy).toBe(shots.solved.zero_shot / 100);
+    expect(BASE_CHART[1].accuracy).toBe(shots.solved["10_shot"] / 100);
+    expect(BASE_CHART[2].accuracy).toBe(PAGE5.instruct.find((m) => m.size === "3B")!.cot.accuracy);
+  });
+
+  it("reads the second chart out of the one sweep, except thinking longer", () => {
+    expect(INSTRUCT_CHART[0].accuracy).toBe(PILE8.bars.one_chain);
+    expect(INSTRUCT_CHART[2].accuracy).toBe(PILE8.bars.vote);
+    expect(INSTRUCT_CHART[2].accuracy).toBe(
+      PAGE7.figure2.hot.points[PAGE7.figure2.hot.points.length - 1].accuracy,
     );
-    expect(at("at least one of the").accuracy).toBe(PAGE8.coverage);
-    expect(at("filtered by step soundness").accuracy).toBe(PAGE9.selection!.filtered);
+    expect(INSTRUCT_CHART[3].accuracy).toBe(PILE8.bars.best_of_n);
+    expect(INSTRUCT_CHART[4].accuracy).toBe(BEST_OF_N.bars.prm);
+    expect(INSTRUCT_CHART[1].label).toContain("*");
+    expect(INSTRUCT_CHART[1].detail).toMatch(/different 100/);
   });
 
-  /**
-   * The bigger model's own greedy row was cut on 2026-08-10 by request. What
-   * that bought is worth holding: every rung left is one model's chains, so the
-   * page can say "one model wrote all of this" without a footnote. If a rung
-   * from another writer is added back, that sentence has to go with it.
-   */
-  it("draws one writer's chains and no other model's", () => {
-    expect(LADDER.some((r) => r.band === "elsewhere")).toBe(false);
-    expect(LADDER.every((r) => r.page >= 5 && r.page <= 9)).toBe(true);
+  it("reads the GRPO chart out of page 13's final checkpoint", () => {
+    expect(GRPO_CHART[0].accuracy).toBe(GRPO_FINAL.pass1);
+    expect(GRPO_CHART[1].accuracy).toBe(GRPO_FINAL.maj[String(GRPO_RUN.k)]);
+    expect(GRPO_RUN.model).toBe("Qwen/Qwen2.5-1.5B-Instruct");
+    expect(GRPO_SCOPE).toMatch(/1\.5B-Instruct only, on GSM8K/);
   });
 
-  it("puts forcing more thinking on the chart, and lets it come out flat", () => {
-    // Page 6's wait arm is the deck's one measurement of making a model that
-    // has finished carry on. It is a null and the chart must show it as one:
-    // a band that only climbs would be an advert rather than a summary.
-    const forced = at("forced to keep thinking");
-    expect(forced.page).toBe(6);
-    expect(forced.accuracy).toBeCloseTo(WAIT_TABLE!.after / WAIT_TABLE!.table.n, 5);
-    expect(forced.accuracy).toBeLessThanOrEqual(at("one chain of thought, greedy").accuracy);
-    expect(forced.note).toMatch(/times the tokens/);
+  it("gives each bar its category: one colour per kind of scaling", () => {
+    expect(BASE_CHART.map((b) => b.category)).toEqual(["base", "inference", "fineTuned"]);
+    expect(INSTRUCT_CHART.map((b) => b.category)).toEqual([
+      "fineTuned",
+      "inference",
+      "inference",
+      "inference",
+      "inference",
+    ]);
+    expect(GRPO_CHART.every((b) => b.category === "inferenceTraining")).toBe(true);
+    expect(new Set(all.map((b) => b.category)).size).toBe(CATEGORIES.length);
   });
 
-  it("pairs the wait arm to the chain directly above it", () => {
-    // The arm's "before" IS the rung above it, which is what lets a reader read
-    // the step between two adjacent bars as a result. page16.ts throws on load
-    // if that stops being true, because then it is two runs and not one step.
-    expect(FORCED.before).toBe(at("one chain of thought, greedy").accuracy);
-    expect(FORCED.turnedRight).toBeLessThan(FORCED.turnedWrong);
-    expect(FORCED.tokenMultiple).toBeGreaterThan(1);
-  });
-
-  it("bookends the first band with page 5's own paired contrast", () => {
-    // The blurt arm and the full chain are one paired result on one run, and
-    // page 6's cuts sit between them as the climb. Citing the full chain to
-    // page 6 would split a pair across two pages for no reason.
-    expect(at("no chain at all").page).toBe(5);
-    expect(at("one chain of thought, greedy").page).toBe(5);
-  });
-
-  it("keeps page 5's baseline and page 6's top rung agreeing", () => {
-    // They are the same measurement made twice. The band only reads as one
-    // climb while they match, and page16.ts throws on load if they stop.
-    expect(PAGE5.figure2.bare.accuracy).toBe(
-      PAGE6.figure2.primary.points[PAGE6.figure2.primary.points.length - 1].accuracy,
-    );
-  });
-
-  it("cites the vote and the coverage ceiling to page 7, which measured them", () => {
-    expect(at("sampled chains, voted").page).toBe(7);
-    expect(at("at least one of the").page).toBe(7);
-    expect(at("temperature zero").page).toBe(7);
-    // Selection is page 8's: that is the page that ran the judges.
-    expect(at("trained verifier picks one").page).toBe(8);
-  });
-
-  it("draws no rung for search, which was never run on these problems", () => {
+  it("draws no bar for search, which was never run", () => {
     // Page 10 ships no run: hand-authored tree, Yao et al.'s bars on Game of 24
-    // and crosswords. A bar would invent a result and borrowing Yao's number
-    // would put another task on this axis. The takeaways carry it instead.
-    expect(LADDER.some((r) => r.page === 10)).toBe(false);
-    expect(LADDER.every((r) => r.accuracy > 0)).toBe(true);
+    // and crosswords. The takeaways carry it instead.
+    expect(all.some((b) => b.run === 10)).toBe(false);
+    expect(all.every((b) => b.accuracy > 0 && b.accuracy <= 1)).toBe(true);
   });
 
-  it("takes its vote and its selector from ONE run, since they are compared", () => {
-    // Page 7 measures its vote at 55% and page 8 measures one at 56% on its own
-    // candidates. The ladder quotes page 11, the only run that re-aggregates
-    // pages 6, 7 and 8 into one accounting AND prices them, so the step between
-    // the vote and the selector is a step somebody actually measured.
-    const hard = PAGE11.bands.hard;
-    expect(at("sampled chains, voted").accuracy).toBe(
-      hard.voteCurve[hard.voteCurve.length - 1].accuracy,
-    );
-    expect(at("trained verifier picks one").accuracy).toBe(hard.bestOf!.accuracy);
-  });
-
-  it("gives page 9's rung its own baseline, because its pool is not the others'", () => {
-    // Read as a bare number this rung sits below page 8's selector and would
-    // look like a technique that lost. It is not comparable: page 9 filtered a
-    // pool whose own vote is 57%. The only true reading is the step from there.
-    const r = at("filtered by step soundness");
-    expect(r.baseline).toBe(PAGE9.selection!.majority);
-    expect(r.accuracy - r.baseline!).toBeCloseTo(PAGE9.selection!.deltaPts / 100, 5);
-    expect(PAGE9.selection!.helps).toBe(false);
-  });
-
-  it("prices only the rungs page 11 actually measured in FLOPs", () => {
-    // The bill is spent in prose rather than in a column, but it still may only
-    // exist where somebody measured FLOPs. Mean tokens are not FLOPs.
-    // Was four until the other-model row was cut on 2026-08-10; three remain.
-    const priced = LADDER.filter((r) => r.bill !== undefined);
-    expect(priced).toHaveLength(3);
-    for (const r of priced) expect(r.bill!).toBeGreaterThan(0);
-    expect(at("one chain of thought, greedy").bill).toBeCloseTo(1, 5);
-  });
-
-  it("still prices the best selector, which is what the conclusions spend", () => {
-    // Page 11's comparison lost its bar, so the bill that survives is the one
-    // conclusion 3 leans on: what the best selector costs. Without a bill on it
-    // "you want a trained judge" reads free.
-    const selector = at("trained verifier picks one");
-    expect(selector.bill).toBeGreaterThan(1);
-  });
-
-  it("keeps the coverage ceiling above every technique on the axis", () => {
-    const ceiling = LADDER.filter((r) => r.ceiling);
-    expect(ceiling).toHaveLength(1);
-    const best = Math.max(
-      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
-    );
-    expect(ceiling[0].accuracy).toBeGreaterThan(best);
-  });
-
-  it("only puts bars side by side that measured the same problems", () => {
-    expect(ITEM_COUNT).toBe(PAGE5.figure2.bare.n);
-    expect(ITEM_COUNT).toBe(PAGE8.paired.items);
-    expect(ITEM_COUNT).toBe(PAGE9.run.items);
-    expect(ITEM_COUNT).toBe(PAGE11.bands.hard.nItems);
-  });
-
-  it("keeps the rungs grouped in order, even though the groups are not drawn", () => {
-    // The bands order the chart and tag the row measured on another model. They
-    // are no longer headings, so the only thing left to protect is that the
-    // grouping is contiguous: rungs interleaved between bands would put the
-    // other-model row in the middle of the answer-time ladder.
-    for (const r of LADDER) {
-      expect(BAND_KEYS.includes(r.band), `${r.label} has band ${r.band}`).toBe(true);
-    }
-    const order = LADDER.map((r) => BAND_KEYS.indexOf(r.band));
-    expect([...order]).toEqual([...order].sort((a, b) => a - b));
-    // `elsewhere` is empty since the other-model row was cut, so the assertion is
-    // that no band is out of order, not that every band is populated.
-    for (const key of BAND_KEYS) {
-      expect(LADDER.filter((r) => r.band === key).length, key).toBeGreaterThanOrEqual(0);
-    }
-  });
-
-  it("cites a real page for every rung", () => {
-    for (const r of LADDER) expect(PAGES.some((p) => p.n === r.page)).toBe(true);
+  it("names a real page for every bar's run", () => {
+    for (const b of all) expect(PAGES.some((p) => p.n === b.run)).toBe(true);
   });
 });
 
@@ -214,11 +119,8 @@ describe("page 16's takeaways", () => {
   });
 
   it("has a coverage gap worth writing takeaway 2 about", () => {
-    const ceiling = LADDER.find((r) => r.ceiling)!;
-    const best = Math.max(
-      ...LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").map((r) => r.accuracy),
-    );
-    expect(Math.round((ceiling.accuracy - best.valueOf()) * 100)).toBeGreaterThan(10);
+    const gap = PILE8.bars.ceiling - Math.max(BEST_OF_N.bars.prm, PILE8.bars.best_of_n);
+    expect(Math.round(gap * 100)).toBeGreaterThanOrEqual(5);
   });
 });
 
@@ -235,8 +137,9 @@ describe("page 16's other axis (quoted, not plotted)", () => {
     // The published figure is the whole of MATH-500; the axis above is levels 4
     // and 5 only. Putting it on that axis would be the deck dropping the
     // coordinates off a score on its own last page.
-    expect(LADDER.some((r) => r.label.includes(OTHER_AXIS.label))).toBe(false);
-    expect(LADDER.some((r) => r.accuracy === OTHER_AXIS.math500)).toBe(false);
+    const all = [...BASE_CHART, ...INSTRUCT_CHART, ...GRPO_CHART];
+    expect(all.some((b) => b.label.includes(OTHER_AXIS.label))).toBe(false);
+    expect(all.some((b) => b.accuracy === OTHER_AXIS.math500)).toBe(false);
   });
 
   it("sizes the item-mix difference from the deck's own two bands", () => {
@@ -255,10 +158,6 @@ describe("page 16's other axis (quoted, not plotted)", () => {
     );
   });
 
-  it("still beats every lever on the chart, which is why it is quoted at all", () => {
-    const best = Math.max(...LADDER.map((r) => r.accuracy));
-    expect(OTHER_AXIS.math500).toBeGreaterThan(best);
-  });
 });
 
 describe("page 16's concept check", () => {

@@ -98,7 +98,7 @@ export const PAGES: PageMeta[] = [
   { n: 12, slug: "star-self-improvement", title: "Teaching Models to Reason: STaR and Self-Improvement", act: 3, concept: "Generate rationales, keep only the ones that reach the right answer, fine-tune on them, repeat: the model becomes its own teacher — for exactly as long as an external check filters what it studies.", milestone: "M4" },
   { n: 13, slug: "learned-reasoning", title: "Learned Reasoning: One Law, Two Knobs", act: 3, concept: "RL on verifiable problems builds reasoning into the weights and lifts the compute curve; thinking at answer time slides along it; and the lifted curve is portable, distilled into weights anyone can download.", milestone: "M5" },
   { n: 14, slug: "when-reasoning-breaks", title: "When Reasoning Breaks: Self-Correction, Verifier Reliability, Overthinking", act: 3, concept: "More thinking can make things worse: unaided self-correction degrades answers, longer reasoning can subtract, and the verifiers doing the rescuing are fallible themselves.", milestone: "M5" },
-  { n: 15, slug: "wrap-up", title: "Wrap-Up: What You Now Know", act: 3, concept: "Every lever in the deck on one axis for the first time, measured on the same hundred problems, and ten questions that check the mechanisms rather than the magnitudes.", milestone: "M5" },
+  { n: 15, slug: "wrap-up", title: "Wrap-Up: What You Now Know", act: 3, concept: "Every lever in the deck side by side for the first time, and ten questions that check the mechanisms rather than the magnitudes.", milestone: "M5" },
   { n: 16, slug: "glossary", title: "Glossary", concept: "The terms the deck uses, defined once.", milestone: "—", appendix: true },
 ];
 

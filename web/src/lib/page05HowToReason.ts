@@ -2,8 +2,8 @@
  * The retired page 5 run, `page_05_how_to_reason.ipynb`: Qwen2.5-Instruct on 100
  * MATH-500 level 4 and 5 problems, reasoning against non-reasoning. Page 5 no longer
  * draws it (since 2026-10-18 it reads `page05.ts`, the few-shot and instruct runs).
- * It stays because page 15's ladder takes its first two rungs from it: the same 100
- * problems page 6 measures, which page 15 pairs across pages.
+ * Page 15's ladder stopped reading it on 2026-11-09, so nothing renders it now. It
+ * stays as the record of the run, like the other retained sources in PROVENANCE.md.
  *
  * What follows is the module as it was when it loaded page 5.
  *

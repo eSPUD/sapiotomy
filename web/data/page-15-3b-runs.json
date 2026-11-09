@@ -1,0 +1,16 @@
+{
+  "thinking_longer": {
+    "model": "Qwen/Qwen2.5-3B-Instruct",
+    "notebook": "6_ThinkingLonger_InstructModels.ipynb",
+    "notebook_sha256": "78d98f9493017fadc9f4b0667aa9f058ac1de554f9f493dfea27922c339faefd",
+    "output_file": "out/page-06.json",
+    "output_sha256": "7b34a6c922f5bbdb156118b30d2f297940d9b8ed1f482a28b15770f0e0f879cf",
+    "timestamp_utc": "2026-11-09T04:27:29.469903+00:00",
+    "decoding": "greedy",
+    "budget": 2048,
+    "n": 100,
+    "n_correct": 60,
+    "accuracy": 0.6,
+    "levels": [1, 2, 3, 4, 5]
+  }
+}

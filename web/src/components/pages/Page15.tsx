@@ -10,22 +10,12 @@
  * summary has the contents list. So this page does two things the deck could
  * not do earlier and could not do anywhere else.
  *
- * SECTION 1 IS THE ONE CHART THE DECK COULD NEVER DRAW. Every lever in Act 2
- * was measured on the same hundred MATH-500 level 4 and 5 problems, and each
- * page drew its own lever against its own baseline. Only now, with all of them
- * behind the reader, can they go on one axis: no chain at all, one chain,
- * sixteen identical chains, sixteen sampled chains voted, sixteen chains with a
- * trained judge picking, and then the coverage line above all of them. The
- * shape is the argument. The steps get smaller, and the last one does not
- * happen: there is a wide gap between what the generator found and what any
- * selector kept. A dashed rule marks where a model twice the size lands with
- * one greedy chain, which is page 11's crossing said in one line.
- *
- * The comparability is load-bearing and is enforced in `lib/page16.ts` rather
- * than promised here: the rungs come from one pool wherever a comparison is
- * being made, the two that do not are labelled with the page that measured
- * them, and the module refuses to build the ladder at all if those runs stop
- * agreeing about how many problems they saw.
+ * SECTION 1 IS THE CHARTS THE DECK COULD NEVER DRAW. Each page drew its own
+ * lever against its own baseline. Only now, with all of them behind the reader,
+ * can they go side by side: the 3B base, the 3B-Instruct, and GRPO, with one
+ * colour per category. The runs do not all share a problem set, which the
+ * caption under the charts says. GRPO is a different model and benchmark, and
+ * its figure says so.
  *
  * SECTION 2 IS THE CONCEPT CHECK. Ten questions, every one
  * about a mechanism rather than a magnitude: which failure a second pass can
@@ -51,9 +41,9 @@
  * below still ends the deck on the chain not being shown to be the reason, which
  * is now the only place on this page that says so.
  *
- * NO NEW DATA. This page loads nothing of its own. If a number here disagrees
- * with the page it came from, the deck is contradicting itself in front of the
- * reader on its last page, which is why nothing below is retyped by hand.
+ * If a number here disagrees with the page it came from, the deck is
+ * contradicting itself in front of the reader on its last page, which is why
+ * nothing below is retyped by hand.
  */
 
 import { ChartFrame } from "@/components/ChartFrame";
@@ -61,16 +51,19 @@ import { Handoff } from "@/components/Handoff";
 import { PageNav } from "@/components/PageNav";
 import { Quiz } from "@/components/Quiz";
 import {
-  ADAPTIVE_NULL,
-  ITEM_COUNT,
-  LADDER,
+  BASE_CHART,
+  CATEGORIES,
+  GRPO_CHART,
+  GRPO_SCOPE,
+  INSTRUCT_CHART,
   NOTEBOOKS,
   QUIZ,
-  WRITER,
   pct,
+  type Bar,
+  type Category,
 } from "@/lib/page16";
+import { PAGE5 } from "@/lib/page05";
 import { ACTS, getPage } from "@/lib/pages";
-import { PAGE17 } from "@/lib/page17";
 import { useStore } from "@/store/useStore";
 
 /**
@@ -100,158 +93,95 @@ function Takeaway({
 
 const PAGE_N = 15;
 
-/* ------------------------------------------------------------- the ladder */
+/* ------------------------------------------------------------- the charts */
 
-const W = 700;
-const ROW = 32;
-// The deck's bar-chart grammar, kept from every other page that draws one: a
-// label gutter wide enough for the longest row, and readouts that ride the end
-// of their own bar. Not a table with columns, which is what this became for one
-// revision and what pulled the eye off the bars.
-const M = { top: 12, right: 56, bottom: 34, left: 272 };
+const W = 352;
+const ROW = 30;
+const M = { top: 8, right: 34, bottom: 34, left: 168 };
 const IW = W - M.left - M.right;
-const H = LADDER.length * ROW + M.top + M.bottom;
-const IH = H - M.top - M.bottom;
-
 const x = (v: number) => v * IW;
 
 /**
- * The toolbox on one axis, floor to ceiling.
- *
- * Bars are the rungs the deck measured; the coverage rung is hollow because it
- * is not a technique, it is what a perfect selector would have reached, and the
- * gap between it and the best solid bar is filled rather than left for the
- * reader to measure by eye.
- *
- * Two things here are not decoration. The dashed rule marks where the best
- * selector and a model twice the size land at the same accuracy, which is the
- * comparison the last row exists to make. And page 9's rung carries a baseline
- * tick on the bar, because its run is not the others' and the only honest
- * reading of it is the distance from that tick.
- *
- * The rungs are grouped in `LADDER` and the grouping is NOT drawn. Headings
- * over the groups turned a chart into a table of contents: they doubled the
- * chart's height, pushed the labels away from their bars and made the eye track
- * horizontally to find a score. The grouping still orders the rows, and the
- * prose under the chart names the three movements.
+ * One colour per category. Blue, clay and crimson stay apart under every form of
+ * colour blindness; clay and the deck's cactus green do not. The neutral is the
+ * untouched base model.
  */
-function Ladder() {
-  const solid = LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere");
-  const best = Math.max(...solid.map((r) => r.accuracy));
-  const ceiling = LADDER.find((r) => r.ceiling);
+const CATEGORY_FILL: Record<Category, string> = {
+  base: "fill-ink opacity-40",
+  fineTuned: "fill-wrong-bright",
+  inference: "fill-compute",
+  inferenceTraining: "fill-crimson",
+};
+const CATEGORY_OF = Object.fromEntries(CATEGORIES.map((c) => [c.key, c])) as Record<
+  Category,
+  (typeof CATEGORIES)[number]
+>;
+
+function Legend() {
+  return (
+    <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-muted">
+      {CATEGORIES.map((c) => (
+        <li key={c.key} className="flex items-center gap-1.5">
+          <svg width={12} height={12} aria-hidden="true">
+            <rect width={12} height={12} className={CATEGORY_FILL[c.key]} />
+          </svg>
+          {c.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Horizontal bars on a shared 0 to 100 axis, so the charts have one scale.
+ */
+function BarChart({ name, bars }: { name: string; bars: Bar[] }) {
+  const H = bars.length * ROW + M.top + M.bottom;
+  const IH = bars.length * ROW;
   return (
     <ChartFrame
-      title={`What each lever scored on the same ${ITEM_COUNT} problems. ${LADDER.map(
-        (r) =>
-          `${r.label}, ${pct(r.accuracy)}${
-            // Spoken without its baseline, page 9's rung is a bare 58% sitting
-            // under page 8's 60%, which is the exact misreading the tick on the
-            // bar exists to prevent for sighted readers.
-            r.baseline !== undefined
-              ? `, up from ${pct(r.baseline)} on that run's own vote`
-              : ""
-          }`,
-      ).join(". ")}. The steps get smaller as you go, and a wide gap is left between the best selector and the answers that were generated and not picked. Every chain on the chart was written by ${WRITER}.`}
+      title={`${name}: share of problems solved. ${bars
+        .map(
+          (b) =>
+            `${b.label.replace("*", "")}, ${CATEGORY_OF[b.category].label}, ${pct(b.accuracy)}: ${b.detail}`,
+        )
+        .join(". ")}.`}
       width={W}
       height={H}
       margin={M}
-      xLabel={`accuracy on ${ITEM_COUNT} MATH-500 level 4 and 5 problems`}
+      xLabel="% solved"
     >
-      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+      {[0, 25, 50, 75, 100].map((t) => (
         <g key={t}>
-          <line x1={x(t)} x2={x(t)} y1={0} y2={IH} className="stroke-grid" strokeWidth={1} />
-          <text x={x(t)} y={IH + 16} textAnchor="middle" className="fill-ink-muted text-[10px]">
-            {t * 100}
+          <line x1={x(t / 100)} x2={x(t / 100)} y1={0} y2={IH} className="stroke-grid" strokeWidth={1} />
+          <text x={x(t / 100)} y={IH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+            {t}
           </text>
         </g>
       ))}
 
-      {/* What was generated and never picked: the one gap the page argues about. */}
-      {ceiling ? (
-        <rect
-          x={x(best)}
-          y={0}
-          width={x(ceiling.accuracy) - x(best)}
-          height={IH}
-          className="fill-wrong opacity-[0.08]"
-        />
-      ) : null}
-
-      {LADDER.map((r, i) => {
+      {bars.map((b, i) => {
         const y = i * ROW + 6;
         const h = ROW - 12;
-        const base = r.baseline ?? 0;
         return (
-          <g key={r.label}>
-            {/* Label and source in ONE right-aligned run, ending at the bar. The
-                page tag used to sit in the plot at a fixed offset past the value,
-                which collided with the value on every short bar. */}
-            <text x={-10} y={y + h - 3} textAnchor="end" className="text-[11px]">
-              <tspan className={r.ceiling ? "fill-ink-muted italic" : "fill-ink"}>{r.label}</tspan>
-              <tspan className="fill-ink-muted"> · page {r.page}</tspan>
+          <g key={b.label}>
+            <title>{b.detail}</title>
+            <text x={-8} y={y + h / 2 + 4} textAnchor="end" className="fill-ink text-[11px]">
+              {b.label}
             </text>
-
-            {r.ceiling ? (
-              <rect
-                x={0}
-                y={y}
-                width={x(r.accuracy)}
-                height={h}
-                fill="none"
-                strokeDasharray="3 2"
-                className="stroke-wrong"
-                strokeWidth={1.5}
-              />
-            ) : (
-              <rect
-                x={0}
-                y={y}
-                width={x(r.accuracy)}
-                height={h}
-                className={
-                  r.band === "elsewhere"
-                    ? "fill-correct"
-                    : r.accuracy === best
-                      ? "fill-compute"
-                      : "fill-ink opacity-40"
-                }
-              />
-            )}
-
-            {/* Page 9's run is not the others'. Its rung may only be read as the
-                distance from its own vote, so that vote is drawn on the bar. */}
-            {r.baseline !== undefined ? (
-              <>
-                <line
-                  x1={x(base)}
-                  x2={x(base)}
-                  y1={y - 2}
-                  y2={y + h + 2}
-                  className="stroke-canvas"
-                  strokeWidth={2}
-                />
-                <text
-                  x={x(base) - 4}
-                  y={y + h - 3}
-                  textAnchor="end"
-                  className="fill-ink text-[10px] font-semibold"
-                >
-                  {pct(base)}
-                </text>
-              </>
-            ) : null}
-
-            {/* The readouts ride the bar rather than sitting in a column, so a
-                row is read left to right in one move and the eye never leaves
-                the bar it is reading. */}
+            <rect
+              x={0}
+              y={y}
+              width={x(b.accuracy)}
+              height={h}
+              className={CATEGORY_FILL[b.category]}
+            />
             <text
-              x={x(r.accuracy) + 6}
-              y={y + h - 3}
-              className={`text-[11px] font-semibold tabular-nums ${
-                r.ceiling ? "fill-wrong-ink" : "fill-ink"
-              }`}
+              x={x(b.accuracy) + 4}
+              y={y + h / 2 + 4}
+              className="fill-ink text-[11px] font-semibold tabular-nums"
             >
-              {pct(r.accuracy)}
+              {pct(b.accuracy)}
             </text>
           </g>
         );
@@ -265,11 +195,6 @@ function Ladder() {
 export function Page15() {
   const page = getPage(PAGE_N)!;
   const recordInteraction = useStore((s) => s.recordInteraction);
-  const ceiling = LADDER.find((r) => r.ceiling)!;
-  const best = LADDER.filter((r) => !r.ceiling && r.band !== "elsewhere").reduce((a, b) =>
-    b.accuracy > a.accuracy ? b : a,
-  );
-
   return (
     <article className="flex flex-col gap-6">
       <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
@@ -285,7 +210,7 @@ export function Page15() {
           {page.title}
         </h1>
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="text-xs text-ink-muted">the runs behind the chart:</span>
+          <span className="text-xs text-ink-muted">the runs behind the charts:</span>
           {NOTEBOOKS.map((n) => (
             <a
               key={n.href}
@@ -309,48 +234,44 @@ export function Page15() {
         under the hood. Reasoning turned out to be{" "}
         <strong className="text-ink">one knob that can be turned many different ways</strong>, and
         that can even be moved from one axis to another. Here is every lever on the first axis,
-        measured on the same problems the pages showed you. Then ten questions, to see whether the
+        measured on the problems the pages showed you. Then ten questions, to see whether the
         mechanisms landed rather than whether the numbers stuck.
       </p>
 
       <div className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-ink">
-          1. The whole toolbox, on one axis
-          <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-            our runs · {ITEM_COUNT} problems · pages 5 to 11
-          </span>
+          1. The whole toolbox, side by side
+          <span className="ml-2 align-middle text-xs font-normal text-ink-muted">our runs</span>
         </h2>
         <p className="text-ink">
           Each page measured its own lever against its own baseline, so none of them could draw
-          this. Now that all of them are behind you, they go on one axis, priced in the compute
-          they actually spent.
+          this. Now that all of them are behind you, they go side by side: the 3B base model, its
+          Instruct version, and GRPO.
         </p>
-        <Ladder />
-
-        {/* The chart's one caption. It replaces four paragraphs that restated
-            every rung in prose: the rungs are legible, and what a reader cannot
-            get from the picture is the SHAPE, which is what this says. The
-            numbers those paragraphs carried are spent once, in the takeaways.
-
-            The clause about a 128-token chain scoring what no chain scores went
-            with the rung it described. Do not reinstate it: there is no longer a
-            bar on this chart behind it. */}
+        <Legend />
+        <div className="grid items-start gap-x-6 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+          <figure className="flex min-w-0 max-w-lg flex-col gap-1">
+            <figcaption className="text-sm font-semibold text-ink">3B base only</figcaption>
+            <BarChart name="Qwen2.5-3B base model, MATH-500" bars={BASE_CHART} />
+          </figure>
+          <figure className="flex min-w-0 max-w-lg flex-col gap-1">
+            <figcaption className="text-sm font-semibold text-ink">3B Instruct only</figcaption>
+            <BarChart name="Qwen2.5-3B-Instruct, MATH-500" bars={INSTRUCT_CHART} />
+          </figure>
+          <figure className="flex min-w-0 max-w-lg flex-col gap-1">
+            <figcaption className="text-sm font-semibold text-ink">
+              Inference + training-time scaling
+              <span className="mt-0.5 block text-xs font-normal text-ink-muted">{GRPO_SCOPE}</span>
+            </figcaption>
+            <BarChart name="GRPO on Qwen2.5-1.5B-Instruct, GSM8K" bars={GRPO_CHART} />
+          </figure>
+        </div>
         <p className="border-l-2 border-grid pl-3 text-sm text-ink-muted">
-          Read it top to bottom as steps that keep getting smaller. Writing the reasoning at all is
-          the largest single move on the chart, and being made to write more of it is the only step
-          that goes backwards.
-        </p>
-
-        {/* The one thing a reader needs in order to read the chart correctly, and
-            nothing else. The downloads used to sit here and were moved to the top
-            line on 2026-08-10: they are provenance, and a list of five zips between
-            the chart and the conclusions interrupted the argument at its seam. */}
-        <p className="border-l-2 border-grid pl-3 text-sm text-ink-muted">
-          <strong className="text-ink">Every chain above was written by {WRITER}.</strong> One model
-          wrote all of it. What changes down the chart is how many chains it was allowed to write
-          and what got to pick between them, never who was writing; where a judge appears it scores
-          chains, it does not write them. The run behind each rung is linked at the top of this
-          page, traces included, so any of them can be re-derived without a GPU.
+          In the first chart, the two base-model bars share one run and the instruct bar is a
+          separate run on {PAGE5.n} problems. In the second, every bar is the same 100 problems,
+          except <strong className="text-ink">*thinking longer</strong>, which ran on a different
+          100. The third chart is a smaller model on an easier benchmark, so compare its bars only
+          with each other.
         </p>
       </div>
 
@@ -367,7 +288,7 @@ export function Page15() {
         <h2 className="text-xl font-semibold text-ink">
           1b. Conclusions
           <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-            six things the chart is evidence for
+            six things the runs are evidence for
           </span>
         </h2>
         <div className="flex flex-col gap-3">
@@ -380,18 +301,20 @@ export function Page15() {
           </Takeaway>
 
           <Takeaway n={2} title="The answer is usually already in the pile">
-            Ask the same question many times and a right answer turns up far more often than any
+            Ask the same question many times and a right answer turns up more often than any
             rule we tried managed to pick out. The gap between what was found and what was chosen is
             not a thinking problem, and sampling harder does not close it.
           </Takeaway>
 
-          <Takeaway n={3} title="So the judge is the bottleneck, and judges can barely read">
-            Something has to choose. An arithmetic checker can only mark the small part of a chain
-            that is arithmetic, and the rest is prose it cannot read at all. Meanwhile the more
-            variety you buy by sampling, the worse every model asked to judge gets, while a model{" "}
-            <strong className="text-ink">trained to score</strong> holds steady. So you want a
-            trained judge. But sampling and judging your way to what a bigger model reaches on its
-            own costs many times more compute than simply using the bigger model.
+          <Takeaway n={3} title="So a trained judge helps, at the cost of a second model">
+            Something has to choose among the chains. A majority vote only counts answers. On the
+            same chains, a model <strong className="text-ink">trained to score</strong> them picks a
+            right answer a little more often, and one that scores every step does a little better
+            again. An arithmetic checker can mark only the small part of a chain that is arithmetic.
+            The more variety you buy by sampling, the worse a model asked to judge gets, while a
+            trained scorer holds steady. The price is running that second model over every chain.
+            Matching what a bigger model reaches on its own this way costs many times more compute
+            than simply using the bigger model.
           </Takeaway>
 
           <Takeaway n={4} title="Adaptive compute is where that points, not where it lands">
@@ -409,13 +332,14 @@ export function Page15() {
             second, larger model in memory beside the one doing the writing.
           </Takeaway>
 
-          <Takeaway n={6} title="And the biggest move in this story is not on this axis">
-            The largest jump in the whole deck came from none of the levers on this chart. It came
-            from taking a small model and training it on the reasoning of a much stronger one. It is
-            not a bar here because it was not the same test: the published result covers every
-            difficulty level and this chart is only the hardest ones, and our own models score
-            noticeably higher on the easier mix. So part of that gap is the easier test and part is
-            the training, and this deck cannot tell you how it splits.
+          <Takeaway n={6} title="And training adds to what inference-time scaling buys">
+            GRPO trains a model on whether its answers came out right. On the smaller model in the
+            third chart it raised the score of a single chain, and a vote over the trained
+            model&apos;s chains scored higher still. Published results show a larger gain when a
+            small model is trained on the reasoning of a much stronger one. That is not a bar here
+            because it was not our run: it is a published score, from another harness, on a model we
+            did not test. Part of that gain is the training and part is those differences, and this
+            deck cannot tell you how it splits.
           </Takeaway>
         </div>
       </div>

@@ -1,0 +1,189 @@
+{
+ "note": "Built by notebooks/page_9_site_data.py from the PRM notebook's scored traces. Accuracy is on 100 MATH-500 problems, 16 chains each. one_chain is greedy decoding. A tied vote counts as wrong. bars.orm is added by hand from web/data/page-08-pile.json (bars.best_of_n, Skywork-o1-Open-PRM-Qwen-2.5-1.5B read at the final token, same chains at T 0.9), whose vote and one_chain match the bars here.",
+ "temperature": 0.9,
+ "n_problems": 100,
+ "n_chains": 16,
+ "prm_model": "Qwen/Qwen2.5-Math-PRM-7B",
+ "bars": {
+  "one_chain": 0.68,
+  "vote": 0.81,
+  "orm": 0.83,
+  "prm": 0.86
+ },
+ "prm_rules_at_16": {
+  "weakest_step": 0.86,
+  "last_step": 0.89,
+  "product_of_steps": 0.88
+ },
+ "vote_ties_at_16": 5,
+ "disagreements_at_16": {
+  "prm_only": 5,
+  "prm_only_on_a_tied_vote": 2,
+  "vote_only": 0
+ },
+ "prm_lead_at_16_by_temperature": {
+  "0.1": 0.05999999999999994,
+  "0.2": 0.07999999999999996,
+  "0.3": 0.04999999999999993,
+  "0.4": 0.06999999999999995,
+  "0.5": 0.08999999999999997,
+  "0.6": 0.07999999999999996,
+  "0.7": 0.06999999999999995,
+  "0.8": 0.06999999999999995,
+  "0.9": 0.04999999999999993,
+  "1.0": 0.039999999999999925,
+  "1.1": 0.05999999999999994
+ },
+ "by_n": [
+  {
+   "n": 1,
+   "vote": 0.691875,
+   "prm": 0.691875
+  },
+  {
+   "n": 2,
+   "vote": 0.5902,
+   "prm": 0.7576
+  },
+  {
+   "n": 4,
+   "vote": 0.7372,
+   "prm": 0.811
+  },
+  {
+   "n": 8,
+   "vote": 0.7849,
+   "prm": 0.8458
+  },
+  {
+   "n": 16,
+   "vote": 0.81,
+   "prm": 0.86
+  }
+ ],
+ "breaks": {
+  "main_cut": 0.75,
+  "by_cut": {
+   "0.5": {
+    "right": {
+     "chains": 1107,
+     "no_low_step": 910,
+     "bins": [
+      30,
+      30,
+      22,
+      13,
+      27,
+      20,
+      24,
+      19,
+      11,
+      1
+     ],
+     "share_with_low_step": 0.17795844625112917,
+     "median_share_after": 0.41306676187076047,
+     "tokens_after": 0.09649746659188974
+    },
+    "wrong": {
+     "chains": 493,
+     "no_low_step": 44,
+     "bins": [
+      114,
+      36,
+      50,
+      33,
+      45,
+      52,
+      52,
+      37,
+      28,
+      2
+     ],
+     "share_with_low_step": 0.9107505070993914,
+     "median_share_after": 0.372051624388073,
+     "tokens_after": 0.34308641344177127
+    }
+   },
+   "0.75": {
+    "right": {
+     "chains": 1107,
+     "no_low_step": 877,
+     "bins": [
+      25,
+      32,
+      16,
+      17,
+      35,
+      29,
+      32,
+      28,
+      15,
+      1
+     ],
+     "share_with_low_step": 0.20776874435411022,
+     "median_share_after": 0.46978854307754325,
+     "tokens_after": 0.12725536266027412
+    },
+    "wrong": {
+     "chains": 493,
+     "no_low_step": 19,
+     "bins": [
+      97,
+      32,
+      48,
+      37,
+      51,
+      61,
+      60,
+      49,
+      35,
+      4
+     ],
+     "share_with_low_step": 0.9614604462474645,
+     "median_share_after": 0.44392017106201,
+     "tokens_after": 0.4129158094205194
+    }
+   },
+   "0.9": {
+    "right": {
+     "chains": 1107,
+     "no_low_step": 807,
+     "bins": [
+      31,
+      34,
+      17,
+      22,
+      38,
+      31,
+      46,
+      50,
+      28,
+      3
+     ],
+     "share_with_low_step": 0.27100271002710025,
+     "median_share_after": 0.5247378295818204,
+     "tokens_after": 0.17632023958457488
+    },
+    "wrong": {
+     "chains": 493,
+     "no_low_step": 9,
+     "bins": [
+      76,
+      24,
+      41,
+      30,
+      47,
+      53,
+      74,
+      74,
+      52,
+      13
+     ],
+     "share_with_low_step": 0.9817444219066938,
+     "median_share_after": 0.5441259885464957,
+     "tokens_after": 0.5008632809373906
+    }
+   }
+  }
+ }
+}
