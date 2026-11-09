@@ -165,20 +165,19 @@ describe("Page 5, figure 1: worked solutions from MATH-500", () => {
 describe("Page 5, figure 2: zero-shot against few-shot", () => {
   const fig2 = () => screen.getByLabelText("Zero-shot against few-shot");
 
-  it("opens on its own denominator: 200 random problems, none of them the 10 examples", () => {
+  it("opens on random problems, none of them the 10 examples, without stating how many", () => {
     render(<Page5 />);
-    expect(SHOTS.n).toBe(200);
     expect(body().replace(/reference \d/g, "")).toContain(
-      `One trace proves nothing, so both prompts were run on MATH-500 problems, with Qwen2.5 base models of three sizes: zero-shot, and with 10 worked examples. The worked examples are MATH-500 problems themselves, so they are excluded from testing: every count below is on ${SHOTS.n} other problems, chosen at random.`,
+      `One trace proves nothing, so both prompts were run on MATH-500 problems, with Qwen2.5 base models of three sizes: zero-shot, and with 10 worked examples. The worked examples are MATH-500 problems themselves, so they are excluded from testing: every count below is on other problems, chosen at random.`,
     );
   });
 
   it("carries the RunPod run's results, unchanged", () => {
     expect(SHOTS.placeholder).toBe(false);
     expect(SHOTS.rows.map((r) => [r.label, r.solved.zero_shot, r.solved["10_shot"]])).toEqual([
-      ["Qwen2.5-1.5B", 24, 28.5],
-      ["Qwen2.5-3B", 29, 38],
-      ["Qwen2.5-7B", 28.5, 47],
+      ["Qwen2.5-1.5B", 25, 26.2],
+      ["Qwen2.5-3B", 31.9, 37.5],
+      ["Qwen2.5-7B", 31.9, 43.8],
     ]);
   });
 
@@ -211,26 +210,10 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
     render(<Page5 />);
     const vitals = fig2().querySelector("dl")?.textContent ?? "";
     expect(vitals).toContain("Qwen2.5 base · 1.5B, 3B, 7B");
-    expect(fig2().textContent).toContain(`Qwen2.5 base models on ${SHOTS.n} MATH-500 problems`);
-    expect(vitals).toContain(`n = ${SHOTS.n}`);
-    expect(vitals).toContain("1,200 replies");
-  });
-
-  it("annotates the 1.5B with 10 examples as on par with the 3B and 7B with none, and the data agrees", () => {
-    render(<Page5 />);
-    expect(within(fig2()).getByTestId("shots-on-par")).toHaveTextContent(
-      "On par: 1.5B with 10 examples, 3B and 7B with none",
-    );
-    const [small, mid, large] = SHOTS.rows;
-    const onPar = [small.solved["10_shot"], mid.solved.zero_shot, large.solved.zero_shot];
-    expect(Math.max(...onPar) - Math.min(...onPar)).toBeLessThanOrEqual(1);
-    const outlined = (label: string) =>
-      [...within(fig2()).getByTestId(`shots-${label}`).querySelectorAll("rect")].map((b) =>
-        b.getAttribute("class")?.includes("stroke-ink"),
-      );
-    expect(outlined("Qwen2.5-1.5B")).toEqual([false, true]);
-    expect(outlined("Qwen2.5-3B")).toEqual([true, false]);
-    expect(outlined("Qwen2.5-7B")).toEqual([true, false]);
+    expect(fig2().textContent).toContain("Qwen2.5 base models on MATH-500 problems");
+    expect(vitals).toContain("MATH-500");
+    expect(vitals).not.toContain("n =");
+    expect(vitals).not.toContain("replies");
   });
 
   it("says on its face when its numbers are placeholders", () => {
@@ -280,10 +263,10 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
 });
 
 describe("Page 5, figure 3: instruct models against few-shot base models", () => {
-  it("compares the instruct models with no examples against the base models with ten, naming each side's problems", () => {
+  it("compares the instruct models with no examples against the base models with ten, without stating how many problems", () => {
     render(<Page5 />);
-    expect(body()).toContain(`Below, the instruct versions of the same three models answer ${N} problems with no examples, against the base models with ten on ${SHOTS.n} problems.`);
-    expect(body()).toContain(`greedy · base on ${SHOTS.n} problems, instruct on ${N}`);
+    expect(body()).toContain("Below, the instruct versions of the same three models answer MATH-500 problems with no examples, against the base models with ten.");
+    expect(body()).not.toContain("base on");
     expect(body()).not.toContain(`the same ${N} problems`);
     for (const [i, m] of PAGE5.instruct.entries()) {
       expect(SHOTS.rows[i].label).toBe(`Qwen2.5-${m.size}`);

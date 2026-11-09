@@ -367,20 +367,17 @@ export interface ShotRow {
 /**
  * Section 2's figure and section 3's few-shot side, from their own notebook:
  * `web/data/page-05-few-shot.json` holds that notebook's `results` (model id ->
- * percent solved per condition), the number of test problems and the 10-shot
- * prompt's median length. It is a separate run from `page-05-derived.json`, on 200
- * random problems, so its `n` is its own. If `placeholder` is ever true the numbers
+ * percent solved per condition) and the 10-shot prompt's median length. It is a
+ * separate run from `page-05-derived.json`. If `placeholder` is ever true the numbers
  * are arbitrary and the figure says so on its face.
  */
 const shotRaw = rawShots as {
   placeholder: boolean;
-  n: number;
   median_10_shot_prompt_tokens: number;
   results: Record<string, Record<string, number>>;
 };
 export const SHOTS = {
   placeholder: shotRaw.placeholder,
-  n: shotRaw.n,
   tenShotPromptTokens: shotRaw.median_10_shot_prompt_tokens,
   rows: Object.entries(shotRaw.results).map(([modelId, metrics]): ShotRow => {
     const solved = {} as Record<ShotKey, number>;

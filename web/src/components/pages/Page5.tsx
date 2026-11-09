@@ -358,19 +358,6 @@ const SHOT_FILL: Record<ShotKey, string> = {
   "10_shot": "fill-wrong",
 };
 
-/**
- * Figure 2's annotation (author, 2026-11-08): the bars that land together, outlined
- * and bracketed. The match is against the larger models with no examples; with ten
- * they pull ahead. Page5.test.tsx guards the claim against the data.
- */
-const ON_PAR: [string, ShotKey][] = [
-  ["Qwen2.5-1.5B", "10_shot"],
-  ["Qwen2.5-3B", "zero_shot"],
-  ["Qwen2.5-7B", "zero_shot"],
-];
-const ON_PAR_NOTE = "On par: 1.5B with 10 examples, 3B and 7B with none";
-const isOnPar = (label: string, k: ShotKey) => ON_PAR.some(([l, key]) => l === label && key === k);
-
 /** A bar's value as printed, one decimal like figure 3's: 38 reads "38.0%". */
 const shotPct = (v: number) => `${v.toFixed(1)}%`;
 
@@ -406,18 +393,11 @@ function ShotBars() {
   // Wide enough to carry the condition's name on the bar, read horizontally.
   const barW = Math.min(64, (groupW - 24 - (SHOT_KEYS.length - 1) * gap) / SHOT_KEYS.length);
   const clusterW = SHOT_KEYS.length * barW + (SHOT_KEYS.length - 1) * gap;
-  const onPar = ON_PAR.map(([label, k]) => {
-    const i = rows.findIndex((r) => r.label === label);
-    if (i < 0) throw new Error(`page 5: figure 2 has no bars for ${label}`);
-    const cx = i * groupW + (groupW - clusterW) / 2 + SHOT_KEYS.indexOf(k) * (barW + gap) + barW / 2;
-    return { cx, v: rows[i].solved[k] };
-  });
-  const bracketY = y(60);
   return (
     <ChartFrame
-      title={`Percent of ${SHOTS.n} MATH-500 problems solved by Qwen2.5 base models with zero and 10 worked examples in the prompt. ${rows
+      title={`Percent of MATH-500 problems solved by Qwen2.5 base models with zero and 10 worked examples in the prompt. ${rows
         .map((r) => `${r.label}: ${SHOT_KEYS.map((k) => `${SHOT_LABEL[k]} ${shotPct(r.solved[k])}`).join(", ")}`)
-        .join(". ")}. ${ON_PAR_NOTE}.`}
+        .join(". ")}.`}
       width={SHOT_W}
       height={SHOT_H}
       margin={SHOT_MARGIN}
@@ -445,8 +425,7 @@ function ShotBars() {
                     y={y(v)}
                     width={barW}
                     height={SHOT_INNER_H - y(v)}
-                    className={`${SHOT_FILL[k]}${isOnPar(r.label, k) ? " stroke-ink" : ""}`}
-                    strokeWidth={isOnPar(r.label, k) ? 1.5 : undefined}
+                    className={SHOT_FILL[k]}
                   >
                     <title>{`${r.label}, ${SHOT_LABEL[k]}: ${shotPct(v)}`}</title>
                   </rect>
@@ -475,27 +454,6 @@ function ShotBars() {
           </g>
         );
       })}
-      <g data-testid="shots-on-par">
-        <line
-          x1={onPar[0].cx}
-          x2={onPar[onPar.length - 1].cx}
-          y1={bracketY}
-          y2={bracketY}
-          className="stroke-ink"
-          strokeWidth={1}
-        />
-        {onPar.map(({ cx, v }) => (
-          <line key={cx} x1={cx} x2={cx} y1={bracketY} y2={y(v) - 18} className="stroke-ink" strokeWidth={1} />
-        ))}
-        <text
-          x={(onPar[0].cx + onPar[onPar.length - 1].cx) / 2}
-          y={bracketY - 7}
-          textAnchor="middle"
-          className="fill-ink text-xs font-semibold"
-        >
-          {ON_PAR_NOTE}
-        </text>
-      </g>
     </ChartFrame>
   );
 }
@@ -751,14 +709,14 @@ export function Page5() {
           <h2 className="text-xl font-semibold text-ink">2. Zero-shot versus few-shot CoT prompting</h2>
           <p className="text-ink-muted">
             {/* The old opening sentence, rewritten for the RunPod notebook's run
-                (author, 2026-11-08): three sizes, two prompts, and its own denominator,
-                200 random problems, none of them the ten example problems, because
-                testing on those would test the answer key. A stand-in until the prose
-                is iterated on. */}
+                (author, 2026-11-08): three sizes, two prompts, and random problems, none
+                of them the ten example problems, because testing on those would test the
+                answer key. The count is deliberately not stated. A stand-in until the
+                prose is iterated on. */}
             One trace proves nothing, so both prompts were run on MATH-500 problems, with Qwen2.5 base models
             <Cite n={REF.qwen} /> of {SIZE_COUNT_WORD} sizes: zero-shot, and with 10 worked examples. The worked
             examples are MATH-500 problems themselves, so they are excluded from testing: every
-            count below is on {SHOTS.n} other problems, chosen at random.
+            count below is on other problems, chosen at random.
           </p>
           <section
             aria-label="Zero-shot against few-shot"
@@ -767,8 +725,7 @@ export function Page5() {
             <Ledger
               rows={[
                 ["model", `Qwen2.5 base · ${SHOT_SIZES.join(", ")}`],
-                ["problems", `MATH-500 · n = ${SHOTS.n}`],
-                ["output", `${(SHOTS.rows.length * SHOT_KEYS.length * SHOTS.n).toLocaleString("en-GB")} replies`],
+                ["problems", "MATH-500"],
               ]}
             />
             <figure className="flex flex-col gap-2">
@@ -794,7 +751,7 @@ export function Page5() {
               </div>
               <ShotBars />
               <figcaption className="text-center text-base font-semibold text-ink">
-                Zero-shot vs few-shot: Qwen2.5 base models on {SHOTS.n} MATH-500 problems
+                Zero-shot vs few-shot: Qwen2.5 base models on MATH-500 problems
                 <span className="block text-sm font-normal text-ink-muted">
                   How many problems each model solved with zero and 10 worked examples
                 </span>
@@ -834,8 +791,8 @@ export function Page5() {
             <Cite n={REF.qwenReport} />
           </p>
           <p className="text-ink-muted">
-            Below, the instruct versions of the same three models answer {N} problems with no
-            examples, against the base models with ten on {SHOTS.n} problems.
+            Below, the instruct versions of the same three models answer MATH-500 problems with no
+            examples, against the base models with ten.
           </p>
           <section
             aria-label="Instruct models against few-shot base models"
@@ -843,13 +800,13 @@ export function Page5() {
           >
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className={chip}>Qwen2.5 base and Instruct · 1.5B, 3B, 7B · all bf16</span>
-              <span className={chip}>greedy · base on {SHOTS.n} problems, instruct on {N}</span>
+              <span className={chip}>greedy</span>
             </div>
             <figure className="flex flex-col gap-2">
               <SeriesLegend series={FIG3_SERIES} />
               <ArrowRows
                 id="p5-fig3"
-                title={`Share of MATH-500 problems solved, from base models with ten worked examples, on ${SHOTS.n} problems, to instruct models with none, on ${N}. Base, few-shot: ${describeSeries(FIG3_SERIES[0])}. Instruct, no examples: ${describeSeries(FIG3_SERIES[1])}.`}
+                title={`Share of MATH-500 problems solved, from base models with ten worked examples to instruct models with none. Base, few-shot: ${describeSeries(FIG3_SERIES[0])}. Instruct, no examples: ${describeSeries(FIG3_SERIES[1])}.`}
                 series={FIG3_SERIES}
                 sizes={SIZES}
               />
