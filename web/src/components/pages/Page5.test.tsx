@@ -165,23 +165,36 @@ describe("Page 5, figure 1: worked solutions from MATH-500", () => {
 describe("Page 5, figure 2: zero-shot against few-shot", () => {
   const fig2 = () => screen.getByLabelText("Zero-shot against few-shot");
 
-  it("opens on its own denominator, 490: MATH-500 less the 10 example problems", () => {
+  it("opens on its own denominator: 200 random problems, none of them the 10 examples", () => {
     render(<Page5 />);
-    expect(SHOTS.n).toBe(490);
+    expect(SHOTS.n).toBe(200);
     expect(body().replace(/reference \d/g, "")).toContain(
-      `One trace proves nothing, so every prompt was run across MATH-500, with Qwen2.5 models of four sizes: zero-shot, and with 1, 5 or 10 worked examples. The worked examples are MATH-500 problems themselves, so they are excluded from testing: every count below is on the other ${SHOTS.n} problems.`,
+      `One trace proves nothing, so both prompts were run on MATH-500 problems, with Qwen2.5 base models of three sizes: zero-shot, and with 10 worked examples. The worked examples are MATH-500 problems themselves, so they are excluded from testing: every count below is on ${SHOTS.n} other problems, chosen at random.`,
     );
   });
 
-  it("draws one group of four vertical bars per model, zero-shot to 10-shot, with a legend", () => {
+  it("carries the RunPod run's results, unchanged", () => {
+    expect(SHOTS.placeholder).toBe(false);
+    expect(SHOTS.rows.map((r) => [r.label, r.solved.zero_shot, r.solved["10_shot"]])).toEqual([
+      ["Qwen2.5-1.5B", 24, 28.5],
+      ["Qwen2.5-3B", 29, 38],
+      ["Qwen2.5-7B", 28.5, 47],
+    ]);
+  });
+
+  it("draws one group of two vertical bars per model, zero-shot and 10-shot, with a legend", () => {
     render(<Page5 />);
-    expect(SHOTS.rows.map((r) => r.label)).toEqual(["Qwen2.5-0.5B", "Qwen2.5-1.5B", "Qwen2.5-3B", "Qwen2.5-7B"]);
+    expect(SHOTS.rows.map((r) => r.label)).toEqual(["Qwen2.5-1.5B", "Qwen2.5-3B", "Qwen2.5-7B"]);
     const scales: number[] = [];
     for (const r of SHOTS.rows) {
       expect(r.label).toBe(r.modelId.split("/").pop());
-      const bars = [...within(fig2()).getByTestId(`shots-${r.label}`).querySelectorAll("rect")];
+      const group = within(fig2()).getByTestId(`shots-${r.label}`);
+      for (const k of SHOT_KEYS) expect(within(group).getByText(SHOT_LABEL[k]).tagName.toLowerCase()).toBe("text");
+      const printed = [...group.querySelectorAll("text")].map((t) => t.textContent);
+      for (const k of SHOT_KEYS) expect(printed).toContain(`${r.solved[k].toFixed(1)}%`);
+      const bars = [...group.querySelectorAll("rect")];
       expect(bars.map((b) => b.querySelector("title")?.textContent)).toEqual(
-        SHOT_KEYS.map((k) => `${r.label}, ${SHOT_LABEL[k]}: ${r.solved[k]}%`),
+        SHOT_KEYS.map((k) => `${r.label}, ${SHOT_LABEL[k]}: ${r.solved[k].toFixed(1)}%`),
       );
       // Vertical: one baseline for every bar, height in proportion to the share.
       const bottoms = bars.map((b) => Number(b.getAttribute("y")) + Number(b.getAttribute("height")));
@@ -189,16 +202,35 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
       SHOT_KEYS.forEach((k, j) => scales.push(Number(bars[j].getAttribute("height")) / r.solved[k]));
     }
     for (const s of scales) expect(s).toBeCloseTo(scales[0], 6);
+    expect(within(fig2()).getByText("Accuracy (%)")).toBeInTheDocument();
     const legend = within(fig2()).getAllByRole("listitem").map((li) => li.textContent);
-    expect(legend).toEqual(["zero-shot", "1-shot", "5-shot", "10-shot"]);
+    expect(legend).toEqual(["zero-shot", "10-shot"]);
   });
 
   it("carries the run's ledger inside the figure card", () => {
     render(<Page5 />);
     const vitals = fig2().querySelector("dl")?.textContent ?? "";
-    expect(vitals).toContain("Qwen2.5 · 0.5B, 1.5B, 3B, 7B");
+    expect(vitals).toContain("Qwen2.5 base · 1.5B, 3B, 7B");
+    expect(fig2().textContent).toContain(`Qwen2.5 base models on ${SHOTS.n} MATH-500 problems`);
     expect(vitals).toContain(`n = ${SHOTS.n}`);
-    expect(vitals).toContain(`${(SHOTS.rows.length * 4 * SHOTS.n).toLocaleString("en-GB")} replies`);
+    expect(vitals).toContain("1,200 replies");
+  });
+
+  it("annotates the 1.5B with 10 examples as on par with the 3B and 7B with none, and the data agrees", () => {
+    render(<Page5 />);
+    expect(within(fig2()).getByTestId("shots-on-par")).toHaveTextContent(
+      "On par: 1.5B with 10 examples, 3B and 7B with none",
+    );
+    const [small, mid, large] = SHOTS.rows;
+    const onPar = [small.solved["10_shot"], mid.solved.zero_shot, large.solved.zero_shot];
+    expect(Math.max(...onPar) - Math.min(...onPar)).toBeLessThanOrEqual(1);
+    const outlined = (label: string) =>
+      [...within(fig2()).getByTestId(`shots-${label}`).querySelectorAll("rect")].map((b) =>
+        b.getAttribute("class")?.includes("stroke-ink"),
+      );
+    expect(outlined("Qwen2.5-1.5B")).toEqual([false, true]);
+    expect(outlined("Qwen2.5-3B")).toEqual([true, false]);
+    expect(outlined("Qwen2.5-7B")).toEqual([true, false]);
   });
 
   it("says on its face when its numbers are placeholders", () => {
@@ -229,13 +261,13 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
   });
 
   // The page's colours (author, 2026-10-18): crimson baseline, blue few-shot, orange
-  // instruct reasoning. Figure 2's few-shot bars deepen in blue with the examples.
+  // instruct reasoning.
   it("colours the baseline crimson, few-shot blue and instruct reasoning orange", () => {
     render(<Page5 />);
     const bars = [...within(fig2()).getByTestId("shots-Qwen2.5-1.5B").querySelectorAll("rect")].map((b) =>
       b.getAttribute("class"),
     );
-    expect(bars).toEqual(["fill-crimson", "fill-wrong", "fill-wrong-bright", "fill-wrong-ink"]);
+    expect(bars.map((c) => c?.split(" ")[0])).toEqual(["fill-crimson", "fill-wrong"]);
     const fill = (id: string) => screen.getByTestId(id).querySelector("circle")?.getAttribute("class");
     expect(fill("dot-1.5B-few")).toContain("fill-wrong");
     expect(fill("dot-1.5B-instruct")).toContain("fill-compute");
@@ -248,15 +280,17 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
 });
 
 describe("Page 5, figure 3: instruct models against few-shot base models", () => {
-  it("compares the instruct models with no examples against the base models with five, on the same problems", () => {
+  it("compares the instruct models with no examples against the base models with ten, naming each side's problems", () => {
     render(<Page5 />);
-    expect(body()).toContain(`Below, the instruct versions of the same three models answer the same ${N} problems with no examples, against the base models with five.`);
+    expect(body()).toContain(`Below, the instruct versions of the same three models answer ${N} problems with no examples, against the base models with ten on ${SHOTS.n} problems.`);
+    expect(body()).toContain(`greedy · base on ${SHOTS.n} problems, instruct on ${N}`);
+    expect(body()).not.toContain(`the same ${N} problems`);
     for (const [i, m] of PAGE5.instruct.entries()) {
-      expect(screen.getByTestId(`dot-${m.size}-few`)).toHaveTextContent(pct(PAGE5.base[i].fewShot.accuracy, 1));
+      expect(SHOTS.rows[i].label).toBe(`Qwen2.5-${m.size}`);
+      const tenShot = SHOTS.rows[i].solved["10_shot"] / 100;
+      expect(screen.getByTestId(`dot-${m.size}-few`)).toHaveTextContent(pct(tenShot, 1));
       expect(screen.getByTestId(`dot-${m.size}-instruct`)).toHaveTextContent(pct(m.cot.accuracy, 1));
-      expect(screen.getByTestId(`row-${m.size}`)).toHaveTextContent(
-        `+${pts(m.cot.accuracy, PAGE5.base[i].fewShot.accuracy)} pts`,
-      );
+      expect(screen.getByTestId(`row-${m.size}`)).toHaveTextContent(`+${pts(m.cot.accuracy, tenShot)} pts`);
     }
   });
 
@@ -266,10 +300,10 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
     render(<Page5 />);
     const para = screen.getByText(/The worked examples work, but they travel with every question/).closest("p")!;
     expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
-      "The worked examples work, but they travel with every question: the few-shot prompt runs to around 3,750 tokens before the model writes a word. Instruct models do the showing once, in training. An instruct model is the same base model trained further on instructions paired with good answers, including step-by-step solutions to maths problems, so it writes out its steps with no examples in front of the question.",
+      "The worked examples work, but they travel with every question: the few-shot prompt runs to around 3,400 tokens before the model writes a word. Instruct models do the showing once, in training. An instruct model is the same base model trained further, which is called post-training.",
     );
-    // "around 3,750": the median few-shot prompt, to the nearest 50.
-    expect(Math.round(PAGE5.base[0].fewShot.medianPromptTokens / 50) * 50).toBe(3750);
+    // "around 3,400": the median 10-shot prompt, to the nearest 50.
+    expect(Math.round(SHOTS.tenShotPromptTokens / 50) * 50).toBe(3400);
     expect(para.querySelector("strong")?.textContent).toBe("Instruct models");
     expect(Array.from(para.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 5"]);
     expect(screen.getByRole("link", { name: /Qwen2\.5 Technical Report/ })).toHaveAttribute(
@@ -279,17 +313,15 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
   });
 
   // Shashank's "efficiently": what each side reads before it answers, in the legend.
-  // The few-shot prompt carries the five examples (3,700 tokens of them); the
-  // instruct prompt carries none. One tokenizer, so the length is the same at every size.
-  it("gives each side's prompt length, from the notebooks' own counts", () => {
+  // The few-shot prompt carries the ten examples; the instruct prompt carries none.
+  // One tokenizer, so the length is the same at every size.
+  it("gives each side's prompt length", () => {
     render(<Page5 />);
-    const few = PAGE5.base.map((m) => m.fewShot.medianPromptTokens);
     const inst = PAGE5.instruct.map((m) => m.cot.medianPromptTokens);
-    expect(new Set(few).size).toBe(1);
     expect(new Set(inst).size).toBe(1);
-    expect([few[0], inst[0]]).toEqual([3755, 88]);
+    expect([SHOTS.tenShotPromptTokens, inst[0]]).toEqual([3396, 88]);
     const legend = screen.getByLabelText("Instruct models against few-shot base models").querySelector("ul")!;
-    expect(legend).toHaveTextContent("from: base model, five worked examples· prompt 3,755 tokens");
+    expect(legend).toHaveTextContent("from: base model, ten worked examples· prompt 3,396 tokens");
     expect(legend).toHaveTextContent("to: instruct model, no examples· prompt 88 tokens");
   });
 });

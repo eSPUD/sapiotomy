@@ -349,12 +349,10 @@ export const WORKED_SOLUTIONS: WorkedSolution[] = rawWorked.items.map((it) => {
 });
 
 /** Section 2's conditions, in the notebook's keys and display order. */
-export const SHOT_KEYS = ["zero_shot", "1_shot", "5_shot", "10_shot"] as const;
+export const SHOT_KEYS = ["zero_shot", "10_shot"] as const;
 export type ShotKey = (typeof SHOT_KEYS)[number];
 export const SHOT_LABEL: Record<ShotKey, string> = {
   zero_shot: "zero-shot",
-  "1_shot": "1-shot",
-  "5_shot": "5-shot",
   "10_shot": "10-shot",
 };
 
@@ -367,17 +365,23 @@ export interface ShotRow {
 }
 
 /**
- * Section 2's figure, from its own notebook: `web/data/page-05-few-shot.json`
- * holds that notebook's `results` dict as it dumps it (model id -> percent solved
- * per condition) and the number of test problems. It is a separate run from
- * `page-05-derived.json`, on 490 problems (MATH-500 less its 10 example
- * problems), so its `n` is its own. While `placeholder` is true the numbers are
- * arbitrary and the figure says so on its face.
+ * Section 2's figure and section 3's few-shot side, from their own notebook:
+ * `web/data/page-05-few-shot.json` holds that notebook's `results` (model id ->
+ * percent solved per condition), the number of test problems and the 10-shot
+ * prompt's median length. It is a separate run from `page-05-derived.json`, on 200
+ * random problems, so its `n` is its own. If `placeholder` is ever true the numbers
+ * are arbitrary and the figure says so on its face.
  */
-const shotRaw = rawShots as { placeholder: boolean; n: number; results: Record<string, Record<string, number>> };
+const shotRaw = rawShots as {
+  placeholder: boolean;
+  n: number;
+  median_10_shot_prompt_tokens: number;
+  results: Record<string, Record<string, number>>;
+};
 export const SHOTS = {
   placeholder: shotRaw.placeholder,
   n: shotRaw.n,
+  tenShotPromptTokens: shotRaw.median_10_shot_prompt_tokens,
   rows: Object.entries(shotRaw.results).map(([modelId, metrics]): ShotRow => {
     const solved = {} as Record<ShotKey, number>;
     for (const k of SHOT_KEYS) {

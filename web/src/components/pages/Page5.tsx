@@ -11,15 +11,15 @@
  * holds: the Act 2 opener, the hardware note, section 1's definition and section
  * 4's argument and close are the author's words, with new numbers.
  *
- * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED. Two runs, each with its own
- * notebook, both greedy at bf16 with a 1,024-token limit, graded on the first
- * \boxed{} with math_verify, and tallied on the same 495 MATH-500 problems (the
- * five example problems are left out of both): `page_5_few_shot.ipynb` (base
- * Qwen2.5 1.5B, 3B, 7B; zero-shot and five-shot) and
+ * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED, by notebooks greedy at bf16
+ * and graded on the first \boxed{} with math_verify. Sections 2 and 3's few-shot
+ * side: `5_CoT_FewShotPrompting_RunPod.ipynb` (base Qwen2.5 1.5B, 3B, 7B; zero-shot
+ * and 10-shot; 2,048-token limit; 200 random problems), in
+ * `web/data/page-05-few-shot.json`. Section 3's instruct side and section 4:
  * `page_5_instruct_reasoning.ipynb` (Qwen2.5-Instruct 1.5B, 3B, 7B; reasoning and
- * final answer only). `notebooks/page_05_site_data.py` combines their traces into
- * `web/data/page-05-derived.json`, loaded through `@/lib/page05`, which throws if
- * the file's tallies disagree with each other.
+ * final answer only; 1,024-token limit; tallied on 495 problems), via
+ * `notebooks/page_05_site_data.py` into `web/data/page-05-derived.json`. Both load
+ * through `@/lib/page05`, which throws if a file's tallies disagree.
  *
  * Layout: page 6's shell. One reading column of numbered steps, each beside its
  * own margin note that scrolls with it. Every step that carries a figure opens
@@ -39,16 +39,14 @@
  *   is where the models are first named.
  *
  *   Step 2 (rebuilt 2026-11-08, author): figure 2, a simple vertical bar chart of
- *   the few-shot notebook's results: Qwen2.5 0.5B, 1.5B, 3B and 7B, each zero-shot
- *   and with 1, 5 and 10 worked examples. Its data is that notebook's `results`
- *   dict, verbatim, in `web/data/page-05-few-shot.json`, on its own 490 problems
- *   (MATH-500 less the 10 example problems), not the 495 below. Until the run
- *   lands the numbers are PLACEHOLDERS and the figure carries a "placeholder
- *   numbers" chip. Shashank's two sentences follow the figure; the rest of the
- *   prose is a stand-in to iterate on.
+ *   the RunPod notebook's results: Qwen2.5 1.5B, 3B and 7B, each zero-shot and with
+ *   10 worked examples, on its own 200 random problems, not the 495 below.
+ *   Shashank's two sentences follow the figure; the rest of the prose is a stand-in
+ *   to iterate on.
  *
- *   Step 3: figure 3, the instruct models with no examples against the base
- *   models with five. Its opening says what an instruct model is and follows from
+ *   Step 3: figure 3, the instruct models with no examples (495 problems) against
+ *   the base models with ten (the RunPod run's 200: author, 2026-11-08, few-shot
+ *   numbers only). Its opening says what an instruct model is and follows from
  *   step 2 (author, 2026-10-18); the figure's legend gives each side's prompt
  *   length. ANY DISCUSSION OF THE RESULTS STILL WAITS FOR THE AUTHOR (handoff,
  *   section 4).
@@ -227,13 +225,16 @@ function WorkedFigure({ active, onProblem }: { active: number; onProblem: (i: nu
 
 /* ------------------------------------------------------- figures 2 and 3 */
 
+/** All a dot reads from a run: the two sides of figure 3 come from different runs. */
+type DotArm = Pick<ArmStats, "accuracy" | "medianPromptTokens">;
+
 /** One prompt or model: a dot per size. */
 interface DotSeries {
   key: string;
   label: string;
   fill: string;
   stroke: string;
-  arms: ArmStats[];
+  arms: DotArm[];
   /** Shown after the label in the legend: figure 3 gives each prompt's length. */
   note?: string;
 }
@@ -246,10 +247,10 @@ const ROWS_INNER_H = ROWS_H - ROWS_MARGIN.top - ROWS_MARGIN.bottom;
 const DOT_R = 5.5;
 
 /**
- * Figures 2 and 3 as dot-and-arrow rows (author, 2026-10-18, replacing grouped
- * bars that repeated each other): one row per model size, a dot where it starts
- * (the first series), an arrow to where it ends (the second), the share of the
- * same 495 problems solved at each end, and the gain in points at the right.
+ * Figure 3 as dot-and-arrow rows (author, 2026-10-18, replacing grouped bars that
+ * repeated each other): one row per model size, a dot where it starts (the first
+ * series), an arrow to where it ends (the second), the share of problems solved
+ * at each end, and the gain in points at the right.
  * Sizes are rows, not an axis: three sizes are not a trend.
  */
 function ArrowRows({ id, title, series, sizes }: { id: string; title: string; series: [DotSeries, DotSeries]; sizes: string[] }) {
@@ -263,7 +264,7 @@ function ArrowRows({ id, title, series, sizes }: { id: string; title: string; se
       width={ROWS_W}
       height={ROWS_H}
       margin={ROWS_MARGIN}
-      xLabel={`percentage of the same ${N} problems solved`}
+      xLabel="percentage of problems solved"
     >
       <defs>
         <marker id={arrowId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
@@ -349,15 +350,34 @@ const INSTRUCT_REASONING = { fill: "fill-compute", stroke: "stroke-compute" };
 /* ------------------------------------------------------------------ figure 2 */
 
 /**
- * Figure 2's four conditions keep the page's colours: crimson for the baseline
- * (zero-shot, the problem alone), and Sky for few-shot, deepening with the number
- * of worked examples (Sky, then its line step, then its text step).
+ * Figure 2's two conditions keep the page's colours: crimson for the baseline
+ * (zero-shot, the problem alone), and Sky for few-shot.
  */
 const SHOT_FILL: Record<ShotKey, string> = {
   zero_shot: "fill-crimson",
-  "1_shot": "fill-wrong",
-  "5_shot": "fill-wrong-bright",
-  "10_shot": "fill-wrong-ink",
+  "10_shot": "fill-wrong",
+};
+
+/**
+ * Figure 2's annotation (author, 2026-11-08): the bars that land together, outlined
+ * and bracketed. The match is against the larger models with no examples; with ten
+ * they pull ahead. Page5.test.tsx guards the claim against the data.
+ */
+const ON_PAR: [string, ShotKey][] = [
+  ["Qwen2.5-1.5B", "10_shot"],
+  ["Qwen2.5-3B", "zero_shot"],
+  ["Qwen2.5-7B", "zero_shot"],
+];
+const ON_PAR_NOTE = "On par: 1.5B with 10 examples, 3B and 7B with none";
+const isOnPar = (label: string, k: ShotKey) => ON_PAR.some(([l, key]) => l === label && key === k);
+
+/** A bar's value as printed, one decimal like figure 3's: 38 reads "38.0%". */
+const shotPct = (v: number) => `${v.toFixed(1)}%`;
+
+/** The condition's name printed on its bar: whichever ink reads on that fill (5:1 or better). */
+const SHOT_ON_BAR: Record<ShotKey, string> = {
+  zero_shot: "fill-surface",
+  "10_shot": "fill-ink",
 };
 
 /** The run's model sizes, from the notebook's names ("Qwen2.5-0.5B" is "0.5B"). */
@@ -374,7 +394,7 @@ const SHOT_INNER_H = SHOT_H - SHOT_MARGIN.top - SHOT_MARGIN.bottom;
 
 /**
  * Figure 2 (author, 2026-11-08): a simple vertical bar chart of the few-shot
- * notebook's results. One group per model, four bars in each, zero-shot to
+ * notebook's results. One group per model, two bars in each, zero-shot and
  * 10-shot, each the percent of the run's problems solved. The y axis runs 0 to
  * 100, so a bar's height is its share of the whole set.
  */
@@ -383,17 +403,25 @@ function ShotBars() {
   const y = (v: number) => SHOT_INNER_H - (v / 100) * SHOT_INNER_H;
   const groupW = SHOT_INNER_W / rows.length;
   const gap = 3;
-  const barW = Math.min(28, (groupW - 24 - (SHOT_KEYS.length - 1) * gap) / SHOT_KEYS.length);
+  // Wide enough to carry the condition's name on the bar, read horizontally.
+  const barW = Math.min(64, (groupW - 24 - (SHOT_KEYS.length - 1) * gap) / SHOT_KEYS.length);
   const clusterW = SHOT_KEYS.length * barW + (SHOT_KEYS.length - 1) * gap;
+  const onPar = ON_PAR.map(([label, k]) => {
+    const i = rows.findIndex((r) => r.label === label);
+    if (i < 0) throw new Error(`page 5: figure 2 has no bars for ${label}`);
+    const cx = i * groupW + (groupW - clusterW) / 2 + SHOT_KEYS.indexOf(k) * (barW + gap) + barW / 2;
+    return { cx, v: rows[i].solved[k] };
+  });
+  const bracketY = y(60);
   return (
     <ChartFrame
-      title={`Percent of ${SHOTS.n} MATH-500 problems solved with zero, 1, 5 and 10 worked examples in the prompt. ${rows
-        .map((r) => `${r.label}: ${SHOT_KEYS.map((k) => `${SHOT_LABEL[k]} ${r.solved[k]}%`).join(", ")}`)
-        .join(". ")}.`}
+      title={`Percent of ${SHOTS.n} MATH-500 problems solved by Qwen2.5 base models with zero and 10 worked examples in the prompt. ${rows
+        .map((r) => `${r.label}: ${SHOT_KEYS.map((k) => `${SHOT_LABEL[k]} ${shotPct(r.solved[k])}`).join(", ")}`)
+        .join(". ")}. ${ON_PAR_NOTE}.`}
       width={SHOT_W}
       height={SHOT_H}
       margin={SHOT_MARGIN}
-      yLabel={`percent of ${SHOTS.n} problems solved`}
+      yLabel="Accuracy (%)"
     >
       {[0, 25, 50, 75, 100].map((t) => (
         <g key={t}>
@@ -412,11 +440,26 @@ function ShotBars() {
               const v = r.solved[k];
               return (
                 <g key={k}>
-                  <rect x={x} y={y(v)} width={barW} height={SHOT_INNER_H - y(v)} className={SHOT_FILL[k]}>
-                    <title>{`${r.label}, ${SHOT_LABEL[k]}: ${v}%`}</title>
+                  <rect
+                    x={x}
+                    y={y(v)}
+                    width={barW}
+                    height={SHOT_INNER_H - y(v)}
+                    className={`${SHOT_FILL[k]}${isOnPar(r.label, k) ? " stroke-ink" : ""}`}
+                    strokeWidth={isOnPar(r.label, k) ? 1.5 : undefined}
+                  >
+                    <title>{`${r.label}, ${SHOT_LABEL[k]}: ${shotPct(v)}`}</title>
                   </rect>
                   <text x={x + barW / 2} y={y(v) - 5} textAnchor="middle" className="fill-ink text-[10px] tabular-nums">
-                    {v}
+                    {shotPct(v)}
+                  </text>
+                  <text
+                    x={x + barW / 2}
+                    y={SHOT_INNER_H - 8}
+                    textAnchor="middle"
+                    className={`${SHOT_ON_BAR[k]} text-[11px] font-semibold`}
+                  >
+                    {SHOT_LABEL[k]}
                   </text>
                 </g>
               );
@@ -432,6 +475,27 @@ function ShotBars() {
           </g>
         );
       })}
+      <g data-testid="shots-on-par">
+        <line
+          x1={onPar[0].cx}
+          x2={onPar[onPar.length - 1].cx}
+          y1={bracketY}
+          y2={bracketY}
+          className="stroke-ink"
+          strokeWidth={1}
+        />
+        {onPar.map(({ cx, v }) => (
+          <line key={cx} x1={cx} x2={cx} y1={bracketY} y2={y(v) - 18} className="stroke-ink" strokeWidth={1} />
+        ))}
+        <text
+          x={(onPar[0].cx + onPar[onPar.length - 1].cx) / 2}
+          y={bracketY - 7}
+          textAnchor="middle"
+          className="fill-ink text-xs font-semibold"
+        >
+          {ON_PAR_NOTE}
+        </text>
+      </g>
     </ChartFrame>
   );
 }
@@ -442,21 +506,29 @@ function ShotBars() {
  * size, so one number per prompt; the loader's data says so (equal across sizes).
  */
 /** Section 3's opening: the few-shot prompt's median length, to the nearest 50 ("around"). */
-const FEW_PROMPT_ROUNDED = Math.round(BASE[0].fewShot.medianPromptTokens / 50) * 50;
+const FEW_PROMPT_ROUNDED = Math.round(SHOTS.tenShotPromptTokens / 50) * 50;
 
-const promptTokens = (arms: ArmStats[]) => {
+const promptTokens = (arms: DotArm[]) => {
   const ns = new Set(arms.map((a) => a.medianPromptTokens));
   if (ns.size !== 1) throw new Error("page 5: a prompt's length differs across sizes");
   return `prompt ${arms[0].medianPromptTokens.toLocaleString("en-GB")} tokens`;
 };
 
+/** Figure 3's few-shot side: one size's 10-shot result from the RunPod run. */
+const tenShotArm = (size: string): DotArm => {
+  const row = SHOTS.rows.find((r) => r.label === `Qwen2.5-${size}`);
+  if (!row) throw new Error(`page 5: no 10-shot result for ${size}`);
+  return { accuracy: row.solved["10_shot"] / 100, medianPromptTokens: SHOTS.tenShotPromptTokens };
+};
+const TEN_SHOT_ARMS = SIZES.map(tenShotArm);
+
 const FIG3_SERIES: [DotSeries, DotSeries] = [
   {
     key: "few",
-    label: "base model, five worked examples",
+    label: "base model, ten worked examples",
     ...FEW_SHOT,
-    arms: BASE.map((m) => m.fewShot),
-    note: promptTokens(BASE.map((m) => m.fewShot)),
+    arms: TEN_SHOT_ARMS,
+    note: promptTokens(TEN_SHOT_ARMS),
   },
   {
     key: "instruct",
@@ -678,15 +750,15 @@ export function Page5() {
               2026-11-06 to name the prompting it compares. */}
           <h2 className="text-xl font-semibold text-ink">2. Zero-shot versus few-shot CoT prompting</h2>
           <p className="text-ink-muted">
-            {/* The old opening sentence, rewritten for the few-shot notebook's run
-                (author, 2026-11-08): four sizes, four prompts, and its own denominator,
-                490, because the ten example problems are MATH-500 problems and testing
-                on them would test the answer key. A stand-in until the prose is
-                iterated on. */}
-            One trace proves nothing, so every prompt was run across MATH-500, with Qwen2.5 models
-            <Cite n={REF.qwen} /> of {SIZE_COUNT_WORD} sizes: zero-shot, and with 1, 5 or 10 worked examples. The worked
+            {/* The old opening sentence, rewritten for the RunPod notebook's run
+                (author, 2026-11-08): three sizes, two prompts, and its own denominator,
+                200 random problems, none of them the ten example problems, because
+                testing on those would test the answer key. A stand-in until the prose
+                is iterated on. */}
+            One trace proves nothing, so both prompts were run on MATH-500 problems, with Qwen2.5 base models
+            <Cite n={REF.qwen} /> of {SIZE_COUNT_WORD} sizes: zero-shot, and with 10 worked examples. The worked
             examples are MATH-500 problems themselves, so they are excluded from testing: every
-            count below is on the other {SHOTS.n} problems.
+            count below is on {SHOTS.n} other problems, chosen at random.
           </p>
           <section
             aria-label="Zero-shot against few-shot"
@@ -694,7 +766,7 @@ export function Page5() {
           >
             <Ledger
               rows={[
-                ["model", `Qwen2.5 · ${SHOT_SIZES.join(", ")}`],
+                ["model", `Qwen2.5 base · ${SHOT_SIZES.join(", ")}`],
                 ["problems", `MATH-500 · n = ${SHOTS.n}`],
                 ["output", `${(SHOTS.rows.length * SHOT_KEYS.length * SHOTS.n).toLocaleString("en-GB")} replies`],
               ]}
@@ -722,9 +794,9 @@ export function Page5() {
               </div>
               <ShotBars />
               <figcaption className="text-center text-base font-semibold text-ink">
-                Zero-shot vs few-shot: Qwen2.5 on {SHOTS.n} MATH-500 problems
+                Zero-shot vs few-shot: Qwen2.5 base models on {SHOTS.n} MATH-500 problems
                 <span className="block text-sm font-normal text-ink-muted">
-                  How many problems each model solved with zero, 1, 5 and 10 worked examples
+                  How many problems each model solved with zero and 10 worked examples
                 </span>
               </figcaption>
             </figure>
@@ -743,7 +815,7 @@ export function Page5() {
             this is where the models are first named. */}
         <Note kicker="References">
           <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B">
-            Qwen team 2024, <em>Qwen2.5-3B</em> model card (Hugging Face). The 0.5B, 1.5B and 7B
+            Qwen team 2024, <em>Qwen2.5-3B</em> model card (Hugging Face). The 1.5B and 7B
             cards, and the Instruct versions, sit alongside it.
           </RefItem>
         </Note>
@@ -758,14 +830,12 @@ export function Page5() {
             The worked examples work, but they travel with every question: the few-shot prompt runs
             to around {FEW_PROMPT_ROUNDED.toLocaleString("en-GB")} tokens before the model writes a
             word. <strong>Instruct models</strong> do the showing once, in training. An instruct
-            model is the same base model trained further on instructions paired with good answers,
-            including step-by-step solutions to maths problems,
-            <Cite n={REF.qwenReport} /> so it writes out its steps with no examples in front of the
-            question.
+            model is the same base model trained further, which is called post-training.
+            <Cite n={REF.qwenReport} />
           </p>
           <p className="text-ink-muted">
-            Below, the instruct versions of the same three models answer the same {N} problems with
-            no examples, against the base models with five.
+            Below, the instruct versions of the same three models answer {N} problems with no
+            examples, against the base models with ten on {SHOTS.n} problems.
           </p>
           <section
             aria-label="Instruct models against few-shot base models"
@@ -773,18 +843,18 @@ export function Page5() {
           >
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <span className={chip}>Qwen2.5 base and Instruct · 1.5B, 3B, 7B · all bf16</span>
-              <span className={chip}>greedy · the same {N} problems</span>
+              <span className={chip}>greedy · base on {SHOTS.n} problems, instruct on {N}</span>
             </div>
             <figure className="flex flex-col gap-2">
               <SeriesLegend series={FIG3_SERIES} />
               <ArrowRows
                 id="p5-fig3"
-                title={`Share of the same ${N} MATH-500 problems solved, from base models with five worked examples to instruct models with none. Base, few-shot: ${describeSeries(FIG3_SERIES[0])}. Instruct, no examples: ${describeSeries(FIG3_SERIES[1])}.`}
+                title={`Share of MATH-500 problems solved, from base models with ten worked examples, on ${SHOTS.n} problems, to instruct models with none, on ${N}. Base, few-shot: ${describeSeries(FIG3_SERIES[0])}. Instruct, no examples: ${describeSeries(FIG3_SERIES[1])}.`}
                 series={FIG3_SERIES}
                 sizes={SIZES}
               />
               <figcaption className="text-center text-base font-semibold text-ink">
-                Few-shot base vs instruct: Qwen2.5 on {N} MATH-500 problems
+                Few-shot base vs instruct: Qwen2.5 on MATH-500
                 <span className="block text-sm font-normal text-ink-muted">
                   How many problems each solved, and the instruct models&apos; lead in points
                 </span>

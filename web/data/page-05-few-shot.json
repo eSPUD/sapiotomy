@@ -1,11 +1,11 @@
 {
-  "placeholder": true,
-  "note": "PLACEHOLDER NUMBERS, not a run. Replace `results` with the notebook's `results` dict (json.dump(results)), unchanged: model id -> {zero_shot, 1_shot, 5_shot, 10_shot} as percent solved. n is the test problems (MATH-500 less the 10 example problems). Then set placeholder to false.",
-  "n": 490,
+  "placeholder": false,
+  "note": "The `results` of 5_CoT_FewShotPrompting_RunPod.ipynb (A100, bf16, greedy, 2,048-token limit): model id -> {zero_shot, 10_shot} as percent solved. n is the test problems: 200 MATH-500 problems chosen by seed-21 shuffle, after the 10 example problems. median_10_shot_prompt_tokens is the median length of the 10-shot prompt over those 200, the same for all three models.",
+  "n": 200,
+  "median_10_shot_prompt_tokens": 3396,
   "results": {
-    "Qwen/Qwen2.5-0.5B": { "zero_shot": 12.0, "1_shot": 14.0, "5_shot": 15.0, "10_shot": 15.5 },
-    "Qwen/Qwen2.5-1.5B": { "zero_shot": 24.0, "1_shot": 26.0, "5_shot": 27.0, "10_shot": 27.5 },
-    "Qwen/Qwen2.5-3B": { "zero_shot": 30.0, "1_shot": 34.0, "5_shot": 38.0, "10_shot": 39.0 },
-    "Qwen/Qwen2.5-7B": { "zero_shot": 49.0, "1_shot": 50.0, "5_shot": 52.0, "10_shot": 53.0 }
+    "Qwen/Qwen2.5-1.5B": { "zero_shot": 24.0, "10_shot": 28.5 },
+    "Qwen/Qwen2.5-3B": { "zero_shot": 29.0, "10_shot": 38.0 },
+    "Qwen/Qwen2.5-7B": { "zero_shot": 28.5, "10_shot": 47.0 }
   }
 }
