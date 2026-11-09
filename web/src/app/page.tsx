@@ -92,15 +92,17 @@ export default function Home() {
                   Shashank Bangalore Lakshman
                   <sup aria-hidden="true" className="text-ink">*</sup>
                 </span>
-                <span>
-                  Graduate Student, Department of Computer Science, The University of Texas at Austin
-                </span>
+                {/* Name, then role and degree, then department and university (author,
+                    2026-11-09). */}
+                <span>Graduate Student, M.S. in Artificial Intelligence</span>
+                <span>Department of Computer Science, The University of Texas at Austin</span>
               </li>
               <li className="flex flex-col gap-0.5">
                 <span className="font-semibold text-ink">
                   Scott Lawrence Eiers
                 </span>
-                <span>Undergraduate Student, Computer Science, Western Governors University</span>
+                <span>Undergraduate Student</span>
+                <span>Computer Science, Western Governors University</span>
               </li>
             </ol>
             <div className="flex flex-col gap-1 text-xs text-ink-muted">
