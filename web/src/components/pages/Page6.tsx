@@ -26,8 +26,8 @@
  * Act 1 and it survives here as a single clause in step 1's caption.
  *
  *   Step 1 — figure 1, the truncation view. Five problems on buttons, a budget
- *   slider, and the question and reply as a chat in page 2's form. The reply
- *   simply ends where the budget ended, unannotated.
+ *   slider, and the question and reply as a chat in page 2's form. Past the cut
+ *   the reply carries on in gray: what the model would have written.
  *
  *   Step 2 — figure 2, the population curve. Three checkpoints, one tokenizer,
  *   log x-axis, and its OWN budget line on the chart. The y-axis is
@@ -1046,21 +1046,34 @@ export function Page6() {
   const zones = useMemo(() => traceZones(row, traceBudget), [row, traceBudget]);
   const curvePoint = F2.primary.points[curveBudget];
 
-  // Where the reply ends is what the slider changes, so a reply long enough to
-  // scroll is held at its end. Again once the font has loaded, which reflows it.
+  // The cut is what the slider moves, so a reply long enough to scroll is held
+  // with the cut in view. Nothing cut means the reply is read from its start.
   const scrollRef = useRef<HTMLDivElement>(null);
+  const cutRef = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
-    const toEnd = () => {
+    const centreTheCut = () => {
       const box = scrollRef.current;
-      if (box) box.scrollTop = box.scrollHeight;
+      const cut = cutRef.current;
+      if (!box) return;
+      if (!cut) {
+        box.scrollTop = 0;
+        return;
+      }
+      // Measured rather than derived from offsetTop: neither node is positioned,
+      // so offsetTop is relative to an ancestor outside this box.
+      const delta = cut.getBoundingClientRect().top - box.getBoundingClientRect().top;
+      box.scrollTop = Math.max(0, box.scrollTop + delta - box.clientHeight * 0.62);
     };
-    toEnd();
+    // Again after a frame and once the font has loaded, both of which reflow it.
+    centreTheCut();
+    const frame = requestAnimationFrame(centreTheCut);
     let live = true;
     void document.fonts?.ready.then(() => {
-      if (live) toEnd();
+      if (live) centreTheCut();
     });
     return () => {
       live = false;
+      cancelAnimationFrame(frame);
     };
   }, [rowId, traceBudget]);
 
@@ -1202,6 +1215,18 @@ export function Page6() {
                   className="h-72 min-w-0 flex-1 overflow-y-auto whitespace-pre-wrap font-code text-[15px] text-ink"
                 >
                   {tidyMath(zones.own)}
+                  {zones.wasCut ? (
+                    <>
+                      {/* Where the budget ran out, then what the model would
+                          have gone on to write. */}
+                      <span
+                        ref={cutRef}
+                        aria-hidden="true"
+                        className="mx-px inline-block h-[1.25em] w-[1.5ch] translate-y-[0.2em] bg-white ring-1 ring-grid"
+                      />
+                      <span className="text-ink-muted opacity-40">{tidyMath(zones.unwritten)}</span>
+                    </>
+                  ) : null}
                 </div>
               </div>
             </div>

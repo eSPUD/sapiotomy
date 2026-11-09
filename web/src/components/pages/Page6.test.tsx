@@ -81,13 +81,15 @@ describe("Page 6, figure 1: cut it off", () => {
     expect(lengths).toEqual([...lengths].sort((a, b) => a - b));
   });
 
-  it("shows the reply as far as the budget reached and nothing past it", () => {
+  it("shows the reply to the cut, then what the budget left unwritten in gray", () => {
     render(<Page6 />);
     for (const [i] of B.entries()) {
       drag(i);
       const z = traceZones(OPENING, i);
       expect(figure().textContent).toContain(tidyMath(z.own));
-      if (z.unwritten) expect(figure().textContent).not.toContain(tidyMath(z.unwritten));
+      const gray = figure().querySelector(".opacity-40");
+      if (z.wasCut) expect(gray?.textContent).toContain(tidyMath(z.unwritten).slice(-60));
+      else expect(gray).toBeNull();
     }
   });
 
