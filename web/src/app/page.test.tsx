@@ -17,7 +17,7 @@ describe("landing: authors", () => {
         "Graduate Student, M.S. in Artificial Intelligence",
         "Department of Computer Science, The University of Texas at Austin",
       ],
-      ["Scott Lawrence Eiers", "Undergraduate Student", "Computer Science, Western Governors University"],
+      ["Scott Lawrence Eiers", "Undergraduate Student, B.S. in Computer Science", "Western Governors University"],
     ]);
     expect(screen.getByText(/Corresponding author\./)).toBeInTheDocument();
   });

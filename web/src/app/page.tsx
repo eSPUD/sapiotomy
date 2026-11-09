@@ -101,8 +101,8 @@ export default function Home() {
                 <span className="font-semibold text-ink">
                   Scott Lawrence Eiers
                 </span>
-                <span>Undergraduate Student</span>
-                <span>Computer Science, Western Governors University</span>
+                <span>Undergraduate Student, B.S. in Computer Science</span>
+                <span>Western Governors University</span>
               </li>
             </ol>
             <div className="flex flex-col gap-1 text-xs text-ink-muted">
