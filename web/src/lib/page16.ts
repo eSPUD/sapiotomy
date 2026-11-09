@@ -296,7 +296,7 @@ const NOTEBOOK_BY_PAGE: Record<number, NotebookLink | NotebookLink[]> = {
   6: { title: "Thinking longer, and budget forcing", href: "/notebooks/page-06-thinking-longer.zip", size: "2.0 MB" },
   7: { title: "Sampling and voting", href: "/notebooks/7_FrequencyVoting_InstructModels.ipynb", size: "145 KB", format: "ipynb" },
   8: { title: "Best-of-N and the judges", href: "/notebooks/page-08-best-of-n.zip", size: "9.7 MB" },
-  9: { title: "Outcome against process grading", href: "/notebooks/page-09-outcome-vs-process.zip", size: "1.6 MB" },
+  9: { title: "Best-of-N with a process reward model", href: "/notebooks/9_Best_of_N_PRM_dev.ipynb", size: "28 KB", format: "ipynb" },
   10: { title: "The search arm", href: "/notebooks/page-10-search-arm.zip", size: "4.8 MB" },
   11: { title: "Training against scale", href: "/notebooks/page-11-training-vs-scale.zip", size: "2.7 MB" },
 };

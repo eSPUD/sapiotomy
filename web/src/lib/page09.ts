@@ -50,6 +50,7 @@
  * wrong reveal.
  */
 import rawDerived from "@data/page-09-derived.json";
+import rawBestOfN from "@data/page-09-best-of-n.json";
 import { pct, tidyMath } from "./traceText";
 
 export { pct, tidyMath };
@@ -505,4 +506,59 @@ export const PAGE9 = {
   },
 
   claims: raw.claims,
+} as const;
+
+/* ------------------------------------------------ best-of-N on the sweep's chains */
+
+interface RawBreakGroup {
+  chains: number;
+  no_low_step: number;
+  bins: number[];
+  share_with_low_step: number;
+  median_share_after: number;
+  tokens_after: number;
+}
+
+interface RawBestOfN {
+  temperature: number;
+  n_problems: number;
+  n_chains: number;
+  prm_model: string;
+  bars: { one_chain: number; vote: number; orm: number | null; prm: number };
+  prm_rules_at_16: { weakest_step: number; last_step: number; product_of_steps: number };
+  vote_ties_at_16: number;
+  disagreements_at_16: { prm_only: number; prm_only_on_a_tied_vote: number; vote_only: number };
+  prm_lead_at_16_by_temperature: Record<string, number>;
+  breaks: {
+    main_cut: number;
+    by_cut: Record<string, { right: RawBreakGroup; wrong: RawBreakGroup }>;
+  };
+}
+
+const bestOfN = rawBestOfN as unknown as RawBestOfN;
+
+// Every chain lands in exactly one bar of the break figure, or the figure is
+// drawing a different set of chains from the numbers beside it.
+for (const [cut, groups] of Object.entries(bestOfN.breaks.by_cut)) {
+  for (const [name, g] of Object.entries(groups)) {
+    if (g.bins.length !== 10 || g.bins.reduce((a, b) => a + b, 0) + g.no_low_step !== g.chains) {
+      throw new Page09DataError(`the break bins for the ${name} chains at cut ${cut} do not sum to the chains`);
+    }
+  }
+}
+if (!bestOfN.breaks.by_cut[String(bestOfN.breaks.main_cut)]) {
+  throw new Page09DataError("page-09-best-of-n.json has no break counts at its own main cut");
+}
+
+/** Sections 3 and 4: every judge on the same chains, from the scored traces. */
+export const BEST_OF_N = {
+  temperature: bestOfN.temperature,
+  nProblems: bestOfN.n_problems,
+  nChains: bestOfN.n_chains,
+  prmName: bestOfN.prm_model.split("/").pop()!,
+  bars: bestOfN.bars,
+  rules: bestOfN.prm_rules_at_16,
+  disagreements: bestOfN.disagreements_at_16,
+  leadByTemperature: Object.values(bestOfN.prm_lead_at_16_by_temperature),
+  breaks: { mainCut: String(bestOfN.breaks.main_cut), byCut: bestOfN.breaks.by_cut },
 } as const;
