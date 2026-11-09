@@ -57,6 +57,8 @@
  * Load-bearing and easy to lose:
  *   · the notebook downloads: two direct .ipynb links, no zip, beside the title,
  *     each file keeping the name the author gave it.
+ *   · figure 2's annotation on the 3B and 7B with no examples: the author asked for
+ *     it to stay. If new numbers break it, ask the author; do not just remove it.
  *   · the conditions are named plainly: no euphemism ("left alone", "forbidden to
  *     reason") may come back.
  *   · the worked solutions are ours, "written for this experiment, expanding
@@ -355,6 +357,18 @@ const SHOT_FILL: Record<ShotKey, string> = {
   "10_shot": "fill-wrong",
 };
 
+/**
+ * Figure 2's annotation (author, 2026-11-08): the 3B and 7B with no examples, outlined
+ * and bracketed. The two solved the same number of problems. Page5.test.tsx guards the
+ * claim against the data.
+ */
+const ON_PAR: [string, ShotKey][] = [
+  ["Qwen2.5-3B", "zero_shot"],
+  ["Qwen2.5-7B", "zero_shot"],
+];
+const ON_PAR_NOTE = "With no examples, 3B matches 7B";
+const isOnPar = (label: string, k: ShotKey) => ON_PAR.some(([l, key]) => l === label && key === k);
+
 /** A bar's value as printed, one decimal like figure 3's: 38 reads "38.0%". */
 const shotPct = (v: number) => `${v.toFixed(1)}%`;
 
@@ -390,11 +404,18 @@ function ShotBars() {
   // Wide enough to carry the condition's name on the bar, read horizontally.
   const barW = Math.min(64, (groupW - 24 - (SHOT_KEYS.length - 1) * gap) / SHOT_KEYS.length);
   const clusterW = SHOT_KEYS.length * barW + (SHOT_KEYS.length - 1) * gap;
+  const onPar = ON_PAR.map(([label, k]) => {
+    const i = rows.findIndex((r) => r.label === label);
+    if (i < 0) throw new Error(`page 5: figure 2 has no bars for ${label}`);
+    const cx = i * groupW + (groupW - clusterW) / 2 + SHOT_KEYS.indexOf(k) * (barW + gap) + barW / 2;
+    return { cx, v: rows[i].solved[k] };
+  });
+  const bracketY = y(60);
   return (
     <ChartFrame
       title={`Percent of MATH-500 problems solved by Qwen2.5 base models with zero and 10 worked examples in the prompt. ${rows
         .map((r) => `${r.label}: ${SHOT_KEYS.map((k) => `${SHOT_LABEL[k]} ${shotPct(r.solved[k])}`).join(", ")}`)
-        .join(". ")}.`}
+        .join(". ")}. ${ON_PAR_NOTE}.`}
       width={SHOT_W}
       height={SHOT_H}
       margin={SHOT_MARGIN}
@@ -422,7 +443,8 @@ function ShotBars() {
                     y={y(v)}
                     width={barW}
                     height={SHOT_INNER_H - y(v)}
-                    className={SHOT_FILL[k]}
+                    className={`${SHOT_FILL[k]}${isOnPar(r.label, k) ? " stroke-ink" : ""}`}
+                    strokeWidth={isOnPar(r.label, k) ? 1.5 : undefined}
                   >
                     <title>{`${r.label}, ${SHOT_LABEL[k]}: ${shotPct(v)}`}</title>
                   </rect>
@@ -451,6 +473,27 @@ function ShotBars() {
           </g>
         );
       })}
+      <g data-testid="shots-on-par">
+        <line
+          x1={onPar[0].cx}
+          x2={onPar[onPar.length - 1].cx}
+          y1={bracketY}
+          y2={bracketY}
+          className="stroke-ink"
+          strokeWidth={1}
+        />
+        {onPar.map(({ cx, v }) => (
+          <line key={cx} x1={cx} x2={cx} y1={bracketY} y2={y(v) - 18} className="stroke-ink" strokeWidth={1} />
+        ))}
+        <text
+          x={(onPar[0].cx + onPar[onPar.length - 1].cx) / 2}
+          y={bracketY - 7}
+          textAnchor="middle"
+          className="fill-ink text-xs font-semibold"
+        >
+          {ON_PAR_NOTE}
+        </text>
+      </g>
     </ChartFrame>
   );
 }

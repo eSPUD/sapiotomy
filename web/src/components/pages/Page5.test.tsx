@@ -215,6 +215,22 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
     expect(vitals).not.toContain("replies");
   });
 
+  // The author asked for this annotation to stay. If new numbers fail the data check
+  // below, ask the author what it should say; do not just delete it.
+  it("annotates the 3B matching the 7B with no examples, leaves the 1.5B out, and the data agrees", () => {
+    render(<Page5 />);
+    expect(within(fig2()).getByTestId("shots-on-par")).toHaveTextContent("With no examples, 3B matches 7B");
+    const [, mid, large] = SHOTS.rows;
+    expect(mid.solved.zero_shot).toBe(large.solved.zero_shot);
+    const outlined = (label: string) =>
+      [...within(fig2()).getByTestId(`shots-${label}`).querySelectorAll("rect")].map((b) =>
+        b.getAttribute("class")?.includes("stroke-ink"),
+      );
+    expect(outlined("Qwen2.5-1.5B")).toEqual([false, false]);
+    expect(outlined("Qwen2.5-3B")).toEqual([true, false]);
+    expect(outlined("Qwen2.5-7B")).toEqual([true, false]);
+  });
+
   it("says on its face when its numbers are placeholders", () => {
     render(<Page5 />);
     const chip = within(fig2()).queryByTestId("shots-placeholder");
