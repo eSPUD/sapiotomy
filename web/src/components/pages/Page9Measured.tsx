@@ -108,7 +108,8 @@ export function DoesItPickBetter() {
 
       <p className="text-ink-muted">
         The PRM solves <strong className="text-ink">{count(bars.prm)}</strong> of {nProblems}{" "}
-        problems and the vote solves {count(bars.vote)}. A vote can only pick the most common
+        problems{bars.orm === null ? " and" : `, the ORM solves ${count(bars.orm)} and`} the vote
+        solves {count(bars.vote)}. A vote can only pick the most common
         answer, while the PRM can pick a less common one if its steps score higher. The PRM solves{" "}
         {d.prm_only} problems the vote misses, and the vote solves{" "}
         {d.vote_only === 0 ? "none" : d.vote_only} that the PRM misses. Of those {d.prm_only},{" "}

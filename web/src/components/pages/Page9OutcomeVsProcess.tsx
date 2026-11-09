@@ -21,8 +21,8 @@
  * rarer case, not drawn. How a PRM combines its step scores and picks a
  * solution is beat 2's.
  *
- * DRAFT: both solutions come from the select-by-process figure's illustrative
- * pool, and every score, the ORM's included, is illustrative, not measured.
+ * Both solutions come from the select-by-process figure's illustrative pool,
+ * and every score, the ORM's included, is illustrative.
  */
 
 import { useState } from "react";
@@ -206,7 +206,7 @@ export function OutcomeOrProcess() {
         <Cite n={REF.lightman} />. Let&apos;s look at a quick side-by-side view of how each model
         judges.
       </p>
-      <p className="text-xs text-ink-muted">Scores in this draft are illustrative, not measured.</p>
+      <p className="text-xs text-ink-muted">These scores are illustrative.</p>
       <OutcomeVsProcess />
     </section>
   );

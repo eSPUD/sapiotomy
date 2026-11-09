@@ -6,10 +6,16 @@
  * honesty: that the measured figures draw the run's numbers and that the PRM's
  * reliability stays in the notebook.
  */
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { BEST_OF_N, PAGE9, pct } from "@/lib/page09";
 import { Page9 } from "./Page9";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const NOTEBOOK = "9_Best_of_N_PRM_dev.ipynb";
 
 const pickFigure = () => screen.getByRole("img", { name: /how often each judge lands on the right answer/i });
 const breakFigure = () => screen.getByRole("img", { name: /a low step appears in/i });
@@ -169,8 +175,15 @@ describe("Page 9 (outcome vs process supervision) component", () => {
   it("leaves the run conditions to the notebook, downloadable from the top line", () => {
     render(<Page9 />);
     const link = screen.getByRole("link", { name: /download the notebook/i });
-    expect(link).toHaveAttribute("href", "/notebooks/page-09-outcome-vs-process.zip");
+    expect(link).toHaveAttribute("href", `/notebooks/${NOTEBOOK}`);
     expect(link).toHaveAttribute("download");
+    expect(link.textContent).toContain("ipynb, 28 KB");
     expect(screen.queryByText(/top-p/i)).toBeNull();
+  });
+
+  it("serves the repo's copy of the notebook, at the size the page states", () => {
+    const served = readFileSync(resolve(HERE, `../../../public/notebooks/${NOTEBOOK}`));
+    expect(served.equals(readFileSync(resolve(HERE, `../../../../notebooks/${NOTEBOOK}`)))).toBe(true);
+    expect(`${Math.round(served.length / 1e3)} KB`).toBe("28 KB");
   });
 });

@@ -33,8 +33,8 @@ import { DoesItPickBetter, WhereTheChainBreaks } from "./Page9Measured";
 import { ACTS, getPage } from "@/lib/pages";
 
 const PAGE_N = 9;
-const NOTEBOOK_ZIP = "/notebooks/page-09-outcome-vs-process.zip";
-const NOTEBOOK_SIZE = "1.6 MB";
+const NOTEBOOK_FILE = "/notebooks/9_Best_of_N_PRM_dev.ipynb";
+const NOTEBOOK_SIZE = "28 KB";
 
 export function Page9() {
   const page = getPage(PAGE_N)!;
@@ -51,7 +51,7 @@ export function Page9() {
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
+        <NotebookDownload href={NOTEBOOK_FILE} size={NOTEBOOK_SIZE} format="ipynb" />
       </div>
 
       {/* Held to the content column: the margin is the notes column (15rem) plus the

@@ -6,9 +6,7 @@
  * chains, score every step of each, then keep the chain whose lowest step
  * scores highest; its answer is the final answer. There is no answer key: the
  * figure shows what the PRM does, and checking an answer against a key is not
- * part of that. DRAFT: the chains and scores are illustrative, not measured;
- * the dev notebook's run replaces POOL with real chains (16 per problem) and
- * real PRM scores.
+ * part of that. The chains and scores are illustrative.
  *
  * The interactions, none of which asks the reader to judge a step:
  *   · The ‹ › arrows at the top right step through three problems, each with
@@ -641,7 +639,7 @@ export function WhatIsAPrm() {
         problem and the steps written before it, with no answer key. The solution with the highest
         score is always the one chosen, even when every solution has a weak step.
       </p>
-      <p className="text-xs text-ink-muted">Scores in this draft are illustrative, not measured.</p>
+      <p className="text-xs text-ink-muted">These scores are illustrative.</p>
       <SelectByProcess />
     </section>
   );

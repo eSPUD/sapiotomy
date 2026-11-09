@@ -1,5 +1,5 @@
 {
- "note": "Built by notebooks/page_9_site_data.py from the PRM notebook's scored traces. Accuracy is on 100 MATH-500 problems, 16 chains each. one_chain is greedy decoding. A tied vote counts as wrong.",
+ "note": "Built by notebooks/page_9_site_data.py from the PRM notebook's scored traces. Accuracy is on 100 MATH-500 problems, 16 chains each. one_chain is greedy decoding. A tied vote counts as wrong. bars.orm is added by hand from web/data/page-08-pile.json (bars.best_of_n, Skywork-o1-Open-PRM-Qwen-2.5-1.5B read at the final token, same chains at T 0.9), whose vote and one_chain match the bars here.",
  "temperature": 0.9,
  "n_problems": 100,
  "n_chains": 16,
@@ -7,7 +7,7 @@
  "bars": {
   "one_chain": 0.68,
   "vote": 0.81,
-  "orm": null,
+  "orm": 0.83,
   "prm": 0.86
  },
  "prm_rules_at_16": {
