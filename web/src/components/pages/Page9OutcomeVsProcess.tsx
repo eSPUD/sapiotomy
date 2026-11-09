@@ -26,7 +26,13 @@
  */
 
 import { useState } from "react";
+import { Cite } from "@/components/Cite";
 import { CUT, POOL, PROBLEMS, bar, ink } from "./Page9SelectByProcess";
+
+/** Reference numbers, in order of first appearance on the page. */
+export const REF = {
+  lightman: 1,
+} as const;
 
 /** Two solutions, each with the ORM's one score. Illustrative, like POOL. */
 export const SOLUTIONS = [
@@ -196,8 +202,9 @@ export function OutcomeOrProcess() {
       <p className="text-ink-muted">
         A judge trained to score the outcome is an <strong className="text-ink">outcome reward
         model</strong> (ORM). One trained to score every step is a{" "}
-        <strong className="text-ink">process reward model</strong> (PRM). Let&apos;s look at a quick
-        side-by-side view of how each model judges.
+        <strong className="text-ink">process reward model</strong> (PRM)
+        <Cite n={REF.lightman} />. Let&apos;s look at a quick side-by-side view of how each model
+        judges.
       </p>
       <p className="text-xs text-ink-muted">Scores in this draft are illustrative, not measured.</p>
       <OutcomeVsProcess />
