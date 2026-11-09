@@ -4,18 +4,15 @@
  * The old ones drove two sliders and asserted what a simulation returned. The
  * simulation is gone, so what is checked here instead is that the page states
  * its measured result, states its caveat, and does not overclaim: the numbers
- * on screen come from `PAGE8`, and the assertions below are written against
+ * on screen come from `PILE8`, and the assertions below are written against
  * that rather than against literals, so a re-run that moves the numbers moves
  * the test with it and a re-run that changes the CONCLUSION fails it.
  */
 import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
-import { PAGE8, pValue, pct } from "@/lib/page08";
-import { PILE8 } from "@/lib/page08Pile";
+import { PILE8, pct } from "@/lib/page08Pile";
 import { JUDGES8 } from "@/lib/page08Judges";
 import { Page8 } from "./Page8";
-
-vi.mock("./Page8Drafts", () => ({ Page8Drafts: () => null })); // DRAFTS: tested in Page8Drafts.test.tsx; remove with it
 
 describe("Page 8 (best-of-N and verifiers) component", () => {
   it("opens by naming best-of-N against majority voting", () => {
@@ -46,31 +43,14 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(chart.getAttribute("aria-label")).toContain(pct(PILE8.bars.vote));
   });
 
-  it("shows a real batch where the vote loses and the verifier wins", () => {
-    render(<Page8 />);
-    const s = PAGE8.specimen;
-    const panel = screen.getByLabelText("One problem's candidates, counted and scored");
-    expect(within(panel).getByText(new RegExp(`${s.vote.votes} of ${s.n}`))).toBeInTheDocument();
-    // The specimen must be a disagreement, or the panel is drawing nothing.
-    expect(s.vote.correct).toBe(false);
-    expect(s.verifier.correct).toBe(true);
-  });
-
-  it("opens the chain behind a candidate when it is clicked", () => {
-    render(<Page8 />);
-    expect(screen.getByText(/Click a dot to read the chain/)).toBeInTheDocument();
-    const first = PAGE8.specimen.candidates[0];
-    fireEvent.click(screen.getByRole("button", { name: new RegExp(`^chain ${first.sample_index},`) }));
-    expect(screen.getByText(new RegExp(`chain ${first.sample_index} ·`))).toBeInTheDocument();
-  });
-
   it("states the caveat rather than burying it: counting gets there too", () => {
     render(<Page8 />);
-    const close = screen.getByText(/Selection works\. Against the same candidates/);
-    expect(close.textContent).toContain(pValue(PAGE8.caveat.p));
+    const close = screen.getByText(/Choosing works/);
     // The run does not resolve a difference, and the page must not imply one.
-    expect(PAGE8.caveat.resolved).toBe(false);
-    expect(close.textContent).toMatch(/not a difference/);
+    expect(PILE8.bars.best_vs_vote.p).toBeGreaterThan(0.05);
+    expect(close.textContent).toMatch(/level/);
+    expect(PILE8.bars.vote).toBeGreaterThan(PILE8.bars.one_chain);
+    expect(PILE8.bars.best_of_n).toBeGreaterThan(PILE8.bars.one_chain);
   });
 
   it("credits the counting-versus-selection comparison to us, not the literature", () => {
@@ -97,23 +77,14 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
 
   // Provenance is pills at the figures, not the plate this page used to open
   // on. What survives the move is the claim, not the apparatus: every figure
-  // says it is measured, the first one names the model and the problems, and
-  // the evidence figure says the rules read the same chains, which is what lets
-  // its rows be compared at all.
+  // says it is measured, and the first one names the model and the problems.
   it("marks every figure as measured, at the figure", () => {
     render(<Page8 />);
-    // Counted over the pills themselves: figure 4's gutter also says "measured
-    // here" under the one solve rate that was, and that is not a figure pill.
     const pills = Array.from(document.querySelectorAll("li")).filter((li) =>
       /^measured/.test(li.textContent ?? ""),
     );
-    // Section 1's old card, the dots, the bars, and the judges (unless still a placeholder).
-    expect(pills).toHaveLength(JUDGES8.placeholder ? 3 : 4);
-    const first = screen.getByText(`measured ${PAGE8.run.date}`);
-    const row = first.closest("ul")!;
-    // Page 7's two facts: which model, which problems. Named, not implied.
-    expect(row.textContent).toContain(PAGE8.run.model.split("/").pop());
-    expect(row.textContent).toContain(`${PAGE8.run.items} MATH-500 problems`);
+    // The dots, the bars, and the judges (unless still a placeholder).
+    expect(pills).toHaveLength(JUDGES8.placeholder ? 2 : 3);
     // The dot figure names its own model and problem count.
     const heat = screen.getByText(`${PILE8.rows.length} MATH-500 problems, ${PILE8.nChains} chains each`);
     expect(heat.closest("ul")!.textContent).toContain(PILE8.writer.split("/").pop());
@@ -165,26 +136,18 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
   it("prints no run id, token cap or test name at the reader", () => {
     render(<Page8 />);
     const body = document.body.textContent ?? "";
-    expect(body).not.toContain(PAGE8.run.runId);
-    expect(body).not.toContain(String(PAGE8.run.chainCap));
+    expect(body).not.toContain("2048");
     expect(body).not.toMatch(/McNemar|GPU|\bT =|\bN=|levels 4 and 5/);
   });
 
-  // The main evidence figure used to print `best-of-N (qwen1.5b)` and `logprob`
-  // at a reader. Every row is now English, and the map is the only place a new
-  // judge can be named.
   it("labels every selection rule in English, never a notebook identifier", () => {
     render(<Page8 />);
-    for (const j of PAGE8.judges) {
-      expect(j.label).not.toMatch(/prm$|^qwen|^math\d/);
-    }
     expect(document.body.textContent).not.toMatch(/logprob|qwen1\.5b|skywork-prm/);
   });
 
   // The repository is never named in the deck (Page5.test.tsx, Page7.test.tsx),
-  // and neither is a chapter of it. The source itself is now cited, because it
-  // owns a row of the evidence figure and two sentences of that figcaption.
-  it("cites the source whose scorer owns a row, without naming a chapter of it", () => {
+  // and neither is a chapter of it.
+  it("cites the source without naming a chapter of it", () => {
     render(<Page8 />);
     expect(document.body.textContent).not.toMatch(/ch0\d/);
     expect(document.body.textContent).not.toContain("reasoning-from-scratch");
@@ -197,13 +160,11 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
 
   it("says what a verifier is where the word first appears", () => {
     render(<Page8 />);
-    const first = screen.getByText(/trained to score finished solutions rather than to write them/);
+    const first = screen.getByText(/The verifier is the judge: a second model, trained on solutions/);
     expect(first).toBeInTheDocument();
-    // Before the figure that plots its scores, and before step 3's caption.
+    // Before any figure that draws what it kept.
     const body = document.body.textContent ?? "";
-    expect(body.indexOf("trained to score finished solutions")).toBeLessThan(
-      body.indexOf("Best-of-N is only as good as the judge that picks"),
-    );
+    expect(body.indexOf("The verifier is the judge")).toBeLessThan(body.indexOf("Best-of-N on "));
   });
 
   // Figure 4: Best-of-N once per judge, against the vote. The reading says
@@ -220,14 +181,16 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(pills).toContain(JUDGES8.placeholder ? "placeholder" : "measured");
   });
 
-  // Page 7 hands over a question. It gets answered in words, not just in a figure.
-  it("answers page 7 on what judging recovers", () => {
+  // What voting left behind gets answered in words, not just in a figure, and
+  // "only a little" has to stay true of the numbers.
+  it("says what judging recovers of what counting discards", () => {
     render(<Page8 />);
-    const trained = PAGE8.judges.find((j) => j.trained)!;
-    const close = screen.getByText(/leftovers are still mostly leftovers/);
-    expect(close.textContent).toContain(pct(PAGE8.coverage!));
-    expect(close.textContent).toContain(pct(PAGE8.bar.mean));
-    expect(close.textContent).toContain(pct(trained.mean));
+    const { ceiling, vote, best_of_n: best } = PILE8.bars;
+    const close = screen.getByText(/recovers only a little of what counting discards/);
+    expect(close.textContent).toContain(pct(ceiling));
+    expect(close.textContent).toContain(pct(vote));
+    expect(close.textContent).toContain(pct(best));
+    expect(best - vote).toBeLessThan((ceiling - vote) / 2);
   });
 
   // The two sources moved from CitationBadge chips into numbered RefItem entries
@@ -270,7 +233,7 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     const caption = screen.getByText(/there the kept chain is right on/);
     expect(caption.textContent).toContain(`right on ${PILE8.bands.mixedKeptRight}`);
     const misses = PILE8.rows.filter((r) => r.n_correct > 0 && !r.chains[0].c);
-    expect(caption.textContent).toContain(`${Math.max(...misses.map((r) => r.n_correct))} or fewer right chains`);
+    expect(caption.textContent).toContain(`${misses.filter((r) => r.n_correct === 1).length} had only one`);
     expect(PILE8.bands.all + PILE8.bands.mixed + PILE8.bands.none).toBe(PILE8.rows.length);
   });
 

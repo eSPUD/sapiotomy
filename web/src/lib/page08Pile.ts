@@ -1,52 +1,50 @@
 /**
- * Page 8's heat map and comparison, loaded from `web/data/page-08-pile.json`.
+ * Page 8's dots and comparison, loaded from `web/data/page-08-pile.json`.
  *
- * Built by `notebooks/page_08_pile_site_data.py` from page 7's chains (the
- * temperature sweep's 16 chains on each of 40 problems, at the temperature
- * its vote did best at) and the trained verifier's score of every one of
- * them (`notebooks/page_08_pile_scores.py`). The builder refuses to write
- * unless its vote, chain accuracy and ceiling are page 7's.
+ * Built by `notebooks/page_08_pile_site_data.py` from the temperature sweep's
+ * 16 chains on each of 100 problems, at the temperature its vote did best at,
+ * and the trained verifier's score of every one of them. The builder refuses
+ * to write unless its vote, chain accuracy and ceiling are the sweep's.
  *
  * The gates below fail the load, never a conditional in the component: every
- * row carries all its chains, the chains are in the verifier's order (column
- * 1 is the top score, the chain Best-of-N keeps), the rows are in the order
- * the map promises, and every bar is the average of the rows it summarises.
- * A stand-in file, scored by anything but the trained verifier, is refused.
- *
- * The chains' text is not bundled: one file per problem under
- * `web/data/page-08-chains/`, loaded when a reader opens a chain.
+ * row carries all its chains, the chains are in the verifier's order (the first
+ * is the chain Best-of-N keeps; a chain with no answer cannot be kept, so those
+ * come last with no score), the rows are ordered by how many chains are right,
+ * and every bar is the average of the rows it summarises. A stand-in file,
+ * scored by anything but the trained verifier, is refused.
  */
 import raw from "@data/page-08-pile.json";
 
 export class Page08PileError extends Error {}
+
+/** A share as a percent. */
+export const pct = (v: number, digits = 0): string => `${(v * 100).toFixed(digits)}%`;
 
 export interface PileChain {
   /** sample index within the problem's 16 */
   i: number;
   /** right or wrong, by the answer key */
   c: boolean;
-  /** the verifier's raw score */
+  /** the verifier's score; null for a chain with no answer, which cannot be kept */
+  s: number | null;
+}
+
+/** A chain shown in full: its rating as a percent, its final answer and its text. */
+export interface PileCard extends PileChain {
   s: number;
-  /** the same score as a chance of being right, in percent */
   r: number;
-  /** the chain's final answer */
   a: string | null;
+  trace: string;
 }
 
 export interface PileRow {
   id: string;
   level: number;
-  subject: string;
-  question: string;
-  answer: string;
   n_correct: number;
   vote: "right" | "wrong" | "tie";
-  vote_answer: string | null;
   greedy: boolean;
   /** sorted by the verifier's score, highest first */
   chains: PileChain[];
-  /** the file under web/data/page-08-chains/ holding this row's chain text */
-  file: string;
 }
 
 interface RawPile {
@@ -67,7 +65,7 @@ interface RawPile {
     vote_vs_one: { vote_only: number; one_only: number; p: number };
   };
   misses: { n: number; of: number; ids: string[] };
-  specimen: {
+  specimen: null | {
     id: string;
     question: string;
     answer: string;
@@ -75,7 +73,7 @@ interface RawPile {
     vote_answer: string | null;
     n_correct: number;
     right_rank: number;
-    cards: (PileChain & { trace: string })[];
+    cards: PileCard[];
   };
   rows: PileRow[];
 }
@@ -92,7 +90,9 @@ for (const [k, row] of P.rows.entries()) {
   if (row.chains.length !== P.n_chains || ids.size !== P.n_chains) {
     throw new Page08PileError(`${row.id}: ${row.chains.length} chains, not ${P.n_chains}`);
   }
-  if (row.chains.some((c, j) => j > 0 && c.s > row.chains[j - 1].s)) {
+  const outOfOrder = (c: PileChain, prev: PileChain) =>
+    prev.s === null ? c.s !== null : c.s !== null && c.s > prev.s;
+  if (row.chains.some((c, j) => j > 0 && outOfOrder(c, row.chains[j - 1]))) {
     throw new Page08PileError(`${row.id}: chains are not in the verifier's order`);
   }
   if (row.chains.filter((c) => c.c).length !== row.n_correct) {
@@ -137,9 +137,3 @@ export const PILE8 = {
     mixedKeptRight: P.rows.filter((r) => band(r) === "mixed" && r.chains[0].c).length,
   },
 };
-
-/** One problem's chain text, keyed by sample index. */
-export async function loadChains(file: string): Promise<Record<string, string>> {
-  const mod = await import(`../../data/page-08-chains/${file}.json`);
-  return (mod.default ?? mod) as Record<string, string>;
-}

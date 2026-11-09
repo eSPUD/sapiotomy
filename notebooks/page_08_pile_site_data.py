@@ -1,57 +1,107 @@
-"""Page 8's measured figures, built from page 7's chains and the verifier's scores of them.
+"""Page 8's measured figures, built from the temperature sweep's chains and the ORM's score of every one.
 
-Reads two things and computes nothing they do not hold:
+Reads `scored_orm_T{t}_L2048.json`, the sweep's chain files with each chain gaining `orm`, written
+by `8_Best_of_N_ORM_dev.ipynb`. Writes `web/data/page-08-pile.json`.
 
-  - page 7's temperature sweep (`runs/page-07-temperature-sweep.zip`): its 16 chains on each
-    of 40 problems at T = 0.3, its greedy chain, and `results.json`, whose per-problem vote
-    this reuses rather than re-tallies;
-  - `runs/page-08-pile/scores.jsonl`, written by `page_08_pile_scores.py` (to
-    `out/page_08_pile/`) and copied there when the pass is promoted to the page.
+    python page_08_pile_site_data.py --scored scored_responses --chains page_7_json_files \
+        --math500 test.jsonl --page7 ../web/data/page-07-run.json
 
-Writes `web/data/page-08-pile.json` (what the measured figures draw) and one file per problem
-under `web/data/page-08-chains/` (the chains' text, loaded when a reader opens one). Refuses
-to write if its vote, chain accuracy or coverage differ from what page 7 published.
+`--chains` is the sweep's own folder: every chain must match it, text and answer. The temperature is
+the page 7 run's best temperature. The grader, the vote and the problem draw are that run's, and the
+script refuses to write unless its vote, chain accuracy and ceiling are the numbers it published.
 
-    cd notebooks
-    python page_08_pile_site_data.py
+A chain with no answer cannot be kept. It sorts after every answered chain with its score blanked.
 """
 
 import argparse
 import hashlib
 import json
 import math
-import zipfile
+import random
 from collections import Counter
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
-SWEEP_ZIP = HERE / "runs/page-07-temperature-sweep.zip"
-SWEEP = "page-07-temperature-sweep/"
-SCORES = HERE / "runs/page-08-pile/scores.jsonl"
-WEB_DATA = HERE.parent / "web/data"
-DEST = WEB_DATA / "page-08-pile.json"
-CHAINS_DIR = WEB_DATA / "page-08-chains"
+from math_verify import parse, verify
 
-P7_RUN_ID = "full-math500_l45-n100-9ab2b579-cap2048-pool16-p0.95-bfloat16-cuda"
-PILE_CONFIG = "t0.30-c2048"
-GREEDY_CONFIG = "t0.00-c2048"
-SCORE_ID = f"p08-pile-{P7_RUN_ID}"
+HERE = Path(__file__).resolve()
+DEST = HERE.parent.parent / "web/data/page-08-pile.json"
+
+WRITER = "Qwen/Qwen2.5-3B-Instruct"
 VERIFIER = "Skywork/Skywork-o1-Open-PRM-Qwen-2.5-1.5B"
+TEMPERATURES = [round(0.1 * i, 1) for i in range(12)]
+CAP = 2048
+N_PROBLEMS = 100
 N_CHAINS = 16
-N_CARDS = 4          # chain cards in figure 5
+N_CARDS = 4
+SEED = 42
+
+memo_g, memo_s = {}, {}
 
 
-def sha256(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def grade(pred, gold):
+    if pred == "":
+        return False
+    key = (pred, gold)
+    if key not in memo_g:
+        try:
+            memo_g[key] = bool(verify(parse(f"${str(gold).strip()}$"), parse(f"${pred}$")))
+        except Exception:
+            memo_g[key] = pred.replace(" ", "").lower() == str(gold).strip().replace(" ", "").lower()
+    return memo_g[key]
 
 
-def sigmoid(x):
-    """The verifier's score as a chance of being right, the way its model card reads it."""
-    return 1 / (1 + math.exp(-x))
+def same_answer(a, b):
+    if a.replace(" ", "") == b.replace(" ", ""):
+        return True
+    if (a, b) not in memo_s:
+        try:
+            memo_s[(a, b)] = bool(verify(parse(f"${a}$"), parse(f"${b}$")))
+        except Exception:
+            memo_s[(a, b)] = False
+    return memo_s[(a, b)]
+
+
+def tally(chains, gold):
+    """Each chain's group (None when it has no answer), the groups' first-seen answers, and whether
+    each group is the right answer."""
+    groups, labels = [], []
+    for chain in chains:
+        answer = chain["answer"]
+        if answer == "":
+            labels.append(None)
+            continue
+        for g, rep in enumerate(groups):
+            if same_answer(rep, answer):
+                labels.append(g)
+                break
+        else:
+            groups.append(answer)
+            labels.append(len(groups) - 1)
+    return labels, groups, [grade(rep, gold) for rep in groups]
+
+
+def vote_outcome(labels, right):
+    top = Counter(l for l in labels if l is not None).most_common(2)
+    if not top:
+        return "wrong", None
+    if len(top) == 2 and top[0][1] == top[1][1]:
+        return "tie", None
+    return ("right" if right[top[0][0]] else "wrong"), top[0][0]
+
+
+def draw_problems(dataset):
+    by_level = {}
+    for i, row in enumerate(dataset):
+        by_level.setdefault(row["level"], []).append(i)
+    draw = random.Random(SEED)
+    quota = {lv: round(len(ks) * N_PROBLEMS / len(dataset)) for lv, ks in by_level.items()}
+    quota[max(quota, key=lambda lv: len(by_level[lv]))] += N_PROBLEMS - sum(quota.values())
+    picked = sorted(i for lv, ks in by_level.items() for i in draw.sample(ks, quota[lv]))
+    return [dataset[i] for i in picked]
 
 
 def mcnemar(a, b):
-    """Exact two-sided test over the problems where a and b disagree (harness.mcnemar)."""
+    """Exact two-sided test over the problems where a and b disagree."""
     x = sum(1 for k in a if a[k] and not b[k])
     y = sum(1 for k in a if b[k] and not a[k])
     n = x + y
@@ -60,158 +110,138 @@ def mcnemar(a, b):
     return x, y, min(1.0, 2 * sum(math.comb(n, i) for i in range(max(x, y), n + 1)) / 2 ** n)
 
 
-def read_page_7():
-    """The sweep's chains at T = 0.3 and its greedy chain, page 7's way: this run only, the
-    last write per key winning, in sample order. And its results.json."""
-    latest = {}
-    with zipfile.ZipFile(SWEEP_ZIP) as z:
-        with z.open(SWEEP + "traces.jsonl") as f:
-            for line in f:
-                if line.strip():
-                    r = json.loads(line)
-                    if r["run_id"] == P7_RUN_ID and r["config_id"] in (PILE_CONFIG, GREEDY_CONFIG):
-                        latest[(r["config_id"], r["problem_id"], int(r["sample_index"]))] = r
-        results = json.loads(z.read(SWEEP + "results.json"))
-    wanted = {h["problem_id"] for h in results["heatmap"]}
-    latest = {k: r for k, r in latest.items() if k[1] in wanted}
-    pile, greedy = {}, {}
-    for (cid, pid, si), r in sorted(latest.items(), key=lambda kv: kv[0]):
-        if cid == PILE_CONFIG:
-            pile.setdefault(pid, []).append(r)
-        elif si == 0:
-            greedy[pid] = bool(r["correct"])
-    return pile, greedy, results
+def sha256(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def read_scores(path, score_id, scorer):
-    got = {}
-    with Path(path).open(encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                s = json.loads(line)
-                if s["score_id"] == score_id and s["scorer"] == scorer:
-                    got[(s["problem_id"], int(s["sample_index"]))] = s
-    return got
+def read_json(path):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def build(scores_path, score_id, scorer, stand_in):
-    pile, greedy, R = read_page_7()
-    T = f"{R['best_temperature']}"
-    assert PILE_CONFIG == f"t{R['best_temperature']:.2f}-c{R['chain_cap']}", "the pile is not page 7's best temperature"
-    rows_7 = {h["problem_id"]: h["cells"][T] for h in R["heatmap"]}
-    hand = next(x for x in R["summary"] if x["temperature"] == R["best_temperature"])
-    assert set(pile) == set(rows_7) == set(greedy), "page 7's chains, greedy chain and results disagree"
-    scores = read_scores(scores_path, score_id, scorer)
-    missing = [(p, int(r["sample_index"])) for p, rs in pile.items() for r in rs
-               if (p, int(r["sample_index"])) not in scores]
-    assert not missing, f"{len(missing)} of the pile's chains have no {scorer} score, e.g. {missing[:3]}"
+def ranked_chains(chains, labels, right):
+    """Answered chains by score, highest first (a tie goes to the earlier chain), then the rest."""
+    out = []
+    for i, chain in enumerate(chains):
+        answered = labels[i] is not None
+        out.append(dict(i=i, c=answered and right[labels[i]], score=chain["orm"] if answered else None))
+    return sorted(out, key=lambda x: (x["score"] is None, -(x["score"] or 0), x["i"]))
 
-    rows, chains_text = [], {}
-    for pid, rs in pile.items():
-        assert len(rs) == N_CHAINS, f"{pid}: {len(rs)} chains"
-        p7 = rows_7[pid]
-        n_correct = sum(bool(r["correct"]) for r in rs)
-        assert n_correct == p7["correct_chains"], pid
-        ranked = sorted(rs, key=lambda r: (-float(scores[(pid, int(r["sample_index"]))]["score"]),
-                                           int(r["sample_index"])))
-        chains = []
-        for r in ranked:
-            s = scores[(pid, int(r["sample_index"]))]
-            chains.append(dict(
-                i=int(r["sample_index"]), c=bool(r["correct"]),
-                s=round(float(s["score"]), 4), r=round(100 * sigmoid(float(s["score"]))),
-                a=r["extracted_answer"],
-            ))
-        rows.append(dict(
-            id=pid, level=int(rs[0]["level"]), subject=rs[0]["subject"],
-            question=rs[0]["question"], answer=rs[0]["ground_truth"],
-            n_correct=n_correct,
-            vote=p7["outcome"],
-            vote_answer=None if p7["outcome"] == "tie" else p7["plurality_answer"],
-            greedy=greedy[pid], chains=chains))
-        chains_text[pid] = {str(int(r["sample_index"])): r["trace"] for r in rs}
 
-    # Most chains right at the top; problem id breaks ties.
-    rows.sort(key=lambda r: (-r["n_correct"], r["id"]))
-    for k, row in enumerate(rows):
-        row["file"] = f"{k:03d}"
+def score_temperature(problems, chains_at):
+    rows = []
+    for p, chains in zip(problems, chains_at):
+        labels, groups, right = tally(chains, p["answer"])
+        vote, winner = vote_outcome(labels, right)
+        ranked = ranked_chains(chains, labels, right)
+        rows.append(dict(p=p, chains=chains, labels=labels, groups=groups, right=right, vote=vote,
+                         winner=winner, ranked=ranked, n_correct=sum(x["c"] for x in ranked)))
+    return rows
 
+
+def build(a):
+    problems = draw_problems([json.loads(l) for l in Path(a.math500).read_text(encoding="utf-8").splitlines() if l.strip()])
+    ids = [p["unique_id"] for p in problems]
+    page7 = read_json(a.page7)
+    temperature = page7["best_temperature"] if a.temperature is None else a.temperature
+    published = {s["temperature"]: s for s in page7["summary"]}
+
+    files, by_t = {}, {}
+    for t in TEMPERATURES:
+        name = f"T{t:.1f}_L{CAP}.json"
+        scored_path = Path(a.scored) / f"scored_orm_{name}"
+        scored = {r["unique_id"]: r["chains"] for r in read_json(scored_path)}
+        sweep = {r["unique_id"]: r["chains"] for r in read_json(Path(a.chains) / f"chains_{name}")}
+        for pid in ids:
+            assert len(scored[pid]) == N_CHAINS, f"{name} {pid}: {len(scored[pid])} chains"
+            for c, s in zip(scored[pid], sweep[pid], strict=True):
+                assert c["text"] == s["text"] and c["answer"] == s["answer"], f"{name} {pid}: a chain differs from the sweep's"
+                assert 0 <= c["orm"] <= 1, f"{name} {pid}: score {c['orm']}"
+        by_t[t] = [scored[pid] for pid in ids]
+        files[scored_path.name] = sha256(scored_path)
+
+    greedy_rows = score_temperature(problems, by_t[0.0])
+    greedy = {r["p"]["unique_id"]: r["labels"][0] is not None and r["right"][r["labels"][0]] for r in greedy_rows}
+
+    print(" T    one chain  avg chain  vote   best-of-16  ceiling  best-only  vote-only  p")
+    for t in TEMPERATURES:
+        rows = greedy_rows if t == 0.0 else score_temperature(problems, by_t[t])
+        n = len(rows)
+        vote = {r["p"]["unique_id"]: r["vote"] == "right" for r in rows}
+        best = {r["p"]["unique_id"]: r["ranked"][0]["c"] for r in rows}
+        avg = sum(r["n_correct"] for r in rows) / (n * N_CHAINS)
+        ceil = sum(r["n_correct"] > 0 for r in rows) / n
+        pub = published[t]
+        assert math.isclose(sum(vote.values()) / n, pub["vote_accuracy"], abs_tol=1e-9), (t, "vote")
+        assert math.isclose(avg, pub["single_chain_accuracy"], abs_tol=1e-9), (t, "chain average")
+        assert math.isclose(ceil, pub["coverage"], abs_tol=1e-9), (t, "ceiling")
+        x, y, p = mcnemar(best, vote)
+        print(f"{t:.1f}  {sum(greedy.values()) / n:8.1%}  {avg:8.1%}  {sum(vote.values()) / n:5.1%}  "
+              f"{sum(best.values()) / n:9.1%}  {ceil:6.1%}  {x:8d}  {y:8d}  {p:.3f}")
+
+    rows = score_temperature(problems, by_t[temperature])
     n = len(rows)
-    vote = {r["id"]: r["vote"] == "right" for r in rows}
-    best = {r["id"]: r["chains"][0]["c"] for r in rows}
-    one = {r["id"]: r["greedy"] for r in rows}
-    present = {r["id"]: r["n_correct"] > 0 for r in rows}
+    vote = {r["p"]["unique_id"]: r["vote"] == "right" for r in rows}
+    best = {r["p"]["unique_id"]: r["ranked"][0]["c"] for r in rows}
     bars = dict(
-        one_chain=sum(one.values()) / n,
+        one_chain=sum(greedy.values()) / n,
         chain_average=sum(r["n_correct"] for r in rows) / (n * N_CHAINS),
         vote=sum(vote.values()) / n,
         best_of_n=sum(best.values()) / n,
-        ceiling=sum(present.values()) / n)
-    assert abs(bars["vote"] - hand["vote_accuracy"]) < 1e-9, (bars["vote"], hand)
-    assert abs(bars["chain_average"] - hand["single_chain_accuracy"]) < 1e-9, (bars, hand)
-    assert abs(bars["ceiling"] - hand["coverage"]) < 1e-9, (bars, hand)
+        ceiling=sum(r["n_correct"] > 0 for r in rows) / n,
+    )
     b_only, v_only, p = mcnemar(best, vote)
     bars["best_vs_vote"] = dict(best_only=b_only, vote_only=v_only, p=p)
-    b_only, o_only, p = mcnemar(best, one)
+    b_only, o_only, p = mcnemar(best, greedy)
     bars["best_vs_one"] = dict(best_only=b_only, one_only=o_only, p=p)
-    v_only, o_only, p = mcnemar(vote, one)
+    v_only, o_only, p = mcnemar(vote, greedy)
     bars["vote_vs_one"] = dict(vote_only=v_only, one_only=o_only, p=p)
 
-    # The judge's misses: a right chain was in the pile, and the top-rated one is wrong.
-    miss_ids = [r["id"] for r in rows if r["n_correct"] > 0 and not r["chains"][0]["c"]]
-    misses = dict(n=len(miss_ids), of=sum(present.values()), ids=miss_ids)
+    public = [dict(
+        id=r["p"]["unique_id"], level=int(r["p"]["level"]), n_correct=r["n_correct"], vote=r["vote"],
+        greedy=greedy[r["p"]["unique_id"]],
+        chains=[dict(i=x["i"], c=x["c"], s=None if x["score"] is None else round(x["score"], 4)) for x in r["ranked"]],
+    ) for r in rows]
+    public.sort(key=lambda r: (-r["n_correct"], r["id"]))
 
-    # Figure 5: one miss where the vote did not find the right answer either (a miss the
-    # vote fixes makes figure 3's point again). The shortest question wins.
-    pool = [r for r in rows if r["id"] in miss_ids and r["vote"] != "right"]
-    assert pool, "no judge miss outside the vote's wins to draw"
-    spec = min(pool, key=lambda r: (len(r["question"]), r["id"]))
-    top_right = next(c for c in spec["chains"] if c["c"])
-    cards = spec["chains"][:N_CARDS - 1]
-    cards = cards + [top_right] if top_right not in cards else spec["chains"][:N_CARDS]
-    specimen = dict(
-        id=spec["id"], question=spec["question"], answer=spec["answer"],
-        vote=spec["vote"], vote_answer=spec["vote_answer"], n_correct=spec["n_correct"],
-        right_rank=spec["chains"].index(top_right) + 1,
-        cards=[dict(c, trace=chains_text[spec["id"]][str(c["i"])]) for c in cards])
+    misses = [r for r in rows if r["n_correct"] > 0 and not r["ranked"][0]["c"]]
+    pool = sorted((r for r in misses if r["vote"] != "right"), key=lambda r: r["p"]["unique_id"])
+    specimen = None
+    if pool:
+        spec = random.Random(SEED).choice(pool)
+        answered = [x for x in spec["ranked"] if x["score"] is not None]
+        top_right = next(x for x in answered if x["c"])
+        shown = answered[:N_CARDS] if top_right in answered[:N_CARDS - 1] else answered[:N_CARDS - 1] + [top_right]
+        specimen = dict(
+            id=spec["p"]["unique_id"], question=spec["p"]["problem"], answer=spec["p"]["answer"], vote=spec["vote"],
+            vote_answer=None if spec["winner"] is None else spec["groups"][spec["winner"]],
+            n_correct=spec["n_correct"], right_rank=answered.index(top_right) + 1, pool_size=len(pool),
+            cards=[dict(i=x["i"], c=x["c"], s=round(x["score"], 4), r=round(100 * x["score"]),
+                        a=spec["chains"][x["i"]]["answer"], trace=spec["chains"][x["i"]]["text"]) for x in shown])
 
     out = dict(
-        source=dict(
-            page_7_run_id=P7_RUN_ID, page_7_bundle=SWEEP_ZIP.name, page_7_bundle_sha256=sha256(SWEEP_ZIP),
-            scores=scores_path.name, scores_sha256=sha256(scores_path), score_id=score_id,
-            builder=Path(__file__).name, builder_sha256=sha256(__file__), stand_in=stand_in),
-        writer=R["model"], verifier=VERIFIER if not stand_in else scorer,
-        benchmark="MATH-500", levels=[4, 5], temperature=R["best_temperature"],
-        n_chains=N_CHAINS, bars=bars, misses=misses, specimen=specimen,
-        rows=[{k: v for k, v in r.items() if k != "question"} | {"question": r["question"]} for r in rows])
-    DEST.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+        source=dict(scored_sha256=files, builder=HERE.name, builder_sha256=sha256(HERE), page_7_best_temperature=page7["best_temperature"],
+                    specimen_rule="random.Random(seed).choice over the verifier's misses the vote also missed, sorted by id",
+                    seed=SEED, stand_in=False),
+        writer=WRITER, verifier=VERIFIER, benchmark="MATH-500", levels=sorted({r["level"] for r in public}),
+        temperature=temperature, n_chains=N_CHAINS, bars=bars,
+        misses=dict(n=len(misses), of=sum(r["n_correct"] > 0 for r in rows), ids=sorted(r["p"]["unique_id"] for r in misses)),
+        specimen=specimen, rows=public)
+    a.out.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
 
-    CHAINS_DIR.mkdir(exist_ok=True)
-    for old in CHAINS_DIR.glob("*.json"):
-        old.unlink()
-    for r in rows:
-        (CHAINS_DIR / f"{r['file']}.json").write_text(
-            json.dumps(chains_text[r["id"]], ensure_ascii=False, separators=(",", ":")) + "\n",
-            encoding="utf-8")
-
-    print(f"wrote {DEST} ({DEST.stat().st_size / 1e3:.0f} kB) and {len(rows)} chain files")
-    print(f"one chain {bars['one_chain']:.0%}  vote {bars['vote']:.0%}  best-of-{N_CHAINS} "
-          f"{bars['best_of_n']:.0%}  ceiling {bars['ceiling']:.0%}")
-    print(f"best vs vote: {bars['best_vs_vote']}")
-    print(f"judge misses: {misses['n']} of {misses['of']}; specimen {spec['id']} "
-          f"(right chain ranked {specimen['right_rank']})")
-    if stand_in:
-        print("STAND-IN: these are not the trained verifier's scores. Do not ship.")
-
-
-def main():
-    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--scores", type=Path, default=SCORES)
-    ap.add_argument("--score-id", default=SCORE_ID)
-    ap.add_argument("--scorer", default="skywork-prm")
-    args = ap.parse_args()
-    build(args.scores, args.score_id, args.scorer, stand_in=args.scorer != "skywork-prm")
+    no_answer_top = sum(1 for r in rows for x in [max(range(N_CHAINS), key=lambda i: r["chains"][i]["orm"])] if r["labels"][x] is None)
+    print(f"\nwrote {a.out} ({a.out.stat().st_size / 1e3:.0f} kB) at T = {temperature}")
+    print(f"best vs vote {bars['best_vs_vote']}")
+    print(f"best vs one {bars['best_vs_one']}  vote vs one {bars['vote_vs_one']}")
+    print(f"misses {len(misses)} of {out['misses']['of']}; misses the vote also missed {len(pool)}; "
+          f"problems whose top-scored chain had no answer {no_answer_top}")
 
 
 if __name__ == "__main__":
-    main()
+    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    ap.add_argument("--scored", required=True, help="the folder holding scored_orm_T*_L2048.json")
+    ap.add_argument("--chains", required=True, help="the sweep's folder holding chains_T*_L2048.json")
+    ap.add_argument("--math500", required=True, help="MATH-500's test.jsonl")
+    ap.add_argument("--page7", default=str(HERE.parent.parent / "web/data/page-07-run.json"))
+    ap.add_argument("--temperature", type=float, default=None, help="defaults to the page 7 run's best")
+    ap.add_argument("--out", type=Path, default=DEST)
+    build(ap.parse_args())
