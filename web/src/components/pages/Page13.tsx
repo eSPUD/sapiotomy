@@ -907,7 +907,7 @@ export function Page13() {
           </p>
 
           {/* The figure: the chart, its two dials and its two readouts, nothing else. */}
-          <figure className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+          <figure data-demo="p13-s2" className="m-0 flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
             <Fit drawnWidth={640}>
               <BudgetChart trainIdx={trainIdx} budgetIdx={budgetIdx} />
             </Fit>

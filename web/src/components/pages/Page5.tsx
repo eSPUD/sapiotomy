@@ -675,6 +675,7 @@ export function Page5() {
           </p>
           <section
             aria-label="Zero-shot against few-shot"
+            data-demo="p5-s2"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <Ledger

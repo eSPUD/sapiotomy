@@ -78,6 +78,7 @@ import { STAR_LINES } from "@/lib/starListing";
 import { CodeLine } from "@/components/CodeLine";
 import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import { PAGE12, hasHint, modelLabel, tidyMath, walked } from "@/lib/page12";
+import { useDemoSelect } from "@/lib/demo";
 
 const PAGE_N = 12;
 const N_CHAINS = PAGE12.n_chains;
@@ -779,6 +780,8 @@ function StarHarvest() {
     setBi("empty");
     setAt((i + problems.length) % problems.length);
   };
+  // Presentation mode can ask for a problem (1-based, as the counter shows it).
+  useDemoSelect("p12-s2", (problem) => goTo(problem - 1));
 
   const problem = problems[at];
   const g = problem.greedy;
@@ -931,6 +934,7 @@ function StarHarvest() {
   return (
     <figure
       ref={figRef}
+      data-demo="p12-s2"
       className="relative m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-3"
     >
       {/* The switch, and which problem is shown. */}

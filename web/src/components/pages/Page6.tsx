@@ -1447,6 +1447,7 @@ export function Page6() {
           </p>
           <section
             aria-label="The population curve"
+            data-demo="p6-s2"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             {/* This figure's dial is the line ON the figure, as figure 3's is.

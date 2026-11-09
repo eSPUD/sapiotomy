@@ -325,7 +325,10 @@ export function Page15() {
           this. Now that all of them are behind you, they go on one axis, priced in the compute
           they actually spent.
         </p>
-        <Ladder />
+        {/* Tagged for presentation mode (DemoMode), which spotlights the chart. */}
+        <div data-demo="p15-s1">
+          <Ladder />
+        </div>
 
         {/* The chart's one caption. It replaces four paragraphs that restated
             every rung in prose: the rungs are legible, and what a reader cannot
