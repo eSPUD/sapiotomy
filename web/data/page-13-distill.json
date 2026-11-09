@@ -1,0 +1,46 @@
+{
+ "source": {
+  "notebook": "page_13_distill_1p5b_to_0p5b.ipynb",
+  "sha256": "87d1e4ebd321e5ca90d746660267876d964a736d76a556e8360d3a64559173f7"
+ },
+ "student": "Qwen/Qwen2.5-0.5B-Instruct",
+ "teacher": "Qwen/Qwen2.5-1.5B-Instruct",
+ "dataset": "GSM8K",
+ "n_eval": 300,
+ "se_points": 2.9,
+ "teacher_before": {
+  "pass1": 0.65,
+  "maj32": 0.8,
+  "any32": 0.957,
+  "mean_len": 192
+ },
+ "teacher_after": {
+  "pass1": 0.72,
+  "maj32": 0.847,
+  "any32": 0.973,
+  "mean_len": 226
+ },
+ "arms": {
+  "none": {
+   "pass1": 0.283,
+   "maj32": 0.543,
+   "any32": 0.887,
+   "mean_len": 191,
+   "rows": 0
+  },
+  "base15": {
+   "pass1": 0.423,
+   "maj32": 0.627,
+   "any32": 0.887,
+   "mean_len": 184,
+   "rows": 896
+  },
+  "grpo15": {
+   "pass1": 0.493,
+   "maj32": 0.65,
+   "any32": 0.9,
+   "mean_len": 238,
+   "rows": 1891
+  }
+ }
+}

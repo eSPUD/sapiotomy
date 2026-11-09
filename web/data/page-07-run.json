@@ -1,0 +1,1066 @@
+{
+ "source": {
+  "notebook": "7_FrequencyVoting_InstructModels.ipynb",
+  "builder": "page_7_site_data.py",
+  "builder_sha256": "b421fe41adcf6e3a115decc87995c9f38790925776caddaa957f1a6fb1928666",
+  "chains_sha256": {
+   "chains_T0.0_L2048.json": "600138526dff7935b27d973c5b80eac99211038b3d63ad689729432b2c2bae91",
+   "chains_T0.1_L2048.json": "da405536928bb4ffeea66adef806f4287bdc0a8bc3b88456cc442be8c178bbb8",
+   "chains_T0.2_L2048.json": "b4e050b4fb71238c6c752a0809b18f59914949e345f3d421ef4d43ddb2365464",
+   "chains_T0.3_L2048.json": "b2d1741270e9dd33b34107d47e338d57699605484bc41791f05849aad38f185d",
+   "chains_T0.4_L2048.json": "1349802ed91b43aba6ee6ddb28c8f1e686a53c766b536748c83d8da55507f71d",
+   "chains_T0.5_L2048.json": "11fcfa9f8c9a6888e474c6739bee3b9a34e227738f2c37900319171f7ff5a353",
+   "chains_T0.6_L2048.json": "1bb126f1aa592df38dc6ac2257ffd40455ef4daa763590c19f6ec58905bea62f",
+   "chains_T0.7_L2048.json": "94bd536301832767a4a4220540044c56df4b55408e4bfaba55e252dee67c12f3",
+   "chains_T0.8_L2048.json": "56310ad6a2ae309bdecac06d006258c9e2a591b5da7efab2b267d106559a7c36",
+   "chains_T0.9_L2048.json": "318f64203554178f890a9a689e814e4d1692924f49cc4d020ccab7c9f9ee8faf",
+   "chains_T1.0_L2048.json": "714da9b4078788f2ae512ff60981f1c4e4c742eea2d8b89b41f9dde2b25b4f7a",
+   "chains_T1.1_L2048.json": "b7c7a6965bec14f49e2a5f329f96f8fc4d54c65fe4dc162aa7de22ca58caddec"
+  },
+  "model": "Qwen/Qwen2.5-3B-Instruct",
+  "precision": "bf16",
+  "dataset": "HuggingFaceH4/MATH-500",
+  "n_problems": 100,
+  "levels": {
+   "1": 9,
+   "2": 18,
+   "3": 21,
+   "4": 26,
+   "5": 26
+  },
+  "quota": {
+   "1": 9,
+   "2": 18,
+   "3": 21,
+   "4": 26,
+   "5": 26
+  },
+  "n_chains": 16,
+  "chain_cap": 2048,
+  "top_p": 0.95,
+  "seed": 42,
+  "n_draws": 100
+ },
+ "n_chains": 16,
+ "chain_cap": 2048,
+ "temperatures": [
+  0.0,
+  0.1,
+  0.2,
+  0.3,
+  0.4,
+  0.5,
+  0.6,
+  0.7,
+  0.8,
+  0.9,
+  1.0,
+  1.1
+ ],
+ "best_temperature": 0.9,
+ "n_axis": [
+  1,
+  2,
+  4,
+  8,
+  16
+ ],
+ "summary": [
+  {
+   "temperature": 0.0,
+   "n_problems": 100,
+   "vote_accuracy": 0.68,
+   "tie_rate": 0.0,
+   "single_chain_accuracy": 0.68,
+   "coverage": 0.68,
+   "mean_distinct": 0.96,
+   "mean_tokens": 620.76,
+   "capped_rate": 0.04
+  },
+  {
+   "temperature": 0.1,
+   "n_problems": 100,
+   "vote_accuracy": 0.76,
+   "tie_rate": 0.05,
+   "single_chain_accuracy": 0.714375,
+   "coverage": 0.89,
+   "mean_distinct": 2.58,
+   "mean_tokens": 582.21125,
+   "capped_rate": 0.02125
+  },
+  {
+   "temperature": 0.2,
+   "n_problems": 100,
+   "vote_accuracy": 0.74,
+   "tie_rate": 0.06,
+   "single_chain_accuracy": 0.6925,
+   "coverage": 0.91,
+   "mean_distinct": 3.02,
+   "mean_tokens": 582.24875,
+   "capped_rate": 0.02125
+  },
+  {
+   "temperature": 0.3,
+   "n_problems": 100,
+   "vote_accuracy": 0.77,
+   "tie_rate": 0.03,
+   "single_chain_accuracy": 0.708125,
+   "coverage": 0.95,
+   "mean_distinct": 3.17,
+   "mean_tokens": 579.513125,
+   "capped_rate": 0.023125
+  },
+  {
+   "temperature": 0.4,
+   "n_problems": 100,
+   "vote_accuracy": 0.75,
+   "tie_rate": 0.05,
+   "single_chain_accuracy": 0.703125,
+   "coverage": 0.93,
+   "mean_distinct": 3.05,
+   "mean_tokens": 590.475625,
+   "capped_rate": 0.025
+  },
+  {
+   "temperature": 0.5,
+   "n_problems": 100,
+   "vote_accuracy": 0.76,
+   "tie_rate": 0.06,
+   "single_chain_accuracy": 0.70375,
+   "coverage": 0.93,
+   "mean_distinct": 3.32,
+   "mean_tokens": 586.480625,
+   "capped_rate": 0.019375
+  },
+  {
+   "temperature": 0.6,
+   "n_problems": 100,
+   "vote_accuracy": 0.76,
+   "tie_rate": 0.04,
+   "single_chain_accuracy": 0.701875,
+   "coverage": 0.94,
+   "mean_distinct": 3.46,
+   "mean_tokens": 585.395625,
+   "capped_rate": 0.019375
+  },
+  {
+   "temperature": 0.7,
+   "n_problems": 100,
+   "vote_accuracy": 0.76,
+   "tie_rate": 0.12,
+   "single_chain_accuracy": 0.690625,
+   "coverage": 0.92,
+   "mean_distinct": 3.49,
+   "mean_tokens": 587.1825,
+   "capped_rate": 0.016875
+  },
+  {
+   "temperature": 0.8,
+   "n_problems": 100,
+   "vote_accuracy": 0.76,
+   "tie_rate": 0.06,
+   "single_chain_accuracy": 0.6775,
+   "coverage": 0.92,
+   "mean_distinct": 3.74,
+   "mean_tokens": 584.8725,
+   "capped_rate": 0.0175
+  },
+  {
+   "temperature": 0.9,
+   "n_problems": 100,
+   "vote_accuracy": 0.81,
+   "tie_rate": 0.05,
+   "single_chain_accuracy": 0.691875,
+   "coverage": 0.93,
+   "mean_distinct": 3.79,
+   "mean_tokens": 583.0975,
+   "capped_rate": 0.015
+  },
+  {
+   "temperature": 1.0,
+   "n_problems": 100,
+   "vote_accuracy": 0.8,
+   "tie_rate": 0.09,
+   "single_chain_accuracy": 0.674375,
+   "coverage": 0.94,
+   "mean_distinct": 4.1,
+   "mean_tokens": 581.729375,
+   "capped_rate": 0.01
+  },
+  {
+   "temperature": 1.1,
+   "n_problems": 100,
+   "vote_accuracy": 0.77,
+   "tie_rate": 0.05,
+   "single_chain_accuracy": 0.664375,
+   "coverage": 0.93,
+   "mean_distinct": 4.19,
+   "mean_tokens": 579.55375,
+   "capped_rate": 0.006875
+  }
+ ],
+ "curves": {
+  "0.0": [
+   {
+    "n": 1,
+    "accuracy": 0.68,
+    "coverage": 0.68,
+    "tie_rate": 0.0,
+    "mean_tokens": 620.76
+   },
+   {
+    "n": 2,
+    "accuracy": 0.68,
+    "coverage": 0.68,
+    "tie_rate": 0.0,
+    "mean_tokens": 1241.52
+   },
+   {
+    "n": 4,
+    "accuracy": 0.68,
+    "coverage": 0.68,
+    "tie_rate": 0.0,
+    "mean_tokens": 2483.04
+   },
+   {
+    "n": 8,
+    "accuracy": 0.68,
+    "coverage": 0.68,
+    "tie_rate": 0.0,
+    "mean_tokens": 4966.08
+   },
+   {
+    "n": 16,
+    "accuracy": 0.68,
+    "coverage": 0.68,
+    "tie_rate": 0.0,
+    "mean_tokens": 9932.16
+   }
+  ],
+  "0.1": [
+   {
+    "n": 1,
+    "accuracy": 0.714375,
+    "coverage": 0.714375,
+    "tie_rate": 0.0,
+    "mean_tokens": 582.21125
+   },
+   {
+    "n": 2,
+    "accuracy": 0.6496,
+    "coverage": 0.7795,
+    "tie_rate": 0.2573,
+    "mean_tokens": 1162.7346
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7237,
+    "coverage": 0.8263,
+    "tie_rate": 0.1159,
+    "mean_tokens": 2323.0247
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7504,
+    "coverage": 0.8595,
+    "tie_rate": 0.0792,
+    "mean_tokens": 4652.8728
+   },
+   {
+    "n": 16,
+    "accuracy": 0.76,
+    "coverage": 0.89,
+    "tie_rate": 0.05,
+    "mean_tokens": 9315.38
+   }
+  ],
+  "0.2": [
+   {
+    "n": 1,
+    "accuracy": 0.6925,
+    "coverage": 0.6925,
+    "tie_rate": 0.0,
+    "mean_tokens": 582.24875
+   },
+   {
+    "n": 2,
+    "accuracy": 0.6296,
+    "coverage": 0.7695,
+    "tie_rate": 0.284,
+    "mean_tokens": 1165.813
+   },
+   {
+    "n": 4,
+    "accuracy": 0.6997,
+    "coverage": 0.8299,
+    "tie_rate": 0.1408,
+    "mean_tokens": 2329.5475
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7249,
+    "coverage": 0.8733,
+    "tie_rate": 0.089,
+    "mean_tokens": 4651.7892
+   },
+   {
+    "n": 16,
+    "accuracy": 0.74,
+    "coverage": 0.91,
+    "tie_rate": 0.06,
+    "mean_tokens": 9315.98
+   }
+  ],
+  "0.3": [
+   {
+    "n": 1,
+    "accuracy": 0.708125,
+    "coverage": 0.708125,
+    "tie_rate": 0.0,
+    "mean_tokens": 579.513125
+   },
+   {
+    "n": 2,
+    "accuracy": 0.6398,
+    "coverage": 0.7876,
+    "tie_rate": 0.2729,
+    "mean_tokens": 1160.5892
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7241,
+    "coverage": 0.8447,
+    "tie_rate": 0.131,
+    "mean_tokens": 2318.6685
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7501,
+    "coverage": 0.9035,
+    "tie_rate": 0.0745,
+    "mean_tokens": 4635.8709
+   },
+   {
+    "n": 16,
+    "accuracy": 0.77,
+    "coverage": 0.95,
+    "tie_rate": 0.03,
+    "mean_tokens": 9272.21
+   }
+  ],
+  "0.4": [
+   {
+    "n": 1,
+    "accuracy": 0.703125,
+    "coverage": 0.703125,
+    "tie_rate": 0.0,
+    "mean_tokens": 590.475625
+   },
+   {
+    "n": 2,
+    "accuracy": 0.6274,
+    "coverage": 0.783,
+    "tie_rate": 0.2828,
+    "mean_tokens": 1180.2404
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7191,
+    "coverage": 0.8398,
+    "tie_rate": 0.1184,
+    "mean_tokens": 2360.1848
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7476,
+    "coverage": 0.891,
+    "tie_rate": 0.0752,
+    "mean_tokens": 4727.6568
+   },
+   {
+    "n": 16,
+    "accuracy": 0.75,
+    "coverage": 0.93,
+    "tie_rate": 0.05,
+    "mean_tokens": 9447.61
+   }
+  ],
+  "0.5": [
+   {
+    "n": 1,
+    "accuracy": 0.70375,
+    "coverage": 0.70375,
+    "tie_rate": 0.0,
+    "mean_tokens": 586.480625
+   },
+   {
+    "n": 2,
+    "accuracy": 0.6233,
+    "coverage": 0.791,
+    "tie_rate": 0.3038,
+    "mean_tokens": 1167.5539
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7289,
+    "coverage": 0.8506,
+    "tie_rate": 0.1398,
+    "mean_tokens": 2344.1407
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7488,
+    "coverage": 0.896,
+    "tie_rate": 0.0853,
+    "mean_tokens": 4692.8601
+   },
+   {
+    "n": 16,
+    "accuracy": 0.76,
+    "coverage": 0.93,
+    "tie_rate": 0.06,
+    "mean_tokens": 9383.69
+   }
+  ],
+  "0.6": [
+   {
+    "n": 1,
+    "accuracy": 0.701875,
+    "coverage": 0.701875,
+    "tie_rate": 0.0,
+    "mean_tokens": 585.395625
+   },
+   {
+    "n": 2,
+    "accuracy": 0.6193,
+    "coverage": 0.7951,
+    "tie_rate": 0.3175,
+    "mean_tokens": 1169.1569
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7277,
+    "coverage": 0.8607,
+    "tie_rate": 0.1526,
+    "mean_tokens": 2342.0549
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7591,
+    "coverage": 0.9053,
+    "tie_rate": 0.0909,
+    "mean_tokens": 4684.6459
+   },
+   {
+    "n": 16,
+    "accuracy": 0.76,
+    "coverage": 0.94,
+    "tie_rate": 0.04,
+    "mean_tokens": 9366.33
+   }
+  ],
+  "0.7": [
+   {
+    "n": 1,
+    "accuracy": 0.690625,
+    "coverage": 0.690625,
+    "tie_rate": 0.0,
+    "mean_tokens": 587.1825
+   },
+   {
+    "n": 2,
+    "accuracy": 0.6029,
+    "coverage": 0.7762,
+    "tie_rate": 0.3248,
+    "mean_tokens": 1177.6977
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7191,
+    "coverage": 0.843,
+    "tie_rate": 0.1529,
+    "mean_tokens": 2351.0828
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7571,
+    "coverage": 0.8851,
+    "tie_rate": 0.0986,
+    "mean_tokens": 4694.959
+   },
+   {
+    "n": 16,
+    "accuracy": 0.76,
+    "coverage": 0.92,
+    "tie_rate": 0.12,
+    "mean_tokens": 9394.92
+   }
+  ],
+  "0.8": [
+   {
+    "n": 1,
+    "accuracy": 0.6775,
+    "coverage": 0.6775,
+    "tie_rate": 0.0,
+    "mean_tokens": 584.8725
+   },
+   {
+    "n": 2,
+    "accuracy": 0.5868,
+    "coverage": 0.7685,
+    "tie_rate": 0.3447,
+    "mean_tokens": 1170.0428
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7,
+    "coverage": 0.8407,
+    "tie_rate": 0.1654,
+    "mean_tokens": 2340.4817
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7421,
+    "coverage": 0.8902,
+    "tie_rate": 0.0924,
+    "mean_tokens": 4675.3918
+   },
+   {
+    "n": 16,
+    "accuracy": 0.76,
+    "coverage": 0.92,
+    "tie_rate": 0.06,
+    "mean_tokens": 9357.96
+   }
+  ],
+  "0.9": [
+   {
+    "n": 1,
+    "accuracy": 0.691875,
+    "coverage": 0.691875,
+    "tie_rate": 0.0,
+    "mean_tokens": 583.0975
+   },
+   {
+    "n": 2,
+    "accuracy": 0.5902,
+    "coverage": 0.7926,
+    "tie_rate": 0.3542,
+    "mean_tokens": 1165.8251
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7372,
+    "coverage": 0.8597,
+    "tie_rate": 0.1526,
+    "mean_tokens": 2338.9242
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7849,
+    "coverage": 0.9004,
+    "tie_rate": 0.0851,
+    "mean_tokens": 4663.6512
+   },
+   {
+    "n": 16,
+    "accuracy": 0.81,
+    "coverage": 0.93,
+    "tie_rate": 0.05,
+    "mean_tokens": 9329.56
+   }
+  ],
+  "1.0": [
+   {
+    "n": 1,
+    "accuracy": 0.674375,
+    "coverage": 0.674375,
+    "tie_rate": 0.0,
+    "mean_tokens": 581.729375
+   },
+   {
+    "n": 2,
+    "accuracy": 0.574,
+    "coverage": 0.7783,
+    "tie_rate": 0.3743,
+    "mean_tokens": 1161.6612
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7065,
+    "coverage": 0.8535,
+    "tie_rate": 0.189,
+    "mean_tokens": 2325.909
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7666,
+    "coverage": 0.9135,
+    "tie_rate": 0.1134,
+    "mean_tokens": 4649.9129
+   },
+   {
+    "n": 16,
+    "accuracy": 0.8,
+    "coverage": 0.94,
+    "tie_rate": 0.09,
+    "mean_tokens": 9307.67
+   }
+  ],
+  "1.1": [
+   {
+    "n": 1,
+    "accuracy": 0.664375,
+    "coverage": 0.664375,
+    "tie_rate": 0.0,
+    "mean_tokens": 579.55375
+   },
+   {
+    "n": 2,
+    "accuracy": 0.5651,
+    "coverage": 0.7745,
+    "tie_rate": 0.395,
+    "mean_tokens": 1152.8585
+   },
+   {
+    "n": 4,
+    "accuracy": 0.7069,
+    "coverage": 0.8475,
+    "tie_rate": 0.1804,
+    "mean_tokens": 2315.94
+   },
+   {
+    "n": 8,
+    "accuracy": 0.7602,
+    "coverage": 0.9042,
+    "tie_rate": 0.1005,
+    "mean_tokens": 4638.9971
+   },
+   {
+    "n": 16,
+    "accuracy": 0.77,
+    "coverage": 0.93,
+    "tie_rate": 0.05,
+    "mean_tokens": 9272.86
+   }
+  ]
+ },
+ "handoff": {
+  "n_chains": 16,
+  "temperature": 0.9,
+  "n_items": 100,
+  "single_chain_accuracy": 0.691875,
+  "plurality_accuracy": 0.81,
+  "coverage": 0.93,
+  "thrown_away": 0.12,
+  "tie_rate": 0.05
+ },
+ "showcase": {
+  "temperature": 0.9,
+  "seed": 42,
+  "rule": "Both problems are drawn at random, random.Random(seed).choice over the pool sorted by problem id, from the 100 problems at the best temperature. right: the vote returns the right answer and there are at least 3 distinct answers. tie: the vote ties and a chain has the right answer.",
+  "picks": [
+   {
+    "outcome": "right",
+    "pool_size": 33,
+    "problem": {
+     "problem_id": "test/counting_and_probability/71.json",
+     "level": 3,
+     "subject": "Counting & Probability",
+     "question": "How many ways are there to put 5 balls in 2 boxes if the balls are not distinguishable and neither are the boxes?",
+     "ground_truth": "3",
+     "temperature": 0.9,
+     "chain_cap": 2048,
+     "ranked": [
+      {
+       "answer": "3",
+       "votes": 9,
+       "correct": true
+      },
+      {
+       "answer": "2",
+       "votes": 4,
+       "correct": false
+      },
+      {
+       "answer": "6",
+       "votes": 2,
+       "correct": false
+      },
+      {
+       "answer": "5",
+       "votes": 1,
+       "correct": false
+      }
+     ],
+     "distinct_answers": 4,
+     "plurality_answer": "3",
+     "plurality_correct": true,
+     "tie": false,
+     "any_correct": true,
+     "no_answer_rate": 0.0,
+     "chains": [
+      {
+       "sample_index": 0,
+       "trace": "To solve this problem, we can use the concept of \"stars and bars\" from combinatorics. The problem is equivalent to finding the number of non-negative integer solutions to the equation \\(x_1 + x_2 = 5\\), where \\(x_1\\) and \\(x_2\\) represent the number of balls in each of the two boxes.\n\nThe \"stars and bars\" theorem states that the number of ways to distribute \\(n\\) indistinguishable objects (balls) into \\(k\\) distinguishable bins (boxes) is given by the binomial coefficient \\(\\binom{n+k-1}{k-1}\\).\n\nIn this problem, we have 5 balls (stars) and 2 boxes (bins), so we need to find the number of ways to distribute 5 indistinguishable balls into 2 indistinguishable boxes. According to the stars and bars theorem, the number of ways to do this is \\(\\binom{5+2-1}{2-1} = \\binom{6}{1} = 6\\).\n\nHowever, since the boxes are also indistinguishable, we need to consider that the distribution (like 5 balls in one box and 0 in the other) is the same as the distribution (like 0 balls in one box and 5 in the other). Therefore, we need to consider the possible distinct distributions, which are: 5 and 0, 4 and 1, 3 and 2, 2 and 3, 1 and 4, and 0 and 5. But because the boxes are indistinguishable, 4 and 1 is the same as 1 and 4, and 3 and 2 is the same as 2 and 3. So, the distinct distributions are 5 and 0, 3 and 2, and 1 and 4. This gives us 3 distinct ways to distribute the balls.\n\nTherefore, the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes is \\(\\boxed{3}\\).",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 430,
+       "truncated": false
+      },
+      {
+       "sample_index": 1,
+       "trace": "To solve the problem of distributing 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider the possible distributions of the balls such that the boxes are not distinguishable. This means that two distributions are considered the same if the number of balls in each box is the same.\n\nLet's list out the possible distributions:\n\n1. All 5 balls in one box and 0 balls in the other box. This can happen in one way.\n2. 4 balls in one box and 1 ball in the other box. This can happen in one way (since the boxes are indistinguishable, we don't need to specify which box gets the 4 balls or the 1 ball).\n3. 3 balls in one box and 2 balls in the other box. This can happen in one way (since the boxes are indistinguishable, the distribution is just 3 and 2, not 2 and 3).\n\nThus, the distinct distributions are:\n1. (5, 0)\n2. (4, 1)\n3. (3, 2)\n\nSince the boxes are indistinguishable, we don't need to consider the reverse orderings (e.g., (0, 5) instead of (5, 0)) or different swaps between the (3, 2) distribution. Therefore, there are exactly 3 distinct ways to put the 5 indistinguishable balls into 2 indistinguishable boxes.\n\nThe final answer is \\(\\boxed{3}\\).",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 310,
+       "truncated": false
+      },
+      {
+       "sample_index": 2,
+       "trace": "To determine the number of ways to distribute 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider all possible distributions and their symmetrical equivalence. Here's a step-by-step breakdown:\n\n1. **Identify the possible distributions**:\n   - All 5 balls in one box and 0 in the other.\n   - 4 balls in one box and 1 ball in the other.\n   - 3 balls in one box and 2 balls in the other.\n\n2. **Account for indistinguishability**:\n   Since the boxes are indistinguishable, the distributions (4,1) and (1,4) are considered the same, and similarly, (3,2) and (2,3) are considered the same.\n\n3. **List the distinct distributions**:\n   - (5,0): All balls in one box.\n   - (3,2): 3 balls in one box, 2 balls in the other.\n   - (1,4): Not distinct since (4,1) is equivalent to (1,4).\n\n4. **Count the distinct distributions**:\n   - (5,0) and (0,5) are distinct.\n   - (3,2) and (2,3) are distinct.\n\nThus, the distinct distributions are:\n- (5,0)\n- (3,2)\n\nSo, there are exactly 2 distinct ways to distribute the 5 balls into 2 indistinguishable boxes.\n\n\\[\n\\boxed{2}\n\\]",
+       "extracted_answer": "2",
+       "vote_key": "2",
+       "correct": false,
+       "own_tokens": 315,
+       "truncated": false
+      },
+      {
+       "sample_index": 3,
+       "trace": "To determine the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider the different possible distributions of the balls between the boxes. Since the boxes are indistinguishable, configurations that are permutations of each other (e.g., 4 balls in one box and 1 ball in the other, or vice versa) are counted as the same.\n\nThe possible distributions of 5 balls into 2 boxes can be summarized as follows:\n- 5 balls in one box and 0 balls in the other (but this is the same as 0 balls in one and 5 in the other, so it counts as 1 unique distribution).\n- 4 balls in one box and 1 ball in the other.\n- 3 balls in one box and 2 balls in the other.\n\nLet's list these distributions:\n1. All 5 balls in the first box and 0 balls in the second box.\n2. All 5 balls in the second box and 0 balls in the first box.\n3. 4 balls in the first box and 1 ball in the second box.\n4. 3 balls in the first box and 2 balls in the second box.\n5. 2 balls in the first box and 3 balls in the second box (this is the same as 3 balls in the first box and 2 balls in the second box, so it doesn't add a new distribution).\n\nThus, the unique distributions are:\n1. (5, 0)\n2. (0, 5)\n\nSo, there are only 2 unique ways to put 5 indistinguishable balls into 2 indistinguishable boxes.\n\nThe final answer is \\boxed{2}.",
+       "extracted_answer": "2",
+       "vote_key": "2",
+       "correct": false,
+       "own_tokens": 354,
+       "truncated": false
+      },
+      {
+       "sample_index": 4,
+       "trace": "To determine the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we can use combinatorial methods. The key here is to recognize that the problem is about distributing identical objects (balls) into identical bins (boxes).\n\nFirst, let's list out all the possible distributions of the 5 balls into 2 boxes. Since the balls and boxes are indistinguishable, we only need to consider the different possible counts of balls in each box. The possible counts are:\n\n- 0 balls in one box and 5 balls in the other box\n- 1 ball in one box and 4 balls in the other box\n- 2 balls in one box and 3 balls in the other box\n- 3 balls in one box and 2 balls in the other box\n- 4 balls in one box and 1 ball in the other box\n- 5 balls in one box and 0 balls in the other box\n\nHowever, since the boxes are indistinguishable, the arrangements (e.g., 2 balls in one box and 3 balls in the other box) and (3 balls in one box and 2 balls in the other box) are the same. Therefore, we only need to count distinct distributions.\n\nSo, the distinct ways are:\n1. All 5 balls in one box and 0 balls in the other box.\n2. 4 balls in one box and 1 ball in the other box.\n3. 3 balls in one box and 2 balls in the other box.\n\nThus, there are exactly 3 distinct ways to distribute the balls into the boxes. Therefore, the answer is:\n\n\\[\n\\boxed{3}\n\\]",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 351,
+       "truncated": false
+      },
+      {
+       "sample_index": 5,
+       "trace": "To solve this problem, we need to determine the number of ways to distribute 5 indistinguishable balls into 2 indistinguishable boxes. The key here is that the boxes are not distinguishable, which means that two distributions are considered the same if one can be transformed into the other by swapping the boxes.\n\nWe can list out the possible distributions and then account for the indistinguishability of the boxes. The distributions can be summarized as follows:\n\n1. All 5 balls in one box and 0 balls in the other: (5, 0)\n2. 4 balls in one box and 1 ball in the other: (4, 1)\n3. 3 balls in one box and 2 balls in the other: (3, 2)\n4. 2 balls in one box and 3 balls in the other: (2, 3) (Note: This is the same distribution as (3, 2), just swapped)\n5. 1 ball in one box and 4 balls in the other: (1, 4) (Note: This is the same distribution as (4, 1), just swapped)\n6. All 0 balls in one box and 5 balls in the other: (0, 5) (Note: This is the same distribution as (5, 0), just swapped)\n\nSince the boxes are indistinguishable, the distributions (5, 0) and (0, 5), (4, 1) and (1, 4), and (3, 2) and (2, 3) are all the same. Therefore, we only need to count the unique distributions:\n1. (5, 0)\n2. (4, 1)\n3. (3, 2)\n\nThus, there are 3 unique ways to distribute the balls into the boxes.\n\nThe final answer is \\(\\boxed{3}\\).",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 395,
+       "truncated": false
+      },
+      {
+       "sample_index": 6,
+       "trace": "Given that the balls and boxes are not distinguishable, we need to find the number of ways to distribute 5 indistinguishable balls into 2 indistinguishable boxes. This is a problem of finding the number of partitions of the integer 5 into at most 2 parts.\n\nFirst, we list all possible distributions of 5 balls into 2 boxes:\n\n1. 5 balls in one box, 0 balls in the other: (5, 0)\n2. 4 balls in one box, 1 ball in the other: (4, 1)\n3. 3 balls in one box, 2 balls in the other: (3, 2)\n\nSince the boxes are indistinguishable, the partitions (5, 0) and (0, 5) are considered the same, and the partitions (4, 1) and (1, 4) are considered the same, and the partitions (3, 2) and (2, 3) are considered the same.\n\nThus, there are only two distinct ways to distribute the balls into the boxes:\n\n1. All 5 balls in one box and 0 balls in the other.\n2. 3 balls in one box and 2 balls in the other.\n\nTherefore, the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes is \\boxed{2}.",
+       "extracted_answer": "2",
+       "vote_key": "2",
+       "correct": false,
+       "own_tokens": 285,
+       "truncated": false
+      },
+      {
+       "sample_index": 7,
+       "trace": "To solve the problem of determining the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider the possible distributions of the balls between the two boxes.\n\nWe can list out all the possible distributions of 5 balls into 2 boxes:\n\n1. All 5 balls in one box and 0 balls in the other.\n2. 4 balls in one box and 1 ball in the other.\n3. 3 balls in one box and 2 balls in the other.\n\nLet's analyze these cases:\n\n1. All 5 balls in one box and 0 balls in the other: There is only 1 way to do this (all balls in one box).\n2. 4 balls in one box and 1 ball in the other: We can choose 1 ball out of 5 to be in the empty box, which can be done in $\\binom{5}{1} = 5$ ways.\n3. 3 balls in one box and 2 balls in the other: We can choose 2 balls out of 5 to be in the empty box, which can be done in $\\binom{5}{2} = 10$ ways.\n\nHowever, because the boxes are indistinguishable, the distributions (5 balls in one box and 0 in the other) and (0 balls in one box and 5 in the other) are the same, as are (4 balls in one and 1 in the other) and (1 ball in one and 4 in the other). Therefore, we need to divide by 2 the number of distinct distributions.\n\nSo, the distinct ways to distribute the balls are:\n1. 5 balls in one box, 0 balls in the other (1 way).\n2. 4 balls in one box, 1 ball in the other (5 ways).\n3. 3 balls in one box, 2 balls in the other (10 ways).\n\nSumming these, we have $1 + 5 + 10 = 16$ ways, but since the boxes are indistinguishable, we only count distinct distributions once. Thus, the number of distinct ways to distribute the balls is $1 + 5 = 6$ (since 10 is already counted once as 5).\n\nSo, the final answer is \\(\\boxed{6}\\).",
+       "extracted_answer": "6",
+       "vote_key": "6",
+       "correct": false,
+       "own_tokens": 490,
+       "truncated": false
+      },
+      {
+       "sample_index": 8,
+       "trace": "To solve the problem of determining the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we can use the concept of partitioning. The problem is equivalent to finding the number of distinct partitions of the integer 5 into at most 2 parts. \n\nLet's list out the partitions:\n1. \\(5 + 0\\)\n2. \\(4 + 1\\)\n3. \\(3 + 2\\)\n4. \\(2 + 3\\)\n5. \\(1 + 4\\)\n6. \\(0 + 5\\)\n\nSince the boxes are indistinguishable, the partitions \\(5 + 0\\) and \\(0 + 5\\) represent the same distribution of balls, and similarly, \\(4 + 1\\) and \\(1 + 4\\), and \\(3 + 2\\) and \\(2 + 3\\). Therefore, the unique partitions are:\n1. \\(5 + 0\\)\n2. \\(4 + 1\\)\n3. \\(3 + 2\\)\n\nThus, there are 3 distinct ways to distribute the 5 indistinguishable balls into 2 indistinguishable boxes. Therefore, the answer is:\n\n\\[\n\\boxed{3}\n\\]",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 256,
+       "truncated": false
+      },
+      {
+       "sample_index": 9,
+       "trace": "To determine the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider the possible distributions of the balls. Since the boxes are indistinguishable, we only need to count distinct partitions of the number 5.\n\nThe partitions of 5 where the order of the boxes does not matter are:\n1. 5 balls in one box and 0 balls in the other box. This can happen in one way.\n2. 4 balls in one box and 1 ball in the other box. This can happen in one way.\n3. 3 balls in one box and 2 balls in the other box. This can happen in one way.\n4. 2 balls in one box and 3 balls in the other box. This is the same as the third case since the boxes are indistinguishable, and we count it only once.\n5. 1 ball in each box. This can happen in one way.\n6. 0 balls in one box and 5 balls in the other box. This is the same as the first case and we count it only once.\n\nThus, the distinct partitions are: (5,0), (4,1), (3,2), (1,1), and (0,5). There are 5 distinct ways to distribute the balls.\n\nTherefore, the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes is \\(\\boxed{5}\\).",
+       "extracted_answer": "5",
+       "vote_key": "5",
+       "correct": false,
+       "own_tokens": 303,
+       "truncated": false
+      },
+      {
+       "sample_index": 10,
+       "trace": "To solve the problem of distributing 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider the different possible distributions of the balls and account for the fact that the boxes are identical.\n\nThe possible distributions of 5 indistinguishable balls into 2 indistinguishable boxes are:\n\n1. All 5 balls in one box and 0 in the other.\n2. 4 balls in one box and 1 in the other.\n3. 3 balls in one box and 2 in the other.\n4. 2 balls in one box and 3 in the other.\n5. 1 ball in one box and 4 in the other.\n\nHowever, since the boxes are indistinguishable, we do not need to count the pairs (X, Y) and (Y, X) separately. We only need to count each distinct distribution once.\n\nLet's list the distinct distributions:\n\n1. (5, 0) - 5 balls in one box and 0 in the other.\n2. (4, 1) - 4 balls in one box and 1 in the other.\n3. (3, 2) - 3 balls in one box and 2 in the other.\n4. (2, 3) - This is the same as (3, 2) and we have already counted it.\n5. (1, 4) - This is the same as (4, 1) and we have already counted it.\n6. (0, 5) - 0 balls in one box and 5 in the other.\n\nThus, the distinct distributions are (5, 0), (4, 1), and (3, 2). Therefore, there are exactly 3 distinct ways to put 5 indistinguishable balls into 2 indistinguishable boxes.\n\nThe final answer is:\n\\[\n\\boxed{3}\n\\]",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 391,
+       "truncated": false
+      },
+      {
+       "sample_index": 11,
+       "trace": "To solve this problem, we need to consider the different scenarios based on how many balls each box can contain. The key is to find the number of ways to distribute 5 indistinguishable balls into 2 indistinguishable boxes.\n\nLet's denote the number of balls in the first box as \\(a\\) and the number of balls in the second box as \\(b\\). We have the equation:\n\\[a + b = 5\\]\nwhere both \\(a\\) and \\(b\\) can be any integer from 0 to 5.\n\nSince the boxes are indistinguishable, we do not need to consider the order of the boxes. We need to count the distinct combinations of \\(a\\) and \\(b\\). Let's list them out:\n\n- \\(a = 0\\), \\(b = 5\\)\n- \\(a = 1\\), \\(b = 4\\)\n- \\(a = 2\\), \\(b = 3\\)\n- \\(a = 3\\), \\(b = 2\\)\n- \\(a = 4\\), \\(b = 1\\)\n- \\(a = 5\\), \\(b = 0\\)\n\nNotice that the pairs \\((0, 5)\\), \\((1, 4)\\), \\((2, 3)\\), \\((3, 2)\\), \\((4, 1)\\), and \\((5, 0)\\) are distinct combinations. However, since the boxes are indistinguishable, we do not count \\((3, 2)\\) and \\((2, 3)\\) as different. Similarly, \\((4, 1)\\) and \\((1, 4)\\) are the same, and \\((5, 0)\\) and \\((0, 5)\\) are the same.\n\nThus, the distinct combinations are:\n- \\((0, 5)\\)\n- \\((1, 4)\\)\n- \\((2, 3)\\)\n- \\((5, 0)\\)\n\nThere are 3 distinct ways to distribute the balls into the two indistinguishable boxes. Therefore, the number of ways to put 5 balls in 2 boxes is:\n\\[\n\\boxed{3}\n\\]",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 465,
+       "truncated": false
+      },
+      {
+       "sample_index": 12,
+       "trace": "To determine the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider all possible distributions of the balls such that the boxes are not distinguishable.\n\nLet's enumerate the possible distributions by the number of balls in each box:\n\n1. **0 balls in the first box and 5 balls in the second box**: The box with 0 balls and the box with 5 balls can be considered the same.\n2. **1 ball in the first box and 4 balls in the second box**: The boxes can be interchanged, but the distribution is still the same.\n3. **2 balls in the first box and 3 balls in the second box**: The boxes can be interchanged, but the distribution is still the same.\n4. **3 balls in the first box and 2 balls in the second box**: The boxes can be interchanged, but the distribution is still the same.\n5. **4 balls in the first box and 1 ball in the second box**: The boxes can be interchanged, but the distribution is still the same.\n6. **5 balls in the first box and 0 balls in the second box**: The box with 5 balls and the box with 0 balls can be considered the same.\n\nGiven that the boxes are indistinguishable, any distribution that can be interchanged (like 2 balls in the first box and 3 balls in the second box being the same as 3 balls in the first box and 2 balls in the second box) is counted once.\n\nThus, we only need to count the unique distributions:\n\n1. (0, 5)\n2. (1, 4)\n3. (2, 3)\n4. (3, 2)\n5. (4, 1)\n6. (5, 0)\n\nThere are 6 unique ways to distribute the balls into the two indistinguishable boxes. Therefore, the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes is:\n\n\\[\n\\boxed{6}\n\\]",
+       "extracted_answer": "6",
+       "vote_key": "6",
+       "correct": false,
+       "own_tokens": 428,
+       "truncated": false
+      },
+      {
+       "sample_index": 13,
+       "trace": "To determine the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider all possible partitions of the number 5 into at most 2 parts. Since the boxes are indistinguishable, we do not need to count permutations of the same partition. Here's a step-by-step breakdown:\n\n1. Identify all partitions of 5 into at most 2 parts:\n   - \\(5 = 5 + 0\\)\n   - \\(5 = 4 + 1\\)\n   - \\(5 = 3 + 2\\)\n   - \\(5 = 2 + 3\\) (This is the same as \\(3 + 2\\) because the boxes are indistinguishable)\n   - \\(5 = 1 + 4\\) (This is the same as \\(4 + 1\\) because the boxes are indistinguishable)\n   - \\(5 = 0 + 5\\) (This is the same as \\(5 + 0\\) because the boxes are indistinguishable)\n\n2. List the unique partitions:\n   - The unique partitions are \\(5 = 5 + 0\\) and \\(5 = 4 + 1\\) and \\(5 = 3 + 2\\).\n\nSo, there are 3 unique ways to distribute 5 indistinguishable balls into 2 indistinguishable boxes.\n\nThe final answer is \\(\\boxed{3}\\).",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 291,
+       "truncated": false
+      },
+      {
+       "sample_index": 14,
+       "trace": "To determine the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider the different possible distributions of the balls between the two boxes. The key point here is that since the boxes are indistinguishable, we need to avoid counting the same distribution in different orders as distinct.\n\nLet's analyze the possible distributions:\n\n1. **0 balls in the first box and 5 balls in the second box**: This is represented as (0, 5).\n2. **1 ball in the first box and 4 balls in the second box**: This is represented as (1, 4).\n3. **2 balls in the first box and 3 balls in the second box**: This is represented as (2, 3).\n4. **5 balls in the first box and 0 balls in the second box**: This is the same as (0, 5), which we already counted.\n\nSince the boxes are indistinguishable, the distributions (1, 4) and (4, 1) are the same, and the distributions (2, 3) and (3, 2) are the same. Therefore, we only need to count the unique distributions.\n\nFrom the above analysis, the unique distributions are:\n- (0, 5)\n- (1, 4)\n- (2, 3)\n- (3, 2)\n- (4, 1)\n- (5, 0)\n\nThus, there are 3 distinct distributions if we consider the boxes as distinguishable. However, since the boxes are indistinguishable, we do not need to double-count any of these distributions. The number of distinct distributions is the number of unique ways to partition the number 5 into two parts, which is 3.\n\nTherefore, the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes is \\(\\boxed{3}\\).",
+       "extracted_answer": "3",
+       "vote_key": "3",
+       "correct": true,
+       "own_tokens": 395,
+       "truncated": false
+      },
+      {
+       "sample_index": 15,
+       "trace": "To solve the problem of determining the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes, we need to consider the possible distributions of the balls between the two boxes. Since the boxes are indistinguishable, configurations that are permutations of each other are counted as the same.\n\nWe will list out all possible distributions:\n\n1. All 5 balls in one box and 0 balls in the other box. This gives us the configuration (5, 0).\n2. 4 balls in one box and 1 ball in the other box. This gives us the configuration (4, 1).\n3. 3 balls in one box and 2 balls in the other box. This gives us the configuration (3, 2).\n\nBecause the boxes are indistinguishable, the configurations (5, 0) and (0, 5) are the same, and so are (4, 1) and (1, 4), and (3, 2) and (2, 3).\n\nSo, there are only two distinct configurations: (5, 0) and (3, 2).\n\nThus, the number of ways to put 5 indistinguishable balls into 2 indistinguishable boxes is \\(\\boxed{2}\\).",
+       "extracted_answer": "2",
+       "vote_key": "2",
+       "correct": false,
+       "own_tokens": 263,
+       "truncated": false
+      }
+     ]
+    },
+    "greedy": {
+     "own_tokens": 259,
+     "extracted_answer": "3",
+     "correct": true,
+     "truncated": false
+    }
+   },
+   {
+    "outcome": "tie",
+    "pool_size": 3,
+    "problem": {
+     "problem_id": "test/intermediate_algebra/2196.json",
+     "level": 5,
+     "subject": "Intermediate Algebra",
+     "question": "Find the maximum value of\n\\[\\frac{x - y}{x^4 + y^4 + 6}\\]over all real numbers $x$ and $y.$",
+     "ground_truth": "\\frac{1}{4}",
+     "temperature": 0.9,
+     "chain_cap": 2048,
+     "ranked": [
+      {
+       "answer": "\\frac{1}{4}",
+       "votes": 5,
+       "correct": true
+      },
+      {
+       "answer": "\\frac{1}{7}",
+       "votes": 5,
+       "correct": false
+      },
+      {
+       "answer": "\\frac{1}{2}",
+       "votes": 1,
+       "correct": false
+      },
+      {
+       "answer": "\\frac{\\sqrt[4]{2}}{8}",
+       "votes": 1,
+       "correct": false
+      },
+      {
+       "answer": "\\frac{1}{6}",
+       "votes": 1,
+       "correct": false
+      },
+      {
+       "answer": "\\frac{\\sqrt[3]{6}}{12}",
+       "votes": 1,
+       "correct": false
+      },
+      {
+       "answer": "\\frac{1}{8}",
+       "votes": 1,
+       "correct": false
+      }
+     ],
+     "distinct_answers": 7,
+     "plurality_answer": null,
+     "plurality_correct": false,
+     "tie": true,
+     "any_correct": true,
+     "no_answer_rate": 0.0625,
+     "chains": [
+      {
+       "sample_index": 0,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the behavior of the expression and potential critical points. Let's denote the expression by \\(f(x, y) = \\frac{x - y}{x^4 + y^4 + 6}\\).\n\nFirst, observe that the denominator \\(x^4 + y^4 + 6\\) is always positive and has a minimum value of 6 when \\(x = 0\\) and \\(y = 0\\). Therefore, the maximum value of the expression will be achieved when the numerator \\(x - y\\) is maximized. To find this, we can use the method of Lagrange multipliers or analyze the function by considering specific values of \\(x\\) and \\(y\\).\n\nConsider the case when \\(x = y\\). Then the expression becomes:\n\\[\nf(x, x) = \\frac{x - x}{x^4 + x^4 + 6} = \\frac{0}{2x^4 + 6} = 0.\n\\]\nThis is not the maximum value, so we need to consider other values.\n\nNext, consider the case when \\(x = -y\\). Then the expression becomes:\n\\[\nf(x, -x) = \\frac{x - (-x)}{x^4 + (-x)^4 + 6} = \\frac{2x}{2x^4 + 6} = \\frac{2x}{2(x^4 + 3)} = \\frac{x}{x^4 + 3}.\n\\]\nTo maximize \\(\\frac{x}{x^4 + 3}\\), we can take the derivative with respect to \\(x\\) and set it to zero. Let \\(g(x) = \\frac{x}{x^4 + 3}\\). Then:\n\\[\ng'(x) = \\frac{(x^4 + 3) - x(4x^3)}{(x^4 + 3)^2} = \\frac{x^4 + 3 - 4x^4}{(x^4 + 3)^2} = \\frac{3 - 3x^4}{(x^4 + 3)^2} = \\frac{3(1 - x^4)}{(x^4 + 3)^2}.\n\\]\nSetting \\(g'(x) = 0\\), we get:\n\\[\n3(1 - x^4) = 0 \\implies x^4 = 1 \\implies x = \\pm 1.\n\\]\nSo, \\(x = 1\\) and \\(y = -1\\) or \\(x = -1\\) and \\(y = 1\\). In either case, the value of the expression is:\n\\[\nf(1, -1) = f(-1, 1) = \\frac{1 - (-1)}{1^4 + (-1)^4 + 6} = \\frac{2}{1 + 1 + 6} = \\frac{2}{8} = \\frac{1}{4}.\n\\]\nTo confirm that this is the maximum value, we note that for other values of \\(x\\) and \\(y\\), the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) will be less than or equal to \\(\\frac{1}{4}\\). For example, if \\(x = 2\\) and \\(y = 1\\), then:\n\\[\nf(2, 1) = \\frac{2 - 1}{2^4 + 1^4 + 6} = \\frac{1}{16 + 1 + 6} = \\frac{1}{23}.\n\\]\nSince \\(\\frac{1}{23} < \\frac{1}{4}\\), the maximum value is indeed \\(\\frac{1}{4}\\).\n\nTherefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{4}}\\).",
+       "extracted_answer": "\\frac{1}{4}",
+       "vote_key": "\\frac{1}{4}",
+       "correct": true,
+       "own_tokens": 863,
+       "truncated": false
+      },
+      {
+       "sample_index": 1,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering possible values for \\(x\\) and \\(y\\).\n\nFirst, let's consider the case when \\(x = y\\). In this case, the expression simplifies as follows:\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{x - x}{x^4 + x^4 + 6} = \\frac{0}{2x^4 + 6} = 0.\n\\]\nSo, when \\(x = y\\), the value of the expression is 0.\n\nNext, let's consider the case when \\(x = 0\\) and \\(y = 0\\):\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{0 - 0}{0^4 + 0^4 + 6} = \\frac{0}{6} = 0.\n\\]\nAgain, the value of the expression is 0.\n\nNow, let's consider the case when \\(x = 0\\) and \\(y = 1\\):\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{0 - 1}{0^4 + 1^4 + 6} = \\frac{-1}{1 + 6} = \\frac{-1}{7}.\n\\]\nThe value of the expression is \\(-\\frac{1}{7}\\).\n\nWe need to determine if there is any chance for the expression to achieve a maximum value other than 0. To do this, let's consider the general form of the expression and the constraints of the variables \\(x\\) and \\(y\\).\n\nNotice that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6. Therefore, the value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is maximized when the numerator \\(x - y\\) is maximized relative to the denominator. However, since the denominator is always at least 6, the maximum value of the expression is bounded by the maximum possible value of \\(\\frac{x - y}{6}\\), which is \\(\\frac{1}{6}\\) when \\(x = 1\\) and \\(y = 0\\):\n\\[\n\\frac{1 - 0}{1^4 + 0^4 + 6} = \\frac{1}{1 + 6} = \\frac{1}{7}.\n\\]\nThis value is positive, but we need to check if there is a chance for the expression to be positive or negative. Since the expression can be negative (as shown by the case \\(x = 0\\) and \\(y = 1\\)), the maximum possible positive value of the expression is \\(\\frac{1}{7}\\).\n\nTo confirm that \\(\\frac{1}{7}\\) is indeed the maximum value, we can use the method of Lagrange multipliers or other optimization techniques, but for the purpose of this problem, we can conclude based on the analysis of specific cases and the bounded nature of the expression.\n\nTherefore, the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{7}}\\).",
+       "extracted_answer": "\\frac{1}{7}",
+       "vote_key": "\\frac{1}{7}",
+       "correct": false,
+       "own_tokens": 723,
+       "truncated": false
+      },
+      {
+       "sample_index": 2,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering possible values for \\(x\\) and \\(y\\).\n\nFirst, observe that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6 for all real \\(x\\) and \\(y\\). This means the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is bounded by the sign of the numerator \\(x - y\\).\n\nTo find the maximum value, we need to maximize the numerator \\(x - y\\) while keeping in mind the denominator. One effective approach is to consider specific values for \\(x\\) and \\(y\\) that might simplify the expression.\n\nLet's set \\(x = y\\). Substituting \\(x = y\\) into the expression, we get:\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{x - x}{x^4 + x^4 + 6} = \\frac{0}{2x^4 + 6} = 0.\n\\]\nSo, when \\(x = y\\), the value of the expression is 0. This is the minimum value, not the maximum. To find the maximum, we need to consider the case where the numerator \\(x - y\\) is maximized while still being positive or negative.\n\nNext, let's set \\(x = -y\\). Substituting \\(x = -y\\) into the expression, we get:\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{-y - y}{(-y)^4 + y^4 + 6} = \\frac{-2y}{y^4 + y^4 + 6} = \\frac{-2y}{2y^4 + 6} = \\frac{-y}{y^4 + 3}.\n\\]\nWe need to find the maximum value of \\(\\frac{-y}{y^4 + 3}\\). Let's consider the function \\(f(y) = \\frac{-y}{y^4 + 3}\\). We need to find the critical points by taking the derivative and setting it to zero.\n\nThe derivative of \\(f(y)\\) is:\n\\[\nf'(y) = \\frac{-(y^4 + 3) - (-y)(4y^3)}{(y^4 + 3)^2} = \\frac{-y^4 - 3 + 4y^4}{(y^4 + 3)^2} = \\frac{3y^4 - 3}{(y^4 + 3)^2} = \\frac{3(y^4 - 1)}{(y^4 + 3)^2}.\n\\]\nSetting the derivative equal to zero, we get:\n\\[\n3(y^4 - 1) = 0 \\implies y^4 = 1 \\implies y = \\pm 1.\n\\]\nEvaluating \\(f(y)\\) at \\(y = 1\\) and \\(y = -1\\), we get:\n\\[\nf(1) = \\frac{-1}{1^4 + 3} = \\frac{-1}{4} = -\\frac{1}{4},\n\\]\n\\[\nf(-1) = \\frac{-(-1)}{(-1)^4 + 3} = \\frac{1}{4}.\n\\]\nSo, the maximum value of \\(f(y)\\) is \\(\\frac{1}{4}\\). Therefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\frac{1}{4}\\).\n\nThus, the maximum value is \\(\\boxed{\\frac{1}{4}}\\).",
+       "extracted_answer": "\\frac{1}{4}",
+       "vote_key": "\\frac{1}{4}",
+       "correct": true,
+       "own_tokens": 815,
+       "truncated": false
+      },
+      {
+       "sample_index": 3,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by considering the properties and potential values of the expression. Let's denote the expression by \\(f(x, y) = \\frac{x - y}{x^4 + y^4 + 6}\\).\n\nFirst, we analyze the numerator and the denominator separately. The numerator \\(x - y\\) can take any real value, and the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6. This suggests that the maximum value of the fraction will occur when the numerator is maximized and the denominator is minimized.\n\nTo find a potential maximum, we can try specific values for \\(x\\) and \\(y\\). Let's consider the case when \\(x = y\\). Then the expression becomes:\n\\[\nf(x, x) = \\frac{x - x}{x^4 + x^4 + 6} = \\frac{0}{2x^4 + 6} = 0.\n\\]\nThis doesn't give us the maximum value, so we need to consider other values.\n\nNext, let's try the case when \\(x\\) is very large and \\(y\\) is very small (or vice versa). For example, let \\(x = 2\\) and \\(y = 1\\):\n\\[\nf(2, 1) = \\frac{2 - 1}{2^4 + 1^4 + 6} = \\frac{1}{16 + 1 + 6} = \\frac{1}{23}.\n\\]\nThis is a positive value, but we need to check if this is the maximum.\n\nTo find the maximum, we need to consider the critical points and behavior of the function. Let's rewrite the function in a more convenient form. Let \\(x = a + b\\) and \\(y = a - b\\). Then the expression becomes:\n\\[\nf(a + b, a - b) = \\frac{(a + b) - (a - b)}{(a + b)^4 + (a - b)^4 + 6} = \\frac{2b}{(a + b)^4 + (a - b)^4 + 6}.\n\\]\nNow, let's consider the case when \\(b\\) is very large compared to \\(a\\). Then:\n\\[\n(a + b)^4 \\approx b^4 \\quad \\text{and} \\quad (a - b)^4 \\approx (-b)^4 = b^4.\n\\]\nSo the denominator becomes approximately \\(2b^4\\), and the expression becomes:\n\\[\nf(a + b, a - b) \\approx \\frac{2b}{2b^4} = \\frac{1}{b^3}.\n\\]\nThis suggests that the expression can become very large when \\(b\\) is small, but the maximum value is achieved when the ratio of the numerator to the denominator is maximized.\n\nTo find the exact maximum, we need to consider the critical points and the behavior of the function. By symmetry and the properties of the function, the maximum value occurs when the numerator is maximized and the denominator is minimized. By detailed analysis, we find that the maximum value of the function is \\(\\frac{1}{2}\\), which occurs when \\(x = \\sqrt{2}\\) and \\(y = 0\\) or vice versa.\n\nTherefore, the maximum value of the expression is:\n\\[\n\\boxed{\\frac{1}{2}}.\n\\]",
+       "extracted_answer": "\\frac{1}{2}",
+       "vote_key": "\\frac{1}{2}",
+       "correct": false,
+       "own_tokens": 742,
+       "truncated": false
+      },
+      {
+       "sample_index": 4,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering some specific values for \\(x\\) and \\(y\\).\n\nFirst, let's consider the case when \\(x = y\\). Substituting \\(x = y\\) into the expression, we get:\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{x - x}{x^4 + x^4 + 6} = \\frac{0}{2x^4 + 6} = 0.\n\\]\nThis shows that the expression is zero when \\(x = y\\).\n\nNext, let's consider the case when \\(x = 1\\) and \\(y = 0\\). Substituting these values into the expression, we get:\n\\[\n\\frac{1 - 0}{1^4 + 0^4 + 6} = \\frac{1}{1 + 0 + 6} = \\frac{1}{7}.\n\\]\nThis shows that the expression can be \\(\\frac{1}{7}\\) when \\(x = 1\\) and \\(y = 0\\).\n\nNow, let's consider the case when \\(x = 0\\) and \\(y = 1\\). Substituting these values into the expression, we get:\n\\[\n\\frac{0 - 1}{0^4 + 1^4 + 6} = \\frac{-1}{0 + 1 + 6} = \\frac{-1}{7}.\n\\]\nThis shows that the expression can be \\(-\\frac{1}{7}\\) when \\(x = 0\\) and \\(y = 1\\).\n\nTo determine if the maximum value of the expression is indeed \\(\\frac{1}{7}\\), we need to consider the behavior of the expression as \\(x\\) and \\(y\\) vary. Notice that the denominator \\(x^4 + y^4 + 6\\) is always positive and has a minimum value of 6 when \\(x = 0\\) and \\(y = 0\\). Therefore, the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is maximized when the numerator \\(x - y\\) is maximized relative to the denominator. Given that the maximum value we found is \\(\\frac{1}{7}\\) and considering the symmetry and boundedness of the expression, we can conclude that the maximum value of the expression is indeed \\(\\frac{1}{7}\\).\n\nThus, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{7}}\\).",
+       "extracted_answer": "\\frac{1}{7}",
+       "vote_key": "\\frac{1}{7}",
+       "correct": false,
+       "own_tokens": 580,
+       "truncated": false
+      },
+      {
+       "sample_index": 5,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering potential values for \\(x\\) and \\(y\\).\n\nFirst, note that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6 for all real numbers \\(x\\) and \\(y\\). Therefore, the value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is bounded by \\(\\pm \\frac{x - y}{6}\\) because the maximum value of the denominator is 6.\n\nTo find the maximum possible value, we need to consider when the numerator \\(x - y\\) can be maximized. Let's set \\(x = y + k\\) for some real number \\(k\\). Substituting \\(x = y + k\\) into the expression, we get:\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{(y + k) - y}{(y + k)^4 + y^4 + 6} = \\frac{k}{(y + k)^4 + y^4 + 6}.\n\\]\nWe need to maximize \\(\\frac{k}{(y + k)^4 + y^4 + 6}\\). To do this, we consider the case when \\(y = 0\\) and \\(x = k\\):\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{k}{k^4 + 6}.\n\\]\nWe need to find the maximum value of \\(\\frac{k}{k^4 + 6}\\). To do this, we can take the derivative of the function \\(f(k) = \\frac{k}{k^4 + 6}\\) and find its critical points. The derivative is:\n\\[\nf'(k) = \\frac{(k^4 + 6) \\cdot 1 - k \\cdot 4k^3}{(k^4 + 6)^2} = \\frac{k^4 + 6 - 4k^4}{(k^4 + 6)^2} = \\frac{6 - 3k^4}{(k^4 + 6)^2}.\n\\]\nSetting the derivative equal to zero to find the critical points, we get:\n\\[\n6 - 3k^4 = 0 \\implies k^4 = 2 \\implies k = \\pm \\sqrt[4]{2}.\n\\]\nWe evaluate \\(f(k)\\) at these critical points:\n\\[\nf(\\sqrt[4]{2}) = \\frac{\\sqrt[4]{2}}{(\\sqrt[4]{2})^4 + 6} = \\frac{\\sqrt[4]{2}}{2 + 6} = \\frac{\\sqrt[4]{2}}{8}.\n\\]\nSimilarly,\n\\[\nf(-\\sqrt[4]{2}) = \\frac{-\\sqrt[4]{2}}{(-\\sqrt[4]{2})^4 + 6} = \\frac{-\\sqrt[4]{2}}{2 + 6} = -\\frac{\\sqrt[4]{2}}{8}.\n\\]\nTo determine the maximum value, we note that as \\(k \\to \\infty\\) or \\(k \\to -\\infty\\), the value of \\(\\frac{k}{k^4 + 6}\\) approaches 0. Therefore, the maximum value of \\(\\frac{k}{k^4 + 6}\\) is \\(\\frac{\\sqrt[4]{2}}{8}\\).\n\nThus, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\frac{\\sqrt[4]{2}}{8}\\), and we can write the final answer as:\n\\[\n\\boxed{\\frac{\\sqrt[4]{2}}{8}}.\n\\]",
+       "extracted_answer": "\\frac{\\sqrt[4]{2}}{8}",
+       "vote_key": "\\frac{\\sqrt[4]{2}}{8}",
+       "correct": false,
+       "own_tokens": 842,
+       "truncated": false
+      },
+      {
+       "sample_index": 6,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by examining possible values and simplifying the expression. Let's denote the expression by \\(f(x, y) = \\frac{x - y}{x^4 + y^4 + 6}\\).\n\nFirst, observe that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6 for all real \\(x\\) and \\(y\\). Therefore, the value of \\(f(x, y)\\) will be bounded by how large \\(x - y\\) can be relative to the denominator. We will try specific values of \\(x\\) and \\(y\\) to see if we can find a maximum.\n\nConsider the case when \\(x = y\\). Then the expression simplifies to:\n\\[ f(x, x) = \\frac{x - x}{x^4 + x^4 + 6} = \\frac{0}{2x^4 + 6} = 0. \\]\nThis tells us that the expression can be zero, but we need to check if it can be positive or negative.\n\nNext, consider the case when \\(x = y + k\\) for some large positive or negative \\(k\\). Let's examine the limit as \\(k \\to \\infty\\):\n\\[ f(y + k, y) = \\frac{(y + k) - y}{(y + k)^4 + y^4 + 6} = \\frac{k}{(y + k)^4 + y^4 + 6}. \\]\nAs \\(k \\to \\infty\\), the term \\((y + k)^4\\) dominates, and the expression becomes:\n\\[ \\frac{k}{(y + k)^4} = \\frac{k}{k^4 + 4k^3y + 6k^2y^2 + 4ky^3 + y^4} \\approx \\frac{k}{k^4} = \\frac{1}{k^3} \\to 0. \\]\nThis shows that as \\(k\\) becomes very large, the value of the expression approaches 0 from above or below, but never exceeds it.\n\nNow, let's consider the case when \\(x = 2y\\):\n\\[ f(2y, y) = \\frac{2y - y}{(2y)^4 + y^4 + 6} = \\frac{y}{16y^4 + y^4 + 6} = \\frac{y}{17y^4 + 6}. \\]\nTo find the maximum value, we need to maximize \\(\\frac{y}{17y^4 + 6}\\). Let \\(g(y) = \\frac{y}{17y^4 + 6}\\). We can find the critical points by taking the derivative and setting it to zero:\n\\[ g'(y) = \\frac{(17y^4 + 6) \\cdot 1 - y \\cdot 68y^3}{(17y^4 + 6)^2} = \\frac{17y^4 + 6 - 68y^4}{(17y^4 + 6)^2} = \\frac{6 - 51y^4}{(17y^4 + 6)^2}. \\]\nSetting the numerator to zero, we get:\n\\[ 6 - 51y^4 = 0 \\implies y^4 = \\frac{6}{51} = \\frac{2}{17} \\implies y = \\pm \\sqrt[4]{\\frac{2}{17}}. \\]\nEvaluating \\(g(y)\\) at these points, we get:\n\\[ g\\left(\\sqrt[4]{\\frac{2}{17}}\\right) = g\\left(-\\sqrt[4]{\\frac{2}{17}}\\right) = \\frac{\\sqrt[4]{\\frac{2}{17}}}{17 \\left(\\frac{2}{17}\\right) + 6} = \\frac{\\sqrt[4]{\\frac{2}{17}}}{\\frac{2}{17} + 6} = \\frac{\\sqrt[4]{\\frac{2}{17}}}{\\frac{104 + 2}{17}} = \\frac{\\sqrt[4]{\\frac{2}{17}}}{\\frac{106}{17}} = \\frac{17 \\sqrt[4]{\\frac{2}{17}}}{106}. \\]\nThis value simplifies to \\(\\frac{\\sqrt[4]{\\frac{2}{17}}}{6}\\).\n\nTo confirm that this is the maximum, we can check the behavior of the function as \\(y \\to 0\\) or as \\(y \\to \\infty\\):\n\\[ \\lim_{y \\to 0} \\frac{y}{17y^4 + 6} = 0, \\]\n\\[ \\lim_{y \\to \\infty} \\frac{y}{17y^4 + 6} = 0. \\]\nThus, the maximum value of \\(\\frac{y}{17y^4 + 6}\\) is \\(\\frac{1}{6}\\), which occurs when \\(y = \\frac{1}{\\sqrt[4]{17}}\\).\n\nTherefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{6}}\\).",
+       "extracted_answer": "\\frac{1}{6}",
+       "vote_key": "\\frac{1}{6}",
+       "correct": false,
+       "own_tokens": 1198,
+       "truncated": false
+      },
+      {
+       "sample_index": 7,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering potential values for \\(x\\) and \\(y\\).\n\nFirst, note that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6. This means that \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is bounded by \\(\\frac{x - y}{6}\\) in absolute value, since \\(x^4 + y^4 + 6 \\geq 6\\).\n\nTo find the maximum value, we need to consider the cases where the numerator \\(x - y\\) is maximized or minimized while the denominator \\(x^4 + y^4 + 6\\) is minimized. However, a simpler approach is to consider specific values of \\(x\\) and \\(y\\) that might simplify the expression.\n\nLet's try \\(x = 1\\) and \\(y = 0\\):\n\\[\n\\frac{1 - 0}{1^4 + 0^4 + 6} = \\frac{1}{7}.\n\\]\nNow, let's try \\(x = 0\\) and \\(y = 1\\):\n\\[\n\\frac{0 - 1}{0^4 + 1^4 + 6} = \\frac{-1}{7} = -\\frac{1}{7}.\n\\]\nThese values do not give us the maximum positive value. Let's try another approach by considering the symmetry and the fact that the expression is a fraction where the numerator is maximized when \\(x\\) is significantly larger than \\(y\\) and minimized when \\(y\\) is significantly larger than \\(x\\).\n\nConsider \\(x = 2\\) and \\(y = 1\\):\n\\[\n\\frac{2 - 1}{2^4 + 1^4 + 6} = \\frac{1}{16 + 1 + 6} = \\frac{1}{23}.\n\\]\nNow, consider \\(x = -2\\) and \\(y = -1\\):\n\\[\n\\frac{-2 - (-1)}{(-2)^4 + (-1)^4 + 6} = \\frac{-1}{16 + 1 + 6} = \\frac{-1}{23}.\n\\]\nThese values are not optimal either. Let's try \\(x = \\sqrt{2}\\) and \\(y = 0\\):\n\\[\n\\frac{\\sqrt{2} - 0}{(\\sqrt{2})^4 + 0^4 + 6} = \\frac{\\sqrt{2}}{4 + 6} = \\frac{\\sqrt{2}}{10} = \\frac{1}{5\\sqrt{2}} = \\frac{\\sqrt{2}}{10}.\n\\]\nNow, consider the limit as \\(x\\) and \\(y\\) go to infinity or negative infinity, the fraction \\(\\frac{x - y}{x^4 + y^4 + 6}\\) approaches 0. Therefore, the maximum value is approached but not reached by any finite values of \\(x\\) and \\(y\\).\n\nBy the symmetry and the analysis, the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\frac{1}{7}\\) when \\(x = 1\\) and \\(y = 0\\) or \\(x = 0\\) and \\(y = 1\\).\n\nThus, the maximum value is \\(\\boxed{\\frac{1}{7}}\\).",
+       "extracted_answer": "\\frac{1}{7}",
+       "vote_key": "\\frac{1}{7}",
+       "correct": false,
+       "own_tokens": 762,
+       "truncated": false
+      },
+      {
+       "sample_index": 8,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the behavior of the function. Let's denote the expression by \\(f(x, y) = \\frac{x - y}{x^4 + y^4 + 6}\\).\n\nFirst, we observe that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6 for all real \\(x\\) and \\(y\\). This means that the fraction \\(\\frac{x - y}{x^4 + y^4 + 6}\\) can be positive or negative, but its magnitude is bounded by the numerator's magnitude divided by the denominator's minimum value of 6. Therefore, the maximum value of the fraction occurs when the numerator is maximized relative to the denominator.\n\nTo find the maximum value, we can consider the cases where \\(x\\) and \\(y\\) are of opposite signs or equal in magnitude. Let's try setting \\(x = y + k\\) and analyze the expression. We will check if there is a specific value of \\(k\\) that maximizes the expression.\n\nConsider \\(y = 0\\):\n\\[ f(x, 0) = \\frac{x - 0}{x^4 + 0^4 + 6} = \\frac{x}{x^4 + 6}. \\]\nWe need to maximize \\(\\frac{x}{x^4 + 6}\\). Let \\(g(x) = \\frac{x}{x^4 + 6}\\). To find the critical points, we take the derivative of \\(g(x)\\) and set it to zero:\n\\[ g'(x) = \\frac{(x^4 + 6) - x(4x^3)}{(x^4 + 6)^2} = \\frac{6 - 3x^4}{(x^4 + 6)^2}. \\]\nSetting \\(g'(x) = 0\\), we get \\(6 - 3x^4 = 0\\) or \\(x^4 = 2\\), so \\(x = \\pm \\sqrt[4]{2}\\). Evaluating \\(g(x)\\) at these points:\n\\[ g(\\sqrt[4]{2}) = \\frac{\\sqrt[4]{2}}{(\\sqrt[4]{2})^4 + 6} = \\frac{\\sqrt[4]{2}}{2 + 6} = \\frac{\\sqrt[4]{2}}{8}, \\]\n\\[ g(-\\sqrt[4]{2}) = \\frac{-\\sqrt[4]{2}}{(\\sqrt[4]{2})^4 + 6} = \\frac{-\\sqrt[4]{2}}{2 + 6} = -\\frac{\\sqrt[4]{2}}{8}. \\]\nThus, the maximum value of \\(\\frac{x}{x^4 + 6}\\) is \\(\\frac{\\sqrt[4]{2}}{8}\\).\n\nNow, we need to check if this maximum value can be achieved for the original expression. If we set \\(x = \\sqrt[4]{2}\\) and \\(y = 0\\), then:\n\\[ f(\\sqrt[4]{2}, 0) = \\frac{\\sqrt[4]{2} - 0}{(\\sqrt[4]{2})^4 + 0^4 + 6} = \\frac{\\sqrt[4]{2}}{2 + 6} = \\frac{\\sqrt[4]{2}}{8} = \\frac{\\sqrt[4]{2}}{2 \\cdot 4} = \\frac{\\sqrt[4]{2}}{2} \\cdot \\frac{1}{4} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{4} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2}}{2^2} = \\frac{1}{2} \\cdot \\frac{\\sqrt[4]{2",
+       "extracted_answer": "",
+       "vote_key": null,
+       "correct": false,
+       "own_tokens": 2048,
+       "truncated": true
+      },
+      {
+       "sample_index": 9,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering possible values for \\(x\\) and \\(y\\).\n\nFirst, note that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6. Therefore, the value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) can be positive or negative depending on the signs of \\(x - y\\).\n\nTo find the maximum possible value, we need to consider the behavior of the expression as \\(x - y\\) becomes very large. Let's set \\(x = y + k\\) for some real number \\(k\\). Then the expression becomes:\n\\[\n\\frac{(y + k) - y}{(y + k)^4 + y^4 + 6} = \\frac{k}{(y + k)^4 + y^4 + 6}.\n\\]\nWe want to maximize \\(\\frac{k}{(y + k)^4 + y^4 + 6}\\). Notice that the denominator \\((y + k)^4 + y^4 + 6\\) is minimized when \\(y + k = y\\), which is not possible, but we can consider the case when \\(k\\) is very large. If \\(k\\) is very large, then \\((y + k)^4\\) will dominate the expression in the denominator. Let's set \\(y = 0\\) to simplify the expression:\n\\[\n\\frac{k}{k^4 + 6} = \\frac{k}{k^4 + 6}.\n\\]\nTo maximize \\(\\frac{k}{k^4 + 6}\\), we can analyze the limit as \\(k \\to \\infty\\):\n\\[\n\\lim_{k \\to \\infty} \\frac{k}{k^4 + 6} = \\lim_{k \\to \\infty} \\frac{1}{k^3 + \\frac{6}{k}} = 0.\n\\]\nThis limit shows that as \\(k\\) becomes very large, the value of the expression approaches 0. However, we need to check if there is a finite maximum value. Let's consider the case when \\(k = -\\sqrt[3]{6}\\):\n\\[\n\\frac{-\\sqrt[3]{6}}{(-\\sqrt[3]{6})^4 + 6} = \\frac{-\\sqrt[3]{6}}{6^{4/3} + 6} = \\frac{-\\sqrt[3]{6}}{6 \\left(\\frac{6}{6}\\right)^{2/3} + 6} = \\frac{-\\sqrt[3]{6}}{6 \\cdot 1 + 6} = \\frac{-\\sqrt[3]{6}}{12} = -\\frac{\\sqrt[3]{6}}{12}.\n\\]\nThis value is negative, and we need to find the positive maximum. Let's consider the case when \\(k = \\sqrt[3]{6}\\):\n\\[\n\\frac{\\sqrt[3]{6}}{(\\sqrt[3]{6})^4 + 6} = \\frac{\\sqrt[3]{6}}{6^{4/3} + 6} = \\frac{\\sqrt[3]{6}}{6 \\left(\\frac{6}{6}\\right)^{2/3} + 6} = \\frac{\\sqrt[3]{6}}{6 \\cdot 1 + 6} = \\frac{\\sqrt[3]{6}}{12}.\n\\]\nThis value is positive. We need to check if this is the maximum value. Notice that for any \\(k\\), the expression \\(\\frac{k}{k^4 + 6}\\) is always less than or equal to \\(\\frac{\\sqrt[3]{6}}{12}\\) because the denominator is always greater than or equal to \\(12\\).\n\nThus, the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\frac{\\sqrt[3]{6}}{12}\\). Therefore, the answer is:\n\\[\n\\boxed{\\frac{\\sqrt[3]{6}}{12}}.\n\\]",
+       "extracted_answer": "\\frac{\\sqrt[3]{6}}{12}",
+       "vote_key": "\\frac{\\sqrt[3]{6}}{12}",
+       "correct": false,
+       "own_tokens": 914,
+       "truncated": false
+      },
+      {
+       "sample_index": 10,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the behavior of the numerator and the denominator separately.\n\nFirst, consider the denominator \\(x^4 + y^4 + 6\\). Since \\(x^4 \\geq 0\\) and \\(y^4 \\geq 0\\) for all real numbers \\(x\\) and \\(y\\), we have \\(x^4 + y^4 \\geq 0\\). Therefore, the denominator \\(x^4 + y^4 + 6 \\geq 6\\). The minimum value of the denominator is 6, which occurs when \\(x = 0\\) and \\(y = 0\\).\n\nNext, we need to determine the maximum value of the fraction \\(\\frac{x - y}{x^4 + y^4 + 6}\\). To do this, we will consider the possible values of \\(x - y\\). Note that \\(x - y\\) can be any real number, but we need to find the maximum value of the fraction.\n\nTo gain insight, let's consider specific values of \\(x\\) and \\(y\\). If we set \\(x = y\\), then the numerator \\(x - y = 0\\), and the expression becomes \\(\\frac{0}{x^4 + x^4 + 6} = 0\\). This is not the maximum value.\n\nNow, let's consider the case when \\(x = -y\\). Then the numerator \\(x - y = -y - y = -2y\\), and the expression becomes \\(\\frac{-2y}{x^4 + y^4 + 6} = \\frac{-2y}{2y^4 + 6} = \\frac{-y}{y^4 + 3}\\). We need to find the maximum value of \\(\\frac{-y}{y^4 + 3}\\).\n\nTo find the maximum value of \\(\\frac{-y}{y^4 + 3}\\), we can take the derivative of the function \\(f(y) = \\frac{-y}{y^4 + 3}\\) and set it to zero. However, a simpler approach is to consider the behavior of the function. As \\(y \\to \\infty\\) or \\(y \\to -\\infty\\), the value of \\(\\frac{-y}{y^4 + 3}\\) approaches 0. The maximum value occurs at some finite value of \\(y\\).\n\nTo find this maximum value, we can test some specific values. If we set \\(y = 1\\), then \\(x = -1\\) and the expression becomes \\(\\frac{-(-1)}{(-1)^4 + 1^4 + 6} = \\frac{1}{1 + 1 + 6} = \\frac{1}{8}\\).\n\nWe need to confirm that \\(\\frac{1}{8}\\) is indeed the maximum value. Since the denominator \\(x^4 + y^4 + 6 \\geq 6\\) and the numerator \\(x - y\\) can take any real value, the maximum value of the fraction \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is achieved when the numerator is maximized relative to the denominator. Given the symmetry and the behavior of the function, the maximum value is indeed \\(\\frac{1}{8}\\).\n\nTherefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{8}}\\).",
+       "extracted_answer": "\\frac{1}{8}",
+       "vote_key": "\\frac{1}{8}",
+       "correct": false,
+       "own_tokens": 762,
+       "truncated": false
+      },
+      {
+       "sample_index": 11,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering possible values of \\(x\\) and \\(y\\).\n\nFirst, observe that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6. Therefore, the value of the fraction \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is bounded by the values of \\(x - y\\) and is positive when \\(x > y\\) and negative when \\(x < y\\).\n\nTo find the maximum value, we need to maximize \\(x - y\\) while ensuring the denominator is positive. We can use calculus to find critical points or look for specific values that might maximize the expression. Let's consider the case when \\(x = y\\). Substituting \\(x = y\\) into the expression, we get:\n\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{0}{2x^4 + 6} = 0.\n\\]\n\nThis does not give us a maximum value. Next, consider the case when \\(x = -y\\). Substituting \\(x = -y\\) into the expression, we get:\n\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{-y - y}{y^4 + y^4 + 6} = \\frac{-2y}{2y^4 + 6} = \\frac{-y}{y^4 + 3}.\n\\]\n\nTo find the maximum value of \\(\\frac{-y}{y^4 + 3}\\), we can use calculus. Let \\(f(y) = \\frac{-y}{y^4 + 3}\\). We find the critical points by taking the derivative and setting it to zero:\n\n\\[\nf'(y) = \\frac{(-1)(y^4 + 3) - (-y)(4y^3)}{(y^4 + 3)^2} = \\frac{-y^4 - 3 + 4y^4}{(y^4 + 3)^2} = \\frac{3y^4 - 3}{(y^4 + 3)^2} = \\frac{3(y^4 - 1)}{(y^4 + 3)^2}.\n\\]\n\nSetting the derivative equal to zero, we get:\n\n\\[\n3(y^4 - 1) = 0 \\implies y^4 = 1 \\implies y = \\pm 1.\n\\]\n\nWe evaluate \\(f(y)\\) at these critical points:\n\n\\[\nf(1) = \\frac{-1}{1^4 + 3} = \\frac{-1}{4}, \\quad f(-1) = \\frac{1}{1^4 + 3} = \\frac{1}{4}.\n\\]\n\nThus, the maximum value of \\(\\frac{-y}{y^4 + 3}\\) is \\(\\frac{1}{4}\\). Therefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\frac{1}{4}\\).\n\nTo confirm that this is indeed the maximum, we note that for any \\(x\\) and \\(y\\) with \\(x \\neq y\\), the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) will be less than or equal to \\(\\frac{1}{4}\\) because the numerator is bounded by the denominator, which is always at least 6.\n\nThus, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{4}}\\).",
+       "extracted_answer": "\\frac{1}{4}",
+       "vote_key": "\\frac{1}{4}",
+       "correct": true,
+       "own_tokens": 811,
+       "truncated": false
+      },
+      {
+       "sample_index": 12,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering different values for \\(x\\) and \\(y\\).\n\nFirst, observe that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6. To maximize \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we need to maximize the numerator \\(x - y\\) while minimizing the denominator \\(x^4 + y^4 + 6\\). However, since the denominator is always at least 6, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) will be bounded by the maximum possible value of \\(\\frac{x - y}{6}\\).\n\nLet's consider the case when \\(x\\) and \\(y\\) are very large and \\(y = -x\\). Then the expression becomes:\n\\[\n\\frac{x - (-x)}{x^4 + (-x)^4 + 6} = \\frac{2x}{2x^4 + 6} = \\frac{2x}{2(x^4 + 3)} = \\frac{x}{x^4 + 3}.\n\\]\nTo find the maximum value of \\(\\frac{x}{x^4 + 3}\\), we can take the derivative and set it to zero. Let \\(f(x) = \\frac{x}{x^4 + 3}\\). The derivative is:\n\\[\nf'(x) = \\frac{(x^4 + 3) \\cdot 1 - x \\cdot 4x^3}{(x^4 + 3)^2} = \\frac{x^4 + 3 - 4x^4}{(x^4 + 3)^2} = \\frac{3 - 3x^4}{(x^4 + 3)^2} = \\frac{3(1 - x^4)}{(x^4 + 3)^2}.\n\\]\nSetting the derivative equal to zero, we get:\n\\[\n3(1 - x^4) = 0 \\implies x^4 = 1 \\implies x = \\pm 1.\n\\]\nEvaluating \\(f(x)\\) at \\(x = 1\\) and \\(x = -1\\):\n\\[\nf(1) = \\frac{1}{1^4 + 3} = \\frac{1}{4},\n\\]\n\\[\nf(-1) = \\frac{-1}{(-1)^4 + 3} = \\frac{-1}{4}.\n\\]\nThus, the maximum value of \\(\\frac{x}{x^4 + 3}\\) is \\(\\frac{1}{4}\\). Therefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\frac{1}{4}\\).\n\nTo confirm that this is indeed the maximum, we note that for any other values of \\(x\\) and \\(y\\), the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) will be less than or equal to \\(\\frac{1}{4}\\). This can be seen by considering that the expression is a continuous function and the maximum value is achieved when \\(x\\) and \\(y\\) are such that the numerator is maximized relative to the denominator.\n\nTherefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{4}}\\).",
+       "extracted_answer": "\\frac{1}{4}",
+       "vote_key": "\\frac{1}{4}",
+       "correct": true,
+       "own_tokens": 766,
+       "truncated": false
+      },
+      {
+       "sample_index": 13,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering possible values for \\(x\\) and \\(y\\).\n\nFirst, observe that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6. Therefore, the maximum value of the fraction \\(\\frac{x - y}{x^4 + y^4 + 6}\\) will be influenced by the behavior of the numerator \\(x - y\\) and the denominator \\(x^4 + y^4 + 6\\).\n\nTo gain insight, we can consider specific values for \\(x\\) and \\(y\\). Let's try setting \\(x = 1\\) and \\(y = 0\\):\n\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{1 - 0}{1^4 + 0^4 + 6} = \\frac{1}{1 + 6} = \\frac{1}{7}.\n\\]\n\nNext, let's try setting \\(x = 0\\) and \\(y = 1\\):\n\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{0 - 1}{0^4 + 1^4 + 6} = \\frac{-1}{1 + 6} = -\\frac{1}{7}.\n\\]\n\nNow, let's try setting \\(x = -1\\) and \\(y = 0\\):\n\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{-1 - 0}{(-1)^4 + 0^4 + 6} = \\frac{-1}{1 + 6} = -\\frac{1}{7}.\n\\]\n\nFinally, let's try setting \\(x = 0\\) and \\(y = -1\\):\n\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{0 - (-1)}{0^4 + (-1)^4 + 6} = \\frac{1}{1 + 6} = \\frac{1}{7}.\n\\]\n\nFrom these specific values, we see that the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) can take values close to \\(\\frac{1}{7}\\) but never exceeds \\(\\frac{1}{7}\\). To confirm that \\(\\frac{1}{7}\\) is indeed the maximum value, we need to consider the general behavior of the function. Since \\(x^4 + y^4 \\geq 0\\) and is minimized to 0 when \\(x = 0\\) and \\(y = 0\\), the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is maximized when \\(x\\) and \\(y\\) are as far apart as possible while still being real numbers. The value \\(\\frac{1}{7}\\) is the upper bound as demonstrated by the specific examples.\n\nTherefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{7}}\\).",
+       "extracted_answer": "\\frac{1}{7}",
+       "vote_key": "\\frac{1}{7}",
+       "correct": false,
+       "own_tokens": 698,
+       "truncated": false
+      },
+      {
+       "sample_index": 14,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we start by analyzing the expression and considering possible values for \\(x\\) and \\(y\\).\n\nFirst, observe that the denominator \\(x^4 + y^4 + 6\\) is always positive and at least 6. Therefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) will be achieved when \\(x - y\\) is maximized relative to the denominator.\n\nConsider the case when \\(x = y\\). Then the expression simplifies to:\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{x - x}{x^4 + x^4 + 6} = \\frac{0}{2x^4 + 6} = 0.\n\\]\nSo, setting \\(x = y\\) does not yield a non-zero maximum. Now, consider the case when \\(x = y + \\epsilon\\) for a small positive \\(\\epsilon\\). Then the expression becomes:\n\\[\n\\frac{(y + \\epsilon) - y}{(y + \\epsilon)^4 + y^4 + 6} = \\frac{\\epsilon}{(y + \\epsilon)^4 + y^4 + 6}.\n\\]\nAs \\(\\epsilon\\) approaches 0, the denominator \\((y + \\epsilon)^4 + y^4 + 6\\) approaches \\(y^4 + y^4 + 6 = 2y^4 + 6\\), and the expression approaches:\n\\[\n\\frac{\\epsilon}{2y^4 + 6} \\approx \\frac{\\epsilon}{2y^4}.\n\\]\nTo maximize this, we need to consider the behavior as \\(y\\) becomes very large or very small. If \\(y\\) becomes very large, \\(2y^4\\) will dominate, and the expression will approach 0. However, if \\(y\\) becomes very small, say \\(y = 0\\), then the expression becomes:\n\\[\n\\frac{\\epsilon}{6}.\n\\]\nAs \\(\\epsilon\\) approaches 0, this expression approaches 0. Instead, let's consider the case when \\(y\\) is negative and \\(x = y + \\epsilon\\) with \\(\\epsilon\\) small but positive. Then:\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{\\epsilon}{(y + \\epsilon)^4 + y^4 + 6}.\n\\]\nIf \\(y\\) is negative, \\((y + \\epsilon)^4\\) is positive and \\((y + \\epsilon)^4 + y^4 + 6\\) is slightly larger than \\(2y^4 + 6\\). As \\(\\epsilon\\) becomes very small, the expression approaches a positive value but is still bounded. The maximum value occurs when the numerator is maximized relative to the denominator, which happens when \\(y\\) is minimized and \\(x\\) is slightly larger. If we set \\(y = -1\\) and \\(x = 0\\), then:\n\\[\n\\frac{x - y}{x^4 + y^4 + 6} = \\frac{0 - (-1)}{0^4 + (-1)^4 + 6} = \\frac{1}{1 + 6} = \\frac{1}{7}.\n\\]\nTo confirm that \\(\\frac{1}{7}\\) is indeed the maximum, we need to check other possible values of \\(x\\) and \\(y\\). If we set \\(y = 0\\) and \\(x\\) is very large or very small, the expression \\(\\frac{x}{x^4 + 6}\\) will approach 0. Therefore, the maximum value of \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is indeed \\(\\frac{1}{7}\\).\n\nThus, the maximum value is \\(\\boxed{\\frac{1}{7}}\\).",
+       "extracted_answer": "\\frac{1}{7}",
+       "vote_key": "\\frac{1}{7}",
+       "correct": false,
+       "own_tokens": 846,
+       "truncated": false
+      },
+      {
+       "sample_index": 15,
+       "trace": "To find the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\), we need to analyze the behavior of the numerator and the denominator. Let's denote the expression by \\( f(x, y) = \\frac{x - y}{x^4 + y^4 + 6} \\).\n\nFirst, consider the case when \\( x = y \\). Then the expression simplifies to:\n\\[\nf(x, x) = \\frac{x - x}{x^4 + x^4 + 6} = \\frac{0}{2x^4 + 6} = 0.\n\\]\nSo, \\( f(x, x) = 0 \\) for all \\( x \\).\n\nNext, we need to determine if there is any other possibility for the maximum value. To do this, we will use the inequality approach. Notice that:\n\\[\nx^4 + y^4 \\geq \\frac{(x^2 + y^2)^2}{2}.\n\\]\nHowever, this inequality is not directly useful here. Instead, let's consider the absolute value of the expression:\n\\[\n\\left| \\frac{x - y}{x^4 + y^4 + 6} \\right| = \\frac{|x - y|}{x^4 + y^4 + 6}.\n\\]\nWe need to find the maximum value of this expression. To do this, let's consider the boundary case where \\( x \\) and \\( y \\) are far apart, say \\( x = t \\) and \\( y = 0 \\) (or vice versa). Then the expression becomes:\n\\[\n\\left| \\frac{t - 0}{t^4 + 0^4 + 6} \\right| = \\frac{|t|}{t^4 + 6}.\n\\]\nAs \\( t \\to \\infty \\) or \\( t \\to -\\infty \\), \\( \\frac{|t|}{t^4 + 6} \\to 0 \\). However, we need to check if there is any maximum value less than 1. Let's consider the specific case when \\( x = 1 \\) and \\( y = -1 \\):\n\\[\nf(1, -1) = \\frac{1 - (-1)}{1^4 + (-1)^4 + 6} = \\frac{2}{1 + 1 + 6} = \\frac{2}{8} = \\frac{1}{4}.\n\\]\nWe need to check if this is the maximum value. To confirm, let's consider the general case. The expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) can be rewritten using trigonometric substitution, but a simpler approach is to use the fact that the denominator \\( x^4 + y^4 + 6 \\) is always greater than or equal to 6, and the numerator \\( x - y \\) can be as large as \\( x \\) and \\( y \\) are apart. The maximum value of the fraction is indeed \\(\\frac{1}{4}\\).\n\nTherefore, the maximum value of the expression \\(\\frac{x - y}{x^4 + y^4 + 6}\\) is \\(\\boxed{\\frac{1}{4}}\\).",
+       "extracted_answer": "\\frac{1}{4}",
+       "vote_key": "\\frac{1}{4}",
+       "correct": true,
+       "own_tokens": 700,
+       "truncated": false
+      }
+     ]
+    },
+    "greedy": {
+     "own_tokens": 815,
+     "extracted_answer": "\\frac{\\sqrt{3}}{15}",
+     "correct": false,
+     "truncated": false
+    }
+   }
+  ]
+ }
+}

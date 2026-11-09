@@ -20,10 +20,14 @@ import { sizeBin, trainingTimeModels } from "@/lib/trainingTime";
 
 const RUN_M = curves.epochRunCost.fit!.params.usdMillionPerRun;
 
-// The spec's hard rule for this page: training only, no inference talk.
+// The spec's hard rule for this page: training only, no inference talk. It covers
+// the page's own copy; the previous/next buttons are the site's frame and name the
+// next page by its title, which does say "Inference", so they are left out.
 const BANNED = /inference/i;
 const expectClean = () => {
-  expect(document.body.textContent ?? "").not.toMatch(BANNED);
+  const copy = document.body.cloneNode(true) as HTMLElement;
+  copy.querySelectorAll('nav[aria-label="Page navigation"]').forEach((n) => n.remove());
+  expect(copy.textContent ?? "").not.toMatch(BANNED);
 };
 
 const yearSlider = () => screen.getByRole("slider", { name: /drag through the first year/i });

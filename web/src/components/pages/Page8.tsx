@@ -8,8 +8,7 @@
  *
  * Figures 2 and 3 and the close read `web/data/page-08-pile.json` through
  * `@/lib/page08Pile`: the temperature sweep's 100 problems and 16 chains each,
- * every chain scored by the trained verifier. Figure 4 reads
- * `web/data/page-08-judges.json`, a placeholder that says so on the figure.
+ * every chain scored by the trained verifier.
  *
  * Whether Best-of-N and the vote differ is decided by the data, and the page
  * calls them level only while they are (Page8.test.tsx fails if that changes).
@@ -28,13 +27,12 @@ import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
 import { PILE8, pct } from "@/lib/page08Pile";
-import { JUDGES8 } from "@/lib/page08Judges";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 8;
-const NOTEBOOK_ZIP = "/notebooks/page-08-best-of-n.zip";
-const NOTEBOOK_SIZE = "10.1 MB";
+const NOTEBOOK_FILE = "/notebooks/8_Best_of_N.ipynb";
+const NOTEBOOK_SIZE = "30 KB";
 
 /** Reference numbers, in order of first appearance on the page. */
 const REF = {
@@ -42,12 +40,6 @@ const REF = {
   source: 2,
   stroebl: 3,
 } as const;
-
-/** "a, b and c", for a list of names read from the run rather than typed out. */
-function andList(items: string[]): string {
-  if (items.length < 2) return items.join("");
-  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
-}
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -74,29 +66,6 @@ function Pills({ items }: { items: string[] }) {
           className="rounded-full border border-grid px-2 py-0.5 text-[11px] text-ink-muted"
         >
           {t}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/**
- * A legend as HTML rather than SVG text: it wraps, it inherits the page's type,
- * and a screen reader reads it as prose instead of as scattered <text> nodes.
- */
-function Legend({ items }: { items: { cls: string; label: string; dashed?: boolean }[] }) {
-  return (
-    <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-[11px] text-ink-muted">
-      {items.map((i) => (
-        <li key={i.label} className="flex items-center gap-1.5">
-          <svg width={16} height={10} aria-hidden="true" className="shrink-0">
-            {i.dashed ? (
-              <line x1={0} x2={16} y1={5} y2={5} className={i.cls} strokeWidth={1.5} strokeDasharray="3 3" />
-            ) : (
-              <line x1={0} x2={16} y1={5} y2={5} className={i.cls} strokeWidth={2.5} />
-            )}
-          </svg>
-          {i.label}
         </li>
       ))}
     </ul>
@@ -603,91 +572,6 @@ function CompareFigure() {
   );
 }
 
-/* ------------------------------------------------------------------ figure 4 */
-
-const JB_W = 672;
-const JB_ROW = 34;
-const JB_M = { top: 12, right: 72, bottom: 38, left: 150 };
-
-/**
- * Best-of-N once per judge: every judge picks from the same chains, so the only
- * thing that changes from bar to bar is the judge. A bar that clears the vote is
- * drawn in the Best-of-N colour; one that does not is grey. The three vertical
- * lines are one chain, the vote and the ceiling, named in the legend under it.
- */
-function JudgeBarsFigure() {
-  const J = JUDGES8;
-  const innerW = JB_W - JB_M.left - JB_M.right;
-  const innerH = J.judges.length * JB_ROW;
-  const height = JB_M.top + JB_M.bottom + innerH;
-  const x = (v: number) => v * innerW;
-  const lines = [
-    { v: J.oneChain, cls: "stroke-ink-muted", dash: undefined },
-    { v: J.vote, cls: "stroke-compute", dash: "4 3" },
-    { v: J.ceiling, cls: "stroke-ink", dash: "1 3" },
-  ];
-  return (
-    <ChartFrame
-      width={JB_W}
-      height={height}
-      margin={JB_M}
-      xLabel={`share of ${J.nProblems} problems solved`}
-      title={
-        `Best-of-${J.nChains} with each of ${J.judges.length} judges picking from the same chains: ` +
-        J.judges.map((j) => `${j.label} ${pct(j.best_of_n)}`).join(", ") +
-        `. One chain solves ${pct(J.oneChain)}, majority voting ${pct(J.vote)}, and at least one ` +
-        `chain was correct on ${pct(J.ceiling)}.`
-      }
-    >
-      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
-        <g key={t}>
-          <line x1={x(t)} x2={x(t)} y1={0} y2={innerH} className="stroke-grid" strokeWidth={1} />
-          <text x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-            {t * 100}%
-          </text>
-        </g>
-      ))}
-      {J.judges.map((j, i) => {
-        const y = i * JB_ROW + JB_ROW / 2;
-        const beats = j.best_of_n > J.vote;
-        return (
-          <g key={j.id} data-beats-vote={beats}>
-            <text x={-10} y={y - 1} textAnchor="end" className="fill-ink text-[12px]">
-              {j.label}
-            </text>
-            <text x={-10} y={y + 11} textAnchor="end" className="fill-ink-muted text-[9px]">
-              {j.kind}
-            </text>
-            <rect
-              x={0}
-              y={y - 9}
-              width={x(j.best_of_n)}
-              height={18}
-              className={beats ? "fill-correct" : "fill-ink-muted"}
-              opacity={beats ? 1 : 0.45}
-            />
-            <text x={innerW + 8} y={y + 4} className={`text-[12px] font-semibold ${beats ? "fill-correct-ink" : "fill-ink"}`}>
-              {pct(j.best_of_n, Math.round(j.best_of_n * 1000) % 10 ? 1 : 0)}
-            </text>
-          </g>
-        );
-      })}
-      {lines.map((l) => (
-        <line
-          key={l.cls}
-          x1={x(l.v)}
-          x2={x(l.v)}
-          y1={-6}
-          y2={innerH}
-          className={l.cls}
-          strokeWidth={1.5}
-          strokeDasharray={l.dash}
-        />
-      ))}
-    </ChartFrame>
-  );
-}
-
 /* ---------------------------------------------------------------------- page */
 
 export function Page8() {
@@ -705,7 +589,7 @@ export function Page8() {
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
+        <NotebookDownload href={NOTEBOOK_FILE} size={NOTEBOOK_SIZE} label="Best-of-N" />
       </div>
 
       {/* Held to the content column: the margin is the notes column (15rem) plus the
@@ -810,60 +694,10 @@ export function Page8() {
           </p>
         </section>
 
-        {/* Step 4 — what a judge is worth. Pinned to the reading column: step 2
-            has no margin note, so without it the grid flows this step into the
-            margin. */}
-        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">4. What a judge is worth</h2>
-          <p className="text-ink-muted">
-            Best-of-N is only as good as the judge that picks. Here {JUDGES8.judges.length} different
-            judges read the same {JUDGES8.nChains} chains per problem, and each bar is how many
-            problems Best-of-N solves with that judge picking.
-          </p>
-          <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
-            <Pills
-              items={
-                JUDGES8.placeholder
-                  ? ["placeholder", `old ${JUDGES8.nProblems}-problem run, until the new notebook runs`]
-                  : [
-                      "measured",
-                      `${JUDGES8.nProblems} ${JUDGES8.benchmark} problems`,
-                      "every judge read the same chains",
-                    ]
-              }
-            />
-            <JudgeBarsFigure />
-            <Legend
-              items={[
-                { cls: "stroke-ink-muted", label: `one chain of thought (${pct(JUDGES8.oneChain)})` },
-                { cls: "stroke-compute", label: `majority vote (${pct(JUDGES8.vote)})`, dashed: true },
-                { cls: "stroke-ink", label: `at least one chain was correct (${pct(JUDGES8.ceiling)})`, dashed: true },
-              ]}
-            />
-          </figure>
-          <p className="text-ink-muted">
-            <strong className="text-ink">
-              Best-of-N beats majority voting only when the judge is good enough.
-            </strong>{" "}
-            {JUDGES8.beatVote.length === 0 ? (
-              <>
-                None of these {JUDGES8.judges.length} judges clears the vote: with every one of them,
-                counting the answers does as well or better.
-              </>
-            ) : (
-              <>
-                {JUDGES8.beatVote.length} of the {JUDGES8.judges.length} judges clear the vote (
-                {andList(JUDGES8.beatVote.map((j) => j.label))}). With the other{" "}
-                {JUDGES8.judges.length - JUDGES8.beatVote.length}, counting the answers does as well
-                or better.
-              </>
-            )}
-          </p>
-        </section>
-        {/* Step 5 — the handoff: the argument in plain prose, and only the
+        {/* Step 4 — the handoff: the argument in plain prose, and only the
             sentence that hands the reader on inside the compute-bordered box. */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">5. Where this leaves us</h2>
+          <h2 className="text-xl font-semibold text-ink">4. Where this leaves us</h2>
           <p className="text-ink">
             Choosing works: majority voting and Best-of-N both solve more problems than one chain of
             thought. Against each other they finish <strong>level</strong>, and voting gets there

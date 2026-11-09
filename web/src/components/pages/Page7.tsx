@@ -4,35 +4,30 @@
  * Page 7, "Frequency Voting" — page 6 made one chain longer. This page runs the
  * chain many times and keeps the answer the most chains agree on.
  *
- * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED. Nothing is redrawn from a
- * paper and nothing is simulated. The source is one run of
- * `notebooks/page_07_frequency_voting.ipynb` — Qwen2.5-3B-Instruct at bf16,
- * MATH-500 levels 4 and 5, the same 100 paired items pages 5 and 6 use, 16
- * sampled chains per problem, 5,920 generations. Its `derived.json` is committed
- * verbatim to `web/data/page-07-derived.json` and loaded through `@/lib/page07`,
- * which reads the run's `claims` gates BEFORE any number and throws if a
- * blocking one is false. No inference runs at demonstration time.
+ * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED, except step 1's classroom,
+ * which is an illustration and says so. Nothing is redrawn from a paper and
+ * nothing is simulated. The source is one run of
+ * `notebooks/7_FrequencyVoting_InstructModels.ipynb` — Qwen2.5-3B-Instruct at bf16,
+ * 100 MATH-500 problems drawn at random within each level (all five, in the
+ * 500's proportions), 16 chains per problem at each of 12 temperatures, 0.0 to
+ * 1.1, every chain capped at 2,048 tokens and left to stop where it stops: no
+ * forced answer, a chain with no boxed answer casts no vote.
+ * `notebooks/page_7_site_data.py` turns the saved chains into
+ * `web/data/page-07-run.json`, loaded through `@/lib/page07`, which checks the
+ * run's aggregates against each other and throws on a mismatch. No inference
+ * runs at demonstration time.
  *
- * WHAT THE OLD PAGE DID THAT THIS ONE MUST NOT. The previous build simulated the
- * vote with `CHAMBER_MODEL` (a Monte Carlo tuned to land on Wang et al.'s
- * published GSM8K curve) over four hand-authored "misreadings" in
- * `SAMPLING_CHAMBER`, and its temperature dial was explicitly modelled because
- * temperature appears in no reported number. All three are gone. Do not
- * reintroduce `lib/sim` or `lib/authored` here.
+ * THESE 100 PROBLEMS ARE NOT PAGES 5 AND 6'S. Those are MATH-500 levels 4 and 5;
+ * this run covers every level, so greedy decoding scores 68% here and the numbers
+ * do not pair with theirs. Page 16 reads this page's lines and page 8 opens on
+ * its handoff, so both have to be re-read against this run.
  *
- * THE HEADLINE, AND THE TRAP IN IT. Bare chain of thought is ONE GREEDY CHAIN —
- * page 5's `bare` condition, page 6's top rung, 43% on these items. The vote over
- * 16 sampled chains solves 55%: +12 points, p = 0.0075. Against one SAMPLED
- * chain the same vote gains only 4 points and does not resolve (p = 0.39),
- * because sampling at T=0.3 is already worth something on its own. The page
- * leads on the greedy contrast because that is what "improves on chain of
- * thought" means here, and the sampled contrast is the guard on it: a reader
- * who takes the 12 without it credits all of it to counting. The guard was a
- * margin note, then a sentence beside the +12; since 2026-10-11 the FIGURE
- * carries it. Figure 2's vote line starts at one sampled chain, above the flat
- * greedy line before any vote is taken, and the readout at one chain says so.
- * The p = 0.39 that says the rest does not resolve is in the download. Keep the
- * vote line starting at N = 1 and keep that readout, or the guard is gone.
+ * THE HEADLINE, AND THE TRAP IN IT. Bare chain of thought is ONE GREEDY CHAIN,
+ * the dashed line. The vote over 16 sampled chains at the best temperature
+ * solves more, but one SAMPLED chain already sits a point above the greedy line
+ * before any vote is taken, so not all of the gain is counting. The FIGURE
+ * carries that guard: the vote line starts at one sampled chain and the readout
+ * there says so. Keep the vote line starting at N = 1 and keep that readout.
  *
  * Layout: pages 5 and 6's shell. One reading column of numbered steps, each
  * beside its own margin note. Every step that carries a figure opens on a
@@ -65,45 +60,41 @@
  *   subject.
  *
  *   Step 2 — figure 1, the pile. Two problems, the vote coming out right and the
- *   vote tying with the truth among the chains (the author cut a third, the vote
- *   coming out wrong, on 2026-10-11), each with 16 chains tallied into a ranked
- *   histogram. A row click opens that answer's chains and
- *   never closes the reader; the arrows step only within the open answer, so
- *   every chain, wrong ones included, is a row click and some arrow presses away.
- *   Each chain shows its opening and its ending with the middle folded, because
- *   chains run to 272 lines and the ending is what a reader is looking for. Truth concentrates (the modal answer holds 9.9 of 16 votes on
- *   average) and the tail is real (41% of answer classes appear exactly once).
- *   Lead with the CONCENTRATION: the run's `errors_are_diffuse` gate is FALSE at
- *   a 50% threshold, so "wrong answers all disagree" overstates it. Opening a bar
- *   shows the chains that landed there, and two chains agreeing on a wrong answer
- *   usually made different mistakes. Do not bucket the singletons.
+ *   vote tying with the truth among the chains, each with 16 chains tallied into a
+ *   ranked histogram. Both are DRAWN at random by the builder from stated pools at
+ *   the best temperature (`showcase.rule`), never picked: a tie is rare (three
+ *   problems qualified), so a regenerated run may draw different ones. The tally is
+ *   the step's ONE figure. The chains are folded until a row is clicked, and
+ *   clicking the open row folds it again; the arrows step only within the open
+ *   answer. Each chain shows its opening and its ending with the middle folded,
+ *   because the ending is what a reader is looking for. A chain that hit the cap
+ *   just stops, with no answer, and says so. Do not claim wrong answers all
+ *   disagree, or that chains sharing a wrong answer made different mistakes: neither
+ *   is measured. Do not bucket the singletons.
  *
- *   Step 3 — figure 2, what the vote buys. Accuracy against N, built by
- *   subsampling one pile so chain length is fixed. The figure opens on two lines,
- *   the vote rising off the flat greedy chain, and the intro names both. The
- *   third, "at least one chain is right", and the band between it and the vote
- *   (what the rule discards, page 8's ceiling arriving early) are behind a
- *   toggle. The widget holds the chart, its slider, a one-sentence readout and
- *   that toggle, and nothing else: the figure carries the step. The temperature-0
- *   line is FLAT by construction and that is the page's cleanest proof that the
- *   vote needs diversity: sixteen identical chains are step 1's class that
- *   "copied one student's working". THE DIP AT N=2 IS REAL AND MUST
- *   BE EXPLAINED, not smoothed: with two chains a disagreement is a tie, a tie is
- *   not a vote, and 52% of N=2 votes tie.
+ *   Step 3 — temperature, then what the vote buys. A bar per temperature (how many
+ *   different answers 16 chains give), then accuracy against N, built by
+ *   subsampling the 16 chains so chain length is fixed. Every sampled temperature is
+ *   a line behind one band; the picked one is drawn on top. The third line, "at
+ *   least one chain is right", and the band between it and the vote (what the rule
+ *   discards, page 8's ceiling arriving early) are behind a toggle. The widget holds
+ *   the chart, its slider, a one-sentence readout and that toggle, and nothing else.
+ *   The temperature-0 line is FLAT by construction and that is the page's cleanest
+ *   proof that the vote needs diversity: sixteen identical chains are step 1's class
+ *   that "copied one student's working". THE DIP AT N=2 IS REAL AND MUST BE
+ *   EXPLAINED, not smoothed: with two chains a disagreement is a tie, a tie is not a
+ *   vote, and the readout says how many votes tie.
  *
- *   Step 4 — the split, and it is the honest half. At a FIXED budget, splitting
- *   loses: 46% / 35% / 8% at N = 1 / 4 / 16. `splitting_a_fixed_budget_pays` is
- *   false and the page says so, but says WHY, because "splitting loses" alone
- *   reads as "voting loses", which step 3 disproves. The cause is the cap: the
- *   cut-off column runs 1% / 55% / 100%, so at N=16 every chain is force-answered
- *   mid-thought and page 6 measured a chain that short at 7% alone. The table
- *   groups its headers because that column is a property of the run and not a
- *   score, and three bare percentages in a row invite reading it as one.
- *   The N=1 row is the control: the cap barely binds, so both runs ARE the same
- *   run and report the same 46%.
+ *   Step 4 — what the vote costs, in tokens: every chain written for the first
+ *   problem drawn as long as its tokens, the one greedy chain beside the sixteen, and
+ *   the averages over all 100 problems in the sentence under it. Tokens only. The
+ *   sentence about wall-clock time (16 chains taking far less than 16 times as long
+ *   as one, because the GPU writes them side by side) was cut on 2026-11-07: it was
+ *   measured on the old run's problems at T = 0.3 and needs a timing run on this
+ *   one before it comes back.
  *
- *   Step 5 — one number, no figure: 23% of problems where the model produced the
- *   right answer and the vote threw it away. That is page 8's whole subject and
+ *   Step 5 — one number, no figure: the share of problems where the model produced
+ *   the right answer and the vote threw it away. That is page 8's whole subject and
  *   it is deliberately not drawn here (see docs/page_8_refactor.md).
  *
  * The apparatus is in the margin, not in a footer. The three-paragraph tail this
@@ -120,13 +111,14 @@
  * carry `lg:col-start-1`, or the next one flows into the note column.
  *
  * Load-bearing and easy to lose:
- *   · the diversity readout is measured on 30 items, not 100. It is a count of
- *     answers, not an accuracy, and the label must keep saying so.
+ *   · the temperature figures (section 3's bars and lines) all read the temperature
+ *     sweep, and the chart says how many problems it covers. The bars are a count of
+ *     answers, not an accuracy, and the axis must keep saying so.
  *   · Wang et al. is cited for the TECHNIQUE. No cite may carry one of our
  *     numbers.
  */
 
-import { Fragment, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
@@ -135,13 +127,12 @@ import { NotebookDownload } from "@/components/NotebookDownload";
 import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE7,
+  type SweepPoint,
   chainsFor,
   foldTrace,
-  pLabel,
   pct,
   tidyMath,
   tokens,
-  type HeatCell,
   type Problem,
   type ShowcaseOutcome,
   type SpecimenChain,
@@ -150,12 +141,10 @@ import { useStore } from "@/store/useStore";
 
 const PAGE_N = 7;
 const F1 = PAGE7.figure1;
-const F2 = PAGE7.figure2;
 const H = PAGE7.handoff;
-const M = PAGE7.manifest;
 
-const NOTEBOOK_ZIP = "/notebooks/page-07-frequency-voting.zip";
-const NOTEBOOK_SIZE = "7.5 MB";
+const NOTEBOOK_FILE = "/notebooks/7_FrequencyVoting_InstructModels.ipynb";
+const NOTEBOOK_SIZE = "145 KB";
 
 /* The instrument used to sit in a provenance plate above step 1, which read as a
    specimen label from a lab the reader has not visited. What a reader needs is
@@ -164,7 +153,7 @@ const NOTEBOOK_SIZE = "7.5 MB";
    the apparatus — precision, top-p, run id, date, the item hash — is in the
    download on the top line. */
 const BENCHMARK = "MATH-500";
-const LEVELS = "levels 4 and 5";
+const LEVELS = "levels 1 to 5";
 /** Figure 2's x axis, and the control that moves along it. */
 const N_LABEL = "# of sampled chains";
 
@@ -207,19 +196,6 @@ const FARMYARD_METHODS: { name: string; students: number; lines: string[] | stri
 /** The students who said 4: the four methods' head counts together. */
 const FARMYARD_RIGHT = FARMYARD_METHODS.reduce((n, m) => n + m.students, 0);
 
-/* The pile's temperature is the best the sweep found, but it is not the only one:
-   the run votes to the same accuracy at more than one setting. Both places that
-   talk about the sweep have to say so, so the tie is read out of the data here
-   rather than named in prose. */
-const BEST_VOTE = Math.max(...F2.diversity.map((d) => d.plurality_accuracy));
-const TIED_WITH_HOT = [...F2.diversity]
-  .sort((a, b) => a.temperature - b.temperature)
-  .filter(
-    (d) =>
-      Math.abs(d.plurality_accuracy - BEST_VOTE) < 1e-9 && d.temperature !== F2.hot.temperature,
-  )
-  .map((d) => `T = ${d.temperature}`)
-  .join(" and ");
 
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
   return (
@@ -340,18 +316,17 @@ function ProblemPicker({ value, onChange }: { value: number; onChange: (i: numbe
 }
 
 /** The row a problem opens on: its correct answer, or the top row if none is right. */
-const firstOpen = (p: Problem): string => (p.ranked.find((r) => r.correct) ?? p.ranked[0]).answer;
 
 /** How this problem's vote came out, read off the run, for the specimen card. */
-function outcomeLine(outcome: ShowcaseOutcome, p: Problem): string {
+function outcomeLine(outcome: ShowcaseOutcome, p: Problem, pool: number): string {
   const top = p.ranked[0];
   const chains = (n: number) => (n === 1 ? "1 chain" : `${n} chains`);
   const truth = p.ranked.find((r) => r.correct)?.votes ?? 0;
   if (outcome === "right") {
-    return `the vote returns ${tidyMath(top.answer)} on ${top.votes} of ${p.chains.length} chains and it is right · picked from ${F1.n_candidates} problems that qualified`;
+    return `the vote returns ${tidyMath(top.answer)} on ${top.votes} of ${p.chains.length} chains and it is right · drawn at random from ${pool} problems like it`;
   }
   const tied = p.ranked.filter((r) => r.votes === top.votes).length;
-  return `${tied} answers tie at ${chains(top.votes)} each, so the vote returns nothing · the right answer came back from ${chains(truth)}`;
+  return `${tied} answers tie at ${chains(top.votes)} each, so the vote returns nothing · the right answer came back from ${chains(truth)} · drawn at random from ${pool} problems like it`;
 }
 
 /**
@@ -456,210 +431,69 @@ function Tally({
 
 /* --------------------------------------------------------- the heat map */
 
-const HM = F1.heatmap;
+const HM = PAGE7.sweep;
 /** One decimal for every temperature but zero, so 1.0 reads like its neighbours. */
 const tLabel = (t: number) => (t === 0 ? "0" : t.toFixed(1));
-const OUTCOME_SAYS: Record<HeatCell["outcome"], string> = {
-  right: "the vote is right",
-  wrong: "the vote is wrong",
-  tie: "the vote ties",
+
+/* Section 3 reads the temperature sweep: a line per temperature over the N axis. Temperature
+   0 is one greedy chain copied, so its line is the flat baseline, not one of the voting
+   lines. The chart says how many problems the sweep covers, so the chart and its prose
+   always describe the same run. */
+const sweepLine = (t: number): SweepPoint[] => HM.curves[t.toFixed(1)];
+/* Every temperature of the sweep, T = 0 included: its line is the greedy chain (16
+   identical chains vote exactly as one does), so it lies on the dashed baseline. */
+const SWEEP_TEMPS = HM.temperatures;
+/** The temperatures section 3's band spans: every sampled one (T = 0 is the greedy line). */
+const BAND_TEMPS = SWEEP_TEMPS.filter((t) => t > 0);
+const GREEDY = sweepLine(0)[0].accuracy;
+const SWEEP_PROBLEMS = HM.n_problems;
+/* Read off the sweep for section 3's bridge: the temperatures tied with the best (the
+   page says so rather than naming one winner). */
+const SWEEP_BY_T = [...HM.summary].sort((a, b) => a.temperature - b.temperature);
+const SWEEP_TIED = SWEEP_BY_T.filter(
+  (d) =>
+    Math.abs(d.vote_accuracy - Math.max(...SWEEP_BY_T.map((x) => x.vote_accuracy))) < 1e-9 &&
+    d.temperature !== HM.best_temperature,
+).map((d) => `T = ${tLabel(d.temperature)}`);
+/* The bridge's last claims, read off the sweep: every sampled temperature's vote at the
+   most chains. Its "only at two chains" claim is held by Page7.test.tsx. */
+const AT_MOST = BAND_TEMPS.map((t) => sweepLine(t)[sweepLine(t).length - 1].accuracy);
+const MOST_N = sweepLine(BAND_TEMPS[0])[sweepLine(BAND_TEMPS[0]).length - 1].n;
+
+/** Cool to warm as temperature rises: the page's blue into its orange. */
+const tempColour = (t: number) => {
+  const hot = Math.max(...SWEEP_TEMPS);
+  return `color-mix(in srgb, var(--compute) ${Math.round((t / hot) * 100)}%, var(--wrong))`;
 };
 
-/**
- * The fill for one cell. Hue says how the vote came out: Cactus where it is right,
- * Sky where it is not (wrong or tied, which the readout tells apart). Strength says how
- * many chains are right, from a 30% tint at none to the full hue at all of them, so a
- * cell with no right chain still shows its hue: at 12% the two hues read as one grey.
- * Ink stays AA on both hues at full.
- */
-const heatFill = (c: HeatCell) =>
-  `color-mix(in srgb, var(${c.outcome === "right" ? "--correct" : "--wrong"}) ${Math.round(
-    30 + (70 * c.n_correct) / HM.n_chains,
-  )}%, transparent)`;
-
-/**
- * The temperature sweep: a row per problem, a column per temperature, 40 x 12. A cell
- * holds how many of its 16 chains are right; its colour is whether the vote is. Clicking
- * a problem (its number or any of its cells) pins a panel that names, temperature by
- * temperature, what the vote returned and whether that is the right answer: the user's
- * brief, "click a question and see which temperatures got the correct answer". Hovering
- * a cell reads it out without pinning. A table, so it reads as one without a table view.
- */
-function TemperatureHeatmap() {
-  const [at, setAt] = useState<{ q: number; j: number } | null>(null);
-  const [pinned, setPinned] = useState<number | null>(null);
-  const shown = at ? HM.problems[at.q].cells[at.j] : null;
-  const pin = (q: number) => {
-    setPinned((cur) => (cur === q ? null : q));
-  };
-  const legend = (outcome: HeatCell["outcome"], label: string) => (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-xs text-ink-muted">{label}</span>
-      <span className="flex gap-px" aria-hidden="true">
-        {Array.from({ length: HM.n_chains + 1 }, (_, k) => k)
-          .filter((k) => k % 4 === 0)
-          .map((k) => (
-            <span
-              key={k}
-              className="flex h-4 w-5 items-center justify-center rounded-sm font-mono text-[10px] tabular-nums text-ink"
-              style={{ background: heatFill({ temperature: 0, n_correct: k, outcome }) }}
-            >
-              {k}
+/** Which temperature's line is highlighted. The best one is chosen to start. */
+function TempPicker({ value, onChange }: { value: number; onChange: (t: number) => void }) {
+  const name = useId();
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="text-xs text-ink-muted">Temperature</span>
+      <div role="radiogroup" aria-label="Temperature" className="flex flex-wrap gap-1">
+        {SWEEP_TEMPS.map((t) => (
+          <label key={t} className="cursor-pointer">
+            <input
+              type="radio"
+              name={name}
+              className="peer sr-only"
+              checked={value === t}
+              aria-label={`T = ${tLabel(t)}${t === HM.best_temperature ? ", the best" : ""}`}
+              onChange={() => onChange(t)}
+            />
+            <span className="flex items-center gap-1 rounded border border-grid px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-ink peer-focus-visible:ring-2 peer-focus-visible:ring-compute peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas">
+              <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: tempColour(t) }} />
+              {tLabel(t)}
+              {t === HM.best_temperature ? <span aria-hidden="true">★</span> : null}
             </span>
-          ))}
-      </span>
+          </label>
+        ))}
+      </div>
     </div>
   );
-  const p = pinned === null ? null : HM.problems[pinned];
-  const rightAt = p ? p.cells.filter((c) => c.outcome === "right") : [];
-  return (
-    <section
-      aria-label="Chains right and the vote, at every temperature"
-      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4 sm:flex-row sm:items-start sm:gap-5"
-    >
-      <table
-        className="w-auto shrink-0 border-separate self-start font-mono text-[10px] tabular-nums"
-        style={{ borderSpacing: "1px" }}
-        onMouseLeave={() => setAt(null)}
-      >
-        <caption className="sr-only">
-          Chains right out of {HM.n_chains}, and the vote, for {HM.problems.length} problems at{" "}
-          {HM.temperatures.length} temperatures
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" className="pb-1 pr-1 text-left align-bottom font-normal text-ink-muted">
-              #
-            </th>
-            {HM.temperatures.map((t) => (
-              <th key={t} scope="col" className="w-7 pb-1 align-bottom font-normal text-ink-muted">
-                {/* Set vertically, reading bottom to top. */}
-                <span className="inline-block rotate-180 whitespace-nowrap [writing-mode:vertical-rl]">
-                  T = {tLabel(t)}
-                </span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {HM.problems.map((row, q) => (
-            <tr key={row.problem_id}>
-              <th scope="row" className="pr-1 text-left font-normal">
-                <button
-                  type="button"
-                  aria-pressed={pinned === q}
-                  aria-label={`Problem ${q + 1}: show which temperatures got it right`}
-                  onClick={() => pin(q)}
-                  className={`w-full rounded-sm px-0.5 text-left tabular-nums hover:text-ink ${
-                    pinned === q ? "bg-compute font-semibold text-canvas" : "text-ink-muted"
-                  }`}
-                >
-                  {q + 1}
-                </button>
-              </th>
-              {row.cells.map((c, j) => (
-                <td
-                  key={c.temperature}
-                  onMouseEnter={() => setAt({ q, j })}
-                  onClick={() => pin(q)}
-                  className={`h-4 w-7 cursor-pointer rounded-sm text-center leading-none text-ink ${
-                    at?.q === q && at.j === j
-                      ? "outline outline-2 outline-ink"
-                      : pinned === q
-                        ? "outline outline-1 outline-compute"
-                        : ""
-                  }`}
-                  style={{ background: heatFill(c) }}
-                >
-                  {c.n_correct}
-                  <span className="sr-only"> of {HM.n_chains} chains right, {OUTCOME_SAYS[c.outcome]}</span>
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th scope="row" className="pt-1 pr-1 text-left font-normal text-ink-muted">
-              right
-            </th>
-            {HM.temperatures.map((t, j) => (
-              <td key={t} className="pt-1 text-center text-correct-ink">
-                {HM.problems.filter((r) => r.cells[j].outcome === "right").length}
-              </td>
-            ))}
-          </tr>
-        </tfoot>
-      </table>
-
-      {/* The legend and the pinned problem. Sticky, so it stays beside the rows while
-          the reader scrolls down forty of them. */}
-      <div className="flex min-w-0 flex-col gap-3 sm:sticky sm:top-20 sm:w-56">
-        {legend("right", "the vote is right")}
-        {legend("wrong", "the vote is wrong or ties")}
-        <p className="text-xs text-ink-muted">
-          Each cell: chains right of {HM.n_chains}. The bottom row counts problems the vote got
-          right, of {HM.problems.length}.
-        </p>
-        {/* The hover readout; it holds its lines so the panel does not jump. */}
-        <p aria-hidden="true" className="min-h-[2.5rem] font-mono text-xs text-ink">
-          {shown && at
-            ? `problem ${at.q + 1} · T = ${tLabel(shown.temperature)} · ${shown.n_correct} of ${HM.n_chains} right · ${OUTCOME_SAYS[shown.outcome]}`
-            : ""}
-        </p>
-        {p && pinned !== null ? (
-          <div
-            data-testid="heatmap-problem"
-            aria-live="polite"
-            className="flex flex-col gap-2 rounded border border-compute bg-compute/5 p-2 text-xs"
-          >
-            <div className="flex items-baseline justify-between gap-2">
-              <p className="font-semibold text-ink">
-                Problem {pinned + 1} · level {p.level} · {p.subject}
-              </p>
-              <button
-                type="button"
-                onClick={() => setPinned(null)}
-                aria-label="Close this problem"
-                className="text-ink-muted hover:text-ink"
-              >
-                ×
-              </button>
-            </div>
-            <p className="max-h-28 overflow-y-auto font-code leading-relaxed text-ink">
-              {tidyMath(p.question)}
-            </p>
-            <p className="text-ink-muted">
-              answer <span className="font-mono text-ink">{tidyMath(p.ground_truth)}</span> · the vote
-              gets it at {rightAt.length} of {HM.temperatures.length} temperatures
-            </p>
-            <ul className="flex flex-col gap-px font-mono tabular-nums">
-              {p.cells.map((c) => (
-                <li
-                  key={c.temperature}
-                  className="flex items-center gap-2 rounded-sm px-1"
-                  style={{ background: heatFill(c) }}
-                >
-                  <span className="w-11 shrink-0 text-ink">T = {tLabel(c.temperature)}</span>
-                  <span className="min-w-0 flex-1 truncate text-ink" title={c.answer ?? "tie"}>
-                    {c.outcome === "tie" ? "tie" : tidyMath(c.answer ?? "")}
-                  </span>
-                  <span className="shrink-0 text-ink">
-                    {c.n_correct}/{HM.n_chains}
-                  </span>
-                  <span className="w-3 shrink-0 text-center text-ink" aria-label={OUTCOME_SAYS[c.outcome]}>
-                    {c.outcome === "right" ? "✓" : "✗"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-      </div>
-    </section>
-  );
 }
-
 /* ------------------------------------------------------------------ figure 2 */
 
 const W = 620;
@@ -714,21 +548,37 @@ function PileChart({
   at,
   showLost,
   onAt,
+  temp,
 }: {
   at: number;
   showLost: boolean;
   onAt: (i: number) => void;
+  /** The highlighted temperature; every other one is drawn faint behind it. */
+  temp: number;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const pts = F2.hot.points;
-  const ns = pts.map((p) => p.n);
+  const pts = sweepLine(temp);
+  const ns = HM.n_axis;
   const sel = pts[at];
   const x = (n: number) => (Math.log2(n) / Math.log2(Math.max(...ns))) * IW;
   const y = (v: number) => IH - (v / 100) * IH;
-  const line = (get: (p: (typeof pts)[number]) => number) =>
-    pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(get(p) * 100)}`).join(" ");
-  const cold = F2.cold.points[0].accuracy;
+  const pathOf = (line: SweepPoint[], get: (p: SweepPoint) => number) =>
+    line.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(get(p) * 100)}`).join(" ");
+  const line = (get: (p: SweepPoint) => number) => pathOf(pts, get);
+  const cold = GREEDY;
   const last = pts[pts.length - 1];
+  // The band: at each N, the lowest and highest vote across the sampled temperatures.
+  const bandLo = ns.map((_, i) => Math.min(...BAND_TEMPS.map((t) => sweepLine(t)[i].accuracy)));
+  const bandHi = ns.map((_, i) => Math.max(...BAND_TEMPS.map((t) => sweepLine(t)[i].accuracy)));
+  const bandPath =
+    ns.map((n, i) => `${i ? "L" : "M"}${x(n)},${y(bandHi[i] * 100)}`).join(" ") +
+    " " +
+    [...ns]
+      .map((n, i) => ({ n, i }))
+      .reverse()
+      .map(({ n, i }) => `L${x(n)},${y(bandLo[i] * 100)}`)
+      .join(" ") +
+    " Z";
   // Snap a pointer to the nearest measured N, through the svg's own coordinates,
   // because the chart scales to fit its column.
   const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
@@ -764,7 +614,7 @@ function PileChart({
 
   return (
     <ChartFrame
-      title={`Share of ${M.items.n} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of sampled chains. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. Majority voting solves ${pct(last.accuracy)} over sixteen sampled chains.${showLost ? ` At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.` : ""}`}
+      title={`Share of ${SWEEP_PROBLEMS} ${BENCHMARK} problems, ${LEVELS}, solved by ${PAGE7.primary.label} against the number of sampled chains, at ${HM.temperatures.length - 1} temperatures. One greedy chain solves ${pct(cold)} and stays there however many copies are made of it. At T = ${tLabel(temp)}, majority voting solves ${pct(last.accuracy)} over sixteen sampled chains; across every sampled temperature it solves ${pct(bandLo[bandLo.length - 1])} to ${pct(bandHi[bandHi.length - 1])}.${showLost ? ` At least one chain was right on ${pct(last.coverage)}, so ${pct(last.coverage - last.accuracy)} of problems had the right answer generated and discarded by the vote.` : ""}`}
       width={W}
       height={HGT}
       margin={MARGIN}
@@ -808,14 +658,36 @@ function PileChart({
         </g>
       ) : null}
 
-      <path d={line((p) => p.accuracy)} fill="none" className="stroke-compute" strokeWidth={2.4} />
+      {/* Every sampled temperature (T = 0.1 to the hottest) as one band, lowest to
+          highest accuracy at each N, instead of a faint line each: the band says "at any
+          temperature, voting lands in here", and the picked temperature is the line drawn
+          on top of it. Neutral, so it never reads as the vote's thrown-away band. */}
+      <path data-testid="temperature-band" d={bandPath} className="fill-ink-faint" opacity={0.16} />
+      <text
+        x={x(ns[ns.length - 2])}
+        y={y(bandHi[ns.length - 2] * 100) - 7}
+        textAnchor="middle"
+        className="fill-ink-muted text-[10px]"
+      >
+        every temperature, T = {tLabel(BAND_TEMPS[0])} to {tLabel(BAND_TEMPS[BAND_TEMPS.length - 1])}
+      </text>
+      <path
+        data-testid={`sweep-line-${tLabel(temp)}`}
+        d={line((p) => p.accuracy)}
+        fill="none"
+        className="stroke-compute"
+        strokeWidth={2.4}
+      />
       {pts.map((p) => (
         <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy * 100)} r={3.4} className="fill-compute" />
       ))}
-      <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute-ink text-[10px] font-semibold">
-        <tspan x={IW + 6} dy="0">majority</tspan>
-        <tspan x={IW + 6} dy="11">voting</tspan>
-      </text>
+      {/* At T = 0 the highlighted line IS the greedy baseline, which is labelled already. */}
+      {temp !== 0 ? (
+        <text x={IW + 6} y={y(last.accuracy * 100) - 2} className="fill-compute-ink text-[10px] font-semibold">
+          <tspan x={IW + 6} dy="0">majority voting</tspan>
+          <tspan x={IW + 6} dy="11">T = {tLabel(temp)}</tspan>
+        </text>
+      ) : null}
 
       <line x1={0} x2={IW} y1={y(cold * 100)} y2={y(cold * 100)} className="stroke-ink-muted" strokeWidth={1.4} strokeDasharray="2 3" />
       <text x={IW + 6} y={y(cold * 100) + 4} className="fill-ink-muted text-[10px]">
@@ -879,152 +751,136 @@ function PileChart({
 
 /* ------------------------------------------------------------------ figure 3 */
 
-const FW = 620;
-const FHGT = 290;
-const FMARGIN = { top: 30, right: 128, bottom: 46, left: 46 };
-const FIW = FW - FMARGIN.left - FMARGIN.right;
-const FIH = FHGT - FMARGIN.top - FMARGIN.bottom;
-
-/** The three shared budgets get one hue, light to dark as the budget grows. */
-const BUDGET_SHADE = [0.4, 0.68, 1];
+/** One column of a Columns panel. `greedy` draws it muted rather than in the
+ *  majority-voting colour. */
+interface CostCol {
+  key: string;
+  label: string;
+  aria: string;
+  value: number;
+  text: string;
+  greedy: boolean;
+  /** A fill of its own, in place of the grey and orange (section 3: by temperature). */
+  color?: string;
+  /** Marked with a star and set in bold (section 3: the best temperature). */
+  best?: boolean;
+}
 
 /**
- * Step 4 as a fan: N chains sharing a fixed budget of 2,048, 4,096 or 8,192
- * tokens, B/N each, against the same chains each allowed to finish.
- *
- * Allowed to finish IS section 3's majority-voting line (the pile, which about 1%
- * of chains ever reach the cap of), so it is drawn in that line's colour and the
- * page quotes one number for sixteen chains, not two draws that differ by chance.
- * The three budgets are one hue, light to dark as the budget grows.
- *
- * At one chain no cap binds and all four lines start together, which is the
- * control that makes this one experiment rather than four. They fan apart as N
- * grows, and the order of the fan is the finding: the smaller the budget each
- * chain gets, the further the vote falls. The cause, the share of chains cut off
- * by their cap, is behind the widget's toggle (CutOffGrid) rather than drawn under
- * the axis, where four series of gauges would crowd the chart.
- *
- * The right-hand labels are spread so they never overlap; at N = 4 three of the
- * lines sit at the same height, which is a fact about the data, not a drawing
- * error, and the readers see the lines merge there.
+ * A panel of labelled columns on its own scale, starting at zero. Section 3 colours
+ * its columns by temperature.
  */
-function ForkChart() {
-  const budgets = F2.budgets;
-  const finish = F2.uncapped.points;
-  const ns = finish.map((p) => p.n);
-  const top = Math.max(...ns);
-  const x = (n: number) => (Math.log2(n) / Math.log2(top)) * FIW;
-  const y = (share: number) => FIH - share * FIH;
-  const path = (pts: { n: number; accuracy: number }[]) =>
-    pts.map((p, i) => `${i ? "L" : "M"}${x(p.n)},${y(p.accuracy)}`).join(" ");
-
-  // Right-hand labels at each line's last point, nudged apart to a minimum gap.
-  const ends = [
-    ...budgets.map((b, i) => ({
-      key: `b${b.budget}`,
-      text: `${tokens(b.budget)} shared`,
-      y: y(b.points[b.points.length - 1].accuracy),
-      shade: BUDGET_SHADE[i] ?? 1,
-      finish: false,
-    })),
-    { key: "finish", text: "allowed to finish", y: y(finish[finish.length - 1].accuracy), shade: 1, finish: true },
-  ].sort((a, b) => a.y - b.y);
-  for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 12);
-  const lastFinish = finish[finish.length - 1];
-
+function Columns({
+  title,
+  axis,
+  cols,
+  testId,
+}: {
+  title: string;
+  axis: string;
+  cols: CostCol[];
+  testId: string;
+}) {
+  const top = Math.max(...cols.map((c) => c.value));
   return (
-    <ChartFrame
-      title={`Share of ${M.items.n} problems solved against the number of chains, when the chains share a fixed budget of ${budgets.map((b) => tokens(b.budget)).join(", ")} tokens, and when each is allowed to finish. At one chain all four solve about ${pct(finish[0].accuracy)}. At ${top} chains, allowed to finish solves ${pct(lastFinish.accuracy)}; ${budgets.map((b) => `${tokens(b.budget)} shared solves ${pct(b.points[b.points.length - 1].accuracy)}`).join(", ")}.`}
-      width={FW}
-      height={FHGT}
-      margin={FMARGIN}
-      xLabel="# of sampled chains"
-      yLabel="solved (%)"
-    >
-      {[0, 25, 50, 75, 100].map((t) => (
-        <g key={t}>
-          <line x1={0} x2={FIW} y1={FIH - (t / 100) * FIH} y2={FIH - (t / 100) * FIH} className="stroke-grid" strokeWidth={1} />
-          <text x={-8} y={FIH - (t / 100) * FIH + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
-            {t}
-          </text>
-        </g>
-      ))}
-      {ns.map((n) => (
-        <text key={n} x={x(n)} y={FIH + 16} textAnchor="middle" className="fill-ink-muted text-[10px] tabular-nums">
-          {n}
-        </text>
-      ))}
-
-      {budgets.map((b, i) => (
-        <g key={b.budget} data-testid={`budget-line-${b.budget}`} strokeOpacity={BUDGET_SHADE[i] ?? 1}>
-          <path d={path(b.points)} fill="none" className="stroke-wrong" strokeWidth={2.2} />
-          {b.points.map((p) => (
-            <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy)} r={3.2} className="fill-wrong" fillOpacity={BUDGET_SHADE[i] ?? 1} />
-          ))}
-        </g>
-      ))}
-      {/* Drawn last: where the lines meet, the one the reader came from stays on top. */}
-      <g data-testid="finish-line">
-        <path d={path(finish)} fill="none" className="stroke-compute" strokeWidth={2.6} />
-        {finish.map((p) => (
-          <circle key={p.n} cx={x(p.n)} cy={y(p.accuracy)} r={3.6} className="fill-compute" />
+    <figure aria-label={title} data-testid={testId} className="flex min-w-0 flex-col gap-1.5">
+      <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">{title}</p>
+      <div className="flex h-56 items-end gap-4 border-b border-grid pb-px">
+        {cols.map((c) => (
+          <div
+            key={c.key}
+            data-testid={`${testId}-bar`}
+            data-value={c.value}
+            aria-label={c.aria}
+            className="flex h-full flex-1 flex-col items-center justify-end gap-0.5"
+          >
+            <span
+              className={`font-mono text-[10px] tabular-nums ${
+                c.color ? (c.best ? "font-semibold text-ink" : "text-ink") : c.greedy ? "text-ink" : "text-compute-ink"
+              }`}
+            >
+              {c.text}
+            </span>
+            <span
+              data-testid="column-fill"
+              className={`w-full max-w-[5rem] rounded-t-sm ${
+                c.color ? "" : c.greedy ? "bg-ink-faint/50" : "bg-compute"
+              }`}
+              style={{ height: `${(c.value / top) * 86}%`, ...(c.color ? { background: c.color } : {}) }}
+            />
+          </div>
         ))}
-      </g>
-
-      <text x={6} y={y(finish[0].accuracy) - 14} className="fill-ink-muted text-[10px]">
-        at one chain no cap binds: all four start together
-      </text>
-
-      {ends.map((e) => (
-        <text
-          key={e.key}
-          x={FIW + 8}
-          y={e.y + 3}
-          className={`text-[10px] font-semibold ${e.finish ? "fill-compute-ink" : "fill-wrong-ink"}`}
-          fillOpacity={e.finish ? 1 : Math.max(e.shade, 0.55)}
-        >
-          {e.text}
-        </text>
-      ))}
-    </ChartFrame>
+      </div>
+      <div className="flex gap-4" aria-hidden="true">
+        {cols.map((c) => (
+          <span
+            key={c.key}
+            className={`flex-1 text-center font-mono text-[10px] tabular-nums ${
+              c.color ? (c.best ? "font-semibold text-ink" : "text-ink-muted") : c.greedy ? "text-ink-muted" : "text-compute-ink"
+            }`}
+          >
+            {c.label}
+            {c.best ? " ★" : ""}
+          </span>
+        ))}
+      </div>
+      <p className="text-center text-[10px] text-ink-muted" aria-hidden="true">
+        {axis}
+      </p>
+    </figure>
   );
 }
 
 /**
- * Why the budget lines fall: the share of each budget's chains cut off by their cap
- * and made to commit mid-thought, at every N. Behind the widget's toggle. It is a
- * property of the run, not a score, so it is a small grid of gauges and not a line.
+ * Section 4 (author, 2026-11-05): what majority voting costs, shown on real chains.
+ * Every chain the model wrote for figure 1's first problem, each drawn as long as the
+ * tokens it wrote: the one greedy chain, then the sixteen sampled ones. Lengths are on
+ * one scale, up to the cap; a chain that hit the cap is marked. Tokens only: section 3
+ * shows accuracy, and the averages over every problem are in the sentence under it.
  */
-function CutOffGrid() {
-  const budgets = F2.budgets;
-  const ns = budgets[0].points.map((p) => p.n);
-  return (
-    <div data-testid="cut-off-grid" className="flex flex-col gap-1.5 text-xs">
-      <p className="text-ink-muted">Share of chains cut off by their cap before they finished:</p>
-      <div className="grid max-w-md grid-cols-[6.5rem_repeat(3,minmax(0,1fr))] items-center gap-x-3 gap-y-1">
-        <span />
-        {ns.map((n) => (
-          <span key={n} className="font-mono tabular-nums text-ink-muted">
-            {n === 1 ? "1 chain" : `${n} chains`}
-          </span>
-        ))}
-        {budgets.map((b, i) => (
-          <Fragment key={b.budget}>
-            <span className="font-semibold text-wrong-ink" style={{ opacity: Math.max(BUDGET_SHADE[i] ?? 1, 0.55) }}>
-              {tokens(b.budget)} shared
-            </span>
-            {b.points.map((p) => (
-              <span key={p.n} className="flex items-center gap-1.5">
-                <span className="h-2 w-12 overflow-hidden rounded-sm bg-surface-raised ring-1 ring-grid">
-                  <span className="block h-full bg-wrong/70" style={{ width: `${p.truncated_rate * 100}%` }} />
-                </span>
-                <span className="font-mono tabular-nums text-ink-muted">{pct(p.truncated_rate)}</span>
-              </span>
-            ))}
-          </Fragment>
-        ))}
-      </div>
+function CostFigure() {
+  const { problem, greedy } = F1.showcase[0];
+  const chains = problem.chains;
+  const cap = problem.chain_cap;
+  const total = chains.reduce((s, c) => s + c.own_tokens, 0);
+  const strip = (tokensUsed: number, isGreedy: boolean, capped: boolean, key: string, label: string) => (
+    <div key={key} data-testid="chain-strip" data-tokens={tokensUsed} className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-2">
+      <span className="text-right font-mono text-[10px] tabular-nums text-ink-muted">{label}</span>
+      <span className="flex items-center gap-2">
+        <span
+          className={`h-2.5 rounded-sm ${isGreedy ? "bg-ink-faint/60" : "bg-compute"}`}
+          style={{ width: `${(tokensUsed / cap) * 82}%` }}
+        />
+        <span className="font-mono text-[10px] tabular-nums text-ink-muted">
+          {tokens(tokensUsed)}
+          {capped ? " · hit the cap" : ""}
+        </span>
+      </span>
     </div>
+  );
+  return (
+    <section
+      aria-label="Every chain written for one problem"
+      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+    >
+      <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(problem.question)}</p>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+          greedy decoding · {tokens(greedy.own_tokens)} tokens
+        </p>
+        {strip(greedy.own_tokens, true, greedy.truncated, "greedy", "1 chain")}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
+          majority voting, {chains.length} chains at T = {tLabel(problem.temperature)} ·{" "}
+          <span data-testid="chains-total">{tokens(total)}</span> tokens
+        </p>
+        {chains.map((c, i) => strip(c.own_tokens, false, c.truncated, `c${c.sample_index}`, `chain ${i + 1}`))}
+      </div>
+      <p className="font-mono text-[10px] text-ink-muted">
+        each bar is one chain&apos;s tokens, on one scale up to the {tokens(cap)}-token cap
+      </p>
+    </section>
   );
 }
 
@@ -1038,28 +894,23 @@ export function Page7() {
   // reader starts on a right solution, even when the vote did not return it; every
   // other answer is a row click away. The arrows only ever step within the open
   // answer: "64" has eight chains to read, "128" has two.
+  // Since 2026-11-05 nothing is open until the reader clicks a row (author: section 2
+  // down to one figure, the tally); clicking the open row folds it again.
   const [problemIx, setProblemIx] = useState(0);
-  const [open, setOpen] = useState(firstOpen(F1.showcase[0].problem));
+  const [open, setOpen] = useState<string | null>(null);
   const [chainIx, setChainIx] = useState(0);
   // Index into the measured N axis, not N itself. Opens at the top of the axis,
   // so the reader's first sight of the chart is the finished result the prose
   // above it quotes, and adding a voter is something they take away rather than
   // something they build up to.
-  const [voterIx, setVoterIx] = useState(F2.hot.points.length - 1);
-  const voters = F2.hot.points[voterIx];
+  const [voterIx, setVoterIx] = useState(HM.n_axis.length - 1);
+  // Section 3's highlighted temperature; it starts on the sweep's best.
+  const [tempSel, setTempSel] = useState(HM.best_temperature);
+  const voters = sweepLine(tempSel)[voterIx];
   // The third line and its band, what the vote threw away, are drawn on request.
   const [showLost, setShowLost] = useState(false);
-  // Section 4's cause, the share of chains cut off by their cap, is shown on request.
-  const [showCut, setShowCut] = useState(false);
-  // The closing paragraph's two cases: the smallest and largest budget at the most chains.
-  const atTop = (b: (typeof F2.budgets)[number]) => ({
-    budget: b.budget,
-    ...b.points[b.points.length - 1],
-  });
-  const cutLow = atTop(F2.budgets[0]);
-  const cutHigh = atTop(F2.budgets[F2.budgets.length - 1]);
   // The readout's baseline is the flat line the chart draws: one greedy chain.
-  const cold = F2.cold.points[0].accuracy;
+  const cold = GREEDY;
   const pointsVsGreedy = (acc: number) => {
     const d = Math.round((acc - cold) * 100);
     return d === 0
@@ -1069,22 +920,19 @@ export function Page7() {
 
   const shown = F1.showcase[problemIx];
   const s = shown.problem;
-  const openRow = s.ranked.find((r) => r.answer === open) ?? s.ranked[0];
-  const rowChains = chainsFor(s, openRow.answer);
+  const noAnswer = s.chains.filter((c) => c.vote_key === null).length;
+  const openRow = open === null ? null : (s.ranked.find((r) => r.answer === open) ?? null);
+  const rowChains = openRow ? chainsFor(s, openRow.answer) : [];
   const chain = rowChains[chainIx];
-  const last = F2.hot.points[F2.hot.points.length - 1];
-  // What one chain spends against what the pile spends. The gap between them is what
-  // "just give one chain more" would have to beat, and page 6 measured that arm: the
-  // chain does carry on when it is pushed, it just does not score any better for it.
-  const oneChainTokens = F2.hot.points[0].mean_tokens;
-  const pileTokens = last.mean_tokens;
+  // Section 4's numbers: the best temperature's vote at the most chains against one
+  // greedy chain, in tokens per problem.
+  const costTop = sweepLine(HM.best_temperature)[HM.n_axis.length - 1];
+  const greedyTokens = sweepLine(0)[0].mean_tokens;
 
-  // Clicking a row opens its first chain, unless that row is already open, in which
-  // case nothing moves: a second click must not close it or lose the reader's place.
+  // Clicking a row opens its first chain; clicking the open row folds it again.
   const pick = (answer: string) => {
     recordInteraction(PAGE_N);
-    if (answer === openRow.answer) return;
-    setOpen(answer);
+    setOpen((cur) => (cur === answer ? null : answer));
     setChainIx(0);
   };
   const step = (by: number) => {
@@ -1094,7 +942,7 @@ export function Page7() {
   const pickProblem = (i: number) => {
     recordInteraction(PAGE_N);
     setProblemIx(i);
-    setOpen(firstOpen(F1.showcase[i].problem));
+    setOpen(null);
     setChainIx(0);
   };
   // The arrow keys step through the open answer while focus is in the card. Everywhere else
@@ -1120,14 +968,15 @@ export function Page7() {
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
+        <NotebookDownload href={NOTEBOOK_FILE} size={NOTEBOOK_SIZE} label="frequency voting" />
       </div>
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        Page 6 made <strong className="text-ink">one chain longer</strong>, and ran out of road. So
-        stop asking once: ask the <em>same</em> question many times, and keep the answer that comes
-        up <strong className="text-ink">most often</strong>.
+        A longer chain of thought gives a model more room, but it is still one attempt at the
+        problem. Ask the same question many times instead, and each attempt can reason its way
+        there differently. Keep the answer that comes up most often, and you have{" "}
+        <strong className="text-ink">frequency voting</strong>.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
@@ -1161,15 +1010,10 @@ export function Page7() {
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">2. Sixteen answers to the same question</h2>
           <p className="text-ink-muted">
-            {/* Temperature glossed operationally, which is all this page is allowed to
-                say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens and
-                probability distributions, off this page and on page 10. */}
+            {/* Temperature is introduced in section 3, not here (author, 2026-11-05). */}
             Now the model is the whole class. Here are two problems: on one the vote is right,
-            and on the other it ties. Each one went to {PAGE7.primary.label} {F1.n_chains} times with sampling
-            turned on, which is what <strong className="text-ink">temperature</strong> does.
-            Temperature is a dial, written <span className="font-mono text-ink">T</span> on every
-            chart on this page: at zero every chain comes back identical, and turning it up makes
-            them disagree more.
+            and on the other it ties. Each one went to {PAGE7.primary.label} {F1.n_chains} times,
+            with the same prompt every time.
             Every answer it came back with is tallied, like the answers on the board. Click a row to
             read the chains that landed there, wrong answers included, and use the arrows to step
             between them.
@@ -1185,14 +1029,28 @@ export function Page7() {
             <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(s.question)}</p>
             <p className="font-mono text-xs text-ink-muted">
               {BENCHMARK}, level {s.level} · the answer is {tidyMath(s.ground_truth)} ·{" "}
-              {outcomeLine(shown.outcome, s)}
+              {outcomeLine(shown.outcome, s, shown.pool_size)}
             </p>
 
             {/* The invitation is the last line of the step's intro, directly above this
                 card. It used to be repeated here, near-verbatim. */}
             <Tally problem={s} onOpen={pick} open={open} />
+            {/* A chain that hit the cap wrote no answer, so it is on no row and cast no vote. */}
+            {noAnswer > 0 ? (
+              <p data-testid="no-answer" className="font-mono text-xs text-ink-muted">
+                {noAnswer === 1 ? "1 chain" : `${noAnswer} chains`}{" "}
+                {s.chains.every((c) => c.vote_key !== null || c.truncated)
+                  ? `hit the ${tokens(s.chain_cap)}-token cap and wrote no answer`
+                  : "wrote no answer"}
+                , so {noAnswer === 1 ? "it casts" : "they cast"} no vote
+              </p>
+            ) : null}
 
+            {/* The chains stay folded until a row is clicked (author, 2026-11-05: section 2
+                down to one figure, the tally). */}
+            {openRow && chain ? (
             <div
+              data-testid="chain-reader"
               className={`flex flex-col gap-3 rounded-lg border-l-4 p-3 ${
                 chain.correct ? "border-correct bg-correct/10" : "border-wrong bg-wrong/10"
               }`}
@@ -1239,48 +1097,83 @@ export function Page7() {
               <div className="flex flex-col gap-1">
                 <p className="font-mono text-xs text-ink-muted">
                   {tokens(chain.own_tokens)} tokens
-                  {chain.truncated ? " · hit its cap and was made to commit" : ""}
+                  {chain.truncated ? " · hit its cap and stopped" : ""}
                 </p>
                 {/* Keyed on the chain so the next one opens folded again. */}
                 <ChainText key={`${problemIx}-${chain.sample_index}`} chain={chain} />
               </div>
             </div>
+            ) : null}
           </section>
-          <p className="text-sm text-ink-muted">
-            The winning answer holds {F1.shape.mean_top_votes.toFixed(1)} of {F1.shape.n_chains}{" "}
-            votes on average across all {M.items.n} problems, against{" "}
-            {F1.shape.mean_distinct.toFixed(1)} distinct answers. Agreement concentrates; the rest
-            is a scatter of near-misses, {pct(F1.shape.singleton_share)} of which are said exactly
-            once.
-          </p>
-          <p className="text-ink-muted">
-            Here is the vote on {HM.problems.length} of these problems at{" "}
-            {HM.temperatures.length} temperatures, {HM.n_chains} chains each. Click a problem to
-            see which temperatures got it right.
-          </p>
-          <TemperatureHeatmap />
         </section>
+        {/* The note's second sentence, that chains sharing a wrong answer got there by
+            different mistakes, went with the cut: it was never checked, and on algebra 224
+            fifteen chains make the same slip. */}
         <Note kicker="Read it as">
-          <p>
-            Each chain is one student, and each answer is a number on the board. Two chains landing on the
-            same wrong answer usually got there by different mistakes, which is why the tail stays a
-            scatter.
-          </p>
+          <p>Each chain is one student, and each answer is a number on the board.</p>
         </Note>
 
         {/* Step 3 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. Greedy decoding against majority voting</h2>
-          {/* Step 2 showed the vote on two problems; this asks how it compares with one
-              plain chain at scale. Majority voting is not re-explained: step 1's analogy
-              does that. The flat line's meaning (every greedy chain is the same chain) is
-              said under the chart, where the headline leads into the temperature card. */}
-          <p className="text-ink-muted">
-            Just now, we saw majority voting on two separate problems, and how different
-            reasoning across many chains of thought can lead to many different answers. But how
-            does majority voting compare with a single, pure chain of thought? Below, we compare
-            majority voting against greedy decoding on all {M.items.n} {BENCHMARK} problems at{" "}
-            {LEVELS}. <strong className="text-ink">One greedy chain</strong> is the baseline to beat.
+          {/* Section 3 opens on temperature, with the bar chart, then bridges to the
+              vote against one plain chain (author, 2026-11-05). The lead-in is the
+              author's. Temperature is glossed operationally, which is all this page is
+              allowed to say: docs/page_7_refactor.md:225-234 keeps the mechanism, tokens
+              and probability distributions, off this page and on page 10. */}
+          <p data-testid="temperature-lead" className="text-ink-muted">
+            In the figure above, the {F1.n_chains} chains on the first problem gave{" "}
+            {F1.showcase[0].problem.distinct_answers} different answers. Each chain came from the
+            exact same prompt, so why was the reasoning so different across them, even among chains
+            that arrived at the same answer? <strong className="text-ink">Temperature</strong> is
+            the hidden machinery behind this variation. It is a dial, written{" "}
+            <span className="font-mono text-ink">T</span> on every chart on this page. At T = 0,
+            every chain comes back identical, which is what is called{" "}
+            <strong className="text-ink">greedy decoding</strong>. As you increase the temperature,
+            to say 0.3, you introduce variation in the model&apos;s answers, even though the same
+            prompt is being fed. The chart below shows how many different answers arise as you
+            increase the temperature gradually, to {tLabel(Math.max(...HM.temperatures))}.
+          </p>
+          {/* The temperature sweep, framed across the content column like section 4's
+              tokens (author, 2026-11-05). One column per temperature, each labelled with
+              its value, coloured by temperature as in the picker under the line chart,
+              and the best temperature starred. */}
+          <section
+            aria-label="Different answers by temperature"
+            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
+          >
+            <Columns
+              title={`Different answers among ${HM.n_chains} chains, by temperature`}
+              axis="temperature (T)"
+              testId="diversity"
+              cols={SWEEP_BY_T.map((d) => ({
+                key: tLabel(d.temperature),
+                label: tLabel(d.temperature),
+                aria: `T = ${tLabel(d.temperature)}: ${d.mean_distinct.toFixed(1)} different answers`,
+                value: d.mean_distinct,
+                text: d.mean_distinct.toFixed(1),
+                greedy: false,
+                color: tempColour(d.temperature),
+                best: d.temperature === HM.best_temperature,
+              }))}
+            />
+          </section>
+          {/* The bridge, reworded from the author's draft (2026-11-05). Majority voting is
+              counted at the sampled temperatures only: at T = 0 it is greedy decoding,
+              the dashed line. The bar figure has no caption (author, 2026-11-05). */}
+          <p data-testid="sweep-bridge" className="text-ink">
+            Raising the temperature gives more different answers, but more answers do not mean
+            better results. The chart below shows how often majority voting gets the right answer
+            at each of the {BAND_TEMPS.length} temperatures from {tLabel(BAND_TEMPS[0])} to{" "}
+            {tLabel(BAND_TEMPS[BAND_TEMPS.length - 1])}, in steps of 0.1, against{" "}
+            greedy decoding, the dashed line. Step through the temperatures and
+            you&apos;ll find the vote does best at T = {tLabel(HM.best_temperature)}
+            {SWEEP_TIED.length ? `, with ${SWEEP_TIED.join(" and ")} level with it` : ""}.
+            You&apos;ll also see that whichever temperature you pick, the vote at {MOST_N} chains
+            still beats one greedy chain: it solves between {pct(Math.min(...AT_MOST))} and{" "}
+            {pct(Math.max(...AT_MOST))}, against {pct(GREEDY)}. Two chains are the exception, due
+            to tie votes. That is the only place we found majority voting doing worse than greedy
+            decoding.
           </p>
           {/* The widget is the chart and its controls. Every sentence that used to sit
               in here (the band note, the headline, two footnotes) is outside it now or
@@ -1289,8 +1182,16 @@ export function Page7() {
             aria-label="Accuracy against the number of chains"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
+            <TempPicker
+              value={tempSel}
+              onChange={(t) => {
+                recordInteraction(PAGE_N);
+                setTempSel(t);
+              }}
+            />
             <PileChart
               at={voterIx}
+              temp={tempSel}
               showLost={showLost}
               onAt={(i) => {
                 recordInteraction(PAGE_N);
@@ -1303,15 +1204,23 @@ export function Page7() {
               {/* One sentence, measured against the line the reader can see. It used
                   to compare against one SAMPLED chain, which the chart does not draw. */}
               <p aria-live="polite" className="text-sm text-ink">
-                {voters.n === 1 ? (
+                {tempSel === 0 ? (
                   <>
-                    With one chain there is no vote yet: that one sampled chain solves{" "}
+                    At T = 0 every chain is the same greedy chain, so{" "}
+                    {voters.n === 1 ? "one" : voters.n} of them solve{" "}
+                    <strong className="font-mono">{pct(voters.accuracy)}</strong>, exactly what one
+                    greedy chain does: there is nothing to vote on.
+                  </>
+                ) : voters.n === 1 ? (
+                  <>
+                    With one chain at T = {tLabel(tempSel)} there is no vote yet: that one sampled
+                    chain solves{" "}
                     <strong className="font-mono">{pct(voters.accuracy)}</strong>,{" "}
                     {pointsVsGreedy(voters.accuracy)}.
                   </>
                 ) : (
                   <>
-                    With {voters.n} sampled chains, majority voting solves{" "}
+                    With {voters.n} sampled chains at T = {tLabel(tempSel)}, majority voting solves{" "}
                     <strong className="font-mono">{pct(voters.accuracy)}</strong>,{" "}
                     <strong>{pointsVsGreedy(voters.accuracy)}</strong>
                     {voters.accuracy < cold ? `: ${pct(voters.tie_rate)} of these votes tie.` : "."}
@@ -1338,114 +1247,25 @@ export function Page7() {
               </button>
             </div>
           </section>
-          {/* The headline, and the bridge into the temperature card below it. Its guard
-              (some of the 12 is sampling, not counting) is carried by the figure: the vote
-              line starts above the greedy line at one chain, and the readout there says
-              so. See the file header. "Every chain gives the same answer" at T = 0 is the
-              card's own first number, 1.0, and the tests hold it there. */}
-          <p className="text-ink">
-            One greedy chain solves <strong className="font-mono">{pct(F2.gain.bare_cot)}</strong>,
-            which is <strong>{F2.gain.gain_pts.toFixed(0)} points</strong> less than majority voting
-            with {F1.n_chains} sampled chains. Those {F2.gain.gain_pts.toFixed(0)} points exist only
-            because the chains disagree. At T = 0 every chain gives the same answer, so there is
-            nothing to vote on; turn the temperature up and the answers start to differ. Here is by
-            how much:
-          </p>
-          {/* The temperature sweep as a small figure, not a second boxed widget: the
-              chart above is the step's one framed panel, and this is what the paragraph's
-              "Here is by how much:" points at. Bars run on a fixed 0 to n_chains scale,
-              the most different answers that many chains can give, so a full bar would be
-              every chain disagreeing. The pile's temperature is drawn in the majority-
-              voting line's colour, because those are the chains the chart above votes on. */}
-          <figure
-            aria-label={`Different answers among ${F2.diversity[0].n_chains} chains, by temperature`}
-            className="flex max-w-md flex-col gap-1.5"
-          >
-            <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
-              different answers among {F2.diversity[0].n_chains} chains, by temperature
-            </p>
-            {[...F2.diversity]
-              .sort((a, b) => a.temperature - b.temperature)
-              .map((d) => {
-                const pile = d.temperature === F2.hot.temperature;
-                return (
-                  <div
-                    key={d.temperature}
-                    data-testid="diversity-bar"
-                    data-value={d.mean_distinct}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <span
-                      className={`w-14 shrink-0 font-mono tabular-nums ${pile ? "font-semibold text-compute" : "text-ink-muted"}`}
-                    >
-                      T = {d.temperature}
-                    </span>
-                    <span className="flex h-3 flex-1 items-center">
-                      <span
-                        className={`h-full rounded-sm ${pile ? "bg-compute" : "bg-ink-faint/40"}`}
-                        style={{ width: `${(d.mean_distinct / d.n_chains) * 100}%` }}
-                      />
-                      <span
-                        className={`ml-1.5 font-mono tabular-nums ${pile ? "font-semibold text-compute" : "text-ink"}`}
-                      >
-                        {d.mean_distinct.toFixed(1)}
-                      </span>
-                    </span>
-                  </div>
-                );
-              })}
-            <figcaption className="pt-1 text-xs text-ink-muted">
-              Averaged over {F2.diversity[0].n_items} problems; a count of answers, not an
-              accuracy. More is not better: the vote comes out the same at T = {F2.hot.temperature}{" "}
-              and {TIED_WITH_HOT}, and worse above that.
-            </figcaption>
-          </figure>
         </section>
         {/* Step 4. Starts a new grid row explicitly: step 3 has no margin note, so
             without this the section would flow into the note column. */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">4. Sharing a fixed budget between chains</h2>
+          <h2 className="text-xl font-semibold text-ink">4. What majority voting costs</h2>
+          {/* Section 4 is about cost, majority voting against greedy decoding, not about
+              dividing a fixed budget (author, 2026-11-05). */}
           <p className="text-ink-muted">
-            Sixteen chains cost sixteen times the tokens. So what if you do not have sixteen times
-            the budget? Below, a fixed budget of{" "}
-            {F2.budgets.map((b) => tokens(b.budget)).join(", ").replace(/, ([^,]*)$/, " or $1")}{" "}
-            tokens is divided between the chains, and the same chains are also allowed to finish.
-            At every point on the x axis the model gets the same number of chains; the only thing
-            that changes between the lines is how many tokens each chain may use.
+            Majority voting is not free. Every chain is a full answer the model has to write, so
+            each one you add costs as much as the first. Below is every chain the model wrote for
+            the first problem in the figure above: one greedy chain, then the {F1.n_chains} chains
+            the vote counted, each drawn as long as the tokens it wrote.
           </p>
-          {/* The widget is the chart and its one toggle, as in step 3. */}
-          <section
-            aria-label="A fixed budget shared between chains"
-            className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4"
-          >
-            <ForkChart />
-            {showCut ? <CutOffGrid /> : null}
-            <button
-              type="button"
-              aria-pressed={showCut}
-              onClick={() => {
-                recordInteraction(PAGE_N);
-                setShowCut((v) => !v);
-              }}
-              className="inline-flex items-center gap-1.5 self-start rounded border border-compute bg-compute/10 px-2.5 py-1 text-xs font-semibold text-compute transition-colors hover:bg-compute hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-compute focus-visible:ring-offset-1"
-            >
-              <span aria-hidden="true">{showCut ? "▾" : "▸"}</span>
-              {showCut ? "Hide how many chains were cut off" : "Show how many chains were cut off"}
-            </button>
-          </section>
-          <p className="text-ink">
-            Dividing a budget does two things at once. One, it adds chains, and two, it shortens
-            every one of them. The shortening is the one that lands. At {cutLow.n} chains,{" "}
-            {tokens(cutLow.budget)} tokens leaves each chain only {tokens(cutLow.chain_budget)}, and{" "}
-            {pct(cutLow.truncated_rate)} of them are cut off before they finish; even{" "}
-            {tokens(cutHigh.budget)} tokens leaves {tokens(cutHigh.chain_budget)} each, and{" "}
-            {pct(cutHigh.truncated_rate)} are cut off. The vote is counting fragments of arguments
-            rather than arguments.{" "}
-            <strong className="text-ink">Splitting is not what fails, capping is.</strong> Let the
-            same chains run to their own end and the vote indeed works, at {tokens(pileTokens)}{" "}
-            tokens for {last.n} chains vs {tokens(oneChainTokens)} for one. There are two ways of
-            spending here, divide one budget, or let every chain finish. The second one is the
-            winner.
+          <CostFigure />
+          <p data-testid="cost-summary" className="text-ink">
+            {costTop.n} chains write {tokens(costTop.mean_tokens)} tokens per problem, against{" "}
+            {tokens(greedyTokens)} for one greedy chain, about{" "}
+            {Math.round(costTop.mean_tokens / greedyTokens)} times as many, to go from{" "}
+            {pct(GREEDY)} to {pct(costTop.accuracy)}.
           </p>
         </section>
         {/* Step 5. Page 12's closing shape: prose at full width in the reading
@@ -1475,8 +1295,8 @@ export function Page7() {
             chains. It also only ever looks at the answer, never at the reasoning that reached it, so a
             chain can agree with the majority for bad reasons and be counted anyway.{" "}
             <em>
-              Page 8 re-runs this protocol, lands where this page landed, then changes one rule for
-              picking one of the {H.n_chains}: stop counting, start judging.
+              The next step changes one rule for picking one of the {H.n_chains}: stop counting,
+              start judging.
             </em>
           </Handoff>
         </section>

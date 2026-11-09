@@ -67,7 +67,9 @@
  *      rule). The component test sweeps the DOM; this one catches it in the
  *      source, where the fix is obvious.
  */
-import { PAGE5 } from "./page05";
+// The retired page 5 run (100 level 4 and 5 problems), not the page's current runs:
+// its problems are page 6's, so the ladder can pair them.
+import { PAGE5 } from "./page05HowToReason";
 import { PAGE6, WAIT_TABLE, pLabel } from "./page06";
 import { PAGE7 } from "./page07";
 import { PAGE8 } from "./page08";
@@ -143,7 +145,7 @@ function assertSameItems(): number {
     ["page 8's paired comparison", PAGE8.paired.items],
     ["page 9's step grading", PAGE9.run.items],
     ["page 11's hard band", PAGE11.bands.hard.nItems],
-    ["page 15's re-read", PAGE17.run.items],
+    ["page 14's re-read", PAGE17.run.items],
   ];
   const [, first] = counts[0];
   for (const [what, n] of counts) {
@@ -283,13 +285,16 @@ if (WAIT.before / WAIT.table.n !== PAGE5.figure2.bare.accuracy) {
  * the right one. Any page that gains a rung must gain an entry here, and NOTEBOOKS
  * throws rather than silently omitting a source.
  */
-/** A page's download: a zip bundle (notebook, harness, traces) unless `format` says the bare notebook. */
+/** A page's download: a zip bundle (notebook, harness, traces) unless `format` says a bare .ipynb. */
 type NotebookLink = { title: string; href: string; size: string; format?: "zip" | "ipynb" };
-const NOTEBOOK_BY_PAGE: Record<number, NotebookLink> = {
-  // Page 5 links the author's single notebook since 2026-10-14, as page 5 itself does.
-  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/5_CoT.ipynb", size: "0.9 MB", format: "ipynb" },
+const NOTEBOOK_BY_PAGE: Record<number, NotebookLink | NotebookLink[]> = {
+  // Page 5 links the author's two notebooks as plain files, as page 5 itself does.
+  5: [
+    { title: "Zero-shot vs few-shot", href: "/notebooks/5_CoT_ZeroShot-vs-FewShot.ipynb", size: "228 KB", format: "ipynb" },
+    { title: "Base few-shot vs instruct", href: "/notebooks/5_CoT_BaseFewShot-vs-Instruct.ipynb", size: "908 KB", format: "ipynb" },
+  ],
   6: { title: "Thinking longer, and budget forcing", href: "/notebooks/page-06-thinking-longer.zip", size: "2.0 MB" },
-  7: { title: "Sampling and voting", href: "/notebooks/page-07-frequency-voting.zip", size: "3.0 MB" },
+  7: { title: "Sampling and voting", href: "/notebooks/7_FrequencyVoting_InstructModels.ipynb", size: "145 KB", format: "ipynb" },
   8: { title: "Best-of-N and the judges", href: "/notebooks/page-08-best-of-n.zip", size: "9.7 MB" },
   9: { title: "Outcome against process grading", href: "/notebooks/page-09-outcome-vs-process.zip", size: "1.6 MB" },
   10: { title: "The search arm", href: "/notebooks/page-10-search-arm.zip", size: "4.8 MB" },
@@ -386,14 +391,14 @@ export const NOTEBOOKS: ({ page: number } & NotebookLink)[] = [
   ...new Set(LADDER.map((r) => r.page)),
 ]
   .sort((a, b) => a - b)
-  .map((page) => {
+  .flatMap((page) => {
     const meta = NOTEBOOK_BY_PAGE[page];
     if (!meta) {
       throw new Page16DataError(
         `page 16 draws a rung from page ${page} and has no notebook to show for it`,
       );
     }
-    return { page, ...meta };
+    return [meta].flat().map((link) => ({ page, ...link }));
   });
 
 /** How much of a real chain a step checker can actually adjudicate. Page 9's. */
@@ -678,7 +683,7 @@ export const QUESTIONS: Question[] = [
   },
   {
     id: "q13-self-correction",
-    page: 15,
+    page: 14,
     concept: "why unaided revision fails",
     stem: `Ask a model to look over its own answer and fix any mistakes. No hints, no tools, nothing it did not already have. On CommonSenseQA that took GPT-3.5 from ${SC.gpt35Csqa0}% down to ${SC.gpt35Csqa1}%. Why does asking make it worse?`,
     options: [

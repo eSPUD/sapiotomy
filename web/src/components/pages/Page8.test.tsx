@@ -11,7 +11,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { PILE8, pct } from "@/lib/page08Pile";
-import { JUDGES8 } from "@/lib/page08Judges";
 import { Page8 } from "./Page8";
 
 describe("Page 8 (best-of-N and verifiers) component", () => {
@@ -26,7 +25,6 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     render(<Page8 />);
     expect(screen.getByRole("heading", { name: /Generate, judge, keep the best/ })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Best-of-N on \d+ problems/ })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /What a judge is worth/ })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /Chain of thought, majority vote, Best-of-N/ })).toBeInTheDocument();
   });
 
@@ -83,8 +81,8 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     const pills = Array.from(document.querySelectorAll("li")).filter((li) =>
       /^measured/.test(li.textContent ?? ""),
     );
-    // The dots, the bars, and the judges (unless still a placeholder).
-    expect(pills).toHaveLength(JUDGES8.placeholder ? 2 : 3);
+    // The dots and the bars.
+    expect(pills).toHaveLength(2);
     // The dot figure names its own model and problem count.
     const heat = screen.getByText(`${PILE8.rows.length} MATH-500 problems, ${PILE8.nChains} chains each`);
     expect(heat.closest("ul")!.textContent).toContain(PILE8.writer.split("/").pop());
@@ -167,20 +165,6 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     expect(body.indexOf("The verifier is the judge")).toBeLessThan(body.indexOf("Best-of-N on "));
   });
 
-  // Figure 4: Best-of-N once per judge, against the vote. The reading says
-  // which judges clear it, from the data, and the placeholder says it is one.
-  it("draws Best-of-N per judge and names the judges that beat the vote", () => {
-    render(<Page8 />);
-    const chart = screen.getByLabelText(/^Best-of-\d+ with each of \d+ judges/);
-    for (const j of JUDGES8.judges) expect(chart.getAttribute("aria-label")).toContain(`${j.label} ${pct(j.best_of_n)}`);
-    expect(chart.querySelectorAll('[data-beats-vote="true"]')).toHaveLength(JUDGES8.beatVote.length);
-    const reading = screen.getByText(/only when the judge is good enough/).closest("p")!;
-    for (const j of JUDGES8.beatVote) expect(reading.textContent).toContain(j.label);
-    expect(reading.closest("figure")).toBeNull();
-    const pills = chart.closest("figure")!.querySelector("ul")!.textContent!;
-    expect(pills).toContain(JUDGES8.placeholder ? "placeholder" : "measured");
-  });
-
   // What voting left behind gets answered in words, not just in a figure, and
   // "only a little" has to stay true of the numbers.
   it("says what judging recovers of what counting discards", () => {
@@ -213,10 +197,10 @@ describe("Page 8 (best-of-N and verifiers) component", () => {
     }
   });
 
-  it("links the notebook and traces for download", () => {
+  it("links the notebook for download", () => {
     render(<Page8 />);
-    const link = screen.getByRole("link", { name: /download the notebook/i });
-    expect(link).toHaveAttribute("href", "/notebooks/page-08-best-of-n.zip");
+    const link = screen.getByRole("link", { name: /download the Best-of-N notebook/i });
+    expect(link).toHaveAttribute("href", "/notebooks/8_Best_of_N.ipynb");
   });
 
   // Figure 2: every problem as one dot, stacked by its right chains and

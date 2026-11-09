@@ -49,6 +49,14 @@ export const tokens = {
   wrongBright: "#4f7fae",
   correctBright: "#66794d",
 
+  // Crimson: a fourth hue, outside the style guide, for the baseline of a comparison
+  // whose other arms are Sky and Clay (page 5: the problem alone, and the final answer
+  // only). Deliberately DARK: a red as light as Clay would blur into it for
+  // colour-blind readers, so it is told apart by lightness. Ivory text goes on it, not
+  // Slate. Measured in tokens.test.ts.
+  crimson: "#a83a3a",
+  crimsonInk: "#8e2f2f",
+
   // A four-step sequential ramp in Clay, light to dark, for a magnitude (page
   // 3's model-size bins). One hue, lightness falling every step, the light end
   // clearing 2:1 on the surface. Measured in tokens.test.ts.

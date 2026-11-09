@@ -3,18 +3,31 @@
 import { usePathname } from "next/navigation";
 
 /** The foot of every page. Story pages carry the workshop acceptance line and,
- *  right-aligned, the "Built with Claude Code" credit; the landing carries only
- *  the how-to-explore note, since its hero already names the venue. */
+ *  right-aligned, the "Built with Claude Code" credit; the landing carries the
+ *  how-to-explore note, since its hero already names the venue, and under it the
+ *  AI usage disclosure (author, 2026-11-06). */
 export function SubmissionFooter() {
   const landing = usePathname() === "/";
   return (
     <footer className={`mx-auto max-w-[min(90%,2048px)] px-4 ${landing ? "pb-4" : "pb-10"}`}>
       {landing ? (
-        // The landing's note sits centred, with no rule and no credit.
-        <div className="-mt-4 text-center text-sm text-ink-muted">
+        // The landing's note sits left-aligned with the page (author, 2026-11-08), with
+        // no rule and no credit, in small type (author, 2026-11-08): how to explore,
+        // with the hardware the notebooks ran on, then the AI usage disclosure at the
+        // same size and width.
+        <div className="-mt-4 flex flex-col items-start gap-2 text-left text-xs text-ink-muted">
           <p>
-            Read in order, or jump to any chapter. Every figure is interactive: drag the sliders,
-            click the diagrams. Some chapters come with a Python notebook of their code and data.
+            {/* The hardware sentence in the authors' first person, like page 5 (author,
+                2026-11-08). */}
+            <strong className="font-semibold text-ink">How to explore:</strong> Interact with the
+            AI explainable to build intuition. Download the Python notebooks and run your own
+            experiments! We ran the experiment notebooks on Google Colab/RunPod with an NVIDIA
+            A100 GPU with 80 GB of memory.
+          </p>
+          <p>
+            <strong className="font-semibold text-ink">AI usage disclosure:</strong> AI coding
+            assistants, including Claude Code, were used to develop this AI explainable and its
+            Python notebooks.
           </p>
         </div>
       ) : (

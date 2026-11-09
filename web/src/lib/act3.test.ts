@@ -36,7 +36,7 @@ describe("budget forcing (Muennighoff et al., preprint), retained unrendered", (
   it("is preprint-flagged", () => expect(d.citation.preprint).toBe(true));
 });
 
-describe("Page 14: DeepSeek-R1 RL training (Nature)", () => {
+describe("Page 13: DeepSeek-R1 RL training (Nature)", () => {
   const d = curves.deepseekTraining;
   it("pass@1 rises 15.6% -> 71.0%, cons@64 = 86.7%", () => {
     expect(Math.abs(interpolate(d, 0) - 15.6)).toBeLessThan(TOL);
@@ -135,7 +135,7 @@ describe("Old page 16: the cost-accuracy dial, retained unrendered", () => {
   });
 });
 
-describe("Page 15: self-correction (Huang et al., ICLR 2024) + revision chain", () => {
+describe("Page 14: self-correction (Huang et al., ICLR 2024) + revision chain", () => {
   const d = curves.selfCorrection;
   it("GPT-4 on GSM8K declines 95.5 -> 91.5 -> 89.0 across rounds (verbatim)", () => {
     expect(interpolate(d, 0)).toBe(95.5);

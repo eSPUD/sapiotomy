@@ -1,0 +1,242 @@
+mode=FULL  dataset=math500_l45  items=100
+the pile   16 chains at a 2048-token cap  ->  N axis [1, 2, 4, 8, 16] by subsampling
+the split  B=2048 shared by N in [1, 4, 16]  ->  chain budgets [2048, 512, 128]
+the split  B=4096 shared by N in [1, 4, 16]  ->  chain budgets [4096, 1024, 256]
+the split  B=8192 shared by N in [1, 4, 16]  ->  chain budgets [8192, 2048, 512]
+allowed to finish  the pile: 16 chains at a 2048-token cap
+diversity  T in [0.0, 0.3, 0.6, 0.9, 1.2] at N=8 on 30 items
+top_p=0.95   group=8   answer allowance=32
+torch 2.10.0+cu128
+harness 1.5 c1d6d5b18d64
+math500_l45: 100 of 262 available   sha256 9ab2b5792042
+page 6's draw: the same
+clustering, on made-up answers so the rule is visible before it is used:
+   '\\frac{1}{2}'   -> class '\\frac{1}{2}'
+   '0.5'            -> class '\\frac{1}{2}'
+   '1,024'          -> class '1,024'
+   '1024'           -> class '1,024'
+   '3'              -> class '3'
+   '\\frac{1}{2}'   -> class '\\frac{1}{2}'
+   '0.500'          -> class '\\frac{1}{2}'
+   7 answers, 3 distinct by string, 3 classes
+FULL: generations are made below
+Using NVIDIA CUDA GPU
+[1/4] fetch      Qwen/Qwen2.5-3B-Instruct
+         0.0s  (already cached, 6.18 GB on disk)
+[2/4] load       tokenizer and weights
+Loading weights:   0%|          | 0/434 [00:00<?, ?it/s]Loading weights: 100%|██████████| 434/434 [00:00<00:00, 26215.53it/s]
+         0.3s
+[3/4] move       to cuda
+         0.5s
+[4/4] warm up    16 tokens
+         0.4s  ~40.0 tokens/s
+
+ready: Qwen/Qwen2.5-3B-Instruct  3.09B params  torch.bfloat16  on cuda
+harness 1.5 (c1d6d5b18d64): 54 token reconstructions across split characters and every truncation point, numerics OK
+
+end-of-turn ids: [151643, 151645]
+[20:30:08] t0.00-c2048          test/algebra/893.json                      1/100      94 tok/s  eta  0.2 h
+[20:30:14] t0.00-c2048          test/intermediate_algebra/1279.json        2/100      94 tok/s  eta  0.2 h
+[20:30:21] t0.00-c2048          test/algebra/2277.json                     3/100      94 tok/s  eta  0.2 h
+[20:30:25] t0.00-c2048          test/geometry/615.json                     4/100      94 tok/s  eta  0.2 h
+[20:30:47] t0.00-c2048          test/intermediate_algebra/1063.json        5/100      93 tok/s  eta  0.2 h
+[20:30:55] t0.00-c2048          test/geometry/711.json                     6/100      94 tok/s  eta  0.2 h
+[20:31:02] t0.00-c2048          test/counting_and_probability/430.json     7/100      94 tok/s  eta  0.2 h
+[20:31:09] t0.00-c2048          test/intermediate_algebra/2152.json        8/100      94 tok/s  eta  0.2 h
+[20:31:13] t0.00-c2048          test/counting_and_probability/894.json     9/100      95 tok/s  eta  0.2 h
+[20:31:17] t0.00-c2048          test/intermediate_algebra/1510.json       10/100      95 tok/s  eta  0.2 h
+[20:31:19] t0.00-c2048          test/prealgebra/2057.json                 11/100      95 tok/s  eta  0.2 h
+[20:31:26] t0.00-c2048          test/intermediate_algebra/1454.json       12/100      95 tok/s  eta  0.2 h
+[20:31:30] t0.00-c2048          test/counting_and_probability/1114.json    13/100      95 tok/s  eta  0.2 h
+[20:31:42] t0.00-c2048          test/geometry/229.json                    14/100      95 tok/s  eta  0.2 h
+[20:31:48] t0.00-c2048          test/algebra/2430.json                    15/100      96 tok/s  eta  0.2 h
+[20:31:52] t0.00-c2048          test/number_theory/911.json               16/100      96 tok/s  eta  0.2 h
+[20:32:01] t0.00-c2048          test/intermediate_algebra/102.json        17/100      96 tok/s  eta  0.2 h
+[20:32:15] t0.00-c2048          test/intermediate_algebra/1779.json       18/100      96 tok/s  eta  0.2 h
+[20:32:18] t0.00-c2048          test/counting_and_probability/803.json    19/100      96 tok/s  eta  0.2 h
+[20:32:29] t0.00-c2048          test/intermediate_algebra/956.json        20/100      96 tok/s  eta  0.2 h
+[20:32:37] t0.00-c2048          test/number_theory/753.json               21/100      96 tok/s  eta  0.2 h
+[20:32:44] t0.00-c2048          test/precalculus/881.json                 22/100      96 tok/s  eta  0.2 h
+[20:32:54] t0.00-c2048          test/intermediate_algebra/1994.json       23/100      96 tok/s  eta  0.2 h
+[20:32:57] t0.00-c2048          test/geometry/947.json                    24/100      96 tok/s  eta  0.2 h
+[20:33:01] t0.00-c2048          test/counting_and_probability/870.json    25/100      96 tok/s  eta  0.2 h
+[20:33:04] t0.00-c2048          test/prealgebra/1353.json                 26/100      96 tok/s  eta  0.1 h
+[20:33:25] t0.00-c2048          test/algebra/2391.json                    27/100      96 tok/s  eta  0.2 h
+[20:33:31] t0.00-c2048          test/number_theory/483.json               28/100      96 tok/s  eta  0.2 h
+[20:33:34] t0.00-c2048          test/algebra/224.json                     29/100      96 tok/s  eta  0.1 h
+[20:33:48] t0.00-c2048          test/counting_and_probability/1003.json    30/100      96 tok/s  eta  0.1 h
+[20:33:52] t0.00-c2048          test/number_theory/1287.json              31/100      96 tok/s  eta  0.1 h
+[20:33:58] t0.00-c2048          test/algebra/1578.json                    32/100      96 tok/s  eta  0.1 h
+[20:34:02] t0.00-c2048          test/geometry/880.json                    33/100      96 tok/s  eta  0.1 h
+[20:34:13] t0.00-c2048          test/precalculus/323.json                 34/100      96 tok/s  eta  0.1 h
+[20:34:16] t0.00-c2048          test/prealgebra/1423.json                 35/100      96 tok/s  eta  0.1 h
+[20:34:19] t0.00-c2048          test/algebra/2253.json                    36/100      96 tok/s  eta  0.1 h
+[20:34:23] t0.00-c2048          test/counting_and_probability/525.json    37/100      96 tok/s  eta  0.1 h
+[20:34:31] t0.00-c2048          test/intermediate_algebra/1806.json       38/100      96 tok/s  eta  0.1 h
+[20:34:43] t0.00-c2048          test/precalculus/398.json                 39/100      96 tok/s  eta  0.1 h
+[20:34:45] t0.00-c2048          test/counting_and_probability/339.json    40/100      96 tok/s  eta  0.1 h
+[20:34:54] t0.00-c2048          test/precalculus/1199.json                41/100      96 tok/s  eta  0.1 h
+[20:34:58] t0.00-c2048          test/counting_and_probability/216.json    42/100      96 tok/s  eta  0.1 h
+[20:35:04] t0.00-c2048          test/prealgebra/1251.json                 43/100      96 tok/s  eta  0.1 h
+[20:35:10] t0.00-c2048          test/prealgebra/1139.json                 44/100      96 tok/s  eta  0.1 h
+[20:35:15] t0.00-c2048          test/prealgebra/1961.json                 45/100      96 tok/s  eta  0.1 h
+[20:35:23] t0.00-c2048          test/algebra/1837.json                    46/100      96 tok/s  eta  0.1 h
+[20:35:26] t0.00-c2048          test/prealgebra/951.json                  47/100      96 tok/s  eta  0.1 h
+[20:35:33] t0.00-c2048          test/number_theory/357.json               48/100      96 tok/s  eta  0.1 h
+[20:35:42] t0.00-c2048          test/intermediate_algebra/232.json        49/100      96 tok/s  eta  0.1 h
+[20:35:47] t0.00-c2048          test/algebra/1184.json                    50/100      96 tok/s  eta  0.1 h
+[20:35:51] t0.00-c2048          test/counting_and_probability/1014.json    51/100      96 tok/s  eta  0.1 h
+[20:36:05] t0.00-c2048          test/precalculus/44.json                  52/100      96 tok/s  eta  0.1 h
+[20:36:11] t0.00-c2048          test/precalculus/768.json                 53/100      96 tok/s  eta  0.1 h
+[20:36:16] t0.00-c2048          test/algebra/2570.json                    54/100      96 tok/s  eta  0.1 h
+[20:36:22] t0.00-c2048          test/prealgebra/1930.json                 55/100      96 tok/s  eta  0.1 h
+[20:36:31] t0.00-c2048          test/intermediate_algebra/190.json        56/100      96 tok/s  eta  0.1 h
+[20:36:33] t0.00-c2048          test/counting_and_probability/238.json    57/100      96 tok/s  eta  0.1 h
+[20:36:39] t0.00-c2048          test/number_theory/13.json                58/100      96 tok/s  eta  0.1 h
+[20:37:01] t0.00-c2048          test/prealgebra/1646.json                 59/100      95 tok/s  eta  0.1 h
+[20:37:16] t0.00-c2048          test/intermediate_algebra/345.json        60/100      95 tok/s  eta  0.1 h
+[20:37:27] t0.00-c2048          test/intermediate_algebra/1405.json       61/100      95 tok/s  eta  0.1 h
+[20:37:30] t0.00-c2048          test/number_theory/72.json                62/100      95 tok/s  eta  0.1 h
+[20:37:37] t0.00-c2048          test/algebra/791.json                     63/100      96 tok/s  eta  0.1 h
+[20:37:42] t0.00-c2048          test/algebra/873.json                     64/100      96 tok/s  eta  0.1 h
+[20:37:48] t0.00-c2048          test/algebra/2779.json                    65/100      96 tok/s  eta  0.1 h
+[20:37:53] t0.00-c2048          test/counting_and_probability/377.json    66/100      96 tok/s  eta  0.1 h
+[20:37:57] t0.00-c2048          test/algebra/907.json                     67/100      96 tok/s  eta  0.1 h
+[20:38:00] t0.00-c2048          test/intermediate_algebra/591.json        68/100      96 tok/s  eta  0.1 h
+[20:38:05] t0.00-c2048          test/intermediate_algebra/1981.json       69/100      96 tok/s  eta  0.1 h
+[20:38:19] t0.00-c2048          test/intermediate_algebra/662.json        70/100      96 tok/s  eta  0.1 h
+[20:38:26] t0.00-c2048          test/precalculus/1133.json                71/100      96 tok/s  eta  0.1 h
+[20:38:34] t0.00-c2048          test/intermediate_algebra/121.json        72/100      96 tok/s  eta  0.1 h
+[20:38:39] t0.00-c2048          test/intermediate_algebra/2196.json       73/100      96 tok/s  eta  0.1 h
+[20:39:01] t0.00-c2048          test/number_theory/533.json               74/100      96 tok/s  eta  0.1 h
+[20:39:10] t0.00-c2048          test/precalculus/1202.json                75/100      96 tok/s  eta  0.1 h
+[20:39:17] t0.00-c2048          test/intermediate_algebra/47.json         76/100      96 tok/s  eta  0.0 h
+[20:39:20] t0.00-c2048          test/prealgebra/1388.json                 77/100      96 tok/s  eta  0.0 h
+[20:39:42] t0.00-c2048          test/number_theory/820.json               78/100      96 tok/s  eta  0.0 h
+[20:39:47] t0.00-c2048          test/geometry/465.json                    79/100      96 tok/s  eta  0.0 h
+[20:39:58] t0.00-c2048          test/intermediate_algebra/558.json        80/100      96 tok/s  eta  0.0 h
+[20:40:06] t0.00-c2048          test/intermediate_algebra/955.json        81/100      96 tok/s  eta  0.0 h
+[20:40:22] t0.00-c2048          test/number_theory/488.json               82/100      95 tok/s  eta  0.0 h
+[20:40:27] t0.00-c2048          test/algebra/2700.json                    83/100      95 tok/s  eta  0.0 h
+[20:40:31] t0.00-c2048          test/geometry/483.json                    84/100      95 tok/s  eta  0.0 h
+[20:40:36] t0.00-c2048          test/number_theory/1000.json              85/100      95 tok/s  eta  0.0 h
+[20:40:43] t0.00-c2048          test/intermediate_algebra/1354.json       86/100      95 tok/s  eta  0.0 h
+[20:41:05] t0.00-c2048          test/intermediate_algebra/207.json        87/100      95 tok/s  eta  0.0 h
+[20:41:07] t0.00-c2048          test/counting_and_probability/134.json    88/100      95 tok/s  eta  0.0 h
+[20:41:10] t0.00-c2048          test/algebra/1199.json                    89/100      95 tok/s  eta  0.0 h
+[20:41:14] t0.00-c2048          test/prealgebra/1128.json                 90/100      95 tok/s  eta  0.0 h
+[20:41:20] t0.00-c2048          test/number_theory/149.json               91/100      95 tok/s  eta  0.0 h
+[20:41:24] t0.00-c2048          test/algebra/2427.json                    92/100      95 tok/s  eta  0.0 h
+[20:41:30] t0.00-c2048          test/number_theory/1172.json              93/100      95 tok/s  eta  0.0 h
+[20:41:36] t0.00-c2048          test/algebra/686.json                     94/100      95 tok/s  eta  0.0 h
+[20:41:44] t0.00-c2048          test/number_theory/737.json               95/100      95 tok/s  eta  0.0 h
+[20:41:48] t0.00-c2048          test/intermediate_algebra/986.json        96/100      95 tok/s  eta  0.0 h
+[20:41:52] t0.00-c2048          test/geometry/353.json                    97/100      95 tok/s  eta  0.0 h
+[20:41:56] t0.00-c2048          test/number_theory/427.json               98/100      95 tok/s  eta  0.0 h
+[20:42:01] t0.00-c2048          test/geometry/826.json                    99/100      95 tok/s  eta  0.0 h
+[20:42:06] t0.00-c2048          test/algebra/2064.json                   100/100      95 tok/s  eta  0.0 h
+== t0.00-c2048: 100 chains made, 6 reached the 2048-token ceiling
+== greedy, 1 chain, T = 0: 100 chains, 69,320 tokens, 12.10 min
+[20:42:27] t0.30-c2048          test/algebra/893.json                     16/1600     528 tok/s  eta  0.6 h
+[20:43:02] t0.30-c2048          test/intermediate_algebra/1279.json       32/1600     383 tok/s  eta  0.8 h
+[20:43:28] t0.30-c2048          test/algebra/2277.json                    48/1600     411 tok/s  eta  0.7 h
+[20:43:37] t0.30-c2048          test/geometry/615.json                    64/1600     423 tok/s  eta  0.6 h
+[20:44:26] t0.30-c2048          test/intermediate_algebra/1063.json       80/1600     418 tok/s  eta  0.7 h
+[20:44:53] t0.30-c2048          test/geometry/711.json                    96/1600     420 tok/s  eta  0.7 h
+[20:45:20] t0.30-c2048          test/counting_and_probability/430.json   112/1600     414 tok/s  eta  0.7 h
+[20:45:40] t0.30-c2048          test/intermediate_algebra/2152.json      128/1600     417 tok/s  eta  0.7 h
+[20:45:54] t0.30-c2048          test/counting_and_probability/894.json   144/1600     422 tok/s  eta  0.6 h
+[20:46:17] t0.30-c2048          test/intermediate_algebra/1510.json      160/1600     428 tok/s  eta  0.6 h
+[20:46:22] t0.30-c2048          test/prealgebra/2057.json                176/1600     430 tok/s  eta  0.6 h
+[20:46:48] t0.30-c2048          test/intermediate_algebra/1454.json      192/1600     432 tok/s  eta  0.6 h
+[20:47:00] t0.30-c2048          test/counting_and_probability/1114.json   208/1600     434 tok/s  eta  0.5 h
+[20:47:48] t0.30-c2048          test/geometry/229.json                   224/1600     432 tok/s  eta  0.6 h
+[20:48:04] t0.30-c2048          test/algebra/2430.json                   240/1600     438 tok/s  eta  0.6 h
+[20:48:41] t0.30-c2048          test/number_theory/911.json              256/1600     423 tok/s  eta  0.6 h
+[20:49:07] t0.30-c2048          test/intermediate_algebra/102.json       272/1600     424 tok/s  eta  0.6 h
+[20:49:34] t0.30-c2048          test/intermediate_algebra/1779.json      288/1600     428 tok/s  eta  0.6 h
+[20:49:50] t0.30-c2048          test/counting_and_probability/803.json   304/1600     429 tok/s  eta  0.5 h
+[20:50:40] t0.30-c2048          test/intermediate_algebra/956.json       320/1600     424 tok/s  eta  0.6 h
+[20:50:53] t0.30-c2048          test/number_theory/753.json              336/1600     427 tok/s  eta  0.6 h
+[20:51:20] t0.30-c2048          test/precalculus/881.json                352/1600     431 tok/s  eta  0.5 h
+[20:51:58] t0.30-c2048          test/intermediate_algebra/1994.json      368/1600     425 tok/s  eta  0.6 h
+[20:52:11] t0.30-c2048          test/geometry/947.json                   384/1600     427 tok/s  eta  0.5 h
+[20:52:24] t0.30-c2048          test/counting_and_probability/870.json   400/1600     430 tok/s  eta  0.5 h
+[20:52:35] t0.30-c2048          test/prealgebra/1353.json                416/1600     431 tok/s  eta  0.5 h
+[20:52:49] t0.30-c2048          test/algebra/2391.json                   432/1600     432 tok/s  eta  0.5 h
+[20:53:06] t0.30-c2048          test/number_theory/483.json              448/1600     435 tok/s  eta  0.5 h
+[20:53:13] t0.30-c2048          test/algebra/224.json                    464/1600     436 tok/s  eta  0.5 h
+[20:53:55] t0.30-c2048          test/counting_and_probability/1003.json   480/1600     438 tok/s  eta  0.5 h
+[20:54:07] t0.30-c2048          test/number_theory/1287.json             496/1600     439 tok/s  eta  0.4 h
+[20:54:25] t0.30-c2048          test/algebra/1578.json                   512/1600     440 tok/s  eta  0.4 h
+[20:54:50] t0.30-c2048          test/geometry/880.json                   528/1600     439 tok/s  eta  0.4 h
+[20:55:29] t0.30-c2048          test/precalculus/323.json                544/1600     444 tok/s  eta  0.4 h
+[20:55:38] t0.30-c2048          test/prealgebra/1423.json                560/1600     446 tok/s  eta  0.4 h
+[20:55:47] t0.30-c2048          test/algebra/2253.json                   576/1600     447 tok/s  eta  0.4 h
+[20:56:16] t0.30-c2048          test/counting_and_probability/525.json   592/1600     443 tok/s  eta  0.4 h
+[20:56:48] t0.30-c2048          test/intermediate_algebra/1806.json      608/1600     444 tok/s  eta  0.4 h
+[20:57:30] t0.30-c2048          test/precalculus/398.json                624/1600     443 tok/s  eta  0.4 h
+[20:57:38] t0.30-c2048          test/counting_and_probability/339.json   640/1600     444 tok/s  eta  0.4 h
+[20:57:52] t0.30-c2048          test/precalculus/1199.json               656/1600     445 tok/s  eta  0.4 h
+[20:58:08] t0.30-c2048          test/counting_and_probability/216.json   672/1600     445 tok/s  eta  0.4 h
+[20:58:27] t0.30-c2048          test/prealgebra/1251.json                688/1600     446 tok/s  eta  0.4 h
+[20:59:08] t0.30-c2048          test/prealgebra/1139.json                704/1600     440 tok/s  eta  0.4 h
+[20:59:20] t0.30-c2048          test/prealgebra/1961.json                720/1600     441 tok/s  eta  0.4 h
+[20:59:58] t0.30-c2048          test/algebra/1837.json                   736/1600     437 tok/s  eta  0.3 h
+[21:00:07] t0.30-c2048          test/prealgebra/951.json                 752/1600     438 tok/s  eta  0.3 h
+[21:00:25] t0.30-c2048          test/number_theory/357.json              768/1600     440 tok/s  eta  0.3 h
+[21:01:14] t0.30-c2048          test/intermediate_algebra/232.json       784/1600     437 tok/s  eta  0.3 h
+[21:01:27] t0.30-c2048          test/algebra/1184.json                   800/1600     437 tok/s  eta  0.3 h
+[21:01:39] t0.30-c2048          test/counting_and_probability/1014.json   816/1600     438 tok/s  eta  0.3 h
+[21:02:25] t0.30-c2048          test/precalculus/44.json                 832/1600     439 tok/s  eta  0.3 h
+[21:02:56] t0.30-c2048          test/precalculus/768.json                848/1600     438 tok/s  eta  0.3 h
+[21:03:09] t0.30-c2048          test/algebra/2570.json                   864/1600     440 tok/s  eta  0.3 h
+[21:03:33] t0.30-c2048          test/prealgebra/1930.json                880/1600     440 tok/s  eta  0.3 h
+[21:03:57] t0.30-c2048          test/intermediate_algebra/190.json       896/1600     440 tok/s  eta  0.3 h
+[21:04:04] t0.30-c2048          test/counting_and_probability/238.json   912/1600     440 tok/s  eta  0.3 h
+[21:04:41] t0.30-c2048          test/number_theory/13.json               928/1600     436 tok/s  eta  0.3 h
+[21:05:05] t0.30-c2048          test/prealgebra/1646.json                944/1600     437 tok/s  eta  0.3 h
+[21:05:58] t0.30-c2048          test/intermediate_algebra/345.json       960/1600     433 tok/s  eta  0.3 h
+[21:06:21] t0.30-c2048          test/intermediate_algebra/1405.json      976/1600     434 tok/s  eta  0.3 h
+[21:06:28] t0.30-c2048          test/number_theory/72.json               992/1600     435 tok/s  eta  0.2 h
+[21:06:49] t0.30-c2048          test/algebra/791.json                   1008/1600     435 tok/s  eta  0.2 h
+[21:07:03] t0.30-c2048          test/algebra/873.json                   1024/1600     437 tok/s  eta  0.2 h
+[21:07:21] t0.30-c2048          test/algebra/2779.json                  1040/1600     438 tok/s  eta  0.2 h
+[21:07:35] t0.30-c2048          test/counting_and_probability/377.json  1056/1600     439 tok/s  eta  0.2 h
+[21:07:43] t0.30-c2048          test/algebra/907.json                   1072/1600     440 tok/s  eta  0.2 h
+[21:07:52] t0.30-c2048          test/intermediate_algebra/591.json      1088/1600     441 tok/s  eta  0.2 h
+[21:08:05] t0.30-c2048          test/intermediate_algebra/1981.json     1104/1600     442 tok/s  eta  0.2 h
+[21:08:57] t0.30-c2048          test/intermediate_algebra/662.json      1120/1600     440 tok/s  eta  0.2 h
+[21:09:17] t0.30-c2048          test/precalculus/1133.json              1136/1600     440 tok/s  eta  0.2 h
+[21:09:45] t0.30-c2048          test/intermediate_algebra/121.json      1152/1600     441 tok/s  eta  0.2 h
+[21:10:06] t0.30-c2048          test/intermediate_algebra/2196.json     1168/1600     442 tok/s  eta  0.2 h
+[21:10:40] t0.30-c2048          test/number_theory/533.json             1184/1600     440 tok/s  eta  0.2 h
+[21:11:14] t0.30-c2048          test/precalculus/1202.json              1200/1600     440 tok/s  eta  0.2 h
+[21:11:34] t0.30-c2048          test/intermediate_algebra/47.json       1216/1600     441 tok/s  eta  0.2 h
+[21:11:40] t0.30-c2048          test/prealgebra/1388.json               1232/1600     442 tok/s  eta  0.1 h
+[21:12:10] t0.30-c2048          test/number_theory/820.json             1248/1600     442 tok/s  eta  0.1 h
+[21:12:49] t0.30-c2048          test/geometry/465.json                  1264/1600     441 tok/s  eta  0.1 h
+[21:13:17] t0.30-c2048          test/intermediate_algebra/558.json      1280/1600     442 tok/s  eta  0.1 h
+[21:13:43] t0.30-c2048          test/intermediate_algebra/955.json      1296/1600     443 tok/s  eta  0.1 h
+[21:14:12] t0.30-c2048          test/number_theory/488.json             1312/1600     443 tok/s  eta  0.1 h
+[21:14:34] t0.30-c2048          test/algebra/2700.json                  1328/1600     443 tok/s  eta  0.1 h
+[21:14:44] t0.30-c2048          test/geometry/483.json                  1344/1600     443 tok/s  eta  0.1 h
+[21:15:18] t0.30-c2048          test/number_theory/1000.json            1360/1600     441 tok/s  eta  0.1 h
+[21:15:47] t0.30-c2048          test/intermediate_algebra/1354.json     1376/1600     441 tok/s  eta  0.1 h
+[21:16:01] t0.30-c2048          test/intermediate_algebra/207.json      1392/1600     441 tok/s  eta  0.1 h
+[21:16:09] t0.30-c2048          test/counting_and_probability/134.json  1408/1600     442 tok/s  eta  0.1 h
+[21:16:16] t0.30-c2048          test/algebra/1199.json                  1424/1600     442 tok/s  eta  0.1 h
+[21:16:25] t0.30-c2048          test/prealgebra/1128.json               1440/1600     442 tok/s  eta  0.1 h
+[21:16:42] t0.30-c2048          test/number_theory/149.json             1456/1600     444 tok/s  eta  0.1 h
+[21:17:00] t0.30-c2048          test/algebra/2427.json                  1472/1600     443 tok/s  eta  0.1 h
+[21:17:23] t0.30-c2048          test/number_theory/1172.json            1488/1600     443 tok/s  eta  0.0 h
+[21:17:42] t0.30-c2048          test/algebra/686.json                   1504/1600     444 tok/s  eta  0.0 h
+[21:17:54] t0.30-c2048          test/number_theory/737.json             1520/1600     444 tok/s  eta  0.0 h
+[21:18:15] t0.30-c2048          test/intermediate_algebra/986.json      1536/1600     445 tok/s  eta  0.0 h
+[21:18:24] t0.30-c2048          test/geometry/353.json                  1552/1600     445 tok/s  eta  0.0 h
+[21:18:40] t0.30-c2048          test/number_theory/427.json             1568/1600     446 tok/s  eta  0.0 h
+[21:18:59] t0.30-c2048          test/geometry/826.json                  1584/1600     445 tok/s  eta  0.0 h
+[21:19:13] t0.30-c2048          test/algebra/2064.json                  1600/1600     446 tok/s  eta  0.0 h
+== t0.30-c2048: 1600 chains made, 20 reached the 2048-token ceiling
+== majority voting, 16 chains, T = 0.3: 1600 chains, 993,116 tokens, 37.12 min
+wrote /tmp/claude-1000/-home-zenithblade-workspace-research-sapiotomy--claude-worktrees-relaxed-northcutt-81c3b7/954bdfc9-30af-4635-9b78-de4891915aba/scratchpad/s3_timing/timing.json

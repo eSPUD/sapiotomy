@@ -1,208 +1,134 @@
 "use client";
 
 /**
- * Page 5, "Chain of Thought: Reasoning Out Loud" — Act 2 opens on page 4's
- * question: can a machine be walked down a road? In 2026 the answer arrives
- * before the question does. A plain instruct model reasons on a hard maths
- * problem with nothing in the prompt asking it to, so the page cannot be about
- * summoning a chain. It is about what the chain is worth, measured the only way
- * left: by taking it away.
+ * Page 5, "Reasoning in steps" (retitled 2026-11-08; was "Chain of Thought:
+ * Reasoning Out Loud"). Act 2 opens on page 4's
+ * question: can a language model reason through a problem instead of answering
+ * on reflex? This page walks the two ways a model comes to write its steps out:
+ * shown how in the prompt, or trained to.
  *
- * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED, with one labelled
- * exception: section 4's training-cost comparison (2026-09-27) is an estimate
- * from standard formulas, said so in its margin note and sourced there (see
- * COST_ESTIMATE). Nothing is redrawn from a paper and nothing is authored. The source is one run of
- * `notebooks/page_05_how_to_reason.ipynb` — Qwen2.5-Instruct at bf16 (1.5B, 3B,
- * 7B; the 3B is the primary), MATH-500 levels 4 and 5, 100 paired items, greedy,
- * 900 generations. Its `derived.json` is committed verbatim to
- * `web/data/page-05-derived.json` and loaded through `@/lib/page05`, which reads
- * the run's `claims` gates BEFORE any number and throws if one is false. No
- * inference runs at demonstration time; the page replays committed logs.
+ * Rebuilt 2026-10-18 from Shashank's outline (planning/page_5_rework_plan.md and
+ * planning/page_5_handoff.md), keeping the old page's prose wherever it still
+ * holds: the Act 2 opener, the hardware note, section 1's definition and the
+ * close are the author's words.
+ *
+ * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED, by notebooks greedy at bf16
+ * and graded on the first \boxed{} with math_verify. Sections 2 and 3's few-shot
+ * side: `5_CoT_ZeroShot-vs-FewShot.ipynb` (base Qwen2.5 1.5B, 3B, 7B; zero-shot
+ * and 10-shot; 2,048-token limit; 480 random problems), in
+ * `web/data/page-05-few-shot.json`. Section 3's instruct side:
+ * `page_5_instruct_reasoning.ipynb` (Qwen2.5-Instruct 1.5B, 3B, 7B; reasoning and
+ * final answer only; 1,024-token limit; tallied on 495 problems), via
+ * `notebooks/page_05_site_data.py` into `web/data/page-05-derived.json`. Both load
+ * through `@/lib/page05`, which throws if a file's tallies disagree.
  *
  * Layout: page 6's shell. One reading column of numbered steps, each beside its
  * own margin note that scrolls with it. Every step that carries a figure opens
- * with a sentence saying what the figure is a picture OF, because the numbers
- * are meaningless without their denominator: "43" is not a claim, "43 of the
- * same 100 problems" is.
+ * with a sentence saying what the figure is a picture OF: "37.6%" is not a claim,
+ * "37.6% of the same 495 problems" is.
  *
- *   Step 1 — the definition and figure 1, the specimen, merged 2026-09-27 under
- *   planning/reviewer_response_changes_plan.md (page 5, sections 1 and 2). The
- *   two paragraphs are the author's (rewritten 2026-09-27): chain-of-thought
- *   prompting as each step feeding the next, then the classic ask. The 17 × 24
- *   worked example went with that rewrite. No
- *   "for a model the steps ARE the thinking" contrast: the author cut it
- *   2026-09-27, since a person's written steps are their thinking too, so there
- *   is no difference to claim. It ends on the classic way to ASK,
- *   quoting Kojima's trigger ("Let's think step by step.") because the marker
- *   sits on that phrase; the run's own `zero_shot_cot` suffix is a different
- *   string and its arm is not on the page. The second paragraph says today's
- *   models no longer need that prompt, since System 2 is their default, and hands
- *   the reader the split: the 3B forced into System 1 beside its default.
+ *   Step 1: the definition and figure 1 (author, 2026-11-08): three MATH-500
+ *   problems with the dataset's own worked solutions (number_theory/515,
+ *   algebra/858, number_theory/13), set in page 2's chat template: the question
+ *   on the right with the user icon, the solution on the left with the model
+ *   icon, one plain line per step, no highlighting. A stepper sits above the
+ *   chat: "‹ Previous" and "Next ›" as bordered buttons (author, 2026-11-08, so
+ *   they read as controls), the problem's place and level between them.
+ *   NOTHING IS RUN for it: the records are copied verbatim into
+ *   `web/data/page-05-worked-solutions.json` and `@/lib/page05` checks the steps
+ *   rebuild each solution. It replaced the base 3B's zero-shot and few-shot
+ *   replies side by side; the Qwen model card's citation moved to step 2, which
+ *   is where the models are first named.
  *
- *   The token and greedy glosses moved to the glossary, page 17, on
- *   2026-09-27; only the references sit in the margin beside this step. One problem,
- *   one model, one decoding setting, two prompts that differ only by a suffix.
- *   Since 2026-09-27 the figure is a split of two chats set like page 2's (user
- *   and model icons, no bubbles), System 1 beside System 2, with no mode buttons.
- *   Each shows the question alone; the suffix is not on the page. Play shows
- *   both whole replies at once, grouped into intermediate steps, and Reset
- *   clears them. Question and trace are set in `font-code`: they are listings
- *   of what a machine read and wrote. The
- *   instruction condition is NOT a third tab: it is measured, and it lives in the
- *   notebook download (see the load-bearing list below).
+ *   Step 2 (rebuilt 2026-11-08, author): figure 2, a simple vertical bar chart of
+ *   that notebook's results: Qwen2.5 1.5B, 3B and 7B, each zero-shot and with
+ *   10 worked examples, on its own 480 random problems, not the 495 below.
+ *   Shashank's two sentences follow the figure; the rest of the prose is a stand-in
+ *   to iterate on.
  *
- *   Step 2 — figure 2, the page's headline: the McNemar 2x2 as two stacked
- *   bars of the same 100 problems, one per system: solved by both, solved only
- *   by that system, not solved. It replaced a 2x2 matrix, and before that a
- *   100-square grid with a
- *   System 1 / System 2 switch on 2026-09-27 (author): the grid was grouped by
- *   outcome, and readers took its first squares for the first problems. The
- *   four counts are fully determined by the two discordant counts and the two
- *   solve counts the notebook reports. We do not ship per-item outcomes to the
- *   page, so no row may name a problem.
+ *   Step 3: figure 3, the instruct models with no examples (495 problems) against
+ *   the base models with ten (that run's 480: author, 2026-11-08, few-shot
+ *   numbers only). Its opening says what an instruct model is and follows from
+ *   step 2 (author, 2026-10-18); the figure's legend gives each side's prompt
+ *   length. ANY DISCUSSION OF THE RESULTS STILL WAITS FOR THE AUTHOR (handoff,
+ *   section 4).
  *
- *   Step 3 — figure 3, three checkpoints. The claim is the FLAT FLOOR, never
- *   scale: three points are not a scaling law, our trend has no sign flip, and
- *   emergence is page 11's subject. No size axis, no line through the points,
- *   and no caption that can be read as either. Section 1 of the spec.
- *
- *   Step 4 — figure 4, "The cost of a chain of thought" (reframed around tokens
- *   2026-09-27: System 2 writes about a hundred times the tokens of System 1,
- *   yet a million chains cost about a hundred-thousandth of training). Before: This used to be three
- *   stat cards, one of which was a "trade": 95.5x the tokens for 36 points. Two
- *   things were wrong with it. It never said which of the three checkpoints it
- *   was quoting (the 3B, and a reader had no way to know), and putting a ratio
- *   on a card asserts a rate of exchange the run cannot price, because the two
- *   prompts differ by more than the length of what they produce. The cards are
- *   now one pair of axes: median tokens written across, share of the same 100
- *   solved up, six dots for three checkpoints under two prompts. The dots are
- *   deliberately unjoined and the caption says why. What the figure shows is the
- *   thing the cards hid: the tokens move with the PROMPT, in two clusters two
- *   decades apart, while the accuracy moves with the MODEL, up the page inside
- *   each cluster.
- *
- * The apparatus lives in the margin, one note per step, not in a footer. The
- * three-paragraph footnote this page used to end on was doing the notebook's
- * job: a reader who wants the full method downloads the run. What survives in
- * the margin is only what a reader needs while looking at THAT figure. The
- * instruction null and the exemplar rungs went back to the notebook on
- * 2026-08-08: the page shows what the chain is worth, and a note on how a model
- * that already reasons responds to being asked to was prompt engineering the
- * reader had no use for.
- *
- * The notes have been cut twice and the rule that survived both is: a note may
- * say what a reader cannot work out from the figure beside it, and nothing else.
- * The grading provenance went back to the notebook under that rule even though
- * it is true and load-bearing, because a reader looking at 100 squares does not
- * need to know whose `grade_answer` drew them. Anything that reads as method
- * belongs in the download.
+ *   The old step 4 (figure 4, each instruct model reasoning and asked for the final
+ *   answer only) moved verbatim to page 14's step 1 (author, 2026-11-08).
  *
  * Load-bearing and easy to lose:
- *   · the notebook download. Since 2026-10-14 the link is the author's single
- *     notebook, 5_CoT.ipynb, in place of the bundle (notebook, `harness.py` and all
- *     900 traces) that re-derives each figure; see NOTEBOOK_HREF. It sits at the top right of the page, beside the act
- *     kicker; the references sit in right-hand References sidenotes beside the
- *     steps that cite them (Wei, Kojima and the model card beside step 1, the
- *     dataset beside step 2, Kaplan and the Qwen2.5 report beside step 4's
- *     estimate). The run's ledger sits INSIDE step 4's figure card,
- *     where it has the card's width: the margin column wrapped it mid-hash.
- *   · the conditions are named plainly, "reasoning" and "non-reasoning", on
- *     every surface: buttons, cluster labels, aria titles, prose. No euphemism
- *     ("left alone", "forbidden to reason") may come back.
- *   · the instruction null and the exemplar rungs are measured, in the run, and
- *     deliberately NOT on the page (removed 2026-08-08; the claims gate
- *     `instruction_null_bounded` still gates the data load). If they return,
- *     the bound rule returns with them: a BOUND, never a zero, never the word
- *     "nothing" unqualified.
- *   · chain share is a blurt detector and nothing more. It verifies the gag
- *     worked; it is not a measure of how much reasoning happened.
- *   · figure 4's dots stay unjoined, and no sentence on the page may say the
- *     tokens bought the points. Tokens are a cost the page reports, never a
- *     price it quotes: the only thing that moved between the clusters is the
- *     prompt, and page 6 is where length itself becomes the variable.
+ *   · the notebook downloads: two direct .ipynb links, no zip, beside the title,
+ *     each file keeping the name the author gave it.
+ *   · figure 2's annotation, the 3B with few-shot against the 7B with zero-shot: the
+ *     author asked for it to stay. If new numbers break it, ask the author; do not
+ *     just remove it.
+ *   · the conditions are named plainly: no euphemism ("left alone", "forbidden to
+ *     reason") may come back.
+ *   · the worked solutions are ours, "written for this experiment, expanding
+ *     MATH's own solutions". No sentence may present them as MATH's.
  *   · Wei et al. and Kojima et al. are cited for the TECHNIQUES they introduced.
- *     No cite may carry one of our numbers or sit where it implies the data came
- *     from a paper.
+ *     No cite may carry one of our numbers.
+ *   · page 15's ladder still reads the retired page 5 run (`page05HowToReason`),
+ *     whose 100 problems are page 6's. Nothing on this page draws from it.
  */
 
 import { useState } from "react";
 import { Handoff } from "@/components/Handoff";
-import { ChartFrame } from "@/components/ChartFrame";
 import { ModelIcon, UserIcon } from "@/components/ChatIcons";
+import { ChartFrame } from "@/components/ChartFrame";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
 import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE5,
-  SUPPRESSION_TABLE,
+  SHOTS,
+  SHOT_KEYS,
+  SHOT_LABEL,
+  WORKED_SOLUTIONS,
   pct,
-  reasoningSteps,
   tidyMath,
-  type SpecimenTab,
+  type ArmStats,
+  type ShotKey,
+  type WorkedSolution,
 } from "@/lib/page05";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 5;
 
-const F1 = PAGE5.figure1;
-const F2 = PAGE5.figure2;
-const F3 = PAGE5.figure3;
-/** Figure 1's two sides: the forced blurt (System 1) and the bare prompt (System 2). */
-const BLURT_TAB = F1.tabs.find((t) => t.condition === "forced_blurt")!;
-const BARE_TAB = F1.tabs.find((t) => t.condition === "bare")!;
-const CLOSE = PAGE5.close;
-const M = PAGE5.manifest;
-/** The checkpoint every figure above the close is measured on. */
-const PRIMARY_ROW = F3.models.find((m) => m.modelId === PAGE5.figure2.modelId)!;
-/** Section 4's intro: "around 570" and "5 or 6", read off the run. */
-const BARE_MEDIAN_ROUNDED =
-  Math.round(F3.models.reduce((a, m) => a + m.bareMedianTokens, 0) / F3.models.length / 10) * 10;
-const BLURT_MIN = Math.min(...F3.models.map((m) => m.blurtMedianTokens));
-const BLURT_MAX = Math.max(...F3.models.map((m) => m.blurtMedianTokens));
-const BLURT_MEDIAN_RANGE = BLURT_MIN === BLURT_MAX ? `${BLURT_MIN}` : `${BLURT_MIN} or ${BLURT_MAX}`;
+const N = PAGE5.n;
+const BASE = PAGE5.base;
+const INSTRUCT = PAGE5.instruct;
 
 /**
- * The download: the author's notebook, 5_CoT.ipynb, as a single file (author,
- * 2026-10-14; it replaced the zip bundle here). The bundle, with harness.py and
- * the 900 traces this page's figures replay, stays in public/notebooks for page
- * 16 and notebookBundles.test.ts.
+ * Percentage points between two accuracies, as the difference of the two
+ * percentages the page prints (one decimal each), so the reader's subtraction and
+ * the page's agree: 37.6% against 22.8% is 14.8 points.
  */
-const NOTEBOOK_HREF = "/notebooks/5_CoT.ipynb";
-const NOTEBOOK_SIZE = "0.9 MB";
+const pts = (a: number, b: number) => (Math.round(a * 1000) - Math.round(b * 1000)) / 10;
+const ptsLabel = (a: number, b: number) => pts(a, b).toFixed(1);
+
+/**
+ * The downloads: the author's two notebooks as plain files, named as the author
+ * named them. The retired run's bundle, with harness.py and its 900 traces, stays
+ * in public/notebooks for build_trace_report.py and notebookBundles.test.ts.
+ */
+const NOTEBOOK_LINKS = [
+  { label: "zero-shot vs few-shot", href: "/notebooks/5_CoT_ZeroShot-vs-FewShot.ipynb", size: "228 KB" },
+  { label: "base few-shot vs instruct", href: "/notebooks/5_CoT_BaseFewShot-vs-Instruct.ipynb", size: "908 KB" },
+];
 
 /**
  * Numbered in order of first appearance. Wei and Kojima are cited for the
- * techniques they introduced; the model card and the dataset are cited as the
- * instruments the run was made with. Every number on this page is ours, so no
+ * techniques they introduced; the dataset and the model card are cited as the
+ * instruments the runs were made with. Every number on this page is ours, so no
  * entry may carry a figure.
  */
-const REF = { wei: 1, kojima: 2, qwen: 3, math500: 4, kaplan: 5, qwenReport: 6 } as const;
-
-/**
- * Section 4's cost comparison, 2026-09-27. These are ESTIMATES, the one
- * exception to "every number on this page is measured", and the margin note
- * beside section 4 says so. Standard approximations (Kaplan et al. 2020): about
- * 2 operations per parameter per token written, and 6 per parameter per token
- * trained on. The Qwen2.5 report gives the family's pretraining set as 18
- * trillion tokens; whether every size saw all of it is not stated, so the
- * training figure is an upper-end estimate. Page5.test.tsx checks that the
- * words in the prose ("about a hundred-thousandth") still match this maths.
- */
-const PRETRAIN_TOKENS = 18e12;
-export const COST_ESTIMATE = (() => {
-  const params = PRIMARY_ROW.params;
-  /** Operations for the primary model to write one median chain of thought. */
-  const chainFlops = 2 * params * PRIMARY_ROW.bareMedianTokens;
-  /** Operations to train it. */
-  const trainFlops = 6 * params * PRETRAIN_TOKENS;
-  return { chainFlops, trainFlops, millionChainsShare: (1e6 * chainFlops) / trainFlops };
-})();
+const REF = { wei: 1, kojima: 2, math500: 3, qwen: 4, qwenReport: 5 } as const;
 
 /**
  * The trigger Kojima et al. published, quoted as they published it, because the
- * marker beside it sends the reader to that paper. The run's own instruction
- * suffix is a different string and is not on the page.
+ * marker beside it sends the reader to that paper.
  */
 const ZERO_SHOT_COT_TRIGGER = "Let's think step by step.";
 
@@ -228,76 +154,79 @@ function Note({
 
 const chip = "rounded-full border border-grid px-2 py-0.5 text-ink-muted";
 
+/** A run's vitals, inside the figure card they certify (never in the margin). */
+function Ledger({ rows }: { rows: [string, string][] }) {
+  return (
+    <dl className="flex flex-wrap gap-x-6 gap-y-1 border-b border-grid pb-3 font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
+      {rows.map(([k, v]) => (
+        <div key={k} className="flex gap-2">
+          <dt>{k}</dt>
+          <dd className="text-ink">{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /* ------------------------------------------------------------------ figure 1 */
 
 /**
- * One side of figure 1's split: a chat set like page 2's, the user's turn on the
- * right and the model's on the left, each marked by an icon, as plain monospace
- * with no bubbles. Both sides show the question alone. Each reveal is one
- * intermediate step (an instruction with the working it announces), not one
- * line. Play shows both replies whole, at once; there is no streaming.
+ * The worked problem, one at a time, wrapping round the three. Previous and Next
+ * are bordered buttons with their words on them (author, 2026-11-08: bare arrows
+ * were too easy to miss); the arrows are decoration, and each button keeps its
+ * full name for a screen reader.
  */
-function ChatColumn({
-  title,
-  tab,
-  shown,
-}: {
-  title: string;
-  tab: SpecimenTab;
-  shown: boolean;
-}) {
-  const steps = reasoningSteps(tab.steps);
+function ProblemStepper({ active, onProblem }: { active: number; onProblem: (i: number) => void }) {
+  const n = WORKED_SOLUTIONS.length;
+  const w = WORKED_SOLUTIONS[active];
+  const button =
+    "flex items-center gap-1.5 rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink hover:border-compute hover:bg-compute/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-compute";
   return (
-    <section aria-label={title} className="flex min-w-0 flex-col gap-3">
-      <h3 className="text-sm font-semibold text-ink">{title}</h3>
-      <div className="flex flex-1 flex-col gap-5 rounded-lg border border-grid bg-canvas p-3">
-        <div className="flex max-w-[95%] items-start gap-2 self-end">
-          <p data-testid="user-question" className="text-right font-code text-sm text-ink">
-            {tidyMath(F1.question)}
+    // On a phone the label takes its own line above the two buttons, so the buttons
+    // stay side by side; from sm up all three share one row.
+    <div role="group" aria-label="Worked problem" className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 text-xs tabular-nums text-ink-muted">
+      <button type="button" aria-label="Previous problem" onClick={() => onProblem((active + n - 1) % n)} className={button}>
+        <span aria-hidden="true">‹</span> Previous
+      </button>
+      <span aria-live="polite" className="order-first w-full text-right sm:order-none sm:w-auto">
+        Problem: {active + 1} of {n} · {w.subject} · Level: {w.level}
+      </span>
+      <button type="button" aria-label="Next problem" onClick={() => onProblem((active + 1) % n)} className={button}>
+        Next <span aria-hidden="true">›</span>
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Figure 1 (author, 2026-11-08): page 2's chat template, followed as is. The
+ * question is the user's turn on the right, the dataset's worked solution the
+ * reply on the left, each marked by its icon, as plain font-code text with no
+ * bubbles and no highlighting. The solution keeps one line per step, unnumbered.
+ * The stepper sits above the chat.
+ */
+function WorkedFigure({ active, onProblem }: { active: number; onProblem: (i: number) => void }) {
+  const w = WORKED_SOLUTIONS[active];
+  return (
+    <section aria-label="Worked solutions from MATH-500" className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4">
+      <div className="flex justify-end">
+        <ProblemStepper active={active} onProblem={onProblem} />
+      </div>
+      <div className="flex flex-col gap-6 rounded-lg border border-grid bg-canvas p-3">
+        <div className="flex max-w-[90%] items-start gap-2 self-end">
+          <p data-testid="worked-question" className="min-w-0 break-words text-right font-code text-[15px] text-ink">
+            {tidyMath(w.problem)}
           </p>
           <UserIcon />
         </div>
-
-        <div className="flex max-w-[95%] items-start gap-2 self-start">
+        <div className="flex max-w-[90%] items-start gap-2 self-start">
           <ModelIcon />
-          <div data-testid="model-reply" className="flex min-w-0 flex-col gap-2">
-            {!shown ? (
-              <p className="flex items-center gap-2 text-sm text-ink-muted">
-                <span aria-hidden="true" className="animate-pulse text-compute-ink">
-                  ▍
-                </span>
-                press Play to see its reply
+          <div data-testid="worked-steps" className="flex min-w-0 flex-col gap-2 font-code text-[15px] text-ink">
+            {w.steps.map((s, i) => (
+              <p key={i} className="whitespace-pre-wrap break-words">
+                {tidyMath(s)}
               </p>
-            ) : (
-              <ol className="flex flex-col gap-2">
-                {steps.map((s, i) => (
-                  <li key={i} className="flex gap-2 font-code text-sm leading-relaxed text-ink">
-                    {steps.length > 1 ? <span className="shrink-0 text-compute-ink">{i + 1}</span> : null}
-                    <span className="flex min-w-0 flex-col gap-1">
-                      {s.parts.map((part, j) => (
-                        <span key={j} className="whitespace-pre-wrap break-words">
-                          {tidyMath(part)}
-                        </span>
-                      ))}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            )}
-            {shown ? (
-              <p
-                className={`rounded border-l-4 px-3 py-2 ${
-                  tab.correct ? "border-correct bg-correct/15" : "border-wrong bg-wrong/15"
-                }`}
-              >
-                <span className={`font-semibold ${tab.correct ? "text-correct-ink" : "text-wrong-ink"}`}>
-                  {tab.correct ? "✓" : "✗"} Final answer: {tab.extractedAnswer}.
-                </span>{" "}
-                <span className="font-mono text-xs tabular-nums text-ink-muted">
-                  {tab.tokensGenerated} tokens · {steps.length} {steps.length === 1 ? "step" : "steps"}
-                </span>
-              </p>
-            ) : null}
+            ))}
           </div>
         </div>
       </div>
@@ -305,434 +234,333 @@ function ChatColumn({
   );
 }
 
+/* ------------------------------------------------------- figures 2 and 3 */
+
+/** All a dot reads from a run: the two sides of figure 3 come from different runs. */
+type DotArm = Pick<ArmStats, "accuracy" | "medianPromptTokens">;
+
+/** One prompt or model: a dot per size. */
+interface DotSeries {
+  key: string;
+  label: string;
+  fill: string;
+  stroke: string;
+  arms: DotArm[];
+  /** Shown after the label in the legend: figure 3 gives each prompt's length. */
+  note?: string;
+}
+
+const ROWS_W = 660;
+const ROWS_H = 176;
+const ROWS_MARGIN = { top: 8, right: 76, bottom: 40, left: 52 };
+const ROWS_INNER_W = ROWS_W - ROWS_MARGIN.left - ROWS_MARGIN.right;
+const ROWS_INNER_H = ROWS_H - ROWS_MARGIN.top - ROWS_MARGIN.bottom;
+const DOT_R = 5.5;
+
+/**
+ * Figure 3 as dot-and-arrow rows (author, 2026-10-18, replacing grouped bars that
+ * repeated each other): one row per model size, a dot where it starts (the first
+ * series), an arrow to where it ends (the second), the share of problems solved
+ * at each end, and the gain in points at the right.
+ * Sizes are rows, not an axis: three sizes are not a trend.
+ */
+function ArrowRows({ id, title, series, sizes }: { id: string; title: string; series: [DotSeries, DotSeries]; sizes: string[] }) {
+  const x = (accuracy: number) => Math.round(accuracy * ROWS_INNER_W * 100) / 100;
+  const rowH = ROWS_INNER_H / sizes.length;
+  const [from, to] = series;
+  const arrowId = `${id}-arrow`;
+  return (
+    <ChartFrame
+      title={title}
+      width={ROWS_W}
+      height={ROWS_H}
+      margin={ROWS_MARGIN}
+      xLabel="percentage of problems solved"
+    >
+      <defs>
+        <marker id={arrowId} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" className={to.fill} />
+        </marker>
+      </defs>
+      {[0, 25, 50, 75, 100].map((t) => (
+        <g key={t}>
+          <line x1={x(t / 100)} x2={x(t / 100)} y1={0} y2={ROWS_INNER_H} className="stroke-grid" strokeWidth={1} />
+          <text x={x(t / 100)} y={ROWS_INNER_H + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
+            {t}
+          </text>
+        </g>
+      ))}
+      {sizes.map((size, i) => {
+        const y = i * rowH + rowH / 2;
+        const a = from.arms[i].accuracy;
+        const b = to.arms[i].accuracy;
+        return (
+          <g key={size} data-testid={`row-${size}`}>
+            <text x={-10} y={y + 5} textAnchor="end" className="fill-ink text-sm font-semibold">
+              {size}
+            </text>
+            <line
+              x1={x(a) + DOT_R + 1}
+              x2={x(b) - DOT_R - 1}
+              y1={y}
+              y2={y}
+              className={to.stroke}
+              strokeWidth={2}
+              markerEnd={`url(#${arrowId})`}
+            />
+            {[
+              { s: from, acc: a, labelX: x(a) - DOT_R - 5, anchor: "end" as const },
+              { s: to, acc: b, labelX: x(b) + DOT_R + 5, anchor: "start" as const },
+            ].map(({ s, acc, labelX, anchor }) => (
+              <g key={s.key} data-testid={`dot-${size}-${s.key}`}>
+                <circle cx={x(acc)} cy={y} r={DOT_R} className={`${s.fill} stroke-surface`} strokeWidth={1.5}>
+                  <title>{`${size}, ${s.label}: ${pct(acc, 1)}`}</title>
+                </circle>
+                <text x={labelX} y={y + 4} textAnchor={anchor} className="fill-ink text-xs tabular-nums">
+                  {pct(acc, 1)}
+                </text>
+              </g>
+            ))}
+            <text x={ROWS_INNER_W + 10} y={y + 4} className="fill-ink text-xs font-semibold tabular-nums">
+              {`${pts(b, a) >= 0 ? "+" : ""}${ptsLabel(b, a)} pts`}
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
+  );
+}
+
+function SeriesLegend({ series }: { series: DotSeries[] }) {
+  return (
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
+      {series.map((s, k) => (
+        <li key={s.key} className="flex items-center gap-1.5">
+          <svg aria-hidden="true" width="12" height="12">
+            <circle cx="6" cy="6" r="5" className={s.fill} />
+          </svg>
+          {k === 0 ? "from" : "to"}: {s.label}
+          {s.note ? <span className="font-mono tabular-nums text-ink">· {s.note}</span> : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const SIZES = BASE.map((m) => m.size);
+
+/**
+ * The page's colours (author, 2026-10-18): crimson for the baseline (the
+ * problem alone in figure 2), Sky blue for few-shot (figures 2 and 3), Clay orange
+ * for instruct models reasoning (figure 3). Crimson is dark so it stays apart from Clay for colour-blind readers.
+ */
+const FEW_SHOT = { fill: "fill-wrong", stroke: "stroke-wrong" };
+const INSTRUCT_REASONING = { fill: "fill-compute", stroke: "stroke-compute" };
+
 /* ------------------------------------------------------------------ figure 2 */
 
 /**
- * Figure 2's bars: the notebook's paired table as two stacked bars of the same
- * 100 problems. The gag is the baseline and the chain is the change, so
- * `beforeOnly` is solved only in System 1 and `afterOnly` only in System 2.
- * Getting that backwards swaps 4 and 40, so Page5.test.tsx checks each bar's
- * solved segments against its solve count.
+ * Figure 2's two conditions keep the page's colours: crimson for the baseline
+ * (zero-shot, the problem alone), and Sky for few-shot.
  */
-const SOLVED_BARS = [
-  {
-    label: "System 1",
-    solved: PAGE5.figure2.blurt.nCorrect,
-    segments: [
-      { key: "both", count: SUPPRESSION_TABLE.both },
-      { key: "only", count: SUPPRESSION_TABLE.beforeOnly },
-      { key: "unsolved", count: SUPPRESSION_TABLE.n - PAGE5.figure2.blurt.nCorrect },
-    ],
-  },
-  {
-    label: "System 2",
-    solved: PAGE5.figure2.bare.nCorrect,
-    segments: [
-      { key: "both", count: SUPPRESSION_TABLE.both },
-      { key: "only", count: SUPPRESSION_TABLE.afterOnly },
-      { key: "unsolved", count: SUPPRESSION_TABLE.n - PAGE5.figure2.bare.nCorrect },
-    ],
-  },
-] as const;
+const SHOT_FILL: Record<ShotKey, string> = {
+  zero_shot: "fill-crimson",
+  "10_shot": "fill-wrong",
+};
 
 /**
- * Two steps of the cyan size ramp for the two kinds of solved (validated as an
- * ordinal pair, and both carry paper text at AA), and the neutral grid for not
- * solved, which reads as absence rather than as a third category.
+ * Figure 2's annotation (author, 2026-11-08): the 3B with few-shot and the 7B with
+ * zero-shot, outlined and bracketed. Page5.test.tsx guards the claim against the data.
  */
-const SEGMENT_STYLE = {
-  both: { fill: "fill-size-4", text: "fill-canvas", name: "solved by both" },
-  only: { fill: "fill-size-3", text: "fill-canvas", name: "solved only by this system" },
-  unsolved: { fill: "fill-grid", text: "fill-ink", name: "not solved" },
-} as const;
+const ANNOTATED: [string, ShotKey][] = [
+  ["Qwen2.5-3B", "10_shot"],
+  ["Qwen2.5-7B", "zero_shot"],
+];
+const ANNOTATED_NOTE = "3B with few-shot beats 7B with zero-shot";
+const isAnnotated = (label: string, k: ShotKey) => ANNOTATED.some(([l, key]) => l === label && key === k);
 
-const SOLVED_W = 660;
-const SOLVED_H = 150;
-const SOLVED_MARGIN = { top: 12, right: 84, bottom: 40, left: 74 };
-const SOLVED_INNER_W = SOLVED_W - SOLVED_MARGIN.left - SOLVED_MARGIN.right;
-const SOLVED_INNER_H = SOLVED_H - SOLVED_MARGIN.top - SOLVED_MARGIN.bottom;
+/** A bar's value as printed, one decimal like figure 3's: 38 reads "38.0%". */
+const shotPct = (v: number) => `${v.toFixed(1)}%`;
+
+/** The condition's name printed on its bar: whichever ink reads on that fill (5:1 or better). */
+const SHOT_ON_BAR: Record<ShotKey, string> = {
+  zero_shot: "fill-surface",
+  "10_shot": "fill-ink",
+};
+
+/** The run's model sizes, from the notebook's names ("Qwen2.5-0.5B" is "0.5B"). */
+const SHOT_SIZES = SHOTS.rows.map((r) => r.label.replace(/^Qwen2\.5-/, ""));
+/** "four sizes" in the prose, spelled out the way the page writes small counts. */
+const SIZE_COUNT_WORD =
+  ["no", "one", "two", "three", "four", "five", "six"][SHOT_SIZES.length] ?? String(SHOT_SIZES.length);
+
+const SHOT_W = 660;
+const SHOT_H = 300;
+const SHOT_MARGIN = { top: 16, right: 16, bottom: 44, left: 48 };
+const SHOT_INNER_W = SHOT_W - SHOT_MARGIN.left - SHOT_MARGIN.right;
+const SHOT_INNER_H = SHOT_H - SHOT_MARGIN.top - SHOT_MARGIN.bottom;
+
 /**
- * Every segment carries its count, the thin "3" and "4" included (author,
- * 2026-09-27). At text-xs a digit is about 7px, and the 3 is about 13px wide
- * after its gap, so a single digit fits; the check only guards a future run
- * whose counts outgrow their segment.
+ * Figure 2 (author, 2026-11-08): a simple vertical bar chart of the few-shot
+ * notebook's results. One group per model, two bars in each, zero-shot and
+ * 10-shot, each the percent of the run's problems solved. The y axis runs 0 to
+ * 100, so a bar's height is its share of the whole set.
  */
-const segmentFits = (count: number, w: number) => w >= String(count).length * 7 + 2;
-
-function SolvedChart() {
-  const n = SUPPRESSION_TABLE.n;
-  const x = (v: number) => (v / n) * SOLVED_INNER_W;
-  const rowH = SOLVED_INNER_H / SOLVED_BARS.length;
-  const barH = 28;
+function ShotBars() {
+  const rows = SHOTS.rows;
+  const y = (v: number) => SHOT_INNER_H - (v / 100) * SHOT_INNER_H;
+  const groupW = SHOT_INNER_W / rows.length;
+  const gap = 3;
+  // Wide enough to carry the condition's name on the bar, read horizontally.
+  const barW = Math.min(64, (groupW - 24 - (SHOT_KEYS.length - 1) * gap) / SHOT_KEYS.length);
+  const clusterW = SHOT_KEYS.length * barW + (SHOT_KEYS.length - 1) * gap;
+  const annotated = ANNOTATED.map(([label, k]) => {
+    const i = rows.findIndex((r) => r.label === label);
+    if (i < 0) throw new Error(`page 5: figure 2 has no bars for ${label}`);
+    const cx = i * groupW + (groupW - clusterW) / 2 + SHOT_KEYS.indexOf(k) * (barW + gap) + barW / 2;
+    return { cx, v: rows[i].solved[k] };
+  });
+  const bracketY = y(60);
   return (
     <ChartFrame
-      title={`The same ${n} problems, stacked for each system. System 1 solves ${SOLVED_BARS[0].solved}: ${SUPPRESSION_TABLE.both} solved by both and ${SUPPRESSION_TABLE.beforeOnly} only by System 1. System 2 solves ${SOLVED_BARS[1].solved}: the same ${SUPPRESSION_TABLE.both} and ${SUPPRESSION_TABLE.afterOnly} only by System 2.`}
-      width={SOLVED_W}
-      height={SOLVED_H}
-      margin={SOLVED_MARGIN}
-      xLabel={`problems, of the same ${n}`}
+      title={`Percent of MATH-500 problems solved by Qwen2.5 base models with zero and 10 worked examples in the prompt. ${rows
+        .map((r) => `${r.label}: ${SHOT_KEYS.map((k) => `${SHOT_LABEL[k]} ${shotPct(r.solved[k])}`).join(", ")}`)
+        .join(". ")}. ${ANNOTATED_NOTE}.`}
+      width={SHOT_W}
+      height={SHOT_H}
+      margin={SHOT_MARGIN}
+      yLabel="Accuracy (%)"
     >
       {[0, 25, 50, 75, 100].map((t) => (
-        <text key={t} x={x(t)} y={SOLVED_INNER_H + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
-          {t}
-        </text>
+        <g key={t}>
+          <line x1={0} x2={SHOT_INNER_W} y1={y(t)} y2={y(t)} className="stroke-grid" strokeWidth={1} />
+          <text x={-8} y={y(t) + 4} textAnchor="end" className="fill-ink-muted text-[11px]">
+            {t}
+          </text>
+        </g>
       ))}
-      {SOLVED_BARS.map((bar, i) => {
-        const y = i * rowH + rowH / 2 - barH / 2;
-        let start = 0;
+      {rows.map((r, i) => {
+        const x0 = i * groupW + (groupW - clusterW) / 2;
         return (
-          <g key={bar.label}>
-            <text x={-10} y={y + barH / 2 + 4} textAnchor="end" className="fill-ink text-sm font-semibold">
-              {bar.label}
-            </text>
-            {bar.segments.map((seg) => {
-              const x0 = x(start);
-              start += seg.count;
-              // A 2px paper gap between segments, taken from the segment's own width.
-              const w = Math.max(0, x(seg.count) - (start < n ? 2 : 0));
-              const style = SEGMENT_STYLE[seg.key];
+          <g key={r.modelId} data-testid={`shots-${r.label}`}>
+            {SHOT_KEYS.map((k, j) => {
+              const x = x0 + j * (barW + gap);
+              const v = r.solved[k];
               return (
-                <g key={seg.key} data-testid={`bar-${bar.label}-${seg.key}`}>
-                  <rect x={x0} y={y} width={w} height={barH} className={style.fill}>
-                    <title>{`${bar.label}: ${seg.count} ${style.name}`}</title>
+                <g key={k}>
+                  <rect
+                    x={x}
+                    y={y(v)}
+                    width={barW}
+                    height={SHOT_INNER_H - y(v)}
+                    className={`${SHOT_FILL[k]}${isAnnotated(r.label, k) ? " stroke-ink" : ""}`}
+                    strokeWidth={isAnnotated(r.label, k) ? 1.5 : undefined}
+                  >
+                    <title>{`${r.label}, ${SHOT_LABEL[k]}: ${shotPct(v)}`}</title>
                   </rect>
-                  {segmentFits(seg.count, w) ? (
-                    <text
-                      x={x0 + w / 2}
-                      y={y + barH / 2 + 4}
-                      textAnchor="middle"
-                      className={`${style.text} pointer-events-none text-xs font-semibold tabular-nums`}
-                    >
-                      {seg.count}
-                    </text>
-                  ) : null}
+                  <text x={x + barW / 2} y={y(v) - 5} textAnchor="middle" className="fill-ink text-[10px] tabular-nums">
+                    {shotPct(v)}
+                  </text>
+                  <text
+                    x={x + barW / 2}
+                    y={SHOT_INNER_H - 8}
+                    textAnchor="middle"
+                    className={`${SHOT_ON_BAR[k]} text-[11px] font-semibold`}
+                  >
+                    {SHOT_LABEL[k]}
+                  </text>
                 </g>
               );
             })}
-            <text x={SOLVED_INNER_W + 8} y={y + barH / 2 + 4} className="fill-ink text-xs tabular-nums">
-              {bar.solved} solved
-            </text>
-          </g>
-        );
-      })}
-    </ChartFrame>
-  );
-}
-
-/* ------------------------------------------------------------------ figure 3 */
-
-const FLOOR_W = 660;
-const FLOOR_H = 250;
-const FLOOR_MARGIN = { top: 30, right: 30, bottom: 44, left: 122 };
-const FLOOR_INNER_W = FLOOR_W - FLOOR_MARGIN.left - FLOOR_MARGIN.right;
-const FLOOR_INNER_H = FLOOR_H - FLOOR_MARGIN.top - FLOOR_MARGIN.bottom;
-
-/**
- * Three checkpoints, each bar split at the accuracy it keeps non-reasoning.
- * The shaded band is the claim: gagged, every model lands
- * in the same narrow strip, and the strip does not move with size. There is no
- * size axis and no line through the points, deliberately.
- */
-function FloorChart() {
-  const rows = F3.models;
-  const maxBlurt = Math.max(...rows.map((m) => m.blurtAccuracy));
-  const x = (v: number) => (v / 100) * FLOOR_INNER_W;
-  const rowH = FLOOR_INNER_H / rows.length;
-  const barH = 22;
-  const crossX = x(F3.cross.ungagged_small_accuracy * 100);
-
-  return (
-    <ChartFrame
-      title={`Share of 100 MATH-500 problems solved by three Qwen2.5-Instruct checkpoints, each bar split into the part it keeps non-reasoning and the part its reasoning adds. Non-reasoning: ${rows.map((m) => `${m.label} ${pct(m.blurtAccuracy)}`).join(", ")}. Reasoning: ${rows.map((m) => `${m.label} ${pct(m.bareAccuracy)}`).join(", ")}.`}
-      width={FLOOR_W}
-      height={FLOOR_H}
-      margin={FLOOR_MARGIN}
-      xLabel="percentage of problems solved"
-    >
-      {/* the floor: every gagged bar ends inside this strip */}
-      <rect x={0} y={0} width={x(maxBlurt * 100)} height={FLOOR_INNER_H} className="fill-wrong opacity-10" />
-      <line
-        x1={x(maxBlurt * 100)}
-        x2={x(maxBlurt * 100)}
-        y1={0}
-        y2={FLOOR_INNER_H}
-        className="stroke-wrong"
-        strokeWidth={1}
-        strokeDasharray="3 3"
-      />
-      <text x={x(maxBlurt * 100) + 6} y={-10} className="fill-wrong-ink text-[11px] font-semibold">
-        the floor: non-reasoning, all three land in here
-      </text>
-
-      {/* gridlines */}
-      {[0, 25, 50, 75, 100].map((t) => (
-        <g key={t}>
-          <line x1={x(t)} x2={x(t)} y1={0} y2={FLOOR_INNER_H} className="stroke-grid" strokeWidth={1} />
-          <text x={x(t)} y={FLOOR_INNER_H + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
-            {t}
-          </text>
-        </g>
-      ))}
-
-      {/* the cross-model comparison, as a guide the eye can land on */}
-      <line
-        x1={crossX}
-        x2={crossX}
-        y1={0}
-        y2={FLOOR_INNER_H}
-        className="stroke-compute"
-        strokeWidth={1}
-        strokeDasharray="4 4"
-      />
-
-      {rows.map((m, i) => {
-        const y = i * rowH + rowH / 2 - barH / 2;
-        const kept = x(m.blurtAccuracy * 100);
-        const added = x(m.bareAccuracy * 100) - kept;
-        return (
-          <g key={m.modelId}>
-            <text x={-10} y={y + barH / 2 + 4} textAnchor="end" className="fill-ink text-xs">
-              {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
-            </text>
-            <text x={-10} y={y + barH / 2 + 17} textAnchor="end" className="fill-ink-muted text-[10px]">
-              {m.quant}
-            </text>
-            <rect x={0} y={y} width={kept} height={barH} className="fill-wrong" />
-            <rect x={kept} y={y} width={added} height={barH} className="fill-compute" />
-            <text x={kept + added + 8} y={y + barH / 2 + 4} className="fill-ink text-xs tabular-nums">
-              {pct(m.bareAccuracy)}
-            </text>
             <text
-              x={kept + added / 2}
-              y={y + barH / 2 + 4}
+              x={i * groupW + groupW / 2}
+              y={SHOT_INNER_H + 18}
               textAnchor="middle"
-              className="fill-ink text-[11px] font-semibold tabular-nums"
+              className="fill-ink text-xs font-semibold"
             >
-              +{m.deltaPts}
+              {r.label}
             </text>
           </g>
         );
       })}
-    </ChartFrame>
-  );
-}
-
-/* ------------------------------------------------------------------ close */
-
-const COST_W = 700;
-const COST_H = 340;
-const COST_MARGIN = { top: 16, right: 92, bottom: 50, left: 54 };
-const COST_INNER_W = COST_W - COST_MARGIN.left - COST_MARGIN.right;
-const COST_INNER_H = COST_H - COST_MARGIN.top - COST_MARGIN.bottom;
-/** Three decades, because 6 tokens and 573 share no linear axis worth reading. */
-const COST_DECADES = 3;
-/** Percent at the top of the accuracy axis: the reasoning 7B reaches 60. */
-const COST_Y_MAX = 70;
-/** The log axis's minor ticks: 2 to 9 times each decade, 2 to 900. */
-const COST_X_MINOR = Array.from({ length: COST_DECADES }, (_, d) =>
-  [2, 3, 4, 5, 6, 7, 8, 9].map((m) => m * 10 ** d),
-).flat();
-/** A gridline every 10 points, the top of the axis included (author, 2026-09-27). */
-const COST_Y_TICKS = Array.from({ length: COST_Y_MAX / 10 + 1 }, (_, i) => i * 10);
-
-/**
- * Model size is encoded by marker SHAPE, one per model in size order, with a
- * legend (author, 2026-09-27; an area-scaled dot was tried first and replaced).
- * Colour stays on the prompt, so the two encodings never compete.
- */
-type MarkerShape = "circle" | "square" | "triangle";
-const MARKER_SHAPES: readonly MarkerShape[] = ["circle", "square", "triangle"];
-const shapeOf = (modelId: string): MarkerShape =>
-  MARKER_SHAPES[F3.models.findIndex((m) => m.modelId === modelId)];
-
-/** One marker, centred on (cx, cy), about 11px across whatever its shape. */
-function Marker({
-  shape,
-  cx,
-  cy,
-  className,
-  strokeWidth,
-}: {
-  shape: MarkerShape;
-  cx: number;
-  cy: number;
-  className: string;
-  strokeWidth: number;
-}) {
-  if (shape === "square") {
-    return (
-      <rect
-        data-shape={shape}
-        x={cx - 4.5}
-        y={cy - 4.5}
-        width={9}
-        height={9}
-        className={className}
-        strokeWidth={strokeWidth}
-      />
-    );
-  }
-  if (shape === "triangle") {
-    return (
-      <path
-        data-shape={shape}
-        d={`M ${cx} ${cy - 6} L ${cx + 5.5} ${cy + 4} L ${cx - 5.5} ${cy + 4} Z`}
-        className={className}
-        strokeWidth={strokeWidth}
-      />
-    );
-  }
-  return <circle data-shape={shape} cx={cx} cy={cy} r={5} className={className} strokeWidth={strokeWidth} />;
-}
-
-/** Short enough to sit beside a dot: "Qwen2.5-1.5B-Instruct" is not. */
-const sizeLabel = (params: number) => `${Number((params / 1e9).toFixed(1))}B`;
-
-/**
- * The close, as one pair of axes: across, the median tokens a checkpoint wrote
- * per problem; up, the share of the same 100 problems it solved. Six dots,
- * three checkpoints under each of two prompts.
- *
- * Deliberately six unconnected dots. Joining a checkpoint's two dots would draw
- * an arrow from tokens to accuracy, and this run cannot support that arrow: the
- * two prompts differ by more than their length. What the figure IS allowed to
- * say is where each named checkpoint sits, which is what the reader could not
- * work out from a card that never said which model it was measuring.
- */
-function CostChart() {
-  const rows = F3.models;
-  /** Rounded so the server and client log10 emit the same string (hydration). */
-  const px = (v: number) => Math.round(v * 100) / 100;
-  const x = (tokens: number) => px((Math.log10(Math.max(tokens, 1)) / COST_DECADES) * COST_INNER_W);
-  const y = (accuracy: number) => px(COST_INNER_H * (1 - (accuracy * 100) / COST_Y_MAX));
-  /** A cluster's annotation: centred over its three markers, a few points above the top one. */
-  const clusterNote = (tokens: number[], accuracies: number[]) => ({
-    x: px(tokens.reduce((a, t) => a + x(t), 0) / tokens.length),
-    y: y(Math.max(...accuracies)) - 16,
-  });
-  const blurtNote = clusterNote(
-    rows.map((m) => m.blurtMedianTokens),
-    rows.map((m) => m.blurtAccuracy),
-  );
-  const bareNote = clusterNote(
-    rows.map((m) => m.bareMedianTokens),
-    rows.map((m) => m.bareAccuracy),
-  );
-
-  const points = rows.flatMap((m) => [
-    {
-      key: `${m.modelId}-blurt`,
-      gagged: true,
-      shape: shapeOf(m.modelId),
-      tokens: m.blurtMedianTokens,
-      accuracy: m.blurtAccuracy,
-    },
-    {
-      key: `${m.modelId}-bare`,
-      gagged: false,
-      shape: shapeOf(m.modelId),
-      tokens: m.bareMedianTokens,
-      accuracy: m.bareAccuracy,
-    },
-  ]);
-
-  const describe = (gagged: boolean) =>
-    rows
-      .map(
-        (m) =>
-          `${sizeLabel(m.params)} ${gagged ? m.blurtMedianTokens : m.bareMedianTokens} tokens and ${pct(
-            gagged ? m.blurtAccuracy : m.bareAccuracy,
-          )}`,
-      )
-      .join(", ");
-
-  return (
-    <ChartFrame
-      title={`Median tokens written against the share of the same ${F2.bare.n} MATH-500 problems solved, for three Qwen2.5-Instruct checkpoints under two prompts. Non-reasoning: ${describe(true)}. Reasoning: ${describe(false)}.`}
-      width={COST_W}
-      height={COST_H}
-      margin={COST_MARGIN}
-      xLabel="median tokens written per problem (log scale)"
-      yLabel="percentage of problems solved"
-    >
-      {/* gridlines: a decade across, with dashed unlabelled minor lines at 2 to 9
-          inside each decade (author, 2026-09-27), and ten points up */}
-      {COST_X_MINOR.map((v) => (
+      <g data-testid="shots-annotation">
         <line
-          key={`minor-${v}`}
-          x1={x(v)}
-          x2={x(v)}
-          y1={0}
-          y2={COST_INNER_H}
-          className="stroke-ink-muted opacity-25"
+          x1={annotated[0].cx}
+          x2={annotated[annotated.length - 1].cx}
+          y1={bracketY}
+          y2={bracketY}
+          className="stroke-ink"
           strokeWidth={1}
-          strokeDasharray="3 3"
         />
-      ))}
-      {[0, 1, 2, 3].map((d) => (
-        <g key={d}>
-          <line
-            x1={x(10 ** d)}
-            x2={x(10 ** d)}
-            y1={0}
-            y2={COST_INNER_H}
-            className="stroke-grid"
-            strokeWidth={1}
-          />
-          <text
-            x={x(10 ** d)}
-            y={COST_INNER_H + 16}
-            textAnchor="middle"
-            className="fill-ink-muted text-[11px] tabular-nums"
-          >
-            {(10 ** d).toLocaleString("en-GB")}
-          </text>
-        </g>
-      ))}
-      {COST_Y_TICKS.map((t) => (
-        <g key={t}>
-          <line x1={0} x2={COST_INNER_W} y1={y(t / 100)} y2={y(t / 100)} className="stroke-grid" strokeWidth={1} />
-          <text
-            x={-8}
-            y={y(t / 100) + 4}
-            textAnchor="end"
-            className="fill-ink-muted text-[11px] tabular-nums"
-          >
-            {t}
-          </text>
-        </g>
-      ))}
-
-      {/* which prompt each cluster is, annotated in the plot just above it (author,
-          2026-09-27: no colour key) */}
-      <text x={blurtNote.x} y={blurtNote.y} textAnchor="middle" className="fill-wrong-ink text-[11px] font-semibold">
-        non-reasoning
-      </text>
-      <text x={bareNote.x} y={bareNote.y} textAnchor="middle" className="fill-compute-ink text-[11px] font-semibold">
-        reasoning
-      </text>
-
-      {points.map((p) => (
-        <g key={p.key}>
-          <Marker
-            shape={p.shape}
-            cx={x(p.tokens)}
-            cy={y(p.accuracy)}
-            className={`${p.gagged ? "fill-wrong" : "fill-compute"} stroke-surface`}
-            strokeWidth={1.5}
-          />
-          <text
-            x={x(p.tokens) + 11}
-            y={y(p.accuracy) + 4}
-            className={`text-[10px] tabular-nums ${p.gagged ? "fill-wrong-ink" : "fill-compute-ink"}`}
-          >
-            {pct(p.accuracy)}
-          </text>
-        </g>
-      ))}
+        {annotated.map(({ cx, v }) => (
+          <line key={cx} x1={cx} x2={cx} y1={bracketY} y2={y(v) - 18} className="stroke-ink" strokeWidth={1} />
+        ))}
+        <text
+          x={(annotated[0].cx + annotated[annotated.length - 1].cx) / 2}
+          y={bracketY - 7}
+          textAnchor="middle"
+          className="fill-ink text-xs font-semibold"
+        >
+          {ANNOTATED_NOTE}
+        </text>
+      </g>
     </ChartFrame>
   );
 }
+
+/**
+ * The prompt each side of figure 3 reads, in tokens (median over the 495): the cost
+ * of the examples, which the instruct models do without. One tokenizer serves every
+ * size, so one number per prompt; the loader's data says so (equal across sizes).
+ */
+/** Section 3's opening: the few-shot prompt's median length, to the nearest 50 ("around"). */
+const FEW_PROMPT_ROUNDED = Math.round(SHOTS.tenShotPromptTokens / 50) * 50;
+
+const promptTokens = (arms: DotArm[]) => {
+  const ns = new Set(arms.map((a) => a.medianPromptTokens));
+  if (ns.size !== 1) throw new Error("page 5: a prompt's length differs across sizes");
+  return `prompt ${arms[0].medianPromptTokens.toLocaleString("en-GB")} tokens`;
+};
+
+/** Figure 3's few-shot side: one size's result from the 10-shot run. */
+const tenShotArm = (size: string): DotArm => {
+  const row = SHOTS.rows.find((r) => r.label === `Qwen2.5-${size}`);
+  if (!row) throw new Error(`page 5: no 10-shot result for ${size}`);
+  return { accuracy: row.solved["10_shot"] / 100, medianPromptTokens: SHOTS.tenShotPromptTokens };
+};
+const TEN_SHOT_ARMS = SIZES.map(tenShotArm);
+
+const FIG3_SERIES: [DotSeries, DotSeries] = [
+  {
+    key: "few",
+    // Figure 3's two labels repeat section 3's heading, each side by its name there
+    // (author, 2026-11-08), with how many examples it reads.
+    label: "Base model with few-shot CoT prompting (ten examples)",
+    ...FEW_SHOT,
+    arms: TEN_SHOT_ARMS,
+    note: promptTokens(TEN_SHOT_ARMS),
+  },
+  {
+    key: "instruct",
+    label: "Instruct model (no examples)",
+    ...INSTRUCT_REASONING,
+    arms: INSTRUCT.map((m) => m.cot),
+    note: promptTokens(INSTRUCT.map((m) => m.cot)),
+  },
+];
+
+/**
+ * Section 3's numbers, read from the runs. The instruct prompt is one length at every
+ * size (one tokenizer); the ratio is rounded to the nearest ten ("about"). The last
+ * sentence sets the smallest instruct model against the largest few-shot base model.
+ */
+const INSTRUCT_PROMPT_TOKENS = INSTRUCT[0].cot.medianPromptTokens;
+const PROMPT_RATIO_ROUNDED = Math.round(SHOTS.tenShotPromptTokens / INSTRUCT_PROMPT_TOKENS / 10) * 10;
+const FIG3_GAINS = SIZES.map((_, i) => ptsLabel(INSTRUCT[i].cot.accuracy, TEN_SHOT_ARMS[i].accuracy));
+const SMALLEST = 0;
+const LARGEST = SIZES.length - 1;
+
+const describeSeries = (s: DotSeries) => SIZES.map((size, i) => `${size} ${pct(s.arms[i].accuracy, 1)}`).join(", ");
 
 /* -------------------------------------------------------------------- page */
 
@@ -741,336 +569,242 @@ export function Page5() {
   const recordInteraction = useStore((s) => s.recordInteraction);
 
   const [announce, setAnnounce] = useState("");
+  // ---- Step 1: which worked problem is showing ----
+  const [active, setActive] = useState(0);
 
-  // ---- Step 1: the specimen -------------------------------------------
-  const [revealed, setRevealed] = useState(false);
-
-  const play = () => {
+  const chooseProblem = (i: number) => {
     recordInteraction(PAGE_N);
-    setRevealed(true);
+    setActive(i);
+    const w = WORKED_SOLUTIONS[i];
     setAnnounce(
-      `System 1 answered ${BLURT_TAB.extractedAnswer} in ${BLURT_TAB.tokensGenerated} tokens; System 2 answered ${BARE_TAB.extractedAnswer} in ${BARE_TAB.tokensGenerated}. The answer is ${F1.groundTruth}.`,
+      `Problem ${i + 1} of ${WORKED_SOLUTIONS.length}, ${w.subject}, level ${w.level}. The worked solution has ${w.steps.length} steps; the answer is ${w.answer}.`,
     );
   };
-
-  const reset = () => {
-    recordInteraction(PAGE_N);
-    setRevealed(false);
-    setAnnounce("Both replies cleared.");
-  };
-
-  // ---- Step 2: the summary table -------------------------------------
-  const T = SUPPRESSION_TABLE;
 
   return (
     <article className="flex flex-col gap-6">
       <p className="text-xs font-eyebrow uppercase tracking-wide text-ink-muted">
         Act {page.act} · {ACTS[page.act].title}
       </p>
-      {/* The notebook sits right beside the page title: the way to re-derive
+      {/* The notebooks sit right beside the page title: the way to re-derive
           the page, where the page is named. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <h1 className="text-3xl font-bold text-ink">
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_HREF} size={NOTEBOOK_SIZE} format="ipynb" />
+        <div className="flex flex-wrap items-center gap-2">
+          {NOTEBOOK_LINKS.map((n) => (
+            <NotebookDownload key={n.href} href={n.href} size={n.size} label={n.label} />
+          ))}
+        </div>
       </div>
       {/* Each step (left) sits beside its own note (right); the whole page scrolls. */}
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Act 2's opener: picks up page 4's open question in its own words and maps the
-            act, as page 11's closing box maps Act 3. Page 4 already covers step-by-step
-            reasoning, so this does not restate it. A grid row of its own, so the
-            hardware note can sit beside it (author, 2026-10-14). */}
+        {/* Act 2's opener, unchanged from the old page: picks up page 4's open question
+            in its own words and maps the act. A grid row of its own, so the hardware
+            note can sit beside it (author, 2026-10-14). */}
         <p className="text-lg text-ink-muted">
           Act 1 ended on a question: can a language model reason through a problem instead of
-          answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on
+          answering on reflex? In Act 2 we answer it with a toolbox of ways to spend more computation on
           each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best
           (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply
-          using a bigger model (page 11). The first tool is the simplest: have the model write out
+          using a bigger model (page 11). The first tool is the simplest: we have the model write out
           its steps.
         </p>
         <Note kicker="Hardware" flush>
-          <p>An A100 GPU with 80GB VRAM was used in these experiments.</p>
+          <p>We used an A100 GPU with 80GB VRAM in these experiments.</p>
         </Note>
 
-        {/* Step 1 — the definition and the specimen, merged 2026-09-27 under the
-            reviewer-response plan (planning/reviewer_response_changes_plan.md,
-            page 5, sections 1 and 2). The first paragraph is the author's draft. */}
+        {/* Step 1: the definition (the author's first paragraph) and three
+            worked solutions from MATH-500. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. Chain of Thought (CoT): System 2, written down</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Chain-of-Thought (CoT): Reasoning over simple steps</h2>
           <p className="text-ink">
             We&apos;ve previously illustrated what step-by-step reasoning looks like for a couple of real-world
             problems. <strong>Chain-of-thought prompting</strong> simulates human reasoning by using
             each intermediate step as part of the LLM prompt to generate the next intermediate step.
-            <Cite n={REF.wei} /> A common way to ask a model for one is to end the prompt with
+            <Cite n={REF.wei} /> We can ask a model for one by ending the prompt with
             &ldquo;{ZERO_SHOT_COT_TRIGGER}&rdquo;
             <Cite n={REF.kojima} />
           </p>
           <p className="text-ink">
-            Today&apos;s models no longer need that phrase, because System&nbsp;2 thinking is their
-            default mode. Below, we force <strong>Qwen2.5-3B-Instruct</strong>
-            <Cite n={REF.qwen} /> into System&nbsp;1, answering immediately, and compare against
-            System&nbsp;2 results.
+            Below we show three problems from MATH-500, each with the worked solution that comes with
+            the dataset.
+            <Cite n={REF.math500} />
           </p>
-          {/* Figure 1 is a split: the same question put to the same model twice, one
-              above the other, System 1 on top and System 2 below (author, 2026-10-11:
-              stacked, so each reply has the full width). No mode buttons;
-              Play shows both whole replies at once, with no streaming and no progress
-              bar (author, 2026-09-27); Reset clears them. System 1's
-              appended instruction is not shown in its question (author, 2026-09-27). */}
-          <section
-            aria-label="One problem, two prompts"
-            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
-          >
-            <div data-testid="split" className="flex flex-col gap-4">
-              <ChatColumn title="System 1" tab={BLURT_TAB} shown={revealed} />
-              <ChatColumn title="System 2" tab={BARE_TAB} shown={revealed} />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={play}
-                disabled={revealed}
-                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
-              >
-                ▶ Play
-              </button>
-              <button
-                type="button"
-                onClick={reset}
-                disabled={!revealed}
-                className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
-              >
-                ↺ Reset
-              </button>
-            </div>
-          </section>
+          {/* Figure 1 (author, 2026-11-08): the old chat figure, the question then the
+              dataset's own solution, one problem at a time. Nothing is run; it shows
+              what a chain of steps looks like before the page measures one. */}
+          <WorkedFigure active={active} onProblem={chooseProblem} />
         </section>
-        {/* Beside the merged step: its references. The "Terms" note that defined token
-            and greedy decoding moved to the glossary, page 17, on 2026-09-27
-            (author); do not bring it back here. */}
-        <div className="flex flex-col gap-6">
-          <Note kicker="References">
-            <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
-              Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
-              Models</em> (NeurIPS 2022).
-            </RefItem>
-            <RefItem n={REF.kojima} href="https://arxiv.org/abs/2205.11916">
-              Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em> (NeurIPS
-              2022).
-            </RefItem>
-            <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B-Instruct">
-              Qwen team 2024, <em>Qwen2.5-3B-Instruct</em> model card (Hugging Face). The 1.5B and
-              7B cards sit alongside it.
-            </RefItem>
-          </Note>
-        </div>
-
-        {/* Step 2 — figure 2 */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. System 1 versus System 2 thinking on MATH-500 problems</h2>
-          {/* The author's paragraph (2026-09-27). It gives the reasoning side only, with
-              the denominator; the switch reveals the rest. Every number is read from the
-              run. The Cite marks the problem set, MATH-500. */}
-          <p className="text-ink-muted">
-            One trace proves nothing, so both prompts were run across {F2.bare.n} problems from the
-            same difficulty band.
-            <Cite n={REF.math500} /> Below is that comparison: the same model, reasoning against
-            non-reasoning. Reasoning, it writes a median of {F2.bare.medianTokens} tokens of working
-            and solves <strong className="text-ink">{F2.bare.nCorrect}</strong> of the {F2.bare.n}.
-          </p>
-          {/* Figure 2 is two stacked bars of the same problems (author, 2026-09-27),
-              replacing a 2x2 matrix, which replaced a 100-square grid that read as if
-              its first squares were the first problems. Legend above, title below. */}
-          <section aria-label="The cost of working with no reasoning">
-            <figure className="flex flex-col gap-2">
-              <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                {(Object.keys(SEGMENT_STYLE) as (keyof typeof SEGMENT_STYLE)[]).map((k) => (
-                  <li key={k} className="flex items-center gap-1.5">
-                    <svg aria-hidden="true" width="12" height="12">
-                      <rect width="12" height="12" rx="2" className={SEGMENT_STYLE[k].fill} />
-                    </svg>
-                    {SEGMENT_STYLE[k].name}
-                  </li>
-                ))}
-              </ul>
-              <SolvedChart />
-              <figcaption className="text-center text-base font-semibold text-ink">
-                System 1 vs System 2: Qwen2.5-3B-Instruct on {T.n} MATH-500 problems (levels{" "}
-                {M.items.eval_levels.join(" and ")})
-                <span className="block text-sm font-normal text-ink-muted">
-                  How many problems each system solved, and which ones they agree on
-                </span>
-              </figcaption>
-            </figure>
-          </section>
-        </section>
-        {/* The author cut "How to read it" on 2026-09-27, since the figure needs no
-            explaining. The dataset's reference moved here from section 4 the same day,
-            beside the first place the page names MATH-500. */}
         <Note kicker="References">
+          <RefItem n={REF.wei} href="https://arxiv.org/abs/2201.11903">
+            Wei et al. 2022, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language
+            Models</em> (NeurIPS 2022).
+          </RefItem>
+          <RefItem n={REF.kojima} href="https://arxiv.org/abs/2205.11916">
+            Kojima et al. 2022, <em>Large Language Models are Zero-Shot Reasoners</em> (NeurIPS
+            2022).
+          </RefItem>
           <RefItem n={REF.math500} href="https://huggingface.co/datasets/HuggingFaceH4/MATH-500">
             <em>MATH-500</em> dataset card (Hugging Face): 500 MATH test problems (Hendrycks et
             al. 2021), the subset of Lightman et al. 2023.
           </RefItem>
         </Note>
 
-        {/* Step 3 — figure 3 */}
+        {/* Step 2: figure first, then the prose explaining Shashank's sentence. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. Smaller reasoning models do better than larger non-reasoning models</h2>
-          {/* Rewritten 2026-09-27 (author's brief): the paragraph argues one thing, that a
-              smaller model in System 2 beats a larger one in System 1. Every claim is
-              guarded against the data in Page5.test.tsx: "less than a quarter the size",
-              "twice as well", and "every model in System 2 beats every model in System 1"
-              (the smallest System 2 score is above the largest System 1 score). */}
+          {/* Headings 2 and 3 name Shashank's two solutions: one at inference time, one
+              in post-training (author, 2026-10-18). Both renamed by the author to name
+              what each figure compares: heading 2 on 2026-11-06, heading 3 on 2026-11-08. */}
+          <h2 className="text-xl font-semibold text-ink">2. ‘Zero-shot’ versus ‘few-shot CoT prompting’</h2>
           <p className="text-ink-muted">
-            Can a bigger model make up for skipping the steps? We ran the same {F2.bare.n} MATH-500
-            problems (levels {M.items.eval_levels.join(" and ")}) on a smaller (1.5B) and a larger
-            (7B) model from the same family. Forced into
-            System&nbsp;1, the 7B solves{" "}
-            <strong className="text-ink">{pct(F3.cross.gagged_large_accuracy)}</strong>. In
-            System&nbsp;2, the 1.5B solves{" "}
-            <strong className="text-ink">{pct(F3.cross.ungagged_small_accuracy)}</strong>: a model
-            less than a quarter the size does twice as well, just by writing out its steps. Every
-            model in System&nbsp;2 beats every model in System&nbsp;1.
+            {/* The section's opening, in the author's words (2026-11-08). */}
+            Another way we can induce reasoning in a model is to give it worked examples at inference
+            time, which is called <strong>few-shot prompting</strong>. A model may not reason in the
+            style we intended. By providing examples, we can steer it into answering our prompt in the
+            same step-by-step format the examples show.
+          </p>
+          <p className="text-ink-muted">
+            {/* The author's lead-in to the figure (2026-11-08). True of the run: both prompts
+                carry the same "step by step" instruction. The problem count is deliberately
+                not stated. */}
+            Let&rsquo;s look at how zero-shot fares against few-shot on Qwen2.5 base models
+            <Cite n={REF.qwen} /> of {SIZE_COUNT_WORD} sizes, when both are told to reason.
           </p>
           <section
-            aria-label="The floor is flat"
+            aria-label="Zero-shot against few-shot"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+          >
+            <Ledger
+              rows={[
+                ["model", `Qwen2.5 base · ${SHOT_SIZES.join(", ")}`],
+                ["problems", "MATH-500"],
+              ]}
+            />
+            <figure className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
+                <ul className="flex flex-wrap gap-x-4 gap-y-1">
+                  {SHOT_KEYS.map((k) => (
+                    <li key={k} className="flex items-center gap-1.5">
+                      <svg aria-hidden="true" width="12" height="12">
+                        <rect width="12" height="12" rx="2" className={SHOT_FILL[k]} />
+                      </svg>
+                      {SHOT_LABEL[k]}
+                    </li>
+                  ))}
+                </ul>
+                {SHOTS.placeholder ? (
+                  <span
+                    data-testid="shots-placeholder"
+                    className="ml-auto rounded-full border border-crimson px-2 py-0.5 font-semibold text-crimson-ink"
+                  >
+                    placeholder numbers
+                  </span>
+                ) : null}
+              </div>
+              <ShotBars />
+              <figcaption className="text-center text-base font-semibold text-ink">
+                Zero-shot vs few-shot: Qwen2.5 base models on MATH-500 problems
+                <span className="block text-sm font-normal text-ink-muted">
+                  How many problems each model solved with zero and 10 worked examples
+                </span>
+              </figcaption>
+            </figure>
+          </section>
+          <p className="text-ink-muted">
+            {/* Shashank's two sentences (author, 2026-10-18), "you" made "we" with the rest
+                of the page (author, 2026-11-08). Page5.test.tsx pins the wording. The
+                sentences around them read the old five-shot run's numbers, so they went with
+                its figure (2026-11-08). */}
+            By providing the step-by-step intermediate logic in the examples, we force the model to
+            generate its own reasoning pathway before committing to a final answer. This prevents
+            the model from hallucinating a final state because it has to calculate the state
+            sequentially.
+          </p>
+        </section>
+        {/* The model card's citation moved here with section 1's figure (2026-11-08):
+            this is where the models are first named. */}
+        <Note kicker="References">
+          <RefItem n={REF.qwen} href="https://huggingface.co/Qwen/Qwen2.5-3B">
+            Qwen team 2024, <em>Qwen2.5-3B</em> model card (Hugging Face). The 1.5B and 7B
+            cards, and the Instruct versions, sit alongside it.
+          </RefItem>
+        </Note>
+
+        {/* Step 3, rewritten for clarity (author, 2026-11-08): the running cost of
+            few-shot prompting, what an instruct model is, the comparison, then the result
+            in one paragraph. Every number is read from the runs. The two sides were not
+            scored on the same problems, so the text never says "the same problems". */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">3. ‘Base model with few-shot CoT prompting’ versus ‘Instruct model’</h2>
+          <p className="text-ink">
+            Few-shot prompting has a running cost: the ten worked examples, about{" "}
+            {FEW_PROMPT_ROUNDED.toLocaleString("en-GB")} tokens, are sent with every question.
+            Post-training pays that cost once. An <strong>Instruct model</strong> is the base model
+            trained further, with supervised fine-tuning and reinforcement learning, so that it
+            follows instructions and writes out its steps when asked, with no examples in the
+            prompt.
+            <Cite n={REF.qwenReport} />
+          </p>
+          <p className="text-ink-muted">
+            Below, we compare each base model with ten examples against its Instruct version with
+            none, on MATH-500.
+          </p>
+          <section
+            aria-label="Base model with few-shot CoT prompting versus Instruct model"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className={chip}>Qwen2.5-Instruct · 1.5B, 3B, 7B · all bf16</span>
-              <span className={chip}>greedy · the same {F2.bare.n} problems</span>
+              <span className={chip}>Qwen2.5 base and Instruct · 1.5B, 3B, 7B · all bf16</span>
+              <span className={chip}>greedy</span>
             </div>
-            <FloorChart />
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm bg-wrong" /> solved with no reasoning
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm bg-compute" /> added by the working
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm bg-wrong opacity-20" /> the floor: all three
-                non-reasoning bars end inside it
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-px bg-compute" /> the 1.5B, reasoning
-              </span>
-            </div>
+            <figure className="flex flex-col gap-2">
+              <SeriesLegend series={FIG3_SERIES} />
+              <ArrowRows
+                id="p5-fig3"
+                title={`Share of MATH-500 problems solved, from the base model with few-shot CoT prompting (ten examples) to the Instruct model (no examples). ${FIG3_SERIES[0].label}: ${describeSeries(FIG3_SERIES[0])}. ${FIG3_SERIES[1].label}: ${describeSeries(FIG3_SERIES[1])}.`}
+                series={FIG3_SERIES}
+                sizes={SIZES}
+              />
+              <figcaption className="text-center text-base font-semibold text-ink">
+                Base model with few-shot CoT prompting vs Instruct model:{" "}
+                <span className="whitespace-nowrap">Qwen2.5 on MATH-500</span>
+                <span className="block text-sm font-normal text-ink-muted">
+                  How many problems each solved, and the Instruct model&apos;s lead in points
+                </span>
+              </figcaption>
+            </figure>
           </section>
-        </section>
-        {/* No margin note: the author cut "Limits" on 2026-09-27. This empty cell keeps
-            the grid's step / note pairing. */}
-        <div aria-hidden="true" />
-
-        {/* Close — figure 4. Every figure above this one is the 3B, and the page
-            never said so where it counted. Six dots say it: which checkpoint,
-            under which prompt, wrote how much, and solved how many. */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">4. The (token) cost of a chain of thought</h2>
-          {/* Reframed around tokens, author, 2026-09-27. "About 100×" and
-              "around 570" are checked against the run in Page5.test.tsx. */}
           <p className="text-ink-muted">
-            A chain of thought is not free. In System&nbsp;2, every model below writes about 100×
-            as many tokens as in System&nbsp;1, a median of around {BARE_MEDIAN_ROUNDED} per
-            problem against {BLURT_MEDIAN_RANGE}.
+            The Instruct model wins at every size, by {FIG3_GAINS[0]}, {FIG3_GAINS[1]} and{" "}
+            {FIG3_GAINS[2]} points, on a prompt about {PROMPT_RATIO_ROUNDED} times shorter (
+            {INSTRUCT_PROMPT_TOKENS.toLocaleString("en-GB")} tokens against{" "}
+            {SHOTS.tenShotPromptTokens.toLocaleString("en-GB")}). The {SIZES[SMALLEST]} Instruct model
+            ({pct(INSTRUCT[SMALLEST].cot.accuracy, 1)}) even beats the {SIZES[LARGEST]} base model
+            with examples ({pct(TEN_SHOT_ARMS[LARGEST].accuracy, 1)}).
           </p>
-          {/* Moved above the figure, author, 2026-09-27: both paragraphs read before the chart. */}
-          <p className="text-ink-muted">
-            A hundred times more sounds expensive, but each chain is small. Even across a million
-            problems, the {sizeLabel(PRIMARY_ROW.params)}&apos;s chains of thought add up to about a
-            hundred-thousandth of what it cost to train the model.
-            <Cite n={REF.kaplan} />
-            <sup aria-hidden="true" className="text-compute-ink">,</sup>
-            <Cite n={REF.qwenReport} />
-          </p>
-          <section
-            aria-label="Tokens written against problems solved"
-            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
-          >
-            {/* The run's ledger, inside the figure it certifies: every vital the
-                top plate's mono line used to carry, as label and value pairs
-                with the card's full width to breathe in rather than a 15rem
-                margin column that wrapped the run id mid-hash. */}
-            <dl className="flex flex-wrap gap-x-6 gap-y-1 border-b border-grid pb-3 font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
-              <div className="flex gap-2">
-                <dt>model</dt>
-                <dd className="text-ink">Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt>decoding</dt>
-                <dd className="text-ink">
-                  {M.decoding.strategy} · {M.decoding.max_new_tokens}-token cap
-                </dd>
-              </div>
-              <div className="flex gap-2">
-                <dt>problems</dt>
-                <dd className="text-ink">
-                  MATH-500 levels {M.items.eval_levels.join(" and ")} · n = {M.items.n} paired
-                </dd>
-              </div>
-              <div className="flex gap-2">
-                <dt>output</dt>
-                <dd className="text-ink">900 generations</dd>
-              </div>
-            </dl>
-            {/* Shape is the model size, keyed in a legend to the right of the chart
-                (author, 2026-09-27). Colour is the prompt, named by annotations inside the
-                plot beside each cluster rather than in a key. */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="min-w-0 flex-1">
-                <CostChart />
-              </div>
-              <ul
-                aria-label="Model size"
-                className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted sm:flex-col sm:items-start"
-              >
-                <li className="font-semibold">model size</li>
-                {F3.models.map((m) => (
-                  <li key={m.modelId} className="flex items-center gap-1.5">
-                    <svg aria-hidden="true" width={14} height={14}>
-                      <Marker
-                        shape={shapeOf(m.modelId)}
-                        cx={7}
-                        cy={7.5}
-                        className="fill-none stroke-ink-muted"
-                        strokeWidth={1.5}
-                      />
-                    </svg>
-                    {sizeLabel(m.params)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-          <Handoff>
-            <p className="text-ink">
-              {/* Closing line, author, 2026-09-27: no page number (reviewer plan, CP2). The
-                  italic handoff question to page 6 was cut by the author the same day. */}
-              A chain of thought makes a model better at hard problems, and it charges for that
-              in tokens.
-            </p>
-          </Handoff>
         </section>
-        {/* Beside section 4, the one set of numbers on the page that is estimated
-            rather than measured, and the sources of the estimate. The model card and
-            dataset references moved up to where the page first names them. */}
-        <Note kicker="An estimate">
-          <p>
-            Writing a token takes about 2 operations per parameter; training takes about 6 per
-            parameter for every token trained on. Qwen2.5 was trained on up to 18 trillion
-            tokens.
-          </p>
-          <RefItem n={REF.kaplan} href="https://arxiv.org/abs/2001.08361">
-            Kaplan et al. 2020, <em>Scaling Laws for Neural Language Models</em> (arXiv).
-          </RefItem>
+        <Note kicker="References">
           <RefItem n={REF.qwenReport} href="https://arxiv.org/abs/2412.15115">
-            Qwen team 2024, <em>Qwen2.5 Technical Report</em> (arXiv).
+            Qwen team 2024, <em>Qwen2.5 Technical Report</em> (arXiv): how the Instruct models
+            were post-trained.
           </RefItem>
         </Note>
+
+        <Handoff className="lg:col-start-1">
+          <p className="text-ink">
+            {/* The closing, author, 2026-11-08: the old closing line widened to time and
+                tokens, then what figures 2 and 3 show. Each claim is pinned against the
+                data in Page5.test.tsx. */}
+            A chain of thought makes a model better at hard problems, and it charges for that
+            in additional time and tokens. Smaller models can outperform larger models when
+            allowed to reason longer, especially with examples of CoT provided at post-training
+            or at inference-time. Post-training beats few-shot inference-time CoT prompting by
+            good margins.
+          </p>
+        </Handoff>
       </div>
 
       <div aria-live="polite" className="sr-only">

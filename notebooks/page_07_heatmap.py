@@ -173,6 +173,37 @@ def build(out_dir, dest):
     print(f"\n{dest}  {len(problems)} problems x {len(div)} temperatures")
 
 
+# ---- copied from the notebook (subsets_for, curve_point): a point at N is the mean over
+# N_RESAMPLES random N-subsets of a problem's chains, seeded per problem, N and pool size.
+SEED, N_AXIS, N_RESAMPLES = 123, (1, 2, 4, 8, 16), 64
+
+
+def subsets_for(pid, n, repeats, size):
+    import random
+    import harness
+    if n >= size:
+        return [list(range(size))]
+    rng = random.Random(harness.sha256_of([str(SEED), pid, str(n), str(size)])[:15])
+    return [rng.sample(range(size), n) for _ in range(repeats)]
+
+
+def curve(chains_by_pid):
+    """One temperature's line: a point per N, each the mean over its problems."""
+    out = []
+    for n in N_AXIS:
+        per = []
+        for pid, rs in chains_by_pid.items():
+            ts = [(tally([rs[i] for i in idx]), sum(rs[i]["tokens_generated"] for i in idx))
+                  for idx in subsets_for(pid, n, N_RESAMPLES, len(rs))]
+            per.append(dict(acc=mean(t["plurality_correct"] for t, _ in ts),
+                            cov=mean(t["any_correct"] for t, _ in ts),
+                            tie=mean(t["tie"] for t, _ in ts),
+                            tok=mean(k for _, k in ts)))
+        out.append(dict(n=n, accuracy=mean(x["acc"] for x in per), coverage=mean(x["cov"] for x in per),
+                        tie_rate=mean(x["tie"] for x in per), mean_tokens=mean(x["tok"] for x in per)))
+    return out
+
+
 SWEEP_BUNDLE = HERE.parent / "runs" / "page-07-temperature-sweep.zip"
 
 
@@ -230,6 +261,19 @@ def build_sweep(bundle, dest):
         print(f"T={s['temperature']:<4} vote {mine['vote_accuracy']:.0%}  one chain "
               f"{mine['single_chain_accuracy']:.0%}  ties {mine['tie_rate']:.0%}  matches results.json")
 
+    # Section 3's lines: every temperature at N = 1, 2, 4, 8, 16, the notebook's estimator.
+    # At N = 16 a line is the full tally, so it must equal the summary saved above.
+    curves = {}
+    for t in R["temperatures"]:
+        chains = {e["problem_id"]: [by[(f"t{t:.2f}-c{R['chain_cap']}", e["problem_id"])][i] for i in range(k)]
+                  for e in R["heatmap"]}
+        curves[f"{t:.1f}"] = curve(chains)
+        s16 = next(x for x in R["summary"] if x["temperature"] == t)
+        top = curves[f"{t:.1f}"][-1]
+        for a, b in (("accuracy", "vote_accuracy"), ("coverage", "coverage"), ("tie_rate", "tie_rate")):
+            assert math.isclose(top[a], s16[b], abs_tol=1e-9), f"T={t}: curve {a} {top[a]} != {s16[b]}"
+        print(f"T={t:<4} line " + "  ".join(f"{p['n']}:{p['accuracy']:.0%}" for p in curves[f"{t:.1f}"]))
+
     out = {
         "source": {"kind": "temperature sweep", "run_id": run_id, "bundle": bundle.name,
                    "bundle_sha256": sha256(bundle), "builder": HERE.name,
@@ -240,6 +284,8 @@ def build_sweep(bundle, dest):
         "best_temperature": R["best_temperature"],
         "summary": R["summary"],
         "control": R["control"],
+        "n_axis": list(N_AXIS),
+        "curves": curves,
         "problems": problems,
     }
     Path(dest).write_text(json.dumps(out, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")

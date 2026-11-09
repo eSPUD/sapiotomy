@@ -225,7 +225,7 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByText(/The law lives in a narrow window/i)).toBeInTheDocument();
     expect(screen.getByText(/The selection wall/i)).toBeInTheDocument();
     expect(screen.getByText(/trains the reasoning into the weights/i)).toBeInTheDocument();
-    expect(screen.getByText(/pages 13 and 14 reward\s*only correct answers/i)).toBeInTheDocument();
+    expect(screen.getByText(/page 13 rewards\s*only correct answers/i)).toBeInTheDocument();
   });
 
   it("retires the Measured / Cited footer, keeping the apparatus beside its figures", () => {

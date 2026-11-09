@@ -54,6 +54,9 @@ describe("tidyMath on the LaTeX MATH-500 really writes", () => {
   it("sets a numeric exponent on the line it belongs on", () => {
     expect(tidyMath("$12t^4+26t^3-8t^2$")).toBe("12t⁴+26t³-8t²");
     expect(tidyMath("$x_1 + x_{12}$")).toBe("x₁ + x₁₂");
+    expect(tidyMath("$7^{-1}$")).toBe("7⁻¹");
+    // A subscript has no minus to raise: `x_{-1}` is left as written.
+    expect(tidyMath("$x_{-1}$")).toBe("x_{-1}");
     // An exponent that is an expression stays written out: flattening it would
     // change what it says rather than how it looks.
     expect(tidyMath("$x^{2n}$")).toBe("x^{2n}");

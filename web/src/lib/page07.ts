@@ -1,43 +1,25 @@
 /**
- * Page 7's measured run, loaded from the notebook's committed `derived.json`.
+ * Page 7's measured run, loaded from `web/data/page-07-run.json`.
  *
- * The boundary (notebooks/README.md): the notebook writes logs, the page reads
- * them. Nothing here recomputes a claim. `web/data/page-07-derived.json` is a
- * byte-for-byte copy of `notebooks/out/page_07/derived.json`, produced by
- * `page_07_frequency_voting.ipynb` from `traces.jsonl`, and the page ships the
- * file it draws from beside a download of the file that file came from.
+ * The boundary (notebooks/README.md): the notebook writes logs, the page reads them. Nothing
+ * here recomputes a claim. The file is built by `notebooks/page_7_site_data.py` from the chains
+ * `notebooks/7_FrequencyVoting_InstructModels.ipynb` saves: Qwen2.5-3B-Instruct, 100 MATH-500
+ * problems drawn at random within each level (the 500's own level mix), 16 chains per problem
+ * at each of 12 temperatures, 0.0 to 1.1, every chain capped at 2,048 tokens and left to stop
+ * where it stops. A chain that hits the cap has no answer and casts no vote.
  *
- * The run carries an explicit `claims` block, so the gates below read it rather
- * than re-deriving it. A run that fails a blocking gate is a load error here,
- * never a conditional in the component:
+ * Section 3's lines, bars and best temperature come from the sweep. The two problems figure 1
+ * shows are DRAWN at random from stated pools by the builder, not picked (`showcase.rule`).
  *
- *   · `vote_beats_bare_cot` — the page's sentence. Bare chain of thought is ONE
- *     GREEDY chain, which is page 5's `bare` condition and page 6's top rung,
- *     not one sampled chain. The run tests both and this is the one that blocks.
- *   · `coverage_exceeds_vote` — there is a gap between what the model produced
- *     and what the vote returned, which is the number page 8 opens on.
- *   · `specimen_usable` — figure 1's specimen was found, not fallen back to.
- *   · `t0_vote_is_a_noop` — the temperature-0 chains really were identical, so
- *     the flat line is a measurement rather than an assumption.
+ * The consistency checks below are the cross-language check in miniature: the sweep's aggregates
+ * have to agree with each other arithmetically, and a shown problem's tally has to be the chains
+ * it ships. A copy-paste of the wrong run into `web/data/` fails the build rather than drawing a
+ * plausible wrong figure.
  *
- * Two gates are deliberately NOT blocking, because they change what the page
- * SAYS rather than whether it ships, and both came back false on the shipped
- * run:
- *
- *   · `splitting_a_fixed_budget_pays` — false. At a fixed budget the best split
- *     is not to split, which is a finding and is drawn as one.
- *   · `errors_are_diffuse` — false at a 50% threshold. 41% of answer classes
- *     appear exactly once, so the page must lead with truth CONCENTRATING (the
- *     modal answer holds 9.9 of 16 votes) rather than with errors scattering.
- *
- * The consistency assertions are the cross-language check in miniature: the
- * notebook's aggregates have to agree with each other arithmetically, and the
- * bundled specimen's tallies have to sum to the chains it ships. A copy-paste of
- * the wrong run into `web/data/` fails the build rather than drawing a plausible
- * wrong figure.
+ * Page 16 reads `figure2.cold` and `figure2.hot` (the greedy line and the best temperature's
+ * line) and `handoff`; page 8 opens on `handoff`.
  */
-import rawDerived from "@data/page-07-derived.json";
-import rawHeatmap from "@data/page-07-heatmap.json";
+import rawRun from "@data/page-07-run.json";
 import { pct, tidyMath } from "./traceText";
 
 export { pct, tidyMath };
@@ -46,20 +28,37 @@ export class Page07DataError extends Error {}
 
 /* --------------------------------------------------------------- raw shape */
 
-interface RawChain {
+export interface SweepPoint {
+  n: number;
+  accuracy: number;
+  coverage: number;
+  tie_rate: number;
+  /** Tokens written by the N chains, per problem. */
+  mean_tokens: number;
+}
+
+interface SweepSummary {
+  temperature: number;
+  n_problems: number;
+  vote_accuracy: number;
+  coverage: number;
+  single_chain_accuracy: number;
+  tie_rate: number;
+  mean_distinct: number;
+  mean_tokens: number;
+  capped_rate: number;
+}
+
+export interface SpecimenChain {
   sample_index: number;
-  batch_seed: number | null;
-  group_index: number | null;
   trace: string;
-  cut_index: number | null;
-  answer_start: number | null;
-  truncated: boolean;
-  forced: boolean;
+  /** What the chain boxed, verbatim; "" when it never boxed an answer. */
   extracted_answer: string;
+  /** The tally row the chain voted for (its answer's first-seen spelling); null with no answer. */
   vote_key: string | null;
   correct: boolean;
   own_tokens: number;
-  tokens_generated: number;
+  truncated: boolean;
 }
 
 interface RawRanked {
@@ -68,123 +67,57 @@ interface RawRanked {
   correct: boolean;
 }
 
-interface RawProblem {
+export interface Problem {
   problem_id: string;
   level: number;
   subject: string;
   question: string;
   ground_truth: string;
-  config_id: string;
   temperature: number;
   chain_cap: number;
   ranked: RawRanked[];
   distinct_answers: number;
-  answer_entropy: number;
   plurality_answer: string | null;
   plurality_correct: boolean;
   tie: boolean;
   any_correct: boolean;
   no_answer_rate: number;
-  chains: RawChain[];
+  chains: SpecimenChain[];
 }
 
-interface RawPilePoint {
-  n: number;
-  accuracy: number;
-  coverage: number;
-  tie_rate: number;
-  /** What N chains actually cost. A chain stops long before the cap, so this is
-   *  the real spend rather than N times the budget. */
-  mean_tokens: number;
-  n_draws: number;
+/** How a shown problem's vote came out. */
+export type Outcome = "right" | "wrong" | "tie";
+export type ShowcaseOutcome = Exclude<Outcome, "wrong">;
+
+interface RawShowcasePick {
+  outcome: ShowcaseOutcome;
+  /** How many problems qualified for the draw this one came from. */
+  pool_size: number;
+  problem: Problem;
+  /** The same problem's one greedy chain. */
+  greedy: { own_tokens: number; extracted_answer: string; correct: boolean; truncated: boolean };
 }
 
-interface RawSplitPoint {
-  n: number;
-  chain_budget: number;
-  temperature: number;
-  page_06_greedy: number | null;
-  plurality_accuracy: number;
-  accuracy: number;
-  single_chain_accuracy: number;
-  coverage: number;
-  tie_rate: number;
-  /** Real spend, not N times the budget: a chain stops before its cap. */
-  mean_tokens: number;
-  /** The column that explains the whole panel. At N=16 it is 1.0. */
-  truncated_rate: number;
-  n_items: number;
-}
-
-interface RawDiversity {
-  temperature: number;
-  n_chains: number;
-  n_items: number;
-  mean_distinct: number;
-  mean_entropy: number;
-  single_chain_accuracy: number;
-  plurality_accuracy: number;
-  coverage: number;
-  tie_rate: number;
-}
-
-interface RawDerived {
-  source: { results_sha256: string };
-  manifest: {
-    run_id: string;
-    timestamp_utc: string;
-    primary_model: string;
-    run_mode: string;
-    models: { id: string; label: string; quant: string | null; dtype: string | null }[];
-    decoding: { top_p: number; temperatures: number[]; pile_temperature: number };
-    pile: { chain_cap: number; n_chains: number; n_axis: number[]; n_resamples: number };
-    split: { budget_total: number; n_grid: number[] };
-    items: { dataset: string; n: number; seed: number; same_as_page_6: boolean | null };
-    vote: { tie_rule: string; equivalence: string };
-  };
-  claims: Record<string, boolean>;
-  procedure: string;
-  figure_1: {
-    config_id: string;
+interface RawRun {
+  source: {
+    notebook: string;
+    model: string;
+    precision: string;
+    dataset: string;
+    n_problems: number;
+    levels: Record<string, number>;
     n_chains: number;
-    temperature: number;
     chain_cap: number;
-    specimen_id: string;
-    specimen_is_fallback: boolean;
-    n_candidates: number;
-    shape: {
-      mean_distinct: number;
-      singleton_share: number;
-      mean_top_votes: number;
-      n_chains: number;
-    };
-    problems: RawProblem[];
+    top_p: number;
+    seed: number;
   };
-  figure_2: {
-    pile: { temperature: number; points: RawPilePoint[] }[];
-    split: RawSplitPoint[];
-    /** Every shared budget (2048, 4096, 8192), keyed by its total. */
-    split_budgets: Record<string, RawSplitPoint[]>;
-    /** The same chains allowed to finish: the pile itself, at the split's N. */
-    uncapped: { config_id: string; chain_cap: number; points: RawPilePoint[] };
-    splitting_pays: boolean;
-    best_split_n: number;
-    diversity: RawDiversity[];
-    gain: {
-      vs_one_sample: { pts: number; p: number; fixed: number; broken: number; baseline: number };
-      vs_bare_cot: {
-        bare_cot: number;
-        vote: number;
-        gain_pts: number;
-        p: number;
-        fixed: number;
-        broken: number;
-        n_items: number;
-      } | null;
-      vote: number;
-      n_chains: number;
-    };
-  };
+  n_chains: number;
+  chain_cap: number;
+  temperatures: number[];
+  best_temperature: number;
+  n_axis: number[];
+  summary: SweepSummary[];
+  curves: Record<string, SweepPoint[]>;
   handoff: {
     n_chains: number;
     temperature: number;
@@ -195,44 +128,10 @@ interface RawDerived {
     thrown_away: number;
     tie_rate: number;
   };
-  pool: { config_id: string; n_chains: number; chain_cap: number; temperature: number };
+  showcase: { temperature: number; seed: number; rule: string; picks: RawShowcasePick[] };
 }
 
-const D = rawDerived as unknown as RawDerived;
-
-/* -------------------------------------------------------------- the gates */
-
-/** Blocking: the spec's claims contract, read before any number reaches a component. */
-const BLOCKING = [
-  "vote_beats_bare_cot",
-  "coverage_exceeds_vote",
-  "specimen_usable",
-  "t0_vote_is_a_noop",
-] as const;
-
-for (const gate of BLOCKING) {
-  if (D.claims[gate] !== true) {
-    throw new Page07DataError(
-      `page-07-derived.json fails the blocking claim '${gate}'. The notebook decides what ` +
-        `this page may say; a run that does not pass must not be translated. See ` +
-        `docs/page_7_refactor.md and notebooks/page_07_frequency_voting.ipynb section 14.`,
-    );
-  }
-}
-
-if (D.manifest.run_mode === "QUICK") {
-  throw new Page07DataError(
-    "page-07-derived.json came from a QUICK run. QUICK is a preview on a reduced grid and " +
-      "must not become a page.",
-  );
-}
-
-if (D.figure_1.specimen_is_fallback) {
-  throw new Page07DataError(
-    "figure 1's specimen is the notebook's flagged fallback, which means no problem had a " +
-      "correct plurality with a real tail. A flagged specimen must never be translated.",
-  );
-}
+const R = rawRun as unknown as RawRun;
 
 /* ------------------------------------------------------- consistency checks */
 
@@ -242,289 +141,109 @@ function near(a: number, b: number, tol: number, what: string): void {
   }
 }
 
-// The page prints the precision on its provenance plate, so the run has to record one.
-// It shipped as `quant: null` for a while, with the page asserting bf16 out of a code
-// literal: a claim on screen with nothing behind it in the artifact.
-const PRIMARY_MODEL = D.manifest.models.find((m) => m.id === D.manifest.primary_model);
-if (!PRIMARY_MODEL?.quant) {
-  throw new Page07DataError(
-    `page-07-derived.json records no precision for ${D.manifest.primary_model}, so the ` +
-      `page cannot state one. A REPLAY reads it off the run id; see the notebook's ` +
-      `model_meta block.`,
-  );
+const close = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+
+if (R.source.n_problems !== 100 || R.n_chains !== 16) {
+  throw new Page07DataError("page-07-run.json is not the 100-problem, 16-chain run the page describes");
+}
+if (!R.source.precision) {
+  throw new Page07DataError("page-07-run.json records no precision for the model");
 }
 
-const BARE = D.figure_2.gain.vs_bare_cot;
-if (!BARE) {
-  throw new Page07DataError(
-    "the run has no bare-chain-of-thought contrast, so the page's headline sentence is " +
-      "untested. The notebook writes it only when the temperature-0 pile is present.",
-  );
-}
-
-// The gain is the difference of the two numbers the page prints beside it.
-near(BARE.gain_pts, (BARE.vote - BARE.bare_cot) * 100, 1e-6, "the headline gain");
-// The vote the contrast used is the vote the handoff reports.
-near(BARE.vote, D.handoff.plurality_accuracy, 1e-9, "the vote");
-// Thrown away is coverage minus the vote, and it is page 8's whole subject.
-near(
-  D.handoff.thrown_away,
-  D.handoff.coverage - D.handoff.plurality_accuracy,
-  1e-9,
-  "the thrown-away share",
-);
-
-const PILE_LINES = D.figure_2.pile;
-const HOT = PILE_LINES.find((l) => l.temperature === D.manifest.decoding.pile_temperature);
-const COLD = PILE_LINES.find((l) => l.temperature === 0);
-if (!HOT || !COLD) {
-  throw new Page07DataError(
-    "figure 2 needs both the sampled line and the temperature-0 line; one is missing.",
-  );
-}
-
-// Temperature 0 is N copies of one greedy chain, so its line must be flat. That is the
-// page's cleanest demonstration that the vote needs diversity, and it is checked rather
-// than asserted: a wobble here would mean the replication rule leaked.
-for (const p of COLD.points) {
-  near(p.accuracy, COLD.points[0].accuracy, 1e-9, `the temperature-0 line at N=${p.n}`);
-}
-near(COLD.points[0].accuracy, BARE.bare_cot, 1e-9, "the flat line and bare chain of thought");
-
-// Coverage can never be below the vote: the vote returns one of the answers present.
-for (const line of PILE_LINES) {
-  for (const p of line.points) {
+// Every temperature has a summary row and a line, and the line's ends are the summary:
+// N = 16 is the whole set of chains, N = 1 is one chain, averaged.
+R.temperatures.forEach((t, j) => {
+  const s = R.summary[j];
+  const line = R.curves[t.toFixed(1)];
+  if (!s || s.temperature !== t || s.n_problems !== R.source.n_problems) {
+    throw new Page07DataError(`the summary row for T = ${t} is missing or out of order`);
+  }
+  if (!line || line.map((p) => p.n).join() !== R.n_axis.join()) {
+    throw new Page07DataError(`the T = ${t} line is not on the run's N axis`);
+  }
+  const top = line[line.length - 1];
+  if (
+    !close(top.accuracy, s.vote_accuracy) ||
+    !close(top.coverage, s.coverage) ||
+    !close(top.tie_rate, s.tie_rate) ||
+    !close(line[0].accuracy, s.single_chain_accuracy)
+  ) {
+    throw new Page07DataError(`the T = ${t} line disagrees with its summary`);
+  }
+  // Coverage can never be below the vote: the vote returns one of the answers present.
+  for (const p of line) {
     if (p.coverage + 1e-9 < p.accuracy) {
-      throw new Page07DataError(
-        `coverage ${p.coverage} is below the vote ${p.accuracy} at N=${p.n}, which is impossible`,
-      );
+      throw new Page07DataError(`T = ${t}: coverage ${p.coverage} is below the vote ${p.accuracy} at N=${p.n}`);
     }
   }
-}
-
-// The split and the pile share their N=1 configuration, and since the notebook was
-// changed to compute both with one estimator they must now agree there exactly. They
-// used to differ by five points -- the split read chain 0 alone while the pile averaged
-// every single draw -- and the page showed both numbers without saying so.
-{
-  const s1 = D.figure_2.split.find((s) => s.n === 1);
-  const p1 = HOT.points.find((p) => p.n === 1);
-  if (s1 && p1) near(s1.accuracy, p1.accuracy, 1e-9, "the split and the pile at N=1");
-}
-
-// Section 4's lines are read off the same chains section 3 draws, so where two of them
-// are the same configuration they must be the same number. Allowed-to-finish IS the pile;
-// the 2048 budget IS the published split; and 8192 shared four ways is 2048 a chain,
-// which is the pile's cap, so that point is the pile's N = 4 exactly.
-{
-  const U = D.figure_2.uncapped;
-  if (U.config_id !== D.pool.config_id) {
-    throw new Page07DataError(
-      `section 4's allowed-to-finish line is ${U.config_id}, not the pile ${D.pool.config_id}`,
-    );
-  }
-  for (const u of U.points) {
-    const p = HOT.points.find((q) => q.n === u.n);
-    if (!p) throw new Page07DataError(`the pile has no point at N=${u.n}`);
-    near(u.accuracy, p.accuracy, 1e-9, `allowed to finish and the pile at N=${u.n}`);
-  }
-  const B = D.figure_2.split_budgets;
-  const b2048 = B[String(D.manifest.split.budget_total)];
-  if (!b2048) throw new Page07DataError("the split's own budget is missing from split_budgets");
-  b2048.forEach((s, i) =>
-    near(s.accuracy, D.figure_2.split[i].accuracy, 1e-9, `the split's own budget at N=${s.n}`),
-  );
-  for (const [b, line] of Object.entries(B)) {
-    for (const s of line) {
-      if (s.chain_budget * s.n !== Number(b)) {
-        throw new Page07DataError(`budget ${b} at N=${s.n} has chains of ${s.chain_budget}`);
-      }
-      if (s.chain_budget === D.pool.chain_cap) {
-        const p = HOT.points.find((q) => q.n === s.n);
-        if (p) near(s.accuracy, p.accuracy, 1e-9, `budget ${b} at N=${s.n} and the pile`);
-      }
-    }
-  }
-}
-
-/* ------------------------------------------------------------ the specimen */
-
-export interface SpecimenChain extends RawChain {}
-
-export interface Problem extends Omit<RawProblem, "chains"> {
-  chains: SpecimenChain[];
-}
-
-const PROBLEMS = D.figure_1.problems as Problem[];
-const SPECIMEN = PROBLEMS.find((p) => p.problem_id === D.figure_1.specimen_id);
-if (!SPECIMEN) {
-  throw new Page07DataError(
-    `figure 1 names ${D.figure_1.specimen_id} as its specimen but that problem is not bundled.`,
-  );
-}
-
-/**
- * The two boxes figure 1 lets the reader switch between: the vote coming out right
- * (the notebook's specimen) and the vote tying (a bundled problem picked for it,
- * checked below rather than trusted, because the reader is told it in a label).
- * A third box, the vote coming out wrong (test/algebra/224, still bundled by
- * notebooks/page_07_site_data.py), was cut from the page on 2026-10-11 by the author.
- */
-export type Outcome = "right" | "wrong" | "tie";
-export type ShowcaseOutcome = Exclude<Outcome, "wrong">;
-
-const SHOWCASE_PICKS: { id: string; outcome: ShowcaseOutcome }[] = [
-  { id: D.figure_1.specimen_id, outcome: "right" },
-  // Picked for being short and easy to follow. 7 chains say 5, which is right, and
-  // 7 say 4, so the vote returns nothing.
-  { id: "test/algebra/1837.json", outcome: "tie" },
-];
-
-const outcomeOf = (p: Problem): Outcome =>
-  p.tie ? "tie" : p.plurality_correct ? "right" : "wrong";
-
-export const SHOWCASE = SHOWCASE_PICKS.map(({ id, outcome }) => {
-  const problem = PROBLEMS.find((p) => p.problem_id === id);
-  if (!problem) {
-    throw new Page07DataError(`figure 1 shows ${id} but that problem is not bundled.`);
-  }
-  if (outcomeOf(problem) !== outcome) {
-    throw new Page07DataError(
-      `figure 1 labels ${id} as a vote that comes out '${outcome}', but the run says ` +
-        `'${outcomeOf(problem)}'.`,
-    );
-  }
-  // The non-specimen boxes are there to show the right answer being lost, so it has
-  // to be in the box for the reader to find.
-  if (outcome !== "right" && !problem.any_correct) {
-    throw new Page07DataError(`figure 1's '${outcome}' box ${id} has no correct chain in it.`);
-  }
-  return { outcome, problem };
 });
 
-// Each tally must account for every chain the box ships: the votes plus the chains
-// that produced nothing usable. If these disagree the histogram is drawing a different
-// pile than the one the reader can open.
-for (const { problem } of SHOWCASE) {
-  const votes = problem.ranked.reduce((s, r) => s + r.votes, 0);
-  const noAnswer = Math.round(problem.no_answer_rate * problem.chains.length);
-  if (votes + noAnswer !== problem.chains.length) {
+// Temperature 0 is sixteen copies of one greedy chain, so its line is flat. That is the
+// page's cleanest demonstration that the vote needs diversity: checked, not assumed.
+const COLD_POINTS = R.curves["0.0"];
+if (!COLD_POINTS || COLD_POINTS.some((p) => !close(p.accuracy, COLD_POINTS[0].accuracy))) {
+  throw new Page07DataError("the T = 0 line is not flat, so it is not one greedy chain");
+}
+
+// The best temperature is the one the summary names: most problems right, the lower on a tie.
+const BEST = [...R.summary].sort(
+  (a, b) => b.vote_accuracy - a.vote_accuracy || a.temperature - b.temperature,
+)[0];
+if (BEST.temperature !== R.best_temperature) {
+  throw new Page07DataError(`the run names T = ${R.best_temperature} as best, not T = ${BEST.temperature}`);
+}
+const HOT_POINTS = R.curves[R.best_temperature.toFixed(1)];
+
+// The handoff is the best temperature's full set of chains.
+near(R.handoff.plurality_accuracy, BEST.vote_accuracy, 1e-9, "the handoff's vote");
+near(R.handoff.coverage, BEST.coverage, 1e-9, "the handoff's coverage");
+near(R.handoff.thrown_away, R.handoff.coverage - R.handoff.plurality_accuracy, 1e-9, "the thrown-away share");
+
+/* ---------------------------------------------------------- figure 1's problems */
+
+const outcomeOf = (p: Problem): Outcome => (p.tie ? "tie" : p.plurality_correct ? "right" : "wrong");
+
+export const SHOWCASE = R.showcase.picks.map((pick) => {
+  const { problem, outcome } = pick;
+  if (outcomeOf(problem) !== outcome) {
     throw new Page07DataError(
-      `${problem.problem_id} tallies ${votes} votes plus ${noAnswer} non-answers, but ships ` +
-        `${problem.chains.length} chains`,
+      `figure 1 labels ${problem.problem_id} as a vote that comes out '${outcome}', but the run says '${outcomeOf(problem)}'.`,
+    );
+  }
+  if (outcome !== "right" && !problem.any_correct) {
+    throw new Page07DataError(`figure 1's '${outcome}' box ${problem.problem_id} has no correct chain in it.`);
+  }
+  // Each tally must account for every chain the box ships: the votes plus the chains that
+  // wrote no answer. If these disagree the histogram draws a different pile than the one the
+  // reader can open.
+  const votes = problem.ranked.reduce((s, r) => s + r.votes, 0);
+  const noAnswer = problem.chains.filter((c) => c.vote_key === null).length;
+  if (votes + noAnswer !== problem.chains.length || problem.chains.length !== R.n_chains) {
+    throw new Page07DataError(
+      `${problem.problem_id} tallies ${votes} votes plus ${noAnswer} non-answers, but ships ${problem.chains.length} chains`,
     );
   }
   if (problem.ranked.length !== problem.distinct_answers) {
-    throw new Page07DataError(
-      `${problem.problem_id}'s ranked tally and distinct_answers disagree`,
-    );
+    throw new Page07DataError(`${problem.problem_id}'s ranked tally and distinct_answers disagree`);
   }
-}
-
-/* ----------------------------------------------------------- the heat map */
-
-/**
- * Section 2's heat map: the temperature sweep, 16 chains at 12 temperatures on 40 of
- * the 100 problems (`notebooks/page_07_temperature_sweep.py`, bundled in
- * `notebooks/runs/page-07-temperature-sweep.zip`). One cell per problem and temperature:
- * how many of its chains are right, how the vote came out, and the answer it returned.
- * `notebooks/page_07_heatmap.py --sweep` re-tallies every cell from the bundle's chains
- * and refuses to write unless each one matches the sweep's results. Checked again here:
- * the run must be this page's, the summaries must be the averages of the cells, the
- * temperature-0 column must be one greedy chain copied, and the best temperature must be
- * the one the summaries name.
- */
-export interface HeatCell {
-  temperature: number;
-  n_correct: number;
-  outcome: Outcome;
-  /** What the vote returned; null on a tie. */
-  answer?: string | null;
-}
-
-interface HeatSummary {
-  temperature: number;
-  n_problems: number;
-  vote_accuracy: number;
-  coverage: number;
-  single_chain_accuracy: number;
-  tie_rate: number;
-  mean_distinct: number;
-}
-
-interface RawHeatmap {
-  source: { kind: string; run_id: string; bundle: string; bundle_sha256: string };
-  n_chains: number;
-  chain_cap: number;
-  temperatures: number[];
-  best_temperature: number;
-  summary: HeatSummary[];
-  control: {
-    temperature: number;
-    n_problems: number;
-    accuracy: number;
-    greedy_accuracy: number;
-    vs_greedy: { fixed: number; broken: number; p: number };
-  };
-  problems: {
-    problem_id: string;
-    level: number;
-    subject: string;
-    question: string;
-    ground_truth: string;
-    cells: HeatCell[];
-  }[];
-}
-
-const HM = rawHeatmap as unknown as RawHeatmap;
-
-if (HM.source.run_id !== D.manifest.run_id) {
-  throw new Page07DataError("the heat map was built from a different run than derived.json");
-}
-{
-  const close = (a: number, b: number) => Math.abs(a - b) < 1e-9;
-  HM.temperatures.forEach((t, j) => {
-    const cells = HM.problems.map((p) => p.cells[j]);
-    const s = HM.summary[j];
-    const avg = (f: (c: HeatCell) => number) => cells.reduce((a, c) => a + f(c), 0) / cells.length;
-    if (
-      s.temperature !== t ||
-      s.n_problems !== HM.problems.length ||
-      cells.some((c) => c.temperature !== t || c.n_correct < 0 || c.n_correct > HM.n_chains) ||
-      cells.some((c) => (c.outcome === "tie") !== (c.answer === null)) ||
-      !close(avg((c) => +(c.outcome === "right")), s.vote_accuracy) ||
-      !close(avg((c) => +(c.outcome === "tie")), s.tie_rate) ||
-      !close(avg((c) => c.n_correct / HM.n_chains), s.single_chain_accuracy) ||
-      !close(avg((c) => +(c.n_correct > 0)), s.coverage)
-    ) {
-      throw new Page07DataError(`the heat map's T = ${t} column disagrees with its own summary`);
+  for (const row of problem.ranked) {
+    if (problem.chains.filter((c) => c.vote_key === row.answer).length !== row.votes) {
+      throw new Page07DataError(`${problem.problem_id}: row '${row.answer}' is not the chains that voted for it`);
     }
-  });
-  // Temperature 0 is one greedy chain copied, so every cell is all right or all wrong.
-  const j0 = HM.temperatures.indexOf(0);
-  if (j0 >= 0 && HM.problems.some((p) => ![0, HM.n_chains].includes(p.cells[j0].n_correct))) {
-    throw new Page07DataError("the heat map's T = 0 column is not one greedy chain");
   }
-  const best = [...HM.summary].sort(
-    (a, b) => b.vote_accuracy - a.vote_accuracy || a.temperature - b.temperature,
-  )[0];
-  if (best.temperature !== HM.best_temperature) {
-    throw new Page07DataError(`the heat map names T = ${HM.best_temperature} as best, not T = ${best.temperature}`);
-  }
-}
-
-export const HEATMAP = HM;
+  return pick;
+});
 
 /** The chains that landed on one answer, in the order they were sampled. */
 export function chainsFor(problem: Problem, answer: string): SpecimenChain[] {
-  return problem.chains.filter((c) => c.extracted_answer === answer);
+  return problem.chains.filter((c) => c.vote_key === answer);
 }
 
 /**
  * A chain cut for reading: its opening paragraph (how it read the problem), its
  * last two (where it committed to an answer), and everything between folded away
- * for the reader to open. Chains run 31 to 272 lines, and the question a reader
- * brings to a wrong one is where it ended up, not every step of getting there.
+ * for the reader to open. The question a reader brings to a wrong chain is where
+ * it ended up, not every step of getting there.
  *
  * A cut at paragraph breaks, never inside one, so every word shown is still the
  * model's own and in its own order. A chain short enough that folding would hide
@@ -547,51 +266,45 @@ export function foldTrace(
   };
 }
 
-/** The share of the tally one row holds, for a bar width. */
-export const share = (votes: number, total: number): number => votes / total;
-
 /* --------------------------------------------------------------- the page */
 
 export const PAGE7 = {
-  manifest: D.manifest,
-  /** The primary model as the run recorded it, label and precision, for the plate. */
-  primary: { label: PRIMARY_MODEL.label, precision: PRIMARY_MODEL.quant },
-  claims: D.claims,
-  procedure: D.procedure,
+  run: R.source,
+  /** The model as the run recorded it, label and precision. */
+  primary: { label: R.source.model.split("/").pop() as string, precision: R.source.precision },
 
-  /** Figure 1: one problem, N chains, ranked. */
+  /** Figure 1: two problems, 16 chains each, ranked. */
   figure1: {
-    ...D.figure_1,
-    specimen: SPECIMEN,
-    problems: PROBLEMS,
-    /** The two boxes the reader switches between, specimen first. */
+    n_chains: R.n_chains,
+    temperature: R.showcase.temperature,
+    chain_cap: R.chain_cap,
+    /** The two boxes the reader switches between, the vote right first. */
     showcase: SHOWCASE,
-    /** Every problem of the diversity family at every temperature, one cell each. */
-    heatmap: HEATMAP,
+    specimen: SHOWCASE[0].problem,
+    showcaseRule: R.showcase.rule,
   },
 
-  /** Figure 2: what the vote buys, and what it costs at a fixed budget. */
+  /** The temperature sweep: a line per temperature over the N axis, T = 0 the greedy chain. */
+  sweep: {
+    n_chains: R.n_chains,
+    chain_cap: R.chain_cap,
+    temperatures: R.temperatures,
+    best_temperature: R.best_temperature,
+    n_axis: R.n_axis,
+    summary: R.summary,
+    curves: R.curves,
+    n_problems: R.source.n_problems,
+    levels: R.source.levels,
+  },
+
+  /** Figure 2's two reference lines. */
   figure2: {
-    hot: HOT,
-    cold: COLD,
-    split: D.figure_2.split,
-    splittingPays: D.figure_2.splitting_pays,
-    /** Section 4: every shared budget, smallest first, and the same chains allowed to finish. */
-    budgets: Object.entries(D.figure_2.split_budgets)
-      .map(([b, points]) => ({ budget: Number(b), points }))
-      .sort((a, b) => a.budget - b.budget),
-    uncapped: D.figure_2.uncapped,
-    bestSplitN: D.figure_2.best_split_n,
-    diversity: D.figure_2.diversity,
-    /** The page's sentence: the vote against ONE GREEDY CHAIN. */
-    gain: BARE,
-    /** Measured and reported, not plotted: the vote against one SAMPLED chain. */
-    gainVsOneSample: D.figure_2.gain.vs_one_sample,
+    hot: { temperature: R.best_temperature, points: HOT_POINTS },
+    cold: { temperature: 0, points: COLD_POINTS },
   },
 
   /** The one number the page closes on, and page 8 opens on. */
-  handoff: D.handoff,
-  pool: D.pool,
+  handoff: R.handoff,
 } as const;
 
 /** Formats a p-value the way the deck does elsewhere. */

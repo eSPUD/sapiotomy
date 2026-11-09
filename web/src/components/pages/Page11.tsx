@@ -1389,7 +1389,7 @@ export function Page11() {
             the answer is a worked solution the model wrote for itself, and the vote throws it
             away.{" "}
             <em>Act 3 stops selecting at inference time and trains the reasoning into the weights.
-            Page 12 keeps the winning chains and fine-tunes on them. Pages 13 and 14 reward only
+            Page 12 keeps the winning chains and fine-tunes on them. Page 13 rewards only
             correct answers, until the reasoning emerges on its own.</em>
           </Handoff>
         </div>
