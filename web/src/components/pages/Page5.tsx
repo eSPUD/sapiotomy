@@ -30,8 +30,9 @@
  *   problems with the dataset's own worked solutions (number_theory/515,
  *   algebra/858, number_theory/13), set in page 2's chat template: the question
  *   on the right with the user icon, the solution on the left with the model
- *   icon, one plain line per step, no highlighting. A quiet "‹ 1 of 3 ›" stepper
- *   sits above the chat.
+ *   icon, one plain line per step, no highlighting. A stepper sits above the
+ *   chat: "‹ Previous" and "Next ›" as bordered buttons (author, 2026-11-08, so
+ *   they read as controls), the problem's place and level between them.
  *   NOTHING IS RUN for it: the records are copied verbatim into
  *   `web/data/page-05-worked-solutions.json` and `@/lib/page05` checks the steps
  *   rebuild each solution. It replaced the base 3B's zero-shot and few-shot
@@ -168,21 +169,29 @@ function Ledger({ rows }: { rows: [string, string][] }) {
 
 /* ------------------------------------------------------------------ figure 1 */
 
-/** The worked problem, one at a time: a quiet "‹ 1 of 3 ›", wrapping round the three. */
+/**
+ * The worked problem, one at a time, wrapping round the three. Previous and Next
+ * are bordered buttons with their words on them (author, 2026-11-08: bare arrows
+ * were too easy to miss); the arrows are decoration, and each button keeps its
+ * full name for a screen reader.
+ */
 function ProblemStepper({ active, onProblem }: { active: number; onProblem: (i: number) => void }) {
   const n = WORKED_SOLUTIONS.length;
   const w = WORKED_SOLUTIONS[active];
-  const arrow = "rounded px-1.5 text-ink-muted hover:bg-grid/40 hover:text-ink";
+  const button =
+    "flex items-center gap-1.5 rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink hover:border-compute hover:bg-compute/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-compute";
   return (
-    <div role="group" aria-label="Worked problem" className="flex items-center gap-1 text-xs tabular-nums text-ink-muted">
-      <button type="button" aria-label="Previous problem" onClick={() => onProblem((active + n - 1) % n)} className={arrow}>
-        ‹
+    // On a phone the label takes its own line above the two buttons, so the buttons
+    // stay side by side; from sm up all three share one row.
+    <div role="group" aria-label="Worked problem" className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 text-xs tabular-nums text-ink-muted">
+      <button type="button" aria-label="Previous problem" onClick={() => onProblem((active + n - 1) % n)} className={button}>
+        <span aria-hidden="true">‹</span> Previous
       </button>
-      <span aria-live="polite">
-        problem {active + 1} of {n} · {w.subject} · level {w.level}
+      <span aria-live="polite" className="order-first w-full text-right sm:order-none sm:w-auto">
+        Problem: {active + 1} of {n} · {w.subject} · level {w.level}
       </span>
-      <button type="button" aria-label="Next problem" onClick={() => onProblem((active + 1) % n)} className={arrow}>
-        ›
+      <button type="button" aria-label="Next problem" onClick={() => onProblem((active + 1) % n)} className={button}>
+        Next <span aria-hidden="true">›</span>
       </button>
     </div>
   );

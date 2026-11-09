@@ -116,16 +116,16 @@ describe("Page 5, figure 1: worked solutions from MATH-500", () => {
     ]);
     const seen = [];
     for (let i = 0; i < 3; i++) {
-      seen.push(stepper().getByText(/^problem \d of 3/).textContent);
+      seen.push(stepper().getByText(/^Problem: \d of 3/).textContent);
       fireEvent.click(next());
     }
     expect(seen).toEqual([
-      "problem 1 of 3 · Number Theory · level 3",
-      "problem 2 of 3 · Algebra · level 4",
-      "problem 3 of 3 · Number Theory · level 5",
+      "Problem: 1 of 3 · Number Theory · level 3",
+      "Problem: 2 of 3 · Algebra · level 4",
+      "Problem: 3 of 3 · Number Theory · level 5",
     ]);
     fireEvent.click(prev());
-    expect(stepper().getByText("problem 3 of 3 · Number Theory · level 5")).toBeInTheDocument();
+    expect(stepper().getByText("Problem: 3 of 3 · Number Theory · level 5")).toBeInTheDocument();
   });
 
   it("shows the question as the user's turn, then the worked solution one line per step", () => {
@@ -154,6 +154,14 @@ describe("Page 5, figure 1: worked solutions from MATH-500", () => {
       "Previous problem",
       "Next problem",
     ]);
+    // Bordered buttons with their words on them, not bare arrows; each visible word
+    // is inside its accessible name.
+    for (const [name, word] of [["Previous problem", "Previous"], ["Next problem", "Next"]] as const) {
+      const b = figure1().getByRole("button", { name });
+      expect(b).toHaveClass("border");
+      expect(b.textContent?.replace(/[‹›]/g, "").trim()).toBe(word);
+      expect(name).toContain(word);
+    }
     expect(body()).not.toMatch(/press Play/i);
     expect(body()).not.toMatch(/Final answer:/);
   });
