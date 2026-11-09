@@ -205,7 +205,7 @@ describe("Page 16 (wrap-up) component", () => {
     // Page 5's link is its author's two notebooks in one zip, the same file page 5 offers.
     const p5 = screen.getByRole("link", { name: /^Page 5:/ });
     expect(p5).toHaveAttribute("href", "/notebooks/page-05-chain-of-thought.zip");
-    expect(p5.getAttribute("aria-label")).toMatch(/Download the notebooks, zip, 14 KB$/);
+    expect(p5.getAttribute("aria-label")).toMatch(/Download the notebooks, zip, 62 KB$/);
     // Derived from the ladder, so a rung can never quietly outlive its source.
     const pages = [...new Set(LADDER.map((r) => r.page))].sort((a, b) => a - b);
     expect(NOTEBOOKS.map((n) => n.page)).toEqual(pages);

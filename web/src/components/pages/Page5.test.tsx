@@ -7,7 +7,6 @@ import { PAGE5, SHOTS, SHOT_KEYS, SHOT_LABEL, WORKED_SOLUTIONS, pct, tidyMath } 
 const body = () => (document.body.textContent ?? "").replace(/\s+/g, " ");
 const N = PAGE5.n;
 const [B15, B3, B7] = PAGE5.base;
-const [I15, I3, I7] = PAGE5.instruct;
 /** The difference of the two printed percentages, as the page prints it. */
 const pts = (a: number, b: number) => ((Math.round(a * 1000) - Math.round(b * 1000)) / 10).toFixed(1);
 
@@ -30,15 +29,15 @@ describe("Page 5, the Act 2 opener", () => {
 });
 
 describe("Page 5, step 1: what a chain of thought is", () => {
-  it("has four steps, in Shashank's order", () => {
+  it("has three steps, in Shashank's order", () => {
     render(<Page5 />);
     const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
     expect(headings).toEqual([
       "1. Chain of Thought (CoT): System 2, written down",
       "2. Zero-shot versus few-shot CoT prompting",
       "3. In post-training: instruct models, with no examples",
-      "4. Smaller reasoning models do better than larger non-reasoning models",
     ]);
+    expect(screen.queryByLabelText("The floor is flat")).toBeNull();
   });
 
   it("keeps the author's definition and the classic ask in the cited paper's words", () => {
@@ -172,7 +171,7 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
     );
   });
 
-  it("carries the RunPod run's results, unchanged", () => {
+  it("carries the zero-vs-ten-shot run's results, unchanged", () => {
     expect(SHOTS.placeholder).toBe(false);
     expect(SHOTS.rows.map((r) => [r.label, r.solved.zero_shot, r.solved["10_shot"]])).toEqual([
       ["Qwen2.5-1.5B", 25, 26.2],
@@ -256,9 +255,6 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
     expect(fill("dot-1.5B-instruct")).toContain("fill-compute");
     // The arrow takes the colour of where it ends.
     expect(screen.getByTestId("row-1.5B").querySelector("line")?.getAttribute("class")).toContain("stroke-compute");
-    const floor = screen.getByTestId(`floor-${I15.label}`).querySelectorAll("rect");
-    expect(floor[0].getAttribute("class")).toContain("fill-crimson");
-    expect(floor[1].getAttribute("class")).toContain("fill-compute");
   });
 });
 
@@ -309,56 +305,13 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
   });
 });
 
-describe("Page 5, figure 4: the floor is flat", () => {
-  it("defines System 1 here as the final answer only, and checks the models complied", () => {
-    render(<Page5 />);
-    const floor = Math.floor(Math.min(...PAGE5.instruct.map((m) => m.direct.shortShare!)) * 100);
-    expect(floor).toBe(98);
-    expect(body()).toContain(`At least ${floor}% of their replies are then 40 tokens or fewer: System 1, answering immediately.`);
-  });
-
-  it("states the cross-model result, and its words match the data", () => {
-    render(<Page5 />);
-    const small = PAGE5.section4.small;
-    const large = PAGE5.section4.large;
-    expect(body()).toContain(`Forced into System 1, the 7B solves ${pct(large.direct.accuracy, 1)}.`);
-    expect(body()).toContain(`In System 2, the 1.5B solves ${pct(small.cot.accuracy, 1)}`);
-    expect(1.5 / 7).toBeLessThan(0.25); // "less than a quarter the size"
-    expect(small.cot.accuracy / large.direct.accuracy).toBeGreaterThanOrEqual(2); // "twice as well"
-    // "Every model in System 2 beats every model in System 1."
-    expect(Math.min(...PAGE5.instruct.map((m) => m.cot.accuracy))).toBeGreaterThan(
-      Math.max(...PAGE5.instruct.map((m) => m.direct.accuracy)),
-    );
-  });
-
-  it("prices the steps in tokens, rounded the way the sentence says", () => {
-    render(<Page5 />);
-    const mean = PAGE5.instruct.reduce((a, m) => a + m.cot.medianTokens, 0) / 3;
-    expect(Math.round(mean / 10) * 10).toBe(450);
-    expect([I15, I3, I7].every((m) => m.direct.medianTokens === 6)).toBe(true);
-    expect(body()).toContain("a median of around 450 tokens per problem, against 6.");
-  });
-
-  it("splits each checkpoint's bar at its non-reasoning accuracy, with no size axis", () => {
-    render(<Page5 />);
-    for (const m of PAGE5.instruct) {
-      const row = screen.getByTestId(`floor-${m.label}`);
-      expect(row).toHaveTextContent(pct(m.cot.accuracy, 1));
-      expect(row).toHaveTextContent(`+${pts(m.cot.accuracy, m.direct.accuracy)}`);
-    }
-    const chart = screen.getByRole("img", { name: /each bar split into the part it keeps non-reasoning/ });
-    expect(chart.getAttribute("aria-label")).not.toMatch(/parameters|scale/i);
-    const vitals = screen.getByLabelText("The floor is flat").querySelector("dl")?.textContent ?? "";
-    expect(vitals).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16");
-  });
-});
 
 describe("Page 5: provenance and what the page may claim", () => {
   it("links the two notebooks as one zip, beside the title", () => {
     render(<Page5 />);
     const link = screen.getByRole("link", { name: /download the notebooks/i });
     expect(link).toHaveAttribute("href", "/notebooks/page-05-chain-of-thought.zip");
-    expect(link).toHaveTextContent("Download the notebooks (zip, 14 KB)");
+    expect(link).toHaveTextContent("Download the notebooks (zip, 62 KB)");
     expect(link).toHaveAttribute("download");
     expect(link.parentElement?.querySelector("h1")).toBe(screen.getByRole("heading", { level: 1 }));
   });

@@ -201,10 +201,10 @@ describe.each(PAGES)("page $n's notebook bundle", ({
 // are the repo's notebooks (the traces live in notebooks/traces/page_5).
 describe("page 5's two-notebook zip", () => {
   const slug = "page-05-chain-of-thought";
-  const notebooks = ["page_5_few_shot.ipynb", "page_5_instruct_reasoning.ipynb"];
+  const notebooks = ["page_5_instruct_reasoning.ipynb", "page_5_zero_vs_ten_shot.ipynb"];
 
   it("exists, and the size on the page is the size on disk", () => {
-    expect(`${Math.round(statSync(zipPath(slug)).size / 1e3)} KB`).toBe("14 KB");
+    expect(`${Math.round(statSync(zipPath(slug)).size / 1e3)} KB`).toBe("62 KB");
   });
 
   it("unpacks into one folder holding the two notebooks and nothing else", () => {
@@ -219,14 +219,18 @@ describe("page 5's two-notebook zip", () => {
     }
   });
 
-  // Sections 3 and 4 compare the two runs' accuracies, which only means something if
-  // they grade alike: the first \boxed{}, compared with math_verify.
-  it("grades both notebooks on the first \\boxed{} with math_verify", () => {
-    for (const nb of notebooks) {
-      const src = codeCells(readFileSync(resolve(WEB, `public/notebooks/${nb}`))).join("\n");
-      expect(src).toContain("def extract_answer(text):");
-      expect(src).toContain('.find("\\\\boxed{")');
-      expect(src).toContain('verify(parse(f"$');
-    }
+  // Figure 3 compares the two runs' accuracies, and they do NOT grade alike: both take
+  // the first \boxed{} and use math_verify, but only the instruct notebook wraps the
+  // strings in $...$, which changes verdicts (web/data/PROVENANCE.md). This pins what
+  // each one does, so that bringing them into line has to be done on purpose.
+  it("pins each notebook's grader, which differ in whether they wrap the answer in $", () => {
+    const src = (nb: string) => codeCells(readFileSync(resolve(WEB, `public/notebooks/${nb}`))).join("\n");
+    const [instruct, tenShot] = notebooks.map(src);
+    expect(instruct).toContain("def extract_answer(text):");
+    expect(instruct).toContain('.find("\\\\boxed{")');
+    expect(instruct).toContain('verify(parse(f"$');
+    expect(tenShot).toContain("def extract_boxed_answer(text):");
+    expect(tenShot).toContain('.find("\\\\boxed{")');
+    expect(tenShot).toContain("pred_parsed = parse(pred_str)");
   });
 });

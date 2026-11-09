@@ -289,7 +289,7 @@ if (WAIT.before / WAIT.table.n !== PAGE5.figure2.bare.accuracy) {
 type NotebookLink = { title: string; href: string; size: string; format?: "zip" | "notebooks" };
 const NOTEBOOK_BY_PAGE: Record<number, NotebookLink> = {
   // Page 5 links the author's two notebooks, base and instruct, in one zip, as page 5 itself does.
-  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/page-05-chain-of-thought.zip", size: "14 KB", format: "notebooks" },
+  5: { title: "Chain of thought, and what it is worth", href: "/notebooks/page-05-chain-of-thought.zip", size: "62 KB", format: "notebooks" },
   6: { title: "Thinking longer, and budget forcing", href: "/notebooks/page-06-thinking-longer.zip", size: "2.0 MB" },
   7: { title: "Sampling and voting", href: "/notebooks/page-07-frequency-voting.zip", size: "3.0 MB" },
   8: { title: "Best-of-N and the judges", href: "/notebooks/page-08-best-of-n.zip", size: "9.7 MB" },

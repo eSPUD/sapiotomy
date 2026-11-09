@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { curves } from "@/lib/curves";
+import { PAGE5, pct } from "@/lib/page05";
 import { PAGE17 } from "@/lib/page17";
 import { Page15 } from "./Page15";
 
@@ -67,7 +68,7 @@ describe("Page 15 (when reasoning breaks) component", () => {
     // model performs unprompted when a chain left running overwrites an answer it had
     // already reached. Nothing new enters in either case, which is the shared hinge.
     const step2 = step(/Thinking too hard/i);
-    expect(step2.textContent).toMatch(/Step 1 was a revision/i);
+    expect(step2.textContent).toMatch(/Step 2 was a revision/i);
     expect(step2.textContent).toMatch(/you asked for/i);
     expect(step2.textContent).toMatch(/the model performs on its own/i);
     // They are still separate measurements: different models, benchmarks and
@@ -411,5 +412,67 @@ describe("Page 15 (when reasoning breaks) component", () => {
       .map((a) => a.getAttribute("href")!.slice(1))
       .filter((id) => !document.getElementById(id));
     expect(dangling).toEqual([]);
+  });
+});
+
+describe("Page 15, step 1: the floor is flat (moved from page 5)", () => {
+  const body = () => (document.body.textContent ?? "").replace(/\s+/g, " ");
+  const [I15, I3, I7] = PAGE5.instruct;
+  const pts = (a: number, b: number) => ((Math.round(a * 1000) - Math.round(b * 1000)) / 10).toFixed(1);
+
+  it("opens the page, ahead of the failure modes", () => {
+    render(<Page15 />);
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent ?? "");
+    expect(headings[0]).toBe("1. Smaller reasoning models do better than larger non-reasoning models");
+    expect(headings.slice(1).map((h) => h.slice(0, 2))).toEqual(["2.", "3.", "4.", "5."]);
+  });
+
+  it("colours each bar crimson, then orange", () => {
+    render(<Page15 />);
+    const floor = screen.getByTestId(`floor-${I15.label}`).querySelectorAll("rect");
+    expect(floor[0].getAttribute("class")).toContain("fill-crimson");
+    expect(floor[1].getAttribute("class")).toContain("fill-compute");
+  });
+
+  it("defines System 1 here as the final answer only, and checks the models complied", () => {
+    render(<Page15 />);
+    const floor = Math.floor(Math.min(...PAGE5.instruct.map((m) => m.direct.shortShare!)) * 100);
+    expect(floor).toBe(98);
+    expect(body()).toContain(`At least ${floor}% of their replies are then 40 tokens or fewer: System 1, answering immediately.`);
+  });
+
+  it("states the cross-model result, and its words match the data", () => {
+    render(<Page15 />);
+    const small = PAGE5.section4.small;
+    const large = PAGE5.section4.large;
+    expect(body()).toContain(`Forced into System 1, the 7B solves ${pct(large.direct.accuracy, 1)}.`);
+    expect(body()).toContain(`In System 2, the 1.5B solves ${pct(small.cot.accuracy, 1)}`);
+    expect(1.5 / 7).toBeLessThan(0.25); // "less than a quarter the size"
+    expect(small.cot.accuracy / large.direct.accuracy).toBeGreaterThanOrEqual(2); // "twice as well"
+    // "Every model in System 2 beats every model in System 1."
+    expect(Math.min(...PAGE5.instruct.map((m) => m.cot.accuracy))).toBeGreaterThan(
+      Math.max(...PAGE5.instruct.map((m) => m.direct.accuracy)),
+    );
+  });
+
+  it("prices the steps in tokens, rounded the way the sentence says", () => {
+    render(<Page15 />);
+    const mean = PAGE5.instruct.reduce((a, m) => a + m.cot.medianTokens, 0) / 3;
+    expect(Math.round(mean / 10) * 10).toBe(450);
+    expect([I15, I3, I7].every((m) => m.direct.medianTokens === 6)).toBe(true);
+    expect(body()).toContain("a median of around 450 tokens per problem, against 6.");
+  });
+
+  it("splits each checkpoint's bar at its non-reasoning accuracy, with no size axis", () => {
+    render(<Page15 />);
+    for (const m of PAGE5.instruct) {
+      const row = screen.getByTestId(`floor-${m.label}`);
+      expect(row).toHaveTextContent(pct(m.cot.accuracy, 1));
+      expect(row).toHaveTextContent(`+${pts(m.cot.accuracy, m.direct.accuracy)}`);
+    }
+    const chart = screen.getByRole("img", { name: /each bar split into the part it keeps non-reasoning/ });
+    expect(chart.getAttribute("aria-label")).not.toMatch(/parameters|scale/i);
+    const vitals = screen.getByLabelText("The floor is flat").querySelector("dl")?.textContent ?? "";
+    expect(vitals).toContain("Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16");
   });
 });

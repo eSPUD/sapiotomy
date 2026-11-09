@@ -16,6 +16,9 @@
  * Step 1 is verbatim published data (Huang et al., ICLR 2024, Table 3): asked
  * to re-check its own reasoning with no new information, a model gets WORSE.
  *
+ * Step numbers in this comment and the step comments below predate 2026-11-08, when
+ * page 5's section 4 moved in as the page's step 1: each is now one higher on the page.
+ *
  * THE SPINE OF THE PAGE IS ONE FAILURE WITH TWO TRIGGERS, and the section titles
  * carry it. Step 1 ("Fix your mistakes") is revision the reader asked for. Step 2
  * ("Thinking too hard") is revision the model performs unprompted, when a chain
@@ -86,6 +89,7 @@ import { PageNav } from "@/components/PageNav";
 import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import { curves } from "@/lib/curves";
+import { PAGE5 } from "@/lib/page05";
 import { PAGE17, Page17DataError, pct, tidyMath } from "@/lib/page17";
 import { useStore } from "@/store/useStore";
 
@@ -136,6 +140,151 @@ function SelfCorrectPanel({
     </div>
   );
 }
+
+/* ------------------------------------------------------------------- step 1 */
+
+/* Moved from page 5's section 4 with its chart and data (author, 2026-11-08). */
+
+const N = PAGE5.n;
+const INSTRUCT = PAGE5.instruct;
+const S4 = PAGE5.section4;
+const DEC = PAGE5.provenance.decoding;
+
+/**
+ * Percentage points between two accuracies, as the difference of the two
+ * percentages the page prints (one decimal each), so the reader's subtraction and
+ * the page's agree: 37.6% against 22.8% is 14.8 points.
+ */
+const pts = (a: number, b: number) => (Math.round(a * 1000) - Math.round(b * 1000)) / 10;
+const ptsLabel = (a: number, b: number) => pts(a, b).toFixed(1);
+
+/** A run's vitals, inside the figure card they certify (never in the margin). */
+function Ledger({ rows }: { rows: [string, string][] }) {
+  return (
+    <dl className="flex flex-wrap gap-x-6 gap-y-1 border-b border-grid pb-3 font-mono text-xs leading-relaxed tabular-nums text-ink-muted">
+      {rows.map(([k, v]) => (
+        <div key={k} className="flex gap-2">
+          <dt>{k}</dt>
+          <dd className="text-ink">{v}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+
+const FLOOR_W = 660;
+const FLOOR_H = 250;
+const FLOOR_MARGIN = { top: 30, right: 30, bottom: 44, left: 122 };
+const FLOOR_INNER_W = FLOOR_W - FLOOR_MARGIN.left - FLOOR_MARGIN.right;
+const FLOOR_INNER_H = FLOOR_H - FLOOR_MARGIN.top - FLOOR_MARGIN.bottom;
+
+const FLOOR_ROWS = INSTRUCT.map((m) => ({
+  modelId: m.modelId,
+  label: m.label,
+  blurtAccuracy: m.direct.accuracy,
+  bareAccuracy: m.cot.accuracy,
+  deltaPts: ptsLabel(m.cot.accuracy, m.direct.accuracy),
+}));
+
+/**
+ * Three checkpoints, each bar split at the accuracy it keeps non-reasoning.
+ * The shaded band is the claim: answering directly, every model lands in the
+ * same narrow strip, and the strip does not move with size. There is no size
+ * axis and no line through the points, deliberately. The old section 3's chart,
+ * kept almost exactly: only the numbers changed (handoff, section 2).
+ */
+function FloorChart() {
+  const rows = FLOOR_ROWS;
+  const maxBlurt = Math.max(...rows.map((m) => m.blurtAccuracy));
+  const x = (v: number) => (v / 100) * FLOOR_INNER_W;
+  const rowH = FLOOR_INNER_H / rows.length;
+  const barH = 22;
+  const crossX = x(S4.small.cot.accuracy * 100);
+
+  return (
+    <ChartFrame
+      title={`Share of ${N} MATH-500 problems solved by three Qwen2.5-Instruct checkpoints, each bar split into the part it keeps non-reasoning and the part its reasoning adds. Non-reasoning: ${rows.map((m) => `${m.label} ${pct(m.blurtAccuracy, 1)}`).join(", ")}. Reasoning: ${rows.map((m) => `${m.label} ${pct(m.bareAccuracy, 1)}`).join(", ")}.`}
+      width={FLOOR_W}
+      height={FLOOR_H}
+      margin={FLOOR_MARGIN}
+      xLabel="percentage of problems solved"
+    >
+      {/* the floor: every non-reasoning bar ends inside this strip */}
+      <rect x={0} y={0} width={x(maxBlurt * 100)} height={FLOOR_INNER_H} className="fill-crimson opacity-10" />
+      <line
+        x1={x(maxBlurt * 100)}
+        x2={x(maxBlurt * 100)}
+        y1={0}
+        y2={FLOOR_INNER_H}
+        className="stroke-crimson"
+        strokeWidth={1}
+        strokeDasharray="3 3"
+      />
+      <text x={x(maxBlurt * 100) + 6} y={-10} className="fill-crimson-ink text-[11px] font-semibold">
+        the floor: non-reasoning, all three land in here
+      </text>
+
+      {/* gridlines */}
+      {[0, 25, 50, 75, 100].map((t) => (
+        <g key={t}>
+          <line x1={x(t)} x2={x(t)} y1={0} y2={FLOOR_INNER_H} className="stroke-grid" strokeWidth={1} />
+          <text x={x(t)} y={FLOOR_INNER_H + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
+            {t}
+          </text>
+        </g>
+      ))}
+
+      {/* the cross-model comparison, as a guide the eye can land on */}
+      <line
+        x1={crossX}
+        x2={crossX}
+        y1={0}
+        y2={FLOOR_INNER_H}
+        className="stroke-compute"
+        strokeWidth={1}
+        strokeDasharray="4 4"
+      />
+
+      {rows.map((m, i) => {
+        const y = i * rowH + rowH / 2 - barH / 2;
+        const kept = x(m.blurtAccuracy * 100);
+        const added = x(m.bareAccuracy * 100) - kept;
+        return (
+          <g key={m.modelId} data-testid={`floor-${m.label}`}>
+            <text x={-10} y={y + barH / 2 + 4} textAnchor="end" className="fill-ink text-xs">
+              {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
+            </text>
+            <text x={-10} y={y + barH / 2 + 17} textAnchor="end" className="fill-ink-muted text-[10px]">
+              {DEC.dtype}
+            </text>
+            <rect x={0} y={y} width={kept} height={barH} className="fill-crimson" />
+            <rect x={kept} y={y} width={added} height={barH} className="fill-compute" />
+            <text x={kept + added + 8} y={y + barH / 2 + 4} className="fill-ink text-xs tabular-nums">
+              {pct(m.bareAccuracy, 1)}
+            </text>
+            <text
+              x={kept + added / 2}
+              y={y + barH / 2 + 4}
+              textAnchor="middle"
+              className="fill-ink text-[11px] font-semibold tabular-nums"
+            >
+              +{m.deltaPts}
+            </text>
+          </g>
+        );
+      })}
+    </ChartFrame>
+  );
+}
+
+/** Median reply lengths across the three instruct models, for section 4's last sentence. */
+const COT_MEDIAN_ROUNDED =
+  Math.round(INSTRUCT.reduce((a, m) => a + m.cot.medianTokens, 0) / INSTRUCT.length / 10) * 10;
+const DIRECT_MEDIANS = [...new Set(INSTRUCT.map((m) => m.direct.medianTokens))];
+const DIRECT_MEDIAN_RANGE = DIRECT_MEDIANS.join(" or ");
+/** The smallest share of Direct replies of 40 tokens or fewer, floored to a whole percent. */
+const DIRECT_SHORT_FLOOR = Math.floor(Math.min(...INSTRUCT.map((m) => m.direct.shortShare ?? 0)) * 100);
 
 /* ------------------------------------------------------------------ step 2a */
 
@@ -714,10 +863,64 @@ export function Page15() {
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
+        {/* Step 1: moved verbatim from page 5's section 4 (author, 2026-11-08), with its
+            chart. Every claim is guarded against the data in Page15.test.tsx: "less than
+            a quarter the size", "twice as well", and "every model in System 2 beats
+            every model in System 1". */}
+        <section className="flex min-w-0 flex-col gap-3">
+          <h2 className="text-xl font-semibold text-ink">1. Smaller reasoning models do better than larger non-reasoning models</h2>
+          <p className="text-ink-muted">
+            Today&apos;s instruct models no longer need asking: System&nbsp;2 thinking is their
+            default mode. So we asked the same three models for the opposite, adding one line to
+            every problem: give only the final answer, with no working. At least{" "}
+            {DIRECT_SHORT_FLOOR}% of their replies are then 40 tokens or fewer: System&nbsp;1,
+            answering immediately.
+          </p>
+          <p className="text-ink-muted">
+            Can a bigger model make up for skipping the steps? Forced into System&nbsp;1, the 7B
+            solves <strong className="text-ink">{pct(S4.large.direct.accuracy, 1)}</strong>. In
+            System&nbsp;2, the 1.5B solves{" "}
+            <strong className="text-ink">{pct(S4.small.cot.accuracy, 1)}</strong>: a model less
+            than a quarter the size does twice as well, just by writing out its steps. Every model
+            in System&nbsp;2 beats every model in System&nbsp;1. The steps are not free: a median of
+            around {COT_MEDIAN_ROUNDED} tokens per problem, against {DIRECT_MEDIAN_RANGE}.
+          </p>
+          <section
+            aria-label="The floor is flat"
+            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+          >
+            <Ledger
+              rows={[
+                ["model", "Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16"],
+                ["decoding", `${DEC.strategy} · ${DEC.max_new_tokens.toLocaleString("en-GB")}-token cap`],
+                ["problems", `MATH-500 · n = ${N} paired`],
+                ["output", `${(INSTRUCT.length * 2 * N).toLocaleString("en-GB")} replies`],
+              ]}
+            />
+            <FloorChart />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-5 rounded-sm bg-crimson" /> solved with no reasoning
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-5 rounded-sm bg-compute" /> added by the working
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-5 rounded-sm bg-crimson opacity-20" /> the floor: all three
+                non-reasoning bars end inside it
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="h-3 w-px bg-compute" /> the 1.5B, reasoning
+              </span>
+            </div>
+          </section>
+        </section>
+        <div aria-hidden="true" />
+
         {/* Step 1 — intrinsic self-correction fails */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. Fix your mistakes
+            2. Fix your mistakes
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               verbatim published numbers
             </span>
@@ -771,13 +974,13 @@ export function Page15() {
         {/* Step 2 — thinking too hard: page 6's curve with the losses drawn back in */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            2. Thinking too hard
+            3. Thinking too hard
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               our run · {PAGE17.run.items} problems · {PAGE17.run.primaryLabel} · greedy
             </span>
           </h2>
           <p className="text-ink-muted">
-            Step 1 was a revision <strong className="text-ink">you asked for</strong>. This one the
+            Step 2 was a revision <strong className="text-ink">you asked for</strong>. This one the
             model performs on its own: left running, a chain keeps writing, and what it writes can
             replace an answer it had already reached. Raise the token cap and page 6&apos;s accuracy
             curve climbs, though most of the climb is chains that were being cut off mid-thought
@@ -919,13 +1122,13 @@ export function Page15() {
         {/* Step 3 — scoring gone wrong: reliability is a coordinate, not a property */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            3. Scoring gone wrong
+            4. Scoring gone wrong
             <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
               our run · the same {PAGE17.run.items} problems · page 8&apos;s judges
             </span>
           </h2>
           <p className="text-ink-muted">
-            Step 2 leaned on a judge, and page 8 sold one: selection beats voting, up to the ceiling
+            Step 3 leaned on a judge, and page 8 sold one: selection beats voting, up to the ceiling
             its reliability sets. That sentence quotes reliability as though it were a property of
             the judge. It is not. It is a reading taken at a setting, and the setting is a knob page
             8 turned two pages ago.
@@ -1003,7 +1206,7 @@ export function Page15() {
 
         {/* Step 4 — what still works */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">4. What still works</h2>
+          <h2 className="text-xl font-semibold text-ink">5. What still works</h2>
           <p className="text-ink">
             <strong className="text-ink">Feedback from outside the model.</strong> Self-correction
             fails <em>unaided</em>; give the reviser real information, a failing unit test, a
@@ -1018,7 +1221,7 @@ export function Page15() {
               Verifiers, where answers are checkable, and trained ones by preference.
             </strong>{" "}
             Selection with a judge (page 8) still beats blind voting, up to the ceiling its
-            reliability sets. Step 3 adds which judge: the trained scorer held across the whole
+            reliability sets. Step 4 adds which judge: the trained scorer held across the whole
             sweep while every model asked to judge lost ground.
           </p>
           <p className="text-ink">

@@ -8,14 +8,14 @@
  *
  * Rebuilt 2026-10-18 from Shashank's outline (planning/page_5_rework_plan.md and
  * planning/page_5_handoff.md), keeping the old page's prose wherever it still
- * holds: the Act 2 opener, the hardware note, section 1's definition and section
- * 4's argument and close are the author's words, with new numbers.
+ * holds: the Act 2 opener, the hardware note, section 1's definition and the
+ * close are the author's words.
  *
  * EVERY NUMBER ON THIS PAGE IS OURS AND IS MEASURED, by notebooks greedy at bf16
  * and graded on the first \boxed{} with math_verify. Sections 2 and 3's few-shot
- * side: `5_CoT_FewShotPrompting_RunPod.ipynb` (base Qwen2.5 1.5B, 3B, 7B; zero-shot
+ * side: `page_5_zero_vs_ten_shot.ipynb` (base Qwen2.5 1.5B, 3B, 7B; zero-shot
  * and 10-shot; 2,048-token limit; 200 random problems), in
- * `web/data/page-05-few-shot.json`. Section 3's instruct side and section 4:
+ * `web/data/page-05-few-shot.json`. Section 3's instruct side:
  * `page_5_instruct_reasoning.ipynb` (Qwen2.5-Instruct 1.5B, 3B, 7B; reasoning and
  * final answer only; 1,024-token limit; tallied on 495 problems), via
  * `notebooks/page_05_site_data.py` into `web/data/page-05-derived.json`. Both load
@@ -39,27 +39,25 @@
  *   is where the models are first named.
  *
  *   Step 2 (rebuilt 2026-11-08, author): figure 2, a simple vertical bar chart of
- *   the RunPod notebook's results: Qwen2.5 1.5B, 3B and 7B, each zero-shot and with
+ *   that notebook's results: Qwen2.5 1.5B, 3B and 7B, each zero-shot and with
  *   10 worked examples, on its own 200 random problems, not the 495 below.
  *   Shashank's two sentences follow the figure; the rest of the prose is a stand-in
  *   to iterate on.
  *
  *   Step 3: figure 3, the instruct models with no examples (495 problems) against
- *   the base models with ten (the RunPod run's 200: author, 2026-11-08, few-shot
+ *   the base models with ten (that run's 200: author, 2026-11-08, few-shot
  *   numbers only). Its opening says what an instruct model is and follows from
  *   step 2 (author, 2026-10-18); the figure's legend gives each side's prompt
  *   length. ANY DISCUSSION OF THE RESULTS STILL WAITS FOR THE AUTHOR (handoff,
  *   section 4).
  *
- *   Step 4: figure 4, the old section 3's chart with the new run's numbers:
- *   each instruct model reasoning and asked for the final answer only. The claim
- *   is the FLAT FLOOR, never scale: no size axis, no line through the points.
+ *   The old step 4 (figure 4, each instruct model reasoning and asked for the final
+ *   answer only) moved verbatim to page 15's step 1 (author, 2026-11-08).
  *
  * Load-bearing and easy to lose:
  *   · the notebook download: one zip of the two notebooks, beside the title.
- *   · the conditions are named plainly. Section 4 uses System 1 and System 2,
- *     which page 1 defines; no euphemism ("left alone", "forbidden to reason")
- *     may come back.
+ *   · the conditions are named plainly: no euphemism ("left alone", "forbidden to
+ *     reason") may come back.
  *   · the worked solutions are ours, "written for this experiment, expanding
  *     MATH's own solutions". No sentence may present them as MATH's.
  *   · Wei et al. and Kojima et al. are cited for the TECHNIQUES they introduced.
@@ -95,8 +93,6 @@ const PAGE_N = 5;
 const N = PAGE5.n;
 const BASE = PAGE5.base;
 const INSTRUCT = PAGE5.instruct;
-const S4 = PAGE5.section4;
-const DEC = PAGE5.provenance.decoding;
 
 /**
  * Percentage points between two accuracies, as the difference of the two
@@ -107,13 +103,13 @@ const pts = (a: number, b: number) => (Math.round(a * 1000) - Math.round(b * 100
 const ptsLabel = (a: number, b: number) => pts(a, b).toFixed(1);
 
 /**
- * The download: one zip of the page's two notebooks, page_5_few_shot.ipynb (base)
- * and page_5_instruct_reasoning.ipynb (instruct). The retired run's bundle, with
+ * The download: one zip of the page's two notebooks, page_5_zero_vs_ten_shot.ipynb
+ * (base) and page_5_instruct_reasoning.ipynb (instruct). The retired run's bundle, with
  * harness.py and its 900 traces, stays in public/notebooks for
  * build_trace_report.py and notebookBundles.test.ts.
  */
 const NOTEBOOK_HREF = "/notebooks/page-05-chain-of-thought.zip";
-const NOTEBOOK_SIZE = "14 KB";
+const NOTEBOOK_SIZE = "62 KB";
 
 /**
  * Numbered in order of first appearance. Wei and Kojima are cited for the
@@ -339,10 +335,9 @@ function SeriesLegend({ series }: { series: DotSeries[] }) {
 const SIZES = BASE.map((m) => m.size);
 
 /**
- * The page's colours (author, 2026-10-18): crimson for each comparison's baseline
- * (the problem alone in figure 2, the final answer only in figure 4), Sky blue for
- * few-shot (figures 1 to 3), Clay orange for instruct models reasoning (figures 3
- * and 4). Crimson is dark so it stays apart from Clay for colour-blind readers.
+ * The page's colours (author, 2026-10-18): crimson for the baseline (the
+ * problem alone in figure 2), Sky blue for few-shot (figures 2 and 3), Clay orange
+ * for instruct models reasoning (figure 3). Crimson is dark so it stays apart from Clay for colour-blind readers.
  */
 const FEW_SHOT = { fill: "fill-wrong", stroke: "stroke-wrong" };
 const INSTRUCT_REASONING = { fill: "fill-compute", stroke: "stroke-compute" };
@@ -472,7 +467,7 @@ const promptTokens = (arms: DotArm[]) => {
   return `prompt ${arms[0].medianPromptTokens.toLocaleString("en-GB")} tokens`;
 };
 
-/** Figure 3's few-shot side: one size's 10-shot result from the RunPod run. */
+/** Figure 3's few-shot side: one size's result from the 10-shot run. */
 const tenShotArm = (size: string): DotArm => {
   const row = SHOTS.rows.find((r) => r.label === `Qwen2.5-${size}`);
   if (!row) throw new Error(`page 5: no 10-shot result for ${size}`);
@@ -498,121 +493,6 @@ const FIG3_SERIES: [DotSeries, DotSeries] = [
 ];
 
 const describeSeries = (s: DotSeries) => SIZES.map((size, i) => `${size} ${pct(s.arms[i].accuracy, 1)}`).join(", ");
-
-/* ------------------------------------------------------------------ figure 4 */
-
-const FLOOR_W = 660;
-const FLOOR_H = 250;
-const FLOOR_MARGIN = { top: 30, right: 30, bottom: 44, left: 122 };
-const FLOOR_INNER_W = FLOOR_W - FLOOR_MARGIN.left - FLOOR_MARGIN.right;
-const FLOOR_INNER_H = FLOOR_H - FLOOR_MARGIN.top - FLOOR_MARGIN.bottom;
-
-const FLOOR_ROWS = INSTRUCT.map((m) => ({
-  modelId: m.modelId,
-  label: m.label,
-  blurtAccuracy: m.direct.accuracy,
-  bareAccuracy: m.cot.accuracy,
-  deltaPts: ptsLabel(m.cot.accuracy, m.direct.accuracy),
-}));
-
-/**
- * Three checkpoints, each bar split at the accuracy it keeps non-reasoning.
- * The shaded band is the claim: answering directly, every model lands in the
- * same narrow strip, and the strip does not move with size. There is no size
- * axis and no line through the points, deliberately. The old section 3's chart,
- * kept almost exactly: only the numbers changed (handoff, section 2).
- */
-function FloorChart() {
-  const rows = FLOOR_ROWS;
-  const maxBlurt = Math.max(...rows.map((m) => m.blurtAccuracy));
-  const x = (v: number) => (v / 100) * FLOOR_INNER_W;
-  const rowH = FLOOR_INNER_H / rows.length;
-  const barH = 22;
-  const crossX = x(S4.small.cot.accuracy * 100);
-
-  return (
-    <ChartFrame
-      title={`Share of ${N} MATH-500 problems solved by three Qwen2.5-Instruct checkpoints, each bar split into the part it keeps non-reasoning and the part its reasoning adds. Non-reasoning: ${rows.map((m) => `${m.label} ${pct(m.blurtAccuracy, 1)}`).join(", ")}. Reasoning: ${rows.map((m) => `${m.label} ${pct(m.bareAccuracy, 1)}`).join(", ")}.`}
-      width={FLOOR_W}
-      height={FLOOR_H}
-      margin={FLOOR_MARGIN}
-      xLabel="percentage of problems solved"
-    >
-      {/* the floor: every non-reasoning bar ends inside this strip */}
-      <rect x={0} y={0} width={x(maxBlurt * 100)} height={FLOOR_INNER_H} className="fill-crimson opacity-10" />
-      <line
-        x1={x(maxBlurt * 100)}
-        x2={x(maxBlurt * 100)}
-        y1={0}
-        y2={FLOOR_INNER_H}
-        className="stroke-crimson"
-        strokeWidth={1}
-        strokeDasharray="3 3"
-      />
-      <text x={x(maxBlurt * 100) + 6} y={-10} className="fill-crimson-ink text-[11px] font-semibold">
-        the floor: non-reasoning, all three land in here
-      </text>
-
-      {/* gridlines */}
-      {[0, 25, 50, 75, 100].map((t) => (
-        <g key={t}>
-          <line x1={x(t)} x2={x(t)} y1={0} y2={FLOOR_INNER_H} className="stroke-grid" strokeWidth={1} />
-          <text x={x(t)} y={FLOOR_INNER_H + 16} textAnchor="middle" className="fill-ink-muted text-[11px]">
-            {t}
-          </text>
-        </g>
-      ))}
-
-      {/* the cross-model comparison, as a guide the eye can land on */}
-      <line
-        x1={crossX}
-        x2={crossX}
-        y1={0}
-        y2={FLOOR_INNER_H}
-        className="stroke-compute"
-        strokeWidth={1}
-        strokeDasharray="4 4"
-      />
-
-      {rows.map((m, i) => {
-        const y = i * rowH + rowH / 2 - barH / 2;
-        const kept = x(m.blurtAccuracy * 100);
-        const added = x(m.bareAccuracy * 100) - kept;
-        return (
-          <g key={m.modelId} data-testid={`floor-${m.label}`}>
-            <text x={-10} y={y + barH / 2 + 4} textAnchor="end" className="fill-ink text-xs">
-              {m.label.replace("Qwen2.5-", "").replace("-Instruct", "")}
-            </text>
-            <text x={-10} y={y + barH / 2 + 17} textAnchor="end" className="fill-ink-muted text-[10px]">
-              {DEC.dtype}
-            </text>
-            <rect x={0} y={y} width={kept} height={barH} className="fill-crimson" />
-            <rect x={kept} y={y} width={added} height={barH} className="fill-compute" />
-            <text x={kept + added + 8} y={y + barH / 2 + 4} className="fill-ink text-xs tabular-nums">
-              {pct(m.bareAccuracy, 1)}
-            </text>
-            <text
-              x={kept + added / 2}
-              y={y + barH / 2 + 4}
-              textAnchor="middle"
-              className="fill-ink text-[11px] font-semibold tabular-nums"
-            >
-              +{m.deltaPts}
-            </text>
-          </g>
-        );
-      })}
-    </ChartFrame>
-  );
-}
-
-/** Median reply lengths across the three instruct models, for section 4's last sentence. */
-const COT_MEDIAN_ROUNDED =
-  Math.round(INSTRUCT.reduce((a, m) => a + m.cot.medianTokens, 0) / INSTRUCT.length / 10) * 10;
-const DIRECT_MEDIANS = [...new Set(INSTRUCT.map((m) => m.direct.medianTokens))];
-const DIRECT_MEDIAN_RANGE = DIRECT_MEDIANS.join(" or ");
-/** The smallest share of Direct replies of 40 tokens or fewer, floored to a whole percent. */
-const DIRECT_SHORT_FLOOR = Math.floor(Math.min(...INSTRUCT.map((m) => m.direct.shortShare ?? 0)) * 100);
 
 /* -------------------------------------------------------------------- page */
 
@@ -708,7 +588,7 @@ export function Page5() {
               2026-11-06 to name the prompting it compares. */}
           <h2 className="text-xl font-semibold text-ink">2. Zero-shot versus few-shot CoT prompting</h2>
           <p className="text-ink-muted">
-            {/* The old opening sentence, rewritten for the RunPod notebook's run
+            {/* The old opening sentence, rewritten for the zero-vs-ten-shot run
                 (author, 2026-11-08): three sizes, two prompts, and random problems, none
                 of them the ten example problems, because testing on those would test the
                 answer key. The count is deliberately not stated. A stand-in until the
@@ -826,66 +706,13 @@ export function Page5() {
           </RefItem>
         </Note>
 
-        {/* Step 4: the old section 3, its argument and chart kept, its numbers from
-            the instruct run. Every claim is guarded against the data in
-            Page5.test.tsx: "less than a quarter the size", "twice as well", and
-            "every model in System 2 beats every model in System 1". */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">4. Smaller reasoning models do better than larger non-reasoning models</h2>
-          <p className="text-ink-muted">
-            Today&apos;s instruct models no longer need asking: System&nbsp;2 thinking is their
-            default mode. So we asked the same three models for the opposite, adding one line to
-            every problem: give only the final answer, with no working. At least{" "}
-            {DIRECT_SHORT_FLOOR}% of their replies are then 40 tokens or fewer: System&nbsp;1,
-            answering immediately.
+        <Handoff className="lg:col-start-1">
+          <p className="text-ink">
+            {/* The old page's closing line, author, 2026-09-27. */}
+            A chain of thought makes a model better at hard problems, and it charges for that
+            in tokens.
           </p>
-          <p className="text-ink-muted">
-            Can a bigger model make up for skipping the steps? Forced into System&nbsp;1, the 7B
-            solves <strong className="text-ink">{pct(S4.large.direct.accuracy, 1)}</strong>. In
-            System&nbsp;2, the 1.5B solves{" "}
-            <strong className="text-ink">{pct(S4.small.cot.accuracy, 1)}</strong>: a model less
-            than a quarter the size does twice as well, just by writing out its steps. Every model
-            in System&nbsp;2 beats every model in System&nbsp;1. The steps are not free: a median of
-            around {COT_MEDIAN_ROUNDED} tokens per problem, against {DIRECT_MEDIAN_RANGE}.
-          </p>
-          <section
-            aria-label="The floor is flat"
-            className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
-          >
-            <Ledger
-              rows={[
-                ["model", "Qwen2.5-Instruct · 1.5B, 3B, 7B · bf16"],
-                ["decoding", `${DEC.strategy} · ${DEC.max_new_tokens.toLocaleString("en-GB")}-token cap`],
-                ["problems", `MATH-500 · n = ${N} paired`],
-                ["output", `${(INSTRUCT.length * 2 * N).toLocaleString("en-GB")} replies`],
-              ]}
-            />
-            <FloorChart />
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm bg-crimson" /> solved with no reasoning
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm bg-compute" /> added by the working
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-5 rounded-sm bg-crimson opacity-20" /> the floor: all three
-                non-reasoning bars end inside it
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="h-3 w-px bg-compute" /> the 1.5B, reasoning
-              </span>
-            </div>
-          </section>
-          <Handoff>
-            <p className="text-ink">
-              {/* The old page's closing line, author, 2026-09-27. */}
-              A chain of thought makes a model better at hard problems, and it charges for that
-              in tokens.
-            </p>
-          </Handoff>
-        </section>
-        <div aria-hidden="true" />
+        </Handoff>
       </div>
 
       <div aria-live="polite" className="sr-only">
