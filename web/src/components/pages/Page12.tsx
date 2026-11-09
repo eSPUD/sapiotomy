@@ -942,7 +942,7 @@ function StarHarvest() {
         {hasHint ? (
           <div className="flex flex-col gap-0.5">
             <Toggle
-              label="Rationalization (lines 8 and 9)"
+              label="STaR (Self-Taught Reasoner) - Rationalization"
               checked={rationalize}
               onChange={(v) => {
                 // Mid-play, show the whole pass at once; an empty pass stays empty.

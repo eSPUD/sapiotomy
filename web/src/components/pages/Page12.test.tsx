@@ -65,6 +65,9 @@ describe("Page 12 (STaR and self-improvement)", () => {
       ).toBeInTheDocument();
       // Rationalization is a small switch, on by default because it is part of STaR as published.
       const sw = screen.getByRole("switch", { name: /Rationalization/ });
+      // Named for the method it belongs to (author, 2026-11-09).
+      expect(screen.getByText("STaR (Self-Taught Reasoner) - Rationalization")).toBeInTheDocument();
+      expect(screen.queryByText(/lines 8 and 9/)).toBeNull();
       expect(sw).toHaveAttribute("aria-checked", "true");
       expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
       expect(
