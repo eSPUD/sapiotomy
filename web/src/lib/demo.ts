@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 
 /**
- * Presentation (demo) mode: P steps through these stops in order, looping round,
- * and Q leaves. Each stop is one widget, tagged in its page with a matching
- * `data-demo` attribute; DemoMode scrolls to it and spotlights it. A stop with a
+ * Presentation (demo) mode: P steps through these stops in order; a P past the
+ * last returns to the landing page and leaves the demo, and Q leaves at any stop.
+ * Each stop is one widget, tagged in its page with a matching `data-demo`
+ * attribute; DemoMode scrolls to it and spotlights it. A stop with a
  * `problem` also asks its widget to show that problem (1-based, as the widget's
  * own "problem 2 of 4" counts).
  */
