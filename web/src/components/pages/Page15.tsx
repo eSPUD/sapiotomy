@@ -47,6 +47,7 @@
  */
 
 import { ChartFrame } from "@/components/ChartFrame";
+import { Cite, RefItem } from "@/components/Cite";
 import { Handoff } from "@/components/Handoff";
 import { PageNav } from "@/components/PageNav";
 import { Quiz } from "@/components/Quiz";
@@ -92,6 +93,9 @@ function Takeaway({
 }
 
 const PAGE_N = 15;
+
+/** Page 15's references, numbered in order of first appearance. */
+const REF = { bitterLesson: 1 } as const;
 
 /* ------------------------------------------------------------- the charts */
 
@@ -367,12 +371,25 @@ export function Page15() {
       {/* The story's last word, and presentation mode's last stop. */}
       <Handoff demo="p15-close">
         {/* Simplified by the author, 2026-11-09, from one long sentence: the same four
-            claims (gains, a cost, a limit, the open question) and the same last line. */}
+            claims (gains, a cost, a limit, the open question) and the same last line. The
+            bittersweet lesson (author, 2026-11-09) is our framing of Sutton's essay: search
+            and learning are the two methods it names, and this story is both. */}
         In short: letting a model think longer before it answers really does make its answers
-        better. Every gain has a cost and a limit. And no one has yet shown that the reasoning a
-        model writes out is what actually produces its answer.{" "}
+        better. Call it a bittersweet lesson. Bitter, as Rich Sutton put it: the methods that win
+        are the general ones that scale with computation, search and learning, not clever
+        shortcuts built in by hand.
+        <Cite n={REF.bitterLesson} /> Sweet: that computation can now be spent when a question is
+        asked, not only in training. Every gain has a cost and a limit. And no one has yet shown
+        that the reasoning a model writes out is what actually produces its answer.{" "}
         <em className="text-ink-muted">That is where the field stands today, and now so do you.</em>
       </Handoff>
+      {/* The page's one reference, under the box that cites it. */}
+      <aside className="flex flex-col gap-2 text-sm text-ink-muted">
+        <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">References</p>
+        <RefItem n={REF.bitterLesson} href="http://www.incompleteideas.net/IncIdeas/BitterLesson.html">
+          Rich Sutton, <em>The Bitter Lesson</em> (2019).
+        </RefItem>
+      </aside>
 
       <PageNav n={PAGE_N} />
     </article>

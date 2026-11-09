@@ -226,8 +226,9 @@ describe("Page 15 (wrap-up) component", () => {
   it("carries six numbered takeaways, read as a set", () => {
     render(<Page15 />);
     expect(screen.getByText(/Conclusions/i)).toBeInTheDocument();
+    // The takeaways' own numbers (the References entry under the closing box is "1." too).
     for (let n = 1; n <= 6; n++) {
-      expect(screen.getByText(`${n}.`)).toBeInTheDocument();
+      expect(screen.getAllByText(`${n}.`).some((el) => el.classList.contains("font-mono"))).toBe(true);
     }
   });
 
@@ -317,6 +318,16 @@ describe("Page 15 (wrap-up) component", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/That is where the field stands today, and now so do you\./)).toBeInTheDocument();
     expect(screen.queryByText(/The one sentence to leave with/)).toBeNull();
+    // The bittersweet lesson, citing Sutton (author, 2026-11-09).
+    const box = screen.getByRole("complementary", { name: "Where this leaves us" });
+    expect(box.textContent?.replace(/\s+/g, " ")).toMatch(
+      /Call it a bittersweet lesson\. Bitter, as Rich Sutton put it: the methods that win are the general ones that scale with computation, search and learning, not clever shortcuts built in by hand\.\s*reference 1 Sweet: that computation can now be spent when a question is asked, not only in training\./,
+    );
+    expect(box.querySelector('sup a[href="#ref-1"]')).not.toBeNull();
+    expect(screen.getByRole("link", { name: /The Bitter Lesson/ })).toHaveAttribute(
+      "href",
+      "http://www.incompleteideas.net/IncIdeas/BitterLesson.html",
+    );
   });
 
   it("carries no em dash or en dash in rendered copy", () => {
