@@ -229,13 +229,16 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
 
   /* ---- provenance and the hand-off ------------------------------------- */
 
-  it("hands off to Act 3 on the two loose ends: selection and waste", () => {
+  it("closes on the two loose ends, selection and waste, with no Act 3 preview", () => {
     render(<Page11 />);
     expect(screen.getByText(/So why did the crossing not appear for us/i)).toBeInTheDocument();
     expect(screen.getByText(/The law lives in a narrow window/i)).toBeInTheDocument();
     expect(screen.getByText(/The selection wall/i)).toBeInTheDocument();
-    expect(screen.getByText(/trains the reasoning into the weights/i)).toBeInTheDocument();
-    expect(screen.getByText(/page 13 rewards\s*only correct answers/i)).toBeInTheDocument();
+    // It ends on the waste; the Act 3 preview was cut (author, 2026-11-09).
+    const box = screen.getByRole("complementary", { name: "Where this leaves us" });
+    expect(box.textContent?.replace(/\s+/g, " ").trim()).toMatch(/and the vote throws it away\.$/);
+    expect(screen.queryByText(/trains the reasoning into the weights/i)).toBeNull();
+    expect(screen.queryByText(/rewards only\s*correct answers/i)).toBeNull();
   });
 
   it("retires the Measured / Cited footer, keeping the apparatus beside its figures", () => {

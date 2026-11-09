@@ -1377,10 +1377,9 @@ export function Page11() {
             problems. Two loose ends are left. The selection wall: the answer is in the pile, but no
             rule we can run at answer time reliably grabs it. And the waste: a chain that reached
             the answer is a worked solution the model wrote for itself, and the vote throws it
-            away.{" "}
-            <em>Act 3 stops selecting at inference time and trains the reasoning into the weights.
-            Page 12 keeps the winning chains and fine-tunes on them. Page 13 rewards only
-            correct answers, until the reasoning emerges on its own.</em>
+            away.
+            {/* The Act 3 preview ("Act 3 stops selecting at inference time …") was cut
+                (author, 2026-11-09); the box ends on the two loose ends. */}
           </Handoff>
         </div>
       </div>
