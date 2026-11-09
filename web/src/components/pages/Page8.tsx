@@ -1,110 +1,45 @@
 "use client";
 
 /**
- * Page 8, "Best-of-N and Verifiers" — measured, not simulated.
+ * Page 8, "Best-of-N and Verifiers". Figure 1, the sister's-age demo, is an
+ * illustration of the mechanism (generate, judge, keep the best) and says so.
+ * Its chains and ratings are authored, live only in `SISTER`, and no number
+ * from it may appear anywhere else on the page.
  *
- * The old page ran `LILY_PAD_MODEL`: a Monte Carlo with an invented `appeal`
- * vector and a verifier-reliability slider whose units its own footnote
- * admitted nobody could defend. All three beats now come from
- * `web/data/page-08-derived.json`, produced by `page_08_best_of_n.ipynb` from
- * 12,800 generations and 70,960 judgements. Every number below is loaded
- * through `@/lib/page08`, which refuses to load a run that failed the
- * notebook's gates.
+ * Figures 2 and 3 and the close read `web/data/page-08-pile.json` through
+ * `@/lib/page08Pile`: the temperature sweep's 100 problems and 16 chains each,
+ * every chain scored by the trained verifier.
  *
- * The three beats, and what each is allowed to say:
+ * Whether Best-of-N and the vote differ is decided by the data, and the page
+ * calls them level only while they are (Page8.test.tsx fails if that changes).
+ * That comparison is ours: the source we build on never sets them against each
+ * other, and the close says so.
  *
- *   1. ONE BATCH, TWO RULES. A real problem where the vote is confidently
- *      wrong and the verifier is right. The vote reads down the rows (the
- *      longest wins), the verifier reads across (the rightmost wins). The old
- *      page had to invent an appeal vector to manufacture this picture; here
- *      eleven of sixteen chains agreed on a wrong answer without being asked.
- *      Beside it, the same claim over a hundred problems.
- *
- *   2. WHAT EACH RULE FIXED AND BROKE. The page's evidence, and the only
- *      claim it gates on: scoring N candidates and keeping the best beats
- *      taking one, by an exact McNemar over the problems where the two
- *      disagree. ch05's own `heuristic_score` is on the same axis and is the
- *      one rule whose mass sits on the wrong side of zero.
- *
- *   3. WHAT A JUDGE IS WORTH. Five judges spanning size, domain and training
- *      objective, across four temperatures. What a judge can solve does not
- *      predict what it can select; what it was trained for does.
- *
- * The caveat is not buried: against page 7's vote on identical candidates the
- * verifier is +4 points at p=0.45, which is not a difference. That comparison
- * is OURS — `self_consistency_vote` is ch04 and the scorers are ch05, and the
- * book never sets them against each other. The page says so rather than
- * implying the literature agrees.
- *
- * Layout follows pages 1 and 6: an intro paragraph full width above one
- * reading column of numbered steps, each beside a margin note that scrolls
- * with it. The download sits on the top line beside the act kicker, and there
- * is no footer. What the footer used to carry that lives nowhere else is now
- * in the margin note beside the sentence it qualifies.
- *
- * ANYTHING THE ARGUMENT NEEDS IS IN THE PROSE, not in the margin. The page once
- * carried four notes of two and three paragraphs, most of it defending the
- * measurement rather than explaining a picture; the 2026-08-10 trim cut that to
- * four short ones, and the notes now hold references and nothing else. What the
- * verifier does opens step 1, which row of the evidence figure is page 7's rule
- * opens step 2, which model the trained verifier is opens step 3, and whose
- * comparison the close makes is a sentence of the close. The claim that the
- * verifier had to be rebuilt from published weights is gone from the page
- * entirely and lives in the notebook and the download.
- *
- * THERE IS NO PROVENANCE PLATE, and one must not come back. It opened the page
- * in the notebook's own language (a token cap, four temperatures, an exact
- * McNemar, a run id forty characters long) and asked the reader to carry all of
- * it down three figures. Provenance is a row of pills on each figure instead:
- * every one says it is measured, the first says which model and which problems,
- * the second says every rule read the same chains, and the third says what its
- * bars average over. Everything else the run recorded is in the download on the
- * top line, which is the only place it can be acted on anyway.
- *
- * Page 7 retired its plate the same day and reached the same two facts a reader
- * needs, WHICH MODEL and WHICH PROBLEMS. It carries them in prose and specimen
- * labels; this page carries them in pills. The facts are the convention, the
- * furniture is the page's own.
- *
- * No figure on this page renders a notebook identifier. `page08.ts` maps every
- * selector to a reader-facing label and throws on one it does not know, because
- * a row reading `best-of-N (qwen1.5b)` is a figure the reader cannot use.
+ * Provenance is a row of pills on each figure; there is no plate above them.
+ * The margin holds references and nothing else.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
+import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
-import { PAGE8, pValue, pct, tidyMath } from "@/lib/page08";
+import { PILE8, pct } from "@/lib/page08Pile";
 import { ACTS, getPage } from "@/lib/pages";
 import { useStore } from "@/store/useStore";
 
 const PAGE_N = 8;
-const NOTEBOOK_ZIP = "/notebooks/page-08-best-of-n.zip";
-const NOTEBOOK_SIZE = "10.1 MB";
-
-/* Page 7's convention, arrived at independently and adopted here: of everything
-   the run recorded, the two facts a reader needs are WHICH MODEL and WHICH
-   PROBLEMS, and they belong on the figure rather than in a plate above it. The
-   levels, the token cap and the run id stay in the download. */
-const BENCHMARK = "MATH-500";
+const NOTEBOOK_FILE = "/notebooks/8_Best_of_N.ipynb";
+const NOTEBOOK_SIZE = "30 KB";
 
 /** Reference numbers, in order of first appearance on the page. */
 const REF = {
   cobbe: 1,
-  /* The source we build on. It owns a row of figure 2 and two sentences of that
-     figure's caption, and went uncited on the page until now. */
   source: 2,
   stroebl: 3,
 } as const;
-
-/** "a, b and c", for a list of names read from the run rather than typed out. */
-function andList(items: string[]): string {
-  if (items.length < 2) return items.join("");
-  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
-}
 
 /** A margin note that sits beside its step and scrolls with the page. */
 function Note({ kicker, children }: { kicker: string; children: React.ReactNode }) {
@@ -137,455 +72,502 @@ function Pills({ items }: { items: string[] }) {
   );
 }
 
-/**
- * A legend as HTML rather than SVG text: it wraps, it inherits the page's type,
- * and a screen reader reads it as prose instead of as scattered <text> nodes.
- * Both panels of figure 1 need one, and the curve panel is unreadable without
- * it: four lines in four colours and nothing saying which is which.
- */
-function Legend({ items }: { items: { cls: string; label: string; dashed?: boolean; ring?: boolean }[] }) {
+/* ------------------------------------------------------------------ figure 1 */
+
+/** The judge, a third speaker beside page 5's user and model: a balance scale. */
+function JudgeIcon({ current }: { current?: boolean }) {
   return (
-    <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-[11px] text-ink-muted">
-      {items.map((i) => (
-        <li key={i.label} className="flex items-center gap-1.5">
-          <svg width={16} height={10} aria-hidden="true" className="shrink-0">
-            {i.ring ? (
-              <circle cx={8} cy={5} r={4} className={`fill-none ${i.cls}`} strokeWidth={2} />
-            ) : i.dashed ? (
-              <line x1={0} x2={16} y1={5} y2={5} className={i.cls} strokeWidth={1.5} strokeDasharray="3 3" />
-            ) : (
-              <line x1={0} x2={16} y1={5} y2={5} className={i.cls} strokeWidth={2.5} />
-            )}
-          </svg>
-          {i.label}
-        </li>
-      ))}
-    </ul>
+    <span
+      role="img"
+      aria-label="Judge"
+      title="Judge"
+      className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-ink motion-safe:transition-all motion-safe:duration-500 ${
+        current ? "bg-compute ring-4 ring-compute/30" : "bg-ink/10"
+      }`}
+    >
+      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3v18M7 21h10M5 7h14" />
+        <path d="M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z" />
+      </svg>
+    </span>
   );
 }
 
-/* ------------------------------------------------------------ figure 1 left */
-
-const SPEC_W = 430;
-const SPEC_H = 260;
-const SPEC_M = { top: 14, right: 16, bottom: 40, left: 92 };
+const SISTER_QUESTION = "When I was 6, my sister was half my age. Now I'm 70. How old is my sister?";
 
 /**
- * One batch, drawn so both rules are readable at once: answer class down the
- * side so the vote is the longest row, verifier score across so selection is
- * the rightmost dot. When the longest row does not contain the rightmost dot,
- * the two rules disagree, and that is the whole page in one picture.
+ * The sister's-age puzzle, as four chains of thought: two land on the tempting
+ * 35 (halving 70, as if the ratio held), one on the right 67 (the three-year gap
+ * holds), one strays to 64. Authored, not measured, and the figure says so.
+ *
+ * The judge is the kind the rest of the page measures: a second model trained
+ * on solutions marked right or wrong. It reads the question and one whole chain
+ * and returns one number, how likely that chain is right. It never sees the
+ * answer key and gives no reasons, so the figure shows no checks: a line like
+ * "at 6 she was 3, and 3 is half of 6" would show it checking the answer
+ * against the question, which it does not do. One number per chain, never one
+ * per step: grading steps is page 9's subject. Two chains with the same answer
+ * can rate differently, because it reads the chain and not just the answer.
  */
-function SpecimenPanel({ onOpen }: { onOpen: (sampleIndex: number) => void }) {
-  const s = PAGE8.specimen;
+const SISTER: { answer: string; rating: number; work: string[] }[] = [
+  { answer: "35", rating: 18, work: ["half of 70 is 35", "so my sister is 35"] },
+  { answer: "67", rating: 96, work: ["at 6, she was half my age: 3", "so she is 3 years younger", "70 − 3 = 67"] },
+  { answer: "35", rating: 21, work: ["she is half my age", "70 ÷ 2 = 35"] },
+  { answer: "64", rating: 9, work: ["the gap is 6 years", "70 − 6 = 64"] },
+];
 
-  const rows = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const c of s.candidates) {
-      if (c.answer_class === null) continue;
-      counts.set(c.answer_class, (counts.get(c.answer_class) ?? 0) + 1);
+const SISTER_KEPT = SISTER.reduce((best, c, i) => (c.rating > SISTER[best].rating ? i : best), 0);
+
+/** How long each chain takes to appear, and how long the judge spends on each one. */
+const WRITE_MS = 450;
+const READ_MS = 900;
+/** The beat between judging the last chain and keeping the best. */
+const PAUSE_MS = 600;
+
+type Phase = "idle" | "generating" | "judging" | "done";
+
+/** What the model's response box says while the demo runs. */
+const STATUS: Record<Phase, string> = {
+  idle: "Press Play.",
+  generating: "Generating…",
+  judging: "Judging…",
+  done: "Best candidate selected",
+};
+
+/**
+ * One step of the demo, tinted while it plays: page 12's mark for the step the
+ * playback is on. Its icon carries the ring (`[&>span:first-child]`), so the
+ * shared chat icons need no prop of their own.
+ */
+function Stage({ n, current, children }: { n: number; current: boolean; children: React.ReactNode }) {
+  return (
+    <div
+      data-current={current ? `step-${n}` : undefined}
+      className={`-mx-2 flex flex-col gap-2 rounded-lg p-2 motion-safe:transition-colors motion-safe:duration-500 ${
+        current ? "bg-compute/10" : ""
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** The ring a step's icon wears while the step plays. */
+const iconRing = (current: boolean) =>
+  `flex items-start gap-2 [&>span:first-child]:motion-safe:transition-shadow [&>span:first-child]:motion-safe:duration-500 ${
+    current ? "[&>span:first-child]:ring-4 [&>span:first-child]:ring-compute/30" : ""
+  }`;
+
+/**
+ * A small box in the judge's input → output strip. `lit` is page 12's mark for
+ * the part of the figure doing the work right now: a solid compute border and
+ * tint with a ring around it.
+ */
+function Slot({ children, strong, lit }: { children: React.ReactNode; strong?: boolean; lit?: boolean }) {
+  return (
+    <span
+      className={`rounded border px-3 py-1.5 text-center text-xs motion-safe:transition-all motion-safe:duration-500 ${
+        lit
+          ? "border-compute bg-compute/30 text-ink ring-4 ring-compute/30"
+          : strong
+            ? "border-ink-muted text-ink"
+            : "border-grid text-ink-muted"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+/**
+ * Best-of-N in one press. Play writes the four chains one after another, sends
+ * them through the judge one at a time, so the reader watches what goes in (the
+ * question and one chain) and what comes out (one number), then keeps the
+ * highest rating and throws the rest away. A status line in the model's box
+ * names the step. No vote here: this figure is the mechanism, and the
+ * comparison with page 7 belongs to the steps below.
+ */
+function BestOfNDemo() {
+  const recordInteraction = useStore((s) => s.recordInteraction);
+  const [phase, setPhase] = useState<Phase>("idle");
+  // Chains written so far, and chains the judge has rated so far; while judging,
+  // chain `read` is the one being read.
+  const [written, setWritten] = useState(0);
+  const [read, setRead] = useState(0);
+  const n = SISTER.length;
+
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    if (phase === "generating") {
+      t = written < n
+        ? setTimeout(() => setWritten((w) => w + 1), WRITE_MS)
+        : setTimeout(() => setPhase("judging"), PAUSE_MS);
+    } else if (phase === "judging") {
+      t = read < n
+        ? setTimeout(() => setRead((r) => r + 1), READ_MS)
+        : setTimeout(() => setPhase("done"), PAUSE_MS);
     }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }, [s.candidates]);
+    return () => clearTimeout(t);
+  }, [phase, written, read, n]);
 
-  const scores = s.candidates.map((c) => c.score ?? 0);
-  const lo = Math.min(...scores);
-  const hi = Math.max(...scores);
-  const innerW = SPEC_W - SPEC_M.left - SPEC_M.right;
-  const innerH = SPEC_H - SPEC_M.top - SPEC_M.bottom;
-  const x = (v: number) => ((v - lo) / (hi - lo || 1)) * (innerW - 24) + 12;
-  const rowY = (cls: string) => {
-    const i = rows.findIndex(([a]) => a === cls);
-    return ((i + 0.5) / rows.length) * innerH;
+  // The steps are the content, so they play for everyone. Reduced motion drops
+  // only the decoration: the bars' slide and the pulsing cursor.
+  const play = () => {
+    setWritten(0);
+    setRead(0);
+    setPhase("generating");
+    recordInteraction(PAGE_N);
   };
+  const reset = () => {
+    setPhase("idle");
+    setWritten(0);
+    setRead(0);
+  };
+
+  const generating = phase === "generating";
+  const judging = phase === "judging";
+  const running = generating || judging;
+  const judged = phase === "judging" || phase === "done";
+  const reading = phase === "judging" && read < n ? read : null;
+  const rated = (i: number) => phase === "done" || i < read;
+  const kept = phase === "done";
+  const best = SISTER[SISTER_KEPT];
+
+  return (
+    <section
+      aria-label="Four chains, judged"
+      className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
+    >
+      <div className="flex max-w-[95%] items-start gap-2 self-end">
+        <p className="text-right font-code text-sm text-ink">{SISTER_QUESTION}</p>
+        <UserIcon />
+      </div>
+
+      <Stage n={1} current={generating}>
+        <div className={iconRing(generating)}>
+          <ModelIcon />
+          <p className="text-sm text-ink-muted">
+            <strong className="text-ink">Step 1.</strong> The model answers the same question {n} times.
+            Each answer is its own chain of thought, written without seeing the other {n - 1}.
+          </p>
+        </div>
+      </Stage>
+
+      <p
+        aria-live="polite"
+        className={`flex items-center gap-2 font-mono text-sm sm:pl-8 ${kept ? "text-correct-ink" : "text-ink-muted"}`}
+      >
+        {kept ? (
+          <span aria-hidden="true">✓</span>
+        ) : (
+          <span aria-hidden="true" className="text-compute-ink motion-safe:animate-pulse">
+            ▍
+          </span>
+        )}
+        {STATUS[phase]}
+      </p>
+
+      {written > 0 ? (
+        <ol className="m-0 grid list-none gap-3 p-0 sm:grid-cols-2">
+          {SISTER.slice(0, written).map((c, i) => {
+            const isKept = kept && i === SISTER_KEPT;
+            return (
+              <li
+                key={i}
+                className={`flex flex-col gap-2 rounded-lg p-3 motion-safe:transition-opacity ${
+                  isKept
+                    ? "border-2 border-correct bg-correct/10"
+                    : reading === i
+                      ? "border-2 border-compute bg-surface-raised"
+                      : "border-2 border-transparent bg-surface-raised"
+                } ${kept && !isKept ? "opacity-50" : ""}`}
+              >
+                <p className="text-xs text-ink-muted">chain {i + 1}</p>
+                <div className="flex flex-col gap-0.5 font-code text-xs leading-relaxed text-ink-muted">
+                  {c.work.map((l) => (
+                    <p key={l}>{l}</p>
+                  ))}
+                </div>
+                <p className="text-sm text-ink">
+                  Final answer: <strong className="font-mono">{c.answer}</strong>
+                </p>
+                {judged ? (
+                  <div className="flex items-center gap-2 border-t border-grid pt-2">
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-grid">
+                      <span
+                        className="block h-full rounded-full bg-compute motion-safe:transition-[width] motion-safe:duration-500"
+                        style={{ width: rated(i) ? `${c.rating}%` : "0%" }}
+                      />
+                    </span>
+                    <span className="w-24 text-right font-mono text-xs tabular-nums text-ink">
+                      {rated(i) ? `${c.rating}% right` : reading === i ? "reading…" : "not read yet"}
+                    </span>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })}
+        </ol>
+      ) : null}
+
+      <Stage n={2} current={judging}>
+        <div className="flex items-start gap-2">
+          <JudgeIcon current={judging} />
+          <p className="text-sm text-ink-muted">
+            <strong className="text-ink">Step 2.</strong> A judge, a second model, reads one chain at
+            a time. Only the outcome is scored.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:pl-8">
+          <Slot lit={reading !== null}>
+            question
+            <br />+ {reading !== null ? `chain ${reading + 1}` : "one chain"}
+          </Slot>
+          <span aria-hidden="true" className="text-ink-muted">→</span>
+          <Slot strong lit={judging}>
+            judge
+            <br />
+            <span className="text-[11px] text-ink-muted">trained on solutions marked right or wrong</span>
+          </Slot>
+          <span aria-hidden="true" className="text-ink-muted">→</span>
+          <Slot lit={judging && read > 0}>
+            how likely
+            <br />
+            it is right
+            {phase === "judging" && read > 0 ? (
+              <>
+                : <span className="font-mono text-ink">{SISTER[read - 1].rating}%</span>
+              </>
+            ) : null}
+          </Slot>
+        </div>
+      </Stage>
+
+      <Stage n={3} current={kept}>
+        <div className={iconRing(kept)}>
+          <span
+            aria-hidden="true"
+            className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm text-ink motion-safe:transition-colors motion-safe:duration-500 ${
+              kept ? "bg-compute" : "bg-ink/10"
+            }`}
+          >
+            ✓
+          </span>
+          <p className="text-sm text-ink-muted">
+            <strong className="text-ink">Step 3.</strong> Keep the chain the judge rates highest.
+          </p>
+        </div>
+        {kept ? (
+          <p aria-live="polite" className="text-sm text-ink sm:pl-8">
+            Best of {n} keeps chain {SISTER_KEPT + 1}:{" "}
+            <strong className="font-mono text-correct-ink">{best.answer}</strong>, the judge&apos;s
+            highest rating. The other {n - 1} are thrown away.
+          </p>
+        ) : null}
+      </Stage>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={play}
+          disabled={running}
+          className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+        >
+          ▶ Play
+        </button>
+        <button
+          type="button"
+          onClick={reset}
+          disabled={phase === "idle"}
+          className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+        >
+          ↺ Reset
+        </button>
+      </div>
+      {/* Every other figure on the page is measured, so this one says it is not. */}
+      <p className="font-mono text-xs text-ink-muted">This is an illustrative example.</p>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------- figure 2: the dots */
+
+/** What Best-of-N got on one problem. */
+type Outcome = "kept-right" | "kept-wrong" | "no-right";
+const outcomeOf = (r: (typeof PILE8.rows)[number]): Outcome =>
+  r.n_correct === 0 ? "no-right" : r.chains[0].c ? "kept-right" : "kept-wrong";
+const OUTCOMES: { o: Outcome; label: string; bg: string; fill: string }[] = [
+  { o: "kept-right", label: "kept chain right", bg: "bg-correct", fill: "fill-correct" },
+  { o: "kept-wrong", label: "kept chain wrong, a right one was written", bg: "bg-wrong", fill: "fill-wrong" },
+  { o: "no-right", label: "no right chain written", bg: "bg-grid", fill: "fill-grid" },
+];
+const OUTCOME_FILL = Object.fromEntries(OUTCOMES.map((x) => [x.o, x.fill])) as Record<Outcome, string>;
+
+const DOT_W = 672;
+const DOT_M = { top: 12, right: 12, bottom: 40, left: 12 };
+/** The largest spacing between dots, and the tallest the stacks may grow. */
+const DOT_PITCH = 17;
+const DOT_MAX_H = 300;
+
+/**
+ * How the stacks fill their columns: the fewest dots side by side that keep the
+ * tallest stack under `DOT_MAX_H`. A few dozen problems stack singly; hundreds
+ * wrap into narrow blocks of smaller dots.
+ */
+function dotGrid(tallest: number, columnW: number) {
+  for (let perRow = 1; ; perRow++) {
+    const pitch = Math.min(DOT_PITCH, columnW / perRow);
+    if (Math.ceil(tallest / perRow) * pitch <= DOT_MAX_H) return { perRow, pitch };
+  }
+}
+
+/** The problems where the kept chain was wrong and exactly one chain was right. */
+const MISSES_ONE_RIGHT = PILE8.rows.filter((r) => outcomeOf(r) === "kept-wrong" && r.n_correct === 1).length;
+
+/**
+ * Every problem as one dot, stacked over how many of its 16 chains are right
+ * and coloured by what Best-of-N got: the kept chain right, the kept chain
+ * wrong although a right one was written, or no right chain to keep.
+ */
+function ChainDots() {
+  const rows = PILE8.rows;
+  const n = PILE8.nChains;
+  const cols = Array.from({ length: n + 1 }, (_, k) => rows.filter((r) => r.n_correct === k));
+  const tallest = Math.max(...cols.map((c) => c.length));
+  const innerW = DOT_W - DOT_M.left - DOT_M.right;
+  const cw = innerW / (n + 1);
+  const { perRow, pitch } = dotGrid(tallest, cw);
+  const innerH = Math.ceil(tallest / perRow) * pitch;
+  const height = DOT_M.top + DOT_M.bottom + innerH;
+  const r = pitch * 0.41;
+  return (
+    <div className="flex flex-col gap-3">
+      <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 text-xs text-ink-muted">
+        {OUTCOMES.map((x) => (
+          <li key={x.o} className="flex items-center gap-1.5">
+            <span aria-hidden="true" className={`h-3 w-3 rounded-full ${x.bg}`} />
+            {x.label}
+          </li>
+        ))}
+      </ul>
+      <ChartFrame
+        width={DOT_W}
+        height={height}
+        margin={DOT_M}
+        xLabel={`chains right, of ${n}`}
+        title={
+          `${rows.length} problems as dots, stacked over how many of their ${n} chains are right ` +
+          `and coloured by whether the chain Best-of-N kept was right.`
+        }
+      >
+        {cols.map((col, k) => (
+          <g key={k}>
+            {[...col]
+              .sort((a, b) => +b.chains[0].c - +a.chains[0].c)
+              .map((row, i) => (
+                <circle
+                  key={row.id}
+                  data-outcome={outcomeOf(row)}
+                  cx={k * cw + cw / 2 + ((i % perRow) - (perRow - 1) / 2) * pitch}
+                  cy={innerH - pitch / 2 - Math.floor(i / perRow) * pitch}
+                  r={r}
+                  className={OUTCOME_FILL[outcomeOf(row)]}
+                />
+              ))}
+            <text x={k * cw + cw / 2} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+              {k}
+            </text>
+          </g>
+        ))}
+      </ChartFrame>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------- figure 3: the bars */
+
+const CMP_W = 672;
+const CMP_ROW = 46;
+const CMP_M = { top: 34, right: 124, bottom: 38, left: 150 };
+
+/**
+ * The three methods on the same problems and the same chains, as horizontal
+ * bars. The dashed line is the most any way of choosing could reach: a right
+ * chain was among the 16. Past each choosing bar, the faint stretch up to that
+ * line is what was written and not picked.
+ */
+function CompareFigure() {
+  const b = PILE8.bars;
+  const nProblems = PILE8.rows.length;
+  const bars = [
+    { label: "one chain of thought", v: b.one_chain, fill: "fill-ink-muted", text: "fill-ink" },
+    { label: `majority vote over ${PILE8.nChains}`, v: b.vote, fill: "fill-compute", text: "fill-compute-ink" },
+    { label: `Best-of-${PILE8.nChains}`, v: b.best_of_n, fill: "fill-correct", text: "fill-correct-ink" },
+  ];
+  const innerW = CMP_W - CMP_M.left - CMP_M.right;
+  const innerH = bars.length * CMP_ROW;
+  const height = CMP_M.top + CMP_M.bottom + innerH;
+  const x = (v: number) => v * innerW;
+  const solved = (v: number) => Math.round(v * nProblems);
 
   return (
     <ChartFrame
-      width={SPEC_W}
-      height={SPEC_H}
-      margin={SPEC_M}
-      role="group"
-      xLabel={`what the verifier scored it →`}
+      width={CMP_W}
+      height={height}
+      margin={CMP_M}
+      xLabel={`share of ${nProblems} problems solved`}
       title={
-        `Sixteen chains for one problem. Each dot is a chain, placed in the row of the answer ` +
-        `it gave and along the axis by the verifier's score. The vote takes the longest row, ` +
-        `${s.vote.answer ?? "no answer"} with ${s.vote.votes} of ${s.n} chains, and is wrong. ` +
-        `The verifier takes the rightmost dot, which is correct.`
+        `On the same ${nProblems} problems and the same chains, one chain of thought solves ` +
+        `${pct(b.one_chain)}, majority voting over ${PILE8.nChains} solves ${pct(b.vote)} and ` +
+        `Best-of-${PILE8.nChains} solves ${pct(b.best_of_n, 1)}. At least one chain was correct on ` +
+        `${pct(b.ceiling, 1)}, the most any way of choosing could reach.`
       }
     >
-      {rows.map(([cls, count], i) => {
-        const y = ((i + 0.5) / rows.length) * innerH;
-        const isVote = i === 0;
-        const correct = s.candidates.find((c) => c.answer_class === cls)?.correct ?? false;
+      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+        <g key={t}>
+          <line x1={x(t)} x2={x(t)} y1={0} y2={innerH} className="stroke-grid" strokeWidth={1} />
+          <text x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
+            {t * 100}%
+          </text>
+        </g>
+      ))}
+      {bars.map((bar, i) => {
+        const y = i * CMP_ROW + CMP_ROW / 2;
         return (
-          <g key={cls}>
-            {isVote ? (
+          <g key={bar.label}>
+            <text x={-10} y={y + 4} textAnchor="end" className="fill-ink text-[12px]">
+              {bar.label}
+            </text>
+            {i > 0 ? (
               <rect
-                x={0}
-                y={y - innerH / rows.length / 2}
-                width={innerW}
-                height={innerH / rows.length}
-                className="fill-wrong"
-                opacity={0.07}
+                x={x(bar.v)}
+                y={y - 11}
+                width={x(b.ceiling) - x(bar.v)}
+                height={22}
+                className={bar.fill}
+                opacity={0.18}
               />
             ) : null}
-            <text
-              x={-8}
-              y={y + 4}
-              textAnchor="end"
-              className={`text-[11px] ${correct ? "fill-correct-ink" : "fill-ink-muted"}`}
-            >
-              {(() => {
-                const t = tidyMath(cls);
-                return t.length > 13 ? `${t.slice(0, 12)}…` : t;
-              })()}{" "}
-              ({count})
+            <rect x={0} y={y - 11} width={x(bar.v)} height={22} className={bar.fill} />
+            <text x={innerW + 10} y={y + 4} className={`text-[12px] font-semibold ${bar.text}`}>
+              {pct(bar.v, bar.v * 100 % 1 ? 1 : 0)}
+              <tspan className="fill-ink-muted font-normal"> · {solved(bar.v)} of {nProblems}</tspan>
             </text>
           </g>
         );
       })}
-
-      {s.candidates.map((c, i) => {
-        if (c.answer_class === null || c.score === null) return null;
-        const cy = rowY(c.answer_class) + ((i % 3) - 1) * 4;
-        const picked = c.sample_index === s.verifier.sample_index;
-        return (
-          <g key={c.sample_index}>
-            {picked ? (
-              <circle cx={x(c.score)} cy={cy} r={8} className="fill-none stroke-compute" strokeWidth={2} />
-            ) : null}
-            <circle
-              cx={x(c.score)}
-              cy={cy}
-              r={picked ? 5 : 4}
-              className={c.correct ? "fill-correct" : "fill-wrong"}
-              tabIndex={0}
-              role="button"
-              aria-label={`chain ${c.sample_index}, answer ${tidyMath(c.answer ?? "none")}, ${
-                c.correct ? "correct" : "wrong"
-              }. Open it.`}
-              onClick={() => onOpen(c.sample_index)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onOpen(c.sample_index);
-                }
-              }}
-              style={{ cursor: "pointer" }}
-            />
-          </g>
-        );
-      })}
-    </ChartFrame>
-  );
-}
-
-/* ----------------------------------------------------------- figure 1 right */
-
-const CURVE_W = 430;
-const CURVE_H = 260;
-const CURVE_M = { top: 14, right: 16, bottom: 40, left: 44 };
-
-function CurvePanel() {
-  const { axis, lines, headlineSelector } = PAGE8.curve;
-  const innerW = CURVE_W - CURVE_M.left - CURVE_M.right;
-  const innerH = CURVE_H - CURVE_M.top - CURVE_M.bottom;
-  const lgMin = Math.log2(axis[0]);
-  const lgMax = Math.log2(axis[axis.length - 1]);
-  const x = (n: number) => ((Math.log2(n) - lgMin) / (lgMax - lgMin)) * innerW;
-  const y = (v: number) => innerH - v * innerH;
-
-  const series = [
-    { key: "one chain", cls: "stroke-ink-muted", label: "one chain" },
-    { key: "majority", cls: "stroke-compute", label: "majority vote" },
-    { key: headlineSelector, cls: "stroke-correct", label: "best-of-N, trained verifier" },
-  ];
-
-  const path = (key: string) => {
-    const line = lines.find((l) => l.selector === key);
-    if (!line) return "";
-    return line.points.map((p) => `${x(p.n)},${y(p.accuracy)}`).join(" ");
-  };
-  const coverage = lines.find((l) => l.selector === "coverage");
-
-  // The one point where voting is worse than not voting. Found rather than
-  // hardcoded: if a re-run moves or removes it, the marker moves or goes.
-  const majorityPts = lines.find((l) => l.selector === "majority")?.points ?? [];
-  const onePts = lines.find((l) => l.selector === "one chain")?.points ?? [];
-  const dip =
-    majorityPts.find((p, i) => p.n > 1 && p.accuracy < (onePts[i]?.accuracy ?? 0) - 0.02) ?? null;
-
-  return (
-    <ChartFrame
-      width={CURVE_W}
-      height={CURVE_H}
-      margin={CURVE_M}
-      xLabel="candidates the rule may look at"
-      yLabel="problems solved (%)"
-      title={
-        `Accuracy against the number of candidates. One chain is flat at ` +
-        `${pct(PAGE8.chainAverage)}, which is the average candidate and not the one fixed chain ` +
-        `the next figure measures against. Majority voting and best-of-N by the trained verifier ` +
-        `both climb, the verifier highest. A dotted line above shows how often a correct answer ` +
-        `is present at all.`
-      }
-    >
-      {[0, 0.25, 0.5, 0.75, 1].map((g) => (
-        <g key={g}>
-          <line x1={0} x2={innerW} y1={y(g)} y2={y(g)} className="stroke-grid" strokeWidth={1} />
-          <text x={-6} y={y(g) + 4} textAnchor="end" className="fill-ink-muted text-[10px]">
-            {Math.round(g * 100)}
-          </text>
-        </g>
-      ))}
-      {axis.map((n) => (
-        <text key={n} x={x(n)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-          {n}
-        </text>
-      ))}
-      {coverage ? (
-        <polyline
-          points={path("coverage")}
-          fill="none"
-          className="stroke-ink-muted"
-          strokeWidth={1.25}
-          strokeDasharray="3 3"
-        />
-      ) : null}
-      {series.map((s) => (
-        <polyline
-          key={s.key}
-          points={path(s.key)}
-          fill="none"
-          className={s.cls}
-          strokeWidth={s.key === headlineSelector ? 2.5 : 1.75}
-        />
-      ))}
-      {/* The vote's dip at N=2 reads as an error and is not one: with two
-          candidates any disagreement is a tie, and page 7's rule is that a tie
-          is not a vote. Marked here because an unexplained kink costs the
-          reader more trust than the annotation costs in ink. */}
-      {dip ? (
-        <g>
-          <circle
-            cx={x(dip.n)}
-            cy={y(dip.accuracy)}
-            r={4}
-            className="fill-none stroke-compute"
-            strokeWidth={1.5}
-          />
-          <text
-            x={x(dip.n) + 7}
-            y={y(dip.accuracy) + 11}
-            className="fill-compute-ink text-[9px]"
-          >
-            ties
-          </text>
-        </g>
-      ) : null}
-    </ChartFrame>
-  );
-}
-
-/* ------------------------------------------------------------------ figure 2 */
-
-const PAIR_W = 672;
-const PAIR_ROW = 30;
-// The left margin holds a sentence fragment, not an identifier: "best-of-N,
-// 1.5B math specialist" is the longest row label and it has to fit unclipped.
-const PAIR_M = { top: 26, right: 96, bottom: 34, left: 206 };
-
-/**
- * Fixed to the right of zero, broken to the left, one row per rule, against
- * the same single-chain baseline on the same problems. The one row whose mass
- * sits left of zero is the heuristic scorer from the source we build on.
- */
-function PairedFigure() {
-  const rows = useMemo(
-    () => [...PAGE8.paired.vsOneChain].sort((a, b) => a.net - b.net),
-    [],
-  );
-  const height = PAIR_M.top + PAIR_M.bottom + rows.length * PAIR_ROW;
-  const innerW = PAIR_W - PAIR_M.left - PAIR_M.right;
-  const innerH = rows.length * PAIR_ROW;
-  const lim = Math.max(...rows.map((r) => Math.max(r.fixed, r.broke))) + 2;
-  const x = (v: number) => (v / lim) * (innerW / 2) + innerW / 2;
-
-  return (
-    <ChartFrame
-      width={PAIR_W}
-      height={height}
-      margin={PAIR_M}
-      xLabel="problems, against one fixed chain"
-      title={
-        `For each selection rule, how many problems it fixed and how many it broke compared ` +
-        `with taking one fixed chain, which solves ${pct(PAGE8.oneChain)} here. The trained ` +
-        `verifier fixed ${PAGE8.headline.fixed} and ` +
-        `broke ${PAGE8.headline.broke}. The hand-written length heuristic from the source we ` +
-        `build on is the only rule that broke more than it fixed.`
-      }
-    >
-      <text x={innerW / 2 + 40} y={-10} textAnchor="middle" className="fill-correct-ink text-[11px] font-semibold">
-        fixed
-      </text>
-      <text x={innerW / 2 - 40} y={-10} textAnchor="middle" className="fill-wrong-ink text-[11px] font-semibold">
-        broke
-      </text>
-      {rows.map((r, i) => {
-        const cy = i * PAIR_ROW + PAIR_ROW / 2;
-        return (
-          <g key={r.selector}>
-            <text x={-8} y={cy + 4} textAnchor="end" className="fill-ink text-[11px]">
-              {r.label}
-            </text>
-            <rect
-              x={innerW / 2}
-              y={cy - 8}
-              width={x(r.fixed) - innerW / 2}
-              height={16}
-              className="fill-correct"
-            />
-            <rect
-              x={x(-r.broke)}
-              y={cy - 8}
-              width={innerW / 2 - x(-r.broke)}
-              height={16}
-              className="fill-wrong"
-            />
-            <text
-              x={innerW + 8}
-              y={cy + 4}
-              className={`text-[10px] ${r.resolved ? "fill-ink" : "fill-ink-muted"}`}
-            >
-              {r.net > 0 ? `+${r.net}` : r.net} · {pValue(r.p)}
-            </text>
-          </g>
-        );
-      })}
-      <line x1={innerW / 2} x2={innerW / 2} y1={0} y2={innerH} className="stroke-ink" strokeWidth={1} />
-    </ChartFrame>
-  );
-}
-
-/* ------------------------------------------------------------------ figure 3 */
-
-const JUDGE_W = 520;
-const JUDGE_H = 246;
-const JUDGE_M = { top: 26, right: 44, bottom: 42, left: 150 };
-
-/**
- * One row per judge, ordered by what it solves on its own, best solver at the
- * top. It was a scatter of solve-rate against judge-rate: every label sat
- * beside its point and ran through the next point's range bar, and five
- * vertical stalks read as an axis rather than as four temperatures. Rows put
- * the names in a gutter where nothing can overlap them, lay the range down the
- * axis it is measured on, and make the caption's claim the reading order: the
- * ladder descends on the left and does not descend on the right.
- */
-function JudgeFigure() {
-  const innerW = JUDGE_W - JUDGE_M.left - JUDGE_M.right;
-  const innerH = JUDGE_H - JUDGE_M.top - JUDGE_M.bottom;
-  const xLo = 0.44;
-  const xHi = 0.8;
-  const x = (v: number) => ((v - xLo) / (xHi - xLo)) * innerW;
-  // Best solver first. `PAGE8.judges` is sorted the other way, with the judge
-  // that solves nothing at the head.
-  const rows = [...PAGE8.judges].reverse();
-  const rowH = innerH / rows.length;
-  const cy = (i: number) => rowH * (i + 0.5);
-
-  return (
-    <ChartFrame
-      width={JUDGE_W}
-      height={JUDGE_H}
-      margin={JUDGE_M}
-      xLabel="picks a correct candidate (%)"
-      title={
-        `Five judges, ordered by what each solves on its own with the best solver at the top, ` +
-        `against how often it picks a correct candidate, averaged over four temperatures with ` +
-        `the bar spanning best and worst. The order does not carry: the best solver judges ` +
-        `worst. The one judge whose mean sits past the majority line is the trained verifier, ` +
-        `which scores and never answers, so it is at the foot of the ladder without a solve ` +
-        `rate of its own. The bars overlap, so no pair of judges is resolved at this sample. ` +
-        `Each solve rate on the left says where it came from, page 6 or this run, because that ` +
-        `column is not one measurement.`
-      }
-    >
-      {/* The vote across the same four temperatures, as the band a judge has to
-          clear rather than a single number. */}
-      <rect
-        x={x(PAGE8.bar.lo)}
-        y={0}
-        width={Math.max(0, x(PAGE8.bar.hi) - x(PAGE8.bar.lo))}
-        height={innerH}
-        className="fill-compute"
-        opacity={0.08}
-      />
       <line
-        x1={x(PAGE8.bar.mean)}
-        x2={x(PAGE8.bar.mean)}
-        y1={0}
+        x1={x(b.ceiling)}
+        x2={x(b.ceiling)}
+        y1={-14}
         y2={innerH}
-        className="stroke-compute"
-        strokeWidth={1.25}
+        className="stroke-ink"
+        strokeWidth={1.5}
         strokeDasharray="4 3"
       />
-      <text x={x(PAGE8.bar.mean)} y={-8} textAnchor="middle" className="fill-compute-ink text-[10px]">
-        majority vote, {pct(PAGE8.bar.mean)}
+      <text x={x(b.ceiling)} y={-20} textAnchor="middle" className="fill-ink text-[11px]">
+        at least one chain was correct: {pct(b.ceiling, 1)}
       </text>
-      {[0.5, 0.6, 0.7, 0.8].map((g) => (
-        <text key={g} x={x(g)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-          {Math.round(g * 100)}
-        </text>
-      ))}
-      {rows.map((j, i) => {
-        const y = cy(i);
-        // Written out rather than interpolated: Tailwind only ships classes it
-        // can find whole in the source.
-        const tone = j.trained ? "fill-correct-ink" : "fill-ink-muted";
-        return (
-          <g key={j.name}>
-            {/* A hairline from the name to its range, so the eye does not have
-                to cross 150px of gutter unaided. */}
-            <line x1={0} x2={innerW} y1={y} y2={y} className="stroke-grid" strokeWidth={1} />
-            <text x={-JUDGE_M.left + 4} y={y - 1} className={`text-[11px] ${tone}`}>
-              {j.label}
-            </text>
-            {/* The verifier's solve rate is `null` because it was never
-                measured and could not be: it is a value head, so it scores and
-                does not answer. The row says that rather than printing a 0%
-                the run does not have. */}
-            <text x={-JUDGE_M.left + 4} y={y + 11} className="text-[9px] fill-ink-muted">
-              {j.solves === null ? "scores only, never answers" : `solves ${pct(j.solves)} on its own`}
-            </text>
-            {/* This column is not one measurement: most of it is page 6's
-                greedy run and one row was measured here under sampling. The
-                provenance sits under the number it belongs to rather than in a
-                note a reader has to carry across five rows. */}
-            {j.solvesSourceLabel ? (
-              <text x={-JUDGE_M.left + 4} y={y + 21} className="text-[9px] fill-ink-muted opacity-70">
-                {j.solvesSourceLabel}
-              </text>
-            ) : null}
-            <rect
-              x={x(j.lo)}
-              y={y - 3}
-              width={Math.max(0, x(j.hi) - x(j.lo))}
-              height={6}
-              rx={3}
-              className={tone}
-              opacity={0.28}
-            />
-            <circle cx={x(j.mean)} cy={y} r={j.trained ? 5 : 4} className={tone} />
-            {/* The means read as a column outside the plot rather than as a tag
-                on the end of each bar, where they would land on the vote line
-                whenever a judge's best temperature is near it. */}
-            <text x={innerW + 6} y={y + 4} className={`text-[10px] ${tone}`}>
-              {pct(j.mean)}
-            </text>
-          </g>
-        );
-      })}
     </ChartFrame>
   );
 }
@@ -594,26 +576,6 @@ function JudgeFigure() {
 
 export function Page8() {
   const page = getPage(PAGE_N)!;
-  const recordInteraction = useStore((s) => s.recordInteraction);
-  const [open, setOpen] = useState<number | null>(null);
-
-  const s = PAGE8.specimen;
-  const chain = open === null ? null : s.candidates.find((c) => c.sample_index === open) ?? null;
-  const trained = PAGE8.judges.find((j) => j.trained);
-  // The top of the ladder figure 3 orders by, named from the run rather than
-  // typed into the caption: if a re-run changes who solves the most, the
-  // sentence that calls it the best solver changes with it.
-  const bestSolver = PAGE8.judges.reduce<(typeof PAGE8.judges)[number] | undefined>(
-    (best, j) => (j.solves !== null && (!best || j.solves > best.solves!) ? j : best),
-    undefined,
-  );
-  // The judges that out-solve the model whose candidates they grade. The run
-  // records it per judge and keeps a gate for it, and figure 3's ladder is only
-  // readable as evidence about judging once the page has said so.
-  const stronger = PAGE8.judges.filter((j) => j.strongerThanWriter);
-  // "Qwen/Qwen2.5-3B-Instruct" reads as a file path. What is after the slash is
-  // the model; what is before it is the account that hosts the weights.
-  const model = PAGE8.run.model.split("/").pop();
 
   return (
     <article className="flex flex-col gap-6">
@@ -627,125 +589,38 @@ export function Page8() {
           <span className="font-mono text-ink-muted">{page.n}. </span>
           {page.title}
         </h1>
-        <NotebookDownload href={NOTEBOOK_ZIP} size={NOTEBOOK_SIZE} />
+        <NotebookDownload href={NOTEBOOK_FILE} size={NOTEBOOK_SIZE} label="Best-of-N" />
       </div>
 
       {/* Held to the content column: the margin is the notes column (15rem) plus the
           grid's column gap (2rem), so its right edge meets the body text's. */}
       <p className="text-lg text-ink-muted lg:mr-[17rem]">
-        Counting asks what is most common. Judging asks what is best. They are not the same
-        question, and on {PAGE8.run.items} problems{" "}
-        <strong className="text-ink">
-          scoring {PAGE8.paired.n} candidates and keeping the best takes {pct(PAGE8.oneChain)} to{" "}
-          {pct(PAGE8.headline.accuracy)}
-        </strong>
-        : {PAGE8.headline.fixed} problems fixed against {PAGE8.headline.broke} broken,{" "}
-        {pValue(PAGE8.headline.p)}. Then the part nobody promised us: page 7&apos;s vote, reading
-        the same candidates, gets there too.
+        Chain of thought lets a model reason through a problem step by step. Majority voting samples
+        many of those chains and keeps the answer that comes up most often. But what if, instead of
+        counting answers, we checked each one against a clear standard and kept the best? That
+        approach is called <strong className="text-ink">Best-of-N sampling</strong>.
       </p>
 
       <div className="grid gap-x-8 gap-y-8 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        {/* Step 1 — one batch, two rules */}
+        {/* Step 1 — how Best-of-N works */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. Judge one batch two ways</h2>
-          {/* Pages 5, 6 and 7 open every figure step on a sentence saying what
-              the figure is a picture OF. This step went straight from its
-              heading into the card, so the reader met two panels with no idea
-              what either was for. */}
-          <p className="text-ink-muted">
-            Page 7 counted the chains and kept the answer most of them agreed on. Here the same
-            pile is read a second way, one candidate at a time by a judge that scores each on its
-            own. That judge reads one finished candidate and returns a single number, which is
-            where that candidate&apos;s dot sits on the axis below. It never sees the tally, so the
-            rightmost dot is not counting in disguise. Below is a problem where the two rules
-            disagree, and beside it both rules across all {PAGE8.run.items} problems.
+          <h2 className="text-xl font-semibold text-ink">1. Generate, judge, keep the best</h2>
+          <p className="text-ink">
+            Best-of-N works in three steps: the model writes several chains of thought for the same
+            question, a judge rates each chain on its own, and the chain with the highest rating is
+            kept. Press Play to watch it on a small puzzle.
           </p>
-          <section
-            aria-label="One problem's candidates, counted and scored"
-            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
-          >
-            {/* The page's only statement of what was run and when. It sits on
-                the first figure because that is where a reader first has to
-                decide whether to believe a picture. */}
-            <Pills
-              items={[
-                `measured ${PAGE8.run.date}`,
-                model ?? PAGE8.run.model,
-                `${PAGE8.run.items} ${BENCHMARK} problems, ${PAGE8.paired.n} chains each`,
-              ]}
-            />
-            <p className="text-sm text-ink">{tidyMath(s.question)}</p>
-            <p className="text-xs text-ink-muted">
-              {s.n} chains. The vote takes the longest row:{" "}
-              <strong className="text-wrong-ink">
-                {tidyMath(s.vote.answer ?? "no answer")} on {s.vote.votes} of {s.n}
-              </strong>
-              , and it is wrong. The <strong className="text-ink">verifier</strong>, a second model
-              trained to score finished solutions rather than to write them
-              <Cite n={REF.cobbe} />, takes the rightmost dot:{" "}
-              <strong className="text-correct-ink">{tidyMath(s.verifier.answer ?? "")}</strong>, which
-              is right. The answer is {tidyMath(s.ground_truth)}.
-            </p>
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="flex min-w-0 flex-col gap-2">
-                <SpecimenPanel
-                  onOpen={(i) => {
-                    setOpen(i === open ? null : i);
-                    recordInteraction(PAGE_N);
-                  }}
-                />
-                <Legend
-                  items={[
-                    { cls: "stroke-correct", label: "a correct chain" },
-                    { cls: "stroke-wrong", label: "a wrong one" },
-                    { cls: "stroke-compute", label: "what the verifier kept", ring: true },
-                  ]}
-                />
-              </div>
-              <div className="flex min-w-0 flex-col gap-2">
-                <CurvePanel />
-                <Legend
-                  items={[
-                    { cls: "stroke-correct", label: "best-of-N, trained verifier" },
-                    { cls: "stroke-compute", label: "majority vote" },
-                    // Two different one-chain numbers live on this page: this
-                    // line is every candidate averaged, and the figure below
-                    // scores every rule against one fixed chain, three points
-                    // lower. Both are labelled where they are drawn.
-                    { cls: "stroke-ink-muted", label: `one chain, on average (${pct(PAGE8.chainAverage)})` },
-                    { cls: "stroke-ink-muted", label: "a correct answer is present", dashed: true },
-                  ]}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-ink-muted">
-              The vote dips below one chain at two candidates, and that is the rule rather than
-              noise: <strong className="text-ink">with only two, any disagreement is a tie</strong>,
-              and page 7 counts a tie as no answer. Voting needs a crowd before it beats not
-              voting.
-            </p>
-            {chain ? (
-              <div className="rounded border border-grid bg-surface-raised p-3">
-                <p className="text-xs text-ink-muted">
-                  chain {chain.sample_index} · answer{" "}
-                  <span className={chain.correct ? "text-correct-ink" : "text-wrong-ink"}>
-                    {tidyMath(chain.answer ?? "none")}
-                  </span>{" "}
-                  · {chain.chars.toLocaleString()} characters · the verifier scored it{" "}
-                  {chain.score?.toFixed(2)}
-                </p>
-                <p className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap font-mono text-xs text-ink">
-                  {tidyMath(chain.trace)}
-                </p>
-              </div>
-            ) : (
-              <p className="text-xs text-ink-muted">Click a dot to read the chain behind it.</p>
-            )}
-          </section>
+          <BestOfNDemo />
+          {/* The anchor sentence: the formal version of what the demo just showed,
+              from Cobbe et al.'s abstract, cited in the margin beside it. */}
+          <p className="text-ink">
+            That is the whole method. In the words of the paper that introduced it, you{" "}
+            &ldquo;generate many candidate solutions and select the one ranked highest by the
+            verifier.&rdquo;
+            <Cite n={REF.cobbe} /> The verifier is the judge: a second model, trained on solutions
+            marked right or wrong.
+          </p>
         </section>
-        {/* What the left panel's x axis IS now opens the step in prose, where a
-            reader meets it before the figure rather than beside it. The margin
-            keeps the reference and nothing else. */}
         <Note kicker="References">
           <RefItem n={REF.cobbe} href="https://arxiv.org/abs/2110.14168">
             Cobbe et al. 2021, <em>Training Verifiers to Solve Math Word Problems</em> (arXiv
@@ -753,142 +628,92 @@ export function Page8() {
           </RefItem>
         </Note>
 
-        {/* Step 2 — what each rule fixed and broke */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">2. What each rule fixed, and what it broke</h2>
-          {/* One row of the figure is the previous page's rule, which the row
-              label cannot say, and it did not read the previous page's chains,
-              which nothing else on the page says. The rest of the retired note
-              was the close's point made early. */}
+        {/* Step 2 — Best-of-N on the problems */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
+          <h2 className="text-xl font-semibold text-ink">2. Best-of-N on {PILE8.rows.length} problems</h2>
           <p className="text-ink-muted">
-            One row per selection rule, each against the same single chain on the same problems.
-            The majority-vote row is page 7&apos;s counting rule, re-run here on chains this page
-            generated itself.
+            The same method on {PILE8.rows.length} real problems. For each one the model wrote{" "}
+            {PILE8.nChains} chains of thought, the judge rated every chain, and Best-of-N kept the one
+            rated highest. Each dot below is one problem, placed by how many of its {PILE8.nChains}{" "}
+            chains are right and coloured by whether the kept chain was right.
           </p>
           <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
-            {/* The fact the whole page rests on, and the reason the rows may be
-                compared to each other at all. */}
-            <Pills
-              items={["measured", `${PAGE8.paired.items} problems`, "every rule reads the same chains"]}
-            />
-            <PairedFigure />
-            <figcaption className="text-sm text-ink-muted">
-              Every rule against the same fixed chain per problem, which solves{" "}
-              {pct(PAGE8.oneChain)}, on the same {PAGE8.paired.items} problems, tested where the
-              two disagree. The trained verifier fixes{" "}
-              <strong className="text-ink">{PAGE8.headline.fixed}</strong> and breaks{" "}
-              <strong className="text-ink">{PAGE8.headline.broke}</strong>. And{" "}
-              <strong className="text-ink">the heuristic scorer from the source we build on</strong>
-              <Cite n={REF.source} />
-              {PAGE8.heuristic ? (
-                <>
-                  {" "}
-                  breaks {PAGE8.heuristic.broke} and fixes only {PAGE8.heuristic.fixed}: every
-                  candidate here ends in a boxed answer, so its boxed bonus cancels and the rule
-                  reduces to <em>shortest wins</em>. A judge that grades presentation is worse than
-                  not choosing at all.
-                </>
-              ) : null}
-            </figcaption>
-          </figure>
-        </section>
-        {/* The bars carry the counts, the net and the p value, and the step's
-            opening prose carries which row is page 7's. Nothing is left for the
-            margin but the reference. */}
-        <Note kicker="References">
-          <RefItem n={REF.source} href="https://mng.bz/lZ5B">
-            Raschka 2025, <em>Build a Reasoning Model (From Scratch)</em> (Manning).
-          </RefItem>
-        </Note>
-
-        {/* Step 3 — what a judge is worth */}
-        <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. What a judge is worth</h2>
-          {/* Which model the winning judge actually is opens the step, because
-              the figure below ranks it against four others and cannot say what
-              it is. */}
-          <p className="text-ink-muted">
-            Five judges read the same candidates, and one of them is the trained verifier from the
-            figures above. It is{" "}
-            <span className="font-mono text-xs">{PAGE8.verifierNote?.model ?? trained?.name}</span>,
-            a process reward model read at the final token only: one number for the whole solution.
-            Grading the steps is the next page.
-          </p>
-          <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
-            {/* Each point is an average, so the pill says what it averages over
-                before the reader reads a bar as an error. */}
             <Pills
               items={[
                 "measured",
-                `${PAGE8.judges.length} judges`,
-                `${PAGE8.run.temperatures.length} temperatures each`,
+                PILE8.writer.split("/").pop() ?? PILE8.writer,
+                `${PILE8.rows.length} ${PILE8.benchmark} problems, ${PILE8.nChains} chains each`,
               ]}
             />
-            <JudgeFigure />
+            <ChainDots />
             <figcaption className="text-sm text-ink-muted">
-              Five judges spanning size, subject and training objective, each averaged over four
-              temperatures with the bar spanning its best and worst. As you can see from the graph,{" "}
-              <strong className="text-ink">
-                being good at solving the problems is not the same thing as being good at judging
-                them
-              </strong>
-              . This run shows that the best solver on the ladder (the {bestSolver?.label}) ranked
-              last as a judge, and the only judge whose mean sits above the vote is the{" "}
-              <strong className="text-correct-ink">{trained?.label}</strong>, which ironically cannot
-              solve any of these problems on its own.
+              On {PILE8.bands.all} problems every chain is right, so any pick works. On{" "}
+              {PILE8.bands.none} none is, so there is nothing for the judge to find. The judge matters
+              in the {PILE8.bands.mixed} between: there the kept chain is right on{" "}
+              <strong className="text-ink">{PILE8.bands.mixedKeptRight}</strong>. Of its{" "}
+              {PILE8.bands.mixed - PILE8.bands.mixedKeptRight} misses, {MISSES_ONE_RIGHT} had only one
+              right chain to find.
             </figcaption>
-            {/* The confound the ladder cannot show, and the run keeps a gate
-                for: two of these judges are better at the problems than the
-                model whose work they grade. */}
-            {stronger.length > 0 && PAGE8.writerSolves !== null ? (
-              <p className="text-xs text-ink-muted">
-                The {andList(stronger.map((j) => j.label))} solve more of these problems than the
-                model that wrote the candidates, which solves {pct(PAGE8.writerSolves)}. Nothing
-                here separates being a better judge from being a better solver.{" "}
-                {PAGE8.claims.best_of_n_beats_counting_without_a_stronger_generator ? null : (
-                  <>Set them aside and the judge that never answers is still no better than the
-                  vote.</>
-                )}
-              </p>
-            ) : null}
           </figure>
         </section>
-        {/* Step 4 — the handoff. Page 7 and page 12 close the same way: the
-            argument in plain prose, and only the sentence that hands the reader
-            to the next page inside the compute-bordered box. The whole step used
-            to sit in that box, which spent the emphasis on everything at once.
-            `col-start-1` because step 3 no longer has a margin note to fill the
-            second column. */}
+
+        {/* Step 3 — the three methods side by side */}
+        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
+          <h2 className="text-xl font-semibold text-ink">
+            3. Chain of thought, majority vote, Best-of-N
+          </h2>
+          <p className="text-ink-muted">
+            Three ways to answer the same {PILE8.rows.length} problems from the same chains: take one
+            chain of thought, take the answer most of the {PILE8.nChains} agree on, or take the chain
+            the judge rates highest. Both ways of choosing need the chains to differ:
+            with no randomness the model writes the same chain {PILE8.nChains} times, and there is
+            nothing to count or to judge.
+          </p>
+          <figure className="m-0 flex min-w-0 flex-col gap-3 rounded-lg border-l-4 border-grid bg-surface p-4">
+            <Pills
+              items={["measured", `${PILE8.rows.length} problems`, "all three read the same chains"]}
+            />
+            <CompareFigure />
+            <figcaption className="text-sm text-ink-muted">
+              Both ways of choosing beat one chain. Best-of-N fixes{" "}
+              {PILE8.bars.best_vs_one.best_only} problems one chain got wrong and breaks{" "}
+              {PILE8.bars.best_vs_one.one_only}; the vote fixes {PILE8.bars.vote_vs_one.vote_only} and
+              breaks {PILE8.bars.vote_vs_one.one_only}. Against each other they are{" "}
+              <strong className="text-ink">level</strong>: they disagree on only{" "}
+              {PILE8.bars.best_vs_vote.best_only + PILE8.bars.best_vs_vote.vote_only} problems,{" "}
+              {PILE8.bars.best_vs_vote.best_only} going to Best-of-N and{" "}
+              {PILE8.bars.best_vs_vote.vote_only} to the vote, which is not a difference. And neither
+              reaches the dashed line: the faint stretch past each bar is problems where a right chain
+              was written and not picked.
+            </figcaption>
+          </figure>
+          {/* The cost, in one sentence: nothing here is measured for it. */}
+          <p className="text-ink-muted">
+            Best-of-N costs what majority voting costs, {PILE8.nChains} chains, plus a second model
+            that reads each of them once.
+          </p>
+        </section>
+
+        {/* Step 4 — the handoff: the argument in plain prose, and only the
+            sentence that hands the reader on inside the compute-bordered box. */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">4. Where this leaves us</h2>
           <p className="text-ink">
-            Selection works. Against the same candidates, so does counting: the verifier is{" "}
-            <strong>{PAGE8.caveat.net > 0 ? `+${PAGE8.caveat.net}` : PAGE8.caveat.net}</strong>{" "}
-            problems ahead of the vote, {pValue(PAGE8.caveat.p)}, which is not a difference. Two
-            routes to the same place, and one of them is free.
+            Choosing works: majority voting and Best-of-N both solve more problems than one chain of
+            thought. Against each other they finish <strong>level</strong>, and voting gets there
+            without a second model.
           </p>
-          {/* Whose comparison this is, said where the comparison is made rather
-              than in a note beside it. It is the one disclosure the retired
-              footer held that lives nowhere else. */}
           <p className="text-ink">
-            That contest is ours. Counting against selection is not one anyone else ran:
-            self-consistency and best-of-N are introduced in different chapters of the source we
-            build on
+            That comparison is ours: self-consistency and Best-of-N are introduced in different
+            chapters of the source we build on
             <Cite n={REF.source} /> and are never set against each other there.
           </p>
-          {/* Page 7 closed on the right answers the vote threw away and handed
-              this page the question. Answered here in the numbers both figures
-              already draw, before the pivot that the answer motivates. */}
-          {PAGE8.coverage !== null && trained ? (
-            <p className="text-ink">
-              And page 7&apos;s leftovers are still mostly leftovers. A right answer was in the pile
-              on <strong>{pct(PAGE8.coverage)}</strong> of problems, and on the problems where one
-              exists the vote returns it {pct(PAGE8.bar.mean)} of the time against the trained
-              verifier&apos;s {pct(trained.mean)}. Judging recovers a little of what counting
-              discarded, not most of it.
-              <Cite n={REF.stroebl} />
-            </p>
-          ) : null}
+          <p className="text-ink">
+            A right chain was written on <strong>{pct(PILE8.bars.ceiling)}</strong> of problems.
+            Majority voting returns the right answer on {pct(PILE8.bars.vote)} and Best-of-N on{" "}
+            {pct(PILE8.bars.best_of_n)}, so a judge recovers only a little of what counting discards.
+            <Cite n={REF.stroebl} />
+          </p>
           <Handoff>
             So the question is not how many candidates, nor even how good the judge is, but{" "}
             <em>what the judge is reading</em>. Every rule here grades the final answer and none of
@@ -896,6 +721,9 @@ export function Page8() {
           </Handoff>
         </section>
         <Note kicker="References">
+          <RefItem n={REF.source} href="https://mng.bz/lZ5B">
+            Raschka 2025, <em>Build a Reasoning Model (From Scratch)</em> (Manning).
+          </RefItem>
           <RefItem n={REF.stroebl} href="https://arxiv.org/abs/2411.17501">
             Stroebl et al. 2024, <em>Inference Scaling fLaws: The Limits of LLM Resampling with
             Imperfect Verifiers</em> (arXiv 2411.17501).

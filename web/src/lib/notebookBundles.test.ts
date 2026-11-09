@@ -51,8 +51,11 @@ const PAGES = [
   // notebooks/RUNBOOK_page6_full.md.
   { n: 6, slug: "page-06-thinking-longer", notebook: "page_06_thinking_longer.ipynb",
     declared: "2.0 MB", extras: [], siteData: null, repoNotebookIsTheShippedOne: false },
+  // The retired page 8 run. Page 8 no longer links this bundle: it offers one plain
+  // .ipynb, checked below. The bundle stays because the wrap-up's ladder still plots
+  // its data and links it, so it is still checked here, with no declared size.
   { n: 8, slug: "page-08-best-of-n", notebook: "page_08_best_of_n.ipynb",
-    declared: "10.1 MB", extras: ["scores.jsonl", "judge_solves.jsonl"], siteData: null,
+    declared: null, extras: ["scores.jsonl", "judge_solves.jsonl"], siteData: null,
     repoNotebookIsTheShippedOne: false },
   // Page 9 was absent from this list until 2026-08-09, and it had drifted in the two
   // ways the list exists to catch: it unpacked flat instead of into a folder, and its
@@ -207,6 +210,20 @@ describe("page 7's notebook", () => {
 
   it("the size on the page is the size on disk", () => {
     expect(`${Math.round(statSync(resolve(WEB, `public/notebooks/${file}`)).size / 1e3)} KB`).toBe("145 KB");
+  });
+
+  it("public/notebooks serves the repo's copy", () => {
+    const served = readFileSync(resolve(WEB, `public/notebooks/${file}`));
+    expect(served.equals(readFileSync(resolve(WEB, `../notebooks/${file}`)))).toBe(true);
+  });
+});
+
+// Page 8 ships one plain .ipynb that writes its own chains, with no traces.
+describe("page 8's notebook", () => {
+  const file = "8_Best_of_N.ipynb";
+
+  it("the size on the page is the size on disk", () => {
+    expect(`${Math.round(statSync(resolve(WEB, `public/notebooks/${file}`)).size / 1e3)} KB`).toBe("30 KB");
   });
 
   it("public/notebooks serves the repo's copy", () => {
