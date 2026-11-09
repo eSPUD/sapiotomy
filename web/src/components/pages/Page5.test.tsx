@@ -120,12 +120,12 @@ describe("Page 5, figure 1: worked solutions from MATH-500", () => {
       fireEvent.click(next());
     }
     expect(seen).toEqual([
-      "Problem: 1 of 3 · Number Theory · level 3",
-      "Problem: 2 of 3 · Algebra · level 4",
-      "Problem: 3 of 3 · Number Theory · level 5",
+      "Problem: 1 of 3 · Number Theory · Level: 3",
+      "Problem: 2 of 3 · Algebra · Level: 4",
+      "Problem: 3 of 3 · Number Theory · Level: 5",
     ]);
     fireEvent.click(prev());
-    expect(stepper().getByText("Problem: 3 of 3 · Number Theory · level 5")).toBeInTheDocument();
+    expect(stepper().getByText("Problem: 3 of 3 · Number Theory · Level: 5")).toBeInTheDocument();
   });
 
   it("shows the question as the user's turn, then the worked solution one line per step", () => {

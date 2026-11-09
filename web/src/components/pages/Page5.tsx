@@ -188,7 +188,7 @@ function ProblemStepper({ active, onProblem }: { active: number; onProblem: (i: 
         <span aria-hidden="true">‹</span> Previous
       </button>
       <span aria-live="polite" className="order-first w-full text-right sm:order-none sm:w-auto">
-        Problem: {active + 1} of {n} · {w.subject} · level {w.level}
+        Problem: {active + 1} of {n} · {w.subject} · Level: {w.level}
       </span>
       <button type="button" aria-label="Next problem" onClick={() => onProblem((active + 1) % n)} className={button}>
         Next <span aria-hidden="true">›</span>
