@@ -553,7 +553,7 @@ export function Page5() {
         {/* Step 1: the definition (the author's first paragraph, unchanged) and three
             worked solutions from MATH-500. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">1. Chain of Thought (CoT): System 2, written down</h2>
+          <h2 className="text-xl font-semibold text-ink">1. Chain-of-Thought (CoT): Reasoning over simple steps</h2>
           <p className="text-ink">
             We&apos;ve previously illustrated what step-by-step reasoning looks like for a couple of real-world
             problems. <strong>Chain-of-thought prompting</strong> simulates human reasoning by using
