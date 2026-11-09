@@ -22,7 +22,7 @@ export function SubmissionFooter() {
           <p className="max-w-3xl text-xs">
             <strong className="font-semibold text-ink">AI usage disclosure:</strong> AI coding
             assistants, including Claude Code, were used to develop this AI explainable and its
-            Python notebooks. The notebooks&apos; experiments were run on Google Colab with an NVIDIA
+            Python notebooks. The experiment notebooks were run on Google Colab/RunPod with an NVIDIA
             A100 GPU with 80 GB of memory.
           </p>
         </div>

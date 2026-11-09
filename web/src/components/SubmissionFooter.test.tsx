@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({ usePathname: () => pathname }));
 import { SubmissionFooter } from "./SubmissionFooter";
 
 const DISCLOSURE =
-  "AI usage disclosure: AI coding assistants, including Claude Code, were used to develop this AI explainable and its Python notebooks. The notebooks' experiments were run on Google Colab with an NVIDIA A100 GPU with 80 GB of memory.";
+  "AI usage disclosure: AI coding assistants, including Claude Code, were used to develop this AI explainable and its Python notebooks. The experiment notebooks were run on Google Colab/RunPod with an NVIDIA A100 GPU with 80 GB of memory.";
 
 describe("SubmissionFooter", () => {
   it("carries the AI usage disclosure on the landing, under the how-to-explore note", () => {
