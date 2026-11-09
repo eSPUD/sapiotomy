@@ -590,8 +590,8 @@ export function Page5() {
         {/* Step 2: figure first, then the prose explaining Shashank's sentence. */}
         <section className="flex min-w-0 flex-col gap-3">
           {/* Headings 2 and 3 name Shashank's two solutions: one at inference time, one
-              in post-training (author, 2026-10-18). Heading 2 renamed by the author
-              2026-11-06 to name the prompting it compares. */}
+              in post-training (author, 2026-10-18). Both renamed by the author to name
+              what each figure compares: heading 2 on 2026-11-06, heading 3 on 2026-11-08. */}
           <h2 className="text-xl font-semibold text-ink">2. Zero-shot versus few-shot CoT prompting</h2>
           <p className="text-ink-muted">
             {/* The old opening sentence, rewritten for the zero-vs-ten-shot run
@@ -668,7 +668,7 @@ export function Page5() {
             question, and post-training does the showing once instead. The results
             discussion still waits for the author; the figure carries the numbers. */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">3. In post-training: instruct models, with no examples</h2>
+          <h2 className="text-xl font-semibold text-ink">3. ‘Base model with few-shot CoT prompting’ versus ‘Instruct model’</h2>
           <p className="text-ink">
             The worked examples work, but they travel with every question: the few-shot prompt runs
             to around {FEW_PROMPT_ROUNDED.toLocaleString("en-GB")} tokens before the model writes a
