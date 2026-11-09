@@ -539,6 +539,17 @@ const FIG3_SERIES: [DotSeries, DotSeries] = [
   },
 ];
 
+/**
+ * Section 3's numbers, read from the runs. The instruct prompt is one length at every
+ * size (one tokenizer); the ratio is rounded to the nearest ten ("about"). The last
+ * sentence sets the smallest instruct model against the largest few-shot base model.
+ */
+const INSTRUCT_PROMPT_TOKENS = INSTRUCT[0].cot.medianPromptTokens;
+const PROMPT_RATIO_ROUNDED = Math.round(SHOTS.tenShotPromptTokens / INSTRUCT_PROMPT_TOKENS / 10) * 10;
+const FIG3_GAINS = SIZES.map((_, i) => ptsLabel(INSTRUCT[i].cot.accuracy, TEN_SHOT_ARMS[i].accuracy));
+const SMALLEST = 0;
+const LARGEST = SIZES.length - 1;
+
 const describeSeries = (s: DotSeries) => SIZES.map((size, i) => `${size} ${pct(s.arms[i].accuracy, 1)}`).join(", ");
 
 /* -------------------------------------------------------------------- page */
@@ -708,22 +719,24 @@ export function Page5() {
           </RefItem>
         </Note>
 
-        {/* Step 3. Its opening says what an instruct model is, picking up where step 2
-            ends (author, 2026-10-18): the examples work, but they ride with every
-            question, and post-training does the showing once instead. The results
-            discussion still waits for the author; the figure carries the numbers. */}
+        {/* Step 3, rewritten for clarity (author, 2026-11-08): the running cost of
+            few-shot prompting, what an instruct model is, the comparison, then the result
+            in one paragraph. Every number is read from the runs. The two sides were not
+            scored on the same problems, so the text never says "the same problems". */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">3. ‘Base model with few-shot CoT prompting’ versus ‘Instruct model’</h2>
           <p className="text-ink">
-            The worked examples work, but they travel with every question: the few-shot prompt runs
-            to around {FEW_PROMPT_ROUNDED.toLocaleString("en-GB")} tokens before the model writes a
-            word. <strong>Instruct models</strong> do the showing once, in training. An instruct
-            model is the same base model trained further, which is called post-training.
+            Few-shot prompting has a running cost: the ten worked examples, about{" "}
+            {FEW_PROMPT_ROUNDED.toLocaleString("en-GB")} tokens, are sent with every question.
+            Post-training pays that cost once. An <strong>Instruct model</strong> is the base model
+            trained further, with supervised fine-tuning and reinforcement learning, so that it
+            follows instructions and writes out its steps when asked, with no examples in the
+            prompt.
             <Cite n={REF.qwenReport} />
           </p>
           <p className="text-ink-muted">
-            Below, the instruct versions of the same three models answer MATH-500 problems with no
-            examples, against the base models with ten.
+            Below, each base model with ten examples is compared with its Instruct version with
+            none, on MATH-500.
           </p>
           <section
             aria-label="Base model with few-shot CoT prompting versus Instruct model"
@@ -750,6 +763,14 @@ export function Page5() {
               </figcaption>
             </figure>
           </section>
+          <p className="text-ink-muted">
+            The Instruct model wins at every size, by {FIG3_GAINS[0]}, {FIG3_GAINS[1]} and{" "}
+            {FIG3_GAINS[2]} points, on a prompt about {PROMPT_RATIO_ROUNDED} times shorter (
+            {INSTRUCT_PROMPT_TOKENS.toLocaleString("en-GB")} tokens against{" "}
+            {SHOTS.tenShotPromptTokens.toLocaleString("en-GB")}). The {SIZES[SMALLEST]} Instruct model
+            ({pct(INSTRUCT[SMALLEST].cot.accuracy, 1)}) even beats the {SIZES[LARGEST]} base model
+            with examples ({pct(TEN_SHOT_ARMS[LARGEST].accuracy, 1)}).
+          </p>
         </section>
         <Note kicker="References">
           <RefItem n={REF.qwenReport} href="https://arxiv.org/abs/2412.15115">

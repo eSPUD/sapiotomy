@@ -277,7 +277,9 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
 describe("Page 5, figure 3: instruct models against few-shot base models", () => {
   it("compares the instruct models with no examples against the base models with ten, without stating how many problems", () => {
     render(<Page5 />);
-    expect(body()).toContain("Below, the instruct versions of the same three models answer MATH-500 problems with no examples, against the base models with ten.");
+    expect(body()).toContain("Below, each base model with ten examples is compared with its Instruct version with none, on MATH-500.");
+    // The two sides were not scored on the same problems; the text never says so.
+    expect(body()).not.toContain("the same problems");
     expect(body()).not.toContain("base on");
     expect(body()).not.toContain(`the same ${N} problems`);
     for (const [i, m] of PAGE5.instruct.entries()) {
@@ -289,21 +291,38 @@ describe("Page 5, figure 3: instruct models against few-shot base models", () =>
     }
   });
 
-  // Section 3 opens by saying what an instruct model is, picking up from section 2's
-  // examples (author, 2026-10-18), with the prompt length the figure's legend gives.
-  it("opens by saying what an instruct model is, following on from the examples", () => {
+  // Section 3 (author, 2026-11-08: clear and concise): the running cost of the examples,
+  // what an instruct model is, then the result, every number read from the runs.
+  it("opens on the examples' running cost and says what an Instruct model is", () => {
     render(<Page5 />);
-    const para = screen.getByText(/The worked examples work, but they travel with every question/).closest("p")!;
+    const para = screen.getByText(/Few-shot prompting has a running cost/).closest("p")!;
     expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
-      "The worked examples work, but they travel with every question: the few-shot prompt runs to around 3,400 tokens before the model writes a word. Instruct models do the showing once, in training. An instruct model is the same base model trained further, which is called post-training.",
+      "Few-shot prompting has a running cost: the ten worked examples, about 3,400 tokens, are sent with every question. Post-training pays that cost once. An Instruct model is the base model trained further, with supervised fine-tuning and reinforcement learning, so that it follows instructions and writes out its steps when asked, with no examples in the prompt.",
     );
-    // "around 3,400": the median 10-shot prompt, to the nearest 50.
+    // "about 3,400": the median 10-shot prompt, to the nearest 50.
     expect(Math.round(SHOTS.tenShotPromptTokens / 50) * 50).toBe(3400);
-    expect(para.querySelector("strong")?.textContent).toBe("Instruct models");
+    expect(para.querySelector("strong")?.textContent).toBe("Instruct model");
     expect(Array.from(para.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 5"]);
     expect(screen.getByRole("link", { name: /Qwen2\.5 Technical Report/ })).toHaveAttribute(
       "href",
       "https://arxiv.org/abs/2412.15115",
+    );
+  });
+
+  it("states the result in one paragraph, from the data", () => {
+    render(<Page5 />);
+    const ten = (i: number) => SHOTS.rows[i].solved["10_shot"] / 100;
+    const inst = PAGE5.instruct;
+    const gains = inst.map((m, i) => pts(m.cot.accuracy, ten(i)));
+    expect(gains).toEqual(["30.0", "26.7", "31.1"]);
+    const instTokens = inst[0].cot.medianPromptTokens;
+    const ratio = Math.round(SHOTS.tenShotPromptTokens / instTokens / 10) * 10;
+    expect(ratio).toBe(40);
+    const last = inst.length - 1;
+    // The smallest Instruct model really does beat the largest few-shot base model.
+    expect(inst[0].cot.accuracy).toBeGreaterThan(ten(last));
+    expect(body()).toContain(
+      `The Instruct model wins at every size, by ${gains[0]}, ${gains[1]} and ${gains[2]} points, on a prompt about ${ratio} times shorter (${instTokens} tokens against 3,396). The ${inst[0].size} Instruct model (${pct(inst[0].cot.accuracy, 1)}) even beats the ${inst[last].size} base model with examples (${pct(ten(last), 1)}).`,
     );
   });
 
