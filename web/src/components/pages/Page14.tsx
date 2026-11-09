@@ -1237,15 +1237,12 @@ export function Page14() {
             forward as the open question rather than delivered as a last word.
             In the content column, page 3's shape for a handoff: outside the grid
             on its own max-w-2xl it was the one block on the page set narrower
-            than everything above it. */}
+            than everything above it. The closing "Hold that. Next: …" line was cut
+            (author, 2026-11-09); the box ends on the assumption itself. */}
         <Handoff className="lg:col-start-1">
           Notice what every repair on this page assumed. The verifier reads the chain, the reviser
           reads the chain, and the reader reads the chain, and all three take it for what it says
-          it is: the working that produced the answer.{" "}
-          <em className="text-ink-muted">
-            Hold that. Next: every lever in this story on one axis, and ten questions on the
-            mechanisms rather than the magnitudes.
-          </em>
+          it is: the working that produced the answer.
         </Handoff>
       </div>
 

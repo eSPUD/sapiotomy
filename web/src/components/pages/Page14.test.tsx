@@ -389,8 +389,11 @@ describe("Page 14 (when reasoning breaks) component", () => {
     // This aimed at page 18 (faithfulness) until that page was cut, then briefly
     // closed the deck. Page 16 closes now, so this is a handoff again, and the
     // thing handed forward is the assumption the whole page rested on.
-    const close = screen.getByText(/every lever in this story on one axis/i);
-    expect(close.closest("div")!.textContent).toMatch(/all three take it for what it says it is/i);
+    const close = screen.getByText(/all three take it for what it says/i);
+    // It ends on the assumption: the "Hold that. Next: …" line was cut (author, 2026-11-09).
+    expect(close.textContent?.replace(/\s+/g, " ").trim()).toMatch(/the working that produced the answer\.$/);
+    expect(screen.queryByText(/Hold that\./)).toBeNull();
+    expect(screen.queryByText(/every lever in this story on one axis/i)).toBeNull();
   });
 
   it("carries no em dash or en dash in rendered copy", () => {
