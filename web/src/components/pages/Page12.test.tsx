@@ -245,7 +245,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
     const counterweight = screen.getByText(
       /Trained on reasoning, graded on answers/,
     );
-    const handoff = screen.getByText(/Next: what a wrong chain can teach/);
+    const handoff = screen.getByText(/trains on those chains too\./);
     const follows =(a: Element, b: Element) =>
       Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
     expect(follows(interactive, listing)).toBe(true);
@@ -360,7 +360,7 @@ describe("Page 12 (STaR and self-improvement)", () => {
     render(<Page12 />);
     // The hand-off is a bulleted block now, so read its wrapping div.
     const handoff = screen
-      .getByText(/Next: what a wrong chain can teach/)
+      .getByText(/trains on those chains too\./)
       .closest("div")!;
     // The lift-vs-slide bridge: page 11 said model size picks your curve; STaR
     // is the first knob that lifts it.
@@ -369,11 +369,18 @@ describe("Page 12 (STaR and self-improvement)", () => {
     );
   });
 
+  it("ends the hand-off on GRPO, with no Next line (author, 2026-11-09)", () => {
+    render(<Page12 />);
+    const last = screen.getByText(/trains on those chains too\./);
+    expect(last.textContent?.replace(/\s+/g, " ").trim()).toMatch(/trains on those chains too\.$/);
+    expect(screen.queryByText(/what a wrong chain can teach/)).toBeNull();
+  });
+
   it("closes on both ways to spend, then what page 13 opens with", () => {
     render(<Page12 />);
     // The hand-off is a bulleted block now, so read its wrapping div.
     const handoff = screen
-      .getByText(/Next: what a wrong chain can teach/)
+      .getByText(/trains on those chains too\./)
       .closest("div")!;
     // The hand-off sums Act 2's answer-time toolbox (5-11, priced by the
     // scaling law) and this page's train-time loop.

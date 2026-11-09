@@ -1610,8 +1610,8 @@ export function Page12() {
             <p>
               STaR discards every chain that misses the answer key. GRPO, the
               reinforcement-learning recipe behind DeepSeek&apos;s R1-Zero,
-              trains on those chains too.{" "}
-              <em>Next: what a wrong chain can teach.</em>
+              trains on those chains too.
+              {/* The "Next: what a wrong chain can teach." line was cut (author, 2026-11-09). */}
             </p>
           </Handoff>
         </div>

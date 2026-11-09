@@ -1163,10 +1163,8 @@ export function Page13() {
             Every claim on this page arrived as a benchmark score: {pct(FINAL.pass1).toFixed(1)}% on{" "}
             {RUN.dataset}, {pct(FINAL.maj[String(RUN.k)]).toFixed(1)}% with a vote,{" "}
             {studentPct("grpo15").toFixed(1)}% for a 0.5B that read a trained model&apos;s chains.
-            Every one of them is also a number for thinking longer.{" "}
-            <em className="text-ink-muted">
-              Next: the side of that dial where thinking longer makes the answer worse.
-            </em>
+            {/* The "Next: the side of that dial …" line was cut (author, 2026-11-09). */}
+            Every one of them is also a number for thinking longer.
           </Handoff>
         </section>
 

@@ -502,14 +502,16 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       expect(screen.queryByText(/the student kept/)).not.toBeInTheDocument();
     });
 
-    it("keeps old page 14's coda, aimed at the wrong side of the dial", () => {
+    it("keeps old page 14's coda, ending on thinking longer", () => {
       render(<Page13 />);
       const coda = screen.getByLabelText("Where this leaves us");
       expect(coda.textContent).toMatch(/Every claim on this page arrived as a benchmark score/);
       expect(coda.textContent).toMatch(/49\.3% for a 0\.5B that read a trained model's chains/);
       expect(coda.textContent).not.toMatch(/o1-mini/);
       expect(coda.textContent).not.toMatch(/Two pages/);
-      expect(coda.textContent).toMatch(/the side of that dial where thinking longer makes the answer worse/);
+      // It ends on the claim; the "Next: the side of that dial …" line was cut (author, 2026-11-09).
+      expect(coda.textContent?.replace(/\s+/g, " ").trim()).toMatch(/Every one of them is also a number for thinking longer\.$/);
+      expect(coda.textContent).not.toMatch(/the side of that dial/);
     });
   });
 
