@@ -16,6 +16,7 @@
  * load error, not a quietly wrong figure.
  */
 import raw from "@data/page-13-two-axis.json";
+import distillRaw from "@data/page-13-distill.json";
 
 export class Page13DataError extends Error {}
 
@@ -89,41 +90,44 @@ export const pct = (p: number) => Math.round(p * 1000) / 10;
 export const modelLabel = RUN.model.split("/").pop()!;
 
 /* ---------------------------------------------------------------------------
- * Section 5b: the distillation run (notebooks/page_13_distill_grpo_into_0.5B.ipynb).
- * Not run yet: DISTILL is null and the section draws its placeholder. Once the
- * run exists, page_13_site_data.py writes data/page-13-distill.json in this
- * shape and DISTILL loads it. Proportions are 0-1, as in page-13-two-axis.json.
+ * Section 5: the distillation run, from `web/data/page-13-distill.json`, built by
+ * `notebooks/page_13_distill_site_data.py` from the outputs saved in
+ * `notebooks/page_13_distill_1p5b_to_0p5b.ipynb` (the author's Colab run, 2026-11-06).
+ * One student per teacher, one seed, 300 test problems, and the two trained
+ * students read different numbers of rows. Proportions are 0-1.
  * ------------------------------------------------------------------------- */
 
-/** What the 0.5B student was fine-tuned on: the notebook's student arms. */
-export type DistillSource = "none" | "self" | "base15" | "grpo15";
+/** What the 0.5B student was fine-tuned on. */
+export type DistillSource = "none" | "base15" | "grpo15";
 
-export interface DistillChain {
-  question: string;
-  /** The kept chain the student was trained on, drawn at random from the matched pool. */
-  text: string;
-  n_tokens: number;
+export interface DistillReading {
+  /** One sample's accuracy: the first chain. */
+  pass1: number;
+  maj32: number;
+  any32: number;
+  mean_len: number;
 }
 
-export interface DistillArm {
-  /** pass@1 on the 600 test problems, averaged over the SFT seeds ("none": the one untrained model). */
-  pass1: number;
-  pass1_by_seed: number[];
-  /** One training chain from this source; null for "none", which read nothing. */
-  chain: DistillChain | null;
+export interface DistillArm extends DistillReading {
+  /** Prompt/completion rows the student was fine-tuned on; 0 for the 0.5B as released. */
+  rows: number;
 }
 
 export interface DistillRun {
+  source: { notebook: string; sha256: string };
   student: string;
   teacher: string;
+  dataset: string;
+  n_eval: number;
+  /** One standard error per model, in points, as the notebook reports it. */
+  se_points: number;
   /** The 1.5B teacher before and after GRPO, re-measured in the distillation run. */
-  teacher_before: number;
-  teacher_after: number;
-  /** Training problems in the matched pool: each source contributes one chain per problem. */
-  n_pool: number;
+  teacher_before: DistillReading;
+  teacher_after: DistillReading;
   arms: Record<DistillSource, DistillArm>;
-  /** (student on after-RL chains - student on before-RL chains) / (teacher after - teacher before), with its 95% interval. */
-  transfer: { mean: number; lo: number; hi: number };
 }
 
-export const DISTILL: DistillRun | null = null;
+export const DISTILL = distillRaw as DistillRun;
+
+/** "Qwen2.5-0.5B-Instruct", without the organisation. */
+export const studentLabel = DISTILL.student.split("/").pop()!;

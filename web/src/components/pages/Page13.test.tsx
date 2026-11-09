@@ -62,7 +62,7 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       "2. Better answers, longer chains",
       "3. At scale, the chains keep growing",
       "4. Training stacks with inference-time scaling",
-      "5. Data the model writes itself",
+      "5. Whose chains did the student read?",
     ].map((h) => screen.getByRole("heading", { level: 2, name: new RegExp(`^${escape(h)}`) }));
     for (let i = 1; i < headings.length; i++) {
       expect(follows(headings[i - 1], headings[i])).toBe(true);
@@ -452,119 +452,64 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
     });
   });
 
-  describe("section 5: data the model writes itself", () => {
-    it("pins the distilled-model table to DeepSeek-AI 2025 Table 5", () => {
-      expect(curves.deepseekDistill.points).toEqual([
-        { x: 1.5, y: 28.9 },
-        { x: 7, y: 55.5 },
-        { x: 8, y: 50.4 },
-        { x: 14, y: 69.7 },
-        { x: 32, y: 72.6 },
-        { x: 70, y: 70.0 },
-      ]);
-      const p = curves.deepseekDistill.fit!.params;
-      expect(p.r1Aime).toBe(79.8);
-      expect(p.o1miniAime).toBe(63.6);
-      expect(p.gpt4oAime).toBe(9.3);
+  describe("section 5: our distillation", () => {
+    it("pins the run's numbers to the notebook's results table", () => {
+      expect(DISTILL.n_eval).toBe(300);
+      expect(DISTILL.arms.none).toMatchObject({ pass1: 0.283, mean_len: 191, rows: 0 });
+      expect(DISTILL.arms.base15).toMatchObject({ pass1: 0.423, mean_len: 184, rows: 896 });
+      expect(DISTILL.arms.grpo15).toMatchObject({ pass1: 0.493, mean_len: 238, rows: 1891 });
+      expect(DISTILL.teacher_before.pass1).toBe(0.65);
+      expect(DISTILL.teacher_after.pass1).toBe(0.72);
     });
 
-    it("answers the bill and the finite stock of text with the run's own counts", () => {
+    it("replaces 'Data the model writes itself' and R1's dot plot", () => {
       render(<Page13 />);
-      expect(screen.getByText(/Qwen2\.5 was pre-trained on 18 trillion tokens/)).toBeInTheDocument();
-      const para = screen.getByText(/Reasoning-focused RL draws on neither/).textContent!;
-      // 400 steps x 16 questions over 2,538 kept questions; 8 chains each.
-      expect(para).toMatch(/reused 2,538 maths questions, each about 2\.5 times/);
-      expect(para).toMatch(/Every one of the 51,200 chains/);
-      expect(para).toMatch(/took 82 minutes on one GPU/);
-      expect(para).toMatch(/\$294,000 for R1's reasoning training/);
-      expect(para).toMatch(/about a twentieth of the \$5\.6 million/);
+      expect(screen.queryByRole("heading", { name: /Data the model writes itself/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole("img", { name: /horizontal dot plot/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/R1-Distill/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/placeholder/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/What it does add is text/)).not.toBeInTheDocument();
     });
 
-    it("states the two limits, then distillation as the payoff", () => {
+    it("draws three students, measured, with the teacher as rules", () => {
       render(<Page13 />);
-      expect(screen.getByText(/It has two limits/).textContent).toMatch(
-        /answers a program can check.*it adds no facts/s,
-      );
-      // Section 5b duplicates the opening sentence; section 5's copy carries R1's traces.
-      const [distill, dup] = screen.getAllByText(/What it does add is text/).map((e) => e.textContent!);
-      expect(dup).not.toMatch(/800K/);
-      expect(distill).toMatch(/about 800K reasoning traces/);
-      expect(distill).toMatch(/the same fine-tuning STaR uses and\s+no RL at all/);
-      expect(screen.getByText(/The RL is paid for once, by one model/)).toBeInTheDocument();
-      // The old framing is gone.
-      expect(screen.queryByText(/Does the law need one/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/curriculum for everyone else/)).not.toBeInTheDocument();
+      for (const [name, value] of [
+        [/^nothing/, "28.3%"],
+        [/^1\.5B, before RL/, "42.3%"],
+        [/^1\.5B, after RL/, "49.3%"],
+      ] as const) {
+        expect(within(screen.getByRole("button", { name })).getByText(value)).toBeInTheDocument();
+      }
+      expect(screen.queryByRole("button", { name: /^its own chains/ })).not.toBeInTheDocument();
+      expect(screen.getByText("1.5B before RL · 65.0%")).toBeInTheDocument();
+      expect(screen.getByText("after · 72.0%")).toBeInTheDocument();
     });
 
-    it("keeps the chart's disclosures in a margin note, not a caption", () => {
+    it("defaults to the after-RL chains and switches the readout with the dial", () => {
       render(<Page13 />);
-      expect(screen.getByText(/9\.3% is\s+DeepSeek's measurement/)).toBeInTheDocument();
-      expect(screen.queryByText(/no RL and no reward, which is STaR's/)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^1\.5B, after RL/ })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByText(/238 tokens per answer/)).toBeInTheDocument();
+      expect(screen.getByText(/points over\s+the student that read the 1\.5B before RL/).textContent).toMatch(/^\+7\.0/);
+      fireEvent.click(screen.getByRole("button", { name: /^1\.5B, before RL/ }));
+      expect(screen.getByText(/points over\s+the 0\.5B as released/).textContent).toMatch(/^\+14\.0/);
+      fireEvent.click(screen.getByRole("button", { name: /^nothing/ }));
+      expect(screen.getByText(/This student read nothing/)).toBeInTheDocument();
     });
 
-    it("defaults the distill picker to Qwen-14B and updates on selection", () => {
+    it("discloses the unequal rows, and prints no transfer ratio", () => {
       render(<Page13 />);
-      expect(screen.getByRole("button", { name: /Qwen-14B/ })).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByText(/R1-Distill-Qwen-14B/)).toBeInTheDocument();
-      expect(screen.getByText(/clears o1-mini's line/)).toBeInTheDocument();
-      fireEvent.click(screen.getByRole("button", { name: /Qwen-32B/ }));
-      expect(screen.getByText(/R1-Distill-Qwen-32B/)).toBeInTheDocument();
-      expect(screen.getByText(/within seven points of the 671B teacher/)).toBeInTheDocument();
-    });
-
-    it("draws the distillation trade as a dot plot: rows by size, closed models as rules", () => {
-      render(<Page13 />);
-      const label = screen.getByRole("img", { name: /horizontal dot plot/i }).getAttribute("aria-label")!;
-      expect(label).toMatch(/Qwen-14B 69\.7 percent/);
-      expect(label).toMatch(/Llama-70B 70 percent/);
-      expect(label).toMatch(/671B mixture-of-experts, at 79\.8 percent/);
-      expect(label).toMatch(/GPT-4o at 9\.3 percent and OpenAI o1-mini at 63\.6 percent/);
-      expect(label).toMatch(/Llama-70B sits left of Qwen-32B/);
+      expect(screen.getByText(/896 training rows from the 1\.5B before\s+RL, 1,891 from the 1\.5B after it/)).toBeInTheDocument();
+      expect(screen.queryByText(/the student kept/)).not.toBeInTheDocument();
     });
 
     it("keeps old page 14's coda, aimed at the wrong side of the dial", () => {
       render(<Page13 />);
       const coda = screen.getByLabelText("Where this leaves us");
       expect(coda.textContent).toMatch(/Every claim on this page arrived as a benchmark score/);
+      expect(coda.textContent).toMatch(/49\.3% for a 0\.5B that read a trained model's chains/);
+      expect(coda.textContent).not.toMatch(/o1-mini/);
       expect(coda.textContent).not.toMatch(/Two pages/);
       expect(coda.textContent).toMatch(/the side of that dial where thinking longer makes the answer worse/);
-    });
-  });
-
-  describe("section 5b: our distillation, a placeholder until the run exists", () => {
-    it("follows section 5 and carries the hand-off at its end", () => {
-      render(<Page13 />);
-      const s5 = screen.getByRole("heading", { level: 2, name: /^5\. Data the model writes itself/ });
-      const s5b = screen.getByRole("heading", { level: 2, name: /^5b\. Whose chains did the student read\?/ });
-      expect(follows(s5, s5b)).toBe(true);
-      expect(follows(s5b, screen.getByLabelText("Where this leaves us"))).toBe(true);
-      expect(s5b.textContent).toMatch(/placeholder · waiting on the distillation run/);
-    });
-
-    it("draws four empty students and no invented numbers", () => {
-      render(<Page13 />);
-      expect(DISTILL).toBeNull();
-      for (const name of [/^nothing/, /^its own chains/, /^1\.5B, before RL/, /^1\.5B, after RL/]) {
-        expect(screen.getByRole("button", { name })).toBeInTheDocument();
-      }
-      expect(screen.getAllByTestId("distill-empty-bar")).toHaveLength(4);
-      expect(screen.getByText(/accuracy not measured yet/)).toBeInTheDocument();
-      // The teacher rules are measured: the two-axis run's 1.5B before and after.
-      expect(screen.getByText("1.5B before RL · 64.9%")).toBeInTheDocument();
-      expect(screen.getByText("after · 73.8%")).toBeInTheDocument();
-    });
-
-    it("defaults to the after-RL chains and switches the readout with the dial", () => {
-      render(<Page13 />);
-      expect(screen.getByRole("button", { name: /^1\.5B, after RL/ })).toHaveAttribute("aria-pressed", "true");
-      expect(screen.getByText(/Of the teacher's \+8\.9\s+points from RL, the student kept/)).toBeInTheDocument();
-      expect(screen.getByTestId("distill-chain-placeholder")).toBeInTheDocument();
-      fireEvent.click(screen.getByRole("button", { name: /^nothing/ }));
-      expect(screen.getByText(/This student read nothing/)).toBeInTheDocument();
-      expect(screen.queryByText(/Of the teacher's/)).not.toBeInTheDocument();
-      fireEvent.click(screen.getByRole("button", { name: /^its own chains/ }));
-      expect(screen.getByText(/0\.5B trained on its own chains/)).toBeInTheDocument();
-      expect(screen.getByTestId("distill-chain-placeholder")).toBeInTheDocument();
     });
   });
 
@@ -574,9 +519,6 @@ describe("Page 13 (learned reasoning: one law, two knobs)", () => {
       "https://arxiv.org/abs/2501.12948",
       "https://arxiv.org/abs/2402.03300",
       "https://arxiv.org/abs/2503.20783",
-      "https://arxiv.org/abs/2412.15115",
-      "https://www.nature.com/articles/s41586-025-09422-z",
-      "https://arxiv.org/abs/2412.19437",
     ];
     for (const href of hrefs) {
       expect(document.querySelectorAll(`a[href="${href}"]`)).toHaveLength(1);

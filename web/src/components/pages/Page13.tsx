@@ -93,20 +93,20 @@
  * model voting over 4 chains about matches the trained model's one, but the
  * training is paid once and the vote on every question.
  *
- * Section 5 (2026-11-06) answers the training-time-scaling page's two walls,
- * the bill and the finite stock of human text: pre-training reads new text,
- * reasoning RL reuses a few thousand checkable questions on model-written
- * chains (our run's own counts and minutes; R1's $294K against V3's $5.6M, both
- * final-run GPU costs). Two limits are stated plainly: it needs checkable
- * answers, and it adds no facts. Distillation is the payoff: the chains are new
- * data that teach other models. The figure is still R1's distills (Table 5);
- * it is swapped for the author's own run (1.5B GRPO teacher into a 0.5B) once
- * that run exists with equalised training rows. The chart's disclosures sit
- * in a margin note, not a caption.
+ * Section 5 (2026-11-08, author) is our own distillation: the 1.5B GRPO teacher
+ * into Qwen2.5-0.5B-Instruct, against a student taught by the 1.5B before RL
+ * and the 0.5B as released. It replaced "Data the model writes itself" (the
+ * bill and text-stock argument, R1's $294K, the two limits) and R1's distill
+ * dot plot. The two trained students read unequal rows (896 and 1,891) and each
+ * was trained once, so the margin note says so and the page prints no transfer
+ * ratio: on these rows it would read as a misleading 100%. The matched,
+ * three-seed design is notebooks/page_13_distill_grpo_into_0.5B.ipynb, not run.
  *
  * Anchored to data/page-13-two-axis.json (built by notebooks/page_13_site_data.py
- * from notebooks/page_13_two_axis_grpo.ipynb), deepseek-r1-training.json and
- * deepseek-r1-distill.json; the page is pinned in Page13.test.tsx.
+ * from notebooks/page_13_two_axis_grpo.ipynb), data/page-13-distill.json (built by
+ * notebooks/page_13_distill_site_data.py from
+ * notebooks/page_13_distill_1p5b_to_0p5b.ipynb) and deepseek-r1-training.json; the
+ * page is pinned in Page13.test.tsx.
  */
 
 import { useState } from "react";
@@ -129,6 +129,7 @@ import {
   RUN,
   modelLabel,
   pct,
+  studentLabel,
   type DistillSource,
 } from "@/lib/page13";
 import { useStore } from "@/store/useStore";
@@ -142,7 +143,7 @@ const NOTEBOOK_HREF = "/notebooks/page_13_two_axis_grpo.ipynb";
 const NOTEBOOK_SIZE = "0.6 MB";
 
 /** Page 13's references, numbered in order of first appearance. */
-const REF = { r1: 1, grpo: 2, critical: 3, qwen25: 4, r1Nature: 5, v3: 6 } as const;
+const REF = { r1: 1, grpo: 2, critical: 3 } as const;
 
 /* ---------------------------------------------------------------------------
  * Section 1: the loop, and GRPO
@@ -209,12 +210,6 @@ const MAX_BUDGET = BUDGETS[BUDGETS.length - 1];
 // accuracy gained, and percent more tokens per answer, step 0 to the last step.
 const LIFT_POINTS = Math.round(pct(FINAL.pass1) - pct(BASE.pass1));
 const LENGTH_GROWTH = Math.round((FINAL.mean_len / BASE.mean_len - 1) * 100);
-
-/* Section 5: what the run consumed. Questions drawn over the run, how often
- * each kept question came round, and the chains the model wrote for itself. */
-const QUESTIONS_DRAWN = RUN.rl_steps * RUN.prompts_per_step;
-const QUESTION_REUSE = (QUESTIONS_DRAWN / RUN.filter_kept).toFixed(1);
-const CHAINS_WRITTEN = QUESTIONS_DRAWN * RUN.chains_per_prompt;
 
 /**
  * The two knobs, every cell measured: one line per training checkpoint, accuracy
@@ -668,30 +663,31 @@ function Reading({
 }
 
 /* ---------------------------------------------------------------------------
- * Section 5b: whose chains did the student read? (our distillation run)
+ * Section 5: whose chains did the student read? (our distillation run)
  * ------------------------------------------------------------------------- */
 
 const DISTILL_ARMS: { key: DistillSource; label: string; note: string }[] = [
   { key: "none", label: "nothing", note: "the 0.5B as released" },
-  { key: "self", label: "its own chains", note: "the 0.5B's correct chains" },
   { key: "base15", label: "1.5B, before RL", note: "chains from the untrained 1.5B" },
   { key: "grpo15", label: "1.5B, after RL", note: "chains from the trained 1.5B" },
 ];
 
+/** One sample's accuracy for a student, in percent. */
+const studentPct = (s: DistillSource) => pct(DISTILL.arms[s].pass1);
+const gainOver = (s: DistillSource, than: DistillSource) => (studentPct(s) - studentPct(than)).toFixed(1);
+
 /**
  * One student per row, every bar from zero (section 4's idiom), with the 1.5B
- * teacher before and after RL as dashed rules across all rows. Until the run
- * exists the bars are empty outlines with no numbers: placeholder values must
- * never be drawn as if measured. The teacher rules fall back to the two-axis
- * run's measurements, the same model the distillation run uses as its teacher.
+ * teacher before and after RL as dashed rules across all rows, measured on the
+ * same 300 problems as the students.
  */
 function DistillBars({ picked, onPick }: { picked: DistillSource; onPick: (s: DistillSource) => void }) {
-  const before = DISTILL ? pct(DISTILL.teacher_before) : pct(BASE.pass1);
-  const after = DISTILL ? pct(DISTILL.teacher_after) : pct(FINAL.pass1);
+  const before = pct(DISTILL.teacher_before.pass1);
+  const after = pct(DISTILL.teacher_after.pass1);
   return (
     <div className="flex flex-col gap-2">
       {DISTILL_ARMS.map((a) => {
-        const value = DISTILL ? pct(DISTILL.arms[a.key].pass1) : null;
+        const value = studentPct(a.key);
         const active = a.key === picked;
         return (
           <button
@@ -708,17 +704,10 @@ function DistillBars({ picked, onPick }: { picked: DistillSource; onPick: (s: Di
               <span className="block text-xs text-ink-muted">{a.note}</span>
             </span>
             <span className="relative h-5 flex-1 rounded bg-surface-raised">
-              {value === null ? (
-                <span
-                  data-testid="distill-empty-bar"
-                  className={`absolute inset-0 rounded border border-dashed ${active ? "border-compute" : "border-grid"}`}
-                />
-              ) : (
-                <span
-                  className={`absolute left-0 h-5 rounded ${active ? "bg-compute" : "bg-grid"}`}
-                  style={{ width: `${value}%` }}
-                />
-              )}
+              <span
+                className={`absolute left-0 h-5 rounded ${active ? "bg-compute" : "bg-grid"}`}
+                style={{ width: `${value}%` }}
+              />
               {[before, after].map((v) => (
                 <span
                   key={v}
@@ -729,7 +718,7 @@ function DistillBars({ picked, onPick }: { picked: DistillSource; onPick: (s: Di
               ))}
             </span>
             <span className="w-16 shrink-0 text-right font-mono font-semibold tabular-nums text-ink">
-              {value === null ? "?" : `${value}%`}
+              {value.toFixed(1)}%
             </span>
           </button>
         );
@@ -738,179 +727,15 @@ function DistillBars({ picked, onPick }: { picked: DistillSource; onPick: (s: Di
         <span className="w-44 shrink-0" />
         <span className="relative h-4 flex-1">
           <span className="absolute -translate-x-full pr-1" style={{ left: `${before}%` }}>
-            1.5B before RL · {before}%
+            1.5B before RL · {before.toFixed(1)}%
           </span>
           <span className="absolute pl-1" style={{ left: `${after}%` }}>
-            after · {after}%
+            after · {after.toFixed(1)}%
           </span>
         </span>
         <span className="w-16 shrink-0" />
       </div>
     </div>
-  );
-}
-
-/* ---------------------------------------------------------------------------
- * Section 5: the curve is portable
- * ------------------------------------------------------------------------- */
-
-interface Distill {
-  size: number;
-  label: string;
-  family: "qwen" | "llama";
-  note: string;
-}
-const DISTILLS: Distill[] = [
-  { size: 1.5, label: "Qwen-1.5B", family: "qwen", note: "beats GPT-4o on AIME, from a model that fits on a phone" },
-  { size: 7, label: "Qwen-7B", family: "qwen", note: "most of the way to o1-mini, at laptop scale" },
-  { size: 8, label: "Llama-8B", family: "llama", note: "a Llama base instead of Qwen: the same traces teach a different family" },
-  { size: 14, label: "Qwen-14B", family: "qwen", note: "clears o1-mini's line at a size a single workstation can serve" },
-  { size: 32, label: "Qwen-32B", family: "qwen", note: "within seven points of the 671B teacher" },
-  { size: 70, label: "Llama-70B", family: "llama", note: "bigger is not automatically better: the 32B Qwen edges it" },
-];
-
-/** A small legend swatch + label (page-11 idiom). */
-function Key({ shape, className, label }: { shape: "circle" | "diamond" | "line" | "dash"; className: string; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5">
-      <span
-        aria-hidden="true"
-        className={`inline-block ${
-          shape === "line"
-            ? "h-0.5 w-4"
-            : shape === "dash"
-              ? "h-0 w-4 border-t border-dashed"
-              : shape === "diamond"
-                ? "h-3 w-3 rotate-45"
-                : "h-3 w-3 rounded-full"
-        } ${className}`}
-      />
-      {label}
-    </span>
-  );
-}
-
-/**
- * Score is the axis; size is just row order. One row per distilled model
- * (smallest at the top), the 671B teacher as the bottom row, and the closed
- * models as vertical dashed rules: they have scores but no disclosed sizes.
- * Reading down the rows the dots march right through the rules; Llama-70B
- * sitting left of Qwen-32B is a visible kink. Clicking a row picks it.
- */
-function DistillDotPlot({ picked, onPick }: { picked: number; onPick: (size: number) => void }) {
-  const distill = curves.deepseekDistill;
-  const D = distill.fit!.params;
-  const aimeOf = (size: number) => distill.points.find((p) => p.x === size)!.y;
-
-  const width = 720;
-  const height = 280;
-  const margin = { top: 26, right: 16, bottom: 40, left: 118 };
-  const innerW = width - margin.left - margin.right;
-  const innerH = height - margin.top - margin.bottom;
-  const x = scaleLinear().domain([0, 90]).range([0, innerW]);
-  const rows = DISTILLS.length + 1;
-  const rowH = innerH / rows;
-  const rowY = (i: number) => (i + 0.5) * rowH;
-
-  const title = `AIME 2024 pass at 1 as a horizontal dot plot, one row per model, smallest at the top. Rows: ${DISTILLS.map(
-    (d) => `${d.label} ${aimeOf(d.size)} percent`,
-  ).join(", ")}, and the R1 teacher, a ${D.teacherParamsB}B mixture-of-experts, at ${D.r1Aime} percent. Dashed vertical rules mark closed models with undisclosed sizes: GPT-4o at ${D.gpt4oAime} percent and OpenAI o1-mini at ${D.o1miniAime} percent; a dotted rule marks the teacher's score. Reading down the rows, the dots move right past the closed-model rules; Llama-70B sits left of Qwen-32B. ${DISTILLS.find((d) => d.size === picked)?.label} is selected.`;
-
-  return (
-    <ChartFrame title={title} width={width} height={height} margin={margin} xLabel="AIME 2024 pass@1 (%)">
-      {[0, 20, 40, 60, 80].map((t) => (
-        <g key={`x${t}`}>
-          <line x1={x(t)} x2={x(t)} y1={0} y2={innerH} className="stroke-grid" strokeWidth={0.5} />
-          <text x={x(t)} y={innerH + 14} textAnchor="middle" className="fill-ink-muted text-[10px]">
-            {t}
-          </text>
-        </g>
-      ))}
-
-      {/* closed models: rules, not rows; their sizes are undisclosed */}
-      {[
-        { label: "GPT-4o", v: D.gpt4oAime, anchor: "start" as const, dx: 4 },
-        { label: "o1-mini", v: D.o1miniAime, anchor: "end" as const, dx: -4 },
-      ].map((r) => (
-        <g key={r.label}>
-          <line
-            x1={x(r.v)}
-            x2={x(r.v)}
-            y1={0}
-            y2={innerH}
-            className="stroke-ink-muted"
-            strokeWidth={1}
-            strokeDasharray="4 3"
-          />
-          <text x={x(r.v) + r.dx} y={-8} textAnchor={r.anchor} className="fill-ink-muted text-[10px]">
-            {r.label} · {r.v}%
-          </text>
-        </g>
-      ))}
-
-      {/* the teacher's score, ruled so "within seven points" is visible */}
-      <line
-        x1={x(D.r1Aime)}
-        x2={x(D.r1Aime)}
-        y1={0}
-        y2={innerH}
-        className="stroke-correct"
-        strokeWidth={1}
-        strokeDasharray="2 3"
-      />
-      <text x={x(D.r1Aime) - 4} y={-8} textAnchor="end" className="fill-correct-ink text-[10px]">
-        R1 teacher · {D.r1Aime}%
-      </text>
-
-      {DISTILLS.map((d, i) => {
-        const cy = rowY(i);
-        const cx = x(aimeOf(d.size));
-        const active = d.size === picked;
-        return (
-          <g key={d.size} onClick={() => onPick(d.size)} className="cursor-pointer" aria-hidden="true">
-            <rect x={-margin.left} y={cy - rowH / 2} width={margin.left + innerW} height={rowH} fill="transparent" />
-            <line x1={0} x2={innerW} y1={cy} y2={cy} className="stroke-grid" strokeWidth={0.5} />
-            <text
-              x={-8}
-              y={cy}
-              dy="0.32em"
-              textAnchor="end"
-              className={`text-[10px] ${active ? "fill-ink font-semibold" : "fill-ink-muted"}`}
-            >
-              {d.label}
-            </text>
-            {active ? <circle cx={cx} cy={cy} r={9} fill="none" className="stroke-ink" strokeWidth={1.5} /> : null}
-            {d.family === "llama" ? (
-              <rect
-                x={cx - 4}
-                y={cy - 4}
-                width={8}
-                height={8}
-                transform={`rotate(45 ${cx} ${cy})`}
-                className="fill-wrong stroke-canvas"
-                strokeWidth={1.5}
-              />
-            ) : (
-              <circle cx={cx} cy={cy} r={4.5} className="fill-compute stroke-canvas" strokeWidth={1.5} />
-            )}
-            {active ? (
-              <text x={cx + 13} y={cy} dy="0.32em" textAnchor="start" className="fill-ink text-[10px] font-semibold">
-                {aimeOf(d.size).toFixed(1)}%
-              </text>
-            ) : null}
-          </g>
-        );
-      })}
-
-      {/* the teacher's row, at the bottom: the biggest model, the rightmost dot */}
-      <g aria-hidden="true">
-        <line x1={0} x2={innerW} y1={rowY(rows - 1)} y2={rowY(rows - 1)} className="stroke-grid" strokeWidth={0.5} />
-        <text x={-8} y={rowY(rows - 1)} dy="0.32em" textAnchor="end" className="fill-ink text-[10px] font-semibold">
-          R1 teacher · {D.teacherParamsB}B
-        </text>
-        <circle cx={x(D.r1Aime)} cy={rowY(rows - 1)} r={6} className="fill-correct stroke-canvas" strokeWidth={1.5} />
-      </g>
-    </ChartFrame>
   );
 }
 
@@ -944,7 +769,6 @@ export function Page13() {
   const recordInteraction = useStore((s) => s.recordInteraction);
   const training = curves.deepseekTraining;
   const T = training.fit!.params;
-  const D = curves.deepseekDistill.fit!.params;
 
   /* — section 2: open on the finished run with room to think, the headline's
        lift; the try-it note sends the reader to the tight budget — */
@@ -960,16 +784,9 @@ export function Page13() {
   const length = Math.round(T.lengthStart + (T.lengthEnd - T.lengthStart) * (step / MAX_STEP));
   const stage: TraceStage = step >= AHA_STEP ? "aha" : step >= MID_STEP ? "mid" : "early";
 
-  /* — section 5: the distills — */
-  const [pickedSize, setPickedSize] = useState(14);
-  const picked = DISTILLS.find((d) => d.size === pickedSize)!;
-  const paramRatio = Math.round(D.teacherParamsB / picked.size);
-
-  /* — section 5b: our distillation run — */
+  /* — section 5: our distillation run — */
   const [distillPick, setDistillPick] = useState<DistillSource>("grpo15");
   const distillArm = DISTILL_ARMS.find((a) => a.key === distillPick)!;
-  const distillChain = DISTILL?.arms[distillPick].chain ?? null;
-  const TEACHER_GAIN = (pct(FINAL.pass1) - pct(BASE.pass1)).toFixed(1);
 
   const touch = () => recordInteraction(PAGE_N);
 
@@ -1284,151 +1101,30 @@ export function Page13() {
           </figure>
         </section>
 
-        {/* Step 5: the data the model writes itself */}
-        <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-          <h2 className="text-xl font-semibold text-ink">5. Data the model writes itself</h2>
-          <p className="text-ink-muted">
-            Pre-training teaches a model by having it read human-written text, and a lot of it:
-            Qwen2.5 was pre-trained on 18 trillion tokens.
-            <Cite n={REF.qwen25} /> Keeping a model current that way means paying a bill that grows
-            every year, and drawing on a stock of quality text that is running out.
-          </p>
-          <p className="text-ink-muted">
-            Reasoning-focused RL draws on neither. Our run reused{" "}
-            {RUN.filter_kept.toLocaleString("en-US")} maths questions, each about {QUESTION_REUSE}{" "}
-            times. Every one of the {CHAINS_WRITTEN.toLocaleString("en-US")} chains it trained on
-            was written by the model itself, and a program checked only the final answer. Training
-            took {Math.round(RUN.train_minutes)} minutes on one GPU. At the frontier, DeepSeek
-            reports $294,000 for R1&apos;s reasoning training,
-            <Cite n={REF.r1Nature} /> about a twentieth of the $5.6 million it spent pre-training
-            the base model.
-            <Cite n={REF.v3} />
-          </p>
-          <p className="text-ink-muted">
-            It has two limits. It needs questions whose answers a program can check, which is why
-            it works first on maths and code. And it adds no facts: the model gets better at
-            reasoning with what it already knows, not at knowing more.
-          </p>
-          <p className="text-ink-muted">
-            What it does add is text. The trained model&apos;s chains are new training data, and
-            they can teach other models. DeepSeek had R1 write about {D.samplesK}K reasoning traces
-            and fine-tuned six smaller open models on them, with the same fine-tuning STaR uses and
-            no RL at all.
-            <Cite n={REF.r1} />
-          </p>
-
-          {/* The figure: the dot plot, its key, the size picker and the readout. */}
-          <div className="flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
-            <figure className="m-0 flex flex-col gap-2">
-              <Fit drawnWidth={720}>
-                <DistillDotPlot
-                  picked={pickedSize}
-                  onPick={(size) => {
-                    setPickedSize(size);
-                    touch();
-                  }}
-                />
-              </Fit>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-muted">
-                <Key shape="circle" className="bg-compute" label="Qwen base" />
-                <Key shape="diamond" className="bg-wrong" label="Llama base" />
-                <Key shape="circle" className="bg-correct" label="R1 teacher (671B MoE)" />
-                <Key shape="dash" className="border-ink-muted" label="closed model (size undisclosed)" />
-              </div>
-            </figure>
-
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Pick a distilled model">
-              {DISTILLS.map((d) => {
-                const active = d.size === pickedSize;
-                return (
-                  <button
-                    key={d.label}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() => {
-                      setPickedSize(d.size);
-                      touch();
-                    }}
-                    className={`rounded border px-3 py-1.5 text-sm ${
-                      active
-                        ? "border-compute bg-compute/15 font-semibold text-ink"
-                        : "border-grid bg-surface-raised text-ink-muted"
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="text-sm text-ink">
-              <strong>R1-Distill-{picked.label}</strong>{" "}
-              <span className="text-ink-muted">· ~{paramRatio}× smaller than its teacher,</span>{" "}
-              {picked.note}.
-            </p>
-          </div>
-
-          <p className="text-ink-muted">
-            The RL is paid for once, by one model. Its chains then teach the rest, and none of them
-            came from the stock of human-written text.
-          </p>
-
-        </section>
-
-        <div className="flex flex-col gap-8">
-          <Note kicker="Reading the chart">
-            <p>
-              Rows are ordered by size. R1&apos;s {D.teacherParamsB}B is a mixture-of-experts
-              total; about {D.teacherActiveB}B is active per token. GPT-4o and o1-mini publish
-              scores but not sizes, so they are dashed rules. GPT-4o&apos;s {D.gpt4oAime}% is
-              DeepSeek&apos;s measurement.
-            </p>
-          </Note>
-          <Note kicker="References">
-            <RefItem n={REF.qwen25} href="https://arxiv.org/abs/2412.15115">
-              Qwen Team 2024, <em>Qwen2.5 Technical Report</em>.
-            </RefItem>
-            <RefItem n={REF.r1Nature} href="https://www.nature.com/articles/s41586-025-09422-z">
-              DeepSeek-AI 2025, <em>DeepSeek-R1 incentivizes reasoning in LLMs through
-              reinforcement learning</em>, Nature (supplementary information).
-            </RefItem>
-            <RefItem n={REF.v3} href="https://arxiv.org/abs/2412.19437">
-              DeepSeek-AI 2024, <em>DeepSeek-V3 Technical Report</em>.
-            </RefItem>
-          </Note>
-        </div>
-
-        {/* Step 5b: our own distillation, a placeholder until the run exists */}
+        {/* Step 5: our own distillation */}
         <section className="flex min-w-0 flex-col gap-3 lg:col-start-1">
           <h2 className="text-xl font-semibold text-ink">
-            5b. Whose chains did the student read?
-            {DISTILL ? null : (
-              <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
-                placeholder · waiting on the distillation run
-              </span>
-            )}
+            5. Whose chains did the student read?
+            <span className="ml-2 align-middle text-xs font-normal text-ink-muted">
+              measured · {studentLabel} · {DISTILL.n_eval} {DISTILL.dataset} problems
+            </span>
           </h2>
-          {/* Duplicated from section 5. */}
           <p className="text-ink-muted">
-            What it does add is text. The trained model&apos;s chains are new training data, and
-            they can teach other models.
+            A trained model&apos;s chains are new training data, and they can teach other models.
           </p>
           <p className="text-ink-muted">
-            To see how, we distilled our trained {modelLabel} into Qwen2.5-0.5B-Instruct. The 1.5B
+            To see how, we distilled our trained {modelLabel} into {studentLabel}. The 1.5B
             answered {RUN.dataset}&apos;s training questions, a program kept the chains that reached
             the right answer, and the 0.5B was fine-tuned to reproduce them: the same fine-tuning
             STaR uses, on another model&apos;s chains. To check that the reasoning is what travels,
-            the 0.5B was also trained on the same questions with its own chains, and with chains
-            from the 1.5B before RL.
+            a second 0.5B was trained the same way on chains from the 1.5B before RL.
           </p>
 
           {/* The figure: the dial (one row per student), the bars and the readout. */}
           <figure className="m-0 flex flex-col gap-3 rounded-lg border border-grid bg-surface p-4">
             <div
               role="group"
-              aria-label={`What the 0.5B was trained on. Dashed rules: the 1.5B teacher before and after RL.${
-                DISTILL ? "" : " Not measured yet."
-              }`}
+              aria-label="What the 0.5B was trained on. Dashed rules: the 1.5B teacher before and after RL."
             >
               <DistillBars
                 picked={distillPick}
@@ -1443,49 +1139,31 @@ export function Page13() {
                 <strong>0.5B trained on {distillArm.label}</strong>
                 <span className="text-ink-muted">
                   {" "}
-                  · {DISTILL ? `${pct(DISTILL.arms[distillPick].pass1)}% on ${RUN.dataset}` : "accuracy not measured yet"}
+                  · {studentPct(distillPick).toFixed(1)}% on {DISTILL.dataset} ·{" "}
+                  {DISTILL.arms[distillPick].mean_len} tokens per answer
                 </span>
               </p>
-              {distillPick === "grpo15" ? (
-                <p className="text-ink-muted">
-                  Of the teacher&apos;s +
-                  {DISTILL
-                    ? (pct(DISTILL.teacher_after) - pct(DISTILL.teacher_before)).toFixed(1)
-                    : TEACHER_GAIN}{" "}
-                  points from RL, the student kept{" "}
-                  <strong className="text-ink">
-                    {DISTILL ? `${Math.round(DISTILL.transfer.mean * 100)}%` : "?"}
-                  </strong>
-                  .
-                </p>
-              ) : null}
               {distillPick === "none" ? (
                 <p className="text-ink-muted">This student read nothing: it is the 0.5B as released.</p>
-              ) : distillChain ? (
-                <div className="flex flex-col gap-1">
-                  <p className="text-xs text-ink-muted">
-                    One chain it was trained on · {distillChain.n_tokens} tokens
-                  </p>
-                  <p className="text-ink">{distillChain.question}</p>
-                  <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded bg-surface-raised p-3 font-mono text-xs text-ink">
-                    {distillChain.text}
-                  </pre>
-                </div>
               ) : (
-                <div
-                  data-testid="distill-chain-placeholder"
-                  className="rounded border border-dashed border-grid p-3 text-xs text-ink-muted"
-                >
-                  One chain this student was trained on goes here.
-                </div>
+                <p className="text-ink-muted">
+                  <strong className="text-ink">
+                    +{distillPick === "grpo15" ? gainOver("grpo15", "base15") : gainOver("base15", "none")}
+                  </strong>{" "}
+                  points over{" "}
+                  {distillPick === "grpo15"
+                    ? "the student that read the 1.5B before RL."
+                    : "the 0.5B as released."}
+                </p>
               )}
             </div>
           </figure>
 
           <Handoff>
             Every claim on this page arrived as a benchmark score: {pct(FINAL.pass1).toFixed(1)}% on{" "}
-            {RUN.dataset}, {pct(FINAL.maj[String(RUN.k)]).toFixed(1)}% with a vote, a 14B crossing
-            o1-mini&apos;s line. Every one of them is also a number for thinking longer.{" "}
+            {RUN.dataset}, {pct(FINAL.maj[String(RUN.k)]).toFixed(1)}% with a vote,{" "}
+            {studentPct("grpo15").toFixed(1)}% for a 0.5B that read a trained model&apos;s chains.
+            Every one of them is also a number for thinking longer.{" "}
             <em className="text-ink-muted">
               Next: the side of that dial where thinking longer makes the answer worse.
             </em>
@@ -1495,6 +1173,16 @@ export function Page13() {
         <div className="flex flex-col gap-8">
           <Note kicker="Try it">
             <p>Switch what the 0.5B was trained on.</p>
+          </Note>
+          <Note kicker="Reading the chart">
+            <p>
+              The two trained students did not read the same amount:{" "}
+              {DISTILL.arms.base15.rows.toLocaleString("en-US")} training rows from the 1.5B before
+              RL, {DISTILL.arms.grpo15.rows.toLocaleString("en-US")} from the 1.5B after it, so part
+              of the gap may be quantity. Each was trained once and tested on {DISTILL.n_eval}{" "}
+              problems, where one standard error is about {DISTILL.se_points} points. The dashed
+              rules are the 1.5B on those same problems, so they differ slightly from section 2.
+            </p>
           </Note>
         </div>
       </div>
