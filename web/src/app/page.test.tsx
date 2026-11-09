@@ -22,3 +22,11 @@ describe("landing: authors", () => {
     expect(screen.getByText(/Corresponding author\./)).toBeInTheDocument();
   });
 });
+
+describe("landing: lede", () => {
+  it("spans the page's full width, with no width cap", () => {
+    render(<Home />);
+    const lede = screen.getByText(/Same model, same weights, better answers/).closest("p")!;
+    expect(lede.className).not.toMatch(/max-w-/);
+  });
+});

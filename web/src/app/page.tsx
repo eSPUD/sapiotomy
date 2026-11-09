@@ -35,7 +35,8 @@ export default function Home() {
               </p>
             </div>
 
-            <p className="max-w-4xl italic leading-relaxed text-ink-muted">
+            {/* Full width, like the act cards under it (author, 2026-11-09). */}
+            <p className="italic leading-relaxed text-ink-muted">
               Same model, same weights, better answers: just let it{" "}
               <span className="not-italic text-ink">think longer</span>. Have it reason out loud,
               sample many answers and vote, let a judge pick the best, or search through its options:
