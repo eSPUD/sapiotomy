@@ -1,7 +1,8 @@
 "use client";
 
 /**
- * Page 5, "Chain of Thought: Reasoning Out Loud". Act 2 opens on page 4's
+ * Page 5, "Reasoning in steps" (retitled 2026-11-08; was "Chain of Thought:
+ * Reasoning Out Loud"). Act 2 opens on page 4's
  * question: can a language model reason through a problem instead of answering
  * on reflex? This page walks the two ways a model comes to write its steps out:
  * shown how in the prompt, or trained to.
