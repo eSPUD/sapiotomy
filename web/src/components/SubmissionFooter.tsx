@@ -11,19 +11,23 @@ export function SubmissionFooter() {
   return (
     <footer className={`mx-auto max-w-[min(90%,2048px)] px-4 ${landing ? "pb-4" : "pb-10"}`}>
       {landing ? (
-        // The landing's note sits centred, with no rule and no credit. The AI usage
-        // disclosure sits under it, smaller: what AI was used for, and the hardware
-        // the notebooks ran on.
-        <div className="-mt-4 flex flex-col items-center gap-3 text-center text-sm text-ink-muted">
+        // The landing's note sits left-aligned with the page (author, 2026-11-08), with
+        // no rule and no credit, in small type (author, 2026-11-08): how to explore,
+        // with the hardware the notebooks ran on, then the AI usage disclosure at the
+        // same size and width.
+        <div className="-mt-4 flex flex-col items-start gap-2 text-left text-xs text-ink-muted">
           <p>
-            Read in order, or jump to any chapter. Every figure is interactive: drag the sliders,
-            click the diagrams. Some chapters come with a Python notebook of their code and data.
+            {/* The hardware sentence in the authors' first person, like page 5 (author,
+                2026-11-08). */}
+            <strong className="font-semibold text-ink">How to explore:</strong> Interact with the
+            AI explainable to build intuition. Download the Python notebooks and run your own
+            experiments! We ran the experiment notebooks on Google Colab/RunPod with an NVIDIA
+            A100 GPU with 80 GB of memory.
           </p>
-          <p className="max-w-3xl text-xs">
+          <p>
             <strong className="font-semibold text-ink">AI usage disclosure:</strong> AI coding
             assistants, including Claude Code, were used to develop this AI explainable and its
-            Python notebooks. The experiment notebooks were run on Google Colab/RunPod with an NVIDIA
-            A100 GPU with 80 GB of memory.
+            Python notebooks.
           </p>
         </div>
       ) : (
