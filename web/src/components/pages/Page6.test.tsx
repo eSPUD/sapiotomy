@@ -57,8 +57,14 @@ describe("Page 6, figure 1: cut it off", () => {
     const picker = screen.getByRole("group", { name: "Problem level" });
     const buttons = within(picker).getAllByRole("button");
     expect(buttons.map((b) => b.textContent)).toEqual([1, 2, 3, 4, 5].map((n) => `Level ${n}`));
-    expect(figure().firstElementChild).toBe(picker);
+    expect(picker.parentElement).toBe(figure().firstElementChild);
     expect(new Set(F1.levelRowIds).size).toBe(5);
+  });
+
+  it("puts the budget slider after the buttons, in the same row", () => {
+    render(<Page6 />);
+    const picker = screen.getByRole("group", { name: "Problem level" });
+    expect(picker.nextElementSibling).toContainElement(budgetSlider());
   });
 
   it("loads the problem a button names", () => {

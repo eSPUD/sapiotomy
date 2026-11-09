@@ -1153,27 +1153,42 @@ export function Page6() {
             aria-label="The truncation view"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <div className="flex flex-wrap gap-2" role="group" aria-label="Problem level">
-              {F1.levelRowIds.map((id, i) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={id === rowId}
-                  onClick={() => onRow(id)}
-                  className={`rounded border px-3 py-1 text-sm ${
-                    id === rowId
-                      ? "border-compute bg-compute text-ink"
-                      : "border-grid bg-surface-raised text-ink-muted"
-                  }`}
-                >
-                  Level {i + 1}
-                </button>
-              ))}
+            {/* The slider wraps under the buttons only when the two will not fit. */}
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Problem level">
+                {F1.levelRowIds.map((id, i) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={id === rowId}
+                    onClick={() => onRow(id)}
+                    className={`rounded border px-3 py-1 text-sm ${
+                      id === rowId
+                        ? "border-compute bg-compute text-ink"
+                        : "border-grid bg-surface-raised text-ink-muted"
+                    }`}
+                  >
+                    Level {i + 1}
+                  </button>
+                ))}
+              </div>
+              <div className="min-w-[16rem] flex-1">
+                <Slider
+                  label="Token budget"
+                  min={0}
+                  max={B.length - 1}
+                  value={traceBudget}
+                  onChange={onTraceBudget}
+                  format={(i) => `${B[i]} tokens`}
+                  ticks={B.map((_, i) => i)}
+                  tickLabel={(i) => String(B[i])}
+                />
+              </div>
             </div>
 
             {/* A chat in page 2's form: the question on the right, the reply on
                 the left, an icon each, plain mono text and no bubbles. The reply
-                keeps a fixed height so the slider below it stays put during a
+                keeps a fixed height so the page below it stays put during a
                 drag. */}
             <div className="flex flex-col gap-6 rounded-lg border border-grid bg-canvas p-3">
               <div className="flex max-w-[90%] items-start gap-2 self-end">
@@ -1189,19 +1204,6 @@ export function Page6() {
                   {tidyMath(zones.own)}
                 </div>
               </div>
-            </div>
-
-            <div className="rounded-lg border border-grid bg-surface-raised p-3">
-              <Slider
-                label="Token budget"
-                min={0}
-                max={B.length - 1}
-                value={traceBudget}
-                onChange={onTraceBudget}
-                format={(i) => `${B[i]} tokens`}
-                ticks={B.map((_, i) => i)}
-                tickLabel={(i) => String(B[i])}
-              />
             </div>
           </section>
         </section>
