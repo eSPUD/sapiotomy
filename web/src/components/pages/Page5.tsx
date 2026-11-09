@@ -57,8 +57,9 @@
  * Load-bearing and easy to lose:
  *   · the notebook downloads: two direct .ipynb links, no zip, beside the title,
  *     each file keeping the name the author gave it.
- *   · figure 2's annotation on the 3B and 7B with no examples: the author asked for
- *     it to stay. If new numbers break it, ask the author; do not just remove it.
+ *   · figure 2's annotation, the 3B with few-shot against the 7B with zero-shot: the
+ *     author asked for it to stay. If new numbers break it, ask the author; do not
+ *     just remove it.
  *   · the conditions are named plainly: no euphemism ("left alone", "forbidden to
  *     reason") may come back.
  *   · the worked solutions are ours, "written for this experiment, expanding
@@ -358,16 +359,15 @@ const SHOT_FILL: Record<ShotKey, string> = {
 };
 
 /**
- * Figure 2's annotation (author, 2026-11-08): the 3B and 7B with no examples, outlined
- * and bracketed. The two solved the same number of problems. Page5.test.tsx guards the
- * claim against the data.
+ * Figure 2's annotation (author, 2026-11-08): the 3B with few-shot and the 7B with
+ * zero-shot, outlined and bracketed. Page5.test.tsx guards the claim against the data.
  */
-const ON_PAR: [string, ShotKey][] = [
-  ["Qwen2.5-3B", "zero_shot"],
+const ANNOTATED: [string, ShotKey][] = [
+  ["Qwen2.5-3B", "10_shot"],
   ["Qwen2.5-7B", "zero_shot"],
 ];
-const ON_PAR_NOTE = "With no examples, 3B matches 7B";
-const isOnPar = (label: string, k: ShotKey) => ON_PAR.some(([l, key]) => l === label && key === k);
+const ANNOTATED_NOTE = "3B with few-shot beats 7B with zero-shot";
+const isAnnotated = (label: string, k: ShotKey) => ANNOTATED.some(([l, key]) => l === label && key === k);
 
 /** A bar's value as printed, one decimal like figure 3's: 38 reads "38.0%". */
 const shotPct = (v: number) => `${v.toFixed(1)}%`;
@@ -404,7 +404,7 @@ function ShotBars() {
   // Wide enough to carry the condition's name on the bar, read horizontally.
   const barW = Math.min(64, (groupW - 24 - (SHOT_KEYS.length - 1) * gap) / SHOT_KEYS.length);
   const clusterW = SHOT_KEYS.length * barW + (SHOT_KEYS.length - 1) * gap;
-  const onPar = ON_PAR.map(([label, k]) => {
+  const annotated = ANNOTATED.map(([label, k]) => {
     const i = rows.findIndex((r) => r.label === label);
     if (i < 0) throw new Error(`page 5: figure 2 has no bars for ${label}`);
     const cx = i * groupW + (groupW - clusterW) / 2 + SHOT_KEYS.indexOf(k) * (barW + gap) + barW / 2;
@@ -415,7 +415,7 @@ function ShotBars() {
     <ChartFrame
       title={`Percent of MATH-500 problems solved by Qwen2.5 base models with zero and 10 worked examples in the prompt. ${rows
         .map((r) => `${r.label}: ${SHOT_KEYS.map((k) => `${SHOT_LABEL[k]} ${shotPct(r.solved[k])}`).join(", ")}`)
-        .join(". ")}. ${ON_PAR_NOTE}.`}
+        .join(". ")}. ${ANNOTATED_NOTE}.`}
       width={SHOT_W}
       height={SHOT_H}
       margin={SHOT_MARGIN}
@@ -443,8 +443,8 @@ function ShotBars() {
                     y={y(v)}
                     width={barW}
                     height={SHOT_INNER_H - y(v)}
-                    className={`${SHOT_FILL[k]}${isOnPar(r.label, k) ? " stroke-ink" : ""}`}
-                    strokeWidth={isOnPar(r.label, k) ? 1.5 : undefined}
+                    className={`${SHOT_FILL[k]}${isAnnotated(r.label, k) ? " stroke-ink" : ""}`}
+                    strokeWidth={isAnnotated(r.label, k) ? 1.5 : undefined}
                   >
                     <title>{`${r.label}, ${SHOT_LABEL[k]}: ${shotPct(v)}`}</title>
                   </rect>
@@ -473,25 +473,25 @@ function ShotBars() {
           </g>
         );
       })}
-      <g data-testid="shots-on-par">
+      <g data-testid="shots-annotation">
         <line
-          x1={onPar[0].cx}
-          x2={onPar[onPar.length - 1].cx}
+          x1={annotated[0].cx}
+          x2={annotated[annotated.length - 1].cx}
           y1={bracketY}
           y2={bracketY}
           className="stroke-ink"
           strokeWidth={1}
         />
-        {onPar.map(({ cx, v }) => (
+        {annotated.map(({ cx, v }) => (
           <line key={cx} x1={cx} x2={cx} y1={bracketY} y2={y(v) - 18} className="stroke-ink" strokeWidth={1} />
         ))}
         <text
-          x={(onPar[0].cx + onPar[onPar.length - 1].cx) / 2}
+          x={(annotated[0].cx + annotated[annotated.length - 1].cx) / 2}
           y={bracketY - 7}
           textAnchor="middle"
           className="fill-ink text-xs font-semibold"
         >
-          {ON_PAR_NOTE}
+          {ANNOTATED_NOTE}
         </text>
       </g>
     </ChartFrame>
@@ -596,17 +596,17 @@ export function Page5() {
             note can sit beside it (author, 2026-10-14). */}
         <p className="text-lg text-ink-muted">
           Act 1 ended on a question: can a language model reason through a problem instead of
-          answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on
+          answering on reflex? In Act 2 we answer it with a toolbox of ways to spend more computation on
           each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best
           (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply
-          using a bigger model (page 11). The first tool is the simplest: have the model write out
+          using a bigger model (page 11). The first tool is the simplest: we have the model write out
           its steps.
         </p>
         <Note kicker="Hardware" flush>
-          <p>An A100 GPU with 80GB VRAM was used in these experiments.</p>
+          <p>We used an A100 GPU with 80GB VRAM in these experiments.</p>
         </Note>
 
-        {/* Step 1: the definition (the author's first paragraph, unchanged) and three
+        {/* Step 1: the definition (the author's first paragraph) and three
             worked solutions from MATH-500. */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">1. Chain-of-Thought (CoT): Reasoning over simple steps</h2>
@@ -614,12 +614,12 @@ export function Page5() {
             We&apos;ve previously illustrated what step-by-step reasoning looks like for a couple of real-world
             problems. <strong>Chain-of-thought prompting</strong> simulates human reasoning by using
             each intermediate step as part of the LLM prompt to generate the next intermediate step.
-            <Cite n={REF.wei} /> A common way to ask a model for one is to end the prompt with
+            <Cite n={REF.wei} /> We can ask a model for one by ending the prompt with
             &ldquo;{ZERO_SHOT_COT_TRIGGER}&rdquo;
             <Cite n={REF.kojima} />
           </p>
           <p className="text-ink">
-            Below are three problems from MATH-500, each with the worked solution that comes with
+            Below we show three problems from MATH-500, each with the worked solution that comes with
             the dataset.
             <Cite n={REF.math500} />
           </p>
@@ -650,15 +650,18 @@ export function Page5() {
               what each figure compares: heading 2 on 2026-11-06, heading 3 on 2026-11-08. */}
           <h2 className="text-xl font-semibold text-ink">2. ‘Zero-shot’ versus ‘few-shot CoT prompting’</h2>
           <p className="text-ink-muted">
-            {/* The old opening sentence, rewritten for the zero-vs-ten-shot run
-                (author, 2026-11-08): three sizes, two prompts, and random problems, none
-                of them the ten example problems, because testing on those would test the
-                answer key. The count is deliberately not stated. A stand-in until the
-                prose is iterated on. */}
-            One trace proves nothing, so both prompts were run on MATH-500 problems, with Qwen2.5 base models
-            <Cite n={REF.qwen} /> of {SIZE_COUNT_WORD} sizes: zero-shot, and with 10 worked examples. The worked
-            examples are MATH-500 problems themselves, so they are excluded from testing: every
-            count below is on other problems, chosen at random.
+            {/* The section's opening, in the author's words (2026-11-08). */}
+            Another way we can induce reasoning in a model is to give it worked examples at inference
+            time, which is called <strong>few-shot prompting</strong>. A model may not reason in the
+            style we intended. By providing examples, we can steer it into answering our prompt in the
+            same step-by-step format the examples show.
+          </p>
+          <p className="text-ink-muted">
+            {/* The author's lead-in to the figure (2026-11-08). True of the run: both prompts
+                carry the same "step by step" instruction. The problem count is deliberately
+                not stated. */}
+            Let&rsquo;s look at how zero-shot fares against few-shot on Qwen2.5 base models
+            <Cite n={REF.qwen} /> of {SIZE_COUNT_WORD} sizes, when both are told to reason.
           </p>
           <section
             aria-label="Zero-shot against few-shot"
@@ -701,10 +704,11 @@ export function Page5() {
             </figure>
           </section>
           <p className="text-ink-muted">
-            {/* Shashank's two sentences, verbatim (author, 2026-10-18). Page5.test.tsx
-                pins the wording. The sentences around them read the old five-shot run's
-                numbers, so they went with its figure (2026-11-08). */}
-            By providing the step-by-step intermediate logic in the examples, you force the model to
+            {/* Shashank's two sentences (author, 2026-10-18), "you" made "we" with the rest
+                of the page (author, 2026-11-08). Page5.test.tsx pins the wording. The
+                sentences around them read the old five-shot run's numbers, so they went with
+                its figure (2026-11-08). */}
+            By providing the step-by-step intermediate logic in the examples, we force the model to
             generate its own reasoning pathway before committing to a final answer. This prevents
             the model from hallucinating a final state because it has to calculate the state
             sequentially.
@@ -735,7 +739,7 @@ export function Page5() {
             <Cite n={REF.qwenReport} />
           </p>
           <p className="text-ink-muted">
-            Below, each base model with ten examples is compared with its Instruct version with
+            Below, we compare each base model with ten examples against its Instruct version with
             none, on MATH-500.
           </p>
           <section

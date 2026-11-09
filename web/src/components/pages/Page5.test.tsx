@@ -11,17 +11,17 @@ const [B15, B3, B7] = PAGE5.base;
 const pts = (a: number, b: number) => ((Math.round(a * 1000) - Math.round(b * 1000)) / 10).toFixed(1);
 
 describe("Page 5, the Act 2 opener", () => {
-  it("picks up page 4's question and maps the act, unchanged from the old page", () => {
+  it("picks up page 4's question and maps the act", () => {
     render(<Page5 />);
     expect(body()).toContain(
-      "Act 1 ended on a question: can a language model reason through a problem instead of answering on reflex? Act 2 answers it with a toolbox of ways to spend more computation on each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply using a bigger model (page 11). The first tool is the simplest: have the model write out its steps.",
+      "Act 1 ended on a question: can a language model reason through a problem instead of answering on reflex? In Act 2 we answer it with a toolbox of ways to spend more computation on each answer: think longer in one chain (pages 5 and 6), try many paths and pick the best (pages 7 to 9), search through them (page 10), and finally weigh all of it against simply using a bigger model (page 11). The first tool is the simplest: we have the model write out its steps.",
     );
   });
 
   it("notes the hardware in a sidenote beside the opener", () => {
     render(<Page5 />);
     const note = screen.getByText("Hardware").closest("aside")!;
-    expect(note).toHaveTextContent("An A100 GPU with 80GB VRAM was used in these experiments.");
+    expect(note).toHaveTextContent("We used an A100 GPU with 80GB VRAM in these experiments.");
     expect(PAGE5.provenance.decoding.hardware).toContain("A100");
     expect(note.className).not.toMatch(/lg:pt-9/);
     expect(note.previousElementSibling?.textContent).toMatch(/^\s*Act 1 ended on a question/);
@@ -45,7 +45,7 @@ describe("Page 5, step 1: what a chain of thought is", () => {
     expect(body()).toContain(
       "We've previously illustrated what step-by-step reasoning looks like for a couple of real-world problems. Chain-of-thought prompting simulates human reasoning by using each intermediate step as part of the LLM prompt to generate the next intermediate step.",
     );
-    expect(body()).toContain("A common way to ask a model for one is to end the prompt with “Let's think step by step.”");
+    expect(body()).toContain("We can ask a model for one by ending the prompt with “Let's think step by step.”");
   });
 
   // The worked solutions are ours: no sentence may present them as MATH's.
@@ -58,9 +58,9 @@ describe("Page 5, step 1: what a chain of thought is", () => {
   // problems with the dataset's own solutions. No model is named in this step.
   it("introduces the three worked solutions in one sentence, naming no model", () => {
     render(<Page5 />);
-    const para = screen.getByText(/Below are three problems from MATH-500/).closest("p")!;
+    const para = screen.getByText(/Below we show three problems from MATH-500/).closest("p")!;
     expect(para.textContent?.replace(/reference \d/g, "").replace(/\s+/g, " ").trim()).toBe(
-      "Below are three problems from MATH-500, each with the worked solution that comes with the dataset.",
+      "Below we show three problems from MATH-500, each with the worked solution that comes with the dataset.",
     );
     expect(body()).not.toMatch(/The original way, though/);
     expect(body()).not.toMatch(/Below, the base model/);
@@ -68,9 +68,9 @@ describe("Page 5, step 1: what a chain of thought is", () => {
 
   it("marks the techniques and the dataset, resolved in the References sidenote beside the step", () => {
     render(<Page5 />);
-    const def = screen.getByText(/A common way to ask a model for one/).closest("p")!;
+    const def = screen.getByText(/We can ask a model for one/).closest("p")!;
     expect(Array.from(def.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 1", "reference 2"]);
-    const lead = screen.getByText(/Below are three problems from MATH-500/).closest("p")!;
+    const lead = screen.getByText(/Below we show three problems from MATH-500/).closest("p")!;
     expect(Array.from(lead.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 3"]);
     // Numbered in order of appearance: the two techniques, then the dataset.
     const refs = screen.getAllByText("References")[0].closest("aside")!;
@@ -88,7 +88,7 @@ describe("Page 5, step 1: what a chain of thought is", () => {
   // section 2 first names the models, and sits in the sidenote beside that step.
   it("cites the Qwen model card in section 2, where the models are first named", () => {
     render(<Page5 />);
-    const intro = screen.getByText(/One trace proves nothing/).closest("p")!;
+    const intro = screen.getByText(/look at how zero-shot fares/).closest("p")!;
     expect(Array.from(intro.querySelectorAll("sup")).map((s) => s.textContent)).toEqual(["reference 4"]);
     const refs = screen.getAllByText("References")[1].closest("aside")!;
     expect(within(refs).getByRole("link", { name: /Qwen2\.5-3B.*model card/ })).toHaveAttribute(
@@ -164,10 +164,17 @@ describe("Page 5, figure 1: worked solutions from MATH-500", () => {
 describe("Page 5, figure 2: zero-shot against few-shot", () => {
   const fig2 = () => screen.getByLabelText("Zero-shot against few-shot");
 
-  it("opens on random problems, none of them the 10 examples, without stating how many", () => {
+  it("opens on what few-shot prompting is, in the author's words", () => {
+    render(<Page5 />);
+    expect(body()).toContain(
+      "Another way we can induce reasoning in a model is to give it worked examples at inference time, which is called few-shot prompting. A model may not reason in the style we intended. By providing examples, we can steer it into answering our prompt in the same step-by-step format the examples show.",
+    );
+  });
+
+  it("leads into the figure in the author's words, without stating how many problems", () => {
     render(<Page5 />);
     expect(body().replace(/reference \d/g, "")).toContain(
-      `One trace proves nothing, so both prompts were run on MATH-500 problems, with Qwen2.5 base models of three sizes: zero-shot, and with 10 worked examples. The worked examples are MATH-500 problems themselves, so they are excluded from testing: every count below is on other problems, chosen at random.`,
+      "Let’s look at how zero-shot fares against few-shot on Qwen2.5 base models of three sizes, when both are told to reason.",
     );
   });
 
@@ -217,17 +224,19 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
 
   // The author asked for this annotation to stay. If new numbers fail the data check
   // below, ask the author what it should say; do not just delete it.
-  it("annotates the 3B matching the 7B with no examples, leaves the 1.5B out, and the data agrees", () => {
+  it("annotates the 3B with few-shot beating the 7B with zero-shot, leaves the 1.5B out, and the data agrees", () => {
     render(<Page5 />);
-    expect(within(fig2()).getByTestId("shots-on-par")).toHaveTextContent("With no examples, 3B matches 7B");
+    expect(within(fig2()).getByTestId("shots-annotation")).toHaveTextContent(
+      "3B with few-shot beats 7B with zero-shot",
+    );
     const [, mid, large] = SHOTS.rows;
-    expect(mid.solved.zero_shot).toBe(large.solved.zero_shot);
+    expect(mid.solved["10_shot"]).toBeGreaterThan(large.solved.zero_shot);
     const outlined = (label: string) =>
       [...within(fig2()).getByTestId(`shots-${label}`).querySelectorAll("rect")].map((b) =>
         b.getAttribute("class")?.includes("stroke-ink"),
       );
     expect(outlined("Qwen2.5-1.5B")).toEqual([false, false]);
-    expect(outlined("Qwen2.5-3B")).toEqual([true, false]);
+    expect(outlined("Qwen2.5-3B")).toEqual([false, true]);
     expect(outlined("Qwen2.5-7B")).toEqual([true, false]);
   });
 
@@ -247,10 +256,10 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
 
   // Shashank's outline asks for this understanding, and the author wants his two
   // sentences on the page verbatim (2026-10-18).
-  it("carries Shashank's two sentences verbatim, after the figure", () => {
+  it("carries Shashank's two sentences, in the first person, after the figure", () => {
     render(<Page5 />);
     const quote =
-      "By providing the step-by-step intermediate logic in the examples, you force the model to generate its own reasoning pathway before committing to a final answer. This prevents the model from hallucinating a final state because it has to calculate the state sequentially.";
+      "By providing the step-by-step intermediate logic in the examples, we force the model to generate its own reasoning pathway before committing to a final answer. This prevents the model from hallucinating a final state because it has to calculate the state sequentially.";
     expect(body()).toContain(quote);
     expect(body().split(quote)).toHaveLength(2); // once
     const para = screen.getByText(/By providing the step-by-step intermediate logic/).closest("p")!;
@@ -277,7 +286,7 @@ describe("Page 5, figure 2: zero-shot against few-shot", () => {
 describe("Page 5, figure 3: instruct models against few-shot base models", () => {
   it("compares the instruct models with no examples against the base models with ten, without stating how many problems", () => {
     render(<Page5 />);
-    expect(body()).toContain("Below, each base model with ten examples is compared with its Instruct version with none, on MATH-500.");
+    expect(body()).toContain("Below, we compare each base model with ten examples against its Instruct version with none, on MATH-500.");
     // The two sides were not scored on the same problems; the text never says so.
     expect(body()).not.toContain("the same problems");
     expect(body()).not.toContain("base on");
