@@ -79,15 +79,26 @@ describe("DemoMode", () => {
     );
   });
 
-  it("each P moves on a stop, through all six, and loops back to the first", () => {
+  it("each P moves on a stop, through all six, then returns to the landing page and leaves", () => {
     const { rerender } = render(<DemoMode />);
     const visited: string[] = [];
-    for (let i = 0; i < DEMO_STOPS.length + 1; i++) {
+    for (let i = 0; i < DEMO_STOPS.length; i++) {
       press("p");
       rerender(<DemoMode />);
       visited.push(pathname);
     }
-    expect(visited).toEqual(["/p/1", "/p/5", "/p/6", "/p/12", "/p/13", "/p/15", "/p/1"]);
+    expect(visited).toEqual(["/p/1", "/p/5", "/p/6", "/p/12", "/p/13", "/p/15"]);
+    // The last stop says so.
+    expect(screen.getByRole("status", { name: "Presentation mode" })).toHaveTextContent("P finish · Q quit");
+    press("p");
+    rerender(<DemoMode />);
+    expect(pathname).toBe("/");
+    expect(screen.queryByRole("status", { name: "Presentation mode" })).toBeNull();
+    expect(window.sessionStorage.getItem("demo-mode-step")).toBeNull();
+    // A further P starts the demo again from the first stop.
+    press("p");
+    rerender(<DemoMode />);
+    expect(pathname).toBe("/p/1");
   });
 
   it("lets the arrow keys leave a stop's page without being pulled back", () => {

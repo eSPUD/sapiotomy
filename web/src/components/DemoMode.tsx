@@ -24,7 +24,8 @@ const clearSpotlight = () =>
 
 /**
  * Presentation mode (2026-11-09). P enters it at the first stop and each further
- * P moves to the next, looping round; Q leaves. Each stop opens its page, scrolls
+ * P moves to the next; a P on the last stop returns to the landing page and
+ * leaves the demo (2026-11-09), and Q leaves at any stop. Each stop opens its page, scrolls
  * its widget into view and spotlights it (globals.css dims everything else), and
  * a badge says where the presenter is. The widgets stay fully interactive.
  *
@@ -55,7 +56,13 @@ export function DemoMode() {
       if (key === "p") {
         e.preventDefault();
         const cur = stepRef.current;
-        const next = cur === null ? 0 : (cur + 1) % DEMO_STOPS.length;
+        // Past the last stop: back to the landing page, and out of the demo.
+        if (cur === DEMO_STOPS.length - 1) {
+          setStep(null);
+          router.push("/");
+          return;
+        }
+        const next = cur === null ? 0 : cur + 1;
         setStep(next);
         // Only P travels: the arrow keys still move freely between pages mid-demo.
         const href = pageHref(DEMO_STOPS[next].page);
@@ -111,7 +118,9 @@ export function DemoMode() {
         Page {stop.page} · {stop.title}
         {stop.problem ? ` · problem ${stop.problem}` : ""}
       </span>
-      <span className="text-xs text-ink-muted">P next · Q quit</span>
+      <span className="text-xs text-ink-muted">
+        {step === DEMO_STOPS.length - 1 ? "P finish" : "P next"} · Q quit
+      </span>
     </div>
   );
 }
