@@ -3,7 +3,7 @@ import { PAGES, pageHref } from "@/lib/pages";
 
 /** A small bordered pill button (author, 2026-11-08), so the way on reads as a control rather than as a caption. */
 const button =
-  "flex min-w-0 max-w-[48%] items-center gap-1 whitespace-nowrap rounded-full border border-grid bg-surface px-4 py-1.5 text-sm font-semibold text-ink hover:border-compute hover:bg-compute/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-compute";
+  "flex min-w-0 max-w-[48%] items-center gap-1 whitespace-nowrap rounded-full border border-grid bg-surface px-4 py-1.5 text-sm font-semibold text-ink hover:border-chrome hover:bg-chrome/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-chrome";
 
 /** "4. From Reasoning to Inference-Time Scaling": a page as its heading numbers it. */
 const titled = (n: number) => `${n}. ${PAGES.find((p) => p.n === n)?.title ?? ""}`;

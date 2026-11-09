@@ -25,7 +25,7 @@ export function Callout({
       aria-label={title}
       className={`flex flex-col gap-2 rounded-xl bg-quote px-6 py-5 ${className}`}
     >
-      <p className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-compute-ink">
+      <p className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-ink">
         {title}
       </p>
       <div className="font-heading text-lg leading-snug text-ink [&>*+*]:mt-2">{children}</div>

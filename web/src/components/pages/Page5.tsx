@@ -180,7 +180,7 @@ function ProblemStepper({ active, onProblem }: { active: number; onProblem: (i: 
   const n = WORKED_SOLUTIONS.length;
   const w = WORKED_SOLUTIONS[active];
   const button =
-    "flex items-center gap-1.5 rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink hover:border-compute hover:bg-compute/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-compute";
+    "flex items-center gap-1.5 rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm font-semibold text-ink hover:border-chrome hover:bg-chrome/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-chrome";
   return (
     // On a phone the label takes its own line above the two buttons, so the buttons
     // stay side by side; from sm up all three share one row.
@@ -675,6 +675,7 @@ export function Page5() {
           </p>
           <section
             aria-label="Zero-shot against few-shot"
+            data-demo="p5-s2"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
             <Ledger

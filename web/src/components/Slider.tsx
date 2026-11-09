@@ -64,7 +64,7 @@ export function Slider({
         aria-valuetext={readout}
         list={ticks ? listId : undefined}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-2 w-full cursor-pointer appearance-none rounded-full bg-grid accent-compute disabled:opacity-50"
+        className="h-2 w-full cursor-pointer appearance-none rounded-full bg-grid accent-chrome disabled:opacity-50"
       />
       {ticks ? (
         <>

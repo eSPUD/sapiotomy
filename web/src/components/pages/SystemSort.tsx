@@ -86,7 +86,7 @@ export function SystemSort() {
   };
 
   return (
-    <section aria-label="Pick the System 2 tasks" className="flex flex-col gap-4">
+    <section aria-label="Pick the System 2 tasks" data-demo="p1-s2" className="flex flex-col gap-4">
       <p className="text-ink">
         Click every task that needs <strong>System 2</strong>, the slow, deliberate one.
       </p>

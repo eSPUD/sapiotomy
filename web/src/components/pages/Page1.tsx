@@ -320,7 +320,7 @@ export function Page1() {
               className={`w-32 shrink-0 rounded px-4 py-2 text-center text-sm font-semibold ${
                 finished
                   ? "cursor-not-allowed bg-grid text-ink-faint"
-                  : "bg-compute text-ink disabled:opacity-50"
+                  : "bg-chrome text-canvas disabled:opacity-50"
               }`}
             >
               {running ? "Calculating…" : "Calculate"}

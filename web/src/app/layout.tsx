@@ -4,6 +4,7 @@ import "./globals.css";
 import { ProgressRail } from "@/components/ProgressRail";
 import { KeyboardNav } from "@/components/KeyboardNav";
 import { KeyboardHint } from "@/components/KeyboardHint";
+import { DemoMode } from "@/components/DemoMode";
 import { SubmissionFooter } from "@/components/SubmissionFooter";
 
 // The style guide's type stack, all self-hosted by next/font (the runtime stays
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${serif.variable} ${heading.variable} ${mono.variable}`}>
       <body className="min-h-screen bg-canvas text-ink antialiased">
         <KeyboardNav />
+        <DemoMode />
         <ProgressRail />
         <main className="mx-auto max-w-[min(90%,2048px)] px-4 py-8">{children}</main>
         <SubmissionFooter />

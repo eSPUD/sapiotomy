@@ -991,7 +991,7 @@ export function Page14() {
           </p>
           <section
             aria-label="Answers won and lost at each doubling of the token budget"
-            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-chrome bg-surface p-4"
           >
             <Slider
               label="Token budget"
@@ -1025,7 +1025,7 @@ export function Page14() {
           </p>
           <section
             aria-label="One chain at the chosen budget, from a forced commit to its own ending"
-            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-chrome bg-surface p-4"
           >
             <SpecimenChain budgetIndex={budgetIndex} />
           </section>
@@ -1061,7 +1061,7 @@ export function Page14() {
 
           <section
             aria-label="Problems each model talks itself out of"
-            className="flex flex-col gap-2 rounded-lg border-l-4 border-compute bg-surface p-4"
+            className="flex flex-col gap-2 rounded-lg border-l-4 border-chrome bg-surface p-4"
           >
             <p className="text-sm text-ink-muted">
               Problems the model talks itself out of, per {PAGE17.run.items}:
@@ -1135,7 +1135,7 @@ export function Page14() {
           </p>
           <section
             aria-label="Reliability of five ways of picking an answer, against sampling temperature"
-            className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4"
+            className="flex flex-col gap-3 rounded-lg border-l-4 border-chrome bg-surface p-4"
           >
             <Slider
               label="Sampling temperature"

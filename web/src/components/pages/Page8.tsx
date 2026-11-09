@@ -371,7 +371,7 @@ function BestOfNDemo() {
           type="button"
           onClick={play}
           disabled={running}
-          className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+          className="rounded bg-chrome px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
         >
           ▶ Play
         </button>
@@ -379,7 +379,7 @@ function BestOfNDemo() {
           type="button"
           onClick={reset}
           disabled={phase === "idle"}
-          className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+          className="ml-auto rounded border border-chrome px-4 py-2 text-sm font-semibold text-ink hover:bg-chrome/5 disabled:opacity-50"
         >
           ↺ Reset
         </button>

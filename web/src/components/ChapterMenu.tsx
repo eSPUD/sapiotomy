@@ -10,7 +10,7 @@ const acts: Act[] = [1, 2, 3];
  * The act-page index as a left menu beside every story page, set like the
  * landing's three-column index. It sticks under the masthead and scrolls on its
  * own when it is taller than the window. The current page is marked with
- * aria-current and a rule in the compute hue. The glossary is not listed: it is
+ * aria-current and a rule in the chrome. The glossary is not listed: it is
  * reached from inside the pages (and from page 16's next link).
  */
 export function ChapterMenu() {
@@ -26,13 +26,13 @@ export function ChapterMenu() {
           href={pageHref(p.n)}
           aria-current={here ? "page" : undefined}
           className={`group flex items-baseline gap-2 border-l-2 py-0.5 pl-2 text-sm ${
-            here ? "border-compute" : "border-transparent"
+            here ? "border-chrome" : "border-transparent"
           }`}
         >
           <span className="tabular-nums text-ink-muted">{String(p.n).padStart(2, "0")}</span>
           <span
             className={
-              here ? "font-semibold text-compute-ink" : "text-ink group-hover:underline"
+              here ? "font-semibold text-ink" : "text-ink group-hover:underline"
             }
           >
             {p.title}

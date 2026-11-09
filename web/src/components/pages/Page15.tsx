@@ -248,23 +248,26 @@ export function Page15() {
           this. Now that all of them are behind you, they go side by side: the 3B base model, its
           Instruct version, and GRPO.
         </p>
-        <Legend />
-        <div className="grid items-start gap-x-6 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
-          <figure className="flex min-w-0 max-w-lg flex-col gap-1">
-            <figcaption className="text-sm font-semibold text-ink">3B base only</figcaption>
-            <BarChart name="Qwen2.5-3B base model, MATH-500" bars={BASE_CHART} />
-          </figure>
-          <figure className="flex min-w-0 max-w-lg flex-col gap-1">
-            <figcaption className="text-sm font-semibold text-ink">3B Instruct only</figcaption>
-            <BarChart name="Qwen2.5-3B-Instruct, MATH-500" bars={INSTRUCT_CHART} />
-          </figure>
-          <figure className="flex min-w-0 max-w-lg flex-col gap-1">
-            <figcaption className="text-sm font-semibold text-ink">
-              Inference + training-time scaling
-              <span className="mt-0.5 block text-xs font-normal text-ink-muted">{GRPO_SCOPE}</span>
-            </figcaption>
-            <BarChart name="GRPO on Qwen2.5-1.5B-Instruct, GSM8K" bars={GRPO_CHART} />
-          </figure>
+        {/* Tagged for presentation mode (DemoMode), which spotlights the charts. */}
+        <div data-demo="p15-s1" className="flex flex-col gap-3">
+          <Legend />
+          <div className="grid items-start gap-x-6 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            <figure className="flex min-w-0 max-w-lg flex-col gap-1">
+              <figcaption className="text-sm font-semibold text-ink">3B base only</figcaption>
+              <BarChart name="Qwen2.5-3B base model, MATH-500" bars={BASE_CHART} />
+            </figure>
+            <figure className="flex min-w-0 max-w-lg flex-col gap-1">
+              <figcaption className="text-sm font-semibold text-ink">3B Instruct only</figcaption>
+              <BarChart name="Qwen2.5-3B-Instruct, MATH-500" bars={INSTRUCT_CHART} />
+            </figure>
+            <figure className="flex min-w-0 max-w-lg flex-col gap-1">
+              <figcaption className="text-sm font-semibold text-ink">
+                Inference + training-time scaling
+                <span className="mt-0.5 block text-xs font-normal text-ink-muted">{GRPO_SCOPE}</span>
+              </figcaption>
+              <BarChart name="GRPO on Qwen2.5-1.5B-Instruct, GSM8K" bars={GRPO_CHART} />
+            </figure>
+          </div>
         </div>
         <p className="border-l-2 border-grid pl-3 text-sm text-ink-muted">
           In the first chart, the two base-model bars share one run and the instruct bar is a

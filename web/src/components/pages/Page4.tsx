@@ -494,7 +494,7 @@ export function Page4() {
                 type="button"
                 onClick={() => go(step + 1)}
                 disabled={step >= maxStep}
-                className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+                className="rounded bg-chrome px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
               >
                 Next ▸
               </button>
@@ -503,7 +503,7 @@ export function Page4() {
                   type="button"
                   onClick={play}
                   disabled={playing || step >= maxStep}
-                  className="rounded border border-compute px-3 py-2 text-sm font-semibold text-compute-ink disabled:opacity-50"
+                  className="rounded border border-chrome px-3 py-2 text-sm font-semibold text-ink disabled:opacity-50"
                 >
                   ▶ Play
                 </button>

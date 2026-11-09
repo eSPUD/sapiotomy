@@ -392,7 +392,7 @@ export function Page10() {
                         setMyState(c.stateId);
                         recordInteraction(PAGE_N);
                       }}
-                      className="flex items-baseline gap-2 rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink hover:border-compute"
+                      className="flex items-baseline gap-2 rounded border border-grid bg-surface-raised px-3 py-1.5 text-sm text-ink hover:border-chrome"
                     >
                       <span className="font-semibold">{c.word}</span>
                       <span className="font-mono text-xs text-compute-ink">{pct(c.p)}</span>
@@ -484,7 +484,7 @@ export function Page10() {
                   className={`rounded border px-3 py-1.5 text-sm ${
                     strategy === s.key
                       ? "border-compute bg-compute font-semibold text-ink"
-                      : "border-grid bg-surface-raised text-ink hover:border-compute"
+                      : "border-grid bg-surface-raised text-ink hover:border-chrome"
                   }`}
                 >
                   {s.key === "greedy" ? "Greedy (chain of thought)" : s.label}
@@ -515,7 +515,7 @@ export function Page10() {
                   setPlaying((p) => !p);
                   recordInteraction(PAGE_N);
                 }}
-                className="rounded bg-compute px-4 py-1.5 text-sm font-semibold text-ink"
+                className="rounded bg-chrome px-4 py-1.5 text-sm font-semibold text-canvas"
               >
                 {playing ? "Pause" : done ? "Replay" : "Play"}
               </button>
@@ -551,7 +551,7 @@ export function Page10() {
                   setPlaying(false);
                   setStep(Number(e.target.value));
                 }}
-                className="min-w-[8rem] flex-1 accent-compute"
+                className="min-w-[8rem] flex-1 accent-chrome"
               />
               <span className="font-mono text-xs tabular-nums text-ink-muted">
                 {isMcts ? `trial ${step}/${totalSteps}` : `${step}/${totalSteps}`}
@@ -700,7 +700,7 @@ export function Page10() {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-lg border-l-4 border-compute bg-surface-raised p-3">
+                <div className="rounded-lg border-l-4 border-chrome bg-surface-raised p-3">
                   {caption.line ? (
                     <p className="text-lg italic text-ink">{caption.line}</p>
                   ) : null}

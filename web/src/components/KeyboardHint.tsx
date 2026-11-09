@@ -28,6 +28,12 @@ export function KeyboardHint() {
             <li>
               <Kbd>Tab</Kbd> then <Kbd>Enter</Kbd>: jump to any chapter via the chapter menu
             </li>
+            <li>
+              <Kbd>P</Kbd>: presentation mode, then the next demo stop
+            </li>
+            <li>
+              <Kbd>Q</Kbd>: leave presentation mode
+            </li>
           </ul>
         </div>
       ) : null}
@@ -35,7 +41,7 @@ export function KeyboardHint() {
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="rounded-full border border-grid bg-surface px-2 py-0.5 text-[10px] font-medium text-ink shadow-sm transition-colors hover:border-compute"
+        className="rounded-full border border-grid bg-surface px-2 py-0.5 text-[10px] font-medium text-ink shadow-sm transition-colors hover:border-chrome"
       >
         <span aria-hidden="true">⌨</span> Keyboard shortcuts
       </button>
