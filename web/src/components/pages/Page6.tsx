@@ -1205,14 +1205,14 @@ export function Page6() {
                 drag. */}
             <div className="flex flex-col gap-6 rounded-lg border border-grid bg-canvas p-3">
               <div className="flex max-w-[90%] items-start gap-2 self-end">
-                <p className="text-right font-code text-[15px] text-ink">{tidyMath(row.question)}</p>
+                <p className="text-right font-code text-[13px] text-ink">{tidyMath(row.question)}</p>
                 <UserIcon />
               </div>
               <div className="flex w-full max-w-[90%] items-start gap-2 self-start">
                 <ModelIcon />
                 <div
                   ref={scrollRef}
-                  className="h-72 min-w-0 flex-1 overflow-y-auto whitespace-pre-wrap font-code text-[15px] text-ink"
+                  className="h-72 min-w-0 flex-1 overflow-y-auto whitespace-pre-wrap font-code text-[13px] text-ink"
                 >
                   {tidyMath(zones.own)}
                   {zones.wasCut ? (
