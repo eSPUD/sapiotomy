@@ -56,7 +56,7 @@ describe("presentation mode stops", () => {
     [Page12, "p12-s2", /problem 1 of \d/],
     [Page13, "p13-s2", /./],
     [Page15, "p15-s1", /./],
-    [Page15, "p15-close", /The one sentence to leave with/],
+    [Page15, "p15-close", /In short: letting a model think longer/],
   ] as const)("tags each stop's widget in its page (%#)", (Page, target, text) => {
     vi.useRealTimers();
     const { container } = render(<Page />);

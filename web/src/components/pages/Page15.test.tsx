@@ -311,10 +311,12 @@ describe("Page 15 (wrap-up) component", () => {
   it("still ends on the open question rather than on a summary", () => {
     render(<Page15 />);
     expect(screen.queryByText(/What this deck did not settle/i)).toBeNull();
+    // The open question, in the simpler closing (author, 2026-11-09).
     expect(
-      screen.getByText(/nobody has yet shown is the reason for the answer/i),
+      screen.getByText(/no one has yet shown that the reasoning a\s+model writes out is what actually produces its answer/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/where the field is, and where you now are/i)).toBeInTheDocument();
+    expect(screen.getByText(/That is where the field stands today, and now so do you\./)).toBeInTheDocument();
+    expect(screen.queryByText(/The one sentence to leave with/)).toBeNull();
   });
 
   it("carries no em dash or en dash in rendered copy", () => {

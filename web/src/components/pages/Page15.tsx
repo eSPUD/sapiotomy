@@ -366,11 +366,12 @@ export function Page15() {
 
       {/* The story's last word, and presentation mode's last stop. */}
       <Handoff demo="p15-close">
-        The one sentence to leave with: a model can get dramatically better answers by thinking
-        longer at answer time, the gains are real and measured and each one has a price and a
-        ceiling, and every one of them is paid in text that nobody has yet shown is the reason for
-        the answer.{" "}
-        <em className="text-ink-muted">That is where the field is, and where you now are.</em>
+        {/* Simplified by the author, 2026-11-09, from one long sentence: the same four
+            claims (gains, a cost, a limit, the open question) and the same last line. */}
+        In short: letting a model think longer before it answers really does make its answers
+        better. Every gain has a cost and a limit. And no one has yet shown that the reasoning a
+        model writes out is what actually produces its answer.{" "}
+        <em className="text-ink-muted">That is where the field stands today, and now so do you.</em>
       </Handoff>
 
       <PageNav n={PAGE_N} />
