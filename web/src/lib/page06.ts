@@ -244,9 +244,6 @@ const NEVER_FLIP_MAX = 0.6;
 /** Above this share truncated at the top budget, the grid's top still binds. */
 const TOP_TRUNCATION_MAX = 0.1;
 
-/** The row figure 1 opens on. See `PAGE6.figure1.openingId` for why not the notebook's. */
-const OPENING_ID = "test/counting_and_probability/1014.json";
-
 /**
  * A problem whose statement is a drawing PROGRAM rather than prose.
  *
@@ -426,39 +423,15 @@ for (const row of D.figure_1.rows) {
   if (!bundled.has(D.figure_1.specimen_id)) {
     fail(`figure 1's specimen ${D.figure_1.specimen_id} is not among the bundled traces`);
   }
-  if (!bundled.has(OPENING_ID)) {
-    fail(`figure 1 opens on ${OPENING_ID}, whose traces are not bundled`);
-  }
-  {
-    // The picker may lose a problem to `isDrawingProgram`; the row the page
-    // OPENS on may not, because there would be nothing to fall back to and the
-    // first thing the reader meets would be twenty lines of Asymptote.
-    const opening = D.figure_1.rows.find((r) => r.problem_id === OPENING_ID)!;
-    if (isDrawingProgram(opening.question)) {
-      fail(`figure 1 opens on ${OPENING_ID}, whose statement is an Asymptote drawing program`);
-    }
-    const offered = D.figure_3.clickable_row_ids.filter(
-      (id) => !isDrawingProgram(D.figure_1.rows.find((r) => r.problem_id === id)!.question),
-    );
-    if (offered.length < 4) {
-      fail(`only ${offered.length} bundled problems read as prose, which is not a picker`);
-    }
-  }
-  {
-    // The row the page opens on has to demonstrate the thing the page claims:
-    // wrong below some budget, right at and above it, and cut where it is
-    // wrong. A run that no longer satisfies that is a run this page was not
-    // written against.
-    const opening = D.figure_1.rows.find((r) => r.problem_id === OPENING_ID)!;
-    const flip = opening.by_budget.findIndex((r) => r.correct);
-    if (flip < 1) fail(`figure 1's opening row does not flip above the smallest budget`);
-    if (!opening.by_budget[flip - 1].forced) {
-      fail(`figure 1's opening row is not cut at the budget below its flip`);
-    }
-    if (!opening.by_budget.slice(flip).every((r) => r.correct)) {
-      fail(`figure 1's opening row goes right and then wrong again`);
-    }
-  }
+}
+
+/** The bundled problems that read as prose, which is what a button may offer. */
+const PICKABLE_IDS = D.figure_3.clickable_row_ids.filter(
+  (id) => !isDrawingProgram(D.figure_1.rows.find((r) => r.problem_id === id)!.question),
+);
+const LEVELS = 5;
+if (PICKABLE_IDS.length < LEVELS) {
+  fail(`only ${PICKABLE_IDS.length} bundled problems read as prose, too few for ${LEVELS} levels`);
 }
 
 {
@@ -579,6 +552,17 @@ export function traceZones(r: SpecimenRow, budgetIndex: number): TraceZones {
 
 const rows = D.figure_1.rows.map(row);
 
+/** See `PAGE6.figure1.levelRowIds`. */
+function pickLevels(): string[] {
+  const length = (id: string) =>
+    D.figure_3.items.find((d) => d.problem_id === id)?.tokens_at_max ?? Infinity;
+  const pool = [...PICKABLE_IDS].sort((a, b) => length(a) - length(b));
+  return Array.from(
+    { length: LEVELS },
+    (_, i) => pool[Math.round((i * (pool.length - 1)) / (LEVELS - 1))],
+  );
+}
+
 export const PAGE6 = {
   manifest: D.manifest,
   budgets: BUDGETS,
@@ -589,20 +573,14 @@ export const PAGE6 = {
     specimenId: D.figure_1.specimen_id,
     flipBudget: D.figure_1.flip_budget,
     nCandidates: D.figure_1.n_candidate_specimens,
-    /**
-     * The row figure 1 opens on, which is NOT the notebook's specimen.
-     *
-     * The notebook ranks candidates by where they flip and how short they are;
-     * it cannot see what the answer says. Its pick flips at 512 because at 256
-     * the model wrote the right value behind the prompt template's placeholder
-     * ("ANSWER 3√3/4") and the grader could not read it. Two records in 1,500
-     * are like that and the notebook's specimen is one, so its flip is partly
-     * the grader rather than the budget, which is the one thing figure 1 exists
-     * to show. This row answers 360 and then 480: wrong for a real reason, then
-     * right. Both rows ship, and the notebook's pick is still in the picker.
-     */
-    openingId: OPENING_ID,
     rows,
+    /**
+     * The five problems figure 1 offers, as Level 1 to Level 5. The rule is
+     * mechanical so no problem is picked for what it shows: the pickable rows,
+     * shortest unconstrained chain first, five evenly spaced along them. Level
+     * here is that order on this page, not the benchmark's difficulty level.
+     */
+    levelRowIds: pickLevels(),
   },
   figure2: {
     curves: D.figure_2.curves,
@@ -621,9 +599,7 @@ export const PAGE6 = {
      * an Asymptote program is filtered out here rather than there: it is a
      * presentation fact about this page, not a fact about the run.
      */
-    clickableRowIds: D.figure_3.clickable_row_ids.filter(
-      (id) => !isDrawingProgram(D.figure_1.rows.find((r) => r.problem_id === id)!.question),
-    ),
+    clickableRowIds: PICKABLE_IDS,
     /**
      * Chains still running when the top budget arrived. Their `tokens_at_max`
      * is a lower bound rather than a length, so the figure draws them off the
@@ -701,17 +677,6 @@ export const WAIT_TABLE = (() => {
     table: pairedTable(paired.n, before.n_correct, after.n_correct, paired),
   };
 })();
-
-/**
- * Where this chain stops needing the dial: the length it runs to when nothing
- * cuts it, and the first budget that lets it get there. Past that stop the
- * dial has no more travel on this problem, and figure 1 says so rather than
- * leaving the reader dragging a control that does nothing.
- */
-export function naturalLength(r: SpecimenRow): { tokens: number; fromBudget: number } | null {
-  const finished = r.byBudget.find((b) => !b.forced);
-  return finished ? { tokens: finished.ownTokens, fromBudget: finished.budget } : null;
-}
 
 /** Look up a bundled problem by id. Figure 3's row picker feeds figure 1. */
 export function rowById(problemId: string): SpecimenRow {

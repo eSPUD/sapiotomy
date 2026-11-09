@@ -25,13 +25,9 @@
  * standalone System 1 / System 2 card pair is CUT — the reader met that idea in
  * Act 1 and it survives here as a single clause in step 1's caption.
  *
- *   Step 1 — figure 1, the truncation view. One problem, the budget on a dial.
- *   Three visual facts carry the idea and need no prose: the trace is GREYED
- *   past the cut rather than hidden (the single most important pixel on the
- *   page — the reader sees what the model would have written and was not
- *   allowed to); the forced answer is tinted as an intervention rather than a
- *   conclusion; and the verdict flips discontinuously, because item-level
- *   accuracy is a step function. Inset: asked nicely against cut off.
+ *   Step 1 — figure 1, the truncation view. Five problems on buttons, a budget
+ *   slider, and the question and reply as a chat in page 2's form. The reply
+ *   simply ends where the budget ended, unannotated.
  *
  *   Step 2 — figure 2, the population curve. Three checkpoints, one tokenizer,
  *   log x-axis, and its OWN budget line on the chart. The y-axis is
@@ -49,7 +45,6 @@
  *   ends barely moving.
  *
  * Load-bearing and easy to lose:
- *   · the greying past the cut. Hiding it turns the figure into a progress bar.
  *   · the two curves-that-are-three teach an INVARIANT. No caption may compare
  *     their heights as a fact about scale: they differ in size AND in training,
  *     and the 7B is 8-bit while the others are bf16, so a level comparison is
@@ -72,17 +67,18 @@
  *     question should be. Its traces still ship in the download.
  */
 
-import { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Handoff } from "@/components/Handoff";
 import { ChartFrame } from "@/components/ChartFrame";
+import { ModelIcon, UserIcon } from "@/components/ChatIcons";
 import { Cite, RefItem } from "@/components/Cite";
 import { PageNav } from "@/components/PageNav";
 import { NotebookDownload } from "@/components/NotebookDownload";
+import { Slider } from "@/components/Slider";
 import { ACTS, getPage } from "@/lib/pages";
 import {
   PAGE6,
   WAIT_TABLE,
-  naturalLength,
   pLabel,
   pct,
   rowById,
@@ -136,61 +132,6 @@ const WAIT_COST_RANGE = FW
 
 /** Cited for the technique it introduced. No number of theirs appears here. */
 const REF = { s1: 1 } as const;
-
-/**
- * The budget control, drawn as what it actually is: five stops, not a slide.
- *
- * It was a range input, and a range input has to be propped up to be read at
- * all here: a label row, a readout, a track, and a row of tick numbers, four
- * stacked rows to choose one of five values. Native radios collapse that to
- * one row, keep arrow-key operation for free, and let the dead stops be a
- * property of the stop itself rather than a second bar underneath it.
- *
- * `deadFrom` is the first stop that no longer cuts the chain on show. Those
- * stops stay live rather than disabled, because "you can pick it and nothing
- * happens" is the fact the page is teaching, and a disabled control teaches
- * nothing.
- */
-function BudgetStops({
-  value,
-  onChange,
-  deadFrom,
-}: {
-  value: number;
-  onChange: (i: number) => void;
-  deadFrom?: number;
-}) {
-  const name = useId();
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      <span className="text-sm text-ink-muted">Token budget</span>
-      <div role="radiogroup" aria-label="Token budget" className="flex flex-wrap gap-1">
-        {B.map((b, i) => {
-          const dead = deadFrom !== undefined && i >= deadFrom;
-          return (
-            <label key={b} className="cursor-pointer">
-              <input
-                type="radio"
-                name={name}
-                className="peer sr-only"
-                checked={value === i}
-                aria-label={`${b} tokens`}
-                onChange={() => onChange(i)}
-              />
-              <span
-                className={`block rounded border px-2 py-0.5 font-mono text-xs tabular-nums peer-focus-visible:ring-2 peer-focus-visible:ring-compute-ink peer-checked:border-compute peer-checked:bg-compute peer-checked:text-ink ${
-                  dead ? "border-dashed border-grid text-ink-muted" : "border-grid text-ink"
-                }`}
-              >
-                {b}
-              </span>
-            </label>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 /**
  * The budget line, which IS the control: a rule the reader drags along a chart
@@ -1098,62 +1039,28 @@ export function Page6() {
   const [traceBudget, setTraceBudget] = useState(0);
   const [curveBudget, setCurveBudget] = useState(0);
   const [stripBudget, setStripBudget] = useState(0);
-  const [rowId, setRowId] = useState<string>(F1.openingId);
+  const [rowId, setRowId] = useState<string>(F1.levelRowIds[0]);
   const [announce, setAnnounce] = useState("");
 
   const row = useMemo(() => rowById(rowId), [rowId]);
-  const run = row.byBudget[traceBudget];
   const zones = useMemo(() => traceZones(row, traceBudget), [row, traceBudget]);
-  const natural = useMemo(() => naturalLength(row), [row]);
-  /**
-   * The last stop that actually cuts THIS chain. Past it the dial has travel
-   * and no effect, which is a property of the problem rather than of the grid:
-   * this chain stops on its own and the remaining stops have nothing left to
-   * take away. Drawn on the track so it reads before the reader drags into it.
-   */
-  const lastBiting = useMemo(
-    () => row.byBudget.reduce((last, b, i) => (b.forced ? i : last), -1),
-    [row],
-  );
   const curvePoint = F2.primary.points[curveBudget];
 
-  // The cut is the figure. A trace long enough to scroll would otherwise open
-  // with the cut below the fold, and the reader would meet a wall of the
-  // model's working with no sign that anything had been taken away.
+  // Where the reply ends is what the slider changes, so a reply long enough to
+  // scroll is held at its end. Again once the font has loaded, which reflows it.
   const scrollRef = useRef<HTMLDivElement>(null);
-  const cutRef = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
-    const centreTheCut = () => {
+    const toEnd = () => {
       const box = scrollRef.current;
-      const cut = cutRef.current;
-      if (!box) return;
-      if (!cut) {
-        // Nothing was cut at this budget, so there is no cut to centre and the
-        // reader should meet the chain at its beginning rather than wherever
-        // the previous budget's cut left the box.
-        box.scrollTop = 0;
-        return;
-      }
-      if (box.scrollHeight <= box.clientHeight) return;
-      // Measured rather than derived from offsetTop: neither node is
-      // positioned, so their offsetParent is an ancestor of the page and the
-      // difference between them is not the distance inside this box.
-      const delta = cut.getBoundingClientRect().top - box.getBoundingClientRect().top;
-      box.scrollTop = Math.max(0, box.scrollTop + delta - box.clientHeight * 0.62);
+      if (box) box.scrollTop = box.scrollHeight;
     };
-    // Three times, because one measurement is taken too early to be right. The
-    // first pass runs before the box has its clamped height and before the
-    // serif has loaded, and both change where the cut falls; a measurement made
-    // then reads as "already at the top" and leaves the cut below the fold.
-    centreTheCut();
-    const frame = requestAnimationFrame(centreTheCut);
+    toEnd();
     let live = true;
     void document.fonts?.ready.then(() => {
-      if (live) centreTheCut();
+      if (live) toEnd();
     });
     return () => {
       live = false;
-      cancelAnimationFrame(frame);
     };
   }, [rowId, traceBudget]);
 
@@ -1169,9 +1076,9 @@ export function Page6() {
     setAnnounce(
       `Budget ${B[i]} tokens. ${
         r.forced
-          ? `The chain is cut after ${r.ownTokens} tokens and made to commit`
-          : `The chain finished on its own in ${r.ownTokens} tokens`
-      }; it answered ${r.extractedAnswer} and graded ${r.correct ? "correct" : "wrong"}.`,
+          ? `The reply is cut off after ${r.ownTokens} tokens.`
+          : `The reply finished on its own in ${r.ownTokens} tokens.`
+      }`,
     );
   };
 
@@ -1198,12 +1105,7 @@ export function Page6() {
   const onRow = (id: string) => {
     recordInteraction(PAGE_N);
     setRowId(id);
-    const r = rowById(id);
-    setAnnounce(
-      r.firstCorrectBudget === null
-        ? `Loaded a problem no budget in this grid reaches.`
-        : `Loaded a problem that first grades correct at ${r.firstCorrectBudget} tokens.`,
-    );
+    setAnnounce(`Loaded level ${F1.levelRowIds.indexOf(id) + 1}.`);
   };
 
   return (
@@ -1236,178 +1138,72 @@ export function Page6() {
         {/* Step 1 — figure 1 */}
         <section className="flex min-w-0 flex-col gap-3">
           <h2 className="text-xl font-semibold text-ink">
-            1. Cut it off, make it answer
+            1. Cut it off
           </h2>
           <p className="text-ink-muted">
             {/* Rewritten by the author 2026-09-27: no code variable names in reader
-                prose (the dial used to be introduced as `max_new_tokens`). The forcing
-                detail (the answer stem and its token allowance) is shown in the trace's
-                tinted band and lives in the notebook. "8" and the budget range are read
-                off the run; "five" is checked against it in Page6.test.tsx. */}
+                prose (the dial used to be introduced as `max_new_tokens`). */}
             Let&apos;s experiment with that dial, which limits how many tokens the model may use.
             Turning it up allows the model more tokens, but that doesn&apos;t mean it uses them
-            all. Turning it down can cut the chain off mid-thought, so when that happens we stop it
-            and make it answer on the spot.
-            <Cite n={REF.s1} /> Try it on {F3.clickableRowIds.length} problems, at five settings
-            from {B[0].toLocaleString("en-GB")} to {TOP.toLocaleString("en-GB")} tokens.
+            all. Turning it down can cut the chain off mid-thought.
+            <Cite n={REF.s1} /> Try it on five problems, at five settings from{" "}
+            {B[0].toLocaleString("en-GB")} to {TOP.toLocaleString("en-GB")} tokens.
           </p>
           <section
             aria-label="The truncation view"
             className="flex flex-col gap-4 rounded-lg border border-grid bg-surface p-4"
           >
-            <p className="text-xs text-ink-muted">
-              Qwen2.5-3B-Instruct at bf16, greedy · MATH-500 level {row.level},{" "}
-              {row.subject.replace(/_/g, " ")}
-            </p>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Problem level">
+              {F1.levelRowIds.map((id, i) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={id === rowId}
+                  onClick={() => onRow(id)}
+                  className={`rounded border px-3 py-1 text-sm ${
+                    id === rowId
+                      ? "border-compute bg-compute text-ink"
+                      : "border-grid bg-surface-raised text-ink-muted"
+                  }`}
+                >
+                  Level {i + 1}
+                </button>
+              ))}
+            </div>
 
-            {/* The question and the trace are listings of what a machine read
-                and wrote, so they take the deck's one licensed non-serif face,
-                the same rule page 5 settled on. */}
-            <p className="font-code text-sm leading-relaxed text-ink">{tidyMath(row.question)}</p>
+            {/* A chat in page 2's form: the question on the right, the reply on
+                the left, an icon each, plain mono text and no bubbles. The reply
+                keeps a fixed height so the slider below it stays put during a
+                drag. */}
+            <div className="flex flex-col gap-6 rounded-lg border border-grid bg-canvas p-3">
+              <div className="flex max-w-[90%] items-start gap-2 self-end">
+                <p className="text-right font-code text-[15px] text-ink">{tidyMath(row.question)}</p>
+                <UserIcon />
+              </div>
+              <div className="flex w-full max-w-[90%] items-start gap-2 self-start">
+                <ModelIcon />
+                <div
+                  ref={scrollRef}
+                  className="h-72 min-w-0 flex-1 overflow-y-auto whitespace-pre-wrap font-code text-[15px] text-ink"
+                >
+                  {tidyMath(zones.own)}
+                </div>
+              </div>
+            </div>
 
-            <div className="flex flex-col gap-2">
-              {/* Dead travel, carried by the stops themselves. Most chains
-                  finish well inside the top of the grid, so on any given
-                  problem the last stops cut nothing and picking one does
-                  nothing. That is the same fact figure 3 draws for all 100
-                  problems at once, and it is the page's finding rather than an
-                  artefact of the grid, so it is drawn rather than implied. */}
-              <BudgetStops
+            <div className="rounded-lg border border-grid bg-surface-raised p-3">
+              <Slider
+                label="Token budget"
+                min={0}
+                max={B.length - 1}
                 value={traceBudget}
                 onChange={onTraceBudget}
-                deadFrom={lastBiting + 1}
+                format={(i) => `${B[i]} tokens`}
+                ticks={B.map((_, i) => i)}
+                tickLabel={(i) => String(B[i])}
               />
-              {natural ? (
-                <p className="text-xs text-ink-muted">
-                  This chain runs to <strong className="text-ink">{natural.tokens} tokens</strong>{" "}
-                  and stops on its own, so the dial bites at{" "}
-                  {B.filter((_, i) => row.byBudget[i].forced).join(" and ")} and then has nothing
-                  left to cut: {natural.fromBudget} and up are the same chain.
-                </p>
-              ) : (
-                <p className="text-xs text-ink-muted">
-                  This chain is still going at {TOP} tokens, so every stop on the dial cuts it.
-                </p>
-              )}
-            </div>
-
-            {/* The model's own words, then what it would have written and was
-                not allowed to, then our intervention, then what it committed
-                to. Four zones, four tints, and the greyed one is the point. */}
-            <div className="flex flex-col rounded-lg border border-grid bg-surface-raised">
-              <p className="border-b border-dashed border-grid px-3 py-1.5 font-mono text-[10px] font-eyebrow uppercase tracking-wide text-ink-muted">
-                the model →
-              </p>
-              <div
-                ref={scrollRef}
-                className="max-h-64 overflow-y-auto px-3 py-2 font-code text-xs leading-relaxed"
-              >
-                <span className="whitespace-pre-wrap text-ink">{tidyMath(zones.own)}</span>
-                {zones.wasCut ? (
-                  <>
-                    <span ref={cutRef} aria-hidden="true" className="font-semibold text-compute-ink">
-                      ▌
-                    </span>
-                    <span className="whitespace-pre-wrap text-ink-muted opacity-40">
-                      {tidyMath(zones.unwritten)}
-                    </span>
-                  </>
-                ) : null}
-              </div>
-              {zones.wasCut ? (
-                <div className="border-t border-dashed border-grid bg-compute/10 px-3 py-2">
-                  <p className="font-mono text-[10px] font-eyebrow uppercase tracking-wide text-compute-ink">
-                    budget spent · we close the block and make it commit
-                  </p>
-                  {/* The stem is ours and stays verbatim, because it is the
-                      intervention. What the model then committed to is its
-                      text, and reads as maths like the rest of the trace. */}
-                  <p className="mt-1 break-words text-sm text-ink">
-                    <span className="font-code text-ink-muted">Final answer:</span>{" "}
-                    <span className="font-semibold">{tidyMath(`\\boxed{${zones.answer}`)}</span>
-                  </p>
-                </div>
-              ) : (
-                <div className="border-t border-dashed border-grid px-3 py-2">
-                  <p className="font-mono text-[10px] font-eyebrow uppercase tracking-wide text-ink-muted">
-                    it stopped at {run.ownTokens} tokens, inside the budget · nothing was cut and
-                    nothing was forced
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={`rounded-lg border-l-4 px-3 py-1.5 text-sm font-semibold ${
-                  run.correct ? "border-correct bg-correct/15 text-correct-ink" : "border-wrong bg-wrong/15 text-wrong-ink"
-                }`}
-              >
-                {run.correct ? "✓ graded correct" : "✗ graded wrong"}
-              </span>
-              <span className="font-mono text-sm tabular-nums text-ink-muted">
-                {run.ownTokens} of {run.budget} tokens thought
-              </span>
-              <span className="font-mono text-sm tabular-nums text-ink-muted">
-                answered {tidyMath(run.extractedAnswer) || "nothing"}
-                {run.correct ? "" : ` · the answer is ${tidyMath(row.groundTruth)}`}
-              </span>
-            </div>
-
-            {/* The problem picker belongs to this figure, because this figure
-                is the only thing it changes. It used to sit inside figure 3,
-                two screens down, on the grounds that its labels are figure 3's
-                measurement; but every one of those labels is a statement about
-                the flip that THIS figure draws, so the reader met the labels
-                nowhere near the thing they describe.
-
-                Labelled by what each problem demonstrates rather than by a row
-                index into a sort the reader cannot see, which is what the old
-                strip's buttons did. */}
-            <div className="flex flex-col gap-2 border-t border-dashed border-grid pt-3">
-              <p className="text-xs font-semibold font-eyebrow uppercase tracking-wide text-ink-muted">
-                or run a different problem · {F3.clickableRowIds.length} of these ship with their
-                full traces
-              </p>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Bundled problems">
-                {F3.clickableRowIds.map((id) => {
-                  const r = rowById(id);
-                  const d = F3.items.find((x) => x.problem_id === id);
-                  const active = id === rowId;
-                  const what = !d
-                    ? r.flipLabel
-                    : d.correct_by_budget.some(Boolean)
-                      ? `needs ${r.flipLabel}`
-                      : d.truncated_at_max
-                        ? "cut off at every budget"
-                        : `finished at ${d.tokens_at_max}, still wrong`;
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => onRow(id)}
-                      className={`rounded border px-2 py-1 text-xs ${
-                        active
-                          ? "border-compute bg-compute text-ink"
-                          : "border-grid bg-surface-raised text-ink-muted"
-                      }`}
-                    >
-                      {r.subject.replace(/_/g, " ")} · {what}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
           </section>
-          <p className="text-sm text-ink-muted">
-            The grey text is what the model would have written and was not allowed to; the tinted
-            line is ours, not its conclusion. Step through the stops and the verdict does not
-            slide, it{" "}
-            <strong className="text-ink">flips</strong>: for one problem, thinking longer is a
-            threshold and not a gradient. That is Act 1&apos;s slow deliberate System 2, priced in
-            the only currency a model has.
-          </p>
         </section>
         {/* Both of step 1's notes share step 1's cell.
             References used to sit in a row of its own, under an EMPTY left
@@ -1424,9 +1220,6 @@ export function Page6() {
             <RefItem n={REF.s1} href="https://arxiv.org/abs/2501.19393">
               Muennighoff et al. 2025, <em>s1: Simple Test-Time Scaling</em> (arXiv 2501.19393).
             </RefItem>
-          </Note>
-          <Note kicker="Try it" tight>
-            <p>Step to {F1.flipBudget} tokens and back.</p>
           </Note>
         </div>
 

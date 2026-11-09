@@ -23,6 +23,8 @@ export interface SliderProps {
    * it unset on wide ranges, where a mark per step is noise.
    */
   ticks?: number[];
+  /** What a tick prints, for dials whose steps stand for other values. */
+  tickLabel?: (tick: number) => string;
   disabled?: boolean;
 }
 
@@ -40,6 +42,7 @@ export function Slider({
   suffix = "",
   format,
   ticks,
+  tickLabel,
   disabled = false,
 }: SliderProps) {
   const id = useId();
@@ -80,7 +83,7 @@ export function Slider({
             className="flex justify-between px-0.5 font-mono text-[10px] tabular-nums text-ink-muted"
           >
             {ticks.map((t) => (
-              <span key={t}>{t}</span>
+              <span key={t}>{tickLabel ? tickLabel(t) : t}</span>
             ))}
           </div>
         </>

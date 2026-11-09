@@ -24,106 +24,99 @@ const F1 = PAGE6.figure1;
 const F2 = PAGE6.figure2;
 const F3 = PAGE6.figure3;
 
-// The page opens on a curated row that is NOT the notebook's specimen; see
-// PAGE6.figure1.openingId for why. The notebook's pick is still in the picker.
-const OPENING = rowById(F1.openingId);
-const FLIP_INDEX = B.indexOf(OPENING.firstCorrectBudget!);
+const OPENING = rowById(F1.levelRowIds[0]);
 
 const body = () => document.body.textContent ?? "";
 
 // Three figures, three dials, and no two of them are the same object. Figure 1
-// keeps a stop per budget, since there are five of them and a slide would be a
-// fiction; figures 2 and 3 each carry a budget LINE on the chart, which is the
-// control, and each answers to the keyboard as a slider.
-const stops = () => screen.getAllByRole("radio", { name: /tokens$/ });
-const stopFor = (i: number) => screen.getAllByRole("radio", { name: `${B[i]} tokens` });
+// has a slider that snaps to the five budgets; figures 2 and 3 each carry a
+// budget LINE on the chart, which is the control, and answers to the keyboard.
+const budgetSlider = () => screen.getByRole("slider", { name: "Token budget" });
 const curveLine = () => screen.getByRole("slider", { name: /population curve/i });
 const stripLine = () => screen.getByRole("slider", { name: /chain lengths/i });
-const drag = (i: number) => fireEvent.click(stopFor(i)[0]);
+const drag = (i: number) => fireEvent.change(budgetSlider(), { target: { value: String(i) } });
 /** Walk a budget line to a stop the way a keyboard reader would. */
 const walk = (handle: HTMLElement, i: number) => {
   fireEvent.keyDown(handle, { key: "Home" });
   for (let k = 0; k < i; k++) fireEvent.keyDown(handle, { key: "ArrowRight" });
 };
 
-describe("Page 6, figure 1: cut it off, make it answer", () => {
-  it("opens on the specimen at the smallest budget, cut and forced", () => {
+describe("Page 6, figure 1: cut it off", () => {
+  const figure = () => screen.getByLabelText("The truncation view");
+
+  it("opens on Level 1 at the smallest budget", () => {
     render(<Page6 />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Thinking Longer");
+    expect(screen.getByRole("button", { name: "Level 1" })).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText(tidyMath(OPENING.question))).toBeInTheDocument();
-    for (const s of stopFor(0)) expect(s).toBeChecked();
-    expect(body()).toContain(`${OPENING.byBudget[0].ownTokens} of ${B[0]} tokens thought`);
-    expect(body()).toContain("✗ graded wrong");
+    expect(budgetSlider()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
   });
 
-  it("shows the model's own words and what it was not allowed to write", () => {
+  it("offers five problems, Level 1 to Level 5, above the chat", () => {
     render(<Page6 />);
-    const z = traceZones(OPENING, 0);
-    // Both halves are on the page. The greyed continuation is the single most
-    // important pixel here: hiding it would turn the figure into a progress bar.
-    expect(body()).toContain(tidyMath(z.own).slice(0, 60));
-    expect(body()).toContain(tidyMath(z.unwritten).slice(-60));
-    expect(body()).toContain("we close the block and make it commit");
+    const picker = screen.getByRole("group", { name: "Problem level" });
+    const buttons = within(picker).getAllByRole("button");
+    expect(buttons.map((b) => b.textContent)).toEqual([1, 2, 3, 4, 5].map((n) => `Level ${n}`));
+    expect(figure().firstElementChild).toBe(picker);
+    expect(new Set(F1.levelRowIds).size).toBe(5);
   });
 
-  it("the verdict flips at the measured budget, and does not slide to get there", () => {
+  it("loads the problem a button names", () => {
     render(<Page6 />);
-    // Every budget below the flip grades wrong; the flip budget grades correct.
-    for (let i = 0; i < FLIP_INDEX; i++) {
+    F1.levelRowIds.forEach((id, i) => {
+      fireEvent.click(screen.getByRole("button", { name: `Level ${i + 1}` }));
+      expect(figure().textContent).toContain(tidyMath(rowById(id).question));
+    });
+  });
+
+  it("orders the levels by how long each chain ran", () => {
+    const length = (id: string) => F3.items.find((d) => d.problem_id === id)!.tokens_at_max;
+    const lengths = F1.levelRowIds.map(length);
+    expect(lengths).toEqual([...lengths].sort((a, b) => a - b));
+  });
+
+  it("shows the reply as far as the budget reached and nothing past it", () => {
+    render(<Page6 />);
+    for (const [i] of B.entries()) {
       drag(i);
-      expect(body()).toContain("✗ graded wrong");
+      const z = traceZones(OPENING, i);
+      expect(figure().textContent).toContain(tidyMath(z.own));
+      if (z.unwritten) expect(figure().textContent).not.toContain(tidyMath(z.unwritten));
     }
-    drag(FLIP_INDEX);
-    expect(body()).toContain("✓ graded correct");
-    expect(body()).toContain(`answered ${tidyMath(OPENING.byBudget[FLIP_INDEX].extractedAnswer)}`);
   });
 
-  it("stops cutting once the chain finishes inside its budget", () => {
+  it("carries no annotation on the question or the reply", () => {
     render(<Page6 />);
-    const finishedIndex = OPENING.byBudget.findIndex((r) => !r.forced);
-    drag(finishedIndex);
-    expect(body()).toContain("nothing was cut and nothing was forced");
-    expect(body()).not.toContain("we close the block and make it commit");
+    for (const [i] of B.entries()) {
+      drag(i);
+      const t = figure().textContent ?? "";
+      for (const gone of ["graded", "Final answer:", "make it commit", "tokens thought", "same chain"]) {
+        expect(t).not.toContain(gone);
+      }
+    }
   });
 
-  it("opens on a flip the model earned, not one the grader handed it", () => {
-    // The notebook's own specimen flips at 512 only because at 256 it wrote the
-    // right value behind the prompt template's placeholder. The page opens on a
-    // row that is wrong for a real reason and then right.
-    expect(F1.openingId).not.toBe(F1.specimenId);
-    for (const r of OPENING.byBudget) expect(r.extractedAnswer).not.toContain("ANSWER");
-    expect(OPENING.byBudget[FLIP_INDEX - 1].correct).toBe(false);
-    expect(OPENING.byBudget.slice(FLIP_INDEX).every((r) => r.correct)).toBe(true);
-    // The notebook's pick is still reachable, so nothing is hidden.
-    expect(F3.clickableRowIds).toContain(F1.specimenId);
-  });
-
-  it("says where the dial stops biting instead of leaving dead travel", () => {
+  it("sets the question and reply as a chat, with an icon each", () => {
     render(<Page6 />);
-    const natural = OPENING.byBudget.find((r) => !r.forced)!;
-    expect(body()).toContain(`runs to ${natural.ownTokens} tokens`);
-    expect(body()).toContain(`${natural.budget} and up are the same chain`);
+    expect(within(figure()).getByRole("img", { name: "User" })).toBeInTheDocument();
+    expect(within(figure()).getByRole("img", { name: "Model" })).toBeInTheDocument();
   });
 
-  it("prints the committed answer as maths, not as the LaTeX we spliced", () => {
+  it("marks every budget under the slider", () => {
     render(<Page6 />);
-    expect(body()).not.toContain("\\boxed{ANSWER");
-    expect(body()).toContain(`Final answer: ${tidyMath(OPENING.byBudget[0].extractedAnswer)}`);
+    expect(budgetSlider()).toHaveAttribute("max", String(B.length - 1));
+    for (const b of B) expect(figure().textContent).toContain(String(b));
   });
 
-  // The figure opens on what the dial does and what happens when it bites, in
-  // plain words: the author cut the code variable name from the prose on
-  // 2026-09-27. The counts in the last sentence must match the run.
-  it("explains the dial and the forcing in plain words before the reader touches it", () => {
+  // The author cut the code variable name from the prose on 2026-09-27.
+  it("explains the dial in plain words before the reader touches it", () => {
     render(<Page6 />);
     const t = body();
     const intro = screen.getByText(/experiment with that dial/).closest("p")!;
     expect(intro.textContent).not.toContain("max_new_tokens");
-    expect(t).toContain("so when that happens we stop it and make it answer on the spot.");
+    expect(t).not.toContain("make it answer on the spot");
     expect(PAGE6.budgets).toHaveLength(5);
-    expect(t).toContain(
-      `Try it on ${PAGE6.figure3.clickableRowIds.length} problems, at five settings from 128 to 2,048 tokens.`,
-    );
+    expect(t).toContain("Try it on five problems, at five settings from 128 to 2,048 tokens.");
     expect(t).not.toContain("nothing you do here moves anything below");
   });
 
@@ -250,23 +243,6 @@ describe("Page 6, figure 3: it stops mattering before you run out of dial", () =
         Math.round(F2.primary.points[i].truncation_rate * F3.items.length),
       );
     }
-  });
-
-  // Buttons name what each problem demonstrates rather than indexing a sort the
-  // reader cannot see, which is what the retired staircase's buttons did.
-  it("loads a bundled problem into figure 1, labelled by what it shows", () => {
-    render(<Page6 />);
-    const never = F1.rows.find((r) => r.firstCorrectBudget === null)!;
-    const d = F3.items.find((x) => x.problem_id === never.problemId)!;
-    const label = d.truncated_at_max
-      ? /cut off at every budget/i
-      : new RegExp(`finished at ${d.tokens_at_max}, still wrong`, "i");
-    fireEvent.click(screen.getByRole("button", { name: label }));
-    expect(screen.getByText(tidyMath(never.question))).toBeInTheDocument();
-    // Take it to the top of the grid: the chain gets longer, the verdict does not move.
-    drag(B.length - 1);
-    expect(body()).toContain("✗ graded wrong");
-    expect(body()).toContain(`of ${TOP} tokens thought`);
   });
 });
 
@@ -406,11 +382,10 @@ describe("Page 6: one dial per figure, and no dial that reaches past its own", (
    * redrew that trace two screens above IT. This block is here to stop them
    * being merged again.
    */
-  it("gives figure 1 the only stop row, and figures 2 and 3 a line each", () => {
+  it("gives figure 1 the only slider row, and figures 2 and 3 a line each", () => {
     render(<Page6 />);
-    expect(stops()).toHaveLength(B.length);
-    for (const [i] of B.entries()) expect(stopFor(i)).toHaveLength(1);
-    expect(screen.getAllByRole("slider")).toHaveLength(2);
+    expect(screen.getAllByRole("slider")).toHaveLength(3);
+    expect(budgetSlider()).toBeInTheDocument();
     expect(curveLine()).toBeInTheDocument();
     expect(stripLine()).toBeInTheDocument();
     expect(B.every((b) => body().includes(String(b)))).toBe(true);
@@ -422,11 +397,11 @@ describe("Page 6: one dial per figure, and no dial that reaches past its own", (
     fireEvent.keyDown(curveLine(), { key: "End" });
     expect(curveLine()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
     expect(stripLine()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
-    expect(stopFor(0)[0]).toBeChecked();
-    expect(body()).toContain(`${OPENING.byBudget[0].ownTokens} of ${B[0]} tokens thought`);
+    expect(budgetSlider()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
 
-    // And figure 1 to its flip, with figure 2 left at the top.
-    drag(FLIP_INDEX);
+    // And figure 1 to a higher budget, with figure 2 left at the top.
+    drag(2);
+    expect(budgetSlider()).toHaveAttribute("aria-valuetext", `${B[2]} tokens`);
     expect(curveLine()).toHaveAttribute("aria-valuetext", `${TOP} tokens`);
     expect(stripLine()).toHaveAttribute("aria-valuetext", `${B[0]} tokens`);
   });
@@ -457,7 +432,7 @@ describe("Page 6: one dial per figure, and no dial that reaches past its own", (
   // it moved. It is now inside figure 1's own panel.
   it("keeps the problem picker inside the figure it loads into", () => {
     render(<Page6 />);
-    const picker = screen.getByRole("group", { name: /bundled problems/i });
+    const picker = screen.getByRole("group", { name: "Problem level" });
     const figure1 = document.querySelector('section[aria-label="The truncation view"]');
     const figure3 = document.querySelector('section[aria-label="The chain-length distribution"]');
     expect(figure1).toContainElement(picker);
@@ -471,8 +446,7 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
     render(<Page6 />);
     // The run id and the "levels 4 and 5, budget forced at the cap" colophon
     // that used to head the page are jargon the notebook owns; the page names
-    // the instrument where it is applied, in figure 1's own caption.
-    expect(body()).toContain("Qwen2.5-3B-Instruct");
+    // the instrument where it is applied, in figure 2's procedure line.
     expect(body()).toContain("greedy");
     expect(body()).toContain("MATH-500");
     expect(body()).not.toContain(PAGE6.manifest.run_id);
@@ -536,9 +510,9 @@ describe("Page 6: provenance and the claims it is allowed to make", () => {
    */
   it("keeps References beside step 1 rather than in a row of its own", () => {
     render(<Page6 />);
-    const tryIt = screen.getAllByText("Try it")[0].closest("aside")!;
+    const stepOne = screen.getByRole("heading", { name: /1\. Cut it off/ }).closest("section")!;
     const refs = screen.getByText("References").closest("aside")!;
-    expect(refs.parentElement).toBe(tryIt.parentElement);
+    expect(refs.parentElement).toBe(stepOne.nextElementSibling);
   });
 
   /**
