@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 describe("presentation mode stops", () => {
-  it("are the seven widgets asked for, in order", () => {
+  it("are the seven widgets asked for, then the story's closing box, in order", () => {
     expect(DEMO_STOPS.map((s) => [s.page, s.target, s.problem ?? null])).toEqual([
       [1, "p1-s2", null],
       [3, "p3-s1", null],
@@ -44,6 +44,7 @@ describe("presentation mode stops", () => {
       [12, "p12-s2", 2],
       [13, "p13-s2", null],
       [15, "p15-s1", null],
+      [15, "p15-close", null],
     ]);
   });
 
@@ -55,6 +56,7 @@ describe("presentation mode stops", () => {
     [Page12, "p12-s2", /problem 1 of \d/],
     [Page13, "p13-s2", /./],
     [Page15, "p15-s1", /./],
+    [Page15, "p15-close", /The one sentence to leave with/],
   ] as const)("tags each stop's widget in its page (%#)", (Page, target, text) => {
     vi.useRealTimers();
     const { container } = render(<Page />);
@@ -82,7 +84,7 @@ describe("DemoMode", () => {
     );
   });
 
-  it("each P moves on a stop, through all seven, then returns to the landing page and leaves", () => {
+  it("each P moves on a stop, through all eight, then returns to the landing page and leaves", () => {
     const { rerender } = render(<DemoMode />);
     const visited: string[] = [];
     for (let i = 0; i < DEMO_STOPS.length; i++) {
@@ -90,7 +92,7 @@ describe("DemoMode", () => {
       rerender(<DemoMode />);
       visited.push(pathname);
     }
-    expect(visited).toEqual(["/p/1", "/p/3", "/p/5", "/p/6", "/p/12", "/p/13", "/p/15"]);
+    expect(visited).toEqual(["/p/1", "/p/3", "/p/5", "/p/6", "/p/12", "/p/13", "/p/15", "/p/15"]);
     // The last stop says so.
     expect(screen.getByRole("status", { name: "Presentation mode" })).toHaveTextContent("P finish · Q quit");
     press("p");

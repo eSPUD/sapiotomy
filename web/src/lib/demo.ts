@@ -26,6 +26,8 @@ export const DEMO_STOPS: readonly DemoStop[] = [
   { page: 12, target: "p12-s2", title: "Which reasoning goes into the training set?", problem: 2 },
   { page: 13, target: "p13-s2", title: "Better answers, longer chains" },
   { page: 15, target: "p15-s1", title: "The whole toolbox, side by side" },
+  // The last stop since 2026-11-09 (author): the story's closing box.
+  { page: 15, target: "p15-close", title: "Where this leaves us" },
 ];
 
 const SELECT_EVENT = "demo:select";

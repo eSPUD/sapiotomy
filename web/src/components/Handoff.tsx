@@ -7,7 +7,8 @@
  *     "Where this leaves us";
  *   - PullQuote: a question posed to the reader, titled "Open question".
  *
- * `className` carries only layout from the page (a grid column, min-w-0).
+ * `className` carries only layout from the page (a grid column, min-w-0); `demo`
+ * tags the box as a presentation-mode stop (see lib/demo.ts).
  */
 export const HANDOFF_TITLE = "Where this leaves us";
 
@@ -15,14 +16,17 @@ export function Callout({
   title,
   children,
   className = "",
+  demo,
 }: {
   title: string;
   children: React.ReactNode;
   className?: string;
+  demo?: string;
 }) {
   return (
     <aside
       aria-label={title}
+      data-demo={demo}
       className={`flex flex-col gap-2 rounded-xl bg-quote px-6 py-5 ${className}`}
     >
       <p className="font-eyebrow text-xs font-semibold uppercase tracking-wide text-ink">
@@ -33,9 +37,17 @@ export function Callout({
   );
 }
 
-export function Handoff({ children, className }: { children: React.ReactNode; className?: string }) {
+export function Handoff({
+  children,
+  className,
+  demo,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  demo?: string;
+}) {
   return (
-    <Callout title={HANDOFF_TITLE} className={className}>
+    <Callout title={HANDOFF_TITLE} className={className} demo={demo}>
       {children}
     </Callout>
   );

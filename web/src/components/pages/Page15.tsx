@@ -364,7 +364,8 @@ export function Page15() {
       </div>
 
 
-      <Handoff>
+      {/* The story's last word, and presentation mode's last stop. */}
+      <Handoff demo="p15-close">
         The one sentence to leave with: a model can get dramatically better answers by thinking
         longer at answer time, the gains are real and measured and each one has a price and a
         ceiling, and every one of them is paid in text that nobody has yet shown is the reason for
