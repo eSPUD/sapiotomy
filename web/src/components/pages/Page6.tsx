@@ -178,7 +178,7 @@ function BudgetStops({
                 onChange={() => onChange(i)}
               />
               <span
-                className={`block rounded border px-2 py-0.5 font-mono text-xs tabular-nums peer-focus-visible:ring-2 peer-focus-visible:ring-compute-ink peer-checked:border-compute peer-checked:bg-compute peer-checked:text-ink ${
+                className={`block rounded border px-2 py-0.5 font-mono text-xs tabular-nums peer-focus-visible:ring-2 peer-focus-visible:ring-chrome peer-checked:border-compute peer-checked:bg-compute peer-checked:text-ink ${
                   dead ? "border-dashed border-grid text-ink-muted" : "border-grid text-ink"
                 }`}
               >

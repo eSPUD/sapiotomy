@@ -41,7 +41,7 @@ export function PredictBar({ prompt, min = 0, max = 100, suffix = "%", onCommit 
           setCommitted(true);
           onCommit(prediction);
         }}
-        className="mt-3 rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+        className="mt-3 rounded bg-chrome px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
       >
         {committed ? `Predicted ${prediction}${suffix}` : "Lock in prediction"}
       </button>

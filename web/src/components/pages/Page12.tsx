@@ -965,7 +965,7 @@ function StarHarvest() {
             type="button"
             aria-label="previous problem"
             onClick={() => goTo(at - 1)}
-            className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute"
+            className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-chrome"
           >
             ←
           </button>
@@ -973,7 +973,7 @@ function StarHarvest() {
             type="button"
             aria-label="next problem"
             onClick={() => goTo(at + 1)}
-            className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-compute"
+            className="rounded border border-grid px-2 py-0.5 text-xs text-ink hover:border-chrome"
           >
             →
           </button>
@@ -1292,7 +1292,7 @@ function StarHarvest() {
           type="button"
           onClick={play}
           disabled={bi !== "empty"}
-          className="rounded bg-compute px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+          className="rounded bg-chrome px-4 py-2 text-sm font-semibold text-canvas disabled:opacity-50"
         >
           ▶ Play
         </button>
@@ -1300,7 +1300,7 @@ function StarHarvest() {
           type="button"
           onClick={reset}
           disabled={bi === "empty"}
-          className="ml-auto rounded bg-wrong px-4 py-2 text-sm font-semibold text-ink disabled:opacity-50"
+          className="ml-auto rounded border border-chrome px-4 py-2 text-sm font-semibold text-ink hover:bg-chrome/5 disabled:opacity-50"
         >
           ↺ Reset
         </button>

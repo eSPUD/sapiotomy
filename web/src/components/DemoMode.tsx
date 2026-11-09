@@ -102,9 +102,9 @@ export function DemoMode() {
       role="status"
       aria-live="polite"
       aria-label="Presentation mode"
-      className="fixed left-1/2 top-3 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full border border-compute bg-canvas px-4 py-1.5 text-sm text-ink shadow-lg print:hidden"
+      className="fixed left-1/2 top-3 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full border border-chrome bg-canvas px-4 py-1.5 text-sm text-ink shadow-lg print:hidden"
     >
-      <span className="font-eyebrow text-xs uppercase tracking-wide text-compute-ink">
+      <span className="font-eyebrow text-xs uppercase tracking-wide text-ink-muted">
         Demo {step + 1} / {DEMO_STOPS.length}
       </span>
       <span className="font-semibold">

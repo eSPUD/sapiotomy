@@ -603,7 +603,7 @@ export function SelectByProcess() {
             type="button"
             disabled={stage === LAST || writing || (stage === 2 && !done)}
             onClick={() => goTo(stage + 1)}
-            className="rounded bg-compute px-3 py-1 text-sm font-semibold text-ink disabled:opacity-50"
+            className="rounded bg-chrome px-3 py-1 text-sm font-semibold text-canvas disabled:opacity-50"
           >
             {stage === 0 ? "Start: Generate ▸" : stage === LAST ? "Next ▸" : `Next: ${STAGES[stage].name} ▸`}
           </button>
@@ -620,7 +620,7 @@ export function SelectByProcess() {
           <button
             type="button"
             onClick={() => goTo(0)}
-            className="rounded bg-wrong px-3 py-1 text-sm font-semibold text-ink"
+            className="rounded border border-chrome px-3 py-1 text-sm font-semibold text-ink hover:bg-chrome/5"
           >
             ↺ Reset
           </button>

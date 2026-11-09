@@ -56,9 +56,9 @@ em, i, cite {
   font-style: italic;
 }
 
-/* Accent-tinted selection (brand orange, at a quarter strength). */
+/* Selection in the chrome's ink, lightly: orange is kept for "compute" in the charts. */
 ::selection {
-  background-color: color-mix(in srgb, theme("colors.compute") 24%, transparent);
+  background-color: color-mix(in srgb, theme("colors.chrome") 15%, transparent);
 }
 
 /* Purposeful motion only: honour the reader's reduced-motion preference. */
@@ -73,13 +73,14 @@ em, i, cite {
   }
 }
 
-/* Themed keyboard focus — the 2px orange ring, never the default blue. */
+/* Themed keyboard focus — a 2px ring in the chrome, never the default blue. */
 :focus-visible {
-  outline: 2px solid theme("colors.compute-ink");
+  outline: 2px solid theme("colors.chrome");
   outline-offset: 2px;
 }
 
-/* Presentation mode (DemoMode): each stop's widget is spotlit. A wide shadow dims
+/* Presentation mode (DemoMode): each stop's widget is spotlit, outlined in the
+   chrome. A wide shadow dims
    the page around it; the widget itself stays clear and interactive. Scroll
    margins keep a widget clear of the window's edges when it is scrolled to. */
 [data-demo] {
@@ -90,7 +91,7 @@ em, i, cite {
   position: relative;
   z-index: 40;
   border-radius: 0.5rem;
-  outline: 3px solid theme("colors.compute");
+  outline: 3px solid theme("colors.chrome");
   outline-offset: 6px;
   box-shadow: 0 0 0 100vmax color-mix(in srgb, theme("colors.ink") 45%, transparent);
   transition: box-shadow 200ms ease;

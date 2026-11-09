@@ -166,7 +166,7 @@ export function Quiz({ questions, onAnswer }: QuizProps) {
                 // reader's pick is marked wrong if it was not that one. Before
                 // answering nothing is marked, or the page gives itself away.
                 const tone = !resolved
-                  ? "border-grid bg-surface-raised hover:border-compute"
+                  ? "border-grid bg-surface-raised hover:border-chrome"
                   : answer
                     ? "border-correct bg-correct/10"
                     : chosen
@@ -185,7 +185,7 @@ export function Quiz({ questions, onAnswer }: QuizProps) {
                       checked={chosen}
                       disabled={resolved}
                       onChange={() => pick(q, oi)}
-                      className="mt-1 accent-compute"
+                      className="mt-1 accent-chrome"
                     />
                     <span className="flex-1">{o.text}</span>
                     {resolved && answer ? (
@@ -214,7 +214,7 @@ export function Quiz({ questions, onAnswer }: QuizProps) {
       })}
 
       {done ? (
-        <div className="rounded-lg border-l-4 border-compute bg-surface p-4 text-ink">
+        <div className="rounded-lg border-l-4 border-chrome bg-surface p-4 text-ink">
           <p className="text-sm">
             <strong>
               {right.length} of {questions.length}.

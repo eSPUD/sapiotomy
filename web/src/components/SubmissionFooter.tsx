@@ -39,7 +39,7 @@ export function SubmissionFooter() {
               href="https://visxai.io/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-compute-ink underline"
+              className="text-ink underline"
             >
               VISxAI
             </a>

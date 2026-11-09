@@ -305,7 +305,7 @@ function ProblemPicker({ value, onChange }: { value: number; onChange: (i: numbe
               aria-label={OUTCOME_LABEL[outcome]}
               onChange={() => onChange(i)}
             />
-            <span className="block rounded border border-grid px-2 py-0.5 text-xs text-ink peer-focus-visible:ring-2 peer-focus-visible:ring-compute peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas">
+            <span className="block rounded border border-grid px-2 py-0.5 text-xs text-ink peer-focus-visible:ring-2 peer-focus-visible:ring-chrome peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas">
               {OUTCOME_LABEL[outcome]}
             </span>
           </label>
@@ -347,7 +347,7 @@ function ChainText({ chain }: { chain: SpecimenChain }) {
       type="button"
       aria-expanded={unfolded}
       onClick={() => setUnfolded((u) => !u)}
-      className="inline-flex items-center gap-1.5 self-start rounded border border-compute bg-compute/10 px-2.5 py-1 text-xs font-semibold text-compute transition-colors hover:bg-compute hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-compute focus-visible:ring-offset-1"
+      className="inline-flex items-center gap-1.5 self-start rounded border border-chrome bg-chrome/5 px-2.5 py-1 text-xs font-semibold text-ink transition-colors hover:bg-chrome hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chrome focus-visible:ring-offset-1"
     >
       <span aria-hidden="true">{unfolded ? "▾" : "▸"}</span>
       {label}
@@ -483,7 +483,7 @@ function TempPicker({ value, onChange }: { value: number; onChange: (t: number) 
               aria-label={`T = ${tLabel(t)}${t === HM.best_temperature ? ", the best" : ""}`}
               onChange={() => onChange(t)}
             />
-            <span className="flex items-center gap-1 rounded border border-grid px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-ink peer-focus-visible:ring-2 peer-focus-visible:ring-compute peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas">
+            <span className="flex items-center gap-1 rounded border border-grid px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-ink peer-focus-visible:ring-2 peer-focus-visible:ring-chrome peer-checked:border-compute peer-checked:bg-compute peer-checked:text-canvas">
               <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ background: tempColour(t) }} />
               {tLabel(t)}
               {t === HM.best_temperature ? <span aria-hidden="true">★</span> : null}
@@ -1240,7 +1240,7 @@ export function Page7() {
                   recordInteraction(PAGE_N);
                   setShowLost((v) => !v);
                 }}
-                className="inline-flex items-center gap-1.5 self-start rounded border border-compute bg-compute/10 px-2.5 py-1 text-xs font-semibold text-compute transition-colors hover:bg-compute hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-compute focus-visible:ring-offset-1"
+                className="inline-flex items-center gap-1.5 self-start rounded border border-chrome bg-chrome/5 px-2.5 py-1 text-xs font-semibold text-ink transition-colors hover:bg-chrome hover:text-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chrome focus-visible:ring-offset-1"
               >
                 <span aria-hidden="true">{showLost ? "▾" : "▸"}</span>
                 {showLost ? "Hide what the vote threw away" : "Show what the vote threw away"}

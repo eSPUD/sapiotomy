@@ -13,7 +13,7 @@ export function UserIcon() {
 
 export function ModelIcon() {
   return (
-    <span role="img" aria-label="Model" title="Model" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-compute text-ink">
+    <span role="img" aria-label="Model" title="Model" className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-chrome text-canvas">
       <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
         <path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9z" />
         <path d="M19 14l.9 2.6 2.6.9-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9z" />

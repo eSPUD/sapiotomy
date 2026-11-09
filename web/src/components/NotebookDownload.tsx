@@ -16,7 +16,7 @@ export function NotebookDownload({
 }) {
   return (
     <a
-      className="shrink-0 rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:border-compute hover:text-ink"
+      className="shrink-0 rounded border border-grid px-2 py-1 text-xs text-ink-muted hover:border-chrome hover:text-ink"
       href={href}
       download
     >

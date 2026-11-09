@@ -1235,7 +1235,7 @@ export function Page11() {
             it compute-optimal.
             <Cite n={REF.snell} /> Three numbers carry it.
           </p>
-          <div className="flex flex-col gap-3 rounded-lg border-l-4 border-compute bg-surface p-4">
+          <div className="flex flex-col gap-3 rounded-lg border-l-4 border-chrome bg-surface p-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <LawPanel head="4×" headTone="text-correct-ink" title="fewer samples than best-of-N" art={<ArtFourX />}>
                 best-of-N spends 256 samples on every question, easy or hard. Guess the difficulty

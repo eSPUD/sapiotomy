@@ -20,6 +20,10 @@ const config: Config = {
         "size-3": tokens.size3,
         "size-4": tokens.size4,
         ink: tokens.ink,
+        // The site's frame (masthead, act bands, buttons, links, focus rings), kept
+        // apart from the data hues so orange means "compute" and nothing else
+        // (option A, 2026-11-09). One colour to change if the frame is restyled.
+        chrome: tokens.ink,
         "ink-muted": tokens.inkMuted,
         "ink-faint": tokens.inkFaint,
         // The three semantic hues (fills, marks, borders) and their text steps

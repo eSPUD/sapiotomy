@@ -594,7 +594,7 @@ export function Page3() {
                         href={m.source.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-compute-ink underline"
+                        className="text-ink underline"
                       >
                         {m.source.label}
                       </a>

@@ -216,7 +216,7 @@ function CutoffWidget({
             }}
             aria-label="Model training data cutoff month and year"
             aria-valuetext={cutoffText}
-            className="w-full accent-compute"
+            className="w-full accent-chrome"
           />
           {/* Every month of the range, marked under the track with its year stacked
               beneath it, so each mark reads as a full date without twelve wide
