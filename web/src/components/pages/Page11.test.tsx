@@ -131,9 +131,11 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
     expect(screen.getByRole("heading", { name: /2\. The published law/ })).toBeInTheDocument();
     expect(screen.getByText(/That was one model family, on one date/i)).toBeInTheDocument();
     expect(screen.getByText(/says the opposite is\s*possible/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/on models from before the reasoning recipes/i),
-    ).toBeInTheDocument();
+    // The heading stands alone: its "cited · Snell et al. 2024" kicker was cut (author, 2026-11-09).
+    expect(screen.getByRole("heading", { level: 2, name: /^2\. / }).textContent).toBe(
+      "2. The published law, and its fine print",
+    );
+    expect(screen.queryByText(/on models from before the reasoning recipes/i)).toBeNull();
   });
 
   it("lifts each section's lede out of its card, into the page's whitespace", () => {
@@ -150,15 +152,23 @@ describe("Page 11 (the test-time compute scaling law) component", () => {
       expect(el.closest("figure")).toBeNull();
       expect(el.closest(".bg-surface")).toBeNull();
     }
-    // and every figure heading carries its own kicker in the whitespace above
-    for (const kicker of [
-      /measured, Qwen2\.5-3B against 7B/i,
+    // Section 1's measured figure keeps its kicker; sections 2 to 4's "cited · …"
+    // kickers were cut, so those headings stand alone (author, 2026-11-09).
+    expect(screen.getByText(/measured, Qwen2\.5-3B against 7B/i)).toBeInTheDocument();
+    for (const cut of [
       /Snell et al\. 2024, on models from before the reasoning recipes/i,
       /Wu et al\. 2024, Pythia 410M, 2\.8B and 12B on GSM8K/i,
       /MATH500 table, sampling against tree search/i,
     ]) {
-      expect(screen.getByText(kicker)).toBeInTheDocument();
+      expect(screen.queryByText(cut)).toBeNull();
     }
+    expect(
+      screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent).filter((t) => /^[234]\. /.test(t ?? "")),
+    ).toEqual([
+      "2. The published law, and its fine print",
+      "3. Each scale owns a band of the budget",
+      "4. Better search moves the whole frontier",
+    ]);
   });
 
   it("grounds the 4x claim in its baseline: flat 256 vs difficulty-first 64", () => {

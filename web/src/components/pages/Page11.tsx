@@ -1220,12 +1220,9 @@ export function Page11() {
 
         {/* Step 2 — the law, stated */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            2. The published law, and its fine print
-            <span className="block text-xs font-normal text-ink-muted">
-              cited · Snell et al. 2024, on models from before the reasoning recipes
-            </span>
-          </h2>
+          {/* The heading alone (author, 2026-11-09): its "cited · Snell et al. 2024, on
+              models from before the reasoning recipes" kicker was cut. */}
+          <h2 className="text-xl font-semibold text-ink">2. The published law, and its fine print</h2>
           <p className="text-ink-muted">
             That was one model family, on one date. The published record says the opposite is
             possible: a small model that thinks <em>can</em> out-buy a bigger one. The rest of this
@@ -1276,12 +1273,8 @@ export function Page11() {
 
         {/* Step 3 — how MUCH compute: each scale's band, measured */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            3. Each scale owns a band of the budget
-            <span className="block text-xs font-normal text-ink-muted">
-              cited · Wu et al. 2024, Pythia 410M, 2.8B and 12B on GSM8K
-            </span>
-          </h2>
+          {/* The heading alone: its "cited · Wu et al. 2024" kicker was cut (author, 2026-11-09). */}
+          <h2 className="text-xl font-semibold text-ink">3. Each scale owns a band of the budget</h2>
           <p className="text-ink-muted">
             The law is not only Snell&rsquo;s claim; Wu et al. 2024 measured it. They took three
             real models on GSM8K (grade-school word problems), gave each steadily more samples, and
@@ -1333,12 +1326,9 @@ export function Page11() {
 
         {/* Step 4 — how it is SPENT: better search shifts the frontier */}
         <section className="flex min-w-0 flex-col gap-3">
-          <h2 className="text-xl font-semibold text-ink">
-            4. Better search moves the whole frontier
-            <span className="block text-xs font-normal text-ink-muted">
-              cited · the same paper&rsquo;s MATH500 table, sampling against tree search
-            </span>
-          </h2>
+          {/* The heading alone: its "cited · the same paper's MATH500 table" kicker was cut
+              (author, 2026-11-09). */}
+          <h2 className="text-xl font-semibold text-ink">4. Better search moves the whole frontier</h2>
           <p className="text-ink-muted">
             Section 3 varied how <em>much</em> compute; this one varies how it is <em>spent</em>.
             The same paper&rsquo;s results table on MATH500: three models, each under plain sampling
